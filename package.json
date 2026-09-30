@@ -1,0 +1,10 @@
+{
+  "name": "turn-based-star-wars-card-game",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A turn-based Star Wars card battler: collect heroes and ships, build squads, fight campaign battles.",
+  "scripts": {
+    "test": "node tests/sim.test.js",
+    "build": "node scripts/build.js"
+  }
+}

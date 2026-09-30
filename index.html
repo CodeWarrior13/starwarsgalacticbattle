@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Galactic Card Battles</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oxanium:wght@500;700;800&family=Chakra+Petch:wght@400;500;600;700&display=swap" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <div class="starfield" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <button class="brand" type="button" data-nav="home" aria-label="Home">
+      <span class="brand-top">STAR WARS</span>
+      <span class="brand-bottom">Galactic Card Battles</span>
+    </button>
+    <nav class="main-nav" aria-label="Main">
+      <button type="button" data-nav="home">Home</button>
+      <button type="button" data-nav="campaign">Battle</button>
+      <button type="button" data-nav="collection">Collection</button>
+      <button type="button" data-nav="shop">Shop</button>
+    </nav>
+    <div class="wallet" aria-live="polite">
+      <span class="currency credits" title="Credits"><i>¢</i><b id="credits">0</b></span>
+      <span class="currency crystals" title="Crystals"><i>◆</i><b id="crystals">0</b></span>
+    </div>
+  </header>
+
+  <main id="screen" class="screen"></main>
+
+  <div id="modal-root"></div>
+  <div id="toast-root" aria-live="polite"></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/battle.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/battle-ui.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
