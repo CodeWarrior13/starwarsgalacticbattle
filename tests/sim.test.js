@@ -353,6 +353,29 @@ test('group and role synergies: full Bad Batch, Nightsisters, Medical Corps', ()
   for (const a of bb.active) assert.ok(a.key && Array.isArray(a.members), a.name);
 });
 
+test('the Inquisitorius: five dark side hunters with a full-squad bonus', () => {
+  const ids = ['grand_inquisitor', 'second_sister', 'fifth_brother', 'seventh_sister', 'eighth_brother'];
+  for (const id of ids) {
+    const u = D.UNIT_MAP[id];
+    assert.ok(u && u.faction === 'dark' && D.TRAITS[id].includes('inquisitor'), id);
+    assert.ok(D.ULT_ANIM[id], `${id} has a signature ultimate animation`);
+  }
+  const full = D.squadBonuses(ids, null);
+  const inq = full.active.find((a) => a.key === 'inquisitor');
+  assert.ok(inq && inq.count === 5 && inq.tier === 2 && inq.members.length === 5);
+  assert.ok(full.perUnit[0].lifesteal >= 0.18 && full.perUnit[0].double >= 0.2);
+  const pair = D.squadBonuses(ids.slice(0, 2), null).active.find((a) => a.key === 'inquisitor');
+  assert.strictEqual(pair.tier, 0);
+});
+
+test('Battle of Coruscant: ten stages after Exegol with a wreckage hazard', () => {
+  const p = D.PLANET_MAP.coruscant_siege;
+  assert.ok(p && p.stages.length === 10 && p.env === 'siege');
+  assert.strictEqual(D.PLANETS[D.PLANETS.length - 1].id, 'coruscant_siege');
+  assert.ok(p.stages.some((s) => s.kind === 'ship') && p.stages.some((s) => s.kind === 'character'));
+  assert.strictEqual(p.hazard.id, 'debris');
+});
+
 test('every unit and boss has cover art and a bio', () => {
   require('../js/art.js');
   for (const u of [...D.UNITS, ...D.BOSSES]) {

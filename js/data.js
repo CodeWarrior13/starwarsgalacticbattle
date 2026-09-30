@@ -495,6 +495,43 @@
         { name: 'System Override', cd: 3, target: 'enemy', effects: [dmg(1.2), debuff('stun', 1, 0.6)], desc: 'Deal damage with a 60% chance to Stun.' },
       ],
     },
+
+    // ---------- Wave 5: The Inquisitorius ----------
+    {
+      id: 'grand_inquisitor', name: 'Grand Inquisitor', kind: 'character', faction: 'dark', rarity: 'epic', role: 'support', accent: '#ff2a2a', spd: 150,
+      abilities: [
+        { name: 'Spinning Blade', cd: 0, target: 'enemy', effects: [dmg(1.1), debuff('defDown', 2, 0.35)], desc: 'Deal damage with a 35% chance of Defense Down.' },
+        { name: 'Hunt the Jedi', cd: 3, target: 'allAllies', effects: [buff('offUp', 2), tm(25)], desc: 'All allies gain Offense Up and 25% Turn Meter.' },
+      ],
+    },
+    {
+      id: 'second_sister', name: 'Second Sister', kind: 'character', faction: 'dark', rarity: 'epic', role: 'attacker', accent: '#ff2a2a', spd: 152,
+      abilities: [
+        { name: 'Saber Flurry', cd: 0, target: 'enemy', effects: [dmg(0.6, 2)], desc: 'Strike one enemy twice.' },
+        { name: 'Relentless Pursuit', cd: 3, target: 'enemy', effects: [dmg(2.2), { ...tm(25), on: 'self' }], desc: 'Deal heavy damage and gain 25% Turn Meter.' },
+      ],
+    },
+    {
+      id: 'fifth_brother', name: 'Fifth Brother', kind: 'character', faction: 'dark', rarity: 'epic', role: 'tank', accent: '#ff2a2a', spd: 112,
+      abilities: [
+        { name: 'Crushing Blow', cd: 0, target: 'enemy', effects: [dmg(1.1), debuff('stun', 1, 0.25)], desc: 'Deal damage with a 25% chance to Stun.' },
+        { name: 'Brute Presence', cd: 3, target: 'self', effects: [buff('taunt', 2), buff('defUp', 2), heal(0.12)], desc: 'Gain Taunt and Defense Up, and heal 12%.' },
+      ],
+    },
+    {
+      id: 'seventh_sister', name: 'Seventh Sister', kind: 'character', faction: 'dark', rarity: 'epic', role: 'support', accent: '#ff2a2a', spd: 146,
+      abilities: [
+        { name: 'Probe Droid Strike', cd: 0, target: 'enemy', effects: [dmg(1.0), debuff('offDown', 2, 0.4)], desc: 'Deal damage with a 40% chance of Offense Down.' },
+        { name: 'Seeker Swarm', cd: 3, target: 'allEnemies', effects: [dmg(0.7), debuff('defDown', 2, 0.5)], desc: 'Probe droids hit all enemies with a 50% chance of Defense Down.' },
+      ],
+    },
+    {
+      id: 'eighth_brother', name: 'Eighth Brother', kind: 'character', faction: 'dark', rarity: 'epic', role: 'attacker', accent: '#ff2a2a', spd: 148,
+      abilities: [
+        { name: 'Rotor Strike', cd: 0, target: 'enemy', effects: [dmg(1.2)], desc: 'Deal damage to one enemy.' },
+        { name: 'Blade Copter', cd: 3, target: 'allEnemies', effects: [dmg(0.8), debuff('burn', 2, 0.4)], desc: 'Spin through all enemies with a 40% chance to Burn.' },
+      ],
+    },
   ];
 
   // Ultimates charge as a unit acts, deals damage and takes damage.
@@ -551,6 +588,11 @@
     tech: U('Calculated Probability', 'allAllies', [buff('offUp', 2), buff('defUp', 2), tm(35)], 'All allies gain Offense Up, Defense Up and 35% Turn Meter.', 'Statistically, we should all be dead.'),
     crosshair: U('No Miss', 'enemy', [dmg(4.2), debuff('defDown', 2)], 'A single devastating shot that never misses.', 'I never miss.'),
     echo: U('Scomp Surge', 'allEnemies', [dmg(1.1), debuff('stun', 1, 0.5)], 'Overload enemy systems: damage all enemies with a 50% Stun chance.', 'Interfacing now.'),
+    grand_inquisitor: U('The Inquisitorius', 'allEnemies', [dmg(1.4), debuff('defDown', 2), { ...buff('offUp', 2), on: 'allies' }], 'Unleash the spinning blade on all enemies; all allies gain Offense Up.', 'The Jedi are extinct. Their fire has gone out of the universe.'),
+    second_sister: U('Hunt Them Down', 'enemy', [dmg(3.6), debuff('stun', 1)], 'A spinning blade strike that deals massive damage and Stuns.', 'I will find you.'),
+    fifth_brother: U('Brutal Charge', 'allEnemies', [dmg(1.2), debuff('stun', 1, 0.35), { ...buff('taunt', 2), on: 'self' }], 'Crash into all enemies with a 35% Stun chance; gain Taunt.', 'There is nowhere to run.'),
+    seventh_sister: U('Seeker Protocol', 'allEnemies', [dmg(1.3), debuff('offDown', 2), debuff('defDown', 2)], 'A swarm of probe droids hits all enemies with Offense Down and Defense Down.', 'My seekers will find you.'),
+    eighth_brother: U('Rotor Descent', 'allEnemies', [dmg(1.5), debuff('burn', 2)], 'Drop in on a spinning blade: heavy damage and Burn to all enemies.', 'Surrender, Jedi.'),
   };
 
   const ROLE_ULTIMATES = {
@@ -653,6 +695,11 @@
 
   // Flavor text shown on the back of each card.
   const BIOS = {
+    grand_inquisitor: 'Leader of the Empire\'s Jedi hunters. A cold, precise duelist who wields a spinning double-bladed saber.',
+    second_sister: 'A fallen Jedi turned Inquisitor, relentless in her hunt for any Jedi who survived Order 66.',
+    fifth_brother: 'A hulking Inquisitor who prefers overwhelming force to finesse.',
+    seventh_sister: 'A cunning Inquisitor who hunts with a swarm of ID9 seeker probe droids.',
+    eighth_brother: 'An Inquisitor who spins his blade like a rotor to glide down on his prey.',
     rebel_medic: 'A combat medic of the Rebel Alliance who runs toward the blaster fire so others can walk away from it.',
     two_onebee: 'A surgical droid who has patched up everyone from Luke Skywalker to half the Rebel fleet.',
     nightsister_acolyte: 'A young witch of Dathomir who draws on green ichor magick to mend her sisters.',
@@ -784,6 +831,7 @@
     falcon: ['gunship', 'scoundrel', 'rebel'], razor_crest: ['gunship', 'bounty'], tie_fighter: ['fighter', 'empire'],
     tie_bomber: ['bomber', 'empire'], tie_interceptor: ['fighter', 'empire'], lambda_shuttle: ['gunship', 'empire'],
     slave_one: ['gunship', 'bounty'], vulture_droid: ['fighter', 'droid', 'separatist'],
+    grand_inquisitor: ['inquisitor', 'empire', 'leader'], second_sister: ['inquisitor', 'empire'], fifth_brother: ['inquisitor', 'empire'], seventh_sister: ['inquisitor', 'empire'], eighth_brother: ['inquisitor', 'empire'],
     c3po: ['droid', 'rebel'], rebel_medic: ['rebel', 'trooper'], two_onebee: ['droid', 'rebel'], nightsister_acolyte: ['nightsister'], barriss: ['jedi', 'republic'], talzin: ['nightsister', 'leader'],
     hunter: ['badbatch', 'trooper', 'leader'], wrecker: ['badbatch', 'trooper'], tech: ['badbatch', 'trooper'], crosshair: ['badbatch', 'trooper'], echo: ['badbatch', 'trooper', 'droid'], bb8: ['droid', 'rebel'], k2so: ['droid', 'rebel'], chopper: ['droid', 'rebel', 'scoundrel'],
     ig88: ['droid', 'bounty'], droideka: ['droid', 'separatist'], b2_droid: ['droid', 'separatist'], magnaguard: ['droid', 'separatist'], ig11: ['droid', 'bounty'], tie_advanced: ['fighter', 'empire', 'sith'],
@@ -795,7 +843,7 @@
     empire: { label: 'Empire', icon: '⬢' }, republic: { label: 'Republic', icon: '⌬' }, separatist: { label: 'Separatist', icon: '⎔' },
     scoundrel: { label: 'Scoundrel', icon: '☄' }, bounty: { label: 'Bounty Hunter', icon: '⌖' }, droid: { label: 'Droid', icon: '⚙' },
     trooper: { label: 'Trooper', icon: '⛉' }, native: { label: 'Native', icon: '❦' }, leader: { label: 'Leader', icon: '♛' },
-    mandalorian: { label: 'Mandalorian', icon: '⟁' }, badbatch: { label: 'Bad Batch', icon: '⚑' }, nightsister: { label: 'Nightsister', icon: '☽' }, fighter: { label: 'Fighter', icon: '➶' }, bomber: { label: 'Bomber', icon: '✹' },
+    mandalorian: { label: 'Mandalorian', icon: '⟁' }, badbatch: { label: 'Bad Batch', icon: '⚑' }, inquisitor: { label: 'Inquisitor', icon: '⊗' }, nightsister: { label: 'Nightsister', icon: '☽' }, fighter: { label: 'Fighter', icon: '➶' }, bomber: { label: 'Bomber', icon: '✹' },
     gunship: { label: 'Gunship', icon: '⛭' }, creature: { label: 'Creature', icon: '☠' }, capital: { label: 'Capital Ship', icon: '▲' },
   };
 
@@ -805,7 +853,7 @@
     ranged: { label: 'Ranged', icon: '➹' }, support: { label: 'Support', icon: '✦' }, force: { label: 'Force User', icon: '✧' },
     droid: { label: 'Droid', icon: '⚙' }, starfighter: { label: 'Starfighter', icon: '➶' }, bomber: { label: 'Bomber', icon: '✹' }, gunship: { label: 'Gunship', icon: '⛭' },
   };
-  const MELEE = ['ewok_warrior', 'tusken_raider', 'obi_wan', 'luke', 'yoda', 'rey', 'darth_maul', 'kylo_ren', 'count_dooku', 'vader', 'ahsoka', 'grievous', 'mace_windu', 'magnaguard', 'k2so', 'hunter', 'rancor', 'krayt_dragon', 'lord_vader'];
+  const MELEE = ['ewok_warrior', 'tusken_raider', 'obi_wan', 'luke', 'yoda', 'rey', 'darth_maul', 'kylo_ren', 'count_dooku', 'vader', 'ahsoka', 'grievous', 'mace_windu', 'magnaguard', 'k2so', 'hunter', 'grand_inquisitor', 'second_sister', 'fifth_brother', 'seventh_sister', 'eighth_brother', 'rancor', 'krayt_dragon', 'lord_vader'];
 
   function classesOf(def) {
     const tr = TRAITS[def.id] || [];
@@ -816,7 +864,7 @@
       if (tr.includes('gunship') || tr.includes('capital')) out.push('gunship');
     } else {
       out.push(MELEE.includes(def.id) ? 'fighter' : 'ranged');
-      if (tr.includes('jedi') || tr.includes('sith') || def.id === 'grogu') out.push('force');
+      if (tr.includes('jedi') || tr.includes('sith') || tr.includes('inquisitor') || tr.includes('nightsister') || def.id === 'grogu') out.push('force');
     }
     if (tr.includes('droid')) out.push('droid');
     if (def.role === 'healer') out.push('healer');
@@ -835,6 +883,7 @@
     y_wing: 'shield', lambda_shuttle: 'shield', b_wing: 'broadside', razor_crest: 'broadside', tie_bomber: 'bombrun', slave_one: 'bombrun',
     c3po: 'rally', bb8: 'dash', k2so: 'leap', chopper: 'heal', ig88: 'rockets', droideka: 'bulwark', b2_droid: 'barrage', magnaguard: 'dash', ig11: 'barrage', vulture_droid: 'strafe',
     rebel_medic: 'heal', two_onebee: 'heal', nightsister_acolyte: 'heal', barriss: 'heal', talzin: 'lightning', hunter: 'dash', wrecker: 'rockets', tech: 'rally', crosshair: 'snipe', echo: 'lightning',
+    grand_inquisitor: 'saberstorm', second_sister: 'spinsaber', fifth_brother: 'leap', seventh_sister: 'rockets', eighth_brother: 'spinsaber',
     rancor: 'claws', krayt_dragon: 'claws', star_destroyer: 'turbolaser', death_star: 'superlaser',
   };
 
@@ -843,6 +892,10 @@
 
   // `scope: 'trait'` buffs only the units with the trait, `'all'` buffs the whole squad.
   const SYNERGIES = [
+    { trait: 'inquisitor', name: 'The Inquisitorius', scope: 'trait', tiers: [
+      { n: 2, mods: { atk: 0.1, lifesteal: 0.08 }, desc: 'Inquisitors gain +10% attack and 8% lifesteal.' },
+      { n: 3, mods: { atk: 0.15, lifesteal: 0.12, crit: 0.1 }, desc: 'Inquisitors gain +15% attack, 12% lifesteal and +10% crit chance.' },
+      { n: 5, mods: { atk: 0.25, lifesteal: 0.18, crit: 0.15, double: 0.2, tmStart: 30 }, desc: 'The full Inquisitorius: +25% attack, 18% lifesteal, +15% crit, +20% double hit and a 30% Turn Meter head start.' }] },
     { trait: 'badbatch', name: 'Clone Force 99', scope: 'trait', tiers: [
       { n: 2, mods: { atk: 0.1 }, desc: 'Bad Batch members gain +10% attack.' },
       { n: 3, mods: { atk: 0.15, crit: 0.1 }, desc: 'Bad Batch members gain +15% attack and +10% crit chance.' },
@@ -906,7 +959,7 @@
   const SYN_THEME = {
     droid: '#ffb03a', sith: '#ff2a2a', jedi: '#5ab4ff', rebel: '#ff8a4a', empire: '#b8c2cc', republic: '#8fd3ff', separatist: '#6a8aff',
     scoundrel: '#ffd23f', bounty: '#9fe07a', trooper: '#e6ecf5', native: '#8aa04a', leader: '#ffd23f', fighter: '#8fd3ff', bomber: '#ff9a3a',
-    gunship: '#b8c2cc', badbatch: '#3b8bff', nightsister: '#4ade80', healer: '#52e08a', tank: '#8fd3ff', attacker: '#ff6b6b', unity_light: '#ffe08a', unity_dark: '#ff3a3a', formation: '#8fd3ff', terrain: '#52e08a',
+    gunship: '#b8c2cc', badbatch: '#3b8bff', inquisitor: '#ff2a2a', nightsister: '#4ade80', healer: '#52e08a', tank: '#8fd3ff', attacker: '#ff6b6b', unity_light: '#ffe08a', unity_dark: '#ff3a3a', formation: '#8fd3ff', terrain: '#52e08a',
   };
 
   // ---------- Planets ----------
@@ -1054,6 +1107,24 @@
         st('Final Order Fleet', F, 28, ['tie_advanced', 'slave_one', 'tie_interceptor', 'tie_interceptor', 'lambda_shuttle']),
         st('Throne of the Sith', G, 29, ['palpatine', 'thrawn', 'grievous', 'kylo_ren', 'death_trooper']),
         st('Duel of the Fates', G, 30, ['palpatine', 'vader', 'darth_maul', 'kylo_ren', 'count_dooku']),
+      ],
+    },
+    {
+      id: 'coruscant_siege', name: 'Battle of Coruscant', region: 'Core Worlds', env: 'siege', enemyScale: 1.25, reinforce: { character: ['b2_droid', 'battle_droid'], ship: ['vulture_droid'] }, map: { x: 62, y: 80 }, color: '#ff7a3a',
+      blurb: 'The capital burns. Warships fill the skies above the city-world as the Separatists strike, and the Republic falls into Order 66.',
+      terrain: { name: 'Battle-Scarred Skies', desc: 'Separatists, Troopers and Inquisitors gain +12% attack. Everyone gains +8% crit chance.', rules: [{ traits: ['separatist', 'trooper', 'inquisitor'], mods: { atk: 0.12 } }, { mods: { crit: 0.08 } }] },
+      hazard: { id: 'debris', name: 'Falling Wreckage', every: 7, desc: 'Every 7 turns burning starship wreckage falls: 8% max HP to two random units, with a 40% chance to Burn.', effect: { type: 'damage', pct: 0.08, count: 2, burn: 0.4 } },
+      stages: [
+        st('Skyline Dogfight', F, 25, ['vulture_droid', 'vulture_droid', 'tie_interceptor', 'vulture_droid', 'slave_one']),
+        st('Senate District Landing', G, 25, ['b2_droid', 'droideka', 'battle_droid', 'magnaguard', 'battle_droid']),
+        st('Burning Spires', G, 26, ['grievous', 'magnaguard', 'magnaguard', 'b2_droid', 'droideka']),
+        st('Boarding the Invisible Hand', F, 26, ['vulture_droid', 'tie_advanced', 'slave_one', 'vulture_droid', 'lambda_shuttle']),
+        st('Order 66: Temple Steps', G, 27, ['vader', 'clone_trooper', 'clone_trooper', 'clone_trooper', 'death_trooper']),
+        st('Temple Archives', G, 27, ['vader', 'grand_inquisitor', 'second_sister', 'clone_trooper', 'clone_trooper']),
+        st('Orbital Barrage', F, 28, ['tie_advanced', 'tie_interceptor', 'tie_interceptor', 'slave_one', 'vulture_droid']),
+        st('The Works', G, 28, ['fifth_brother', 'seventh_sister', 'eighth_brother', 'death_trooper', 'death_trooper']),
+        st('Senate Rotunda', G, 29, ['palpatine', 'count_dooku', 'grand_inquisitor', 'magnaguard', 'magnaguard']),
+        st('Fall of the Republic', G, 30, ['palpatine', 'vader', 'grievous', 'count_dooku', 'grand_inquisitor']),
       ],
     },
   ];

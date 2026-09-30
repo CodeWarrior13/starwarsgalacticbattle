@@ -127,6 +127,23 @@
 
   // ---------- Wallet ----------
   const lastWallet = {};
+  // Currency chips roll up (or down) to the new amount.
+  function countUp(node, from, to) {
+    const t0 = performance.now();
+    const dur = Math.min(900, 300 + Math.abs(to - from) * 0.4);
+    const id = String(t0);
+    node.dataset.counting = id;
+    const step = (now) => {
+      if (node.dataset.counting !== id) return;
+      const k = Math.min(1, (now - t0) / dur);
+      const e = 1 - Math.pow(1 - k, 3);
+      node.textContent = fmt(Math.round(from + (to - from) * e));
+      if (k < 1) requestAnimationFrame(step);
+      else delete node.dataset.counting;
+    };
+    requestAnimationFrame(step);
+  }
+
   function updateWallet() {
     const s = Player.state;
     const lv = $('#acct-level');
@@ -140,7 +157,8 @@
     for (const key of ['credits', 'crystals', 'aurodium']) {
       const node = $('#' + key);
       if (!node) continue;
-      node.textContent = fmt(s[key]);
+      if (lastWallet[key] != null && lastWallet[key] !== s[key]) countUp(node, lastWallet[key], s[key]);
+      else if (!node.dataset.counting) node.textContent = fmt(s[key]);
       if (lastWallet[key] != null && lastWallet[key] !== s[key]) {
         const chip = node.closest('.currency');
         chip.classList.remove('bump');
@@ -186,23 +204,29 @@
     const liberated = D.PLANETS.filter((p) => Player.planetComplete(p.id)).length;
     const bossesBeaten = Object.keys(s.bosses).length;
     const current = Player.currentPlanet();
-    const showcase = ['vader', 'yoda', 'falcon', 'boba_fett', 'tie_advanced']
-      .map((id, i) => `<div class="showcase-card sc-${i}">${portrait(D.UNIT_MAP[id])}</div>`).join('');
 
     const v = el(`<section class="view">
-      <div class="hero">
-        <div class="hero-copy">
+      <div class="home-galaxy galaxy-map" data-home-map>
+        <canvas data-map-canvas></canvas>
+        <div class="hg-actors" data-actors aria-hidden="true"></div>
+        ${D.PLANETS.map((p) => {
+          const unlocked = Player.planetUnlocked(p.id);
+          const cleared = Player.planetCleared(p.id);
+          return `<button class="map-planet ${unlocked ? '' : 'locked'} ${p.id === current.id ? 'selected' : ''} ${Player.planetComplete(p.id) ? 'done' : ''}" type="button" data-go="campaign" data-planet="${p.id}" style="left:${p.map.x}%;top:${p.map.y}%" ${unlocked ? '' : 'disabled'} aria-label="${esc(p.name)}">
+            <span class="map-label">${esc(p.name)}<small>${unlocked ? `${cleared}/${p.stages.length}` : '🔒'}</small></span>
+          </button>`;
+        }).join('')}
+        <div class="hg-title">
           <p class="eyebrow">A long time ago, in a galaxy far, far away…</p>
-          <h1>Build your squad.<br><em>Command the galaxy.</em></h1>
-          <p>Collect heroes, villains and starfighters, combine their traits for powerful synergies, and liberate ten worlds in turn-based battles on living battlefields.</p>
-          <div class="hero-actions">
-            <button class="btn btn-primary" type="button" data-go="campaign" data-planet="${current.id}">Continue on ${esc(current.name)}</button>
-            <button class="btn" type="button" data-go="campaign" data-kind="map">Galaxy Map</button>
-            <button class="btn" type="button" data-go="campaign" data-kind="boss">Boss Battles</button>
-          </div>
+          <h1>Command <em>the galaxy.</em></h1>
         </div>
-        <div class="showcase" aria-hidden="true">${showcase}</div>
+        <div class="hg-progress"><b>${liberated}/${D.PLANETS.length}</b> worlds liberated<i style="--p:${(Player.totalCleared() / D.PLANETS.reduce((a, p) => a + p.stages.length, 0)) * 100}%"></i></div>
+        <div class="hg-actions">
+          <button class="btn btn-primary" type="button" data-go="campaign" data-planet="${current.id}">Continue on ${esc(current.name)}</button>
+          <button class="btn" type="button" data-go="campaign" data-kind="boss">Boss Battles</button>
+        </div>
       </div>
+      <p class="hg-blurb muted">Collect heroes, villains and starfighters, combine their traits for powerful synergies, and liberate ${D.PLANETS.length} worlds in turn-based battles on living battlefields. Tap a world to jump straight to it.</p>
 
       ${accountPanel()}
 
@@ -233,6 +257,15 @@
     </section>`);
 
     $$('[data-sphere]', v).forEach((n) => spinSphere($('canvas', n), n.dataset.sphere));
+    requestAnimationFrame(() => {
+      const mc = $('[data-map-canvas]', v);
+      if (mc) new root.GalaxyMap(mc, D.PLANETS, () => ({
+        unlocked: (id) => Player.planetUnlocked(id),
+        cleared: (id) => Player.planetCleared(id),
+        current: current.id,
+      }));
+      homeActors($('[data-actors]', v));
+    });
     v.addEventListener('click', async (e) => {
       const go = e.target.closest('[data-go]');
       if (go) {
@@ -253,6 +286,80 @@
     });
     return v;
   };
+
+  // Ambient scenes drifting across the home galaxy, like a title-screen diorama:
+  // dogfights, Star Destroyers, the Falcon jumping to lightspeed, Mando on his
+  // jetpack, Grogu's pram, R2's escape pod and a probe droid.
+  const ACTOR_ART = {
+    mando: `<svg viewBox="0 0 100 100"><path d="M40 60 L36 96 L44 62Z" fill="#ffb03a"/><path d="M41 60 L39 84 L43 61Z" fill="#fff4c0"/><rect x="36" y="38" width="10" height="24" rx="3" fill="#9aa0a8"/><path d="M50 40 L34 74 L52 68Z" fill="#6a5440"/><rect x="47" y="38" width="20" height="28" rx="5" fill="#8a8f84"/><rect x="49" y="40" width="16" height="10" rx="3" fill="#c8ced4"/><rect x="50" y="64" width="7" height="20" rx="2" fill="#5a5a50"/><rect x="59" y="64" width="7" height="18" rx="2" fill="#5a5a50" transform="rotate(-20 62 64)"/><circle cx="58" cy="28" r="11" fill="#c8ced4"/><path d="M50 26 H66 V30 H60 V39 H56 V30 H50Z" fill="#111"/><ellipse cx="54" cy="22" rx="4" ry="2" fill="#fff" opacity=".6"/></svg>`,
+    grogu: `<svg viewBox="0 0 100 100"><ellipse cx="50" cy="84" rx="22" ry="5" fill="#8fd3ff" opacity=".35"/><path d="M18 56 L82 56 Q80 74 50 76 Q20 74 18 56Z" fill="#9aa0a8"/><path d="M41 48 L20 40 L40 53Z" fill="#8ab870"/><path d="M59 48 L80 40 L60 53Z" fill="#8ab870"/><ellipse cx="50" cy="48" rx="10" ry="9" fill="#9ac880"/><circle cx="46" cy="47" r="2.4" fill="#111"/><circle cx="54" cy="47" r="2.4" fill="#111"/><circle cx="46.6" cy="46.3" r=".8" fill="#fff"/><circle cx="54.6" cy="46.3" r=".8" fill="#fff"/><path d="M36 56 Q50 50 64 56Z" fill="#b89a70"/><path d="M16 56 A34 26 0 0 1 36 34" stroke="#c8ccd0" stroke-width="4" fill="none"/><rect x="16" y="54" width="68" height="4" rx="2" fill="#c8ccd0"/></svg>`,
+    pod: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="24" fill="#d8dce0"/><path d="M26 50 A24 24 0 0 0 74 50Z" fill="#aab0b8"/><circle cx="44" cy="44" r="8" fill="#1a2433"/><path d="M38 44 A6 6 0 0 1 50 44Z" fill="#5a8ad8"/><circle cx="44" cy="41" r="1.4" fill="#ff3a3a"/><rect x="70" y="46" width="12" height="8" rx="2" fill="#8a929e"/><circle cx="84" cy="50" r="3" fill="#9fdcff" opacity=".8"/></svg>`,
+    probe: `<svg viewBox="0 0 100 100"><g stroke="#3a3d44" stroke-width="2" fill="none"><path d="M44 58 L38 84 L34 92"/><path d="M50 60 L50 90"/><path d="M56 58 L62 84 L66 92"/><path d="M40 52 L24 70"/></g><circle cx="50" cy="44" r="16" fill="#2a2d33"/><ellipse cx="45" cy="38" rx="6" ry="3" fill="#6a707a" opacity=".6"/><circle cx="44" cy="46" r="2.4" fill="#ff3a3a"/><circle cx="52" cy="48" r="2" fill="#ff3a3a"/><circle cx="57" cy="44" r="1.6" fill="#ff3a3a"/><path d="M50 28 L50 12 M56 30 L62 16" stroke="#6a707a" stroke-width="1.4"/></svg>`,
+  };
+
+  function homeActors(host) {
+    if (!host || !motionOK()) return;
+    const shipSvg = (id) => Art.shipOnly(D.UNIT_MAP[id]);
+    const fly = (html, o) => {
+      const W = host.clientWidth;
+      const H = host.clientHeight;
+      const dir = o.dir || (Math.random() < 0.5 ? 1 : -1);
+      const y0 = (o.y != null ? o.y : 0.1 + Math.random() * 0.8) * H;
+      const y1 = y0 + (o.dy != null ? o.dy : (Math.random() - 0.5) * 0.4) * H;
+      const size = o.size || 44;
+      const a = el(`<div class="hg-actor ${o.cls || ''}" style="width:${size}px;height:${size}px">${html}</div>`);
+      host.appendChild(a);
+      const x0 = dir > 0 ? -size * 1.5 : W + size * 1.5;
+      const x1 = dir > 0 ? W + size * 1.5 : -size * 1.5;
+      const heading = (Math.atan2(y1 - y0, x1 - x0) * 180) / Math.PI + (o.nose === false ? 0 : 90);
+      const flip = o.nose === false && dir < 0 ? ' scaleX(-1)' : '';
+      const rot = o.nose === false ? (o.spin ? 'rotate(0deg)' : '') : `rotate(${heading}deg)`;
+      const rot2 = o.nose === false ? (o.spin ? 'rotate(360deg)' : '') : `rotate(${heading}deg)`;
+      const midY = (y0 + y1) / 2 + (o.arc || 0) * H;
+      const anim = a.animate([
+        { transform: `translate(${x0}px, ${y0}px) ${rot}${flip}` },
+        { transform: `translate(${(x0 + x1) / 2}px, ${midY}px) ${o.spin ? 'rotate(180deg)' : rot}${flip}`, offset: 0.5 },
+        { transform: `translate(${x1}px, ${y1}px) ${rot2}${flip}` },
+      ], { duration: o.dur || 7000, delay: o.delay || 0, easing: o.ease || 'linear', fill: 'both' });
+      anim.onfinish = () => a.remove();
+      return a;
+    };
+    const scenes = [
+      () => { // Dogfight: an X-wing chased by two TIEs firing.
+        const dir = Math.random() < 0.5 ? 1 : -1;
+        const y = 0.15 + Math.random() * 0.6;
+        const dy = (Math.random() - 0.5) * 0.3;
+        const lead = Math.random() < 0.5 ? ['x_wing', 'tie_fighter'] : ['a_wing', 'tie_interceptor'];
+        fly(shipSvg(lead[0]), { dir, y, dy, size: 46, dur: 5200 });
+        [0, 1].forEach((i) => {
+          const t = fly(shipSvg(lead[1]) + '<i class="hg-bolt"></i><i class="hg-bolt b2"></i>', { dir, y: y + (i ? 0.06 : -0.05), dy, size: 38, dur: 5200, delay: 500 + i * 260 });
+          t.classList.add('gunner');
+        });
+      },
+      () => fly(shipSvg('tie_bomber'), { size: 40, dur: 9000 }),
+      () => { const a = fly(shipSvg('falcon') + '<i class="hg-streak"></i>', { size: 56, dur: 2600, ease: 'cubic-bezier(.6,0,.9,.4)', dy: 0 }); a.classList.add('jump'); },
+      () => fly(shipSvg(['slave_one', 'razor_crest', 'b_wing', 'y_wing', 'vulture_droid', 'tie_advanced', 'lambda_shuttle'][Math.floor(Math.random() * 7)]), { size: 50, dur: 8000 }),
+      () => fly(Art.shipOnly({ shape: 'isd' }), { size: 120, dur: 26000, y: 0.3 + Math.random() * 0.4, dy: 0.04, cls: 'far' }),
+      () => fly(ACTOR_ART.mando, { size: 54, nose: false, dur: 7000, arc: -0.15 }),
+      () => fly(ACTOR_ART.grogu, { size: 50, nose: false, dur: 11000, dy: 0.05, cls: 'bob' }),
+      () => fly(ACTOR_ART.pod, { size: 40, nose: false, spin: true, dur: 14000 }),
+      () => fly(ACTOR_ART.probe, { size: 46, nose: false, dur: 16000, dy: 0.1, cls: 'bob' }),
+    ];
+    const weights = [3, 1, 2, 2, 1, 2, 1.5, 1, 1];
+    const pickScene = () => {
+      let r = Math.random() * weights.reduce((a, b) => a + b, 0);
+      for (let i = 0; i < scenes.length; i++) { r -= weights[i]; if (r <= 0) return scenes[i]; }
+      return scenes[0];
+    };
+    scenes[4]();
+    scenes[0]();
+    const tick = () => {
+      if (!host.isConnected) return;
+      if (!document.hidden && host.childElementCount < 10) pickScene()();
+      setTimeout(tick, 2200 + Math.random() * 2600);
+    };
+    setTimeout(tick, 1500);
+  }
 
   function accountPanel() {
     const a = Player.state.account;
@@ -631,7 +738,7 @@
     badbatch: 'lightning', sith: 'lightning', jedi: 'orbs', droid: 'circuit', separatist: 'circuit', empire: 'scan', republic: 'rays',
     rebel: 'embers', scoundrel: 'coins', bounty: 'reticles', mandalorian: 'coins', trooper: 'bolts', native: 'leaves', leader: 'rays',
     fighter: 'warp', gunship: 'warp', bomber: 'blasts', nightsister: 'mist', healer: 'plus', tank: 'hex', formation: 'hex',
-    attacker: 'slashes', unity_light: 'rays', unity_dark: 'vortex',
+    attacker: 'slashes', unity_light: 'rays', unity_dark: 'vortex', inquisitor: 'spinrings',
   };
 
   function bannerFx(canvas, type, color) {
@@ -717,6 +824,50 @@
             ctx.fill();
           }
         }
+      } else if (type === 'spinrings') {
+        // Inquisitor sabers: spinning double-bladed rings wheel across the screen.
+        if (!bolts.length) bolts = Array.from({ length: 5 }, (_, i) => ({ x: -120 - i * rnd(160, 260), y: rnd(H * 0.15, H * 0.85), r: rnd(40, 90), v: rnd(6, 11), spin: rnd(8, 14) * (i % 2 ? -1 : 1) }));
+        // A giant ring wheels slowly behind the title.
+        const gr = Math.min(W, H) * 0.42;
+        const ga = t * 2.2;
+        ctx.globalAlpha = 0.22;
+        ctx.lineWidth = 10;
+        ctx.beginPath(); ctx.arc(W / 2, cy, gr * 0.72, 0, Math.PI * 2); ctx.stroke();
+        for (const k of [0, Math.PI]) {
+          ctx.globalAlpha = 0.28;
+          ctx.lineWidth = 14;
+          ctx.beginPath(); ctx.arc(W / 2, cy, gr, ga + k, ga + k + 1.1); ctx.stroke();
+          ctx.globalAlpha = 0.5;
+          ctx.lineWidth = 5;
+          ctx.beginPath(); ctx.moveTo(W / 2 + Math.cos(ga + k) * gr * 0.2, cy + Math.sin(ga + k) * gr * 0.2); ctx.lineTo(W / 2 + Math.cos(ga + k) * gr * 1.05, cy + Math.sin(ga + k) * gr * 1.05); ctx.stroke();
+        }
+        for (const b of bolts) {
+          b.x += b.v;
+          if (b.x - b.r > W) { b.x = -b.r - rnd(40, 200); b.y = rnd(H * 0.15, H * 0.85); }
+          const a = t * b.spin;
+          ctx.globalAlpha = 0.18;
+          ctx.lineWidth = b.r * 0.3;
+          ctx.beginPath(); ctx.arc(b.x - b.v * 6, b.y, b.r, 0, Math.PI * 2); ctx.stroke();
+          ctx.globalAlpha = 0.7;
+          ctx.lineWidth = 3;
+          ctx.beginPath(); ctx.arc(b.x, b.y, b.r * 0.72, 0, Math.PI * 2); ctx.stroke();
+          ctx.lineCap = 'round';
+          for (const k of [0, Math.PI]) {
+            ctx.globalAlpha = 0.9;
+            ctx.lineWidth = 6;
+            ctx.beginPath(); ctx.moveTo(b.x + Math.cos(a + k) * b.r * 0.15, b.y + Math.sin(a + k) * b.r * 0.15); ctx.lineTo(b.x + Math.cos(a + k) * b.r, b.y + Math.sin(a + k) * b.r); ctx.stroke();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.strokeStyle = color;
+            // Blade trail arc.
+            ctx.globalAlpha = 0.35;
+            ctx.lineWidth = 4;
+            ctx.beginPath(); ctx.arc(b.x, b.y, b.r * 0.9, a + k - 0.9 * Math.sign(b.spin), a + k, b.spin < 0); ctx.stroke();
+          }
+        }
+        ctx.globalAlpha = 0.05 + Math.sin(t * 6) * 0.03;
+        ctx.fillRect(0, 0, W, H);
       } else if (type === 'circuit') {
         ctx.lineWidth = 1.5;
         for (let i = 0; i < 16; i++) {
@@ -869,14 +1020,15 @@
         const cards = defs.slice(0, 5).map((d, i) => `<div class="syn-card" style="--i:${i}">${portrait(d, { plate: false })}</div>`).join('');
         const tierText = entry.need ? `${entry.count}/${entry.need} · ${entry.tier > 0 ? 'Tier ' + (entry.tier + 1) : 'Activated'}` : 'Activated';
         const node = el(`<div class="syn-banner ${epic ? 'epic' : ''}" style="--sc:${color}" role="status">
+          <div class="syn-backdrop" aria-hidden="true"></div>
+          <div class="syn-band"><div class="syn-sheen"></div></div>
           <canvas class="syn-fx" aria-hidden="true"></canvas>
-          <div class="syn-band"></div>
           <div class="syn-sparks">${Array.from({ length: 18 }, (_, i) => `<i style="--k:${i}"></i>`).join('')}</div>
           <div class="syn-content">
             <div class="syn-icon">${entry.icon || '✦'}</div>
             <div class="syn-text">
               <span class="syn-kicker">${epic ? 'Full squad bonus' : 'Synergy unlocked'} · ${esc(tierText)}</span>
-              <b class="syn-name">${esc(title)}</b>
+              <b class="syn-name ${Math.max(...title.split(' ').map((w) => w.length)) > 9 ? 'long' : ''}">${esc(title)}</b>
               <span class="syn-desc">${esc(entry.desc)}</span>
             </div>
             <div class="syn-cards">${cards}</div>

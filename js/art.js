@@ -10,6 +10,17 @@
   const R = (x, y, w, h, fill, extra) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill}" ${extra || ''}/>`;
   const L = (x1, y1, x2, y2, stroke, w, extra) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${stroke}" stroke-width="${w}" stroke-linecap="round" ${extra || ''}/>`;
   const shade = (d, o) => P(d, '#000', `opacity="${o || 0.2}"`);
+  // Gradients get a fresh id per render so many cards can share a page.
+  let gradSeq = 0;
+  const stopsOf = (stops) => stops.map(([o, c, a]) => `<stop offset="${o}" stop-color="${c}"${a != null ? ` stop-opacity="${a}"` : ''}/>`).join('');
+  function LG(stops, x1 = 0, y1 = 0, x2 = 0, y2 = 1) {
+    const id = 'ag' + (++gradSeq).toString(36);
+    return [`url(#${id})`, `<defs><linearGradient id="${id}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}">${stopsOf(stops)}</linearGradient></defs>`];
+  }
+  function RG(stops, cx = 0.5, cy = 0.5, r = 0.5) {
+    const id = 'ag' + (++gradSeq).toString(36);
+    return [`url(#${id})`, `<defs><radialGradient id="${id}" cx="${cx}" cy="${cy}" r="${r}">${stopsOf(stops)}</radialGradient></defs>`];
+  }
 
   function shoulders(fill, opts = {}) {
     const top = opts.top || 74;
@@ -134,6 +145,10 @@
     imperial: () => R(0, 0, 100, 100, '#2a2e36') + [0, 88].map((x) => R(x, 0, 12, 100, '#3a3f48')).join('') + R(22, 0, 56, 70, '#8a1616') + R(24, 0, 52, 68, '#a81c1c')
       + `<g transform="translate(50 34)"><circle r="17" fill="none" stroke="#f2f2f2" stroke-width="3"/><circle r="7" fill="none" stroke="#f2f2f2" stroke-width="2.4"/>${[0, 1, 2, 3, 4, 5].map((i) => `<path d="M0 -8 L0 -16" stroke="#f2f2f2" stroke-width="3.4" transform="rotate(${i * 60})"/>`).join('')}</g>`
       + R(0, 70, 100, 30, '#1c1f25'),
+    fortress: () => R(0, 0, 100, 100, '#060c16') + R(0, 0, 100, 100, '#1a3a5a', 'opacity=".35"')
+      + [18, 42, 70].map((x, i) => P(`M${x} 0 L${x + 10} 0 L${x + 26 - i * 4} 100 L${x - 6} 100Z`, '#5ab4ff', 'opacity=".07"')).join('')
+      + P('M36 100 L42 30 L50 18 L58 30 L64 100Z', '#0c1420') + R(47, 34, 6, 30, '#ff2a2a', 'opacity=".45"')
+      + [10, 26, 74, 88].map((x, i) => C(x, 20 + i * 14, 1.2, '#9fd8ff', 'opacity=".5"')).join('') + R(0, 88, 100, 12, '#04070c'),
     pit: () => R(0, 0, 100, 100, '#2a1d14') + R(0, 0, 100, 100, '#ff9a3a', 'opacity=".08"')
       + P('M0 100 L0 20 Q20 30 30 10 L34 100Z', '#1c130d') + P('M100 100 L100 26 Q84 18 70 34 L66 100Z', '#1c130d')
       + E(20, 94, 6, 2, '#e8dcc4', 'opacity=".7"') + E(78, 92, 5, 1.6, '#e8dcc4', 'opacity=".7"'),
@@ -521,6 +536,129 @@
     + P('M37 38 C37 28 43 25 50 25 C57 25 63 28 63 38 L62 42 C58 34 42 34 38 42Z', '#8a929e') + R(46, 25, 8, 6, '#5d6674', 'rx="1"')
     + `<g style="filter:drop-shadow(0 0 1.5px #58d6ff)">${C(60, 34, 1.4, '#58d6ff')}${C(40, 34, 1.4, '#58d6ff')}</g>` + `<path d="M58 48 L62 48 L62 52" stroke="#8a929e" stroke-width="1" fill="none"/>`;
 
+  // ---------- The Inquisitorius ----------
+  // A spinning double-bladed saber ring, the Inquisitors' signature weapon.
+  const inqSaber = (cx, cy, r, rot) => `<g transform="translate(${cx} ${cy}) rotate(${rot})" style="filter:drop-shadow(0 0 2px #ff2a2a) drop-shadow(0 0 5px #ff2a2a)">`
+    + C(0, 0, r * 0.32, 'none', 'stroke="#8a8f98" stroke-width="2.4"') + L(-r, 0, -r * 0.34, 0, '#ff5a5a', 3.6, 'opacity=".8"') + L(-r, 0, -r * 0.34, 0, '#fff', 1.4)
+    + L(r * 0.34, 0, r, 0, '#ff5a5a', 3.6, 'opacity=".8"') + L(r * 0.34, 0, r, 0, '#fff', 1.4) + '</g>';
+  const inqArmor = () => shoulders('#16181c') + P('M34 76 L66 76 L62 86 L38 86Z', '#24272d') + R(44, 80, 12, 3, '#8a1a1a') + P('M4 100 C8 86 18 78 30 76 L28 100Z', '#0c0d10');
+
+  // Premium Inquisitor kit: backlit red fortress, lacquered armor, ignited blades.
+  const inqScene = () => {
+    const [bg, bgd] = RG([[0, '#5a0c10', 0.9], [0.45, '#1a0608', 0.6], [1, '#000', 0]], 0.5, 0.42, 0.62);
+    return SCENES.fortress() + bgd + R(0, 0, 100, 100, bg)
+      + [20, 50, 80].map((x, i) => P(`M${x - 1} 0 L${x + 1} 0 L${x + 8 - i * 8} 100 L${x - 8 - i * 0} 100Z`, '#ff3a3a', 'opacity=".05"')).join('');
+  };
+  function blade(x1, y1, x2, y2) {
+    return `<g style="filter:drop-shadow(0 0 2px #ff1a1a) drop-shadow(0 0 6px #ff1a1a)">${L(x1, y1, x2, y2, '#ff2a2a', 5, 'opacity=".55"')}${L(x1, y1, x2, y2, '#ff5a5a', 3)}${L(x1, y1, x2, y2, '#fff4f0', 1.2)}</g>`;
+  }
+  // Ignited double-bladed spinning saber: ring hilt with two blades.
+  function inqBlade(cx, cy, len, rot) {
+    const a = (rot * Math.PI) / 180;
+    const dx = Math.cos(a);
+    const dy = Math.sin(a);
+    const h = len * 0.2;
+    const [mg, mgd] = LG([[0, '#d8dde4'], [0.5, '#6a707a'], [1, '#2a2d33']]);
+    return blade(cx + dx * h, cy + dy * h, cx + dx * len, cy + dy * len) + blade(cx - dx * h, cy - dy * h, cx - dx * len, cy - dy * len)
+      + mgd + C(cx, cy, h, 'none', `stroke="${mg}" stroke-width="2.6"`) + C(cx, cy, h, 'none', 'stroke="#111" stroke-width=".5" opacity=".6"')
+      + L(cx - dx * h, cy - dy * h, cx + dx * h, cy + dy * h, '#3a3d44', 2) + C(cx + dy * h * 0.9, cy - dx * h * 0.9, 0.9, '#ff3a3a');
+  }
+  function inqKit(o = {}) {
+    const [ag, agd] = LG([[0, '#3a3e46'], [0.35, '#1a1c21'], [1, '#07080a']]);
+    const [pg, pgd] = LG([[0, '#5a5f69'], [0.4, '#23262c'], [1, '#0c0d10']], 0, 0, 1, 1);
+    const top = o.top || 74;
+    return agd + pgd
+      + P(`M2 100 C4 ${top + 8} 24 ${top} 50 ${top} C76 ${top} 96 ${top + 8} 98 100Z`, ag)
+      // Pauldrons with a lacquer highlight.
+      + P(`M4 100 C4 88 12 ${top + 3} 30 ${top + 1} L33 ${top + 12} C22 ${top + 13} 15 92 14 100Z`, pg) + P(`M70 ${top + 1} C88 ${top + 3} 96 88 96 100 L86 100 C85 92 78 ${top + 13} 67 ${top + 12}Z`, pg)
+      + `<path d="M8 96 C9 88 16 ${top + 5} 29 ${top + 3} M92 96 C91 88 84 ${top + 5} 71 ${top + 3}" stroke="#9aa0aa" stroke-width=".7" fill="none" opacity=".7"/>`
+      // Chest plate, red piping and the Imperial crest.
+      + P(`M33 ${top + 1} L67 ${top + 1} L64 95 L50 100 L36 95Z`, '#15171b') + `<path d="M33 ${top + 1} L36 95 L50 100 L64 95 L67 ${top + 1}" stroke="#b01e1e" stroke-width="1" fill="none"/>`
+      + C(50, 88, 5, '#1f2227', 'stroke="#8a909a" stroke-width="1"') + [0, 1, 2, 3, 4, 5].map((i) => { const a = (i * Math.PI) / 3; return L(50 + Math.cos(a) * 2, 88 + Math.sin(a) * 2, 50 + Math.cos(a) * 4.4, 88 + Math.sin(a) * 4.4, '#8a909a', 0.9); }).join('') + C(50, 88, 1.4, '#8a909a')
+      + [40, 60].map((x) => R(x - 3, top + 5, 6, 1.4, '#b01e1e', 'rx=".7"')).join('')
+      // High collar.
+      + P(`M35 ${top - 12} L39 ${top + 2} L61 ${top + 2} L65 ${top - 12} L58 ${top - 5} L42 ${top - 5}Z`, '#0b0c0f') + L(39, top + 2, 61, top + 2, '#b01e1e', 0.8);
+  }
+  const rim = (d, o) => P(d, '#ff4a4a', `opacity="${o || 0.5}"`);
+
+  CHAR.grand_inquisitor = () => {
+    const [sk, skd] = LG([[0, '#c9cfd4'], [0.5, '#9aa2a9'], [1, '#6c737a']]);
+    return inqScene() + inqKit() + inqBlade(80, 84, 26, -50) + skd
+      + P('M44 58 L56 58 L57 70 L43 70Z', '#7c848b') + shade('M44 62 L56 62 L57 70 L43 70Z', 0.3)
+      + P('M37 44 C35 26 41 10 50 9 C59 10 65 26 63 44 C62 56 57 63 50 64 C43 63 38 56 37 44Z', sk)
+      + shade('M50 9 C59 10 65 26 63 44 C62 56 57 63 50 64 C56 52 58 30 50 9Z', 0.14)
+      // Pau'an cranial ridges.
+      + `<g fill="none" stroke-linecap="round">${[[16, 7], [21, 9.5], [26, 11.5], [31, 12.5]].map(([y, w]) => `<path d="M${50 - w} ${y + 2} Q50 ${y - 3} ${50 + w} ${y + 2}" stroke="#5a6168" stroke-width="1.1"/><path d="M${50 - w} ${y + 3} Q50 ${y - 2} ${50 + w} ${y + 3}" stroke="#e6eaee" stroke-width=".5" opacity=".7"/>`).join('')}<path d="M50 9 L50 20" stroke="#5a6168" stroke-width="1"/></g>`
+      // Sunken sockets, burning eyes.
+      + E(44, 40, 4.6, 3.4, '#241c20') + E(56, 40, 4.6, 3.4, '#241c20') + shade('M38 36 Q50 32 62 36 L62 38 Q50 35 38 38Z', 0.4)
+      + `<g style="filter:drop-shadow(0 0 1.6px #ffb000)">${E(44, 40.4, 2.2, 1.3, '#ffcf3a')}${E(56, 40.4, 2.2, 1.3, '#ffcf3a')}</g>` + C(44, 40.4, 0.8, '#c00000') + C(56, 40.4, 0.8, '#c00000')
+      + shade('M39 44 Q42 52 46 54 L44 46Z', 0.25) + shade('M61 44 Q58 52 54 54 L56 46Z', 0.25)
+      + L(48.6, 47.5, 48.2, 49.5, '#3a3036', 0.8) + L(51.4, 47.5, 51.8, 49.5, '#3a3036', 0.8)
+      + P('M40 53 Q50 60.5 60 53 Q50 57.5 40 53Z', '#1a0a0c') + [42.5, 45, 47.5, 50, 52.5, 55, 57.5].map((x, i) => P(`M${x - 0.9} ${53.6 + Math.abs(i - 3) * -0.3 + 0.9} L${x} ${56.4 - Math.abs(i - 3) * 0.5} L${x + 0.9} ${53.6 + Math.abs(i - 3) * -0.3 + 0.9}Z`, '#efe6d2')).join('')
+      + `<path d="M44 59 Q50 61.5 56 59" stroke="#5a6168" stroke-width=".7" fill="none"/>`
+      + rim('M58 16 C63 24 64.5 36 63 46 C62 54 59 60 55 63 C59 54 61 40 59 28 C58.5 22 58 18 56 14Z', 0.55);
+  };
+
+  CHAR.second_sister = () => SCENES.fortress()
+    + inqArmor() + P('M22 100 L26 62 C30 44 40 38 50 38 C60 38 70 44 74 62 L78 100Z', '#101216', 'opacity=".85"')
+    + P('M34 46 C34 28 41 21 50 21 C59 21 66 28 66 46 L64 60 C60 66 40 66 36 60Z', '#1c1f24') + shade('M50 21 C59 21 66 28 66 46 L64 60 C60 66 50 66 50 66Z', 0.2)
+    + P('M36 40 L64 40 L62 46 L38 46Z', '#0a0a0c') + `<g style="filter:drop-shadow(0 0 2px #ff2a2a)">${R(38, 42, 24, 2, '#ff3a3a')}</g>`
+    + `<path d="M40 30 L60 30 M50 21 L50 30 M42 52 L58 52 M44 56 L56 56" stroke="#3a3f46" stroke-width="1" fill="none"/>` + P('M46 60 L54 60 L52 66 L48 66Z', '#8a1a1a')
+    + inqSaber(22, 80, 15, -30);
+
+  CHAR.fifth_brother = () => {
+    const [sk, skd] = LG([[0, '#c4b7a8'], [0.55, '#9a8c7e'], [1, '#6a5e52']]);
+    return inqScene() + inqKit({ top: 71 }) + inqBlade(18, 86, 24, 50) + skd
+      + P('M41 56 L59 56 L61 70 L39 70Z', '#8a7e70') + shade('M41 61 L59 61 L61 70 L39 70Z', 0.3)
+      + E(31.5, 45, 2.6, 4, '#9a8c7e') + E(68.5, 45, 2.6, 4, '#9a8c7e')
+      + P('M31 45 C30 26 39 15 50 15 C61 15 70 26 69 45 C69 59 61 67 50 68 C39 67 31 59 31 45Z', sk)
+      + shade('M50 15 C61 15 70 26 69 45 C69 59 61 67 50 68 C58 56 61 34 50 15Z', 0.15)
+      // Scalp grooves and scars.
+      + `<g fill="none" stroke-linecap="round">${[36, 43, 50, 57, 64].map((x, i) => `<path d="M${x} ${19 + Math.abs(i - 2) * 2} L${x + (x - 50) * 0.08} ${28 + Math.abs(i - 2) * 1.5}" stroke="#6a5e52" stroke-width="1.3"/>`).join('')}<path d="M58 22 L62 30" stroke="#d8ccbc" stroke-width=".6" opacity=".7"/></g>`
+      // Heavy brow over sunken, furious eyes.
+      + P('M34 38 C41 32.5 59 32.5 66 38 L65 41.5 C58 37 42 37 35 41.5Z', '#7a6e62') + `<path d="M35 38.5 C42 33.5 58 33.5 65 38.5" stroke="#d8ccbc" stroke-width=".5" fill="none" opacity=".6"/>`
+      + E(43, 43.5, 3.8, 2.4, '#2a2020') + E(57, 43.5, 3.8, 2.4, '#2a2020')
+      + `<g style="filter:drop-shadow(0 0 1.6px #ffb000)">${E(43, 43.8, 2.3, 1.3, '#ffcf3a')}${E(57, 43.8, 2.3, 1.3, '#ffcf3a')}</g>` + C(43, 43.8, 0.8, '#6a1000') + C(57, 43.8, 0.8, '#6a1000')
+      + P('M47 47 L53 47 L54 53 Q50 55 46 53Z', '#8a7e70') + shade('M50 47 L53 47 L54 53 Q52 54.5 50 54.5Z', 0.2)
+      + P('M42 58 Q50 55.5 58 58 Q50 60.5 42 58Z', '#2a1414') + `<path d="M38 52 Q40 59 44 62 M62 52 Q60 59 56 62" stroke="#6a5e52" stroke-width=".9" fill="none"/>`
+      + rim('M63 22 C68 30 70 40 69 48 C68 57 64 63 58 66 C63 58 66 48 65 38 C64.5 30 63 26 61 20Z', 0.5);
+  };
+
+  CHAR.seventh_sister = () => {
+    const [sk, skd] = LG([[0, '#f0ead0'], [0.6, '#d8cfae'], [1, '#b0a684']]);
+    const [hr, hrd] = LG([[0, '#2a2a34'], [1, '#050507']]);
+    const seeker = (x, y, s) => `<g transform="translate(${x} ${y}) scale(${s})">${[-50, -20, 20, 50, 160, 200].map((a) => { const r = (a * Math.PI) / 180; return `<path d="M0 0 L${Math.cos(r) * 7} ${Math.sin(r) * 7 - 2} L${Math.cos(r) * 10} ${Math.sin(r) * 10 + 4}" stroke="#8a909a" stroke-width=".9" fill="none"/>`; }).join('')}${E(0, 0, 4.6, 3.8, '#1e2126')}${E(-1.2, -1.4, 2, 1, '#6a707a', 'opacity=".6"')}${C(0, 0.6, 1.6, '#ff2a2a', 'style="filter:drop-shadow(0 0 2px #ff2a2a)"')}</g>`;
+    return inqScene() + seeker(16, 30, 1.3) + seeker(85, 20, 1) + seeker(84, 52, 0.8) + inqKit() + inqBlade(84, 88, 20, -30) + skd + hrd
+      + P('M44 56 L56 56 L57 70 L43 70Z', '#c8bf9e') + shade('M44 61 L56 61 L57 70 L43 70Z', 0.28)
+      + head('#e6dfc2', { rx: 12.5, ry: 15.5, cy: 44 }) + P('M37.5 44 C37.5 36 43 29 50 29 C57 29 62.5 36 62.5 44 C62.5 54 57 60 50 60 C43 60 37.5 54 37.5 44Z', sk)
+      // Glossy black bob with a sweeping fringe.
+      + P('M35 50 C32 30 40 22 50 22 C61 22 68 30 65 50 L63 42 C62 34 58 30 53 30 C47 32 42 36 38 38 L37 50Z', hr)
+      + `<path d="M40 26 C46 23 56 23 61 28" stroke="#8a8aa0" stroke-width=".8" fill="none" opacity=".7"/>`
+      // Yellow eyes with dark liner, Mirialan chin tattoo.
+      + `<path d="M40.5 44.5 Q44 42 47.5 44.3 M52.5 44.3 Q56 42 59.5 44.5" stroke="#1a1418" stroke-width="1.2" fill="none"/>`
+      + E(44, 45, 2.3, 1.3, '#f8f2d8') + E(56, 45, 2.3, 1.3, '#f8f2d8') + `<g style="filter:drop-shadow(0 0 1px #ffb000)">${C(44.2, 45, 1.1, '#e0a010')}${C(55.8, 45, 1.1, '#e0a010')}</g>` + C(44.2, 45, 0.45, '#1a0a00') + C(55.8, 45, 0.45, '#1a0a00')
+      + brows('#1a1418', { angry: true, y: 41.5 }) + nose({ y: 46 })
+      + P('M46 54 Q50 52.6 54 54 Q50 56.4 46 54Z', '#4a1a2a') + L(46.5, 54, 53.5, 54, '#2a0a14', 0.5)
+      + [46, 48, 50, 52, 54].map((x) => P(`M${x} 57.4 L${x + 0.7} 58.2 L${x} 59 L${x - 0.7} 58.2Z`, '#2a3a2a')).join('')
+      + rim('M58 32 C62 36 63 42 62.5 47 C62 53 59 57.5 55 59.5 C58 55 60 49 60 43 C60 38 59 35 56 31Z', 0.45);
+  };
+
+  CHAR.eighth_brother = () => {
+    const [hg, hgd] = LG([[0, '#4a4f5a'], [0.4, '#1c1e24'], [1, '#050506']], 0, 0, 0.6, 1);
+    const [gr, grd] = LG([[0, '#d0d5dc'], [1, '#6a707a']]);
+    return inqScene() + inqKit() + hgd + grd
+      // Hovering saber ring overhead with motion arcs.
+      + `<g opacity=".5" fill="none" stroke="#ff3a3a" stroke-width=".8"><ellipse cx="50" cy="10" rx="26" ry="5"/><ellipse cx="50" cy="10" rx="20" ry="3.6" opacity=".6"/></g>` + inqBlade(50, 10, 24, 8)
+      + P('M34 46 C33 27 41 18 50 18 C59 18 67 27 66 46 L65 60 C61 67 39 67 35 60Z', hg)
+      + E(43, 27, 6, 3.4, '#fff', 'opacity=".18" transform="rotate(-25 43 27)"')
+      + P('M36 34 L64 34 L62 38.5 L38 38.5Z', '#121317') + L(36, 34, 64, 34, '#b01e1e', 1.2)
+      + `<g style="filter:drop-shadow(0 0 2px #ff2a2a)">${P('M39 36 L48 36.4 L47 37.8 L40 37.4Z', '#ff4a4a')}${P('M61 36 L52 36.4 L53 37.8 L60 37.4Z', '#ff4a4a')}</g>`
+      // Chromed face grille.
+      + P('M39 42 L61 42 L59 60 C55 63 45 63 41 60Z', gr) + [42.5, 45.5, 48.5, 51.5, 54.5, 57.5].map((x) => L(x, 44, x + (x - 50) * 0.04, 59, '#15171b', 1.3)).join('')
+      + L(40, 42, 60, 42, '#fff', 0.5, 'opacity=".6"') + P('M46 62 L54 62 L53 66 L47 66Z', '#b01e1e')
+      + rim('M60 22 C64.5 28 66.5 36 66 46 L65 60 C64 62 63 63 61.5 64 C63 56 64 46 63 38 C62.5 30 61 26 58 21Z', 0.5);
+  };
+
   // ---------- Bosses ----------
   CHAR.rancor = () => SCENES.pit()
     + P('M8 100 C8 70 22 52 50 50 C78 52 92 70 92 100Z', '#6a5c4e')
@@ -594,10 +732,24 @@
       + R(36, 58, 7, 22, HULL_D, 'rx="3"') + R(57, 58, 7, 22, HULL_D, 'rx="3"') + eng(39.5, 81, 3) + eng(60.5, 81, 3)
       + P('M50 8 L55 22 L56 60 L57 82 L43 82 L44 60 L45 22Z', '#e6dcc8') + shade('M50 8 L45 22 L44 60 L43 82 L50 82Z', 0.12)
       + P('M46.5 34 C46.5 28 53.5 28 53.5 34 L53.5 46 L46.5 46Z', '#152235') + R(46, 50, 8, 3, '#d0a040'),
-    vulture: () => P('M48 14 L52 14 L55 56 L45 56Z', '#b8a07a') + P('M46 10 L54 10 L55 22 L45 22Z', '#a08a64') + C(50, 14, 2.4, '#2a1c10') + C(50, 14, 1, '#ffb03a')
-      + P('M45 36 L6 22 L4 28 L45 44Z', '#a08a64') + P('M45 44 L6 58 L4 64 L45 52Z', '#b8a07a') + P('M55 36 L94 22 L96 28 L55 44Z', '#a08a64') + P('M55 44 L94 58 L96 64 L55 52Z', '#b8a07a')
-      + R(2, 22, 4, 8, '#3a2a1a') + R(2, 58, 4, 8, '#3a2a1a') + R(94, 22, 4, 8, '#3a2a1a') + R(94, 58, 4, 8, '#3a2a1a')
-      + `<path d="M45 40 L10 27 M45 48 L10 61 M55 40 L90 27 M55 48 L90 61" stroke="#6a5a3a" stroke-width=".7"/>` + R(46, 56, 8, 22, '#8a7654', 'rx="2"') + eng(50, 80, 3, '#ff9a4a'),
+    vulture: () => {
+      const [wg, wgd] = LG([[0, '#e2cfa6'], [0.5, '#b89c70'], [1, '#6e5a3c']], 0, 0, 1, 1);
+      const [bg, bgd] = LG([[0, '#6e5a3c'], [0.35, '#d8c296'], [0.65, '#b39668'], [1, '#5a4830']], 0, 0, 1, 0);
+      const wing = (sx) => {
+        const x = (v) => 50 + (v - 50) * sx;
+        return P(`M${x(54)} 32 L${x(90)} 14 L${x(96)} 18 L${x(58)} 42Z`, wg) + P(`M${x(54)} 50 L${x(90)} 70 L${x(96)} 64 L${x(58)} 44Z`, wg)
+          + `<path d="M${x(56)} 36 L${x(90)} 18 M${x(56)} 47 L${x(90)} 66" stroke="#5a4830" stroke-width=".7"/>`
+          + [0, 1, 2].map((i) => R(x(64 + i * 8) - 1, 26 - i * 4 + (sx < 0 ? 0 : 0), 2, 3, '#8a3a1a', 'opacity=".5"')).join('')
+          + R(Math.min(x(88), x(98)), 10, 10, 10, '#2a2218', 'rx="2"') + R(Math.min(x(88), x(98)), 62, 10, 10, '#2a2218', 'rx="2"')
+          + L(x(93), 10, x(93), 3, '#4a3f30', 2.2) + L(x(93), 72, x(93), 78, '#4a3f30', 2.2) + C(x(93), 3, 1.3, '#ffb03a', 'class="eng" style="--eng:#ff8a3a"');
+      };
+      return wgd + bgd + wing(1) + wing(-1)
+        + P('M44 26 L56 26 L58 60 L54 84 L46 84 L42 60Z', bg) + `<path d="M50 28 L50 82 M44 46 H56 M45 60 H55" stroke="#5a4830" stroke-width=".7"/>`
+        + P('M45 8 L55 8 L57 28 L43 28Z', bg) + P('M46 4 L54 4 L55 10 L45 10Z', '#8a7654')
+        + E(50, 16, 3.6, 5, '#2a1c10') + `<g style="filter:drop-shadow(0 0 2px #ff5a1a)">${C(50, 14, 1.6, '#ff7a2a')}${C(50, 19, 1, '#ffb03a')}</g>`
+        + P('M50 40 L54 42.5 L54 47.5 L50 50 L46 47.5 L46 42.5Z', '#2a4a8a', 'stroke="#c8d8ff" stroke-width=".6"') + C(50, 45, 1.6, '#c8d8ff', 'opacity=".8"')
+        + eng(47, 86, 2.2, '#ff9a4a') + eng(53, 86, 2.2, '#ff9a4a');
+    },
     tie: () => P('M14 8 L25 27 L25 73 L14 92 L3 73 L3 27Z', '#2a2f38') + P('M86 8 L97 27 L97 73 L86 92 L75 73 L75 27Z', '#2a2f38')
       + P('M14 8 L25 27 L25 73 L14 92 L3 73 L3 27Z', 'none', 'stroke="#8a929e" stroke-width="1.6"') + P('M86 8 L97 27 L97 73 L86 92 L75 73 L75 27Z', 'none', 'stroke="#8a929e" stroke-width="1.6"')
       + `<path d="M14 8 L14 92 M3 27 L25 73 M25 27 L3 73 M86 8 L86 92 M75 27 L97 73 M97 27 L75 73" stroke="#5d6674" stroke-width=".7"/>`
@@ -620,10 +772,31 @@
     shuttle: () => R(46, 4, 8, 50, '#e0e3e8', 'rx="1"') + shade('M46 4 H50 V54 H46Z', 0.1) + L(50, 8, 50, 48, '#9aa3b0', 0.7)
       + P('M42 56 L14 92 L24 96 L50 64Z', '#d0d4da') + P('M58 56 L86 92 L76 96 L50 64Z', '#d0d4da') + `<path d="M40 62 L20 90 M60 62 L80 90" stroke="#9aa3b0" stroke-width=".8"/>`
       + R(35, 52, 30, 20, '#e6e9ee', 'rx="6"') + R(40, 56, 20, 6, '#152235', 'rx="2"') + [44, 50, 56].map((x) => L(x, 56, x, 62, '#8a929e', 0.6)).join('') + eng(42, 73, 2.4) + eng(58, 73, 2.4),
-    slave: () => P('M26 70 L10 92 L32 86Z', '#5c6b4a') + P('M74 70 L90 92 L68 86Z', '#5c6b4a') + E(50, 48, 24, 38, '#6b7d58') + shade('M50 10 A24 38 0 0 0 50 86Z', 0.14)
-      + E(50, 48, 24, 38, 'none', 'stroke="#3f4a33" stroke-width="1"') + P('M32 66 C40 74 60 74 68 66 L66 78 C58 84 42 84 34 78Z', '#8a3a2a')
-      + C(50, 24, 7, '#3a4430') + C(50, 24, 4.5, '#152235') + R(38, 40, 5, 12, '#3a4430', 'rx="1"') + R(57, 40, 5, 12, '#3a4430', 'rx="1"')
-      + `<path d="M34 40 C40 44 60 44 66 40 M30 56 C40 60 60 60 70 56" ${LINE}/>` + eng(43, 86, 2.6) + eng(50, 87, 2.6) + eng(57, 86, 2.6),
+    slave: () => {
+      const [hg, hgd] = LG([[0, '#98a878'], [0.45, '#6b7d52'], [1, '#3a4630']], 0, 0, 1, 0.4);
+      const [rg, rgd] = LG([[0, '#b8482e'], [1, '#6a2416']]);
+      const [wg, wgd] = LG([[0, '#d8d0b4'], [1, '#8a846e']]);
+      const hull = 'M50 8 C57 8 61 13 62 20 L74 54 C82 70 78 90 50 92 C22 90 18 70 26 54 L38 20 C39 13 43 8 50 8Z';
+      return hgd + rgd + wgd
+        // Rotating stabilizer wings.
+        + P('M28 50 L8 60 L6 74 L12 76 L26 64Z', wg) + P('M72 50 L92 60 L94 74 L88 76 L74 64Z', wg)
+        + R(6, 68, 7, 3, '#b8482e', 'transform="rotate(-8 9 69)"') + R(87, 68, 7, 3, '#b8482e', 'transform="rotate(8 91 69)"')
+        + `<path d="M26 56 L9 64 M74 56 L91 64" stroke="#5a5646" stroke-width=".7"/>`
+        + P(hull, hg) + shade('M50 8 C43 8 39 13 38 20 L26 54 C18 70 22 90 50 92 C36 84 34 60 44 22Z', 0.16)
+        // Weathered red band around the broad rear.
+        + P('M25 60 C34 70 66 70 75 60 C78 66 79 72 78 76 C66 86 34 86 22 76 C21 72 22 66 25 60Z', rg)
+        + [[30, 70], [40, 76], [58, 75], [68, 70], [48, 72]].map(([x, y], i) => E(x, y, 2 + (i % 2), 1, '#3a1a10', 'opacity=".45"')).join('')
+        + `<path d="M25 60 C34 70 66 70 75 60" stroke="#e8c8a0" stroke-width=".6" fill="none" opacity=".6"/>`
+        // Panel lines, vents, rivets.
+        + `<path d="M40 22 L60 22 M36 34 C44 37 56 37 64 34 M31 46 C42 50 58 50 69 46 M50 22 L50 58" stroke="#3a4630" stroke-width=".7" fill="none"/>`
+        + [[34, 40], [66, 40], [30, 52], [70, 52]].map(([x, y]) => R(x - 3, y - 1, 6, 2, '#2a3222', 'rx=".6"')).join('')
+        + [[42, 28], [58, 28], [38, 44], [62, 44]].map(([x, y]) => C(x, y, 0.6, '#c8d0b0', 'opacity=".7"')).join('')
+        // Off-center cockpit with a glint, twin blaster cannons.
+        + E(50, 17, 6.5, 5, '#3a4630') + E(50, 17, 4.6, 3.4, '#10202e') + E(48.4, 15.8, 1.8, 0.8, '#9fd8ff', 'opacity=".7"')
+        + R(40, 26, 3, 10, '#2a2d33', 'rx="1"') + R(57, 26, 3, 10, '#2a2d33', 'rx="1"') + C(41.5, 26, 1, '#ff5a3a', 'opacity=".8"') + C(58.5, 26, 1, '#ff5a3a', 'opacity=".8"')
+        + P(hull, 'none', 'stroke="#1e2618" stroke-width=".9"') + `<path d="M40 14 C43 10 47 9 50 9" stroke="#e0e8c8" stroke-width=".7" fill="none" opacity=".7"/>`
+        + eng(40, 86, 2.8, '#ffb070') + eng(50, 89, 3.2, '#ffb070') + eng(60, 86, 2.8, '#ffb070');
+    },
     isd: () => P('M50 4 L88 92 L12 92Z', '#c9ced6') + shade('M50 4 L12 92 L50 92Z', 0.12)
       + `<path d="M50 10 L50 90 M30 50 L70 50 M22 70 L78 70 M40 30 L60 30" stroke="#8a929e" stroke-width=".8"/>` + P('M46 30 L54 30 L55 44 L45 44Z', '#3a414c')
       + R(38, 70, 24, 12, '#b3b9c2') + R(42, 62, 16, 10, '#a3aab3') + R(40, 58, 20, 4, '#b3b9c2') + C(44, 57, 2.4, '#b3b9c2') + C(56, 57, 2.4, '#b3b9c2')

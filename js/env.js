@@ -49,6 +49,7 @@
     geonosis: { base: '#b25a2e', bands: ['#9a4a22', '#d9773a', '#8a3e1c', '#c8683a'], atmo: '#ffb07a' },
     exegol: { base: '#1a1630', bands: ['#141028', '#2a2250', '#1e1a3a', '#241e44'], atmo: '#8a7aff', cracks: true },
     mustafar: { base: '#3a1a14', bands: ['#2a100c', '#4a2018', '#361410', '#40180f'], atmo: '#ff6a3a', cracks: true },
+    coruscant_siege: { base: '#4a3440', bands: ['#3a2430', '#6a4a50', '#4a3040', '#5a3a44'], atmo: '#ff9a5a', lights: true, cracks: true },
   };
 
   function drawSphere(ctx, x, y, r, id, t, opts = {}) {
@@ -900,10 +901,339 @@
     },
   };
 
+  // ---------- Battle of Coruscant (Revenge of the Sith / Battlefront II) ----------
+  // Republic Venator: long white dagger with twin bridge towers and a red stripe.
+  function venator(ctx, x, y, s, dir, t) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(s * dir, s);
+    ctx.fillStyle = 'rgba(40,20,20,0.35)';
+    ctx.beginPath(); ctx.moveTo(90, 6); ctx.lineTo(-60, 16); ctx.lineTo(-60, 4); ctx.fill();
+    const g = ctx.createLinearGradient(0, -14, 0, 14);
+    g.addColorStop(0, '#e8e2dc');
+    g.addColorStop(0.55, '#a8a09c');
+    g.addColorStop(1, '#4a3a38');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.moveTo(92, 2);
+    ctx.lineTo(-58, -10);
+    ctx.lineTo(-64, 0);
+    ctx.lineTo(-58, 12);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#c8322a';
+    ctx.beginPath(); ctx.moveTo(60, 1); ctx.lineTo(-40, -6); ctx.lineTo(-40, -3); ctx.lineTo(60, 2.5); ctx.fill();
+    ctx.fillStyle = '#b8b0aa';
+    ctx.fillRect(-48, -20, 7, 12);
+    ctx.fillRect(-36, -20, 7, 12);
+    ctx.fillRect(-50, -23, 11, 4);
+    ctx.fillRect(-38, -23, 11, 4);
+    ctx.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < 3; i++) glow(ctx, -66, -5 + i * 6, 7 + Math.sin(t * 9 + i) * 1.5, '#7ab8ff', 0.8);
+    ctx.restore();
+  }
+
+  // Separatist cruiser (Invisible Hand style): bulbous prow, tall fins, engine bank.
+  function sepCruiser(ctx, x, y, s, dir, t) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(s * dir, s);
+    const g = ctx.createLinearGradient(0, -12, 0, 12);
+    g.addColorStop(0, '#9a9488');
+    g.addColorStop(1, '#3a342e');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.moveTo(-80, -4);
+    ctx.quadraticCurveTo(40, -10, 72, -7);
+    ctx.quadraticCurveTo(92, 0, 72, 8);
+    ctx.quadraticCurveTo(40, 10, -80, 6);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#6e685e';
+    ctx.beginPath(); ctx.moveTo(-10, -6); ctx.lineTo(10, -34); ctx.lineTo(22, -34); ctx.lineTo(18, -7); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(-10, 6); ctx.lineTo(8, 26); ctx.lineTo(18, 26); ctx.lineTo(18, 7); ctx.fill();
+    ctx.fillStyle = 'rgba(255,190,110,0.8)';
+    for (let i = 0; i < 9; i++) ctx.fillRect(-60 + i * 13, -1, 3, 1.5);
+    ctx.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < 4; i++) glow(ctx, -84, -4 + i * 3.4, 6 + Math.sin(t * 8 + i) * 1.2, '#ffb05a', 0.8);
+    ctx.restore();
+  }
+
+  // LAAT/i gunship silhouette with blinking nav lights.
+  function laat(ctx, x, y, s, dir, t, ph) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(s * dir, s);
+    ctx.fillStyle = '#2a1e1c';
+    ctx.beginPath();
+    ctx.moveTo(14, 0); ctx.lineTo(8, -4); ctx.lineTo(-10, -4); ctx.lineTo(-14, -1); ctx.lineTo(-10, 3); ctx.lineTo(10, 3);
+    ctx.fill();
+    ctx.fillRect(-4, -9, 3, 5);
+    ctx.fillRect(-12, -2, 24, 1.5);
+    ctx.fillRect(-9, -5, 3, -4);
+    const blink = Math.sin(t * 6 + ph) > 0.6;
+    if (blink) {
+      ctx.fillStyle = '#ff4a3a'; ctx.fillRect(-13, -2.5, 2, 2);
+      ctx.fillStyle = '#6aff8a'; ctx.fillRect(11, -2.5, 2, 2);
+    }
+    ctx.globalCompositeOperation = 'lighter';
+    glow(ctx, -15, 0, 5, '#ffcf8a', 0.6);
+    ctx.restore();
+  }
+
+  function smokePlume(ctx, x, base, s, t, ph, dark) {
+    for (let i = 0; i < 9; i++) {
+      const k = ((t * 0.12 + ph + i / 9) % 1);
+      const px = x + Math.sin(k * 5 + ph * 7) * 10 * s + k * 60 * s;
+      const py = base - k * 170 * s;
+      ctx.fillStyle = dark ? `rgba(18,10,10,${0.5 * (1 - k)})` : `rgba(70,50,44,${0.35 * (1 - k)})`;
+      ctx.beginPath(); ctx.arc(px, py, (6 + k * 26) * s, 0, TAU); ctx.fill();
+    }
+  }
+
+  // Jedi Temple ziggurat with its five spires (Order 66 / Battlefront II assault).
+  function jediTemple(ctx, cx, base, s, t, burn) {
+    ctx.fillStyle = '#1c1210';
+    ctx.beginPath();
+    ctx.moveTo(cx - 90 * s, base);
+    ctx.lineTo(cx - 62 * s, base - 46 * s);
+    ctx.lineTo(cx + 62 * s, base - 46 * s);
+    ctx.lineTo(cx + 90 * s, base);
+    ctx.fill();
+    const spire = (x, hgt, wdt) => {
+      ctx.beginPath();
+      ctx.moveTo(x - wdt, base - 46 * s);
+      ctx.lineTo(x - wdt * 0.5, base - 46 * s - hgt);
+      ctx.lineTo(x, base - 52 * s - hgt);
+      ctx.lineTo(x + wdt * 0.5, base - 46 * s - hgt);
+      ctx.lineTo(x + wdt, base - 46 * s);
+      ctx.fill();
+    };
+    spire(cx, 70 * s, 9 * s);
+    spire(cx - 44 * s, 42 * s, 7 * s);
+    spire(cx + 44 * s, 42 * s, 7 * s);
+    spire(cx - 22 * s, 36 * s, 5 * s);
+    spire(cx + 22 * s, 36 * s, 5 * s);
+    ctx.fillStyle = `rgba(255,200,120,${0.5 + Math.sin(t * 2) * 0.15})`;
+    for (let i = 0; i < 12; i++) ctx.fillRect(cx - 55 * s + i * 10 * s, base - 30 * s, 2, 3);
+    if (burn) {
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      glow(ctx, cx - 30 * s, base - 40 * s, 34 * s, '#ff6a1a', 0.5 + Math.sin(t * 7) * 0.1);
+      glow(ctx, cx + 38 * s, base - 20 * s, 26 * s, '#ff8a2a', 0.45 + Math.sin(t * 5 + 1) * 0.1);
+      ctx.restore();
+    }
+  }
+
+  THEMES.siege = {
+    horizon: 0.64,
+    dust: ['#ff9a4a', '#ffd27a', '#6a5a58'],
+    weather: { count: 120, spawn: (e) => (Math.random() < 0.55
+      ? { x: rand(0, e.w), y: rand(0, e.h), vx: rand(-14, -4), vy: rand(10, 26), size: rand(0.8, 2.2), color: pick(['#5a4a48', '#7a6a66', '#3a302e']), alpha: rand(0.3, 0.6), kind: 'ash' }
+      : { x: rand(0, e.w), y: rand(e.h * 0.3, e.h), vx: rand(-12, 12), vy: rand(-40, -14), size: rand(0.7, 1.8), color: pick(['#ffae4a', '#ff7a2a', '#ffd27a']), alpha: rand(0.4, 0.9), kind: 'ember', phase: rand(0, TAU) }) },
+    sky: () => [[0, '#120406'], [0.22, '#3a0e0c'], [0.46, '#8a2e14'], [0.6, '#e0742a'], [0.66, '#ffb05a']],
+    init(e, r) {
+      const mk = (n, minH, maxH, spire) => Array.from({ length: n }, (_, i) => {
+        const b = { x: i / n + (r() - 0.5) * 0.02, w: 1 / n * (0.55 + r() * 0.5), h: minH + r() * (maxH - minH), spire: spire && r() > 0.45, fire: r() > 0.72, win: [] };
+        for (let k = 0; k < 16; k++) b.win.push([r(), r(), r()]);
+        return b;
+      });
+      e.g.far = mk(26, 0.1, 0.3, true);
+      // Leave the middle open so the burning Jedi Temple stays in view.
+      e.g.mid = mk(12, 0.12, 0.3, false).filter((b) => Math.abs(b.x + b.w / 2 - 0.5) > 0.2);
+      e.g.caps = [
+        { side: 'rep', x: 0.16, y: 0.14, s: 0.9, bob: r() * TAU },
+        { side: 'rep', x: 0.34, y: 0.27, s: 0.55, bob: r() * TAU },
+        { side: 'sep', x: 0.8, y: 0.17, s: 0.85, bob: r() * TAU },
+        { side: 'sep', x: 0.62, y: 0.3, s: 0.5, bob: r() * TAU },
+      ];
+      e.g.bolts = [];
+      e.g.flak = [];
+      e.g.fall = Array.from({ length: 4 }, () => ({ x: r(), y: -r() * 0.5, vx: 0.02 + r() * 0.05, vy: 0.08 + r() * 0.06, s: 0.6 + r() * 0.9 }));
+      e.g.gunships = Array.from({ length: 3 }, (_, i) => ({ ph: r() * 10, y: 0.36 + i * 0.07, sp: 40 + r() * 30, dir: i % 2 ? -1 : 1 }));
+      e.g.plumes = Array.from({ length: 5 }, () => ({ x: r(), ph: r(), s: 0.6 + r() * 0.8 }));
+      e.g.crash = null;
+    },
+    draw(e, ctx, w, h, t, J) {
+      const hz = h * 0.64;
+      const dt = e.dt;
+      // Glow of a planet-wide city burning below the clouds.
+      glow(ctx, w * 0.5, hz, w * 0.7, '#ff6a1a', 0.3 + Math.sin(t * 0.9) * 0.05);
+      // Capital ships trading turbolaser fire.
+      ctx.save();
+      ctx.translate(J.x * 0.12, J.y * 0.12);
+      for (const c of e.g.caps) {
+        c.px = c.x * w + Math.sin(t * 0.08 + c.bob) * 18;
+        c.py = c.y * h + Math.sin(t * 0.3 + c.bob) * 3;
+        const sc = c.s * h / 380;
+        if (c.side === 'rep') venator(ctx, c.px, c.py, sc, 1, t);
+        else sepCruiser(ctx, c.px, c.py, sc, -1, t);
+      }
+      if (Math.random() < 0.22 * (e.storm || 1)) {
+        const from = pick(e.g.caps);
+        const foes = e.g.caps.filter((c) => c.side !== from.side);
+        const to = pick(foes);
+        const sx = from.px + rand(-40, 40) * from.s;
+        const sy = from.py + rand(-6, 6);
+        const tx = to.px + rand(-60, 60) * to.s;
+        const ty = to.py + rand(-14, 14);
+        const d = Math.hypot(tx - sx, ty - sy);
+        e.g.bolts.push({ sx, sy, tx, ty, k: 0, sp: 900 / d, color: from.side === 'rep' ? '#ff5a3a' : '#5aff6a', hit: Math.random() < 0.35 });
+      }
+      ctx.globalCompositeOperation = 'lighter';
+      e.g.bolts = e.g.bolts.filter((b) => {
+        b.k += b.sp * dt;
+        if (b.k >= 1) {
+          if (b.hit) e.g.flak.push({ x: b.tx, y: b.ty, life: 0, max: 0.5, r: rand(6, 14), color: '#ffcf8a' });
+          return false;
+        }
+        const x = b.sx + (b.tx - b.sx) * b.k;
+        const y = b.sy + (b.ty - b.sy) * b.k;
+        const tl = 0.04;
+        ctx.strokeStyle = b.color;
+        ctx.lineWidth = 1.6;
+        ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - (b.tx - b.sx) * tl, y - (b.ty - b.sy) * tl); ctx.stroke();
+        return true;
+      });
+      // Flak bursts across the upper sky.
+      if (Math.random() < 0.12) e.g.flak.push({ x: rand(0, w), y: rand(h * 0.05, h * 0.45), life: 0, max: rand(0.35, 0.7), r: rand(4, 10), color: pick(['#ffd27a', '#ff9a4a', '#fff0c0']) });
+      e.g.flak = e.g.flak.filter((f) => {
+        f.life += dt;
+        const k = f.life / f.max;
+        glow(ctx, f.x, f.y, f.r * (1 + k * 2.5), f.color, 0.9 * (1 - k));
+        return k < 1;
+      });
+      ctx.globalCompositeOperation = 'source-over';
+      for (const f of e.g.flak) {
+        const k = f.life / f.max;
+        ctx.fillStyle = `rgba(30,20,20,${0.4 * k * (1 - k) * 4})`;
+        ctx.beginPath(); ctx.arc(f.x, f.y, f.r * (1 + k * 2), 0, TAU); ctx.fill();
+      }
+      ctx.restore();
+      // Burning wreckage streaking down with smoke trails.
+      ctx.save();
+      ctx.translate(J.x * 0.2, J.y * 0.2);
+      for (const d of e.g.fall) {
+        d.x += d.vx * dt;
+        d.y += d.vy * dt;
+        if (d.y * h > hz - 10) {
+          e.g.flak.push({ x: d.x * w, y: hz - 6, life: 0, max: 0.8, r: 14 * d.s, color: '#ff8a2a' });
+          d.x = Math.random() * 0.9; d.y = -0.1 - Math.random() * 0.3; d.vx = 0.02 + Math.random() * 0.05; d.vy = 0.08 + Math.random() * 0.06;
+        }
+        const x = d.x * w;
+        const y = d.y * h;
+        const tx = -d.vx * w * 1.6;
+        const ty = -d.vy * h * 1.6;
+        const sg = ctx.createLinearGradient(x, y, x + tx, y + ty);
+        sg.addColorStop(0, 'rgba(60,40,36,0.55)');
+        sg.addColorStop(1, 'rgba(60,40,36,0)');
+        ctx.strokeStyle = sg;
+        ctx.lineWidth = 6 * d.s;
+        ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + tx, y + ty); ctx.stroke();
+        ctx.globalCompositeOperation = 'lighter';
+        const fg = ctx.createLinearGradient(x, y, x + tx * 0.35, y + ty * 0.35);
+        fg.addColorStop(0, 'rgba(255,220,140,0.95)');
+        fg.addColorStop(1, 'rgba(255,90,20,0)');
+        ctx.strokeStyle = fg;
+        ctx.lineWidth = 3 * d.s;
+        ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + tx * 0.35, y + ty * 0.35); ctx.stroke();
+        glow(ctx, x, y, 8 * d.s, '#ffb05a', 0.9);
+        ctx.globalCompositeOperation = 'source-over';
+      }
+      // A big crash triggered by the Falling Wreckage hazard.
+      if (e.g.crash) {
+        const c = e.g.crash;
+        c.life += dt;
+        const k = Math.min(1, c.life / c.max);
+        const x = c.x0 + (c.x1 - c.x0) * k;
+        const y = -40 + (hz + 10) * k * k;
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(0.5 + c.life * 1.5);
+        ctx.fillStyle = '#4a3e3a';
+        ctx.fillRect(-26, -7, 52, 14);
+        ctx.fillStyle = '#a8a09c';
+        ctx.fillRect(-26, -7, 52, 4);
+        ctx.restore();
+        ctx.globalCompositeOperation = 'lighter';
+        glow(ctx, x, y, 40, '#ff7a2a', 0.8);
+        ctx.globalCompositeOperation = 'source-over';
+        if (k >= 1) {
+          e.blast(x, hz + 12, '#ff7a2a', 2.6);
+          e.flash('#ffb05a', 0.4);
+          e.g.crash = null;
+        }
+      }
+      ctx.restore();
+      // Far skyline with spires and fires.
+      const drawBuildings = (list, color, winA, depth, fires) => {
+        ctx.save();
+        ctx.translate(J.x * depth, J.y * depth);
+        for (const b of list) {
+          const bx = b.x * w;
+          const bw = b.w * w;
+          const top = hz + h * 0.08 - b.h * h;
+          ctx.fillStyle = color;
+          ctx.fillRect(bx, top, bw, h);
+          if (b.spire) {
+            ctx.beginPath(); ctx.moveTo(bx, top); ctx.lineTo(bx + bw / 2, top - bw * 1.4); ctx.lineTo(bx + bw, top); ctx.fill();
+          }
+          for (const [wx, wy, ph] of b.win) {
+            if (Math.sin(t * 0.5 + ph * 40) < -0.5) continue;
+            ctx.fillStyle = ph > 0.4 ? `rgba(255,200,120,${winA})` : `rgba(255,120,60,${winA})`;
+            ctx.fillRect(bx + wx * bw * 0.85, top + 4 + wy * b.h * h, 2, 2);
+          }
+          if (fires && b.fire) {
+            ctx.save();
+            ctx.globalCompositeOperation = 'lighter';
+            glow(ctx, bx + bw * 0.5, top + 6, bw * 0.9, '#ff6a1a', 0.55 + Math.sin(t * 8 + b.x * 30) * 0.15);
+            ctx.restore();
+          }
+        }
+        ctx.restore();
+      };
+      drawBuildings(e.g.far, 'rgba(46,18,16,0.92)', 0.45, 0.25, true);
+      // Gunships sweeping across the district.
+      ctx.save();
+      ctx.translate(J.x * 0.35, J.y * 0.35);
+      for (const g of e.g.gunships) {
+        for (let k = 0; k < 3; k++) {
+          const span = w + 240;
+          const x = ((((g.ph * 97 + t * g.sp * (e.rush || 1)) * g.dir - k * 26) % span) + span) % span - 120;
+          laat(ctx, x, g.y * h + k * 6 + Math.sin(t * 2 + k) * 2, h / 420, g.dir, t, g.ph + k);
+        }
+      }
+      ctx.restore();
+      // Smoke plumes rising from the city.
+      ctx.save();
+      ctx.translate(J.x * 0.4, J.y * 0.4);
+      for (const p of e.g.plumes) smokePlume(ctx, p.x * w, hz + h * 0.04, p.s * h / 400, t, p.ph, false);
+      ctx.restore();
+      // Mid layer: the burning Jedi Temple framed by towers.
+      ctx.save();
+      ctx.translate(J.x * 0.6, J.y * 0.6);
+      jediTemple(ctx, w * 0.5, hz + h * 0.12, h / 360, t, true);
+      smokePlume(ctx, w * 0.47, hz - h * 0.02, h / 300, t, 0.2, true);
+      ctx.restore();
+      drawBuildings(e.g.mid, 'rgba(26,12,12,1)', 0.65, 0.6, true);
+      // Foreground landing platform.
+      ctx.save();
+      ctx.translate(J.x, J.y);
+      ctx.fillStyle = '#140a0a';
+      ctx.fillRect(-40, h * 0.86, w + 80, h * 0.2);
+      ctx.fillStyle = 'rgba(255,140,60,0.55)';
+      ctx.fillRect(-40, h * 0.86, w + 80, 2);
+      ctx.fillStyle = `rgba(255,70,40,${0.5 + Math.sin(t * 3) * 0.4})`;
+      for (let i = 0; i < 6; i++) ctx.fillRect((i + 0.5) * w / 6 - 3, h * 0.86 + 5, 6, 2);
+      ctx.restore();
+    },
+  };
+
   // ---------- Space (orbit) theme ----------
   const SPACE_NEBULA = {
     tatooine: ['#ff9a4a', '#6a3aa0'], hoth: ['#5aa8ff', '#9fd0ff'], dagobah: ['#4a8a5a', '#2a5a4a'], bespin: ['#ff7a5a', '#c04a8a'],
-    geonosis: ['#ff8a4a', '#a04a22'], exegol: ['#6a5aff', '#2a1a6a'], endor: ['#3a8a5a', '#5a6ad0'], scarif: ['#3ab0ff', '#40e0d0'], coruscant: ['#a06aff', '#ff6ab0'], mustafar: ['#ff3a1a', '#8a1a3a'],
+    geonosis: ['#ff8a4a', '#a04a22'], exegol: ['#6a5aff', '#2a1a6a'], endor: ['#3a8a5a', '#5a6ad0'], scarif: ['#3ab0ff', '#40e0d0'], coruscant: ['#a06aff', '#ff6ab0'], mustafar: ['#ff3a1a', '#8a1a3a'], coruscant_siege: ['#ff6a2a', '#8a2a6a'],
   };
 
   function spaceInit(e, r) {
@@ -964,6 +1294,27 @@
       ctx.beginPath(); ctx.arc(dx - dr * 0.35, dy - dr * 0.3, dr * 0.14, 0, TAU); ctx.fill();
     }
     ctx.restore();
+    if (special === 'coruscant_siege') {
+      // The whole Republic and Separatist fleets locked in orbit.
+      ctx.save();
+      ctx.translate(J.x * 0.18, J.y * 0.18);
+      const s = h / 520;
+      const caps = [[0.3, 0.16, 1, 'rep'], [0.55, 0.42, 0.6, 'rep'], [0.86, 0.26, 1.1, 'sep'], [0.7, 0.08, 0.5, 'sep']];
+      e.g.siegeCaps = caps.map(([x, y, sc, side], i) => {
+        const px = x * w + Math.sin(t * 0.07 + i) * 20;
+        const py = y * h + Math.sin(t * 0.25 + i) * 4;
+        if (side === 'rep') venator(ctx, px, py, sc * s, 1, t); else sepCruiser(ctx, px, py, sc * s, -1, t);
+        return { px, py, side };
+      });
+      ctx.restore();
+      if (Math.random() < 0.3) {
+        const from = pick(e.g.siegeCaps);
+        const to = pick(e.g.siegeCaps.filter((c) => c.side !== from.side));
+        const d = Math.hypot(to.px - from.px, to.py - from.py) || 1;
+        e.g.skirmish.push({ x: from.px + rand(-30, 30), y: from.py, vx: (to.px - from.px) / d * 520, vy: (to.py - from.py) / d * 520, life: 0, max: d / 520, color: from.side === 'rep' ? '#ff5a3a' : '#5aff6a' });
+      }
+      if (Math.random() < 0.08) e.light(rand(0, w), rand(0, h * 0.6), pick(['#ffb05a', '#ff7a3a']), rand(30, 70), 0.4);
+    }
     // Distant capital ships trading fire.
     ctx.save();
     ctx.translate(J.x * 0.25, J.y * 0.25);
@@ -1034,6 +1385,16 @@
       e.overlay = { color: '#a04a22', a: 0.25, dur: 2 };
     },
     lightning(e) { e.storm = 4; e.flash('#d8d0ff', 0.8); e.jolt(12); e.overlay = { color: '#6a5aff', a: 0.3, dur: 2.5 }; },
+    debris(e) {
+      if (e.g.fall) {
+        e.g.crash = { x0: rand(e.w * 0.1, e.w * 0.5), x1: rand(e.w * 0.4, e.w * 0.9), life: 0, max: 1.1 };
+        e.g.fall.forEach((d) => { d.vy *= 2.5; });
+      }
+      e.overlay = { color: '#ff5a1a', a: 0.22, dur: 2.5 };
+      e.jolt(8);
+      for (let i = 0; i < 60; i++) e.fx.push({ x: rand(0, e.w), y: -10, vx: rand(-30, 60), vy: rand(80, 220), life: 0, max: rand(1.2, 2.2), size: rand(1.5, 3.5), color: pick(['#ffae4a', '#ff6a1a', '#5a4a48']), grav: 120, drag: 0.2, type: i % 3 ? 'ember' : 'debris', rot: rand(0, TAU) });
+      setTimeout(() => e.blast(rand(e.w * 0.2, e.w * 0.8), e.h * 0.8, '#ff7a2a', 1.8), 700);
+    },
     eruption(e) { if (e.g.erupt != null) e.g.erupt = 1; e.jolt(16); e.flash('#ff5a1a', 0.5); e.overlay = { color: '#ff3a0a', a: 0.3, dur: 3 }; },
   };
 

@@ -185,6 +185,7 @@
       let type = 'default';
       let color = u.side === 'player' ? '#ffd23f' : '#ff5a5a';
       if (u.boss) { type = 'boss'; color = '#ff2a2a'; }
+      else if ((D.TRAITS[u.def.id] || []).includes('inquisitor')) { type = 'inquisitor'; color = '#ff2a2a'; }
       else if (u.def.kind === 'ship') { type = 'ship'; color = u.def.faction === 'light' ? '#8fd3ff' : '#8affb0'; }
       else if (cls.includes('force')) { type = 'force'; color = u.def.accent || SABER[u.def.faction]; }
       else if (cls.includes('droid')) { type = 'droid'; color = '#ffb03a'; }
@@ -1459,6 +1460,197 @@
     },
 
     // Four blades whirl around each target in turn.
+    // Inquisitor signature: the spinning double-bladed saber ignites, rings the
+    // battlefield in red, then carves a curving path through every target.
+    async sm_spinsaber(actor, targets) {
+      const color = '#ff2a2a';
+      const from = this.center(actor.uid);
+      const speed = Math.min(this.speed, 2);
+      const spin = el('<div class="spin-saber"><div class="ss-ring"><i></i><i></i><b></b></div></div>');
+      spin.style.left = from.x + 'px';
+      spin.style.top = from.y + 'px';
+      this.fx.appendChild(spin);
+      // Ignition: the ring snaps open with a red flare.
+      spin.animate([{ transform: 'translate(-50%,-50%) scale(.1)', opacity: 0 }, { transform: 'translate(-50%,-50%) scale(1.4)', opacity: 1, offset: 0.6 }, { transform: 'translate(-50%,-50%) scale(1)', opacity: 1 }], { duration: 380 / speed, easing: 'ease-out', fill: 'forwards' });
+      this.wave(from, color, 3.4);
+      this.env.flash('#ff2a2a', 0.25);
+      this.env.light(from.x, from.y, color, 200, 0.6);
+      await this.wait(380);
+      const pts = [from, ...targets.map((t) => this.center(t.uid)), from];
+      const legMs = 300 / speed;
+      const hitAt = new Set();
+      const t0 = performance.now();
+      const total = legMs * (pts.length - 1);
+      let lastTrail = 0;
+      await new Promise((resolve) => {
+        const step = (now) => {
+          const el2 = Math.max(0, Math.min(total, now - t0));
+          const leg = Math.min(pts.length - 2, Math.floor(el2 / legMs));
+          const k = (el2 - leg * legMs) / legMs;
+          const a = pts[leg];
+          const b = pts[leg + 1];
+          // Curve each leg sideways so the saber sweeps rather than slides.
+          const bend = Math.sin(k * Math.PI) * 60 * (leg % 2 ? 1 : -1);
+          const nx = -(b.y - a.y);
+          const ny = b.x - a.x;
+          const nl = Math.hypot(nx, ny) || 1;
+          const x = a.x + (b.x - a.x) * k + (nx / nl) * bend;
+          const y = a.y + (b.y - a.y) * k + (ny / nl) * bend;
+          spin.style.left = x + 'px';
+          spin.style.top = y + 'px';
+          if (now - lastTrail > 40 && !reducedMotion()) {
+            lastTrail = now;
+            const tr = el('<div class="ss-trail"></div>');
+            tr.style.left = x + 'px';
+            tr.style.top = y + 'px';
+            this.fx.appendChild(tr);
+            tr.animate([{ transform: 'translate(-50%,-50%) scale(1)', opacity: 0.6 }, { transform: 'translate(-50%,-50%) scale(.3)', opacity: 0 }], { duration: 360 }).onfinish = () => tr.remove();
+          }
+          if (k > 0.92 && leg < targets.length && !hitAt.has(leg)) {
+            hitAt.add(leg);
+            const t = targets[leg];
+            if (this.cards[t.uid]) {
+              const c = this.center(t.uid);
+              this.slash(c, color, -35);
+              this.slash(c, color, 35);
+              this.sparks(c, color, 12);
+              this.env.impact(c.x, c.y, { power: 1.1, color });
+              this.cards[t.uid].animate([{ transform: 'rotate(0)' }, { transform: `rotate(${rand(-10, 10)}deg) scale(.94)`, offset: 0.3 }, { transform: 'rotate(0)' }], { duration: 360 });
+            }
+          }
+          if (el2 >= total) return resolve();
+          requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
+      });
+      this.shake();
+      spin.animate([{ transform: 'translate(-50%,-50%) scale(1)', opacity: 1 }, { transform: 'translate(-50%,-50%) scale(.2)', opacity: 0 }], { duration: 260, fill: 'forwards' }).onfinish = () => spin.remove();
+      await this.wait(260);
+    },
+
+    // Grand Inquisitor: the saber leaves the battlefield entirely, carves a loop
+    // around the whole screen, slices each target card in half, and returns.
+    async sm_saberstorm(actor, targets) {
+      if (reducedMotion()) return this.sm_saberthrow(actor, targets);
+      const speed = Math.min(this.speed, 2);
+      const W = window.innerWidth;
+      const H = window.innerHeight;
+      const layer = el('<div class="storm-layer" aria-hidden="true"><div class="storm-vignette"></div><canvas></canvas></div>');
+      document.body.appendChild(layer);
+      const cv = $('canvas', layer);
+      const dpr = Math.min(1.5, window.devicePixelRatio || 1);
+      cv.width = W * dpr;
+      cv.height = H * dpr;
+      const ctx = cv.getContext('2d');
+      ctx.scale(dpr, dpr);
+      const saber = el('<div class="spin-saber storm"><div class="ss-ring"><i></i><i></i><b></b></div></div>');
+      layer.appendChild(saber);
+      const from = this.vp(actor.uid);
+      saber.style.left = from.x + 'px';
+      saber.style.top = from.y + 'px';
+      saber.animate([{ transform: 'translate(-50%,-50%) scale(.1)', opacity: 0 }, { transform: 'translate(-50%,-50%) scale(1.5)', opacity: 1, offset: 0.6 }, { transform: 'translate(-50%,-50%) scale(1)', opacity: 1 }], { duration: 360, fill: 'forwards' });
+      this.env.flash('#ff2a2a', 0.3);
+      await this.wait(360);
+      const loop = [[0.86, 0.1], [0.95, 0.5], [0.66, 0.92], [0.12, 0.84], [0.06, 0.3], [0.4, 0.06]].map(([x, y]) => ({ x: x * W, y: y * H }));
+      const route = [from, ...loop, ...targets.map((t) => ({ ...this.vp(t.uid), uid: t.uid })), { ...from, home: true }];
+      const cum = [0];
+      for (let i = 1; i < route.length; i++) cum.push(cum[i - 1] + Math.hypot(route[i].x - route[i - 1].x, route[i].y - route[i - 1].y));
+      const total = cum[cum.length - 1];
+      const pxPerMs = 2.1 * speed;
+      const cr = (p0, p1, p2, p3, u) => {
+        const u2 = u * u;
+        const u3 = u2 * u;
+        return 0.5 * (2 * p1 + (-p0 + p2) * u + (2 * p0 - 5 * p1 + 4 * p2 - p3) * u2 + (-p0 + 3 * p1 - 3 * p2 + p3) * u3);
+      };
+      const at = (d) => {
+        let i = 1;
+        while (i < cum.length - 1 && cum[i] < d) i++;
+        const u = (d - cum[i - 1]) / Math.max(1, cum[i] - cum[i - 1]);
+        const p0 = route[Math.max(0, i - 2)];
+        const p1 = route[i - 1];
+        const p2 = route[i];
+        const p3 = route[Math.min(route.length - 1, i + 1)];
+        return { x: cr(p0.x, p1.x, p2.x, p3.x, u), y: cr(p0.y, p1.y, p2.y, p3.y, u) };
+      };
+      const done = new Set();
+      let prev = from;
+      const t0 = performance.now();
+      await new Promise((resolve) => {
+        const step = (now) => {
+          const d = Math.min(total, Math.max(0, now - t0) * pxPerMs);
+          const p = at(d);
+          ctx.globalCompositeOperation = 'destination-out';
+          ctx.fillStyle = 'rgba(0,0,0,0.16)';
+          ctx.fillRect(0, 0, W, H);
+          ctx.globalCompositeOperation = 'lighter';
+          ctx.lineCap = 'round';
+          for (const [w, c] of [[26, 'rgba(255,30,30,0.18)'], [10, 'rgba(255,60,60,0.6)'], [3, 'rgba(255,240,235,0.95)']]) {
+            ctx.strokeStyle = c;
+            ctx.lineWidth = w;
+            ctx.beginPath(); ctx.moveTo(prev.x, prev.y); ctx.lineTo(p.x, p.y); ctx.stroke();
+          }
+          prev = p;
+          saber.style.left = p.x + 'px';
+          saber.style.top = p.y + 'px';
+          route.forEach((r, i) => {
+            if (!r.uid || done.has(i) || d < cum[i] - 4) return;
+            done.add(i);
+            this.cutCard(r.uid, layer);
+          });
+          if (d >= total) return resolve();
+          requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
+      });
+      // Caught.
+      const home = this.center(actor.uid);
+      this.wave(home, '#ff2a2a', 3);
+      this.env.flash('#ff2a2a', 0.25);
+      saber.animate([{ transform: 'translate(-50%,-50%) scale(1)', opacity: 1 }, { transform: 'translate(-50%,-50%) scale(.2)', opacity: 0 }], { duration: 240, fill: 'forwards' });
+      layer.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 500, delay: 200, fill: 'forwards' }).onfinish = () => layer.remove();
+      await this.wait(420);
+    },
+
+    // Slice a card along a diagonal: the halves split apart in a puff of smoke, then snap back.
+    cutCard(uid, layer) {
+      const card = this.cards[uid];
+      if (!card || !card.isConnected) return;
+      const r = card.getBoundingClientRect();
+      const a = rand(30, 70);
+      const b = 100 - a;
+      const halves = [[`polygon(0 0, 100% 0, 100% ${b}%, 0 ${a}%)`, -1], [`polygon(0 ${a}%, 100% ${b}%, 100% 100%, 0 100%)`, 1]];
+      card.style.visibility = 'hidden';
+      halves.forEach(([clip, dir]) => {
+        const c = card.cloneNode(true);
+        c.classList.add('cut-half');
+        c.style.cssText = `position:fixed;left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px;margin:0;clip-path:${clip};visibility:visible;z-index:1`;
+        layer.insertBefore(c, layer.querySelector('canvas'));
+        const off = `translate(${dir * 10}px, ${dir * 16}px) rotate(${dir * 6}deg)`;
+        c.animate([{ transform: 'none' }, { transform: off, offset: 0.35 }, { transform: off, offset: 0.7 }, { transform: 'none' }], { duration: 950, easing: 'cubic-bezier(.2,.8,.3,1)' }).onfinish = () => c.remove();
+      });
+      setTimeout(() => { if (card.isConnected) card.style.visibility = ''; }, 940);
+      // The cut line and the poof.
+      const cx = r.left + r.width / 2;
+      const cy = r.top + r.height * ((a + b) / 200);
+      const ang = (Math.atan2(((b - a) / 100) * r.height, r.width) * 180) / Math.PI;
+      const line = el(`<div class="cut-line" style="left:${r.left - 20}px;top:${cy}px;width:${r.width + 40}px;transform:rotate(${ang}deg)"></div>`);
+      layer.appendChild(line);
+      line.animate([{ opacity: 1, transform: `rotate(${ang}deg) scaleX(0)` }, { opacity: 1, transform: `rotate(${ang}deg) scaleX(1)`, offset: 0.3 }, { opacity: 0, transform: `rotate(${ang}deg) scaleX(1.1)` }], { duration: 500 }).onfinish = () => line.remove();
+      for (let i = 0; i < 14; i++) {
+        const p = el('<i class="poof"></i>');
+        const t = Math.random() * Math.PI * 2;
+        const dist = 30 + Math.random() * 50;
+        p.style.left = cx + 'px';
+        p.style.top = cy + 'px';
+        layer.appendChild(p);
+        p.animate([{ transform: 'translate(-50%,-50%) scale(.3)', opacity: 0.9 }, { transform: `translate(calc(-50% + ${Math.cos(t) * dist}px), calc(-50% + ${Math.sin(t) * dist}px)) scale(${1.4 + Math.random()})`, opacity: 0 }], { duration: 700 + Math.random() * 300, easing: 'ease-out' }).onfinish = () => p.remove();
+      }
+      const fc = this.center(uid);
+      this.sparks(fc, '#ff2a2a', 14);
+      this.env.impact(fc.x, fc.y, { power: 1.3, color: '#ff2a2a' });
+      this.shake();
+    },
+
     async sm_whirl(actor, targets) {
       const colors = ['#3d8bff', '#46e070', '#3d8bff', '#46e070'];
       for (const t of targets) {
@@ -1627,6 +1819,35 @@
       });
     },
 
+    // Hitting the top multiplier gets a full-screen Star Wars pun instead of a toast.
+    jackpot(mult, credits) {
+      const puns = mult >= 10
+        ? [['Unlimited credits!', 'The Loaded Dice are strong with this one'], ['I have the high roll!', "Don't try it. It's a max multiplier"]]
+        : [['Never tell me the odds!', 'You beat them anyway'], ['These are the credits you\'re looking for', 'Move along… to the bank'], ['The odds are strong with this one', 'A max roll, as the Force wills it']];
+      const [line, sub] = puns[Math.floor(Math.random() * puns.length)];
+      const coins = reducedMotion() ? '' : Array.from({ length: 36 }, (_, i) => `<i style="--x:${Math.random() * 100}%;--d:${(Math.random() * 0.9).toFixed(2)}s;--s:${(0.7 + Math.random() * 0.7).toFixed(2)};--r:${Math.round(rand(-540, 540))}deg"></i>`).join('');
+      const streaks = reducedMotion() ? '' : Array.from({ length: 22 }, (_, i) => `<b style="--y:${Math.random() * 100}%;--d:${(Math.random() * 0.5).toFixed(2)}s;--w:${Math.round(rand(80, 320))}px"></b>`).join('');
+      const node = el(`<div class="jackpot" role="status" aria-live="assertive">
+        <div class="jp-rays"></div>
+        <div class="jp-streaks">${streaks}</div>
+        <div class="jp-coins">${coins}</div>
+        <div class="jp-text">
+          <span class="jp-kicker">Max multiplier · ${mult}×</span>
+          <b class="jp-line">${esc(line)}</b>
+          <span class="jp-sub">${esc(sub)}</span>
+          <span class="jp-amount">${cur('credits', credits)}</span>
+        </div>
+      </div>`);
+      document.body.appendChild(node);
+      const close = () => {
+        if (!node.isConnected) return;
+        node.classList.add('out');
+        setTimeout(() => node.remove(), 450);
+      };
+      node.addEventListener('click', close);
+      setTimeout(close, 3400);
+    },
+
     spinReel(scope, rewards) {
       const track = $('[data-reel]', scope);
       const items = $$('.reel-item', track);
@@ -1638,7 +1859,9 @@
         $('[data-spin-math]', scope).innerHTML = `${cur('credits', rewards.base)} × <b class="mult">${rewards.mult}×</b>${rewards.bounty ? ' × 1.2' : ''} = ${cur('credits', rewards.credits)}`;
         $$('[data-rewards]', scope).forEach((n) => { n.hidden = false; });
         updateWallet();
-        if (rewards.mult >= 3) toast(`Jackpot! ${rewards.mult}× credits!`);
+        const max = Math.max(...rewards.table.map((t) => t.mult));
+        if (rewards.mult >= max) this.jackpot(rewards.mult, rewards.credits);
+        else if (rewards.mult >= 3) toast(`Jackpot! ${rewards.mult}× credits!`);
       };
       // Measure after layout settles; divide out the modal's scale-in transform.
       requestAnimationFrame(() => requestAnimationFrame(() => {
