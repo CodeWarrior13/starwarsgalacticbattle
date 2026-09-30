@@ -36,6 +36,8 @@
       tm: Math.min(40, index * 3 + (side === 'player' ? 5 : 0)),
       cooldowns: abilities.map(() => 0),
       ult: 0,
+      boss: !!def.boss,
+      enraged: false,
       statuses: {},
       alive: true,
     };
@@ -235,6 +237,10 @@
           break;
         }
         case 'status': {
+          if (target.boss && eff.status === 'stun') {
+            events.push({ type: 'resist', uid: target.uid, immune: true });
+            break;
+          }
           if (this.rng() >= eff.chance) {
             events.push({ type: 'resist', uid: target.uid });
             break;
@@ -282,6 +288,13 @@
     applyDamage(target, amount, crit, events, source) {
       target.hp = Math.max(0, target.hp - amount);
       this.chargeUlt(target, (amount / target.maxHp) * ULT_PER_TAKEN);
+      if (target.boss && !target.enraged && target.hp > 0 && target.hp <= target.maxHp / 2) {
+        target.enraged = true;
+        target.statuses.offUp = 99;
+        target.ult = 100;
+        events.push({ type: 'enrage', uid: target.uid });
+        events.push({ type: 'log', text: `${target.def.name} is ENRAGED!`, side: 'enemy' });
+      }
       events.push({ type: 'damage', uid: target.uid, amount, crit, hp: target.hp, source });
       if (target.hp === 0 && target.alive) {
         target.alive = false;

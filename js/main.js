@@ -54,6 +54,7 @@
 
   function boot() {
     root.Player.load();
+    document.querySelectorAll('[data-icon]').forEach((i) => { i.innerHTML = root.Art.ICONS[i.dataset.icon]; });
     starfield();
     document.querySelector('.topbar').addEventListener('click', (e) => {
       const nav = e.target.closest('[data-nav]');

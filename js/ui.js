@@ -3,6 +3,7 @@
 (function (root) {
   const D = root.GameData;
   const Player = root.Player;
+  const Art = root.Art;
 
   // ---------- Small helpers ----------
   const $ = (sel, scope) => (scope || document).querySelector(sel);
@@ -16,36 +17,28 @@
     return t.content.firstElementChild;
   }
 
-  // ---------- Ship silhouettes ----------
-  const SHIPS = {
-    xwing: '<rect x="46" y="8" width="8" height="72" rx="3"/><path d="M14 58h72l-6 13H20z"/><rect x="10" y="28" width="4" height="46" rx="1"/><rect x="86" y="28" width="4" height="46" rx="1"/><circle cx="36" cy="77" r="5"/><circle cx="64" cy="77" r="5"/><rect x="47.5" y="22" width="5" height="8" rx="2" fill="rgba(0,0,0,.45)"/>',
-    ywing: '<ellipse cx="50" cy="22" rx="11" ry="13"/><rect x="46.5" y="30" width="7" height="30"/><rect x="18" y="55" width="64" height="7" rx="2"/><rect x="17" y="38" width="10" height="54" rx="5"/><rect x="73" y="38" width="10" height="54" rx="5"/><circle cx="50" cy="19" r="4" fill="rgba(0,0,0,.45)"/>',
-    awing: '<path d="M50 8 86 82 62 74 50 80 38 74 14 82z"/><rect x="10" y="50" width="7" height="34" rx="2"/><rect x="83" y="50" width="7" height="34" rx="2"/><path d="M50 34l6 16H44z" fill="rgba(0,0,0,.45)"/>',
-    bwing: '<rect x="46" y="6" width="8" height="88" rx="2"/><circle cx="50" cy="16" r="9"/><path d="M18 58h64l-6 9H24z"/><rect x="14" y="54" width="6" height="18" rx="2"/><rect x="80" y="54" width="6" height="18" rx="2"/><circle cx="50" cy="16" r="4" fill="rgba(0,0,0,.45)"/>',
-    falcon: '<circle cx="50" cy="56" r="33"/><rect x="36" y="8" width="10" height="30" rx="2"/><rect x="54" y="8" width="10" height="30" rx="2"/><rect x="46" y="14" width="8" height="24" fill="#070a12"/><rect x="80" y="36" width="14" height="9" rx="4"/><circle cx="50" cy="56" r="9" fill="rgba(0,0,0,.35)"/><rect x="24" y="80" width="52" height="5" rx="2" fill="rgba(90,180,255,.8)"/>',
-    tie: '<path d="M14 10 24 28v44L14 90 4 72V28z"/><path d="M86 10 96 28v44L86 90 76 72V28z"/><rect x="22" y="46" width="56" height="8"/><circle cx="50" cy="50" r="17"/><circle cx="50" cy="50" r="8" fill="rgba(0,0,0,.45)"/>',
-    tieadv: '<path d="M6 16 28 38v24L6 84l8-34z"/><path d="M94 16 72 38v24L94 84l-8-34z"/><rect x="26" y="46" width="48" height="8"/><circle cx="50" cy="50" r="16"/><rect x="42" y="30" width="16" height="10" rx="3"/><circle cx="50" cy="50" r="7" fill="rgba(0,0,0,.45)"/>',
-    tiebomber: '<path d="M12 12 22 28v44L12 88 4 72V28z"/><path d="M88 12 96 28v44L88 88 78 72V28z"/><rect x="20" y="46" width="60" height="8"/><ellipse cx="40" cy="50" rx="11" ry="20"/><ellipse cx="61" cy="52" rx="9" ry="24"/><circle cx="40" cy="42" r="5" fill="rgba(0,0,0,.45)"/>',
-    shuttle: '<rect x="46" y="6" width="8" height="54" rx="2"/><path d="M42 58 16 90l9 3 25-28z"/><path d="M58 58 84 90l-9 3-25-28z"/><rect x="36" y="54" width="28" height="18" rx="5"/><rect x="42" y="58" width="16" height="6" rx="2" fill="rgba(0,0,0,.45)"/>',
-    slave: '<ellipse cx="50" cy="48" rx="24" ry="38"/><path d="M26 68 10 90l20-6z"/><path d="M74 68 90 90l-20-6z"/><circle cx="50" cy="26" r="7" fill="rgba(0,0,0,.45)"/><rect x="38" y="80" width="24" height="6" rx="2" fill="rgba(90,180,255,.8)"/>',
-  };
-
-  function shipSvg(shape) {
-    return `<svg viewBox="0 0 100 100" fill="currentColor" aria-hidden="true">${SHIPS[shape] || SHIPS.xwing}</svg>`;
-  }
-
   function initials(name) {
-    const words = name.replace(/[^A-Za-z0-9\- ]/g, '').split(/[\s-]+/).filter(Boolean);
+    const words = name.replace(/^(The|Darth|Count|General|Grand Moff|Grand Admiral|Emperor|Lord) /, '').replace(/[^A-Za-z0-9\- ]/g, '').split(/[\s-]+/).filter(Boolean);
     if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
     return (words[0][0] + words[words.length - 1][0]).toUpperCase();
   }
 
-  function portrait(def) {
-    if (def.kind === 'ship') {
-      return `<div class="portrait ship ${def.faction}">${shipSvg(def.shape)}<span class="faction-mark"></span><span class="role-badge" title="${def.role}">${D.ROLE_ICONS[def.role]}</span></div>`;
-    }
-    const saber = ['#3d7be8', '#46c46a', '#e23b3b', '#8f5de8'].includes(def.accent) ? '<span class="saber"></span>' : '';
-    return `<div class="portrait char ${def.faction}" style="--accent:${def.accent}"><span class="initials">${initials(def.name)}</span>${saber}<span class="faction-mark"></span><span class="role-badge" title="${def.role}">${D.ROLE_ICONS[def.role]}</span></div>`;
+  // Currency chip: icon + amount.
+  function cur(key, amount, cls) {
+    return `<span class="cur cur-${key} ${cls || ''}" title="${D.CURRENCIES[key].name}">${Art.ICONS[key]}<b>${fmt(amount)}</b></span>`;
+  }
+  function costLabel(cost) {
+    const key = cost.aurodium ? 'aurodium' : cost.crystals ? 'crystals' : 'credits';
+    return cur(key, cost[key]);
+  }
+
+  // Cover art with the name plate along the bottom and initials in the corner.
+  function portrait(def, opts = {}) {
+    return `<div class="portrait ${def.kind} ${def.faction} ${def.boss ? 'is-boss' : ''}">
+      ${Art.unitArt(def)}
+      <span class="monogram" title="${def.faction === 'light' ? 'Light Side' : 'Dark Side'}">${initials(def.name)}</span>
+      ${opts.plate === false ? '' : `<span class="nameplate"><i title="${def.role}">${D.ROLE_ICONS[def.role]}</i>${esc(def.name)}</span>`}
+    </div>`;
   }
 
   function stars(n) {
@@ -66,13 +59,12 @@
       shard = `<div class="shardbar ${u.shards >= need ? 'ready' : ''}" title="${u.shards}/${need} shards"><i style="width:${pct}%"></i></div>`;
     }
     const tag = opts.tag || 'button';
-    return `<${tag} class="ucard rarity-${def.rarity} ${owned ? '' : 'locked'} ${opts.selected ? 'selected' : ''}" data-id="${def.id}" ${tag === 'button' ? 'type="button"' : ''}>
+    return `<${tag} class="ucard rarity-${def.rarity} ${owned ? '' : 'locked'} ${opts.selected ? 'selected' : ''} ${opts.holo ? 'holo' : ''}" data-id="${def.id}" ${tag === 'button' ? `type="button" aria-label="${esc(def.name)}"` : ''}>
       ${opts.badge ? `<span class="sel-badge">${opts.badge}</span>` : ''}
       ${portrait(def)}
       <div class="ucard-body">
-        <div class="ucard-name">${esc(def.name)}</div>
         <div class="ucard-meta"><span class="rar">${D.RARITIES[def.rarity].label}</span><span>${owned ? 'Lv ' + level : 'Locked'}</span></div>
-        ${owned ? stars(starCount) : ''}
+        ${owned ? stars(starCount) : '<span class="muted" style="font-size:12px">Find in the Black Market</span>'}
         ${owned ? `<div class="ucard-meta"><span class="power">⚡ ${fmt(D.power(def, level, starCount))}</span><span>${def.kind === 'ship' ? 'Ship' : 'Hero'}</span></div>` : ''}
         ${shard}
       </div>
@@ -80,7 +72,7 @@
   }
 
   function miniPortrait(def) {
-    return `<span class="mini" title="${esc(def.name)}">${portrait(def)}</span>`;
+    return `<span class="mini ${def.boss ? 'boss-mini' : ''}" title="${esc(def.name)}">${portrait(def, { plate: false })}</span>`;
   }
 
   // ---------- Toasts and modals ----------
@@ -91,7 +83,7 @@
   }
 
   function openModal(html, opts = {}) {
-    const backdrop = el(`<div class="modal-backdrop"><div class="modal ${opts.small ? 'small' : ''}" role="dialog" aria-modal="true">${html}</div></div>`);
+    const backdrop = el(`<div class="modal-backdrop"><div class="modal ${opts.cls || ''} ${opts.small ? 'small' : ''}" role="dialog" aria-modal="true">${html}</div></div>`);
     const close = () => {
       backdrop.remove();
       document.removeEventListener('keydown', onKey);
@@ -99,13 +91,14 @@
     };
     const onKey = (e) => {
       if (e.key === 'Escape' && opts.dismissable !== false) close();
+      if (opts.onKey) opts.onKey(e);
     };
     backdrop.addEventListener('click', (e) => {
       if (e.target === backdrop && opts.dismissable !== false) close();
     });
     document.addEventListener('keydown', onKey);
     $('#modal-root').appendChild(backdrop);
-    const first = backdrop.querySelector('button');
+    const first = backdrop.querySelector('[data-autofocus]') || backdrop.querySelector('button');
     if (first) first.focus({ preventScroll: true });
     return { root: backdrop, close };
   }
@@ -132,14 +125,15 @@
   }
 
   // ---------- Wallet ----------
-  let lastWallet = { credits: null, crystals: null };
+  const lastWallet = {};
   function updateWallet() {
     const s = Player.state;
-    for (const key of ['credits', 'crystals']) {
+    for (const key of ['credits', 'crystals', 'aurodium']) {
       const node = $('#' + key);
+      if (!node) continue;
       node.textContent = fmt(s[key]);
-      if (lastWallet[key] !== null && lastWallet[key] !== s[key]) {
-        const chip = node.parentElement;
+      if (lastWallet[key] != null && lastWallet[key] !== s[key]) {
+        const chip = node.closest('.currency');
         chip.classList.remove('bump');
         void chip.offsetWidth;
         chip.classList.add('bump');
@@ -148,16 +142,11 @@
     }
   }
 
-  function costLabel(cost) {
-    if (cost.crystals) return `<span class="cost">◆ ${fmt(cost.crystals)}</span>`;
-    return `<span class="cost">¢ ${fmt(cost.credits)}</span>`;
-  }
-
   // ---------- Router ----------
   const App = {
     current: null,
     params: {},
-    ui: { collectionKind: 'all', collectionFaction: 'all', campaignKind: 'character' },
+    ui: { collectionKind: 'all', collectionFaction: 'all', collectionSort: 'strong', campaignKind: 'character', betIndex: 0 },
 
     go(screen, params) {
       if (App.battleActive && screen !== 'battle') return;
@@ -169,8 +158,7 @@
       });
       const container = $('#screen');
       container.innerHTML = '';
-      const view = Screens[screen](App.params);
-      container.appendChild(view);
+      container.appendChild(Screens[screen](App.params));
       updateWallet();
       window.scrollTo({ top: 0 });
     },
@@ -188,58 +176,39 @@
     const owned = Object.keys(s.units).length;
     const totalStages = D.CAMPAIGNS.character.stages.length + D.CAMPAIGNS.ship.stages.length;
     const cleared = s.progress.character + s.progress.ship;
-    const topPower = Object.entries(s.units)
-      .map(([id, u]) => D.power(D.UNIT_MAP[id], u.level, u.stars))
-      .sort((a, b) => b - a).slice(0, 5).reduce((a, b) => a + b, 0);
+    const bossesBeaten = Object.keys(s.bosses).length;
+    const showcase = ['vader', 'yoda', 'falcon', 'boba_fett', 'tie_advanced']
+      .map((id, i) => `<div class="showcase-card sc-${i}">${portrait(D.UNIT_MAP[id])}</div>`).join('');
 
     const v = el(`<section class="view">
       <div class="hero">
-        <div>
+        <div class="hero-copy">
           <p class="eyebrow">A long time ago, in a galaxy far, far away…</p>
           <h1>Build your squad.<br><em>Command the galaxy.</em></h1>
           <p>Collect heroes, villains and starfighters. Level them up, earn stars, and lead them into turn-based battles where every ability counts and every ultimate is a showstopper.</p>
           <div class="hero-actions">
             <button class="btn btn-primary" type="button" data-go="campaign" data-kind="character">Ground Battle</button>
             <button class="btn" type="button" data-go="campaign" data-kind="ship">Fleet Battle</button>
-            <button class="btn" type="button" data-go="shop">Open Packs</button>
+            <button class="btn" type="button" data-go="campaign" data-kind="boss">Boss Battles</button>
           </div>
         </div>
-        <div class="crawl-window" aria-hidden="true">
-          <div class="crawl"><div class="crawl-inner">
-            <h3>EPISODE ${cleared + 1}</h3>
-            <h2>SQUAD COMMANDER</h2>
-            <p>The galaxy is at war. Imperial forces tighten their grip on the Outer Rim while Sith Lords gather in the shadows.</p>
-            <p>A new commander has risen, recruiting rebels, smugglers, droids and even rogue troopers from across the stars.</p>
-            <p>With a handful of credits and a battered starfighter wing, you must build a squad strong enough to face the Emperor himself…</p>
-          </div></div>
-        </div>
+        <div class="showcase" aria-hidden="true">${showcase}</div>
       </div>
 
       <div class="stat-row">
         <div class="stat"><b>${owned}/${D.UNITS.length}</b><span>Units collected</span></div>
         <div class="stat"><b>${cleared}/${totalStages}</b><span>Stages cleared</span></div>
-        <div class="stat"><b>${fmt(topPower)}</b><span>Top-5 squad power</span></div>
-        <div class="stat"><b>${s.stats.battlesWon}</b><span>Battles won</span></div>
+        <div class="stat"><b>${bossesBeaten}/${D.BOSS_ENCOUNTERS.length}</b><span>Bosses defeated</span></div>
+        <div class="stat"><b>${s.stats.bestSpin}×</b><span>Luckiest spin</span></div>
       </div>
 
       <div class="mode-grid">
-        <button class="mode-card" type="button" data-go="campaign" data-kind="character">
-          <p class="eyebrow">Ground Campaign</p>
-          <h3>Heroes & Villains</h3>
-          <p>Squads of 4. From the dunes of Tatooine to the Emperor's throne room. Stage ${Math.min(s.progress.character + 1, D.CAMPAIGNS.character.stages.length)} of ${D.CAMPAIGNS.character.stages.length}.</p>
-          <span class="mode-art">${shipSvg('bwing').replace('viewBox', 'style="transform:rotate(30deg)" viewBox')}</span>
-        </button>
-        <button class="mode-card" type="button" data-go="campaign" data-kind="ship">
-          <p class="eyebrow">Fleet Campaign</p>
-          <h3>Starfighter Combat</h3>
-          <p>Wings of 3. Dogfight TIEs, bounty hunters and Vader's own TIE Advanced. Stage ${Math.min(s.progress.ship + 1, D.CAMPAIGNS.ship.stages.length)} of ${D.CAMPAIGNS.ship.stages.length}.</p>
-          <span class="mode-art">${shipSvg('xwing')}</span>
-        </button>
-        <button class="mode-card" type="button" data-go="collection">
-          <p class="eyebrow">Collection</p>
-          <h3>Your Roster</h3>
-          <p>Upgrade levels with credits and unlock stars with shards from duplicate cards.</p>
-          <span class="mode-art">${shipSvg('falcon')}</span>
+        ${modeCard('character', 'Ground Campaign', 'Heroes & Villains', `Squads of 4. Stage ${Math.min(s.progress.character + 1, D.CAMPAIGNS.character.stages.length)} of ${D.CAMPAIGNS.character.stages.length}.`, 'luke')}
+        ${modeCard('ship', 'Fleet Campaign', 'Starfighter Combat', `Wings of 3. Stage ${Math.min(s.progress.ship + 1, D.CAMPAIGNS.ship.stages.length)} of ${D.CAMPAIGNS.ship.stages.length}.`, 'x_wing')}
+        ${modeCard('boss', 'Boss Battles', 'Giant Threats', `Rancors, dragons, Star Destroyers. ${bossesBeaten} of ${D.BOSS_ENCOUNTERS.length} defeated.`, 'rancor')}
+        <button class="mode-card market-card" type="button" data-go="market">
+          <span class="mode-art">${Art.merchantArt()}</span>
+          <span class="mode-text"><span class="eyebrow">Black Market</span><h3>No Questions Asked</h3><span class="muted">Crates, hot stock, lucky charms and a Sabacc table.</span></span>
         </button>
       </div>
 
@@ -263,41 +232,72 @@
     return v;
   };
 
+  function modeCard(kind, eyebrow, title, text, artId) {
+    return `<button class="mode-card" type="button" data-go="campaign" data-kind="${kind}">
+      <span class="mode-art">${Art.unitArt(D.UNIT_MAP[artId])}</span>
+      <span class="mode-text"><span class="eyebrow">${eyebrow}</span><h3>${title}</h3><span class="muted">${text}</span></span>
+    </button>`;
+  }
+
   Screens.campaign = function () {
     const kind = App.ui.campaignKind;
-    const camp = D.CAMPAIGNS[kind];
-    const progress = Player.state.progress[kind];
-    const stagesHtml = camp.stages.map((st, i) => {
-      const state = i < progress ? 'cleared' : i === progress ? 'current' : 'locked';
-      const r = D.stageRewards(kind, i);
-      const enemyPower = st.enemies.reduce((a, id) => a + D.power(D.UNIT_MAP[id], st.level, 1), 0);
-      return `<button class="stage ${state}" type="button" data-stage="${i}" ${state === 'locked' ? 'disabled' : ''}>
-        <span class="stage-num">${state === 'cleared' ? '✓' : i + 1}</span>
-        <span>
-          <h3>${esc(st.name)}</h3>
-          <span class="stage-info">
-            <span>Enemy Lv ${st.level}</span>
-            <span>⚡ ${fmt(enemyPower)}</span>
-            <span>¢ ${fmt(r.credits)}</span>
-            ${state !== 'cleared' ? `<span style="color:var(--epic)">◆ ${r.firstClearCrystals} first clear</span>` : ''}
+    const isBoss = kind === 'boss';
+    let listHtml;
+    if (isBoss) {
+      listHtml = `<div class="boss-grid">${D.BOSS_ENCOUNTERS.map((enc) => {
+        const def = D.UNIT_MAP[enc.id];
+        const unlocked = Player.bossUnlocked(enc);
+        const wins = Player.state.bosses[enc.id] || 0;
+        const r = D.bossRewards(enc, !wins);
+        const need = `Clear ${D.CAMPAIGNS[enc.unlock.kind].name} stage ${enc.unlock.stage}`;
+        return `<button class="boss-card ${unlocked ? '' : 'locked'}" type="button" data-boss="${enc.id}" ${unlocked ? '' : 'disabled'}>
+          <span class="boss-art">${Art.unitArt(def)}</span>
+          <span class="boss-info">
+            <span class="eyebrow">${enc.kind === 'ship' ? 'Fleet boss' : 'Ground boss'} · Lv ${enc.level}</span>
+            <h3>${esc(enc.name)}</h3>
+            <span class="muted">${esc(def.name)} · ${esc(enc.place)}</span>
+            <span class="boss-rewards">${cur('credits', r.credits)}${cur('aurodium', r.aurodium)}${r.kyber ? cur('crystals', r.kyber) : ''}${r.card ? '<span class="tag">+ Epic/Legendary card</span>' : ''}</span>
+            <span class="boss-status">${unlocked ? (wins ? `Defeated ${wins}×` : 'Not yet defeated') : `🔒 ${need}`}</span>
           </span>
-        </span>
-        <span class="mini-row">${st.enemies.map((id) => miniPortrait(D.UNIT_MAP[id])).join('')}</span>
-      </button>`;
-    }).join('');
+        </button>`;
+      }).join('')}</div>`;
+    } else {
+      const camp = D.CAMPAIGNS[kind];
+      const progress = Player.state.progress[kind];
+      listHtml = `<div class="stage-list">${camp.stages.map((st, i) => {
+        const state = i < progress ? 'cleared' : i === progress ? 'current' : 'locked';
+        const r = D.stageRewards(kind, i);
+        const enemyPower = st.enemies.reduce((a, id) => a + D.power(D.UNIT_MAP[id], st.level, 1), 0);
+        return `<button class="stage ${state}" type="button" data-stage="${i}" ${state === 'locked' ? 'disabled' : ''}>
+          <span class="stage-num">${state === 'cleared' ? '✓' : i + 1}</span>
+          <span>
+            <h3>${esc(st.name)}</h3>
+            <span class="stage-info">
+              <span>Enemy Lv ${st.level}</span>
+              <span>⚡ ${fmt(enemyPower)}</span>
+              ${cur('credits', r.credits)}
+              ${state !== 'cleared' ? `<span class="first-clear">${cur('crystals', r.firstClearCrystals)} first clear</span>` : ''}
+            </span>
+          </span>
+          <span class="mini-row">${st.enemies.map((id) => miniPortrait(D.UNIT_MAP[id])).join('')}</span>
+        </button>`;
+      }).join('')}</div>`;
+    }
 
+    const title = isBoss ? 'Boss Battles' : D.CAMPAIGNS[kind].name;
     const v = el(`<section class="view">
       <div class="view-head">
         <div>
-          <p class="eyebrow">Choose your battle</p>
-          <h1>${camp.name}</h1>
+          <p class="eyebrow">${isBoss ? 'Enrage below 50% HP · immune to Stun' : 'Choose your battle'}</p>
+          <h1>${title}</h1>
         </div>
         <div class="seg" role="tablist">
           <button type="button" data-kind="character" class="${kind === 'character' ? 'active' : ''}">Ground</button>
           <button type="button" data-kind="ship" class="${kind === 'ship' ? 'active' : ''}">Fleet</button>
+          <button type="button" data-kind="boss" class="${isBoss ? 'active' : ''}">Bosses</button>
         </div>
       </div>
-      <div class="stage-list">${stagesHtml}</div>
+      ${listHtml}
     </section>`);
 
     v.addEventListener('click', (e) => {
@@ -308,32 +308,37 @@
         return;
       }
       const st = e.target.closest('[data-stage]');
-      if (st && !st.disabled) App.go('squad', { kind, stage: Number(st.dataset.stage) });
+      if (st && !st.disabled) return App.go('squad', { type: 'stage', kind, stage: Number(st.dataset.stage) });
+      const b = e.target.closest('[data-boss]');
+      if (b && !b.disabled) App.go('squad', { type: 'boss', boss: b.dataset.boss });
     });
     return v;
   };
 
-  Screens.squad = function ({ kind, stage }) {
-    const st = D.CAMPAIGNS[kind].stages[stage];
+  Screens.squad = function (params) {
+    const enc = Player.encounter(params);
+    const kind = enc.kind;
     const size = D.SQUAD_SIZE[kind];
     let squad = Player.state.squads[kind].filter((id) => Player.owns(id) && D.UNIT_MAP[id].kind === kind).slice(0, size);
+    const enemyPower = enc.enemies.reduce((a, id) => a + D.power(D.UNIT_MAP[id], enc.level, 1), 0);
 
     const v = el(`<section class="view squad-layout">
       <div class="view-head">
         <div>
-          <p class="eyebrow">Stage ${stage + 1} · ${D.CAMPAIGNS[kind].name}</p>
-          <h1>${esc(st.name)}</h1>
+          <p class="eyebrow">${esc(enc.label)}</p>
+          <h1>${esc(enc.name)}</h1>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn" type="button" data-back>Back</button>
+          <button class="btn" type="button" data-auto-build title="Pick your strongest balanced squad">⚙ Auto-build</button>
           <button class="btn btn-primary" type="button" data-fight>Engage</button>
         </div>
       </div>
-      <div class="versus">
+      <div class="versus ${enc.type === 'boss' ? 'boss-versus' : ''}">
         <div><div class="side-label"><span>Your squad</span><b data-mypower></b></div><div class="slots" data-slots style="--n:${size}"></div></div>
         <div class="vs">VS</div>
-        <div><div class="side-label"><span>Enemy · Lv ${st.level}</span><b>⚡ ${fmt(st.enemies.reduce((a, id) => a + D.power(D.UNIT_MAP[id], st.level, 1), 0))}</b></div>
-          <div class="slots" style="--n:${size}">${st.enemies.map((id) => `<div class="slot filled">${portrait(D.UNIT_MAP[id])}<span class="slot-name">${esc(D.UNIT_MAP[id].name)}</span></div>`).join('')}</div>
+        <div><div class="side-label"><span>Enemy · Lv ${enc.level}</span><b>⚡ ${fmt(enemyPower)}</b></div>
+          <div class="slots" style="--n:${Math.max(enc.enemies.length, 1)}">${enc.enemies.map((id) => `<div class="slot filled ${D.UNIT_MAP[id].boss ? 'boss-slot' : ''}">${portrait(D.UNIT_MAP[id])}</div>`).join('')}</div>
         </div>
       </div>
       <div>
@@ -348,13 +353,14 @@
       for (let i = 0; i < size; i++) {
         const id = squad[i];
         slots.insertAdjacentHTML('beforeend', id
-          ? `<div class="slot filled" data-remove="${id}" title="Remove">${portrait(D.UNIT_MAP[id])}<span class="slot-name">${esc(D.UNIT_MAP[id].name)}</span></div>`
+          ? `<div class="slot filled" data-remove="${id}" title="Remove">${portrait(D.UNIT_MAP[id])}</div>`
           : '<div class="slot">Empty</div>');
       }
-      const power = squad.reduce((a, id) => a + D.power(D.UNIT_MAP[id], Player.unit(id).level, Player.unit(id).stars), 0);
-      $('[data-mypower]', v).textContent = '⚡ ' + fmt(power);
-      const roster = D.UNITS.filter((u) => u.kind === kind && Player.owns(u.id))
-        .sort((a, b) => D.power(b, Player.unit(b.id).level, Player.unit(b.id).stars) - D.power(a, Player.unit(a.id).level, Player.unit(a.id).stars));
+      const power = squad.reduce((a, id) => a + Player.powerOf(id), 0);
+      const mp = $('[data-mypower]', v);
+      mp.textContent = '⚡ ' + fmt(power);
+      mp.className = power >= enemyPower ? 'good' : power >= enemyPower * 0.8 ? 'close' : 'bad';
+      const roster = D.UNITS.filter((u) => u.kind === kind && Player.owns(u.id)).sort((a, b) => Player.powerOf(b.id) - Player.powerOf(a.id));
       $('[data-roster]', v).innerHTML = roster.map((def) => {
         const idx = squad.indexOf(def.id);
         return unitCard(def, { selected: idx >= 0, badge: idx >= 0 ? idx + 1 : null, hideShards: true });
@@ -364,9 +370,14 @@
 
     v.addEventListener('click', (e) => {
       if (e.target.closest('[data-back]')) return App.go('campaign');
+      if (e.target.closest('[data-auto-build]')) {
+        squad = Player.autoSquad(kind);
+        toast('Auto-built your strongest squad.');
+        return render();
+      }
       if (e.target.closest('[data-fight]')) {
         Player.setSquad(kind, squad);
-        root.BattleUI.start(kind, stage);
+        root.BattleUI.start(params);
         return;
       }
       const rem = e.target.closest('[data-remove]');
@@ -382,6 +393,17 @@
     return v;
   };
 
+  const SORTS = {
+    strong: { label: 'Strongest', fn: (a, b) => sortPower(b) - sortPower(a) },
+    weak: { label: 'Weakest', fn: (a, b) => sortPower(a) - sortPower(b) },
+    rarity: { label: 'Rarity', fn: (a, b) => D.RARITIES[b.rarity].weight - D.RARITIES[a.rarity].weight || sortPower(b) - sortPower(a) },
+    name: { label: 'A–Z', fn: (a, b) => a.name.localeCompare(b.name) },
+  };
+  // Unowned units sort by their level-1 power so locked cards still order sensibly.
+  function sortPower(def) {
+    return Player.owns(def.id) ? Player.powerOf(def.id) : D.power(def, 1, 1);
+  }
+
   Screens.collection = function () {
     const ui = App.ui;
     const v = el(`<section class="view">
@@ -390,12 +412,15 @@
           <p class="eyebrow">${Object.keys(Player.state.units).length} of ${D.UNITS.length} collected</p>
           <h1>Collection</h1>
         </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <div class="filters-row">
           <div class="seg" data-filter="kind">
             <button type="button" data-v="all">All</button><button type="button" data-v="character">Heroes</button><button type="button" data-v="ship">Ships</button>
           </div>
           <div class="seg" data-filter="faction">
             <button type="button" data-v="all">Both</button><button type="button" data-v="light">Light</button><button type="button" data-v="dark">Dark</button>
+          </div>
+          <div class="seg" data-filter="sort" aria-label="Sort">
+            ${Object.entries(SORTS).map(([k, s]) => `<button type="button" data-v="${k}">${k === 'strong' ? '▼ ' : k === 'weak' ? '▲ ' : ''}${s.label}</button>`).join('')}
           </div>
         </div>
       </div>
@@ -405,16 +430,14 @@
     function render() {
       $$('[data-filter="kind"] button', v).forEach((b) => b.classList.toggle('active', b.dataset.v === ui.collectionKind));
       $$('[data-filter="faction"] button', v).forEach((b) => b.classList.toggle('active', b.dataset.v === ui.collectionFaction));
-      const rarityOrder = { legendary: 0, epic: 1, rare: 2, common: 3 };
+      $$('[data-filter="sort"] button', v).forEach((b) => b.classList.toggle('active', b.dataset.v === ui.collectionSort));
       const list = D.UNITS
         .filter((u) => ui.collectionKind === 'all' || u.kind === ui.collectionKind)
         .filter((u) => ui.collectionFaction === 'all' || u.faction === ui.collectionFaction)
         .sort((a, b) => {
           const oa = Player.owns(a.id) ? 0 : 1;
           const ob = Player.owns(b.id) ? 0 : 1;
-          if (oa !== ob) return oa - ob;
-          if (!oa) return D.power(b, Player.unit(b.id).level, Player.unit(b.id).stars) - D.power(a, Player.unit(a.id).level, Player.unit(a.id).stars);
-          return rarityOrder[a.rarity] - rarityOrder[b.rarity];
+          return oa - ob || SORTS[ui.collectionSort].fn(a, b);
         });
       $('[data-grid]', v).innerHTML = list.map((def) => unitCard(def)).join('');
     }
@@ -424,125 +447,284 @@
       if (f) {
         const which = f.parentElement.dataset.filter;
         if (which === 'kind') ui.collectionKind = f.dataset.v;
-        else ui.collectionFaction = f.dataset.v;
+        else if (which === 'faction') ui.collectionFaction = f.dataset.v;
+        else ui.collectionSort = f.dataset.v;
         render();
         return;
       }
       const card = e.target.closest('.ucard');
-      if (card) unitDetail(card.dataset.id, render);
+      if (card) inspect(card.dataset.id, render);
     });
     render();
     return v;
   };
 
-  function abilityListHtml(def, level, starCount) {
-    const all = D.abilitiesFor(def);
-    return all.map((ab, i) => `
-      <div class="ability ${ab.ultimate ? 'ult' : ''}">
-        <span class="ability-icon">${ab.ultimate ? '★' : i === 0 ? 'B' : 'S' + i}</span>
-        <div>
-          <h4>${esc(ab.name)} <small>${ab.ultimate ? 'Ultimate · charges in battle' : ab.cd ? `Special · ${ab.cd}-turn cooldown` : 'Basic'}</small></h4>
-          <p>${esc(ab.desc)}</p>
-          ${ab.ultimate && ab.quote ? `<q>${esc(ab.quote)}</q>` : ''}
-        </div>
-      </div>`).join('');
-  }
-
-  function unitDetail(id, onChange) {
+  // ---------- Card inspector ----------
+  // Center: the card (tap to flip to its description). Swipe or use the
+  // arrows: left page shows stats, right page shows upgrades.
+  function inspect(id, onChange) {
     const def = D.UNIT_MAP[id];
-    let m;
-    function body() {
+    let page = 1;
+    let flipped = false;
+
+    function statsPage() {
       const owned = Player.owns(id);
       const u = Player.unit(id) || { level: 1, stars: 1, shards: 0 };
       const s = D.unitStats(def, u.level, u.stars);
+      const max = D.unitStats(def, D.MAX_LEVEL, D.MAX_STARS);
+      const bar = (label, val, cap, color) => `<div class="statbar"><span>${label}</span><b>${fmt(val)}</b><i><em style="width:${Math.min(100, (val / cap) * 100)}%;background:${color}"></em></i></div>`;
+      return `<div class="ipage-inner">
+        <p class="eyebrow">Stats · ${owned ? `Level ${u.level} · ${u.stars}★` : 'Level 1 preview'}</p>
+        <h2>${esc(def.name)}</h2>
+        <div class="power-big">⚡ ${fmt(D.power(def, u.level, u.stars))}<span>power</span></div>
+        ${bar('Health', s.hp, max.hp, '#52e08a')}
+        ${bar('Attack', s.atk, max.atk, '#ff6b6b')}
+        ${bar('Armor', s.def, max.def, '#5ab4ff')}
+        ${bar('Speed', s.spd, 200, '#ffd23f')}
+        <dl class="facts">
+          <div><dt>Role</dt><dd>${D.ROLE_ICONS[def.role]} ${def.role}</dd></div>
+          <div><dt>Side</dt><dd>${def.faction === 'light' ? 'Light Side' : 'Dark Side'}</dd></div>
+          <div><dt>Type</dt><dd>${def.kind === 'ship' ? 'Ship' : 'Character'}</dd></div>
+          <div><dt>Rarity</dt><dd style="color:var(--${def.rarity})">${D.RARITIES[def.rarity].label}</dd></div>
+        </dl>
+      </div>`;
+    }
+
+    function cardPage() {
+      const owned = Player.owns(id);
+      const u = Player.unit(id) || { level: 1, stars: 1 };
+      const abilities = D.abilitiesFor(def);
+      return `<div class="bigcard-wrap">
+        <div class="bigcard rarity-${def.rarity} ${flipped ? 'flipped' : ''} ${owned ? '' : 'locked'}" data-flip tabindex="0" role="button" aria-label="Flip card">
+          <div class="bigface front">
+            ${portrait(def)}
+            <div class="bigcard-foot"><span class="rar">${D.RARITIES[def.rarity].label}</span>${owned ? stars(u.stars) : '<span class="muted">Not recruited</span>'}</div>
+          </div>
+          <div class="bigface back">
+            <p class="eyebrow">${def.faction === 'light' ? 'Light Side' : 'Dark Side'} · ${def.role}</p>
+            <h3>${esc(def.name)}</h3>
+            <p class="bio">${esc(D.BIOS[def.id] || '')}</p>
+            <ul class="mini-abilities">${abilities.map((ab, i) => `<li class="${ab.ultimate ? 'ult' : ''}"><b>${ab.ultimate ? '★ ' : ''}${esc(ab.name)}</b><span>${ab.ultimate ? 'Ultimate' : ab.cd ? `${ab.cd}-turn cooldown` : 'Basic'}</span><p>${esc(ab.desc)}</p>${ab.quote ? `<q>${esc(ab.quote)}</q>` : ''}</li>`).join('')}</ul>
+          </div>
+        </div>
+        <p class="hint">Tap the card to flip it · swipe or use ‹ › for stats</p>
+      </div>`;
+    }
+
+    function upgradePage() {
+      const owned = Player.owns(id);
+      if (!owned) {
+        return `<div class="ipage-inner"><p class="eyebrow">Upgrades</p><h2>Not recruited</h2><p class="muted">Open crates in the Black Market or watch its Hot Stock to recruit ${esc(def.name)}.</p></div>`;
+      }
+      const u = Player.unit(id);
       const maxLevel = u.level >= D.MAX_LEVEL;
       const maxStars = u.stars >= D.MAX_STARS;
       const lvlCost = D.levelCost(u.level);
       const starNeed = maxStars ? 0 : D.STAR_COSTS[u.stars - 1];
-      return `
-        <div class="detail">
-          ${portrait(def)}
-          <div style="display:grid;gap:10px;align-content:start;min-width:0">
-            <p class="eyebrow" style="color:var(--${def.rarity})">${D.RARITIES[def.rarity].label} · ${def.faction === 'light' ? 'Light Side' : 'Dark Side'} · ${def.kind === 'ship' ? 'Ship' : 'Character'} · ${def.role}</p>
-            <h2>${esc(def.name)}</h2>
-            ${owned ? `<div>${stars(u.stars)} <span class="muted">Level ${u.level}/${D.MAX_LEVEL} · ⚡ ${fmt(D.power(def, u.level, u.stars))}</span></div>` : '<p class="muted">Not yet recruited. Find this unit in packs or the daily deal.</p>'}
-            <div class="statgrid">
-              <div><span>Health</span><b>${fmt(s.hp)}</b></div>
-              <div><span>Attack</span><b>${fmt(s.atk)}</b></div>
-              <div><span>Armor</span><b>${fmt(s.def)}</b></div>
-              <div><span>Speed</span><b>${fmt(s.spd)}</b></div>
-            </div>
+      const next = D.unitStats(def, Math.min(D.MAX_LEVEL, u.level + 1), u.stars);
+      const nowS = D.unitStats(def, u.level, u.stars);
+      return `<div class="ipage-inner">
+        <p class="eyebrow">Upgrades</p>
+        <h2>${esc(def.name)}</h2>
+        <div class="upgrade">
+          <b>Level ${u.level} / ${D.MAX_LEVEL}</b>
+          <span class="muted">${maxLevel ? 'Max level reached.' : `Next level: Health ${fmt(nowS.hp)} → ${fmt(next.hp)}, Attack ${fmt(nowS.atk)} → ${fmt(next.atk)}`}</span>
+          <button class="btn btn-primary" type="button" data-level ${maxLevel || Player.state.credits < lvlCost ? 'disabled' : ''}>${maxLevel ? 'Maxed' : `Train · ${cur('credits', lvlCost)}`}</button>
+        </div>
+        <div class="upgrade">
+          <b>${stars(u.stars)}</b>
+          <span class="muted">${maxStars ? 'Max stars reached.' : `Shards ${u.shards}/${starNeed}. Duplicates and Hot Stock give shards.`}</span>
+          ${maxStars ? '' : `<div class="shardbar ${u.shards >= starNeed ? 'ready' : ''}"><i style="width:${Math.min(100, (u.shards / starNeed) * 100)}%"></i></div>`}
+          <button class="btn" type="button" data-star ${maxStars || u.shards < starNeed ? 'disabled' : ''}>${maxStars ? 'Maxed' : `Promote to ${u.stars + 1}★`}</button>
+        </div>
+      </div>`;
+    }
+
+    const labels = ['Stats', 'Card', 'Upgrades'];
+    function body() {
+      return `<div class="inspect">
+        <div class="inspect-top">
+          <button class="icon-btn" type="button" data-prev aria-label="Previous page">‹</button>
+          <div class="pager">${labels.map((l, i) => `<button type="button" data-page="${i}" class="${i === page ? 'active' : ''}">${l}</button>`).join('')}</div>
+          <button class="icon-btn" type="button" data-next aria-label="Next page">›</button>
+        </div>
+        <div class="inspect-stage" data-stage>
+          <div class="inspect-track" style="transform:translateX(${-page * 100}%)">
+            <div class="ipage">${statsPage()}</div>
+            <div class="ipage">${cardPage()}</div>
+            <div class="ipage">${upgradePage()}</div>
           </div>
         </div>
-        <div class="ability-list">${abilityListHtml(def, u.level, u.stars)}</div>
-        ${owned ? `<div class="upgrade-row">
-          <div class="upgrade">
-            <b>Level up</b>
-            <span class="muted">${maxLevel ? 'Max level reached.' : `Lv ${u.level} → ${u.level + 1}: +8% health and attack.`}</span>
-            <button class="btn btn-primary" type="button" data-level ${maxLevel || Player.state.credits < lvlCost ? 'disabled' : ''}>${maxLevel ? 'Maxed' : `Train · ¢ ${fmt(lvlCost)}`}</button>
-          </div>
-          <div class="upgrade">
-            <b>Promote</b>
-            <span class="muted">${maxStars ? 'Max stars reached.' : `Shards ${u.shards}/${starNeed}. Duplicates from packs give shards.`}</span>
-            ${maxStars ? '' : `<div class="shardbar ${u.shards >= starNeed ? 'ready' : ''}"><i style="width:${Math.min(100, (u.shards / starNeed) * 100)}%"></i></div>`}
-            <button class="btn" type="button" data-star ${maxStars || u.shards < starNeed ? 'disabled' : ''}>${maxStars ? 'Maxed' : `Promote to ${u.stars + 1}★`}</button>
-          </div>
-        </div>` : ''}
-        <div class="modal-actions"><button class="btn" type="button" data-close>Close</button></div>`;
+        <div class="modal-actions"><button class="btn" type="button" data-close>Close</button></div>
+      </div>`;
     }
-    m = openModal(body(), { onClose: onChange });
+
+    const go = (p) => {
+      page = Math.max(0, Math.min(2, p));
+      render();
+    };
+    const m = openModal(body(), {
+      cls: 'inspect-modal',
+      onClose: onChange,
+      onKey: (e) => {
+        if (e.key === 'ArrowLeft') go(page - 1);
+        if (e.key === 'ArrowRight') go(page + 1);
+      },
+    });
     const modal = m.root.querySelector('.modal');
+    function render() {
+      modal.innerHTML = body();
+      bindSwipe();
+    }
+
+    function bindSwipe() {
+      const stage = $('[data-stage]', modal);
+      let x0 = null;
+      let moved = false;
+      stage.addEventListener('pointerdown', (e) => {
+        x0 = e.clientX;
+        moved = false;
+      });
+      stage.addEventListener('pointerup', (e) => {
+        if (x0 == null) return;
+        const dx = e.clientX - x0;
+        x0 = null;
+        if (Math.abs(dx) > 45) {
+          moved = true;
+          go(page + (dx < 0 ? 1 : -1));
+        }
+      });
+      stage.addEventListener('click', (e) => {
+        if (moved) {
+          e.stopPropagation();
+          moved = false;
+        }
+      }, true);
+    }
+
     modal.addEventListener('click', (e) => {
       if (e.target.closest('[data-close]')) return m.close();
-      if (e.target.closest('[data-level]') && Player.levelUp(id)) {
-        toast(`${def.name} reached level ${Player.unit(id).level}!`);
-      } else if (e.target.closest('[data-star]') && Player.starUp(id)) {
-        toast(`${def.name} promoted to ${Player.unit(id).stars}★!`);
-      } else {
+      if (e.target.closest('[data-prev]')) return go(page - 1);
+      if (e.target.closest('[data-next]')) return go(page + 1);
+      const pg = e.target.closest('[data-page]');
+      if (pg) return go(Number(pg.dataset.page));
+      const card = e.target.closest('[data-flip]');
+      if (card && !e.target.closest('.back ul')) {
+        flipped = !flipped;
+        card.classList.toggle('flipped', flipped);
         return;
       }
-      modal.innerHTML = body();
+      if (e.target.closest('[data-level]') && Player.levelUp(id)) toast(`${def.name} reached level ${Player.unit(id).level}!`);
+      else if (e.target.closest('[data-star]') && Player.starUp(id)) toast(`${def.name} promoted to ${Player.unit(id).stars}★!`);
+      else return;
+      render();
       updateWallet();
     });
+    modal.addEventListener('keydown', (e) => {
+      if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-flip]')) {
+        e.preventDefault();
+        flipped = !flipped;
+        e.target.classList.toggle('flipped', flipped);
+      }
+    });
+    bindSwipe();
   }
 
-  Screens.shop = function () {
-    const deal = Player.dailyDeal();
-    const packColors = { recruit: 'var(--light)', squadron: 'var(--dark)', holocron: 'var(--legendary)' };
-    const packGlyph = { recruit: '⚔', squadron: '✈', holocron: '◆' };
-    const oddsHtml = (o) => `<div class="odds">${o.common ? `<span class="c">Common ${o.common}%</span>` : ''}<span class="r">Rare ${o.rare}%</span><span class="e">Epic ${o.epic}%</span><span class="l">Legendary ${o.legendary}%</span></div>`;
-    const v = el(`<section class="view">
-      <div class="view-head">
-        <div><p class="eyebrow">Galactic Market</p><h1>Shop</h1></div>
-        <p class="muted" style="margin:0;max-width:44ch">New cards join your roster. Duplicates turn into shards that promote a unit's stars.</p>
+  // ---------- Black Market ----------
+  const MERCHANT_LINES = [
+    'No questions asked, no refunds given.',
+    'Fresh off an Imperial freighter. Don\'t ask which one.',
+    'The Hutts take a cut. Everyone takes a cut.',
+    'Feeling lucky? The Sabacc table is always open.',
+  ];
+  const oddsHtml = (o) => {
+    const total = Object.values(o).reduce((a, b) => a + b, 0);
+    const pct = (k) => `${((o[k] / total) * 100).toFixed(o[k] / total < 0.1 ? 1 : 0)}%`;
+    return `<div class="odds">${o.common ? `<span class="c">C ${pct('common')}</span>` : ''}${o.rare ? `<span class="r">R ${pct('rare')}</span>` : ''}<span class="e">E ${pct('epic')}</span><span class="l">L ${pct('legendary')}</span></div>`;
+  };
+
+  function timeLeft(ms) {
+    const m = Math.max(0, Math.round(ms / 60000));
+    return m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m}m`;
+  }
+
+  Screens.market = function () {
+    const s = Player.state;
+    const luck = s.luck;
+    const stock = Player.marketStock();
+    const line = MERCHANT_LINES[Math.floor(Math.random() * MERCHANT_LINES.length)];
+    const bets = D.LUCK.sabaccBets;
+    const bet = bets[App.ui.betIndex] || bets[0];
+
+    const v = el(`<section class="view market">
+      <div class="market-hero">
+        <div class="market-merchant">${Art.merchantArt()}</div>
+        <div class="market-copy">
+          <p class="neon">BLACK MARKET</p>
+          <h1>Vekko's Back Room</h1>
+          <p class="muted">“${esc(line)}”</p>
+          <div class="luck-row">
+            <span class="luck-chip" title="Crates opened since your last Legendary">🎯 Legendary pity <b>${luck.pity}/${D.LUCK.pityCrates}</b></span>
+            <span class="luck-chip ${luck.charmCrates ? 'on' : ''}" title="Boosted crates remaining">🎲 Chance Cubes <b>${luck.charmCrates}</b></span>
+            <span class="luck-chip ${luck.dice ? 'on' : ''}" title="Boosted victory spins remaining">🎰 Loaded Dice <b>${luck.dice}</b></span>
+          </div>
+        </div>
       </div>
+
+      <h2 class="section-title">Crates</h2>
       <div class="shop-grid">
         ${D.PACKS.map((p) => `
           <div class="pack">
-            <div class="pack-art" style="--pc:${packColors[p.id]}"><div class="pack-box">${packGlyph[p.id]}</div></div>
+            <div class="pack-art">${Art.crateArt(p.id)}</div>
             <h3>${p.name}</h3>
             <p>${p.desc}</p>
-            ${oddsHtml(p.odds)}
+            ${oddsHtml(Player.effectiveOdds(p))}
+            ${luck.charmCrates && p.id !== 'strongbox' ? '<span class="tag glow">Chance Cubes active</span>' : ''}
             <button class="btn btn-primary" type="button" data-pack="${p.id}" ${Player.canAfford(p.cost) ? '' : 'disabled'}>Open · ${costLabel(p.cost)}</button>
           </div>`).join('')}
       </div>
-      <div class="deal-row">
-        <div class="deal">
-          ${portrait(deal.def)}
-          <div style="display:grid;gap:8px;min-width:0">
-            <p class="eyebrow" style="margin:0">Daily deal · resets at midnight UTC</p>
-            <h3>${esc(deal.def.name)}</h3>
-            <p class="muted" style="margin:0;font-size:13px">${Player.owns(deal.def.id) ? `${deal.shards} shards for ${esc(deal.def.name)}.` : `Recruit ${esc(deal.def.name)} (${D.RARITIES[deal.def.rarity].label}) straight away.`}</p>
-            <button class="btn btn-primary" type="button" data-deal ${deal.bought || !Player.canAfford(deal.cost) ? 'disabled' : ''}>${deal.bought ? 'Purchased today' : `Buy · ${costLabel(deal.cost)}`}</button>
+
+      <div class="section-head">
+        <h2 class="section-title">Hot Stock</h2>
+        <span class="muted">Restocks in ${timeLeft(stock.refreshAt - Date.now())} <button class="btn btn-small" type="button" data-reroll ${s.crystals < 20 ? 'disabled' : ''}>Restock now · ${cur('crystals', 20)}</button></span>
+      </div>
+      <div class="stock-grid">
+        ${stock.items.map((it, i) => {
+          const def = D.UNIT_MAP[it.id];
+          const owned = Player.owns(it.id);
+          return `<div class="stock ${it.sold ? 'sold' : ''} rarity-${def.rarity}">
+            ${it.hot ? '<span class="hot">HOT</span>' : ''}
+            ${it.discount ? `<span class="discount">-${it.discount}%</span>` : ''}
+            <button class="stock-art" type="button" data-inspect="${def.id}" aria-label="Inspect ${esc(def.name)}">${portrait(def)}</button>
+            <div class="stock-body">
+              <span class="muted">${owned ? `${it.shards} shards` : 'Recruit unit'}</span>
+              ${it.discount ? `<s class="muted">${fmt(it.full)}</s>` : ''}
+              <button class="btn btn-small ${it.sold ? '' : 'btn-primary'}" type="button" data-buy="${i}" ${it.sold || !Player.canAfford(it.cost) ? 'disabled' : ''}>${it.sold ? 'Sold' : costLabel(it.cost)}</button>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+
+      <div class="market-lower">
+        <div class="panel">
+          <h2 class="section-title">Lucky Charms</h2>
+          ${D.CHARMS.map((c) => `<div class="charm">
+            <span class="charm-icon">${c.id === 'chance_cube' ? '🎲' : '🎰'}</span>
+            <div><b>${c.name}</b><p class="muted">${c.desc}</p></div>
+            <button class="btn btn-small" type="button" data-charm="${c.id}" ${Player.canAfford(c.cost) ? '' : 'disabled'}>${costLabel(c.cost)}</button>
+          </div>`).join('')}
+          <div class="charm">
+            <span class="charm-icon">${Art.ICONS.crystals}</span>
+            <div><b>Kyber Exchange</b><p class="muted">Trade ${cur('crystals', 50)} for ${cur('credits', 1000)}.</p></div>
+            <button class="btn btn-small" type="button" data-exchange ${s.crystals < 50 ? 'disabled' : ''}>Trade</button>
           </div>
         </div>
-        <div class="deal" style="grid-template-columns:1fr">
-          <div style="display:grid;gap:8px">
-            <p class="eyebrow" style="margin:0">Exchange</p>
-            <h3>Credit Cache</h3>
-            <p class="muted" style="margin:0;font-size:13px">Trade 50 crystals for ¢ 1,000 credits.</p>
-            <button class="btn" type="button" data-exchange ${Player.state.crystals < 50 ? 'disabled' : ''}>Exchange · ◆ 50</button>
-          </div>
+        <div class="panel sabacc">
+          <h2 class="section-title">Sabacc Table</h2>
+          <p class="muted">Place a bet, then pick one of three cards. Its multiplier decides your payout, from Bust to Idiot's Array (10×).</p>
+          <div class="seg" data-bets>${bets.map((b, i) => `<button type="button" data-bet="${i}" class="${b === bet ? 'active' : ''}">${cur('credits', b)}</button>`).join('')}</div>
+          <div class="sabacc-cards" data-sabacc>${[0, 1, 2].map((i) => `<button class="scard" type="button" data-pick="${i}" ${s.credits < bet ? 'disabled' : ''}><span>◈</span></button>`).join('')}</div>
+          <p class="hint" data-sabacc-msg>${s.credits < bet ? 'Not enough credits for this bet.' : 'Pick a card.'}</p>
         </div>
       </div>
     </section>`);
@@ -556,33 +738,82 @@
         packReveal(results);
         return;
       }
-      if (e.target.closest('[data-deal]')) {
-        const r = Player.buyDailyDeal();
-        if (r) {
-          packReveal([r]);
-          updateWallet();
+      const ins = e.target.closest('[data-inspect]');
+      if (ins) return inspect(ins.dataset.inspect);
+      const buy = e.target.closest('[data-buy]');
+      if (buy) {
+        const r = Player.buyMarket(Number(buy.dataset.buy));
+        if (r) packReveal([r]);
+        return;
+      }
+      if (e.target.closest('[data-reroll]')) {
+        if (Player.rerollMarket()) {
+          toast('Fresh stock just arrived.');
+          App.refresh();
+        }
+        return;
+      }
+      const charm = e.target.closest('[data-charm]');
+      if (charm) {
+        if (Player.buyCharm(charm.dataset.charm)) {
+          toast(`${D.CHARMS.find((c) => c.id === charm.dataset.charm).name} active!`);
+          App.refresh();
         }
         return;
       }
       if (e.target.closest('[data-exchange]') && Player.exchangeCrystals()) {
-        toast('+¢ 1,000 credits');
+        toast('+1,000 credits');
         App.refresh();
+        return;
       }
+      const b = e.target.closest('[data-bet]');
+      if (b) {
+        App.ui.betIndex = Number(b.dataset.bet);
+        App.refresh();
+        return;
+      }
+      const pick = e.target.closest('[data-pick]');
+      if (pick && !pick.disabled) playSabacc(v, bet, Number(pick.dataset.pick));
     });
     return v;
   };
+
+  function playSabacc(v, bet, pick) {
+    const res = Player.sabacc(bet, pick);
+    if (!res) return toast('Not enough credits.');
+    updateWallet();
+    const cards = $$('.scard', v);
+    cards.forEach((c) => { c.disabled = true; });
+    res.cards.forEach((card, i) => {
+      setTimeout(() => {
+        const c = cards[i];
+        c.classList.add('revealed', i === pick ? 'picked' : 'other', card.mult >= 2 ? 'win' : card.mult === 0 ? 'bust' : 'meh');
+        c.innerHTML = `<b>${card.mult}×</b><small>${esc(card.label)}</small>`;
+      }, i === pick ? 0 : 450 + i * 150);
+    });
+    const msg = $('[data-sabacc-msg]', v);
+    msg.innerHTML = res.net > 0 ? `You won ${cur('credits', res.won)}! (+${fmt(res.net)})` : res.net === 0 ? 'Push. You get your bet back.' : `The house wins. ${res.won ? `You keep ${cur('credits', res.won)}.` : 'Bust!'}`;
+    msg.className = `hint ${res.net > 0 ? 'good' : res.net < 0 ? 'bad' : ''}`;
+    if (res.cards[pick].mult >= 5) toast(`${res.cards[pick].label}! ${res.cards[pick].mult}× payout!`);
+    setTimeout(() => {
+      const again = el('<button class="btn btn-small" type="button">Deal again</button>');
+      again.addEventListener('click', () => App.refresh());
+      msg.appendChild(document.createTextNode(' '));
+      msg.appendChild(again);
+    }, 1000);
+  }
 
   function packReveal(results) {
     const cards = results.map((r) => {
       const def = D.UNIT_MAP[r.id];
       const tag = r.isNew ? '<span class="reveal-tag">NEW!</span>' : `<span class="reveal-tag dup">+${r.shards} shards</span>`;
-      return `<div class="flip glow-${def.rarity}" tabindex="0" role="button" aria-label="Reveal card">
-        <div class="flip-face flip-back">?</div>
-        <div class="flip-face flip-front">${tag}${unitCard(def, { tag: 'div', hideShards: true })}</div>
+      return `<div class="flip glow-${def.rarity} ${r.holo ? 'is-holo' : ''}" tabindex="0" role="button" aria-label="Reveal card">
+        <div class="flip-face flip-back">${Art.ICONS.crystals}</div>
+        <div class="flip-face flip-front">${tag}${r.holo ? '<span class="holo-tag">HOLO</span>' : ''}${r.pity ? '<span class="holo-tag pity">PITY</span>' : ''}${unitCard(def, { tag: 'div', hideShards: true, holo: r.holo })}</div>
       </div>`;
     }).join('');
     const m = openModal(`
-      <div style="text-align:center"><p class="eyebrow">Pack opened</p><h2>Tap each card to reveal</h2></div>
+      <div style="text-align:center"><p class="eyebrow">Crate cracked open</p><h2>Tap each card to reveal</h2></div>
       <div class="reveal-row">${cards}</div>
       <div class="modal-actions" style="justify-content:center">
         <button class="btn" type="button" data-all>Reveal all</button>
@@ -592,6 +823,7 @@
       if (f.classList.contains('flipped')) return;
       f.classList.add('flipped');
       if (f.classList.contains('glow-legendary')) toast('LEGENDARY!');
+      else if (f.classList.contains('is-holo')) toast('HOLO card! Double value.');
     };
     m.root.addEventListener('click', (e) => {
       const f = e.target.closest('.flip');
@@ -607,5 +839,5 @@
     });
   }
 
-  root.UI = { $, $$, el, esc, fmt, portrait, shipSvg, stars, unitCard, toast, openModal, confirmBox, updateWallet, App, Screens };
+  root.UI = { $, $$, el, esc, fmt, cur, portrait, stars, unitCard, toast, openModal, confirmBox, updateWallet, inspect, App, Screens };
 })(window);

@@ -20,11 +20,12 @@
       <button type="button" data-nav="home">Home</button>
       <button type="button" data-nav="campaign">Battle</button>
       <button type="button" data-nav="collection">Collection</button>
-      <button type="button" data-nav="shop">Shop</button>
+      <button type="button" data-nav="market">Black Market</button>
     </nav>
     <div class="wallet" aria-live="polite">
-      <span class="currency credits" title="Credits"><i>¢</i><b id="credits">0</b></span>
-      <span class="currency crystals" title="Crystals"><i>◆</i><b id="crystals">0</b></span>
+      <span class="currency credits" title="Galactic Credits"><i data-icon="credits"></i><b id="credits">0</b></span>
+      <span class="currency crystals" title="Kyber Crystals"><i data-icon="crystals"></i><b id="crystals">0</b></span>
+      <span class="currency aurodium" title="Aurodium Ingots (from bosses)"><i data-icon="aurodium"></i><b id="aurodium">0</b></span>
     </div>
   </header>
 
@@ -34,6 +35,7 @@
   <div id="toast-root" aria-live="polite"></div>
 
   <script src="js/data.js"></script>
+  <script src="js/art.js"></script>
   <script src="js/battle.js"></script>
   <script src="js/state.js"></script>
   <script src="js/ui.js"></script>

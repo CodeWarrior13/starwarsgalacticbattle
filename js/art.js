@@ -1,0 +1,521 @@
+// Hand-drawn SVG cover art for every unit, boss, crate and currency.
+// Each character is built from a recognizable silhouette (helmet, hair,
+// ears, weapon) over a scene from their world. viewBox is 0 0 100 100.
+
+(function (root) {
+  // ---------- Primitives ----------
+  const P = (d, fill, extra) => `<path d="${d}" fill="${fill}" ${extra || ''}/>`;
+  const E = (cx, cy, rx, ry, fill, extra) => `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${fill}" ${extra || ''}/>`;
+  const C = (cx, cy, r, fill, extra) => `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${fill}" ${extra || ''}/>`;
+  const R = (x, y, w, h, fill, extra) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill}" ${extra || ''}/>`;
+  const L = (x1, y1, x2, y2, stroke, w, extra) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${stroke}" stroke-width="${w}" stroke-linecap="round" ${extra || ''}/>`;
+  const shade = (d, o) => P(d, '#000', `opacity="${o || 0.2}"`);
+
+  function shoulders(fill, opts = {}) {
+    const top = opts.top || 74;
+    return P(`M4 100 C6 ${top + 9} 26 ${top} 50 ${top} C74 ${top} 94 ${top + 9} 96 100Z`, fill)
+      + shade(`M4 100 C6 ${top + 9} 26 ${top} 50 ${top} L46 100Z`, 0.22);
+  }
+  function neck(skin) {
+    return P('M43.5 55 L56.5 55 L57.5 76 L42.5 76Z', skin) + shade('M43 64 L57 64 L57.5 76 L42.5 76Z', 0.22);
+  }
+  function head(skin, o = {}) {
+    const rx = o.rx || 12.5;
+    const ry = o.ry || 15;
+    const cy = o.cy || 44;
+    return E(36.8, cy + 2, 2.2, 3.6, skin) + E(63.2, cy + 2, 2.2, 3.6, skin)
+      + E(50, cy, rx, ry, skin)
+      + shade(`M${50 - rx} ${cy} Q${50 - rx} ${cy + ry} 50 ${cy + ry} Q${44 - rx * 0.3} ${cy + ry * 0.7} ${50 - rx * 0.72} ${cy + 1}Z`, 0.16);
+  }
+  function eyes(o = {}) {
+    const y = o.y || 45;
+    const s = o.spread || 5.2;
+    const iris = o.iris || '#3b2616';
+    const w = o.white === false ? '' : E(50 - s, y, 2.2, 1.35, '#f4efe6') + E(50 + s, y, 2.2, 1.35, '#f4efe6');
+    return w + C(50 - s + 0.3, y, 1.05, iris) + C(50 + s - 0.3, y, 1.05, iris)
+      + C(50 - s + 0.6, y - 0.4, 0.35, '#fff') + C(50 + s, y - 0.4, 0.35, '#fff');
+  }
+  function brows(color, o = {}) {
+    const y = o.y || 41.5;
+    const s = o.spread || 5.2;
+    const tilt = o.angry ? 1.4 : o.sad ? -1 : 0;
+    return L(50 - s - 2.6, y - tilt * 0.3, 50 - s + 2.4, y + tilt, color, o.w || 1.3)
+      + L(50 + s - 2.4, y + tilt, 50 + s + 2.6, y - tilt * 0.3, color, o.w || 1.3);
+  }
+  function nose(o = {}) {
+    const y = o.y || 46;
+    return `<path d="M50.5 ${y} L48.6 ${y + 5.6} Q50 ${y + 6.6} 51.8 ${y + 5.8}" stroke="#000" stroke-opacity=".28" stroke-width=".8" fill="none" stroke-linecap="round"/>`;
+  }
+  function mouth(kind, o = {}) {
+    const y = o.y || 54.5;
+    const c = o.color || '#7a3b2e';
+    if (kind === 'smirk') return `<path d="M46 ${y} Q50 ${y + 1.2} 54.5 ${y - 1.2}" stroke="${c}" stroke-width="1.1" fill="none" stroke-linecap="round"/>`;
+    if (kind === 'smile') return `<path d="M45.5 ${y - 0.4} Q50 ${y + 2.4} 54.5 ${y - 0.4}" stroke="${c}" stroke-width="1.1" fill="none" stroke-linecap="round"/>`;
+    if (kind === 'frown') return `<path d="M46 ${y + 0.8} Q50 ${y - 1} 54 ${y + 0.8}" stroke="${c}" stroke-width="1.1" fill="none" stroke-linecap="round"/>`;
+    if (kind === 'snarl') return P(`M44.5 ${y - 1} Q50 ${y + 3.5} 55.5 ${y - 1} Q50 ${y + 1} 44.5 ${y - 1}Z`, '#2a0d0d') + R(46.5, y - 0.6, 7, 1, '#f3ead8');
+    return L(46.5, y, 53.5, y, c, 1.1);
+  }
+  function saber(x1, y1, x2, y2, color, o = {}) {
+    const hx = x1 + (x1 - x2) * 0.16;
+    const hy = y1 + (y1 - y2) * 0.16;
+    const hilt = o.noHilt ? '' : L(x1, y1, hx, hy, o.hilt || '#9aa1ab', 3.2) + L(x1 + (hx - x1) * 0.35, y1 + (hy - y1) * 0.35, x1 + (hx - x1) * 0.5, y1 + (hy - y1) * 0.5, '#2a2d33', 3.4);
+    return `<g class="art-saber" style="filter:drop-shadow(0 0 1.6px ${color}) drop-shadow(0 0 3.5px ${color})">`
+      + L(x1, y1, x2, y2, color, 4.6, 'opacity=".75"') + L(x1, y1, x2, y2, '#fff', 1.9) + '</g>' + hilt;
+  }
+  function blaster(x, y, rot, color) {
+    return `<g transform="translate(${x} ${y}) rotate(${rot || 0})">`
+      + R(-2, -2.5, 18, 5, color || '#23252b', 'rx="1.5"') + R(12, -1.4, 10, 2.8, color || '#23252b') + R(1, 2, 4.5, 9, color || '#23252b', 'rx="1.2" transform="rotate(12)"')
+      + R(4, -5, 8, 2.6, '#3a3d45', 'rx="1"') + '</g>';
+  }
+  function glowEyes(x1, x2, y, color, r) {
+    return `<g style="filter:drop-shadow(0 0 2px ${color})">${C(x1, y, r || 2.2, color)}${C(x2, y, r || 2.2, color)}</g>`;
+  }
+  function stars(seed, count, maxY) {
+    let s = seed;
+    const rnd = () => {
+      s = (s * 9301 + 49297) % 233280;
+      return s / 233280;
+    };
+    let out = '';
+    for (let i = 0; i < count; i++) out += C((rnd() * 100).toFixed(1), (rnd() * (maxY || 100)).toFixed(1), (rnd() * 0.55 + 0.2).toFixed(2), '#fff', `opacity="${(rnd() * 0.6 + 0.35).toFixed(2)}"`);
+    return out;
+  }
+
+  // ---------- Scenes ----------
+  const SCENES = {
+    desert: () => R(0, 0, 100, 100, '#e7a35a') + R(0, 0, 100, 45, '#f0c07a', 'opacity=".6"') + C(24, 22, 7, '#fff4d6') + C(38, 30, 4.5, '#ffe3a3')
+      + P('M0 70 Q25 58 50 66 T100 62 V100 H0Z', '#c98545') + P('M0 82 Q30 72 60 80 T100 76 V100 H0Z', '#b06f36'),
+    jakku: () => R(0, 0, 100, 100, '#e9b774') + C(78, 20, 9, '#fff1cf', 'opacity=".9"')
+      + P('M58 64 L96 40 L100 44 L70 70Z', '#8d7d6c', 'opacity=".75"') + P('M64 60 L74 52 L78 58 L70 64Z', '#6d6053', 'opacity=".8"')
+      + P('M0 72 Q30 62 60 70 T100 68 V100 H0Z', '#c98a4b'),
+    space: (seed) => R(0, 0, 100, 100, '#070b16') + stars(seed || 7, 34) + C(82, 18, 10, '#355c8c', 'opacity=".7"') + P('M72 18 A10 10 0 0 0 92 18', 'none', 'stroke="#8fb6e6" stroke-width="1" opacity=".5"'),
+    corridor: (tint) => R(0, 0, 100, 100, tint === 'white' ? '#cfd6de' : '#3a3f47')
+      + [10, 30, 70, 90].map((x) => R(x - 5, 0, 10, 100, tint === 'white' ? '#e6ebf0' : '#4a5059')).join('')
+      + R(0, 12, 100, 3, tint === 'white' ? '#b3bcc6' : '#222')
+      + (tint === 'red' ? [18, 82].map((x) => R(x - 2, 20, 4, 30, '#ff3b3b', 'opacity=".8"')).join('') : ''),
+    deathstar: () => R(0, 0, 100, 100, '#15171c') + [0, 20, 40, 60, 80].map((y) => R(0, y, 100, 1, '#2a2e36')).join('')
+      + [12, 88].map((x) => R(x - 3, 8, 6, 60, '#2b0e0e') + R(x - 1.5, 10, 3, 56, '#ff2d2d', 'opacity=".7"')).join(''),
+    lava: () => R(0, 0, 100, 100, '#2a0a06') + R(0, 0, 100, 50, '#5a1508', 'opacity=".8"')
+      + P('M0 64 Q20 56 36 66 T70 60 T100 66 V100 H0Z', '#150605') + P('M8 100 Q16 80 12 68 Q22 82 20 100Z', '#ff6a1a', 'opacity=".9"')
+      + P('M78 100 Q86 82 84 66 Q92 84 90 100Z', '#ff8c1a', 'opacity=".85"') + C(18, 20, 1, '#ffb14a') + C(70, 12, 0.8, '#ffb14a') + C(88, 30, 1.1, '#ff8c3a'),
+    swamp: () => R(0, 0, 100, 100, '#1f2e22') + R(0, 58, 100, 42, '#2b3d2c') + E(50, 62, 60, 6, '#8fa88f', 'opacity=".18"')
+      + P('M4 0 Q10 30 6 60 L12 60 Q16 30 14 0Z', '#141e16') + P('M84 0 Q92 26 86 62 L94 62 Q98 30 96 0Z', '#141e16')
+      + L(20, 0, 22, 26, '#223226', 1.2) + L(76, 0, 74, 30, '#223226', 1.2),
+    endor: () => R(0, 0, 100, 100, '#1d3a24') + R(0, 0, 100, 30, '#335c3a', 'opacity=".7"')
+      + [8, 26, 74, 92].map((x, i) => R(x - 4 - i % 2, 0, 8 + (i % 2) * 2, 100, '#3a2a1b')).join('') + R(0, 84, 100, 16, '#243a1f'),
+    city: () => R(0, 0, 100, 100, '#2a1f4a') + R(0, 40, 100, 30, '#6a3a6a', 'opacity=".5"') + C(80, 22, 6, '#ffb86b', 'opacity=".8"')
+      + [[4, 50, 10], [16, 38, 8], [26, 56, 12], [70, 44, 9], [82, 30, 8], [92, 52, 8]].map(([x, h, w]) => R(x, 100 - h - 20, w, h + 20, '#141026')).join('')
+      + [[7, 60], [19, 52], [74, 58], [85, 46]].map(([x, y]) => R(x, y, 2, 2, '#ffd27a', 'opacity=".8"')).join(''),
+    cloud: () => R(0, 0, 100, 100, '#f2a45a') + E(20, 70, 34, 12, '#ffc98c', 'opacity=".8"') + E(82, 78, 30, 12, '#ffd6a3', 'opacity=".8"')
+      + E(60, 30, 28, 8, '#ffcf96', 'opacity=".5"') + R(78, 30, 10, 50, '#d9d2c8', 'opacity=".55"') + E(83, 30, 9, 3, '#e8e2d8', 'opacity=".6"'),
+    bridge: () => R(0, 0, 100, 100, '#262b33') + P('M6 8 H94 L86 58 H14Z', '#060a14') + stars(11, 18, 56).replace(/cy="(\d+)/g, (m, y) => `cy="${Math.min(55, Number(y) + 8)}`)
+      + L(50, 8, 50, 58, '#262b33', 2) + L(30, 8, 32, 58, '#262b33', 1.5) + L(70, 8, 68, 58, '#262b33', 1.5) + R(0, 60, 100, 40, '#30363f'),
+    throne: () => R(0, 0, 100, 100, '#0c0a10') + C(50, 38, 34, '#1a1622') + C(50, 38, 30, '#050409') + stars(23, 16, 70).replace(/<circle/g, '<circle opacity=".8"')
+      + [0, 45, 90, 135].map((a) => `<line x1="50" y1="38" x2="${50 + Math.cos((a * Math.PI) / 180) * 30}" y2="${38 + Math.sin((a * Math.PI) / 180) * 30}" stroke="#1a1622" stroke-width="2"/><line x1="50" y1="38" x2="${50 - Math.cos((a * Math.PI) / 180) * 30}" y2="${38 - Math.sin((a * Math.PI) / 180) * 30}" stroke="#1a1622" stroke-width="2"/>`).join(''),
+    temple: () => R(0, 0, 100, 100, '#6e4a2a') + R(0, 0, 100, 60, '#c8894a', 'opacity=".55"')
+      + [8, 26, 74, 92].map((x) => R(x - 5, 0, 10, 100, '#8a5e36') + R(x - 5, 0, 2, 100, '#b27d4a', 'opacity=".6"')).join('') + R(0, 88, 100, 12, '#553820'),
+    warm: () => R(0, 0, 100, 100, '#3b2a1e') + R(0, 0, 100, 100, '#ff9f4a', 'opacity=".18"') + C(76, 26, 16, '#ffb35a', 'opacity=".25"') + R(6, 10, 22, 14, '#1f160f', 'rx="2"') + R(8, 12, 18, 10, '#58d6ff', 'opacity=".35"'),
+    scarif: () => R(0, 0, 100, 100, '#7fd0ec') + R(0, 62, 100, 12, '#2ba3b8') + R(0, 74, 100, 26, '#f2dfa6')
+      + L(84, 74, 88, 30, '#7a5a3a', 2) + P('M88 30 Q76 26 70 34 M88 30 Q98 24 100 34 M88 30 Q86 20 80 18 M88 30 Q94 22 98 22', 'none', 'stroke="#2f8a3a" stroke-width="2.4" stroke-linecap="round"'),
+    snowred: () => R(0, 0, 100, 100, '#2a0d12') + R(0, 0, 100, 60, '#6a1a22', 'opacity=".5"')
+      + [10, 24, 78, 92].map((x) => P(`M${x} 30 L${x - 7} 70 H${x + 7}Z`, '#140709')).join('') + R(0, 74, 100, 26, '#e6d8dc') + R(0, 74, 100, 26, '#ff3b4b', 'opacity=".12"'),
+    geonosis: () => R(0, 0, 100, 100, '#d9773a') + R(0, 0, 100, 40, '#f2a060', 'opacity=".6"')
+      + P('M0 50 L10 20 L18 50Z', '#a8502a') + P('M80 54 L90 16 L100 54Z', '#a8502a') + P('M0 74 Q40 66 100 72 V100 H0Z', '#b25a2e'),
+    generator: () => R(0, 0, 100, 100, '#1a0808') + R(0, 0, 100, 100, '#ff2a2a', 'opacity=".12"')
+      + [14, 86].map((x) => R(x - 6, 0, 12, 100, '#2a1010') + R(x - 1, 0, 2, 100, '#ff4a4a', 'opacity=".5"')).join('') + R(0, 80, 100, 3, '#3a1414'),
+    hangar: () => R(0, 0, 100, 100, '#2c3440') + R(0, 0, 100, 40, '#11161f') + stars(5, 10, 36) + R(0, 40, 100, 3, '#5b6b80') + [0, 25, 50, 75].map((x) => R(x, 43, 1, 57, '#3a4454')).join(''),
+    pit: () => R(0, 0, 100, 100, '#2a1d14') + R(0, 0, 100, 100, '#ff9a3a', 'opacity=".08"')
+      + P('M0 100 L0 20 Q20 30 30 10 L34 100Z', '#1c130d') + P('M100 100 L100 26 Q84 18 70 34 L66 100Z', '#1c130d')
+      + E(20, 94, 6, 2, '#e8dcc4', 'opacity=".7"') + E(78, 92, 5, 1.6, '#e8dcc4', 'opacity=".7"'),
+  };
+
+  // ---------- Characters ----------
+  const CHAR = {};
+
+  CHAR.rebel_soldier = () => SCENES.corridor('white')
+    + shoulders('#6f84a6') + P('M4 100 C6 84 20 76 36 75 L42 100Z', '#2a2c30') + P('M96 100 C94 84 80 76 64 75 L58 100Z', '#2a2c30')
+    + neck('#d8a47f') + head('#d8a47f') + eyes() + brows('#4a3422') + nose() + mouth()
+    + P('M35.5 42 C35.5 27 42 23.5 50 23.5 C58 23.5 64.5 27 64.5 42Z', '#ece8de') + E(50, 42, 17.5, 3, '#d7d1c3') + R(36, 36, 28, 3, '#c9c2b2')
+    + blaster(18, 90, -28, '#1e2024');
+
+  CHAR.clone_trooper = () => SCENES.city()
+    + shoulders('#f2f2f2') + R(44, 80, 12, 20, '#d9dde2') + P('M8 88 L22 78 L26 84 L12 94Z', '#3d6fd6') + P('M92 88 L78 78 L74 84 L88 94Z', '#3d6fd6')
+    + P('M33.5 44 C33.5 27 41 21 50 21 C59 21 66.5 27 66.5 44 L66.5 58 C62 65 38 65 33.5 58Z', '#f3f3f3') + shade('M33.5 44 C33.5 27 41 21 50 21 L50 64 C42 64 36 62 33.5 58Z', 0.1)
+    + R(47.5, 21, 5, 16, '#3d6fd6') + P('M38.5 39 L61.5 39 L61.5 44 L54 44 L54 56 L46 56 L46 44 L38.5 44Z', '#101114')
+    + L(40, 57, 40, 61, '#9aa3ad', 1) + L(60, 57, 60, 61, '#9aa3ad', 1) + R(46, 58, 8, 3, '#b8bfc7', 'rx="1"');
+
+  CHAR.ewok_warrior = () => SCENES.endor()
+    + L(20, 100, 26, 26, '#6b4a2a', 2.5) + P('M26 26 L22.5 18 L29 18Z', '#8c8f94')
+    + shoulders('#7b5433', { top: 76 }) + E(50, 50, 17, 16, '#7b5433')
+    + P('M32 50 C30 32 40 25 50 25 C60 25 70 32 68 50 C64 40 58 36 50 36 C42 36 36 40 32 50Z', '#b8672e') + C(35, 30, 4, '#b8672e') + C(65, 30, 4, '#b8672e')
+    + E(50, 57, 8.5, 6.5, '#a57a50') + C(43, 48, 2.8, '#0c0806') + C(57, 48, 2.8, '#0c0806') + C(44, 47, 0.8, '#fff') + C(58, 47, 0.8, '#fff')
+    + P('M47.5 53.5 L52.5 53.5 L50 56.5Z', '#1a0f08') + L(35, 36, 65, 36, '#8a4a20', 1);
+
+  CHAR.han_solo = () => SCENES.space(3)
+    + shoulders('#ece6d8') + P('M4 100 C6 84 22 76 38 75 L44 100Z', '#1d1d22') + P('M96 100 C94 84 78 76 62 75 L56 100Z', '#1d1d22')
+    + `<path d="M44 75 L50 86 L56 75" stroke="#b8b0a0" stroke-width="1" fill="none"/>`
+    + neck('#e2b48f') + head('#e2b48f') + eyes() + brows('#4a2f1c') + nose() + mouth('smirk')
+    + P('M36.5 43 C35 29 42 26 51 26.5 C60 27 66 31 63.5 42 C62 36 57 33 50 33.5 C44 34 40 37 38 44Z', '#5a3a22') + P('M44 27 C52 25 60 28 62 34 C56 30 50 30 44 31Z', '#6e4a2c')
+    + blaster(64, 92, -32, '#1c1d21');
+
+  CHAR.chewbacca = () => SCENES.space(9)
+    + shoulders('#7a5230', { top: 72 }) + P('M4 100 C8 88 16 80 28 76 L24 100Z', '#6a4526')
+    + P('M34 50 C32 30 40 21 50 21 C60 21 68 30 66 50 C66 64 58 71 50 71 C42 71 34 64 34 50Z', '#7a5230')
+    + [[38, 30, 36, 40], [62, 30, 64, 40], [44, 24, 43, 32], [56, 24, 57, 32], [36, 54, 38, 64], [64, 54, 62, 64]].map(([a, b, c, d]) => L(a, b, c, d, '#553619', 1.2)).join('')
+    + E(50, 52, 11, 12, '#8e6540') + eyes({ y: 45, iris: '#2c5a8a', spread: 5 }) + P('M46.5 50 L53.5 50 L50 54Z', '#141010') + P('M44.5 58 Q50 62 55.5 58 Q50 60 44.5 58Z', '#2a1810')
+    + P('M18 80 L28 75 L82 100 L68 100Z', '#4a3525') + [0, 1, 2, 3, 4].map((i) => R(30 + i * 10, 81 + i * 4.2, 4.5, 3.6, '#b9bec6', `transform="rotate(24 ${32 + i * 10} ${83 + i * 4.2})"`)).join('');
+
+  CHAR.leia = () => SCENES.corridor('white')
+    + shoulders('#f4f3ef') + P('M34 76 C38 70 62 70 66 76 L60 80 C54 77 46 77 40 80Z', '#e3e1da')
+    + neck('#f0c9a8') + head('#f0c9a8') + eyes() + brows('#3a2416', { w: 1.1 }) + nose() + mouth('smile', { color: '#b0524a' })
+    + P('M37 43 C36 29 44 26.5 50 26.5 C57 26.5 64 29 63 43 C60 35 55 33 50 33 C44 33 40 36 37 43Z', '#4a2e1c')
+    + C(30.5, 46, 7.6, '#4a2e1c') + C(69.5, 46, 7.6, '#4a2e1c')
+    + `<path d="M30.5 41 A5 5 0 1 1 26 47 A3 3 0 1 1 31 46" stroke="#2e1c10" stroke-width="1" fill="none"/><path d="M69.5 41 A5 5 0 1 0 74 47 A3 3 0 1 0 69 46" stroke="#2e1c10" stroke-width="1" fill="none"/>`
+    + blaster(14, 92, -24, '#2a2c31');
+
+  CHAR.r2d2 = () => SCENES.hangar()
+    + R(22, 60, 10, 40, '#e8ecf2', 'rx="3"') + R(68, 60, 10, 40, '#e8ecf2', 'rx="3"') + R(24, 66, 6, 20, '#2f5fb0', 'rx="1.5"') + R(70, 66, 6, 20, '#2f5fb0', 'rx="1.5"')
+    + R(33, 50, 34, 50, '#eef1f5', 'rx="3"') + shade('M33 50 H42 V100 H33Z', 0.12)
+    + R(38, 58, 10, 5, '#2f5fb0') + R(52, 58, 10, 5, '#2f5fb0') + R(40, 67, 20, 12, '#2f5fb0', 'rx="1.5"') + R(43, 70, 14, 2, '#c4cbd6') + R(43, 74, 14, 2, '#c4cbd6') + R(38, 84, 24, 4, '#2f5fb0')
+    + P('M33 51 A17 17 0 0 1 67 51Z', '#c9d0da') + shade('M33 51 A17 17 0 0 1 44 35.5 L44 51Z', 0.1) + R(39, 44, 6, 5, '#2f5fb0') + R(55, 44, 5, 5, '#2f5fb0') + R(47, 38, 6, 4, '#2f5fb0')
+    + C(50, 46.5, 3.2, '#0c0f16') + C(50, 46.5, 1.1, '#ff3b3b') + C(57.5, 40, 1.2, '#3b8bff') + R(33, 50, 34, 2, '#9aa3b0');
+
+  CHAR.obi_wan = () => SCENES.lava()
+    + shoulders('#6b4a2e') + P('M36 75 L50 97 L64 75 C58 73 42 73 36 75Z', '#d8c9a8') + P('M36 75 L50 97 L46 100 L30 78Z', '#c7b791') + P('M64 75 L50 97 L54 100 L70 78Z', '#c7b791')
+    + neck('#e6bb98') + head('#e6bb98') + eyes({ iris: '#3a6aa0' }) + brows('#7a4a28') + nose()
+    + P('M37.5 49 Q39 62.5 50 63.5 Q61 62.5 62.5 49 Q58 57 50 57.5 Q42 57 37.5 49Z', '#9a5c34') + P('M45 54 Q50 52.5 55 54 Q50 55.5 45 54Z', '#8a4e2a')
+    + P('M37 42 C36 30 43 27 50 27 C58 27 64 30 63 42 C61 35 56 34 51 35 C47 33 41 36 37 42Z', '#a0643a')
+    + saber(76, 96, 90, 22, '#3d8bff');
+
+  CHAR.luke = () => SCENES.desert()
+    + shoulders('#1b1b1f') + R(42, 73, 16, 6, '#131316', 'rx="2"')
+    + neck('#eac19c') + head('#eac19c') + eyes({ iris: '#3a74b8' }) + brows('#b48a3a') + nose() + mouth()
+    + P('M36.5 43 C35 29 42 25.5 51 26 C60 26.5 66 31 63.5 43 C62 36 58 32.5 52 33.5 C47 31 41 35 38.5 44Z', '#d9b25a') + P('M40 30 C44 26 50 25 54 27 L46 31Z', '#e8c877')
+    + saber(74, 96, 92, 20, '#46e070');
+
+  CHAR.yoda = () => SCENES.swamp()
+    + shoulders('#bfae8a', { top: 78 }) + P('M38 78 L50 92 L62 78Z', '#a8977a')
+    + P('M37 50 L7 39 Q11 49 37 58Z', '#8db25a') + P('M63 50 L93 39 Q89 49 63 58Z', '#8db25a') + P('M34 51 L14 43 Q18 49 35 55Z', '#b37a74', 'opacity=".45"') + P('M66 51 L86 43 Q82 49 65 55Z', '#b37a74', 'opacity=".45"')
+    + E(50, 53, 15.5, 13.5, '#8db25a') + shade('M34.5 53 Q35 66 50 66.5 Q40 62 38 52Z', 0.15)
+    + E(43.5, 51, 3.4, 2.5, '#e8e0c0') + E(56.5, 51, 3.4, 2.5, '#e8e0c0') + C(43.8, 51, 1.6, '#4a3a1a') + C(56.2, 51, 1.6, '#4a3a1a') + C(44.4, 50.4, 0.5, '#fff') + C(56.8, 50.4, 0.5, '#fff')
+    + `<path d="M39 47.5 Q43.5 45.5 47 47.8 M53 47.8 Q56.5 45.5 61 47.5 M41 43 Q50 40.5 59 43 M43 40 Q50 38.4 57 40" stroke="#6d8f40" stroke-width=".9" fill="none"/>`
+    + `<path d="M49 53 Q50 56.5 51.5 53.5" stroke="#6d8f40" stroke-width=".9" fill="none"/><path d="M44 60 Q50 62.5 56 60" stroke="#4a6630" stroke-width="1" fill="none"/>`
+    + `<path d="M40 42 Q34 36 30 38 M42 41 Q38 34 35 33 M60 42 Q66 36 70 38 M58 41 Q62 34 66 33" stroke="#eeeeee" stroke-width=".7" fill="none" opacity=".85"/>`
+    + saber(70, 94, 82, 60, '#46e070', { hilt: '#8a8f96' });
+
+  CHAR.rey = () => SCENES.jakku()
+    + L(8, 100, 34, 18, '#7a7f86', 2.6) + L(8, 100, 34, 18, '#3a3d42', 0.8)
+    + shoulders('#d9c7a3') + P('M18 82 L28 76 L64 100 L52 100Z', '#9a8360') + P('M60 76 L78 78 L70 100 L58 100Z', '#c7b28a', 'opacity=".7"')
+    + neck('#e8bf9a') + head('#e8bf9a') + eyes({ iris: '#5a3c1e' }) + brows('#4a2e1a') + nose() + mouth()
+    + P('M37 44 C36 30 43 26.5 50 26.5 C57 26.5 64 30 63 44 C61 36 56 33 50 33.5 C44 33 40 36 37 44Z', '#5a3a22')
+    + C(50, 23, 4, '#5a3a22') + C(50, 17.5, 3.3, '#5a3a22') + C(50, 13, 2.6, '#5a3a22')
+    + saber(76, 96, 90, 26, '#3d8bff');
+
+  CHAR.stormtrooper = () => SCENES.corridor()
+    // Armor: white chest and shoulder plates over the black body glove.
+    + shoulders('#101114') + P('M6 100 C8 86 18 79 30 77 L34 100Z', '#f1f2f4') + P('M94 100 C92 86 82 79 70 77 L66 100Z', '#f1f2f4')
+    + P('M36 78 L64 78 L62 92 L38 92Z', '#eceef1') + shade('M36 78 L50 78 L50 92 L38 92Z', 0.08) + L(50, 79, 50, 91, '#c3c8cf', 0.8)
+    + R(38, 94, 24, 6, '#e3e6ea', 'rx="1"') + R(44, 95, 12, 4, '#7d8590', 'rx="1"') + R(46, 95.8, 3, 2.4, '#c43b2e') + R(51, 95.8, 3, 2.4, '#3b6fd6')
+    // Helmet: dome, flared jaw and brow ridge.
+    + P('M32.5 44 C31.5 25.5 40 18 50 18 C60 18 68.5 25.5 67.5 44 L70.5 59 C67 66 59 70 50 70 C41 70 33 66 29.5 59Z', '#f6f7f8')
+    + shade('M50 18 C60 18 68.5 25.5 67.5 44 L70.5 59 C67 66 59 70 50 70Z', 0.07) + shade('M32.5 44 C31.5 25.5 40 18 50 18 L50 22 C41 22 35 28 34.5 44Z', 0.04)
+    + L(50, 19, 50, 33, '#dfe2e6', 1.4)
+    + P('M33.5 35.5 Q50 30 66.5 35.5 L66.5 38.2 Q50 32.8 33.5 38.2Z', '#b8bec6')
+    // Angled black eye lenses and nose ridge.
+    + P('M36 40.2 Q41.5 38.4 47 40.6 L46.2 46 Q41 50.2 36.4 45.6Z', '#0c0d10') + P('M64 40.2 Q58.5 38.4 53 40.6 L53.8 46 Q59 50.2 63.6 45.6Z', '#0c0d10')
+    + P('M38 41 Q41 40 43.5 40.6 L42.5 41.8 Q40.5 41.4 38.4 42.2Z', '#4a5260', 'opacity=".8"') + P('M62 41 Q59 40 56.5 40.6 L57.5 41.8 Q59.5 41.4 61.6 42.2Z', '#4a5260', 'opacity=".8"')
+    + P('M47.6 40.8 L52.4 40.8 L53.4 53 L46.6 53Z', '#f1f2f4') + `<path d="M47.6 40.8 L46.6 53 M52.4 40.8 L53.4 53" stroke="#c9ced5" stroke-width=".6"/>`
+    // Cheek "tears", frown grill and breathing tubes.
+    + L(39.5, 49.5, 38.2, 56, '#6f7a88', 1.4) + L(42.5, 50, 41.8, 55, '#6f7a88', 1.1) + L(60.5, 49.5, 61.8, 56, '#6f7a88', 1.4) + L(57.5, 50, 58.2, 55, '#6f7a88', 1.1)
+    + P('M41.5 56.5 Q50 52.8 58.5 56.5 L57.2 62 Q50 59.6 42.8 62Z', '#2c3036') + [44.5, 47.2, 50, 52.8, 55.5].map((x) => L(x, 56.2, x, 60.4, '#a7aeb8', 0.7)).join('')
+    + R(38.6, 58, 3, 7.5, '#3a3f47', 'rx="1.4"') + R(58.4, 58, 3, 7.5, '#3a3f47', 'rx="1.4"')
+    + P('M44 64.5 L56 64.5 L54 68 L46 68Z', '#dfe2e6')
+    // Ear caps.
+    + C(31.8, 50, 3.4, '#e9ebee') + C(31.8, 50, 2, '#9aa3ad') + C(68.2, 50, 3.4, '#e9ebee') + C(68.2, 50, 2, '#9aa3ad')
+    + blaster(64, 94, -30, '#16171a');
+
+  CHAR.battle_droid = () => SCENES.city()
+    + P('M32 100 L36 80 L64 80 L68 100Z', '#cdb68a') + R(36, 82, 28, 6, '#b59e72') + R(44, 60, 3, 20, '#a8915f') + R(53, 60, 3, 20, '#a8915f')
+    + P('M44.5 22 L55.5 22 L58 35 L54.5 62 L45.5 62 L42 35Z', '#d6bf92') + shade('M44.5 22 L50 22 L50 62 L45.5 62 L42 35Z', 0.12)
+    + P('M42 26 C42 18 58 18 58 26 L58 34 H42Z', '#cfb88a') + C(45.2, 30.5, 2.3, '#3a2a14') + C(54.8, 30.5, 2.3, '#3a2a14') + C(45.2, 30.5, 0.9, '#6a5a3a') + C(54.8, 30.5, 0.9, '#6a5a3a')
+    + L(50, 36, 50, 60, '#b09a6c', 0.8) + R(47, 50, 6, 2, '#a38c5c')
+    + blaster(60, 92, -20, '#3a3226');
+
+  CHAR.tusken_raider = () => SCENES.desert()
+    + L(84, 100, 70, 22, '#7a5a3a', 3) + P('M70 22 L64 16 L74 18Z', '#8c8f94')
+    + shoulders('#b89a6a') + P('M20 80 L30 76 L78 100 L64 100Z', '#6b5436')
+    + P('M34 46 C33 28 41 22 50 22 C59 22 67 28 66 46 C66 62 58 68 50 68 C42 68 34 62 34 46Z', '#cbb38a')
+    + `<path d="M35 36 Q50 30 65 36 M34 44 Q50 40 66 44 M36 56 Q50 60 64 56 M38 62 Q50 66 62 62" stroke="#a58f66" stroke-width="1" fill="none"/>`
+    + C(43, 44, 5, '#6b6b6b') + C(57, 44, 5, '#6b6b6b') + C(43, 44, 3.3, '#1a1a1a') + C(57, 44, 3.3, '#1a1a1a') + C(42, 43, 0.9, '#8a8a8a') + C(56, 43, 0.9, '#8a8a8a')
+    + R(47, 52, 6, 11, '#7a7a7a', 'rx="1.5"') + [54, 56.5, 59].map((y) => L(47, y, 53, y, '#4a4a4a', 0.7)).join('') + L(44, 58, 40, 64, '#7a7a7a', 1.6) + L(56, 58, 60, 64, '#7a7a7a', 1.6);
+
+  CHAR.boba_fett = () => SCENES.cloud()
+    + shoulders('#5c6b4a') + P('M4 100 C8 86 16 80 30 76 L28 100Z', '#7a2f2a', 'opacity=".9"') + R(40, 78, 20, 14, '#6f7d55', 'rx="2"') + R(43, 81, 4, 3, '#c43b2e') + R(49, 81, 4, 3, '#e0b83a')
+    + P('M34 44 C34 27.5 41 21.5 50 21.5 C59 21.5 66 27.5 66 44 L66 61 L34 61Z', '#4f6b4a') + shade('M34 44 C34 27.5 41 21.5 50 21.5 L50 61 L34 61Z', 0.12)
+    + P('M38 32 L62 32 L62 36 L38 36Z', '#8a2a24') + P('M37.5 38 L62.5 38 L62.5 43 L54 43 L54 56 L46 56 L46 43 L37.5 43Z', '#0e0f10')
+    + P('M58 24 L62 27 L60 30Z', '#2f3f2c') + L(66, 40, 70, 18, '#3a3d42', 1.4) + R(68, 16, 4, 6, '#3a3d42') + R(35, 56, 30, 5, '#43583f');
+
+  CHAR.tarkin = () => SCENES.bridge()
+    + shoulders('#6f7a67') + P('M40 74 L60 74 L58 82 L42 82Z', '#5f6958') + R(22, 84, 12, 5, '#1a1a1a') + [0, 1, 2, 3].map((i) => R(22.5 + i * 3, 84.8, 2, 1.6, ['#c43b2e', '#3b6fd6', '#c43b2e', '#e0b83a'][i]) + R(22.5 + i * 3, 86.8, 2, 1.6, ['#3b6fd6', '#e0b83a', '#3b6fd6', '#c43b2e'][i])).join('')
+    + neck('#dcb699') + head('#dcb699', { rx: 11.5, ry: 15.5 }) + shade('M39 46 Q41 54 45 57 L43 47Z', 0.2) + shade('M61 46 Q59 54 55 57 L57 47Z', 0.2)
+    + eyes({ iris: '#6a7a8a', spread: 4.8 }) + brows('#8a8a8a', { spread: 4.8, angry: true }) + nose() + mouth('frown', { color: '#8a4a3e' })
+    + P('M38.5 39 C38.5 30 44 27.5 50 27.5 C56 27.5 61.5 30 61.5 39 C58 33.5 42 33.5 38.5 39Z', '#a3a3a3');
+
+  CHAR.darth_maul = () => SCENES.generator()
+    + shoulders('#121212') + P('M38 74 L50 90 L62 74Z', '#1c1c1c')
+    + neck('#b3261e') + head('#b3261e') + P('M40 40 L45 30 L50 38 L55 30 L60 40 L56 36 L50 44 L44 36Z', '#111')
+    + P('M38 50 L44 52 L42 60Z', '#111') + P('M62 50 L56 52 L58 60Z', '#111') + P('M47 52 L53 52 L52 62 L48 62Z', '#111')
+    + E(44.8, 45, 2.2, 1.4, '#ffd23f') + E(55.2, 45, 2.2, 1.4, '#ffd23f') + C(45, 45, 0.9, '#b30000') + C(55, 45, 0.9, '#b30000')
+    + [38, 42, 46, 50, 54, 58, 62].map((x, i) => P(`M${x - 1.3} ${31 + Math.abs(i - 3) * 1.6} L${x} ${26 + Math.abs(i - 3) * 1.6} L${x + 1.3} ${31 + Math.abs(i - 3) * 1.6}Z`, '#e8d9b0')).join('')
+    + saber(82, 60, 82, 12, '#ff2a2a', { noHilt: true }) + saber(82, 68, 82, 100, '#ff2a2a', { noHilt: true }) + L(82, 58, 82, 70, '#2a2a2e', 3.2);
+
+  CHAR.kylo_ren = () => SCENES.snowred()
+    + P('M22 100 L26 58 C30 34 40 26 50 26 C60 26 70 34 74 58 L78 100Z', '#141416') + shoulders('#18181b')
+    + P('M34 44 C34 27.5 41 21.5 50 21.5 C59 21.5 66 27.5 66 44 L65 62 C60 67 40 67 35 62Z', '#1c1c20') + shade('M34 44 C34 27.5 41 21.5 50 21.5 L50 66 C44 66 38 65 35 62Z', 0.2)
+    + `<path d="M38 40 L62 40 M50 40 L50 60 M38 40 L38 48 M62 40 L62 48 M44 60 L56 60" stroke="#b8bcc4" stroke-width="1.6" fill="none"/>`
+    + `<g style="filter:drop-shadow(0 0 2px #ff2020) drop-shadow(0 0 4px #ff2020)"><path d="M80 96 L82 80 L80 70 L83 58 L81 46 L84 34 L82 22" stroke="#ff3030" stroke-width="4.4" fill="none" stroke-linejoin="round" opacity=".8"/><path d="M80 96 L82 80 L80 70 L83 58 L81 46 L84 34 L82 22" stroke="#fff" stroke-width="1.6" fill="none"/>`
+    + L(74, 86, 88, 84, '#ff3030', 3, 'opacity=".85"') + '</g>' + L(79, 88, 80, 100, '#3a3d42', 3.2);
+
+  CHAR.count_dooku = () => SCENES.geonosis()
+    + shoulders('#2a1f1a') + P('M30 76 C34 72 66 72 70 76 L64 82 C56 78 44 78 36 82Z', '#3a2b22') + L(38, 80, 62, 80, '#c9ccd2', 1.2) + C(38, 80, 1.8, '#c9ccd2') + C(62, 80, 1.8, '#c9ccd2')
+    + neck('#e0bca0') + head('#e0bca0') + eyes({ iris: '#3a2a1a' }) + brows('#d8d8d8', { angry: true }) + nose() + `<path d="M40 50 Q42 53 44 52 M60 50 Q58 53 56 52" stroke="#000" stroke-opacity=".2" stroke-width=".7" fill="none"/>`
+    + P('M42.5 53 Q50 67 57.5 53 Q50 57.5 42.5 53Z', '#e6e6e6') + P('M37 42 C36 30 42 27.5 50 27.5 C58 27.5 64 30 63 42 C60 34 40 34 37 42Z', '#ececec')
+    + `<path d="M76 96 Q74 92 77 88" stroke="#9aa1ab" stroke-width="3.2" fill="none" stroke-linecap="round"/>` + saber(77, 88, 90, 22, '#ff2a2a', { noHilt: true });
+
+  CHAR.vader = () => SCENES.deathstar()
+    + shoulders('#0e0e10') + P('M4 100 C8 84 20 76 34 74 L30 100Z', '#050506') + P('M96 100 C92 84 80 76 66 74 L70 100Z', '#050506')
+    + R(41, 80, 18, 12, '#2a2c33', 'rx="1.5"') + R(43, 82, 3, 2, '#ff3b3b') + R(47, 82, 3, 2, '#3bff6a') + R(51, 82, 3, 2, '#3b8bff') + R(43, 86, 14, 1.5, '#8a9099')
+    + P('M29.5 46 C29.5 24 40 15.5 50 15.5 C60 15.5 70.5 24 70.5 46 L77 67 L62 60.5 L60 69 L40 69 L38 60.5 L23 67Z', '#0e0e11')
+    + P('M34 30 C38 20 46 17.5 50 17.5 L50 22 C44 22 38 25 35 32Z', '#3a3b44', 'opacity=".7"')
+    + P('M37.5 37.5 L47 37.5 L46 45.5 L38.5 45.5Z', '#2a0c0c') + P('M62.5 37.5 L53 37.5 L54 45.5 L61.5 45.5Z', '#2a0c0c') + L(39.5, 39, 44, 39, '#8a3a3a', 0.7) + L(56, 39, 60.5, 39, '#8a3a3a', 0.7)
+    + P('M46 47 L54 47 L57.5 61 L42.5 61Z', '#23252c') + [45.5, 48.5, 51.5, 54.5].map((x) => L(x, 51, x + (x - 50) * 0.18, 60, '#9aa1ab', 0.6)).join('')
+    + P('M42.5 61 L57.5 61 L55 66 L45 66Z', '#16171b') + saber(76, 97, 91, 22, '#ff2a2a');
+
+  CHAR.palpatine = () => SCENES.throne()
+    + P('M18 100 L23 57 C25 29 38 17 50 17 C62 17 75 29 77 57 L82 100Z', '#16121a') + shade('M50 17 C38 17 25 29 23 57 L18 100 L40 100 L36 60Z', 0.25)
+    + E(50, 54, 10.5, 13, '#c9bda9') + P('M38 44 C40 30 60 30 62 44 C58 38 42 38 38 44Z', '#16121a') + shade('M39.5 44 Q50 40 60.5 44 L60 50 Q50 46 40 50Z', 0.35)
+    + E(45.5, 51, 1.9, 1.2, '#f5c542') + E(54.5, 51, 1.9, 1.2, '#f5c542') + C(45.6, 51, 0.6, '#b30000') + C(54.4, 51, 0.6, '#b30000')
+    + `<path d="M42 55 Q44 58 43 61 M58 55 Q56 58 57 61 M45 63 Q50 65 55 63 M47 48 L46 50 M53 48 L54 50" stroke="#7a6a58" stroke-width=".7" fill="none"/>`
+    + `<g style="filter:drop-shadow(0 0 2px #b58cff) drop-shadow(0 0 5px #7a4dff)"><path d="M30 86 L22 78 L26 74 L14 66 L18 62 L6 54" stroke="#e8dcff" stroke-width="1.4" fill="none"/><path d="M70 86 L78 78 L74 74 L86 66 L82 62 L94 54" stroke="#e8dcff" stroke-width="1.4" fill="none"/><path d="M26 74 L20 72 M82 62 L88 64" stroke="#e8dcff" stroke-width="1" fill="none"/></g>`
+    + E(30, 88, 4, 3, '#c9bda9') + E(70, 88, 4, 3, '#c9bda9');
+
+  CHAR.jawa = () => SCENES.desert()
+    + P('M66 60 L96 52 L100 70 L70 74Z', '#7a6a58', 'opacity=".55"')
+    + P('M24 100 L30 60 C32 36 40 20 50 18 C60 20 68 36 70 60 L76 100Z', '#6b4a2a') + shade('M50 18 C40 20 32 36 30 60 L24 100 L40 100 L38 56Z', 0.2)
+    + E(50, 50, 11, 12.5, '#0a0706') + glowEyes(45.5, 54.5, 49, '#ffcf3a', 2.4)
+    + P('M26 80 L34 76 L74 98 L66 100Z', '#3e2a18') + [0, 1, 2].map((i) => R(38 + i * 9, 82 + i * 5, 4, 3, '#8a8f94', `transform="rotate(28 ${40 + i * 9} ${83 + i * 5})"`)).join('');
+
+  CHAR.grogu = () => SCENES.warm()
+    + shoulders('#c9b48c', { top: 76 }) + P('M28 82 C30 72 44 70 50 70 C56 70 70 72 72 82 C64 78 36 78 28 82Z', '#e0cfa8') + [34, 42, 50, 58, 66].map((x) => L(x, 74, x - 1, 80, '#b39e76', 0.8)).join('')
+    + P('M38 52 L4 42 C8 54 22 60 38 62Z', '#9cbf7a') + P('M62 52 L96 42 C92 54 78 60 62 62Z', '#9cbf7a') + P('M36 54 L12 46 C16 53 26 57 37 59Z', '#d49a8a', 'opacity=".5"') + P('M64 54 L88 46 C84 53 74 57 63 59Z', '#d49a8a', 'opacity=".5"')
+    + E(50, 54, 14, 15, '#9cbf7a') + shade('M36 54 Q36 69 50 69 Q42 64 40 54Z', 0.12)
+    + E(44, 53, 4.4, 4, '#140e08') + E(56, 53, 4.4, 4, '#140e08') + C(45.5, 51.5, 1.3, '#fff') + C(57.5, 51.5, 1.3, '#fff') + C(43, 54.5, 0.6, '#fff', 'opacity=".6"')
+    + `<path d="M48.5 59.5 Q50 60.8 51.5 59.5" stroke="#6a8a4a" stroke-width=".9" fill="none"/><path d="M42 44 Q50 41 58 44" stroke="#8aad68" stroke-width=".8" fill="none"/>`
+    + `<path d="M44 38 Q45 35 46 38 M50 36 Q51 33 52 36 M55 38 Q56 35 57 38" stroke="#e8e0d0" stroke-width=".5" fill="none"/>`;
+
+  CHAR.death_trooper = () => SCENES.scarif()
+    + shoulders('#1c1e22') + R(40, 78, 20, 22, '#0c0d0f') + R(42, 80, 16, 6, '#2a2d33', 'rx="1"') + C(22, 84, 2, '#4ade80', 'style="filter:drop-shadow(0 0 2px #4ade80)"')
+    + P('M32.5 42 C32.5 26.5 41 20.5 50 20.5 C59 20.5 67.5 26.5 67.5 42 L68.5 57 C64 65 57.5 67 50 67 C42.5 67 36 65 31.5 57Z', '#1f2126')
+    + shade('M32.5 42 C32.5 26.5 41 20.5 50 20.5 L50 67 C42.5 67 36 65 31.5 57Z', 0.25) + `<path d="M34 34 Q50 30 66 34" stroke="#3a3e46" stroke-width="1.2" fill="none"/>`
+    + `<g style="filter:drop-shadow(0 0 1.5px #4ade80)">${P('M37.5 40.5 C37.5 36.5 46.5 36.5 46.5 40.5 L45.5 47.5 C42.5 49 39 47.5 37.5 40.5Z', '#1a3a26')}${P('M62.5 40.5 C62.5 36.5 53.5 36.5 53.5 40.5 L54.5 47.5 C57.5 49 61 47.5 62.5 40.5Z', '#1a3a26')}</g>`
+    + L(39.5, 41, 44, 41, '#4ade80', 0.8) + L(56, 41, 60.5, 41, '#4ade80', 0.8)
+    + P('M41.5 56.5 Q50 51 58.5 56.5 L56 61 Q50 57.5 44 61Z', '#0c0d0f') + [46, 48.7, 51.3, 54].map((x) => L(x, 56, x, 59, '#4a4e56', 0.6)).join('') + C(34.5, 52, 2.6, '#3a3e46') + C(65.5, 52, 2.6, '#3a3e46');
+
+  CHAR.ahsoka = () => SCENES.temple()
+    + shoulders('#5a5048') + P('M36 74 L50 86 L64 74Z', '#7a6a5a')
+    + P('M36 46 C29 60 31 78 36 90 C40 78 40.5 62 40.5 50Z', '#f2f4f8') + P('M64 46 C71 60 69 78 64 90 C60 78 59.5 62 59.5 50Z', '#f2f4f8')
+    + P('M34 62 Q37 64 40 62 L40 66 Q37 68 34 66Z', '#3a5fb8') + P('M66 62 Q63 64 60 62 L60 66 Q63 68 66 66Z', '#3a5fb8') + P('M33 76 Q36 78 38 76 L38 80 Q36 82 34 80Z', '#3a5fb8') + P('M67 76 Q64 78 62 76 L62 80 Q64 82 66 80Z', '#3a5fb8')
+    + neck('#d9772f') + head('#d9772f')
+    + P('M37 38 C33 26 35 15 40 9 C42.5 18 44.5 28 44.5 34Z', '#f2f4f8') + P('M63 38 C67 26 65 15 60 9 C57.5 18 55.5 28 55.5 34Z', '#f2f4f8')
+    + P('M36 28 L43 26 L43.5 30 L36.5 32Z', '#3a5fb8') + P('M64 28 L57 26 L56.5 30 L63.5 32Z', '#3a5fb8') + P('M37.5 18 L41.5 16 L42 19.5 L38 21Z', '#3a5fb8') + P('M62.5 18 L58.5 16 L58 19.5 L62 21Z', '#3a5fb8')
+    + P('M46 34 L50 29.5 L54 34 L50 39Z', '#f2f4f8') + P('M40.5 48 L44 49.5 L42.5 53Z', '#f2f4f8') + P('M59.5 48 L56 49.5 L57.5 53Z', '#f2f4f8') + P('M48 58 L52 58 L50 61Z', '#f2f4f8')
+    + eyes({ iris: '#2a6ad0' }) + brows('#8a4a1e', { w: 0.9 }) + mouth('smirk', { color: '#6a2a14' })
+    + saber(22, 96, 12, 56, '#eef4ff', { hilt: '#c9ccd2' }) + saber(78, 96, 90, 50, '#eef4ff', { hilt: '#c9ccd2' });
+
+  CHAR.din_djarin = () => SCENES.desert()
+    + L(12, 100, 30, 30, '#4a3a2a', 2.8) + L(12, 100, 30, 30, '#8a8f96', 1)
+    + shoulders('#5a4632') + P('M60 74 C74 74 90 80 94 94 L72 96 C68 86 64 80 58 78Z', '#c3cad2') + shade('M62 76 C72 76 84 80 90 88 L74 90Z', 0.12)
+    + P('M20 82 L30 77 L72 100 L60 100Z', '#3a2a1c')
+    + P('M34 44 C34 27.5 41 21.5 50 21.5 C59 21.5 66 27.5 66 44 L66 62 L34 62Z', '#bcc4cc') + shade('M34 44 C34 27.5 41 21.5 50 21.5 L50 62 L34 62Z', 0.14)
+    + P('M50 22 C58 22 64 27 65.5 36 L50 34Z', '#e2e7ec', 'opacity=".6"')
+    + P('M38.5 38.5 L61.5 38.5 L61.5 42.5 L53 42.5 L53 58 L47 58 L47 42.5 L38.5 42.5Z', '#0e0f11') + L(40, 50, 44, 58, '#8a929a', 0.8) + L(60, 50, 56, 58, '#8a929a', 0.8);
+
+  CHAR.grievous = () => SCENES.city()
+    + saber(20, 88, 6, 30, '#3d8bff') + saber(80, 88, 94, 30, '#46e070') + saber(26, 94, 10, 60, '#46e070') + saber(74, 94, 92, 64, '#3d8bff')
+    + shoulders('#6b7077') + P('M40 76 L60 76 L58 100 L42 100Z', '#4a4e54') + [80, 85, 90, 95].map((y) => L(42, y, 58, y, '#8a9098', 1)).join('')
+    + P('M40 26 C40 18 60 18 60 26 L64 36 L58 30 L42 30 L36 36Z', '#d9d2bf')
+    + P('M37 32 L63 32 L65 50 L58 66 L42 66 L35 50Z', '#e6e0cf') + shade('M37 32 L50 32 L50 66 L42 66 L35 50Z', 0.1)
+    + P('M39 39 L48 42 L47 48 L40 46Z', '#1a1810') + P('M61 39 L52 42 L53 48 L60 46Z', '#1a1810') + glowEyes(43.5, 56.5, 44.2, '#ffd23f', 1.7)
+    + P('M44 54 L56 54 L55 64 L45 64Z', '#3a3830') + [47, 50, 53].map((x) => L(x, 55, x, 63, '#6a6858', 0.7)).join('');
+
+  CHAR.mace_windu = () => SCENES.temple()
+    + shoulders('#4a3424') + P('M36 75 L50 96 L64 75 C58 73 42 73 36 75Z', '#c9b48c') + P('M36 75 L50 96 L46 100 L30 78Z', '#b39e76') + P('M64 75 L50 96 L54 100 L70 78Z', '#b39e76')
+    + neck('#6b4430') + head('#6b4430', { ry: 15.5 }) + P('M38 36 C40 29 60 29 62 36 C56 31 44 31 38 36Z', '#8a5a40', 'opacity=".5"')
+    + eyes({ iris: '#2a1a10' }) + brows('#2a1a10', { angry: true, w: 1.5 }) + nose() + mouth('frown', { color: '#3a1a10' })
+    + saber(74, 96, 90, 20, '#a86bff');
+
+  CHAR.thrawn = () => SCENES.bridge()
+    + shoulders('#eeeeee') + P('M4 90 L22 78 L30 80 L14 94Z', '#e0b83a') + P('M96 90 L78 78 L70 80 L86 94Z', '#e0b83a') + P('M40 74 L60 74 L58 82 L42 82Z', '#dedede')
+    + R(24, 86, 12, 5, '#1a1a1a') + [0, 1, 2, 3].map((i) => R(24.5 + i * 3, 86.8, 2, 1.6, ['#c43b2e', '#3b6fd6', '#e0b83a', '#3b6fd6'][i])).join('')
+    + neck('#4a79b8') + head('#4a79b8') + shade('M40 46 Q42 54 45 57 L43 47Z', 0.2)
+    + `<g style="filter:drop-shadow(0 0 1.8px #ff2020)">${E(44.8, 45, 2.2, 1.4, '#ff2a2a')}${E(55.2, 45, 2.2, 1.4, '#ff2a2a')}</g>`
+    + brows('#0e1420', { angry: true }) + nose() + mouth('', { color: '#2a3a5a' })
+    + P('M37 43 C36 29 43 26.5 50 26.5 C57 26.5 64 29 63 43 C61 34 55 32 50 32 C45 32 39 34 37 43Z', '#0f0f14');
+
+  // ---------- Bosses ----------
+  CHAR.rancor = () => SCENES.pit()
+    + P('M8 100 C8 70 22 52 50 50 C78 52 92 70 92 100Z', '#6a5c4e')
+    + P('M18 56 C16 30 32 16 50 16 C68 16 84 30 82 56 C80 66 70 72 50 72 C30 72 20 66 18 56Z', '#7a6b5b') + shade('M18 56 C16 30 32 16 50 16 L50 72 C30 72 20 66 18 56Z', 0.14)
+    + P('M24 34 C30 26 40 24 46 30 L40 34Z', '#5a4d40') + P('M76 34 C70 26 60 24 54 30 L60 34Z', '#5a4d40')
+    + glowEyes(38, 62, 34, '#ffb03a', 1.8)
+    + P('M26 50 C30 46 70 46 74 50 L70 70 C60 80 40 80 30 70Z', '#2a0e0c')
+    + [30, 36, 42, 48, 54, 60, 66].map((x) => P(`M${x} 50 L${x + 3} 60 L${x + 6} 50Z`, '#efe6cf')).join('')
+    + [34, 40, 46, 52, 58, 64].map((x) => P(`M${x} 74 L${x + 3} 64 L${x + 6} 74Z`, '#efe6cf')).join('')
+    + `<path d="M40 76 Q41 84 39 90" stroke="#b8c8d0" stroke-width="1" fill="none" opacity=".6"/>`;
+
+  CHAR.krayt_dragon = () => SCENES.desert()
+    + P('M100 100 L100 60 C84 50 66 46 50 44 C32 42 16 34 8 22 C18 26 26 24 32 20 C40 30 56 30 70 36 C86 42 96 50 100 54Z', '#c9a86b')
+    + P('M8 22 C18 26 26 24 32 20 C28 36 16 40 6 32Z', '#b39158') + P('M10 30 L6 44 L14 36 L20 46 L24 36Z', '#efe6cf')
+    + P('M34 20 L30 6 L38 16Z', '#8a6e42') + P('M44 26 L42 10 L50 22Z', '#8a6e42') + P('M56 30 L56 14 L62 28Z', '#8a6e42') + P('M68 36 L70 20 L74 36Z', '#8a6e42') + P('M80 42 L84 28 L86 44Z', '#8a6e42')
+    + glowEyes(26, 26, 24, '#ffdf3a', 2)
+    + `<path d="M40 38 Q60 44 90 56 M44 44 Q66 52 96 66" stroke="#a88a52" stroke-width="1.2" fill="none"/>`
+    + P('M100 100 L60 100 C66 86 80 72 100 70Z', '#b39158');
+
+  CHAR.lord_vader = () => {
+    const base = CHAR.vader();
+    const aura = `<g opacity=".85">${C(50, 46, 40, '#ff1a1a', 'opacity=".22"')}${C(50, 46, 30, '#ff3a1a', 'opacity=".22"')}</g>`;
+    return SCENES.lava() + aura + base.replace(SCENES.deathstar(), '');
+  };
+
+  // ---------- Ships ----------
+  // Top-down, nose pointing up (TIE-family are shown head-on).
+  const HULL = '#d7dce4';
+  const HULL_D = '#9aa3b0';
+  const LINE = 'stroke="#5d6674" stroke-width=".6" fill="none"';
+  const eng = (cx, cy, r, color) => `<circle class="eng" cx="${cx}" cy="${cy}" r="${r}" fill="${color || '#9fdcff'}" style="--eng:${color || '#6fc8ff'}"/>`;
+
+  const SHIPS = {
+    xwing: () => P('M44 60 L10 64 L10 72 L44 74Z', HULL) + P('M56 60 L90 64 L90 72 L56 74Z', HULL)
+      + R(20, 64, 12, 3.2, '#c43b2e') + R(68, 64, 12, 3.2, '#c43b2e')
+      + R(8, 30, 3.4, 46, HULL_D, 'rx="1"') + R(88.6, 30, 3.4, 46, HULL_D, 'rx="1"') + R(8.8, 24, 1.8, 8, '#6d7582') + R(89.4, 24, 1.8, 8, '#6d7582')
+      + R(33, 56, 8, 26, HULL_D, 'rx="3"') + R(59, 56, 8, 26, HULL_D, 'rx="3"') + eng(37, 83, 3.4) + eng(63, 83, 3.4)
+      + P('M50 5 L54.5 20 L57 58 L58 84 L42 84 L43 58 L45.5 20Z', HULL) + shade('M50 5 L45.5 20 L43 58 L42 84 L50 84Z', 0.12)
+      + P('M47 40 C47 34 53 34 53 40 L53 50 L47 50Z', '#152235') + P('M48 38 L50 36 L50 44 L48 44Z', '#7fb2e6', 'opacity=".5"')
+      + C(50, 58, 3.2, '#e8ecf2') + P('M46.8 58 A3.2 3.2 0 0 1 53.2 58Z', '#3b6fd6') + R(47, 22, 6, 2, '#c43b2e')
+      + `<path d="M44 28 L56 28 M43.5 66 L56.5 66 M20 68 L32 68 M68 68 L80 68" ${LINE}/>`,
+    ywing: () => R(17, 40, 11, 52, HULL, 'rx="5"') + R(72, 40, 11, 52, HULL, 'rx="5"') + R(18, 46, 9, 5, HULL_D) + R(73, 46, 9, 5, HULL_D)
+      + eng(22.5, 93, 4.2) + eng(77.5, 93, 4.2) + R(20, 60, 5, 26, '#8a929e', 'opacity=".5"') + R(75, 60, 5, 26, '#8a929e', 'opacity=".5"')
+      + R(18, 54, 64, 8, HULL_D, 'rx="2"') + R(46.5, 30, 7, 30, '#8a929e') + `<path d="M47 34 L53 40 M53 44 L47 50 M47 54 L53 58" stroke="#3a414c" stroke-width=".9" fill="none"/>`
+      + P('M40 12 C40 6 60 6 60 12 L60 34 L40 34Z', HULL) + R(40, 18, 20, 4, '#e07b1a') + R(40, 26, 20, 2.4, '#e07b1a')
+      + P('M44 10 L56 10 L55 17 L45 17Z', '#152235') + L(50, 2, 50, 8, '#6d7582', 1.4),
+    awing: () => P('M50 8 L88 82 L64 74 L50 80 L36 74 L12 82Z', HULL) + shade('M50 8 L36 74 L12 82Z', 0.12)
+      + P('M50 8 L56 22 L44 22Z', '#c43b2e') + P('M22 70 L36 66 L38 72 L20 78Z', '#c43b2e') + P('M78 70 L64 66 L62 72 L80 78Z', '#c43b2e')
+      + R(8, 50, 9, 36, HULL_D, 'rx="3"') + R(83, 50, 9, 36, HULL_D, 'rx="3"') + eng(12.5, 87, 4.2) + eng(87.5, 87, 4.2)
+      + E(50, 48, 5.5, 8, '#152235') + P('M47 44 L50 41 L50 50 L47 50Z', '#7fb2e6', 'opacity=".5"')
+      + `<path d="M50 22 L50 38 M40 60 L60 60 M34 68 L66 68" ${LINE}/>`,
+    bwing: () => R(46, 4, 8, 90, HULL, 'rx="2"') + shade('M46 4 H50 V94 H46Z', 0.12)
+      + P('M16 54 L84 54 L78 64 L22 64Z', HULL) + R(12, 50, 8, 22, HULL_D, 'rx="2"') + R(80, 50, 8, 22, HULL_D, 'rx="2"')
+      + R(10, 72, 12, 3, '#6d7582') + R(78, 72, 12, 3, '#6d7582') + C(50, 14, 9, HULL) + C(50, 14, 5, '#152235') + P('M47 12 A4 4 0 0 1 52 10Z', '#7fb2e6', 'opacity=".6"')
+      + R(46, 34, 8, 4, '#c43b2e') + R(20, 56, 10, 2.4, '#c43b2e') + R(70, 56, 10, 2.4, '#c43b2e')
+      + eng(46, 95, 2.6) + eng(50, 96, 2.6) + eng(54, 95, 2.6) + `<path d="M46 44 H54 M46 76 H54 M30 60 H70" ${LINE}/>`,
+    falcon: () => P('M36 26 L36 6 L46 6 L46 30Z', HULL) + P('M64 26 L64 6 L54 6 L54 30Z', HULL) + R(38, 8, 6, 3, HULL_D) + R(56, 8, 6, 3, HULL_D)
+      + C(50, 56, 34, HULL) + shade('M50 22 A34 34 0 0 0 50 90Z', 0.1) + C(50, 56, 34, 'none', 'stroke="#8a929e" stroke-width="1"')
+      + P('M46 22 L54 22 L54 36 L46 36Z', '#070a12') + C(50, 56, 11, '#aeb6c2') + C(50, 56, 6, '#8a929e') + C(50, 56, 3, '#4a525e')
+      + `<path d="M50 34 L50 45 M50 67 L50 88 M28 56 L39 56 M61 56 L84 56 M34 40 L42 48 M66 40 L58 48 M34 72 L42 64 M66 72 L58 64" ${LINE}/>`
+      + P('M80 36 L96 34 L97 42 L82 46Z', HULL) + C(94, 38, 4, '#152235') + P('M76 42 L84 38 L84 46Z', HULL_D)
+      + E(33, 44, 5, 3, HULL_D) + E(33, 44, 3, 1.8, '#5d6674')
+      + `<path class="eng" d="M24 80 A34 34 0 0 0 76 80" stroke="#9fdcff" stroke-width="3.4" fill="none" style="--eng:#6fc8ff"/>`,
+    razorcrest: () => P('M44 8 L56 8 L60 30 L60 78 L40 78 L40 30Z', '#b8bec6') + shade('M44 8 L40 30 L40 78 L50 78 L50 8Z', 0.12)
+      + R(22, 48, 16, 34, '#a3aab3', 'rx="4"') + R(62, 48, 16, 34, '#a3aab3', 'rx="4"') + R(26, 58, 8, 18, '#6d7582', 'rx="2"') + R(66, 58, 8, 18, '#6d7582', 'rx="2"')
+      + R(38, 56, 24, 6, '#8a929e') + eng(30, 84, 5.2, '#9fdcff') + eng(70, 84, 5.2, '#9fdcff')
+      + P('M45 12 L55 12 L56 22 L44 22Z', '#152235') + R(42, 30, 16, 3, '#6d7582') + `<path d="M42 40 H58 M42 50 H58 M42 66 H58 M44 70 L56 70" ${LINE}/>`
+      + R(46, 44, 8, 4, '#5a4632', 'opacity=".6"'),
+    tie: () => P('M14 8 L25 27 L25 73 L14 92 L3 73 L3 27Z', '#2a2f38') + P('M86 8 L97 27 L97 73 L86 92 L75 73 L75 27Z', '#2a2f38')
+      + P('M14 8 L25 27 L25 73 L14 92 L3 73 L3 27Z', 'none', 'stroke="#8a929e" stroke-width="1.6"') + P('M86 8 L97 27 L97 73 L86 92 L75 73 L75 27Z', 'none', 'stroke="#8a929e" stroke-width="1.6"')
+      + `<path d="M14 8 L14 92 M3 27 L25 73 M25 27 L3 73 M86 8 L86 92 M75 27 L97 73 M97 27 L75 73" stroke="#5d6674" stroke-width=".7"/>`
+      + R(24, 46, 18, 8, '#7a828e') + R(58, 46, 18, 8, '#7a828e') + C(50, 50, 16, '#8a929e') + shade('M50 34 A16 16 0 0 0 50 66Z', 0.15)
+      + C(50, 50, 8.5, '#0d1016') + `<path d="M50 41.5 V58.5 M41.5 50 H58.5 M44 44 L56 56 M56 44 L44 56" stroke="#5d6674" stroke-width=".8"/>` + C(50, 50, 3, '#1a1f28')
+      + C(45, 62, 1.4, '#3bff6a', 'class="eng" style="--eng:#3bff6a"') + C(55, 62, 1.4, '#3bff6a', 'class="eng" style="--eng:#3bff6a"'),
+    tieint: () => P('M4 6 L22 34 L22 66 L4 94 L14 50Z', '#2a2f38', 'stroke="#8a929e" stroke-width="1.4"') + P('M96 6 L78 34 L78 66 L96 94 L86 50Z', '#2a2f38', 'stroke="#8a929e" stroke-width="1.4"')
+      + `<path d="M4 6 L22 50 L4 94 M96 6 L78 50 L96 94" stroke="#5d6674" stroke-width=".7" fill="none"/>` + L(4, 6, 4, 14, '#3bff6a', 1.4) + L(96, 6, 96, 14, '#3bff6a', 1.4)
+      + R(22, 46, 18, 8, '#7a828e') + R(60, 46, 18, 8, '#7a828e') + C(50, 50, 15, '#8a929e') + C(50, 50, 8, '#0d1016')
+      + `<path d="M50 42 V58 M42 50 H58 M44.5 44.5 L55.5 55.5 M55.5 44.5 L44.5 55.5" stroke="#5d6674" stroke-width=".8"/>`,
+    tieadv: () => P('M6 12 L28 36 L28 64 L6 88 L16 50Z', '#2a2f38', 'stroke="#8a929e" stroke-width="1.4"') + P('M94 12 L72 36 L72 64 L94 88 L84 50Z', '#2a2f38', 'stroke="#8a929e" stroke-width="1.4"')
+      + `<path d="M6 12 L28 50 L6 88 M94 12 L72 50 L94 88 M16 50 H28 M84 50 H72" stroke="#5d6674" stroke-width=".7" fill="none"/>`
+      + R(26, 46, 14, 8, '#7a828e') + R(60, 46, 14, 8, '#7a828e') + P('M42 60 L58 60 L56 84 L44 84Z', '#6d7582') + eng(47, 86, 2.4, '#ff8a4a') + eng(53, 86, 2.4, '#ff8a4a')
+      + C(50, 50, 15, '#8a929e') + R(43, 30, 14, 10, '#7a828e', 'rx="3"') + C(50, 50, 8, '#0d1016')
+      + `<path d="M50 42 V58 M42 50 H58 M44.5 44.5 L55.5 55.5 M55.5 44.5 L44.5 55.5" stroke="#5d6674" stroke-width=".8"/>`,
+    tiebomber: () => P('M10 10 L22 28 L22 72 L10 90 L2 72 L2 28Z', '#2a2f38', 'stroke="#8a929e" stroke-width="1.4"') + P('M90 10 L98 28 L98 72 L90 90 L78 72 L78 28Z', '#2a2f38', 'stroke="#8a929e" stroke-width="1.4"')
+      + `<path d="M10 10 V90 M90 10 V90" stroke="#5d6674" stroke-width=".7"/>` + R(20, 46, 60, 8, '#7a828e')
+      + E(38, 50, 11, 24, '#8a929e') + E(62, 52, 9, 26, '#8a929e') + shade('M38 26 A11 24 0 0 0 38 74Z', 0.15)
+      + C(38, 40, 6, '#0d1016') + `<path d="M38 34 V46 M32 40 H44" stroke="#5d6674" stroke-width=".7"/>` + R(58, 60, 8, 12, '#5d6674', 'rx="2"'),
+    shuttle: () => R(46, 4, 8, 50, '#e0e3e8', 'rx="1"') + shade('M46 4 H50 V54 H46Z', 0.1) + L(50, 8, 50, 48, '#9aa3b0', 0.7)
+      + P('M42 56 L14 92 L24 96 L50 64Z', '#d0d4da') + P('M58 56 L86 92 L76 96 L50 64Z', '#d0d4da') + `<path d="M40 62 L20 90 M60 62 L80 90" stroke="#9aa3b0" stroke-width=".8"/>`
+      + R(35, 52, 30, 20, '#e6e9ee', 'rx="6"') + R(40, 56, 20, 6, '#152235', 'rx="2"') + [44, 50, 56].map((x) => L(x, 56, x, 62, '#8a929e', 0.6)).join('') + eng(42, 73, 2.4) + eng(58, 73, 2.4),
+    slave: () => P('M26 70 L10 92 L32 86Z', '#5c6b4a') + P('M74 70 L90 92 L68 86Z', '#5c6b4a') + E(50, 48, 24, 38, '#6b7d58') + shade('M50 10 A24 38 0 0 0 50 86Z', 0.14)
+      + E(50, 48, 24, 38, 'none', 'stroke="#3f4a33" stroke-width="1"') + P('M32 66 C40 74 60 74 68 66 L66 78 C58 84 42 84 34 78Z', '#8a3a2a')
+      + C(50, 24, 7, '#3a4430') + C(50, 24, 4.5, '#152235') + R(38, 40, 5, 12, '#3a4430', 'rx="1"') + R(57, 40, 5, 12, '#3a4430', 'rx="1"')
+      + `<path d="M34 40 C40 44 60 44 66 40 M30 56 C40 60 60 60 70 56" ${LINE}/>` + eng(43, 86, 2.6) + eng(50, 87, 2.6) + eng(57, 86, 2.6),
+    isd: () => P('M50 4 L88 92 L12 92Z', '#c9ced6') + shade('M50 4 L12 92 L50 92Z', 0.12)
+      + `<path d="M50 10 L50 90 M30 50 L70 50 M22 70 L78 70 M40 30 L60 30" stroke="#8a929e" stroke-width=".8"/>` + P('M46 30 L54 30 L55 44 L45 44Z', '#3a414c')
+      + R(38, 70, 24, 12, '#b3b9c2') + R(42, 62, 16, 10, '#a3aab3') + R(40, 58, 20, 4, '#b3b9c2') + C(44, 57, 2.4, '#b3b9c2') + C(56, 57, 2.4, '#b3b9c2')
+      + eng(36, 93, 3.2, '#9fdcff') + eng(50, 94, 4, '#9fdcff') + eng(64, 93, 3.2, '#9fdcff'),
+    deathstar: () => C(50, 50, 44, '#8a929e') + shade('M50 6 A44 44 0 0 0 50 94 A30 44 0 0 1 50 6Z', 0.22)
+      + P('M6 50 L94 50', 'none', 'stroke="#4a525e" stroke-width="2"') + [30, 40, 60, 70].map((y) => `<path d="M${50 - Math.sqrt(44 * 44 - (y - 50) ** 2)} ${y} L${50 + Math.sqrt(44 * 44 - (y - 50) ** 2)} ${y}" stroke="#7a828e" stroke-width=".6"/>`).join('')
+      + C(66, 32, 11, '#7a828e') + C(66, 32, 7, '#6a727e') + C(66, 32, 3, '#4ade80', 'class="eng" style="--eng:#4ade80"')
+      + [[24, 62], [36, 74], [58, 66], [72, 58], [28, 38], [42, 24]].map(([x, y]) => R(x, y, 3, 2, '#5d6674')).join(''),
+  };
+
+  function characterArt(id) {
+    return CHAR[id] ? CHAR[id]() : SCENES.space(1);
+  }
+
+  function shipArt(def) {
+    const bg = SCENES.space(def.id.length * 7) + (def.boss ? C(20, 80, 30, def.id === 'death_star' ? '#3a2a5a' : '#2a3a5a', 'opacity=".5"') : '');
+    return `${bg}<g class="ship-body">${(SHIPS[def.shape] || SHIPS.xwing)()}</g>`;
+  }
+
+  function unitArt(def) {
+    const inner = def.kind === 'ship' ? shipArt(def) : characterArt(def.id);
+    return `<svg class="art" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${inner}</svg>`;
+  }
+
+  // ---------- Icons ----------
+  const ICONS = {
+    credits: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h10l4 4v10H9l-4-4z" fill="#e8c14a"/><path d="M5 5h10l4 4v10H9l-4-4z" fill="none" stroke="#8a6a12" stroke-width="1.2"/><rect x="9" y="9" width="6" height="6" rx="1" fill="#8a6a12" opacity=".55"/><circle cx="12" cy="12" r="1.4" fill="#fff2b8"/></svg>',
+    crystals: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l5 7-5 13-5-13z" fill="#5ab4ff"/><path d="M12 2l5 7-5 13z" fill="#2a7ad0"/><path d="M7 9h10" stroke="#cfe8ff" stroke-width=".8"/><path d="M12 2l-2 7 2 13" stroke="#cfe8ff" stroke-width=".6" fill="none" opacity=".8"/></svg>',
+    aurodium: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 16l3-8h12l3 8z" fill="#f2b632"/><path d="M6 8h12l-2 4H8z" fill="#ffd97a"/><path d="M3 16l3-8h12l3 8z" fill="none" stroke="#8a5a0a" stroke-width="1.1"/><path d="M8 14h8" stroke="#8a5a0a" stroke-width=".9"/></svg>',
+  };
+
+  function crateArt(id) {
+    const color = { recruit: '#5ab4ff', squadron: '#ff6b4b', holocron: '#8fd3ff', strongbox: '#f2b632' }[id] || '#8a929e';
+    const glyph = {
+      recruit: C(50, 54, 7, 'none', `stroke="${color}" stroke-width="2.4"`) + L(50, 44, 50, 64, color, 2),
+      squadron: P('M50 44 L58 62 L50 58 L42 62Z', color),
+      holocron: P('M50 42 L60 54 L50 66 L40 54Z', color, 'opacity=".9"') + P('M50 42 L60 54 L50 66Z', '#fff', 'opacity=".25"'),
+      strongbox: P('M38 60 L42 48 H58 L62 60Z', color) + P('M42 48 H58 L56 53 H44Z', '#fff3c4'),
+    }[id] || '';
+    return `<svg class="crate-art" viewBox="0 0 100 100" aria-hidden="true">
+      ${E(50, 86, 34, 6, '#000', 'opacity=".45"')}
+      ${P('M18 34 L50 20 L82 34 L82 76 L50 90 L18 76Z', '#2a303a')}
+      ${P('M18 34 L50 48 L50 90 L18 76Z', '#3a424e')}${P('M82 34 L50 48 L50 90 L82 76Z', '#232830')}
+      ${P('M18 34 L50 20 L82 34 L50 48Z', '#4a5462')}
+      ${P('M18 44 L50 58 L50 62 L18 48Z', color, 'opacity=".75"')}${P('M82 44 L50 58 L50 62 L82 48Z', color, 'opacity=".55"')}
+      <g style="filter:drop-shadow(0 0 3px ${color})" transform="translate(34 68) scale(.7) translate(-50 -54)">${glyph}</g>
+    </svg>`;
+  }
+
+  // Shady merchant for the Black Market.
+  function merchantArt() {
+    return `<svg class="merchant-art" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      ${R(0, 0, 100, 100, '#0d0a14')}${R(0, 0, 100, 100, '#ff2e88', 'opacity=".07"')}
+      ${R(8, 10, 26, 8, '#ff2e88', 'rx="2" opacity=".7" style="filter:drop-shadow(0 0 4px #ff2e88)"')}${R(66, 18, 24, 6, '#2ee6ff', 'rx="2" opacity=".6" style="filter:drop-shadow(0 0 4px #2ee6ff)"')}
+      ${P('M16 100 L22 58 C24 34 36 22 50 22 C64 22 76 34 78 58 L84 100Z', '#241c2e')}${shade('M50 22 C36 22 24 34 22 58 L16 100 L40 100 L36 58Z', 0.3)}
+      ${E(50, 54, 12, 14, '#07050a')}${glowEyes(45, 55, 52, '#ff5a3a', 1.8)}
+      ${P('M30 100 L36 76 L64 76 L70 100Z', '#1a1422')}${P('M34 84 L66 84', 'none', 'stroke="#c9a24a" stroke-width="1.4"')}
+      ${C(28, 86, 5, '#e8c14a', 'opacity=".9"')}${C(72, 90, 4, '#5ab4ff', 'opacity=".9"')}
+    </svg>`;
+  }
+
+  root.Art = { unitArt, ICONS, crateArt, merchantArt, SHIP_SHAPES: Object.keys(SHIPS), CHARACTER_IDS: Object.keys(CHAR) };
+})(typeof window !== 'undefined' ? window : globalThis);

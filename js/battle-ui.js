@@ -1,10 +1,11 @@
 // Battle screen: renders the field, takes player input and plays engine
-// events back as animations (lunges, laser fire, floating numbers, cutscenes).
+// events back as animations (lunges, strafing runs, lasers, torpedoes,
+// explosions, floating numbers, cutscenes) and the victory luck spin.
 
 (function (root) {
   const D = root.GameData;
   const Player = root.Player;
-  const { $, $$, el, esc, fmt, portrait, toast, openModal, confirmBox, updateWallet, App } = root.UI;
+  const { $, $$, el, esc, fmt, cur, portrait, toast, openModal, confirmBox, updateWallet, App } = root.UI;
 
   const PREF_KEY = 'swcg-battle-prefs';
   function loadPrefs() {
@@ -23,6 +24,7 @@
   }
 
   const reducedMotion = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const BOLT = { light: '#ff3b3b', dark: '#3bff6a' };
 
   const BattleUI = {
     battle: null,
@@ -36,16 +38,16 @@
       return new Promise((r) => setTimeout(r, ms / this.speed));
     },
 
-    async start(kind, stageIndex) {
-      const stage = D.CAMPAIGNS[kind].stages[stageIndex];
-      const squad = Player.squadEntries(kind);
+    async start(params) {
+      const enc = Player.encounter(params);
+      const squad = Player.squadEntries(enc.kind);
       if (!squad.length) return toast('Pick at least one unit for your squad.');
-      this.kind = kind;
-      this.stageIndex = stageIndex;
-      this.stage = stage;
+      this.params = params;
+      this.enc = enc;
+      this.kind = enc.kind;
       this.ended = false;
       this.pending = null;
-      this.battle = new root.Battle(squad, stage.enemies.map((id) => ({ id, level: stage.level, stars: 1 })));
+      this.battle = new root.Battle(squad, enc.enemies.map((id) => ({ id, level: enc.level, stars: 1 })));
 
       App.battleActive = true;
       App.current = 'battle';
@@ -53,25 +55,28 @@
       document.documentElement.style.setProperty('--speed', this.speed);
       this.renderScreen();
       await this.hyperspace();
-      this.log(`Battle begins at ${stage.name}!`, 'ult');
+      if (enc.type === 'boss') await this.bossIntro(D.UNIT_MAP[enc.boss]);
+      this.log(`Battle begins: ${enc.name}!`, 'ult');
       this.loop();
     },
 
     // ---------- Rendering ----------
     renderScreen() {
       const b = this.battle;
-      const view = el(`<section class="battle">
+      const ships = this.kind === 'ship';
+      const view = el(`<section class="battle ${this.enc.type === 'boss' ? 'boss-fight' : ''}">
         <div class="battle-top">
-          <h2>${esc(this.stage.name)}</h2>
+          <h2>${esc(this.enc.name)}</h2>
           <div class="turn-order" data-order></div>
           <span class="spacer"></span>
           <button class="btn btn-small toggle" type="button" data-auto title="Let the AI play your turns">Auto</button>
           <button class="btn btn-small" type="button" data-speed title="Animation speed">${this.speed}×</button>
           <button class="btn btn-small btn-danger" type="button" data-retreat>Retreat</button>
         </div>
-        <div class="field ${this.kind === 'ship' ? 'ships' : ''}" data-field>
+        <div class="field ${ships ? 'ships' : ''}" data-field>
+          ${ships ? '<div class="space-layer far"></div><div class="space-layer near"></div><div class="nebula"></div>' : ''}
           <div class="row enemy-row" data-row="enemy"></div>
-          <div class="midline">${this.kind === 'ship' ? 'Engagement zone' : 'Battlefield'}</div>
+          <div class="midline">${ships ? 'Engagement zone' : 'Battlefield'}</div>
           <div class="row player-row" data-row="player"></div>
           <div class="fx-layer" data-fx></div>
         </div>
@@ -85,11 +90,10 @@
       this.fx = $('[data-fx]', view);
       this.cards = {};
       for (const u of b.units) {
-        const card = el(`<div class="bcard" data-uid="${u.uid}">
-          <span class="blevel">Lv ${u.level}</span>
+        const card = el(`<div class="bcard ${u.side} ${u.def.kind} ${u.boss ? 'boss' : ''}" data-uid="${u.uid}" style="--bob:${(u.index * 0.37).toFixed(2)}s">
+          <span class="blevel">${u.boss ? 'BOSS' : 'Lv ' + u.level}</span>
           <div class="statuses"></div>
           ${portrait(u.def)}
-          <div class="bname">${esc(u.def.name)}</div>
           <div class="bars">
             <div class="bar hp"><i class="lag"></i><i class="fill"></i></div>
             <div class="hp-num"><span data-hp></span><span>${fmt(u.maxHp)}</span></div>
@@ -132,10 +136,13 @@
       if (want.join() !== have.join()) {
         st.innerHTML = want.map((k) => {
           const info = D.STATUS_INFO[k];
-          return `<span data-s="${k}" class="${info.kind}" title="${info.label} (${u.statuses[k]}): ${info.desc}">${info.icon}</span>`;
+          const turns = u.statuses[k] > 50 ? '∞' : u.statuses[k];
+          return `<span data-s="${k}" class="${info.kind}" title="${info.label} (${turns}): ${info.desc}">${info.icon}</span>`;
         }).join('');
       }
       card.classList.toggle('ko', !u.alive);
+      card.classList.toggle('enraged', !!u.enraged && u.alive);
+      card.classList.toggle('shielded', !!u.statuses.defUp && u.def.kind === 'ship');
     },
 
     updateAll() {
@@ -146,7 +153,7 @@
       const order = this.battle.predictOrder(7);
       $('[data-order]', this.view).innerHTML = '<span class="label">Next</span>' + order.map((uid) => {
         const u = this.battle.get(uid);
-        return `<span class="to-chip ${u.side}" title="${esc(u.def.name)}">${portrait(u.def)}</span>`;
+        return `<span class="to-chip ${u.side}" title="${esc(u.def.name)}">${portrait(u.def, { plate: false })}</span>`;
       }).join('');
     },
 
@@ -168,7 +175,7 @@
         box.innerHTML = '<div class="waiting" style="grid-column:1/-1">Preparing for battle…</div>';
         return;
       }
-      const chip = `<div class="actor-chip">${portrait(actor.def)}</div>`;
+      const chip = `<div class="actor-chip">${portrait(actor.def, { plate: false })}</div>`;
       if (mode !== 'input') {
         const who = actor.side === 'enemy' ? 'Enemy turn' : 'Auto battle';
         box.innerHTML = `${chip}<div class="actions-main"><div class="actions-title"><b>${esc(actor.def.name)}</b><span class="muted">${who}</span></div><div class="waiting"><span class="dot"></span>${actor.side === 'enemy' ? 'The enemy is choosing an action…' : 'Your squad is fighting on its own.'}</div></div>`;
@@ -289,7 +296,7 @@
         if (await confirmBox('Retreat from battle?', 'This counts as a defeat. You keep everything you already own.', 'Retreat')) {
           this.ended = true;
           this.resolvePending(null);
-          Player.completeStage(this.kind, this.stageIndex, false);
+          Player.completeEncounter(this.params, false);
           this.teardown();
           App.go('campaign');
         }
@@ -353,7 +360,7 @@
             await this.wait(110);
             break;
           case 'resist':
-            this.float(u, 'Resisted', 'info', 18);
+            this.float(u, ev.immune ? 'IMMUNE' : 'Resisted', 'info', 18);
             await this.wait(80);
             break;
           case 'tm':
@@ -363,10 +370,18 @@
             this.float(u, 'STUNNED', 'bad');
             await this.wait(650);
             break;
+          case 'enrage':
+            this.updateCard(u);
+            this.float(u, 'ENRAGED!', 'crit');
+            this.shake();
+            this.wave(this.center(u.uid), '#ff2a2a', 8);
+            await this.wait(700);
+            break;
           case 'ko':
             this.updateCard(u);
+            this.explode(u);
             this.cards[u.uid].animate([{ transform: 'scale(1)' }, { transform: 'scale(1.1) rotate(-3deg)' }, { transform: 'scale(0.92)' }], { duration: 500 / this.speed });
-            await this.wait(450);
+            await this.wait(u.def.kind === 'ship' ? 650 : 450);
             break;
           case 'log':
             this.log(ev.text, ev.side || '');
@@ -386,6 +401,12 @@
       return { x: r.left - fr.left + r.width / 2, y: r.top - fr.top + r.height / 2 };
     },
 
+    shake() {
+      this.field.classList.remove('shake');
+      void this.field.offsetWidth;
+      this.field.classList.add('shake');
+    },
+
     banner(text, side) {
       const b = el(`<div class="ability-banner ${side}">${esc(text)}</div>`);
       this.fx.appendChild(b);
@@ -399,9 +420,7 @@
       if (ev.ultimate) {
         this.log(`★ ${actor.def.name} unleashes ${ab.name}!`, 'ult');
         await this.cutscene(actor, ab);
-        this.field.classList.remove('shake');
-        void this.field.offsetWidth;
-        this.field.classList.add('shake');
+        this.shake();
       } else if (ev.abilityIndex > 0) {
         this.banner(ab.name, actor.side);
       }
@@ -415,22 +434,13 @@
         return;
       }
 
-      const from = this.center(actor.uid);
-      if (actor.def.kind === 'ship') {
-        const color = actor.def.faction === 'light' ? '#ff3b3b' : '#3bff6a';
-        const bolts = ev.ultimate ? 4 : ab.effects.some((e) => e.hits > 1) ? 3 : 2;
-        if (motion) card.animate([{ transform: 'translateY(0)' }, { transform: `translateY(${actor.side === 'player' ? 6 : -6}px)` }, { transform: 'translateY(0)' }], { duration: 300 / this.speed });
-        targets.forEach((t) => {
-          for (let i = 0; i < bolts; i++) this.laser(from, this.center(t.uid), color, i * 90);
-        });
-        await this.wait(260 + bolts * 50);
-        return;
-      }
+      if (actor.def.kind === 'ship') return this.shipAttack(actor, ab, ev, targets, motion);
 
       // Characters: lunge at single targets, shockwave for area attacks.
+      const from = this.center(actor.uid);
       if (ev.aoe) {
         if (motion) card.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.15)' }, { transform: 'scale(1)' }], { duration: 420 / this.speed });
-        this.wave(from, actor.def.faction === 'light' ? '#5ab4ff' : '#ff4b4b', 7);
+        this.wave(from, actor.def.faction === 'light' ? '#5ab4ff' : '#ff4b4b', actor.boss ? 10 : 7);
         await this.wait(300);
         return;
       }
@@ -446,6 +456,46 @@
       this.slash(to, actor.def.accent);
     },
 
+    // Space combat: the ship strafes forward, fires with muzzle flashes, and
+    // heavy single-target specials launch a torpedo.
+    async shipAttack(actor, ab, ev, targets, motion) {
+      const card = this.cards[actor.uid];
+      const from = this.center(actor.uid);
+      const dir = actor.side === 'player' ? -1 : 1;
+      const color = BOLT[actor.def.faction];
+      const heavy = !ev.aoe && ab.effects.some((e) => e.type === 'damage' && e.mult * (e.hits || 1) >= 1.8);
+      const bolts = ev.ultimate ? 5 : ab.effects.some((e) => e.hits > 1) ? 4 : 3;
+
+      if (motion) {
+        const tx = targets.length === 1 ? (this.center(targets[0].uid).x - from.x) * 0.18 : 0;
+        card.animate([
+          { transform: 'translate(0,0) rotate(0)' },
+          { transform: `translate(${tx}px, ${dir * 26}px) rotate(${tx > 0 ? 6 : tx < 0 ? -6 : 0}deg) scale(1.06)`, offset: 0.35 },
+          { transform: `translate(${tx * 0.6}px, ${dir * 18}px) rotate(0)`, offset: 0.7 },
+          { transform: 'translate(0,0) rotate(0)' },
+        ], { duration: 720 / this.speed, easing: 'cubic-bezier(.3,.7,.3,1)' });
+      }
+      await this.wait(160);
+      const muzzle = { x: from.x, y: from.y + dir * 30 };
+
+      if (actor.def.id === 'death_star' && ev.ultimate) {
+        await this.superlaser(muzzle, this.center(targets[0].uid));
+        return;
+      }
+      if (heavy) {
+        this.flashAt(muzzle, color);
+        await this.torpedo(muzzle, this.center(targets[0].uid), actor.def.faction === 'light' ? '#ffb24a' : '#8affb0');
+        return;
+      }
+      targets.forEach((t) => {
+        for (let i = 0; i < bolts; i++) {
+          setTimeout(() => this.flashAt({ x: muzzle.x + (i % 2 ? 12 : -12), y: muzzle.y }, color), (i * 85) / this.speed);
+          this.laser({ x: muzzle.x + (i % 2 ? 12 : -12), y: muzzle.y }, this.center(t.uid), color, i * 85);
+        }
+      });
+      await this.wait(260 + bolts * 60);
+    },
+
     laser(from, to, color, delay) {
       const dx = to.x - from.x;
       const dy = to.y - from.y;
@@ -455,18 +505,120 @@
       const bolt = el('<div class="laser"></div>');
       bolt.style.left = from.x + 'px';
       bolt.style.top = from.y + jitter + 'px';
-      bolt.style.width = '34px';
+      bolt.style.width = '38px';
       bolt.style.setProperty('--bolt', color);
       bolt.style.opacity = '0';
       this.fx.appendChild(bolt);
       const anim = bolt.animate([
         { transform: `rotate(${ang}rad) translateX(0)`, opacity: 1 },
-        { transform: `rotate(${ang}rad) translateX(${Math.max(0, len - 34)}px)`, opacity: 1 },
-      ], { duration: 240 / this.speed, delay: delay / this.speed, easing: 'linear' });
+        { transform: `rotate(${ang}rad) translateX(${Math.max(0, len - 38)}px)`, opacity: 1 },
+      ], { duration: 220 / this.speed, delay: delay / this.speed, easing: 'linear' });
       anim.onfinish = () => {
         bolt.remove();
-        this.wave(to, color, 1.6);
+        this.sparks({ x: to.x, y: to.y + jitter * 0.5 }, color, 5);
       };
+    },
+
+    torpedo(from, to, color) {
+      return new Promise((resolve) => {
+        const t = el('<div class="torpedo"></div>');
+        t.style.setProperty('--glow', color);
+        t.style.left = from.x + 'px';
+        t.style.top = from.y + 'px';
+        this.fx.appendChild(t);
+        const dx = to.x - from.x;
+        const dy = to.y - from.y;
+        const bend = (Math.random() - 0.5) * 60;
+        const trail = setInterval(() => {
+          const r = t.getBoundingClientRect();
+          const fr = this.field.getBoundingClientRect();
+          const puff = el('<div class="trail"></div>');
+          puff.style.left = r.left - fr.left + r.width / 2 + 'px';
+          puff.style.top = r.top - fr.top + r.height / 2 + 'px';
+          puff.style.setProperty('--glow', color);
+          this.fx.appendChild(puff);
+          puff.animate([{ transform: 'scale(1)', opacity: 0.8 }, { transform: 'scale(0.2)', opacity: 0 }], { duration: 360 }).onfinish = () => puff.remove();
+        }, 30);
+        t.animate([
+          { transform: 'translate(0,0) scale(.6)' },
+          { transform: `translate(${dx * 0.5 + bend}px, ${dy * 0.5}px) scale(1)`, offset: 0.5 },
+          { transform: `translate(${dx}px, ${dy}px) scale(1.2)` },
+        ], { duration: 520 / this.speed, easing: 'ease-in' }).onfinish = () => {
+          clearInterval(trail);
+          t.remove();
+          this.boom(to, color, 1.2);
+          resolve();
+        };
+      });
+    },
+
+    superlaser(from, to) {
+      return new Promise((resolve) => {
+        const dx = to.x - from.x;
+        const dy = to.y - from.y;
+        const beam = el('<div class="superlaser"></div>');
+        beam.style.left = from.x + 'px';
+        beam.style.top = from.y + 'px';
+        beam.style.width = Math.hypot(dx, dy) + 'px';
+        beam.style.transform = `rotate(${Math.atan2(dy, dx)}rad)`;
+        this.fx.appendChild(beam);
+        beam.animate([{ opacity: 0, height: '2px' }, { opacity: 1, height: '18px', offset: 0.3 }, { opacity: 1, height: '14px', offset: 0.8 }, { opacity: 0, height: '2px' }], { duration: 900 / this.speed }).onfinish = () => {
+          beam.remove();
+          resolve();
+        };
+        setTimeout(() => {
+          this.boom(to, '#4ade80', 2);
+          this.shake();
+        }, 300 / this.speed);
+      });
+    },
+
+    flashAt(pos, color) {
+      const f = el('<div class="muzzle"></div>');
+      f.style.left = pos.x + 'px';
+      f.style.top = pos.y + 'px';
+      f.style.setProperty('--glow', color);
+      this.fx.appendChild(f);
+      f.animate([{ transform: 'scale(.3)', opacity: 1 }, { transform: 'scale(1.4)', opacity: 0 }], { duration: 180 / this.speed }).onfinish = () => f.remove();
+    },
+
+    sparks(pos, color, count) {
+      if (reducedMotion()) return;
+      for (let i = 0; i < count; i++) {
+        const s = el('<div class="spark"></div>');
+        s.style.left = pos.x + 'px';
+        s.style.top = pos.y + 'px';
+        s.style.setProperty('--glow', i % 2 ? '#ffd27a' : color);
+        this.fx.appendChild(s);
+        const a = Math.random() * Math.PI * 2;
+        const d = 12 + Math.random() * 26;
+        s.animate([{ transform: 'translate(0,0) scale(1)', opacity: 1 }, { transform: `translate(${Math.cos(a) * d}px, ${Math.sin(a) * d}px) scale(.2)`, opacity: 0 }], { duration: (320 + Math.random() * 200) / this.speed, easing: 'ease-out' }).onfinish = () => s.remove();
+      }
+    },
+
+    // Fireball + shock ring + debris.
+    boom(pos, color, size) {
+      const k = size || 1;
+      const ball = el('<div class="fireball"></div>');
+      ball.style.left = pos.x + 'px';
+      ball.style.top = pos.y + 'px';
+      this.fx.appendChild(ball);
+      ball.animate([{ transform: 'scale(.2)', opacity: 1 }, { transform: `scale(${1.6 * k})`, opacity: 0.9, offset: 0.4 }, { transform: `scale(${2.2 * k})`, opacity: 0 }], { duration: 620 / this.speed, easing: 'ease-out' }).onfinish = () => ball.remove();
+      this.wave(pos, color || '#ffb24a', 2.6 * k);
+      this.sparks(pos, '#ff8a3a', Math.round(10 * k));
+    },
+
+    explode(u) {
+      const pos = this.center(u.uid);
+      if (u.def.kind === 'ship') {
+        this.boom(pos, '#ffb24a', u.boss ? 2.4 : 1.4);
+        setTimeout(() => this.boom({ x: pos.x + 18, y: pos.y - 12 }, '#ff6a2a', 0.8), 160 / this.speed);
+        setTimeout(() => this.boom({ x: pos.x - 16, y: pos.y + 10 }, '#ffd27a', 0.7), 300 / this.speed);
+        this.shake();
+      } else {
+        this.wave(pos, '#8a7a6a', 2);
+        this.sparks(pos, '#c9b48a', 6);
+      }
     },
 
     wave(pos, color, scale) {
@@ -502,6 +654,10 @@
         this.float(u, fmt(ev.amount), ev.crit ? 'crit' : 'dmg');
       }
       this.flash(u, 'flash-hit');
+      if (u.def.kind === 'ship' && ev.source !== 'burn') {
+        if (u.statuses.defUp) this.flash(u, 'shield-hit');
+        this.sparks(this.center(u.uid), '#ffb24a', ev.crit ? 8 : 4);
+      }
       if (!reducedMotion()) {
         const k = ev.crit ? 1.8 : 1;
         card.animate([
@@ -529,17 +685,17 @@
     },
 
     // ---------- Cinematics ----------
-    cutscene(actor, ab) {
+    cutscene(actor, ab, opts = {}) {
       return new Promise((resolve) => {
         const speed = Math.min(this.speed, 2);
-        const who = `${actor.side === 'player' ? 'Ally' : 'Enemy'} ultimate · ${actor.def.name}`;
-        const node = el(`<div class="cutscene ${actor.side}" style="--speed:${speed}" role="presentation">
+        const who = opts.who || `${actor.side === 'player' ? 'Ally' : 'Enemy'} ultimate · ${actor.def.name}`;
+        const node = el(`<div class="cutscene ${actor.side || 'enemy'} ${opts.cls || ''}" style="--speed:${speed}" role="presentation">
           <div class="cs-rays"></div>
           <div class="cs-stripe"></div>
           <div class="cs-bar top"></div>
           <div class="cs-bar bottom"></div>
           <div class="cs-content">
-            <div class="cs-portrait">${portrait(actor.def)}</div>
+            <div class="cs-portrait">${portrait(actor.def, { plate: false })}</div>
             <div class="cs-text">
               <div class="cs-who">${esc(who)}</div>
               <div class="cs-name">${esc(ab.name)}</div>
@@ -560,6 +716,10 @@
         document.body.appendChild(node);
         setTimeout(finish, reducedMotion() ? 900 : 2600 / speed);
       });
+    },
+
+    bossIntro(def) {
+      return this.cutscene({ def, side: 'enemy' }, { name: def.name, quote: D.BIOS[def.id] }, { who: '⚠ Warning · Boss approaching', cls: 'boss-intro' });
     },
 
     hyperspace() {
@@ -621,32 +781,64 @@
       this.setActive(null);
       await this.wait(500);
       const won = winner === 'player';
-      const rewards = Player.completeStage(this.kind, this.stageIndex, won);
+      const rewards = Player.completeEncounter(this.params, won);
       this.teardown();
-      updateWallet();
-      const isLast = this.stageIndex === D.CAMPAIGNS[this.kind].stages.length - 1;
-      const nextUnlocked = won && !isLast;
+      const p = this.params;
+      const isStage = p.type === 'stage';
+      const nextUnlocked = won && isStage && p.stage < D.CAMPAIGNS[p.kind].stages.length - 1;
+      const reel = won ? rewards.table.map((t) => `<span class="reel-item" data-mult="${t.mult}">${t.mult}×</span>`).join('') : '';
       const m = openModal(`
         <div class="result-title ${won ? 'win' : 'lose'}">${won ? 'VICTORY' : 'DEFEAT'}</div>
-        ${won ? `<div class="rewards">
-            <span class="reward">¢ ${fmt(rewards.credits)}</span>
-            ${rewards.crystals ? `<span class="reward first">◆ ${rewards.crystals} first clear</span>` : ''}
+        ${won ? `
+          <div class="spin-box ${rewards.loaded ? 'loaded' : ''}">
+            <p class="eyebrow">${rewards.loaded ? 'Loaded Dice · luck spin' : 'Luck spin'}</p>
+            <div class="reel"><div class="reel-track" data-reel>${reel}${reel}${reel}${reel}</div></div>
+            <p class="spin-math" data-spin-math>${cur('credits', rewards.base)} × ?</p>
           </div>
-          ${rewards.firstClear && isLast ? '<p class="muted">You conquered the whole campaign. The galaxy is yours, Commander.</p>' : ''}`
-        : '<p class="muted">Train your units in the Collection, or open packs in the Shop to recruit stronger ones, then try again.</p>'}
+          <div class="rewards" data-rewards hidden>
+            <span class="reward">${cur('credits', rewards.credits)}</span>
+            ${rewards.crystals ? `<span class="reward first">${cur('crystals', rewards.crystals)} ${rewards.firstClear ? 'first clear' : ''}</span>` : ''}
+            ${rewards.aurodium ? `<span class="reward gold">${cur('aurodium', rewards.aurodium)}</span>` : ''}
+          </div>
+          ${rewards.card ? `<div class="reward-card" data-rewards hidden><p class="eyebrow">Boss trophy</p>${root.UI.unitCard(D.UNIT_MAP[rewards.card.id], { tag: 'div', hideShards: true })}<p class="muted">${rewards.card.isNew ? 'New recruit!' : `+${rewards.card.shards} shards`}</p></div>` : ''}`
+        : '<p class="muted">Train your units in the Collection, use Auto-build, or buy crates in the Black Market to recruit stronger ones, then try again.</p>'}
         <div class="modal-actions">
           <button class="btn" type="button" data-r="retry">Retry</button>
           ${won ? '' : '<button class="btn" type="button" data-r="collection">Collection</button>'}
           ${nextUnlocked ? '<button class="btn btn-primary" type="button" data-r="next">Next stage</button>' : '<button class="btn btn-primary" type="button" data-r="campaign">Continue</button>'}
-        </div>`, { small: true, dismissable: false });
+        </div>`, { small: true, dismissable: false, cls: 'result-modal' });
+      if (won) this.spinReel(m.root, rewards);
       m.root.addEventListener('click', (e) => {
         const r = e.target.closest('[data-r]');
         if (!r) return;
         m.close();
-        if (r.dataset.r === 'retry') App.go('squad', { kind: this.kind, stage: this.stageIndex });
-        else if (r.dataset.r === 'next') App.go('squad', { kind: this.kind, stage: this.stageIndex + 1 });
+        if (r.dataset.r === 'retry') App.go('squad', p);
+        else if (r.dataset.r === 'next') App.go('squad', { ...p, stage: p.stage + 1 });
         else App.go(r.dataset.r);
       });
+    },
+
+    spinReel(scope, rewards) {
+      const track = $('[data-reel]', scope);
+      const items = $$('.reel-item', track);
+      const per = rewards.table.length;
+      const targetIdx = per * 3 + rewards.table.findIndex((t) => t.mult === rewards.mult);
+      // offsetWidth ignores the modal's scale-in transform.
+      const itemW = items[0].offsetWidth || 64;
+      const boxW = track.parentElement.clientWidth || 240;
+      const offset = targetIdx * itemW - boxW / 2 + itemW / 2;
+      const reveal = () => {
+        items[targetIdx].classList.add('hit');
+        $('[data-spin-math]', scope).innerHTML = `${cur('credits', rewards.base)} × <b class="mult m${String(rewards.mult).replace('.', '_')}">${rewards.mult}×</b> = ${cur('credits', rewards.credits)}`;
+        $$('[data-rewards]', scope).forEach((n) => { n.hidden = false; });
+        updateWallet();
+        if (rewards.mult >= 3) toast(`Jackpot! ${rewards.mult}× credits!`);
+      };
+      if (reducedMotion()) {
+        track.style.transform = `translateX(${-offset}px)`;
+        return reveal();
+      }
+      track.animate([{ transform: 'translateX(0)' }, { transform: `translateX(${-offset}px)` }], { duration: 1600, easing: 'cubic-bezier(.12,.8,.2,1)', fill: 'forwards' }).onfinish = reveal;
     },
   };
 
