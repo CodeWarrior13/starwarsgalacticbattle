@@ -338,6 +338,21 @@ test('droid roster: new droids have traits, classes and a signature ultimate', (
   assert.ok(net && net.need === 4);
 });
 
+test('group and role synergies: full Bad Batch, Nightsisters, Medical Corps', () => {
+  const bb = D.squadBonuses(['hunter', 'wrecker', 'tech', 'crosshair', 'echo'], null);
+  const cf = bb.active.find((a) => a.key === 'badbatch');
+  assert.ok(cf && cf.count === 5 && cf.tier === 2 && cf.members.length === 5);
+  assert.ok(bb.perUnit[0].double >= 0.2 && bb.perUnit[0].regen >= 0.03);
+  const four = D.squadBonuses(['hunter', 'wrecker', 'tech', 'crosshair'], null).active.find((a) => a.key === 'badbatch');
+  assert.strictEqual(four.tier, 1, 'four members reach tier 2, not full Bad Batch');
+  const ns = D.squadBonuses(['talzin', 'nightsister_acolyte'], null);
+  assert.ok(ns.active.some((a) => a.key === 'nightsister'));
+  const med = D.squadBonuses(['rebel_medic', 'two_onebee', 'luke'], null);
+  const corps = med.active.find((a) => a.key === 'healer');
+  assert.ok(corps && corps.members.length === 2 && med.perUnit[2].regen >= 0.03);
+  for (const a of bb.active) assert.ok(a.key && Array.isArray(a.members), a.name);
+});
+
 test('every unit and boss has cover art and a bio', () => {
   require('../js/art.js');
   for (const u of [...D.UNITS, ...D.BOSSES]) {

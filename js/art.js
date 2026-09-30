@@ -124,6 +124,16 @@
     generator: () => R(0, 0, 100, 100, '#1a0808') + R(0, 0, 100, 100, '#ff2a2a', 'opacity=".12"')
       + [14, 86].map((x) => R(x - 6, 0, 12, 100, '#2a1010') + R(x - 1, 0, 2, 100, '#ff4a4a', 'opacity=".5"')).join('') + R(0, 80, 100, 3, '#3a1414'),
     hangar: () => R(0, 0, 100, 100, '#2c3440') + R(0, 0, 100, 40, '#11161f') + stars(5, 10, 36) + R(0, 40, 100, 3, '#5b6b80') + [0, 25, 50, 75].map((x) => R(x, 43, 1, 57, '#3a4454')).join(''),
+    medbay: () => R(0, 0, 100, 100, '#dfe6ec') + R(0, 0, 100, 12, '#c3ccd6') + R(0, 78, 100, 22, '#b8c2cc')
+      + R(66, 14, 26, 70, '#9fb0bf', 'rx="12"') + R(69, 18, 20, 62, '#58d6ff', 'rx="9" opacity=".55"') + C(76, 40, 2, '#ffffff', 'opacity=".7"') + C(82, 56, 1.4, '#ffffff', 'opacity=".7"') + C(74, 64, 1.8, '#ffffff', 'opacity=".6"')
+      + R(8, 20, 18, 12, '#9aa6b2', 'rx="2"') + R(10, 22, 14, 8, '#6fe0a8', 'opacity=".5"'),
+    dathomir: () => R(0, 0, 100, 100, '#3a0a10') + R(0, 0, 100, 55, '#8a1a22', 'opacity=".55"') + C(74, 22, 12, '#ffb0a0', 'opacity=".35"')
+      + P('M0 70 L12 40 L20 64 L30 30 L42 66 L54 44 L64 70 L78 36 L90 62 L100 48 V100 H0Z', '#1c0508') + E(50, 82, 70, 10, '#4ade80', 'opacity=".12"'),
+    kamino: () => R(0, 0, 100, 100, '#3a4a5c') + R(0, 0, 100, 60, '#56687c', 'opacity=".7"') + E(24, 66, 20, 7, '#dfe6ec') + R(6, 66, 36, 6, '#c3ccd6') + L(24, 72, 24, 100, '#8a98a8', 3)
+      + [8, 20, 32, 44, 56, 68, 80, 92].map((x, i) => L(x, i % 2 ? 4 : 10, x - 6, i % 2 ? 40 : 52, '#c8d6e6', 0.6, 'opacity=".5"')).join('') + R(0, 86, 100, 14, '#26323e'),
+    imperial: () => R(0, 0, 100, 100, '#2a2e36') + [0, 88].map((x) => R(x, 0, 12, 100, '#3a3f48')).join('') + R(22, 0, 56, 70, '#8a1616') + R(24, 0, 52, 68, '#a81c1c')
+      + `<g transform="translate(50 34)"><circle r="17" fill="none" stroke="#f2f2f2" stroke-width="3"/><circle r="7" fill="none" stroke="#f2f2f2" stroke-width="2.4"/>${[0, 1, 2, 3, 4, 5].map((i) => `<path d="M0 -8 L0 -16" stroke="#f2f2f2" stroke-width="3.4" transform="rotate(${i * 60})"/>`).join('')}</g>`
+      + R(0, 70, 100, 30, '#1c1f25'),
     pit: () => R(0, 0, 100, 100, '#2a1d14') + R(0, 0, 100, 100, '#ff9a3a', 'opacity=".08"')
       + P('M0 100 L0 20 Q20 30 30 10 L34 100Z', '#1c130d') + P('M100 100 L100 26 Q84 18 70 34 L66 100Z', '#1c130d')
       + E(20, 94, 6, 2, '#e8dcc4', 'opacity=".7"') + E(78, 92, 5, 1.6, '#e8dcc4', 'opacity=".7"'),
@@ -211,28 +221,24 @@
     + C(50, 23, 4, '#5a3a22') + C(50, 17.5, 3.3, '#5a3a22') + C(50, 13, 2.6, '#5a3a22')
     + saber(76, 96, 90, 26, '#3d8bff');
 
-  CHAR.stormtrooper = () => SCENES.corridor()
-    // Armor: white chest and shoulder plates over the black body glove.
-    + shoulders('#101114') + P('M6 100 C8 86 18 79 30 77 L34 100Z', '#f1f2f4') + P('M94 100 C92 86 82 79 70 77 L66 100Z', '#f1f2f4')
-    + P('M36 78 L64 78 L62 92 L38 92Z', '#eceef1') + shade('M36 78 L50 78 L50 92 L38 92Z', 0.08) + L(50, 79, 50, 91, '#c3c8cf', 0.8)
-    + R(38, 94, 24, 6, '#e3e6ea', 'rx="1"') + R(44, 95, 12, 4, '#7d8590', 'rx="1"') + R(46, 95.8, 3, 2.4, '#c43b2e') + R(51, 95.8, 3, 2.4, '#3b6fd6')
-    // Helmet: dome, flared jaw and brow ridge.
-    + P('M32.5 44 C31.5 25.5 40 18 50 18 C60 18 68.5 25.5 67.5 44 L70.5 59 C67 66 59 70 50 70 C41 70 33 66 29.5 59Z', '#f6f7f8')
-    + shade('M50 18 C60 18 68.5 25.5 67.5 44 L70.5 59 C67 66 59 70 50 70Z', 0.07) + shade('M32.5 44 C31.5 25.5 40 18 50 18 L50 22 C41 22 35 28 34.5 44Z', 0.04)
-    + L(50, 19, 50, 33, '#dfe2e6', 1.4)
-    + P('M33.5 35.5 Q50 30 66.5 35.5 L66.5 38.2 Q50 32.8 33.5 38.2Z', '#b8bec6')
-    // Angled black eye lenses and nose ridge.
-    + P('M36 40.2 Q41.5 38.4 47 40.6 L46.2 46 Q41 50.2 36.4 45.6Z', '#0c0d10') + P('M64 40.2 Q58.5 38.4 53 40.6 L53.8 46 Q59 50.2 63.6 45.6Z', '#0c0d10')
-    + P('M38 41 Q41 40 43.5 40.6 L42.5 41.8 Q40.5 41.4 38.4 42.2Z', '#4a5260', 'opacity=".8"') + P('M62 41 Q59 40 56.5 40.6 L57.5 41.8 Q59.5 41.4 61.6 42.2Z', '#4a5260', 'opacity=".8"')
-    + P('M47.6 40.8 L52.4 40.8 L53.4 53 L46.6 53Z', '#f1f2f4') + `<path d="M47.6 40.8 L46.6 53 M52.4 40.8 L53.4 53" stroke="#c9ced5" stroke-width=".6"/>`
-    // Cheek "tears", frown grill and breathing tubes.
-    + L(39.5, 49.5, 38.2, 56, '#6f7a88', 1.4) + L(42.5, 50, 41.8, 55, '#6f7a88', 1.1) + L(60.5, 49.5, 61.8, 56, '#6f7a88', 1.4) + L(57.5, 50, 58.2, 55, '#6f7a88', 1.1)
-    + P('M41.5 56.5 Q50 52.8 58.5 56.5 L57.2 62 Q50 59.6 42.8 62Z', '#2c3036') + [44.5, 47.2, 50, 52.8, 55.5].map((x) => L(x, 56.2, x, 60.4, '#a7aeb8', 0.7)).join('')
-    + R(38.6, 58, 3, 7.5, '#3a3f47', 'rx="1.4"') + R(58.4, 58, 3, 7.5, '#3a3f47', 'rx="1.4"')
-    + P('M44 64.5 L56 64.5 L54 68 L46 68Z', '#dfe2e6')
-    // Ear caps.
-    + C(31.8, 50, 3.4, '#e9ebee') + C(31.8, 50, 2, '#9aa3ad') + C(68.2, 50, 3.4, '#e9ebee') + C(68.2, 50, 2, '#9aa3ad')
-    + blaster(64, 94, -30, '#16171a');
+  CHAR.stormtrooper = () => SCENES.imperial()
+    // Armor: white plates over the black body glove, E-11 held across the chest.
+    + shoulders('#0c0d10') + P('M4 100 C6 86 16 78 30 76 L36 100Z', '#f6f7f8') + P('M96 100 C94 86 84 78 70 76 L64 100Z', '#f6f7f8')
+    + C(22, 82, 7, '#ffffff') + C(78, 82, 7, '#ffffff') + P('M35 77 L65 77 L62 91 L38 91Z', '#f1f2f4') + L(50, 78, 50, 90, '#9aa1ab', 0.9) + L(38, 84, 62, 84, '#9aa1ab', 0.7)
+    + `<g transform="translate(28 94) rotate(-16)">${R(0, -3, 46, 6, '#141518', 'rx="1.5"')}${R(8, -6, 14, 3, '#2a2c31')}${R(40, -1.6, 12, 3.2, '#141518')}${R(18, 3, 5, 8, '#141518', 'rx="1"')}</g>`
+    // Helmet with a bold outline so it reads at any size.
+    + `<g stroke="#0c0d10" stroke-width="1.4" stroke-linejoin="round">${P('M31.5 43 C30.5 24 39.5 16 50 16 C60.5 16 69.5 24 68.5 43 L72 60 C68 69 59 73 50 73 C41 73 32 69 28 60Z', '#ffffff')}</g>`
+    + shade('M50 16 C60.5 16 69.5 24 68.5 43 L72 60 C68 69 59 73 50 73Z', 0.06)
+    + P('M33 33 Q50 27 67 33 L67 37 Q50 31 33 37Z', '#9aa6b8') + L(50, 17, 50, 29, '#c8ced6', 1.6)
+    // Big angled black lenses.
+    + P('M34.5 39 Q41.5 36.5 48 39.5 L47 47 Q41 52.5 35 46Z', '#07080a') + P('M65.5 39 Q58.5 36.5 52 39.5 L53 47 Q59 52.5 65 46Z', '#07080a')
+    + P('M37 40.5 Q41 39.3 44.5 40 L43.5 41.6 Q40.5 41.2 37.5 42Z', '#5a6474') + P('M63 40.5 Q59 39.3 55.5 40 L56.5 41.6 Q59.5 41.2 62.5 42Z', '#5a6474')
+    + P('M47.8 40 L52.2 40 L53.4 54.5 L46.6 54.5Z', '#f4f5f6', 'stroke="#b8bec6" stroke-width=".6"')
+    // Grey "tear" stripes and the famous frowning grill with its teeth.
+    + P('M37 50 L39.5 50 L38.5 60 L36 60Z', '#5a6474') + P('M63 50 L60.5 50 L61.5 60 L64 60Z', '#5a6474')
+    + P('M40.5 57 Q50 52 59.5 57 L58 64.5 Q50 61 42 64.5Z', '#1c1f24') + [43.5, 46.3, 49.1, 51.9, 54.7, 57.3].map((x) => L(x, 57.2, x, 62.2, '#c8ced6', 0.8)).join('')
+    + R(37.4, 62, 3.2, 8, '#2a2d33', 'rx="1.4"') + R(59.4, 62, 3.2, 8, '#2a2d33', 'rx="1.4"') + P('M44 67 L56 67 L54 71 L46 71Z', '#e6e9ec')
+    + C(30.6, 51, 3.6, '#f1f2f4', 'stroke="#0c0d10" stroke-width="1"') + C(30.6, 51, 1.8, '#5a6474') + C(69.4, 51, 3.6, '#f1f2f4', 'stroke="#0c0d10" stroke-width="1"') + C(69.4, 51, 1.8, '#5a6474');
 
   CHAR.battle_droid = () => SCENES.city()
     + P('M32 100 L36 80 L64 80 L68 100Z', '#cdb68a') + R(36, 82, 28, 6, '#b59e72') + R(44, 60, 3, 20, '#a8915f') + R(53, 60, 3, 20, '#a8915f')
@@ -439,6 +445,81 @@
     + P('M37 44 C37 28 43 23 50 23 C57 23 63 28 63 44 L61 56 C57 61 43 61 39 56Z', '#3a3b42') + shade('M50 23 C57 23 63 28 63 44 L61 56 C57 61 50 61 50 61Z', 0.18)
     + P('M36 32 C42 26 58 26 64 32 L64 38 C58 34 42 34 36 38Z', '#4a3624') + P('M60 34 L70 46 L64 48 L60 38Z', '#4a3624')
     + glowEyes(44.5, 55.5, 44, '#ff3030', 2) + R(46, 52, 8, 2, '#1a1a1e');
+
+  // ---------- Medics ----------
+  CHAR.rebel_medic = () => SCENES.endor()
+    + shoulders('#dcd8c8') + P('M4 100 C6 86 18 78 32 76 L36 100Z', '#5a6a44') + R(18, 82, 9, 7, '#ffffff') + P('M20.5 85.5 H24.5 M22.5 83.5 V87.5', 'none', 'stroke="#c43b2e" stroke-width="1.6"')
+    + R(60, 80, 22, 14, '#6a5436', 'rx="2"') + R(66, 84, 10, 6, '#ffffff', 'rx="1"') + P('M69 87 H73 M71 85 V89', 'none', 'stroke="#c43b2e" stroke-width="1.4"')
+    + neck('#c89a74') + head('#c89a74') + eyes() + brows('#3a2416') + nose() + mouth('smile')
+    + P('M35 40 C35 28 42 23.5 50 23.5 C58 23.5 65 28 65 40 C58 36 42 36 35 40Z', '#4a5a3a') + E(50, 40, 16, 2.6, '#3e4c30')
+    + `<g transform="translate(78 64) rotate(24)">${R(-2.5, -10, 5, 18, '#d8dde3', 'rx="2"')}${R(-2, -6, 4, 9, '#58d6ff', 'opacity=".8"')}${L(0, 8, 0, 13, '#9aa1ab', 1.2)}</g>`;
+
+  CHAR.two_onebee = () => SCENES.medbay()
+    + P('M20 100 L26 70 C32 64 68 64 74 70 L80 100Z', '#3a3f48') + P('M34 70 L66 70 L62 96 L38 96Z', '#8fb8d0', 'opacity=".45"')
+    + [74, 80, 86].map((y) => L(38, y, 62, y, '#58d6ff', 1, 'opacity=".8"')).join('') + L(44, 70, 44, 96, '#c43b2e', 1.2) + L(56, 70, 56, 96, '#3b6fd6', 1.2)
+    + L(22, 76, 10, 60, '#5d6674', 2.4) + L(10, 60, 12, 50, '#9aa1ab', 1.4) + L(78, 76, 90, 60, '#5d6674', 2.4) + P('M90 60 L96 52 L92 50Z', '#c8ced6')
+    + R(46, 52, 8, 14, '#4a4f58')
+    + P('M37 40 C37 26 43 21 50 21 C57 21 63 26 63 40 L61 52 C57 56 43 56 39 52Z', '#5d636d') + shade('M50 21 C57 21 63 26 63 40 L61 52 C57 56 50 56 50 56Z', 0.18)
+    + C(50, 38, 6, '#1a1c20') + `<g style="filter:drop-shadow(0 0 2px #ff5a3a)">${C(50, 38, 2.6, '#ff6a4a')}</g>` + R(44, 47, 12, 3, '#2a2d33', 'rx="1"') + L(40, 30, 60, 30, '#3a3f48', 0.8);
+
+  CHAR.nightsister_acolyte = () => SCENES.dathomir()
+    + P('M18 100 L24 58 C27 34 38 22 50 22 C62 22 73 34 76 58 L82 100Z', '#5a0e18') + shade('M50 22 C38 22 27 34 24 58 L18 100 L38 100 L36 56Z', 0.25)
+    + neck('#e8e4e0') + head('#ece8e4', { cy: 46 }) + P('M40 36 C42 26 58 26 60 36 C56 31 44 31 40 36Z', '#5a0e18')
+    + eyes({ y: 46, iris: '#6a2a2a' }) + mouth('', { y: 56, color: '#5a1a1a' })
+    + `<path d="M50 34 L50 43 M44 38 L46 44 M56 38 L54 44 M42 52 L45 56 M58 52 L55 56" stroke="#8a1a22" stroke-width="1.4" fill="none"/>`
+    + `<g style="filter:drop-shadow(0 0 3px #4ade80) drop-shadow(0 0 6px #4ade80)">${C(76, 80, 5, '#9affb8')}${C(76, 80, 2.4, '#e8fff0')}</g>` + E(76, 88, 6, 3, '#ece8e4');
+
+  CHAR.talzin = () => SCENES.dathomir()
+    + P('M14 100 L20 60 C24 40 36 32 50 32 C64 32 76 40 80 60 L86 100Z', '#3a0a10')
+    + P('M28 30 L34 6 L40 24 L46 2 L50 18 L54 2 L60 24 L66 6 L72 30 C62 26 38 26 28 30Z', '#1a0406', 'stroke="#8a1a22" stroke-width="1"') + C(50, 20, 2.6, '#4ade80', 'style="filter:drop-shadow(0 0 3px #4ade80)"')
+    + neck('#e6e0dc') + head('#ece6e2', { cy: 46 }) + eyes({ y: 46, iris: '#2a2a2a' }) + brows('#3a0a10', { y: 42, angry: true }) + mouth('smirk', { y: 56, color: '#3a0a10' })
+    + `<path d="M40 38 L60 38 M44 50 L42 58 M56 50 L58 58" stroke="#1a0406" stroke-width="1.5" fill="none"/>`
+    + `<g style="filter:drop-shadow(0 0 3px #4ade80) drop-shadow(0 0 7px #4ade80)">${C(22, 82, 5, '#9affb8')}${C(78, 82, 5, '#9affb8')}</g>`;
+
+  CHAR.barriss = () => SCENES.temple()
+    + shoulders('#1e2436') + P('M36 76 L50 92 L64 76Z', '#2a3450')
+    + neck('#b8c46a') + head('#bcc86e') + eyes({ iris: '#2a4a8a' }) + brows('#2a2a1a', { w: 1 }) + nose() + mouth('', { color: '#5a3a4a' })
+    + [41, 44.5, 48, 51.5, 55, 58.5].map((x) => P(`M${x} 47.6 L${x + 1.4} 46.2 L${x + 2.8} 47.6 L${x + 1.4} 49Z`, "#2a2a3a")).join('')
+    + P('M34 46 C32 26 42 20 50 20 C58 20 68 26 66 46 C64 34 58 30 50 30 C42 30 36 34 34 46Z', '#161a28') + P('M34 46 L36 60 L38 48Z', '#161a28') + P('M66 46 L64 60 L62 48Z', '#161a28')
+    + saber(74, 96, 90, 22, '#46e070');
+
+  // ---------- Clone Force 99 (the Bad Batch) ----------
+  const cloneBody = (armor, trim) => shoulders(armor) + P('M36 76 L64 76 L61 90 L39 90Z', trim) + L(50, 77, 50, 89, '#2a2d33', 0.8);
+  const skull = (x, y, k, c) => `<g transform="translate(${x} ${y}) scale(${k})">${C(0, 0, 5, c)}${R(-3.2, 3, 6.4, 3, c)}${C(-1.8, -0.4, 1.4, '#1a1c20')}${C(1.8, -0.4, 1.4, '#1a1c20')}</g>`;
+
+  CHAR.hunter = () => SCENES.kamino()
+    + cloneBody('#3a3d44', '#4a4e56') + skull(26, 84, 1.1, '#e6e0cf')
+    + neck('#b88a64') + head('#bc8e68') + eyes({ iris: '#4a3a2a' }) + brows('#2a1a10', { angry: true }) + nose() + mouth('', { color: '#6a3a2a' })
+    + P('M38 44 C38 36 42 34 46 36 L47 44 L45 52 C41 54 38 50 38 44Z', '#f0ece2', 'opacity=".85"') + C(43, 43, 1.6, '#1a1c20') + L(40, 48, 44, 49, '#1a1c20', 0.8)
+    + P('M36.5 38 C36 28 43 25 50 25 C57 25 64 28 63.5 38 Z', '#2a2a2e') + R(36.5, 34, 27, 4, '#1a1a1e') + P('M63 35 L72 40 L70 44 L62 38Z', '#1a1a1e')
+    + `<g transform="translate(74 90) rotate(-40)">${R(-1.5, -14, 3, 16, '#c8ced6')}${R(-2.5, 2, 5, 7, '#2a2d33', 'rx="1"')}</g>`;
+
+  CHAR.wrecker = () => SCENES.kamino()
+    + P('M0 100 C2 78 22 68 50 68 C78 68 98 78 100 100Z', '#4a4e56') + shade('M0 100 C2 78 22 68 50 68 L46 100Z', 0.2) + skull(78, 80, 1.5, '#e6e0cf')
+    + R(38, 72, 24, 18, '#5a5e66', 'rx="3"') + P('M42 52 L58 52 L60 70 L40 70Z', '#b08664')
+    + head('#b48a66', { rx: 14, ry: 15.5 }) + P('M36 40 C36 30 42 27 50 27 C58 27 64 30 64 40 C58 36 42 36 36 40Z', '#9a7454')
+    + E(44.5, 45, 2.4, 1.6, '#e8e4dc') + C(55.3, 45, 1.05, '#3a2616') + E(55.5, 45, 2.2, 1.35, '#f4efe6') + C(55.2, 45, 1, '#3a2616')
+    + `<path d="M40 38 L46 56 M42 38 L47 52" stroke="#e6d6c4" stroke-width="1.4" fill="none"/>` + brows('#3a2616', { angry: true, w: 1.8 }) + mouth('snarl', { y: 56 })
+    + `<g transform="translate(18 90)">${C(0, 0, 6, '#6a6f78')}${R(-2, -9, 4, 4, '#3a3d42')}${C(0, 0, 2, '#ff5a3a', 'style="filter:drop-shadow(0 0 2px #ff5a3a)"')}</g>`;
+
+  CHAR.tech = () => SCENES.kamino()
+    + cloneBody('#5a5e66', '#6a6f78') + R(60, 82, 18, 12, '#2a2d33', 'rx="1.5"') + R(62, 84, 14, 8, '#58d6ff', 'opacity=".6"')
+    + neck('#bc8e68') + head('#bc8e68') + nose() + mouth('', { color: '#6a3a2a' })
+    + P('M37 40 C36 29 43 25 50 25 C57 25 64 29 63 40 C60 33 55 32 50 32 C45 32 40 33 37 40Z', '#4a3222')
+    + R(37, 41, 26, 8, '#2a2d33', 'rx="3"') + `<g style="filter:drop-shadow(0 0 2px #ffd23f)">${E(44, 45, 5, 3, '#e8c14a', 'opacity=".85"')}${E(56, 45, 5, 3, '#e8c14a', 'opacity=".85"')}</g>` + C(42.5, 44, 1, '#fff', 'opacity=".7"');
+
+  CHAR.crosshair = () => SCENES.kamino()
+    + L(10, 70, 60, 94, '#2a2d33', 3) + L(4, 67, 14, 72, '#2a2d33', 2) + R(26, 74, 12, 4, '#1a1c20', 'transform="rotate(26 32 76)"')
+    + cloneBody('#6a7078', '#7a8088')
+    + neck('#d8bc9c') + head('#dcc0a0') + eyes({ iris: '#4a5a6a' }) + brows('#e8e8e8', { angry: true }) + nose() + mouth('smirk', { color: '#6a4a3a' })
+    + C(55.5, 45, 5, 'none', 'stroke="#2a2d33" stroke-width="1"') + L(55.5, 38.5, 55.5, 51.5, '#2a2d33', 0.8) + L(49, 45, 62, 45, '#2a2d33', 0.8)
+    + P('M37 38 C37 29 43 26.5 50 26.5 C57 26.5 63 29 63 38 C58 33 42 33 37 38Z', '#e6e6e6') + L(53, 56, 61, 58, '#d9b070', 1);
+
+  CHAR.echo = () => SCENES.kamino()
+    + cloneBody('#4a6a8a', '#5a7a9a') + P('M72 80 L90 70 L94 76 L78 88Z', '#8a929e') + C(90, 72, 3, '#58d6ff', 'style="filter:drop-shadow(0 0 2px #58d6ff)"')
+    + neck('#c8c0bc') + head('#ccc4c0') + eyes({ iris: '#4a5a6a' }) + brows('#8a8a8a', { w: 0.8 }) + nose() + mouth('', { color: '#6a5a5a' })
+    + P('M37 38 C37 28 43 25 50 25 C57 25 63 28 63 38 L62 42 C58 34 42 34 38 42Z', '#8a929e') + R(46, 25, 8, 6, '#5d6674', 'rx="1"')
+    + `<g style="filter:drop-shadow(0 0 1.5px #58d6ff)">${C(60, 34, 1.4, '#58d6ff')}${C(40, 34, 1.4, '#58d6ff')}</g>` + `<path d="M58 48 L62 48 L62 52" stroke="#8a929e" stroke-width="1" fill="none"/>`;
 
   // ---------- Bosses ----------
   CHAR.rancor = () => SCENES.pit()

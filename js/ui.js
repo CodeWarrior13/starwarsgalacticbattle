@@ -329,7 +329,7 @@
 
   function hintList(items) {
     if (!items.length) return '';
-    return `<ul class="bonus-list hints">${items.map((b) => `<li class="bonus hint-row"><span class="bonus-icon">${b.icon}</span><span><b>${esc(b.name)}</b> <em>${b.count}/${b.need}</em><small>Add 1 more ${esc(D.TRAIT_INFO[b.trait].label)}: ${esc(b.desc)}</small></span></li>`).join('')}</ul>`;
+    return `<ul class="bonus-list hints">${items.map((b) => `<li class="bonus hint-row"><span class="bonus-icon">${b.icon}</span><span><b>${esc(b.name)}</b> <em>${b.count}/${b.need}</em><small>Add 1 more ${esc(D.TRAIT_INFO[b.trait] ? D.TRAIT_INFO[b.trait].label : { healer: 'healer', tank: 'tank', attacker: 'damage dealer' }[b.trait] || b.trait)}: ${esc(b.desc)}</small></span></li>`).join('')}</ul>`;
   }
 
   function slotRequirement(rule) {
@@ -501,7 +501,9 @@
       </div>
     </section>`);
 
-    function render() {
+    let prevSyn = null;
+    // anim: { initial } | { added, from } | { auto }
+    function render(anim = {}) {
       const slots = $('[data-slots]', v);
       slots.innerHTML = '';
       for (let i = 0; i < maxSize; i++) {
@@ -521,6 +523,27 @@
       mp.className = power >= enemyPower ? 'good' : power >= enemyPower * 0.8 ? 'close' : 'bad';
       const bonus = D.squadBonuses(squad, planetId);
       $('[data-my-bonus]', v).innerHTML = bonusList(bonus.active, 'Combine units that share a trait to unlock synergies.') + hintList(bonus.hints);
+
+      // Slot load-in animations.
+      const slotEls = $$('.slot', slots);
+      if (anim.initial || anim.auto) {
+        squad.forEach((id, i) => loadSlot(slotEls[i], null, i * 140 + (anim.auto ? 60 : 200)));
+      } else if (anim.added) {
+        const i = squad.indexOf(anim.added);
+        if (i >= 0) loadSlot(slotEls[i], anim.from, 0);
+      }
+
+      // Synergy activation banners for anything new (or a tier up).
+      const now = {};
+      bonus.active.filter((b) => b.kind !== 'terrain').forEach((b) => { now[b.key] = b.tier || 0; });
+      if (prevSyn && !anim.initial) {
+        const fresh = bonus.active.filter((b) => b.kind !== 'terrain' && (prevSyn[b.key] == null || prevSyn[b.key] < (b.tier || 0)))
+          .sort((a, b) => (b.need || 0) - (a.need || 0));
+        const delay = anim.auto ? squad.length * 140 + 300 : 420;
+        fresh.forEach((b) => synergyBanner(b, b.members.map((m) => D.UNIT_MAP[squad[m]]).filter(Boolean), delay));
+      }
+      prevSyn = now;
+      $$('.bonus', v).forEach((row, k) => { row.style.animationDelay = `${k * 40}ms`; });
       const roster = D.UNITS.filter((u) => u.kind === kind && Player.owns(u.id)).sort((a, b) => Player.powerOf(b.id) - Player.powerOf(a.id));
       $('[data-roster]', v).innerHTML = roster.map((def) => {
         const idx = squad.indexOf(def.id);
@@ -534,7 +557,7 @@
       if (e.target.closest('[data-auto-build]')) {
         squad = Player.autoSquad(kind);
         toast('Auto-built your strongest squad.');
-        return render();
+        return render({ auto: true });
       }
       if (e.target.closest('[data-fight]')) {
         Player.setSquad(kind, squad);
@@ -545,14 +568,110 @@
       const card = e.target.closest('.ucard');
       const id = rem ? rem.dataset.remove : card ? card.dataset.id : null;
       if (!id) return;
-      if (squad.includes(id)) squad = squad.filter((x) => x !== id);
-      else if (squad.length < size) squad.push(id);
-      else toast(`Squad is full. Remove someone first (max ${size}).`);
-      render();
+      if (squad.includes(id)) {
+        const slotEl = rem || $$('.slot.filled', v).find((x) => x.dataset.remove === id);
+        ejectSlot(slotEl);
+        squad = squad.filter((x) => x !== id);
+        return render();
+      }
+      if (squad.length >= size) return toast(`Squad is full. Remove someone first (max ${size}).`);
+      const from = card ? $('.portrait', card).getBoundingClientRect() : null;
+      squad.push(id);
+      render({ added: id, from });
     });
-    render();
+    render({ initial: true });
     return v;
   };
+
+  // ---------- Squad loading & synergy cinematics ----------
+  const motionOK = () => !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+  // A card flies from the roster into its slot, which scans and locks in.
+  function loadSlot(slotEl, fromRect, delay) {
+    if (!slotEl || !slotEl.classList.contains('filled')) return;
+    slotEl.classList.add('slot-pending');
+    setTimeout(() => {
+      if (!slotEl.isConnected) return;
+      const to = slotEl.getBoundingClientRect();
+      const finish = () => {
+        slotEl.classList.remove('slot-pending');
+        slotEl.classList.add('slot-load');
+        setTimeout(() => slotEl.classList.remove('slot-load'), 900);
+      };
+      if (!fromRect || !motionOK()) return finish();
+      const ghost = el(`<div class="slot-ghost">${slotEl.innerHTML}</div>`);
+      Object.assign(ghost.style, { left: fromRect.left + 'px', top: fromRect.top + 'px', width: fromRect.width + 'px', height: fromRect.height + 'px' });
+      document.body.appendChild(ghost);
+      const dx = to.left - fromRect.left;
+      const dy = to.top - fromRect.top;
+      const sx = to.width / fromRect.width;
+      const sy = to.height / fromRect.height;
+      ghost.animate([
+        { transform: 'translate(0,0) scale(1) rotate(0)', opacity: 1 },
+        { transform: `translate(${dx * 0.5}px, ${dy * 0.5 - 60}px) scale(${(sx + 1) / 2}, ${(sy + 1) / 2}) rotate(-6deg)`, opacity: 1, offset: 0.55 },
+        { transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy}) rotate(0)`, opacity: 1 },
+      ], { duration: 460, easing: 'cubic-bezier(.3,.7,.3,1)' }).onfinish = () => {
+        ghost.remove();
+        finish();
+      };
+    }, delay || 0);
+  }
+
+  function ejectSlot(slotEl) {
+    if (!slotEl || !motionOK()) return;
+    const r = slotEl.getBoundingClientRect();
+    const ghost = el(`<div class="slot-ghost">${slotEl.innerHTML}</div>`);
+    Object.assign(ghost.style, { left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px' });
+    document.body.appendChild(ghost);
+    ghost.animate([{ transform: 'translateY(0) rotate(0)', opacity: 1 }, { transform: 'translateY(80px) rotate(14deg) scale(.7)', opacity: 0 }], { duration: 380, easing: 'ease-in' }).onfinish = () => ghost.remove();
+  }
+
+  // Full-width banner sweeps across the screen with the member cards.
+  let bannerChain = Promise.resolve();
+  function synergyBanner(entry, defs, delay) {
+    const color = D.SYN_THEME[entry.key] || '#ffd23f';
+    bannerChain = bannerChain.then(() => new Promise((resolve) => {
+      setTimeout(() => {
+        // Left the squad screen (e.g. started the battle): drop queued banners.
+        if (!document.querySelector('.squad-layout')) return resolve();
+        if (!motionOK()) {
+          toast(`${entry.name} activated!`);
+          return resolve();
+        }
+        const epic = entry.need >= 4;
+        const title = entry.key === 'badbatch' && entry.count >= 5 ? 'The Bad Batch' : entry.name;
+        const cards = defs.slice(0, 5).map((d, i) => `<div class="syn-card" style="--i:${i}">${portrait(d, { plate: false })}</div>`).join('');
+        const tierText = entry.need ? `${entry.count}/${entry.need} · ${entry.tier > 0 ? 'Tier ' + (entry.tier + 1) : 'Activated'}` : 'Activated';
+        const node = el(`<div class="syn-banner ${epic ? 'epic' : ''}" style="--sc:${color}" role="status">
+          <div class="syn-band"></div>
+          <div class="syn-sparks">${Array.from({ length: 18 }, (_, i) => `<i style="--k:${i}"></i>`).join('')}</div>
+          <div class="syn-content">
+            <div class="syn-icon">${entry.icon || '✦'}</div>
+            <div class="syn-text">
+              <span class="syn-kicker">${epic ? 'Full squad bonus' : 'Synergy unlocked'} · ${esc(tierText)}</span>
+              <b class="syn-name">${esc(title)}</b>
+              <span class="syn-desc">${esc(entry.desc)}</span>
+            </div>
+            <div class="syn-cards">${cards}</div>
+          </div>
+        </div>`);
+        let done = false;
+        const finish = () => {
+          if (done) return;
+          done = true;
+          node.classList.add('out');
+          setTimeout(() => {
+            node.remove();
+            resolve();
+          }, 260);
+        };
+        node.addEventListener('click', finish);
+        document.body.appendChild(node);
+        setTimeout(finish, epic ? 3200 : 2300);
+      }, delay || 0);
+    }));
+    return bannerChain;
+  }
 
   const SORTS = {
     strong: { label: 'Strongest', fn: (a, b) => sortPower(b) - sortPower(a) },

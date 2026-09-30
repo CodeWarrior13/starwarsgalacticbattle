@@ -177,6 +177,27 @@
       }).join('');
     },
 
+    // Small class-flavored pop when a unit's turn comes up (never covers the screen).
+    turnFlourish(u) {
+      const card = this.cards[u.uid];
+      if (!card || reducedMotion()) return;
+      const cls = D.classesOf(u.def);
+      let type = 'default';
+      let color = u.side === 'player' ? '#ffd23f' : '#ff5a5a';
+      if (u.boss) { type = 'boss'; color = '#ff2a2a'; }
+      else if (u.def.kind === 'ship') { type = 'ship'; color = u.def.faction === 'light' ? '#8fd3ff' : '#8affb0'; }
+      else if (cls.includes('force')) { type = 'force'; color = u.def.accent || SABER[u.def.faction]; }
+      else if (cls.includes('droid')) { type = 'droid'; color = '#ffb03a'; }
+      else if (cls.includes('healer')) { type = 'healer'; color = '#52e08a'; }
+      else if (cls.includes('tank')) { type = 'tank'; color = '#8fd3ff'; }
+      const fx = el(`<span class="turn-fx ${type}" style="--tc:${color}" aria-hidden="true"></span>`);
+      card.appendChild(fx);
+      setTimeout(() => fx.remove(), 1000);
+      card.animate([{ scale: '1' }, { scale: '1.08', offset: 0.35 }, { scale: '1' }], { duration: 420, easing: 'cubic-bezier(.3,1.6,.5,1)' });
+      const c = this.center(u.uid);
+      this.env.light(c.x, c.y, color, 90, 0.5);
+    },
+
     setActive(actor) {
       Object.values(this.cards).forEach((c) => c.classList.remove('active'));
       if (actor) this.cards[actor.uid].classList.add('active');
@@ -418,6 +439,7 @@
         const actor = b.advance();
         if (!actor) return this.finish(b.winner() || 'enemy');
         this.setActive(actor);
+        this.turnFlourish(actor);
         this.updateTurnOrder();
         this.updateAll();
         const { events, skipped } = b.beginTurn(actor);

@@ -422,6 +422,79 @@
         { name: 'Energy Torpedo', cd: 3, target: 'enemy', effects: [dmg(1.6)], desc: 'Deal heavy damage to one enemy.' },
       ],
     },
+
+    // ---------- Wave 4: Medics & the Bad Batch ----------
+    {
+      id: 'rebel_medic', name: 'Rebel Field Medic', kind: 'character', faction: 'light', rarity: 'common', role: 'healer', accent: '#52e08a', spd: 128,
+      abilities: [
+        { name: 'Sidearm', cd: 0, target: 'enemy', effects: [dmg(0.8)], desc: 'Deal damage to one enemy.' },
+        { name: 'Bacta Spray', cd: 3, target: 'allAllies', effects: [heal(0.16)], desc: 'Heal all allies for 16% of their max HP.' },
+      ],
+    },
+    {
+      id: 'two_onebee', name: '2-1B Surgical Droid', kind: 'character', faction: 'light', rarity: 'rare', role: 'healer', accent: '#8fd3ff', spd: 118,
+      abilities: [
+        { name: 'Scalpel Laser', cd: 0, target: 'enemy', effects: [dmg(0.75), debuff('defDown', 2, 0.3)], desc: 'Deal damage with a 30% chance of Defense Down.' },
+        { name: 'Bacta Tank', cd: 3, target: 'allAllies', effects: [heal(0.2), buff('defUp', 1)], desc: 'Heal all allies 20% and grant Defense Up.' },
+      ],
+    },
+    {
+      id: 'nightsister_acolyte', name: 'Nightsister Acolyte', kind: 'character', faction: 'dark', rarity: 'rare', role: 'healer', accent: '#4ade80', spd: 138,
+      abilities: [
+        { name: 'Ichor Bolt', cd: 0, target: 'enemy', effects: [dmg(0.9), debuff('burn', 2, 0.3)], desc: 'Deal damage with a 30% chance to Burn.' },
+        { name: 'Dathomir Rite', cd: 3, target: 'allAllies', effects: [heal(0.16), buff('offUp', 1)], desc: 'Heal all allies 16% and grant Offense Up.' },
+      ],
+    },
+    {
+      id: 'barriss', name: 'Barriss Offee', kind: 'character', faction: 'light', rarity: 'epic', role: 'healer', accent: '#46c46a', spd: 135,
+      abilities: [
+        { name: 'Lightsaber Parry', cd: 0, target: 'enemy', effects: [dmg(1.0), { ...heal(0.05), on: 'self' }], desc: 'Deal damage and heal 5%.' },
+        { name: 'Force Healing', cd: 3, target: 'allAllies', effects: [heal(0.22), buff('defUp', 2)], desc: 'Heal all allies 22% and grant Defense Up.' },
+      ],
+    },
+    {
+      id: 'talzin', name: 'Mother Talzin', kind: 'character', faction: 'dark', rarity: 'legendary', role: 'healer', accent: '#4ade80', spd: 140,
+      abilities: [
+        { name: 'Magick Bolt', cd: 0, target: 'enemy', effects: [dmg(1.1), debuff('offDown', 2, 0.4)], desc: 'Deal damage with a 40% chance of Offense Down.' },
+        { name: 'Plague', cd: 3, target: 'allEnemies', effects: [dmg(0.7), debuff('burn', 2, 0.6)], desc: 'Damage all enemies with a 60% chance to Burn.' },
+        { name: 'Ichor Resurgence', cd: 4, target: 'allAllies', effects: [heal(0.25), buff('offUp', 2)], desc: 'Heal all allies 25% and grant Offense Up.' },
+      ],
+    },
+    {
+      id: 'hunter', name: 'Hunter', kind: 'character', faction: 'light', rarity: 'epic', role: 'attacker', accent: '#9fe07a', spd: 150,
+      abilities: [
+        { name: 'Vibro-Knife', cd: 0, target: 'enemy', effects: [dmg(1.15), debuff('defDown', 2, 0.3)], desc: 'Deal damage with a 30% chance of Defense Down.' },
+        { name: 'Tracker\'s Instinct', cd: 3, target: 'allAllies', effects: [buff('offUp', 2), tm(20)], desc: 'All allies gain Offense Up and 20% Turn Meter.' },
+      ],
+    },
+    {
+      id: 'wrecker', name: 'Wrecker', kind: 'character', faction: 'light', rarity: 'epic', role: 'tank', accent: '#d9773a', spd: 108,
+      abilities: [
+        { name: 'Brute Force', cd: 0, target: 'enemy', effects: [dmg(1.1), debuff('stun', 1, 0.25)], desc: 'Deal damage with a 25% chance to Stun.' },
+        { name: 'Wrecker Smash', cd: 3, target: 'self', effects: [buff('taunt', 2), buff('defUp', 2), buff('offUp', 2)], desc: 'Gain Taunt, Defense Up and Offense Up.' },
+      ],
+    },
+    {
+      id: 'tech', name: 'Tech', kind: 'character', faction: 'light', rarity: 'epic', role: 'support', accent: '#e8c14a', spd: 140,
+      abilities: [
+        { name: 'Precision Pistols', cd: 0, target: 'enemy', effects: [dmg(0.55, 2)], desc: 'Hit one enemy twice.' },
+        { name: 'Tactical Analysis', cd: 3, target: 'allEnemies', effects: [debuff('defDown', 2), debuff('offDown', 2, 0.5)], desc: 'All enemies suffer Defense Down, with a 50% chance of Offense Down.' },
+      ],
+    },
+    {
+      id: 'crosshair', name: 'Crosshair', kind: 'character', faction: 'light', rarity: 'epic', role: 'attacker', accent: '#e8e8e8', spd: 132,
+      abilities: [
+        { name: 'Long Shot', cd: 0, target: 'enemy', effects: [dmg(1.3)], desc: 'Deal heavy damage to one enemy.' },
+        { name: 'Headshot', cd: 3, target: 'enemy', effects: [dmg(2.4), debuff('defDown', 2)], desc: 'Deal massive damage and inflict Defense Down.' },
+      ],
+    },
+    {
+      id: 'echo', name: 'Echo', kind: 'character', faction: 'light', rarity: 'epic', role: 'support', accent: '#8fd3ff', spd: 142,
+      abilities: [
+        { name: 'Scomp Link Shot', cd: 0, target: 'enemy', effects: [dmg(1.0), { ...tm(10), on: 'self' }], desc: 'Deal damage and gain 10% Turn Meter.' },
+        { name: 'System Override', cd: 3, target: 'enemy', effects: [dmg(1.2), debuff('stun', 1, 0.6)], desc: 'Deal damage with a 60% chance to Stun.' },
+      ],
+    },
   ];
 
   // Ultimates charge as a unit acts, deals damage and takes damage.
@@ -468,6 +541,16 @@
     b2_droid: U('Blast Them!', 'allEnemies', [dmg(1.0), { ...buff('taunt', 2), on: 'self' }], 'Wrist rockets hit all enemies; gain Taunt.', 'Blast them!'),
     magnaguard: U('Bodyguard Protocol', 'allEnemies', [dmg(1.35), { ...buff('defUp', 2), on: 'self' }], 'Electrostaff strikes hit all enemies; gain Defense Up.', 'Kill. Kill.'),
     ig11: U('360 Sweep', 'allEnemies', [dmg(0.75, 2)], 'Spin and hit all enemies twice.', 'I am not a nurse droid. I am a lethal weapon.'),
+    rebel_medic: U('Evac Protocol', 'allAllies', [heal(0.35), buff('defUp', 2)], 'All allies heal 35% and gain Defense Up.', 'Medic! Hold still!'),
+    two_onebee: U('Full Recovery', 'allAllies', [heal(0.45), tm(15)], 'All allies heal 45% and gain 15% Turn Meter.', 'Treatment complete.'),
+    nightsister_acolyte: U('Witches of Dathomir', 'allAllies', [heal(0.35), buff('offUp', 2)], 'All allies heal 35% and gain Offense Up.', 'The ichor flows.'),
+    barriss: U('Healing Trance', 'allAllies', [heal(0.5), buff('defUp', 2), tm(20)], 'All allies heal 50%, gain Defense Up and 20% Turn Meter.', 'The Force will guide my hands.'),
+    talzin: U('Magicks of Dathomir', 'allEnemies', [dmg(1.6), debuff('burn', 2), { ...heal(0.3), on: 'allies' }], 'Blast all enemies with ichor and Burn them; all allies heal 30%.', 'The Nightsisters are eternal.'),
+    hunter: U('Clone Force 99', 'allEnemies', [dmg(1.4), { ...buff('offUp', 2), on: 'allies' }], 'Lead a strike on all enemies; all allies gain Offense Up.', 'Bad Batch, move out.'),
+    wrecker: U('Wrecker Wrecks It', 'allEnemies', [dmg(1.5), debuff('stun', 1, 0.4), { ...buff('taunt', 2), on: 'self' }], 'Explosives hit all enemies with a 40% Stun chance; gain Taunt.', 'Wrecker wreck it!'),
+    tech: U('Calculated Probability', 'allAllies', [buff('offUp', 2), buff('defUp', 2), tm(35)], 'All allies gain Offense Up, Defense Up and 35% Turn Meter.', 'Statistically, we should all be dead.'),
+    crosshair: U('No Miss', 'enemy', [dmg(4.2), debuff('defDown', 2)], 'A single devastating shot that never misses.', 'I never miss.'),
+    echo: U('Scomp Surge', 'allEnemies', [dmg(1.1), debuff('stun', 1, 0.5)], 'Overload enemy systems: damage all enemies with a 50% Stun chance.', 'Interfacing now.'),
   };
 
   const ROLE_ULTIMATES = {
@@ -570,6 +653,16 @@
 
   // Flavor text shown on the back of each card.
   const BIOS = {
+    rebel_medic: 'A combat medic of the Rebel Alliance who runs toward the blaster fire so others can walk away from it.',
+    two_onebee: 'A surgical droid who has patched up everyone from Luke Skywalker to half the Rebel fleet.',
+    nightsister_acolyte: 'A young witch of Dathomir who draws on green ichor magick to mend her sisters.',
+    barriss: 'A Mirialan Jedi healer, famous for her Force healing and her quiet, fierce focus.',
+    talzin: 'Leader of the Nightsisters of Dathomir, a master of dark magicks who can heal or curse with a gesture.',
+    hunter: 'Leader of Clone Force 99, with enhanced senses that let him track anything.',
+    wrecker: 'The Bad Batch\'s demolitions expert. Huge, loud, and happiest when things explode.',
+    tech: 'The Bad Batch\'s genius. Hacks, calculates and talks through the odds while everyone else fights.',
+    crosshair: 'A clone sharpshooter with enhanced eyesight. He does not miss.',
+    echo: 'A former ARC trooper rebuilt with cybernetics who can interface directly with enemy systems.',
     c3po: 'A protocol droid fluent in over six million forms of communication, and in constant fear of the odds.',
     bb8: 'A plucky astromech who rolls into danger, zaps enemies and gives a mean thumbs up with a lighter.',
     k2so: 'A reprogrammed Imperial security droid with enormous strength and absolutely no filter.',
@@ -691,7 +784,8 @@
     falcon: ['gunship', 'scoundrel', 'rebel'], razor_crest: ['gunship', 'bounty'], tie_fighter: ['fighter', 'empire'],
     tie_bomber: ['bomber', 'empire'], tie_interceptor: ['fighter', 'empire'], lambda_shuttle: ['gunship', 'empire'],
     slave_one: ['gunship', 'bounty'], vulture_droid: ['fighter', 'droid', 'separatist'],
-    c3po: ['droid', 'rebel'], bb8: ['droid', 'rebel'], k2so: ['droid', 'rebel'], chopper: ['droid', 'rebel', 'scoundrel'],
+    c3po: ['droid', 'rebel'], rebel_medic: ['rebel', 'trooper'], two_onebee: ['droid', 'rebel'], nightsister_acolyte: ['nightsister'], barriss: ['jedi', 'republic'], talzin: ['nightsister', 'leader'],
+    hunter: ['badbatch', 'trooper', 'leader'], wrecker: ['badbatch', 'trooper'], tech: ['badbatch', 'trooper'], crosshair: ['badbatch', 'trooper'], echo: ['badbatch', 'trooper', 'droid'], bb8: ['droid', 'rebel'], k2so: ['droid', 'rebel'], chopper: ['droid', 'rebel', 'scoundrel'],
     ig88: ['droid', 'bounty'], droideka: ['droid', 'separatist'], b2_droid: ['droid', 'separatist'], magnaguard: ['droid', 'separatist'], ig11: ['droid', 'bounty'], tie_advanced: ['fighter', 'empire', 'sith'],
     rancor: ['creature'], krayt_dragon: ['creature'], lord_vader: ['sith', 'empire'], star_destroyer: ['capital', 'empire'], death_star: ['capital', 'empire'],
   };
@@ -701,7 +795,7 @@
     empire: { label: 'Empire', icon: '⬢' }, republic: { label: 'Republic', icon: '⌬' }, separatist: { label: 'Separatist', icon: '⎔' },
     scoundrel: { label: 'Scoundrel', icon: '☄' }, bounty: { label: 'Bounty Hunter', icon: '⌖' }, droid: { label: 'Droid', icon: '⚙' },
     trooper: { label: 'Trooper', icon: '⛉' }, native: { label: 'Native', icon: '❦' }, leader: { label: 'Leader', icon: '♛' },
-    mandalorian: { label: 'Mandalorian', icon: '⟁' }, fighter: { label: 'Fighter', icon: '➶' }, bomber: { label: 'Bomber', icon: '✹' },
+    mandalorian: { label: 'Mandalorian', icon: '⟁' }, badbatch: { label: 'Bad Batch', icon: '⚑' }, nightsister: { label: 'Nightsister', icon: '☽' }, fighter: { label: 'Fighter', icon: '➶' }, bomber: { label: 'Bomber', icon: '✹' },
     gunship: { label: 'Gunship', icon: '⛭' }, creature: { label: 'Creature', icon: '☠' }, capital: { label: 'Capital Ship', icon: '▲' },
   };
 
@@ -711,7 +805,7 @@
     ranged: { label: 'Ranged', icon: '➹' }, support: { label: 'Support', icon: '✦' }, force: { label: 'Force User', icon: '✧' },
     droid: { label: 'Droid', icon: '⚙' }, starfighter: { label: 'Starfighter', icon: '➶' }, bomber: { label: 'Bomber', icon: '✹' }, gunship: { label: 'Gunship', icon: '⛭' },
   };
-  const MELEE = ['ewok_warrior', 'tusken_raider', 'obi_wan', 'luke', 'yoda', 'rey', 'darth_maul', 'kylo_ren', 'count_dooku', 'vader', 'ahsoka', 'grievous', 'mace_windu', 'magnaguard', 'k2so', 'rancor', 'krayt_dragon', 'lord_vader'];
+  const MELEE = ['ewok_warrior', 'tusken_raider', 'obi_wan', 'luke', 'yoda', 'rey', 'darth_maul', 'kylo_ren', 'count_dooku', 'vader', 'ahsoka', 'grievous', 'mace_windu', 'magnaguard', 'k2so', 'hunter', 'rancor', 'krayt_dragon', 'lord_vader'];
 
   function classesOf(def) {
     const tr = TRAITS[def.id] || [];
@@ -740,6 +834,7 @@
     a_wing: 'strafe', x_wing: 'torpedo', z95: 'strafe', tie_fighter: 'strafe', tie_interceptor: 'strafe', tie_advanced: 'strafe', falcon: 'strafe',
     y_wing: 'shield', lambda_shuttle: 'shield', b_wing: 'broadside', razor_crest: 'broadside', tie_bomber: 'bombrun', slave_one: 'bombrun',
     c3po: 'rally', bb8: 'dash', k2so: 'leap', chopper: 'heal', ig88: 'rockets', droideka: 'bulwark', b2_droid: 'barrage', magnaguard: 'dash', ig11: 'barrage', vulture_droid: 'strafe',
+    rebel_medic: 'heal', two_onebee: 'heal', nightsister_acolyte: 'heal', barriss: 'heal', talzin: 'lightning', hunter: 'dash', wrecker: 'rockets', tech: 'rally', crosshair: 'snipe', echo: 'lightning',
     rancor: 'claws', krayt_dragon: 'claws', star_destroyer: 'turbolaser', death_star: 'superlaser',
   };
 
@@ -748,6 +843,12 @@
 
   // `scope: 'trait'` buffs only the units with the trait, `'all'` buffs the whole squad.
   const SYNERGIES = [
+    { trait: 'badbatch', name: 'Clone Force 99', scope: 'trait', tiers: [
+      { n: 2, mods: { atk: 0.1 }, desc: 'Bad Batch members gain +10% attack.' },
+      { n: 3, mods: { atk: 0.15, crit: 0.1 }, desc: 'Bad Batch members gain +15% attack and +10% crit chance.' },
+      { n: 5, mods: { atk: 0.25, crit: 0.15, double: 0.2, spd: 0.15, regen: 0.03 }, desc: 'The full Bad Batch: +25% attack, +15% crit, +20% double hit, +15% speed and 3% healing each turn.' }] },
+    { trait: 'nightsister', name: 'Witches of Dathomir', scope: 'all', tiers: [
+      { n: 2, mods: { lifesteal: 0.1, regen: 0.03 }, desc: 'Whole squad gains 10% lifesteal and heals 3% each turn.' }] },
     { trait: 'jedi', name: 'Jedi Order', scope: 'trait', tiers: [
       { n: 2, mods: { crit: 0.1 }, desc: 'Jedi gain +10% crit chance.' },
       { n: 3, mods: { crit: 0.2, regen: 0.03 }, desc: 'Jedi gain +20% crit chance and heal 3% each turn.' }] },
@@ -789,6 +890,24 @@
     { trait: 'gunship', name: 'Heavy Hulls', scope: 'trait', tiers: [
       { n: 2, mods: { hp: 0.2, def: 0.1 }, desc: 'Gunships gain +20% health and +10% armor.' }] },
   ];
+
+  // Role-based synergies (not traits): healers, tanks and damage dealers.
+  const ROLE_SYNERGIES = [
+    { role: 'healer', name: 'Medical Corps', icon: '✚', scope: 'all', tiers: [
+      { n: 2, mods: { regen: 0.03 }, desc: 'Two healers: the whole squad heals 3% each turn.' },
+      { n: 3, mods: { regen: 0.05, def: 0.08 }, desc: 'Three healers: the whole squad heals 5% each turn and gains +8% armor.' }] },
+    { role: 'tank', name: 'Iron Wall', icon: '⛨', scope: 'role', tiers: [
+      { n: 2, mods: { def: 0.15, hp: 0.08 }, desc: 'Two tanks: tanks gain +15% armor and +8% health.' }] },
+    { role: 'attacker', name: 'Strike Team', icon: '⚔', scope: 'role', tiers: [
+      { n: 3, mods: { crit: 0.1, atk: 0.06 }, desc: 'Three damage dealers: they gain +10% crit chance and +6% attack.' }] },
+  ];
+
+  // Colors used by the synergy activation banners.
+  const SYN_THEME = {
+    droid: '#ffb03a', sith: '#ff2a2a', jedi: '#5ab4ff', rebel: '#ff8a4a', empire: '#b8c2cc', republic: '#8fd3ff', separatist: '#6a8aff',
+    scoundrel: '#ffd23f', bounty: '#9fe07a', trooper: '#e6ecf5', native: '#8aa04a', leader: '#ffd23f', fighter: '#8fd3ff', bomber: '#ff9a3a',
+    gunship: '#b8c2cc', badbatch: '#9fe07a', nightsister: '#4ade80', healer: '#52e08a', tank: '#8fd3ff', attacker: '#ff6b6b', unity_light: '#ffe08a', unity_dark: '#ff3a3a', formation: '#8fd3ff', terrain: '#52e08a',
+  };
 
   // ---------- Planets ----------
   // Each planet is its own campaign with a living battlefield, a terrain
@@ -977,28 +1096,43 @@
         defs.forEach((d, i) => {
           if (syn.scope === 'all' || traitsOf(d.id).includes(syn.trait)) addMods(perUnit[i], tier.mods);
         });
-        active.push({ kind: 'synergy', trait: syn.trait, name: syn.name, count: n, need: tier.n, desc: tier.desc, icon: TRAIT_INFO[syn.trait].icon });
+        const members = defs.map((d, i) => (traitsOf(d.id).includes(syn.trait) ? i : -1)).filter((i) => i >= 0);
+        active.push({ kind: 'synergy', key: syn.trait, trait: syn.trait, name: syn.name, count: n, need: tier.n, tier: syn.tiers.indexOf(tier), desc: tier.desc, icon: TRAIT_INFO[syn.trait].icon, members });
       }
       if (next && n > 0 && next.n - n === 1) {
         hints.push({ trait: syn.trait, name: syn.name, count: n, need: next.n, desc: next.desc, icon: TRAIT_INFO[syn.trait].icon });
       }
     }
 
+    for (const rs of ROLE_SYNERGIES) {
+      const members = defs.map((d, i) => (d.role === rs.role ? i : -1)).filter((i) => i >= 0);
+      const n = members.length;
+      const tier = [...rs.tiers].reverse().find((t) => n >= t.n);
+      const next = rs.tiers.find((t) => n < t.n);
+      if (tier) {
+        defs.forEach((d, i) => {
+          if (rs.scope === 'all' || d.role === rs.role) addMods(perUnit[i], tier.mods);
+        });
+        active.push({ kind: 'synergy', key: rs.role, name: rs.name, count: n, need: tier.n, tier: rs.tiers.indexOf(tier), desc: tier.desc, icon: rs.icon, members });
+      }
+      if (next && n > 0 && next.n - n === 1) hints.push({ role: rs.role, trait: rs.role, name: rs.name, count: n, need: next.n, desc: next.desc, icon: rs.icon });
+    }
+
     if (defs.length >= 3) {
       const light = defs.filter((d) => d.faction === 'light').length;
       if (light === defs.length) {
         defs.forEach((d, i) => addMods(perUnit[i], { hp: 0.1, regen: 0.02 }));
-        active.push({ kind: 'unity', name: 'Light Side Unity', desc: 'All Light Side squad: +10% health and 2% healing each turn.', icon: '☀' });
+        active.push({ kind: 'unity', key: 'unity_light', tier: 0, members: defs.map((d, i) => i), name: 'Light Side Unity', desc: 'All Light Side squad: +10% health and 2% healing each turn.', icon: '☀' });
       } else if (light === 0) {
         defs.forEach((d, i) => addMods(perUnit[i], { atk: 0.1, crit: 0.05 }));
-        active.push({ kind: 'unity', name: 'Dark Side Fury', desc: 'All Dark Side squad: +10% attack and +5% crit chance.', icon: '☾' });
+        active.push({ kind: 'unity', key: 'unity_dark', tier: 0, members: defs.map((d, i) => i), name: 'Dark Side Fury', desc: 'All Dark Side squad: +10% attack and +5% crit chance.', icon: '☾' });
       }
     }
 
     const roles = new Set(defs.map((d) => d.role));
     if (defs[0] && defs[0].kind === 'character' && roles.has('tank') && roles.has('healer') && (roles.has('attacker') || roles.has('support'))) {
       defs.forEach((d, i) => addMods(perUnit[i], { def: 0.08 }));
-      active.push({ kind: 'formation', name: 'Battle Formation', desc: 'Tank, healer and damage dealer together: +8% armor for the squad.', icon: '⛨' });
+      active.push({ kind: 'formation', key: 'formation', tier: 0, members: defs.map((d, i) => i), name: 'Battle Formation', desc: 'Tank, healer and damage dealer together: +8% armor for the squad.', icon: '⛨' });
     }
 
     const planet = PLANET_MAP[planetId];
@@ -1015,7 +1149,7 @@
           touched = true;
         });
       }
-      if (touched) active.push({ kind: 'terrain', name: planet.terrain.name, desc: planet.terrain.desc, icon: '◉' });
+      if (touched) active.push({ kind: 'terrain', key: 'terrain', tier: 0, members: [], name: planet.terrain.name, desc: planet.terrain.desc, icon: '◉' });
     }
 
     return { perUnit, active, hints, counts };
@@ -1102,6 +1236,6 @@
     DUPLICATE_SHARDS, SQUAD_SIZE, PACKS, STARTER, levelCost, unitStats, power, stageRewards,
     ultimateFor, abilitiesFor, BOSSES, BOSS_ENCOUNTERS, bossRewards, CURRENCIES, LUCK, CHARMS, MARKET_REFRESH_MS, FLASH_MS, SHELL_PAYOUT, SHELL_BETS, BIOS,
     BASE_SLOTS, SLOT_UNLOCKS, MAX_ACCOUNT_LEVEL, xpToNext, levelReward, XP, planetSquadSize,
-    TRAITS, TRAIT_INFO, CLASS_INFO, classesOf, ULT_ANIM, SYNERGIES, PLANETS, PLANET_MAP, enemyStars, PLANET_CLEAR_KYBER, BASE_DOUBLE, traitsOf, squadBonuses,
+    TRAITS, TRAIT_INFO, ROLE_SYNERGIES, SYN_THEME, CLASS_INFO, classesOf, ULT_ANIM, SYNERGIES, PLANETS, PLANET_MAP, enemyStars, PLANET_CLEAR_KYBER, BASE_DOUBLE, traitsOf, squadBonuses,
   };
 })(typeof window !== 'undefined' ? window : globalThis);
