@@ -129,6 +129,14 @@
   const lastWallet = {};
   function updateWallet() {
     const s = Player.state;
+    const lv = $('#acct-level');
+    if (lv) {
+      const a = s.account;
+      lv.textContent = a.level;
+      const need = D.xpToNext(a.level);
+      $('#acct-bar').style.width = a.level >= D.MAX_ACCOUNT_LEVEL ? '100%' : `${Math.min(100, (a.xp / need) * 100)}%`;
+      lv.closest('.account').title = `Account level ${a.level} · ${a.xp}/${need} XP · ${Player.slots()} squad slots`;
+    }
     for (const key of ['credits', 'crystals', 'aurodium']) {
       const node = $('#' + key);
       if (!node) continue;
@@ -196,6 +204,8 @@
         <div class="showcase" aria-hidden="true">${showcase}</div>
       </div>
 
+      ${accountPanel()}
+
       <div class="stat-row">
         <div class="stat"><b>${owned}/${D.UNITS.length}</b><span>Units collected</span></div>
         <div class="stat"><b>${liberated}/${D.PLANETS.length}</b><span>Planets liberated</span></div>
@@ -243,6 +253,26 @@
     });
     return v;
   };
+
+  function accountPanel() {
+    const a = Player.state.account;
+    const need = D.xpToNext(a.level);
+    const next = Player.nextSlotRule();
+    const slots = Player.slots();
+    return `<div class="account-panel">
+      <div class="acct-ring" style="--p:${a.level >= D.MAX_ACCOUNT_LEVEL ? 100 : Math.round((a.xp / need) * 100)}"><b>${a.level}</b><span>Account</span></div>
+      <div class="acct-info">
+        <p class="eyebrow">Commander rank</p>
+        <h3>Account level ${a.level}${a.level >= D.MAX_ACCOUNT_LEVEL ? ' · Max' : ''}</h3>
+        <p class="muted small">${a.level >= D.MAX_ACCOUNT_LEVEL ? 'Maximum rank reached.' : `${fmt(a.xp)} / ${fmt(need)} XP to level ${a.level + 1}. Every battle earns XP, and each level pays out credits and Kyber.`}</p>
+      </div>
+      <div class="acct-slots">
+        <p class="eyebrow">Squad slots · ground & fleet</p>
+        <div class="slot-pips">${[1, 2, 3, 4, 5].map((n) => `<span class="${n <= slots ? 'on' : ''}">${n <= slots ? n : '🔒'}</span>`).join('')}</div>
+        <p class="muted small">${next ? `Slot ${next.slot}: ${slotRequirement(next)}` : 'All 5 slots unlocked.'}</p>
+      </div>
+    </div>`;
+  }
 
   // Small rotating planet drawn on a canvas.
   function spinSphere(canvas, id) {
@@ -300,6 +330,12 @@
   function hintList(items) {
     if (!items.length) return '';
     return `<ul class="bonus-list hints">${items.map((b) => `<li class="bonus hint-row"><span class="bonus-icon">${b.icon}</span><span><b>${esc(b.name)}</b> <em>${b.count}/${b.need}</em><small>Add 1 more ${esc(D.TRAIT_INFO[b.trait].label)}: ${esc(b.desc)}</small></span></li>`).join('')}</ul>`;
+  }
+
+  function slotRequirement(rule) {
+    const lvOk = Player.state.account.level >= rule.level;
+    const plOk = Player.planetComplete(rule.planet);
+    return `<span class="${lvOk ? 'ok' : ''}">${lvOk ? '✓' : '🔒'} Account Lv ${rule.level}</span><span class="${plOk ? 'ok' : ''}">${plOk ? '✓' : '🔒'} Liberate ${esc(D.PLANET_MAP[rule.planet].name)}</span>`;
   }
 
   function traitChips(id) {
@@ -424,7 +460,8 @@
   Screens.squad = function (params) {
     const enc = Player.encounter(params);
     const kind = enc.kind;
-    const size = D.SQUAD_SIZE[kind];
+    const size = Player.slots();
+    const maxSize = D.SQUAD_SIZE[kind];
     const planetId = enc.planet;
     const planet = D.PLANET_MAP[planetId];
     let squad = Player.state.squads[kind].filter((id) => Player.owns(id) && D.UNIT_MAP[id].kind === kind).slice(0, size);
@@ -444,7 +481,7 @@
         </div>
       </div>
       <div class="versus ${enc.type === 'boss' ? 'boss-versus' : ''}">
-        <div><div class="side-label"><span>Your squad</span><b data-mypower></b></div><div class="slots" data-slots style="--n:${size}"></div></div>
+        <div><div class="side-label"><span>Your squad · ${size}/${maxSize} slots</span><b data-mypower></b></div><div class="slots" data-slots style="--n:${maxSize}"></div></div>
         <div class="vs">VS</div>
         <div><div class="side-label"><span>Enemy · Lv ${enc.level} · ${enc.stars}★</span><b>⚡ ${fmt(enemyPower)}</b></div>
           <div class="slots" style="--n:${enc.enemies.length}">${enc.enemies.map((id) => `<div class="slot filled ${D.UNIT_MAP[id].boss ? 'boss-slot' : ''}">${portrait(D.UNIT_MAP[id])}</div>`).join('')}</div>
@@ -467,8 +504,13 @@
     function render() {
       const slots = $('[data-slots]', v);
       slots.innerHTML = '';
-      for (let i = 0; i < size; i++) {
+      for (let i = 0; i < maxSize; i++) {
         const id = squad[i];
+        const rule = D.SLOT_UNLOCKS.find((r) => r.slot === i + 1);
+        if (i >= size && rule) {
+          slots.insertAdjacentHTML('beforeend', `<div class="slot locked-slot" title="Slot ${i + 1} is locked"><span class="lock">🔒</span><small>Slot ${i + 1}</small><span class="req">${slotRequirement(rule)}</span></div>`);
+          continue;
+        }
         slots.insertAdjacentHTML('beforeend', id
           ? `<div class="slot filled" data-remove="${id}" title="Remove">${portrait(D.UNIT_MAP[id])}</div>`
           : '<div class="slot">Empty</div>');

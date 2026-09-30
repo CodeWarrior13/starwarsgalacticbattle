@@ -23,6 +23,7 @@
       luck: { charmCrates: 0, dice: 0, pity: 0 },
       market: { refreshAt: 0, items: [] },
       flash: { endsAt: 0, items: [] },
+      account: { level: 1, xp: 0 },
     };
   }
 
@@ -66,6 +67,7 @@
           luck: { ...base.luck, ...loaded.luck },
           market: { ...base.market, ...loaded.market },
           flash: { ...base.flash, ...loaded.flash },
+          account: { ...base.account, ...loaded.account },
           bosses: { ...loaded.bosses },
         }
         : base;
@@ -80,6 +82,11 @@
         }
       }
       delete this.state.progress;
+      // Saves from before account levels: grant XP for past victories (no rewards).
+      if (loaded && !loaded.account) {
+        const pastXp = this.totalCleared() * 80 + Object.values(this.state.bosses).reduce((a, n) => a + n * 150, 0);
+        this.gainXp(pastXp, true);
+      }
       // Squads grew to 5: hand out any missing starter units and fill the gaps.
       for (const id of D.STARTER.units) if (!this.state.units[id]) this.state.units[id] = { level: 1, stars: 1, shards: 0 };
       for (const kind of ['character', 'ship']) {
@@ -357,15 +364,47 @@
     },
 
     // ---------- Squads ----------
+    // ---------- Account level & squad slots ----------
+    slotUnlocked(rule) {
+      return this.state.account.level >= rule.level && this.planetComplete(rule.planet);
+    },
+
+    // Same slot count for ground and fleet squads.
+    slots() {
+      return D.BASE_SLOTS + D.SLOT_UNLOCKS.filter((r) => this.slotUnlocked(r)).length;
+    },
+
+    nextSlotRule() {
+      return D.SLOT_UNLOCKS.find((r) => !this.slotUnlocked(r)) || null;
+    },
+
+    gainXp(amount, silent) {
+      const a = this.state.account;
+      const ups = [];
+      a.xp += amount;
+      while (a.level < D.MAX_ACCOUNT_LEVEL && a.xp >= D.xpToNext(a.level)) {
+        a.xp -= D.xpToNext(a.level);
+        a.level += 1;
+        const reward = D.levelReward(a.level);
+        if (!silent) {
+          this.state.credits += reward.credits;
+          this.state.crystals += reward.crystals;
+        }
+        ups.push({ level: a.level, reward });
+      }
+      if (a.level >= D.MAX_ACCOUNT_LEVEL) a.xp = 0;
+      return ups;
+    },
+
     setSquad(kind, ids) {
-      this.state.squads[kind] = ids.slice(0, D.SQUAD_SIZE[kind]);
+      this.state.squads[kind] = ids.slice(0, this.slots());
       this.save();
     },
 
     // Strongest squad with a balanced core: best tank, best healer (ground
     // only), then the highest-power units to fill the rest.
     autoSquad(kind) {
-      const size = D.SQUAD_SIZE[kind];
+      const size = this.slots();
       const owned = D.UNITS.filter((u) => u.kind === kind && this.owns(u.id))
         .sort((a, b) => this.powerOf(b.id) - this.powerOf(a.id));
       const squad = [];
@@ -385,6 +424,7 @@
     squadEntries(kind) {
       return this.state.squads[kind]
         .filter((id) => this.owns(id))
+        .slice(0, this.slots())
         .map((id) => ({ id, level: this.unit(id).level, stars: this.unit(id).stars }));
     },
 
@@ -393,7 +433,7 @@
     encounter(params) {
       if (params.type === 'boss') {
         const enc = D.BOSS_ENCOUNTERS.find((b) => b.id === params.boss);
-        const minions = this.padSquad(enc.minions, D.PLANET_MAP[enc.planet].reinforce[enc.kind], D.SQUAD_SIZE[enc.kind] - 1);
+        const minions = this.padSquad(enc.minions, D.PLANET_MAP[enc.planet].reinforce[enc.kind], D.planetSquadSize(enc.unlock) - 1);
         const half = Math.ceil(minions.length / 2);
         const enemies = [...minions.slice(0, half), enc.id, ...minions.slice(half)];
         return { ...enc, type: 'boss', boss: enc.id, enemies, stars: 1, label: 'Boss Battle' };
@@ -401,7 +441,7 @@
       const planet = D.PLANET_MAP[params.planet];
       const stg = planet.stages[params.stage];
       return {
-        ...stg, enemies: this.padSquad(stg.enemies, planet.reinforce[stg.kind], D.SQUAD_SIZE[stg.kind]),
+        ...stg, enemies: this.padSquad(stg.enemies, planet.reinforce[stg.kind], D.planetSquadSize(planet.id)),
         type: 'stage', planet: planet.id, stage: params.stage, finale: params.stage === planet.stages.length - 1,
         stars: D.enemyStars(planet.id),
         enemyScale: planet.enemyScale || 1,
@@ -446,10 +486,12 @@
 
     // Record a finished battle and grant rewards (with the luck spin applied).
     completeEncounter(params, won, rng) {
+      const slotsBefore = this.slots();
       if (!won) {
         this.state.stats.battlesLost += 1;
+        const levelUps = this.gainXp(D.XP.loss);
         this.save();
-        return null;
+        return { lost: true, xp: D.XP.loss, levelUps, newSlot: this.slots() > slotsBefore };
       }
       const spin = this.rollSpin(rng);
       this.state.stats.bestSpin = Math.max(this.state.stats.bestSpin, spin.mult);
@@ -488,6 +530,10 @@
       out.table = spin.table;
       out.loaded = spin.loaded;
       out.credits = Math.round(out.base * spin.mult * (out.bounty ? 1.2 : 1));
+      const enc = this.encounter(params);
+      out.xp = params.type === 'boss' ? D.XP.boss(enc.level) : D.XP.stage(enc.level);
+      out.levelUps = this.gainXp(out.xp);
+      out.newSlot = this.slots() > slotsBefore;
       this.state.credits += out.credits;
       this.state.crystals += out.crystals;
       this.state.aurodium += out.aurodium;

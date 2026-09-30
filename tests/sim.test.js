@@ -52,7 +52,7 @@ test('every unit has valid abilities', () => {
   }
 });
 
-test('planet stages reference real units of the right kind and pad to 5', () => {
+test('planet stages reference real units and pad to the planet squad size', () => {
   let total = 0;
   for (const planet of D.PLANETS) {
     assert.ok(planet.terrain && planet.hazard && planet.reinforce, planet.id);
@@ -60,7 +60,7 @@ test('planet stages reference real units of the right kind and pad to 5', () => 
       total++;
       for (const id of stg.enemies) assert.strictEqual(D.UNIT_MAP[id].kind, stg.kind, `${planet.id} ${stg.name}: ${id}`);
       const enc = Player.encounter({ type: 'stage', planet: planet.id, stage: i });
-      assert.strictEqual(enc.enemies.length, 5, `${planet.id} ${stg.name} should field 5 enemies`);
+      assert.strictEqual(enc.enemies.length, D.planetSquadSize(planet.id), `${planet.id} ${stg.name} squad size`);
       for (const id of enc.enemies) assert.strictEqual(D.UNIT_MAP[id].kind, stg.kind);
     });
   }
@@ -287,9 +287,55 @@ test('sabacc pays the picked card and market stock can be bought', () => {
 test('auto-build picks a full squad with a tank and healer when owned', () => {
   Player.reset();
   const squad = Player.autoSquad('character');
-  assert.strictEqual(squad.length, 5);
+  assert.strictEqual(squad.length, Player.slots());
   assert.ok(squad.some((id) => D.UNIT_MAP[id].role === 'tank'));
   assert.ok(squad.some((id) => D.UNIT_MAP[id].role === 'healer'));
+});
+
+test('squad slots unlock with both account level and campaign progress', () => {
+  Player.reset();
+  assert.strictEqual(Player.slots(), 3);
+  assert.strictEqual(Player.encounter({ type: 'stage', planet: 'tatooine', stage: 0 }).enemies.length, 3);
+  assert.strictEqual(Player.encounter({ type: 'stage', planet: 'hoth', stage: 0 }).enemies.length, 4);
+  assert.strictEqual(Player.encounter({ type: 'stage', planet: 'dagobah', stage: 0 }).enemies.length, 5);
+  Player.gainXp(5000);
+  assert.ok(Player.state.account.level >= 6);
+  assert.strictEqual(Player.slots(), 3, 'level alone is not enough');
+  Player.state.planets.tatooine = 6;
+  assert.strictEqual(Player.slots(), 4);
+  Player.state.planets.hoth = 6;
+  assert.strictEqual(Player.slots(), 5);
+  Player.reset();
+  Player.state.planets.tatooine = 6;
+  Player.state.planets.hoth = 6;
+  assert.strictEqual(Player.slots(), 3, 'campaign alone is not enough');
+  Player.setSquad('character', ['rebel_soldier', 'clone_trooper', 'ewok_warrior', 'battle_droid', 'jawa']);
+  assert.strictEqual(Player.squadEntries('character').length, 3);
+});
+
+test('battles award XP and level-ups pay out', () => {
+  Player.reset();
+  const credits = Player.state.credits;
+  const r = Player.completeEncounter({ type: 'stage', planet: 'tatooine', stage: 0 }, true, seeded(1));
+  assert.ok(r.xp > 0);
+  const ups = Player.gainXp(D.xpToNext(Player.state.account.level));
+  assert.strictEqual(ups.length, 1);
+  assert.ok(Player.state.credits > credits + r.credits);
+  const loss = Player.completeEncounter({ type: 'stage', planet: 'tatooine', stage: 1 }, false);
+  assert.ok(loss.lost && loss.xp === D.XP.loss);
+});
+
+test('droid roster: new droids have traits, classes and a signature ultimate', () => {
+  for (const id of ['c3po', 'bb8', 'k2so', 'chopper', 'ig88', 'ig11', 'droideka', 'b2_droid', 'magnaguard', 'vulture_droid']) {
+    const u = D.UNIT_MAP[id];
+    assert.ok(u, id);
+    assert.ok(D.traitsOf(id).includes('droid'), id);
+    assert.ok(D.classesOf(u).includes('droid'), id);
+    assert.ok(D.ULT_ANIM[id], id);
+  }
+  const b = D.squadBonuses(['c3po', 'bb8', 'k2so', 'chopper', 'r2d2'], null);
+  const net = b.active.find((a) => a.trait === 'droid');
+  assert.ok(net && net.need === 4);
 });
 
 test('every unit and boss has cover art and a bio', () => {

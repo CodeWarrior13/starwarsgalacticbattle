@@ -1560,6 +1560,14 @@
       const nextInPlanet = won && isStage && p.stage < planet.stages.length - 1;
       const nextPlanet = won && isStage && rewards.planetComplete ? D.PLANETS[D.PLANETS.indexOf(planet) + 1] : null;
       const reel = won ? rewards.table.map((t) => `<span class="reel-item" data-mult="${t.mult}">${t.mult}×</span>`).join('') : '';
+      const acct = Player.state.account;
+      const xpHtml = rewards ? `<div class="xp-box">
+          <span class="xp-gain">+${rewards.xp} XP</span>
+          <span class="xp-bar"><i style="width:${acct.level >= D.MAX_ACCOUNT_LEVEL ? 100 : Math.min(100, (acct.xp / D.xpToNext(acct.level)) * 100)}%"></i></span>
+          <span class="muted small">Account Lv ${acct.level}</span>
+        </div>
+        ${rewards.levelUps.map((u) => `<div class="level-up"><b>LEVEL UP!</b> Account level ${u.level} · ${cur('credits', u.reward.credits)} ${cur('crystals', u.reward.crystals)}</div>`).join('')}
+        ${rewards.newSlot ? `<div class="level-up slot-up"><b>NEW SQUAD SLOT!</b> You can now field ${Player.slots()} units in ground and fleet battles.</div>` : ''}` : '';
       const m = openModal(`
         <div class="result-title ${won ? 'win' : 'lose'}">${won ? 'VICTORY' : 'DEFEAT'}</div>
         ${won && rewards.planetComplete ? `<div class="liberated"><p class="eyebrow">Planet liberated</p><h3>${esc(planet.name)} is free!</h3><p class="muted">${nextPlanet ? `Hyperspace lane to ${esc(nextPlanet.name)} unlocked.` : 'You have liberated the entire galaxy.'}</p></div>` : ''}
@@ -1576,6 +1584,7 @@
           </div>
           ${rewards.card ? `<div class="reward-card" data-rewards hidden><p class="eyebrow">Boss trophy</p>${root.UI.unitCard(D.UNIT_MAP[rewards.card.id], { tag: 'div', hideShards: true })}<p class="muted">${rewards.card.isNew ? 'New recruit!' : `+${rewards.card.shards} shards`}</p></div>` : ''}`
         : '<p class="muted">Train your units in the Collection, build a squad with matching traits for synergies, or grab crates in the Night Market, then try again.</p>'}
+        ${xpHtml}
         <div class="modal-actions">
           <button class="btn" type="button" data-r="retry">Retry</button>
           ${won ? '' : '<button class="btn" type="button" data-r="collection">Collection</button>'}
@@ -1601,22 +1610,27 @@
       const items = $$('.reel-item', track);
       const per = rewards.table.length;
       const targetIdx = per * 3 + rewards.table.findIndex((t) => t.mult === rewards.mult);
-      // offsetWidth ignores the modal's scale-in transform.
-      const itemW = items[0].offsetWidth || 64;
-      const boxW = track.parentElement.clientWidth || 240;
-      const offset = targetIdx * itemW - boxW / 2 + itemW / 2;
+      const target = items[targetIdx];
       const reveal = () => {
-        items[targetIdx].classList.add('hit');
+        target.classList.add('hit');
         $('[data-spin-math]', scope).innerHTML = `${cur('credits', rewards.base)} × <b class="mult">${rewards.mult}×</b>${rewards.bounty ? ' × 1.2' : ''} = ${cur('credits', rewards.credits)}`;
         $$('[data-rewards]', scope).forEach((n) => { n.hidden = false; });
         updateWallet();
         if (rewards.mult >= 3) toast(`Jackpot! ${rewards.mult}× credits!`);
       };
-      if (reducedMotion()) {
-        track.style.transform = `translateX(${-offset}px)`;
-        return reveal();
-      }
-      track.animate([{ transform: 'translateX(0)' }, { transform: `translateX(${-offset}px)` }], { duration: 1600, easing: 'cubic-bezier(.12,.8,.2,1)', fill: 'forwards' }).onfinish = reveal;
+      // Measure after layout settles; divide out the modal's scale-in transform.
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        const reel = track.parentElement;
+        const rr = reel.getBoundingClientRect();
+        const tr = target.getBoundingClientRect();
+        const scale = rr.width / (reel.offsetWidth || rr.width) || 1;
+        const offset = (tr.left + tr.width / 2 - (rr.left + rr.width / 2)) / scale;
+        if (reducedMotion()) {
+          track.style.transform = `translateX(${-offset}px)`;
+          return reveal();
+        }
+        track.animate([{ transform: 'translateX(0)' }, { transform: `translateX(${-offset}px)` }], { duration: 1600, easing: 'cubic-bezier(.12,.8,.2,1)', fill: 'forwards' }).onfinish = reveal;
+      }));
     },
   };
 

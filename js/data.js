@@ -350,6 +350,78 @@
         { name: 'Attack Run', cd: 3, target: 'enemy', effects: [dmg(1.9), debuff('defDown', 2, 0.5)], desc: 'Deal heavy damage with a 50% chance of Defense Down.' },
       ],
     },
+
+    // ---------- Wave 3: Droids ----------
+    {
+      id: 'b2_droid', name: 'B2 Super Battle Droid', kind: 'character', faction: 'dark', rarity: 'common', role: 'tank', accent: '#6a7a90', spd: 100,
+      abilities: [
+        { name: 'Wrist Blaster', cd: 0, target: 'enemy', effects: [dmg(0.95)], desc: 'Deal damage to one enemy.' },
+        { name: 'Heavy Plating', cd: 3, target: 'self', effects: [buff('taunt', 2), buff('defUp', 2)], desc: 'Gain Taunt and Defense Up for 2 turns.' },
+      ],
+    },
+    {
+      id: 'c3po', name: 'C-3PO', kind: 'character', faction: 'light', rarity: 'rare', role: 'support', accent: '#e0b040', spd: 120,
+      abilities: [
+        { name: 'Pardon Me', cd: 0, target: 'enemy', effects: [dmg(0.6), debuff('offDown', 2, 0.5)], desc: 'Deal light damage with a 50% chance of Offense Down.' },
+        { name: 'Six Million Forms', cd: 4, target: 'allAllies', effects: [tm(30), buff('defUp', 2)], desc: 'All allies gain 30% Turn Meter and Defense Up.' },
+      ],
+    },
+    {
+      id: 'chopper', name: 'Chopper', kind: 'character', faction: 'light', rarity: 'rare', role: 'healer', accent: '#e07b1a', spd: 140,
+      abilities: [
+        { name: 'Electro-Prod', cd: 0, target: 'enemy', effects: [dmg(0.9), debuff('stun', 1, 0.2)], desc: 'Deal damage with a 20% chance to Stun.' },
+        { name: 'Grumpy Repairs', cd: 3, target: 'allAllies', effects: [heal(0.15), tm(10)], desc: 'Heal all allies 15% and grant 10% Turn Meter.' },
+      ],
+    },
+    {
+      id: 'droideka', name: 'Droideka', kind: 'character', faction: 'dark', rarity: 'rare', role: 'tank', accent: '#8a6a3a', spd: 105,
+      abilities: [
+        { name: 'Twin Repeaters', cd: 0, target: 'enemy', effects: [dmg(0.5, 2)], desc: 'Hit one enemy twice.' },
+        { name: 'Deflector Shield', cd: 3, target: 'self', effects: [buff('taunt', 2), buff('defUp', 2), heal(0.1)], desc: 'Gain Taunt and Defense Up, and heal 10%.' },
+      ],
+    },
+    {
+      id: 'magnaguard', name: 'IG-100 MagnaGuard', kind: 'character', faction: 'dark', rarity: 'rare', role: 'attacker', accent: '#a86bff', spd: 145,
+      abilities: [
+        { name: 'Electrostaff Strike', cd: 0, target: 'enemy', effects: [dmg(1.1), debuff('stun', 1, 0.2)], desc: 'Deal damage with a 20% chance to Stun.' },
+        { name: 'Staff Whirl', cd: 3, target: 'allEnemies', effects: [dmg(0.7), debuff('defDown', 2, 0.4)], desc: 'Damage all enemies with a 40% chance of Defense Down.' },
+      ],
+    },
+    {
+      id: 'bb8', name: 'BB-8', kind: 'character', faction: 'light', rarity: 'epic', role: 'support', accent: '#ff8a2a', spd: 168,
+      abilities: [
+        { name: 'Rolling Zap', cd: 0, target: 'enemy', effects: [dmg(1.0), debuff('stun', 1, 0.2)], desc: 'Deal damage with a 20% chance to Stun.' },
+        { name: 'Thumbs Up', cd: 3, target: 'allAllies', effects: [buff('offUp', 2), tm(20)], desc: 'All allies gain Offense Up and 20% Turn Meter.' },
+      ],
+    },
+    {
+      id: 'k2so', name: 'K-2SO', kind: 'character', faction: 'light', rarity: 'epic', role: 'tank', accent: '#3a3d44',
+      abilities: [
+        { name: 'Reprogrammed Punch', cd: 0, target: 'enemy', effects: [dmg(1.1), debuff('stun', 1, 0.25)], desc: 'Deal damage with a 25% chance to Stun.' },
+        { name: 'Blunt Honesty', cd: 3, target: 'self', effects: [buff('taunt', 2), buff('defUp', 2), buff('offUp', 2)], desc: 'Gain Taunt, Defense Up and Offense Up.' },
+      ],
+    },
+    {
+      id: 'ig88', name: 'IG-88', kind: 'character', faction: 'dark', rarity: 'epic', role: 'attacker', accent: '#c43b2e',
+      abilities: [
+        { name: 'Heavy Rifle', cd: 0, target: 'enemy', effects: [dmg(1.25)], desc: 'Deal damage to one enemy.' },
+        { name: 'Assassin Protocol', cd: 3, target: 'enemy', effects: [dmg(2.2), debuff('defDown', 2)], desc: 'Deal heavy damage and inflict Defense Down.' },
+      ],
+    },
+    {
+      id: 'ig11', name: 'IG-11', kind: 'character', faction: 'light', rarity: 'epic', role: 'attacker', accent: '#3d8bff', spd: 140,
+      abilities: [
+        { name: 'Twin Blasters', cd: 0, target: 'enemy', effects: [dmg(0.62, 2)], desc: 'Hit one enemy twice.' },
+        { name: 'Tactical Scan', cd: 3, target: 'enemy', effects: [dmg(1.8), debuff('defDown', 2)], desc: 'Deal heavy damage and inflict Defense Down.' },
+      ],
+    },
+    {
+      id: 'vulture_droid', name: 'Vulture Droid', kind: 'ship', faction: 'dark', rarity: 'common', role: 'attacker', shape: 'vulture', spd: 165,
+      abilities: [
+        { name: 'Blaster Cannons', cd: 0, target: 'enemy', effects: [dmg(1.0)], desc: 'Deal damage to one enemy.' },
+        { name: 'Energy Torpedo', cd: 3, target: 'enemy', effects: [dmg(1.6)], desc: 'Deal heavy damage to one enemy.' },
+      ],
+    },
   ];
 
   // Ultimates charge as a unit acts, deals damage and takes damage.
@@ -387,6 +459,15 @@
     death_trooper: U('Deathmark', 'allEnemies', [dmg(1.2), debuff('defDown', 2), { ...buff('taunt', 2), on: 'self' }], 'Damage all enemies, inflict Defense Down and gain Taunt.', 'Target acquired.'),
     razor_crest: U('Bounty Run', 'allEnemies', [dmg(1.3), { ...heal(0.2), on: 'allies' }], 'Damage all enemies and repair all allies 20%.', 'I have spoken.'),
     tie_interceptor: U('Saber Squadron', 'allEnemies', [dmg(0.8, 2)], 'Hit all enemies twice.', 'Stay in formation.'),
+    c3po: U('We\'re Doomed!', 'allEnemies', [debuff('offDown', 2), debuff('defDown', 2), { ...heal(0.15), on: 'allies' }], 'Panic spreads: all enemies get Offense Down and Defense Down; all allies heal 15%.', 'We\'re doomed!'),
+    bb8: U('Rolling Thunder', 'allEnemies', [dmg(1.2), debuff('stun', 1, 0.4)], 'Roll through all enemies with a 40% chance to Stun.', 'Bweep-bweep!'),
+    k2so: U('You Are Being Rescued', 'enemy', [dmg(3.2), debuff('stun', 1), { ...buff('taunt', 2), on: 'self' }], 'Deal massive damage, Stun the target and gain Taunt.', 'Congratulations. You are being rescued.'),
+    chopper: U('Ghost Crew Chaos', 'allAllies', [heal(0.3), buff('offUp', 2)], 'All allies heal 30% and gain Offense Up.', 'Wa-wa-wa!'),
+    ig88: U('Termination Sequence', 'allEnemies', [dmg(1.5), debuff('burn', 2)], 'Rockets hammer all enemies and Burn them.', 'Target acquired. Terminate.'),
+    droideka: U('Roll and Unfurl', 'allEnemies', [dmg(1.1), { ...buff('taunt', 3), on: 'self' }, { ...buff('defUp', 3), on: 'self' }], 'Damage all enemies, then gain Taunt and Defense Up for 3 turns.', 'Shields up.'),
+    b2_droid: U('Blast Them!', 'allEnemies', [dmg(1.0), { ...buff('taunt', 2), on: 'self' }], 'Wrist rockets hit all enemies; gain Taunt.', 'Blast them!'),
+    magnaguard: U('Bodyguard Protocol', 'allEnemies', [dmg(1.35), { ...buff('defUp', 2), on: 'self' }], 'Electrostaff strikes hit all enemies; gain Defense Up.', 'Kill. Kill.'),
+    ig11: U('360 Sweep', 'allEnemies', [dmg(0.75, 2)], 'Spin and hit all enemies twice.', 'I am not a nurse droid. I am a lethal weapon.'),
   };
 
   const ROLE_ULTIMATES = {
@@ -419,7 +500,7 @@
   const BOSSES = [
     {
       id: 'rancor', name: 'The Rancor', kind: 'character', faction: 'dark', rarity: 'legendary', role: 'attacker', spd: 120,
-      boss: { hp: 10, atk: 1.3, def: 1.2 },
+      boss: { hp: 7, atk: 1.12, def: 1.2 },
       abilities: [
         { name: 'Crushing Claw', cd: 0, target: 'enemy', effects: [dmg(1.3)], desc: 'Deal damage to one enemy.' },
         { name: 'Ground Pound', cd: 3, target: 'allEnemies', effects: [dmg(0.8), debuff('stun', 1, 0.3)], desc: 'Damage all enemies with a 30% chance to Stun.' },
@@ -489,6 +570,16 @@
 
   // Flavor text shown on the back of each card.
   const BIOS = {
+    c3po: 'A protocol droid fluent in over six million forms of communication, and in constant fear of the odds.',
+    bb8: 'A plucky astromech who rolls into danger, zaps enemies and gives a mean thumbs up with a lighter.',
+    k2so: 'A reprogrammed Imperial security droid with enormous strength and absolutely no filter.',
+    chopper: 'The Ghost crew\'s grumpy, cantankerous astromech. He fixes things, zaps people and mostly complains.',
+    ig88: 'An assassin droid bounty hunter with a head full of sensors and a body full of weapons.',
+    droideka: 'A Separatist destroyer droid that rolls into battle, unfurls and hides behind a deflector shield.',
+    b2_droid: 'A hulking super battle droid built to soak up blaster fire and shrug it off.',
+    magnaguard: 'General Grievous\'s elite bodyguard, trained in combat with an electrostaff that can block lightsabers.',
+    ig11: 'A bounty hunter droid, later reprogrammed as a protector. Spins its head a full circle while shooting.',
+    vulture_droid: 'A Separatist droid starfighter that can fold its wings and walk. Cheap, fast and built in swarms.',
     rebel_soldier: 'A fleet trooper of the Rebel Alliance. Poorly equipped, badly outnumbered, and still first through the door.',
     clone_trooper: 'Bred on Kamino for one purpose: war. Disciplined, loyal and tough enough to anchor any line.',
     ewok_warrior: 'Small, fierce and fiercely loyal. The forest moon of Endor has humbled bigger armies than yours.',
@@ -570,6 +661,21 @@
 
   const SQUAD_SIZE = { character: 5, ship: 5 };
 
+  // ---------- Account level & squad slots ----------
+  // Squads start with 3 slots. Slots 4 and 5 need BOTH an account level and
+  // a liberated planet, for ground and fleet squads alike.
+  const BASE_SLOTS = 3;
+  const SLOT_UNLOCKS = [
+    { slot: 4, level: 4, planet: 'tatooine' },
+    { slot: 5, level: 6, planet: 'hoth' },
+  ];
+  const MAX_ACCOUNT_LEVEL = 50;
+  const xpToNext = (level) => Math.round(60 + level * 35 + level * level * 5);
+  const levelReward = (level) => ({ credits: 150 + level * 50, crystals: level % 5 === 0 ? 100 : 20 });
+  const XP = { stage: (lvl) => 50 + lvl * 8, boss: (lvl) => 150 + lvl * 10, loss: 15 };
+  // Enemy squads grow with you: 3 on the first planet, 4 on the second, then 5.
+  const planetSquadSize = (planetId) => ({ tatooine: 3, hoth: 4 }[planetId] || 5);
+
   // ---------- Traits & synergies ----------
   const TRAITS = {
     rebel_soldier: ['rebel', 'trooper'], clone_trooper: ['trooper', 'republic'], ewok_warrior: ['native', 'rebel'],
@@ -584,7 +690,9 @@
     z95: ['fighter', 'rebel', 'scoundrel'], a_wing: ['fighter', 'rebel'], y_wing: ['bomber', 'rebel'], x_wing: ['fighter', 'rebel'], b_wing: ['bomber', 'rebel'],
     falcon: ['gunship', 'scoundrel', 'rebel'], razor_crest: ['gunship', 'bounty'], tie_fighter: ['fighter', 'empire'],
     tie_bomber: ['bomber', 'empire'], tie_interceptor: ['fighter', 'empire'], lambda_shuttle: ['gunship', 'empire'],
-    slave_one: ['gunship', 'bounty'], tie_advanced: ['fighter', 'empire', 'sith'],
+    slave_one: ['gunship', 'bounty'], vulture_droid: ['fighter', 'droid', 'separatist'],
+    c3po: ['droid', 'rebel'], bb8: ['droid', 'rebel'], k2so: ['droid', 'rebel'], chopper: ['droid', 'rebel', 'scoundrel'],
+    ig88: ['droid', 'bounty'], droideka: ['droid', 'separatist'], b2_droid: ['droid', 'separatist'], magnaguard: ['droid', 'separatist'], ig11: ['droid', 'bounty'], tie_advanced: ['fighter', 'empire', 'sith'],
     rancor: ['creature'], krayt_dragon: ['creature'], lord_vader: ['sith', 'empire'], star_destroyer: ['capital', 'empire'], death_star: ['capital', 'empire'],
   };
 
@@ -601,9 +709,9 @@
   const CLASS_INFO = {
     healer: { label: 'Healer', icon: '✚' }, tank: { label: 'Tank', icon: '⛨' }, fighter: { label: 'Fighter', icon: '⚔' },
     ranged: { label: 'Ranged', icon: '➹' }, support: { label: 'Support', icon: '✦' }, force: { label: 'Force User', icon: '✧' },
-    starfighter: { label: 'Starfighter', icon: '➶' }, bomber: { label: 'Bomber', icon: '✹' }, gunship: { label: 'Gunship', icon: '⛭' },
+    droid: { label: 'Droid', icon: '⚙' }, starfighter: { label: 'Starfighter', icon: '➶' }, bomber: { label: 'Bomber', icon: '✹' }, gunship: { label: 'Gunship', icon: '⛭' },
   };
-  const MELEE = ['ewok_warrior', 'tusken_raider', 'obi_wan', 'luke', 'yoda', 'rey', 'darth_maul', 'kylo_ren', 'count_dooku', 'vader', 'ahsoka', 'grievous', 'mace_windu', 'rancor', 'krayt_dragon', 'lord_vader'];
+  const MELEE = ['ewok_warrior', 'tusken_raider', 'obi_wan', 'luke', 'yoda', 'rey', 'darth_maul', 'kylo_ren', 'count_dooku', 'vader', 'ahsoka', 'grievous', 'mace_windu', 'magnaguard', 'k2so', 'rancor', 'krayt_dragon', 'lord_vader'];
 
   function classesOf(def) {
     const tr = TRAITS[def.id] || [];
@@ -616,6 +724,7 @@
       out.push(MELEE.includes(def.id) ? 'fighter' : 'ranged');
       if (tr.includes('jedi') || tr.includes('sith') || def.id === 'grogu') out.push('force');
     }
+    if (tr.includes('droid')) out.push('droid');
     if (def.role === 'healer') out.push('healer');
     if (def.role === 'tank') out.push('tank');
     if (def.role === 'support') out.push('support');
@@ -630,6 +739,7 @@
     darth_maul: 'dash', ahsoka: 'dash', grievous: 'whirl', kylo_ren: 'choke', vader: 'choke', lord_vader: 'choke', count_dooku: 'lightning', palpatine: 'lightning',
     a_wing: 'strafe', x_wing: 'torpedo', z95: 'strafe', tie_fighter: 'strafe', tie_interceptor: 'strafe', tie_advanced: 'strafe', falcon: 'strafe',
     y_wing: 'shield', lambda_shuttle: 'shield', b_wing: 'broadside', razor_crest: 'broadside', tie_bomber: 'bombrun', slave_one: 'bombrun',
+    c3po: 'rally', bb8: 'dash', k2so: 'leap', chopper: 'heal', ig88: 'rockets', droideka: 'bulwark', b2_droid: 'barrage', magnaguard: 'dash', ig11: 'barrage', vulture_droid: 'strafe',
     rancor: 'claws', krayt_dragon: 'claws', star_destroyer: 'turbolaser', death_star: 'superlaser',
   };
 
@@ -660,7 +770,9 @@
     { trait: 'bounty', name: 'Bounty Hunters', scope: 'trait', tiers: [
       { n: 2, mods: { critDmg: 0.35, crit: 0.08 }, desc: 'Bounty Hunters gain +8% crit chance and +35% crit damage. +20% credits on victory.' }] },
     { trait: 'droid', name: 'Droid Network', scope: 'trait', tiers: [
-      { n: 2, mods: { tmStart: 35, def: 0.1 }, desc: 'Droids start with +35% Turn Meter and +10% armor.' }] },
+      { n: 2, mods: { tmStart: 35, def: 0.1 }, desc: 'Droids start with +35% Turn Meter and +10% armor.' },
+      { n: 3, mods: { tmStart: 45, def: 0.15, double: 0.08 }, desc: 'Droids start with +45% Turn Meter, +15% armor and +8% double-hit chance.' },
+      { n: 4, mods: { tmStart: 55, def: 0.2, double: 0.12, atk: 0.12 }, desc: 'Droid uprising: +55% Turn Meter, +20% armor, +12% double hit and +12% attack.' }] },
     { trait: 'trooper', name: 'Squad Tactics', scope: 'trait', tiers: [
       { n: 2, mods: { hp: 0.12 }, desc: 'Troopers gain +12% health.' },
       { n: 3, mods: { hp: 0.25, def: 0.1 }, desc: 'Troopers gain +25% health and +10% armor.' }] },
@@ -686,7 +798,7 @@
   const st = (name, kind, level, enemies) => ({ name, kind, level, enemies });
   const PLANETS = [
     {
-      id: 'tatooine', name: 'Tatooine', region: 'Outer Rim', enemyScale: 0.7, env: 'desert', reinforce: { character: ['jawa'], ship: ['tie_fighter'] }, map: { x: 8, y: 64 }, color: '#e0a060',
+      id: 'tatooine', name: 'Tatooine', region: 'Outer Rim', enemyScale: 0.8, env: 'desert', reinforce: { character: ['jawa'], ship: ['tie_fighter'] }, map: { x: 8, y: 64 }, color: '#e0a060',
       blurb: 'A harsh desert world under twin suns, run by Hutts and haunted by Tusken Raiders.',
       terrain: { name: 'Twin Suns', desc: 'Natives, Scoundrels and Bounty Hunters gain +15% attack.', rules: [{ traits: ['native', 'scoundrel', 'bounty'], mods: { atk: 0.15 } }] },
       hazard: { id: 'sandstorm', name: 'Sandstorm', every: 9, desc: 'Every 9 turns a sandstorm drains 20% Turn Meter from everyone except Natives.', effect: { type: 'tm', amount: -20, except: ['native'] } },
@@ -714,15 +826,15 @@
       ],
     },
     {
-      id: 'dagobah', name: 'Dagobah', region: 'Sluis Sector', env: 'swamp', reinforce: { character: ['battle_droid', 'jawa'], ship: ['tie_fighter'] }, map: { x: 30, y: 70 }, color: '#6f9a5a',
+      id: 'dagobah', name: 'Dagobah', region: 'Sluis Sector', env: 'swamp', reinforce: { character: ['battle_droid', 'jawa'], ship: ['vulture_droid'] }, map: { x: 30, y: 70 }, color: '#6f9a5a',
       blurb: 'A misty swamp world strong with the Force, where a Jedi Master hides in exile.',
       terrain: { name: 'Strong with the Force', desc: 'Jedi heal 4% each turn and Sith gain +15% attack.', rules: [{ traits: ['jedi'], mods: { regen: 0.04 } }, { traits: ['sith'], mods: { atk: 0.15 } }] },
       hazard: { id: 'vision', name: 'Force Vision', every: 9, desc: 'Every 9 turns a Force vision heals every Light Side unit 10%.', effect: { type: 'heal', pct: 0.1, faction: 'light' } },
       stages: [
         st('Swamp Landing', F, 6, ['tie_fighter', 'tie_fighter', 'tie_fighter']),
-        st('Separatist Scouts', G, 7, ['battle_droid', 'battle_droid', 'battle_droid', 'battle_droid']),
+        st('Separatist Scouts', G, 7, ['battle_droid', 'b2_droid', 'battle_droid', 'battle_droid']),
         st('Cave of Evil', G, 8, ['kylo_ren', 'battle_droid', 'battle_droid']),
-        st('Mist Hunters', G, 9, ['boba_fett', 'jawa', 'battle_droid', 'battle_droid']),
+        st('Mist Hunters', G, 9, ['boba_fett', 'ig88', 'battle_droid', 'battle_droid']),
         st('Orbital Blockade', F, 9, ['tie_bomber', 'tie_interceptor', 'tie_fighter']),
         st('Trial of the Jedi', G, 10, ['count_dooku', 'darth_maul']),
       ],
@@ -776,7 +888,7 @@
       hazard: { id: 'traffic', name: 'Speeder Rush', every: 7, desc: 'Every 7 turns a rush of traffic gives everyone +15% Turn Meter.', effect: { type: 'tm', amount: 15 } },
       stages: [
         st('Senate Landing', F, 14, ['tie_interceptor', 'tie_interceptor', 'slave_one']),
-        st('Lower Levels', G, 15, ['grievous', 'battle_droid', 'battle_droid', 'battle_droid']),
+        st('Lower Levels', G, 15, ['grievous', 'droideka', 'battle_droid', 'b2_droid']),
         st('Jedi Temple Siege', G, 16, ['vader', 'stormtrooper', 'stormtrooper', 'death_trooper']),
         st('Senate Chamber', G, 17, ['palpatine', 'count_dooku']),
         st('Orbital Battle', F, 17, ['tie_advanced', 'slave_one', 'tie_interceptor']),
@@ -784,16 +896,16 @@
       ],
     },
     {
-      id: 'geonosis', name: 'Geonosis', region: 'Arkanis Sector', env: 'canyon', reinforce: { character: ['battle_droid'], ship: ['tie_fighter', 'tie_bomber'] }, map: { x: 80, y: 54 }, color: '#d9773a',
+      id: 'geonosis', name: 'Geonosis', region: 'Arkanis Sector', env: 'canyon', reinforce: { character: ['b2_droid', 'battle_droid'], ship: ['vulture_droid'] }, map: { x: 80, y: 54 }, color: '#d9773a',
       blurb: 'A rust-red world of rock spires and droid foundries, home of the infamous execution arena.',
       terrain: { name: 'Droid Foundries', desc: 'Droids and Separatists gain +15% health and armor.', rules: [{ traits: ['droid', 'separatist'], mods: { hp: 0.15, def: 0.15 } }] },
       hazard: { id: 'swarm', name: 'Geonosian Swarm', every: 8, desc: 'Every 8 turns a winged swarm deals 7% max HP to two random non-Droid units.', effect: { type: 'damage', pct: 0.07, count: 2, except: ['droid'] } },
       stages: [
-        st('Foundry Skies', F, 17, ['tie_interceptor', 'tie_bomber', 'tie_fighter', 'tie_fighter']),
-        st('Droid Foundry', G, 18, ['battle_droid', 'battle_droid', 'grievous', 'battle_droid', 'jawa']),
+        st('Foundry Skies', F, 17, ['vulture_droid', 'vulture_droid', 'tie_interceptor', 'vulture_droid']),
+        st('Droid Foundry', G, 18, ['b2_droid', 'droideka', 'grievous', 'battle_droid', 'magnaguard']),
         st('Execution Arena', G, 19, ['count_dooku', 'battle_droid', 'battle_droid', 'tusken_raider', 'jawa']),
         st('Canyon Run', F, 19, ['slave_one', 'tie_interceptor', 'tie_fighter', 'tie_bomber']),
-        st('Hive Spires', G, 20, ['grievous', 'count_dooku', 'battle_droid', 'battle_droid', 'death_trooper']),
+        st('Hive Spires', G, 20, ['grievous', 'count_dooku', 'magnaguard', 'magnaguard', 'droideka']),
         st('The Separatist War Room', G, 21, ['grievous', 'count_dooku', 'darth_maul', 'battle_droid', 'battle_droid']),
       ],
     },
@@ -804,7 +916,7 @@
       hazard: { id: 'eruption', name: 'Eruption', every: 8, desc: 'Every 8 turns a volcano erupts: 6% max HP to all non-Sith units, with a 30% chance to Burn.', effect: { type: 'damage', pct: 0.06, except: ['sith'], burn: 0.3 } },
       stages: [
         st('Lava Approach', F, 20, ['tie_advanced', 'tie_interceptor', 'tie_interceptor']),
-        st('Mining Facility', G, 21, ['grievous', 'count_dooku', 'battle_droid', 'battle_droid']),
+        st('Mining Facility', G, 21, ['grievous', 'count_dooku', 'magnaguard', 'droideka']),
         st('Separatist Council', G, 22, ['grievous', 'count_dooku', 'battle_droid', 'death_trooper']),
         st('River of Fire', G, 23, ['kylo_ren', 'darth_maul', 'death_trooper']),
         st('Fortress Skies', F, 24, ['tie_advanced', 'slave_one', 'lambda_shuttle']),
@@ -989,6 +1101,7 @@
     RARITIES, ROLE_BASE, ROLE_ICONS, STATUS_INFO, UNITS, UNIT_MAP, MAX_LEVEL, MAX_STARS, STAR_COSTS,
     DUPLICATE_SHARDS, SQUAD_SIZE, PACKS, STARTER, levelCost, unitStats, power, stageRewards,
     ultimateFor, abilitiesFor, BOSSES, BOSS_ENCOUNTERS, bossRewards, CURRENCIES, LUCK, CHARMS, MARKET_REFRESH_MS, FLASH_MS, SHELL_PAYOUT, SHELL_BETS, BIOS,
+    BASE_SLOTS, SLOT_UNLOCKS, MAX_ACCOUNT_LEVEL, xpToNext, levelReward, XP, planetSquadSize,
     TRAITS, TRAIT_INFO, CLASS_INFO, classesOf, ULT_ANIM, SYNERGIES, PLANETS, PLANET_MAP, enemyStars, PLANET_CLEAR_KYBER, BASE_DOUBLE, traitsOf, squadBonuses,
   };
 })(typeof window !== 'undefined' ? window : globalThis);
