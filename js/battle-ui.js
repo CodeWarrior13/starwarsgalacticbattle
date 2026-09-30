@@ -1,6 +1,6 @@
-// Battle screen: renders the field, takes player input and plays engine
-// events back as animations (lunges, strafing runs, lasers, torpedoes,
-// explosions, floating numbers, cutscenes) and the victory luck spin.
+// Battle screen: renders the field over a living planet backdrop, takes
+// player input (mouse, touch or keyboard) and plays engine events back as
+// animations. Every ultimate has a signature cinematic ("super move").
 
 (function (root) {
   const D = root.GameData;
@@ -25,6 +25,8 @@
 
   const reducedMotion = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const BOLT = { light: '#ff3b3b', dark: '#3bff6a' };
+  const SABER = { light: '#5ab4ff', dark: '#ff2a2a' };
+  const rand = (a, b) => a + Math.random() * (b - a);
 
   const BattleUI = {
     battle: null,
@@ -47,7 +49,13 @@
       this.kind = enc.kind;
       this.ended = false;
       this.pending = null;
-      this.battle = new root.Battle(squad, enc.enemies.map((id) => ({ id, level: enc.level, stars: 1 })));
+      this.planetId = enc.planet;
+      this.battle = new root.Battle(
+        squad,
+        enc.enemies.map((id) => ({ id, level: enc.level, stars: enc.stars || 1 })),
+        null,
+        { planet: enc.planet, enemyScale: enc.enemyScale },
+      );
 
       App.battleActive = true;
       App.current = 'battle';
@@ -57,6 +65,13 @@
       await this.hyperspace();
       if (enc.type === 'boss') await this.bossIntro(D.UNIT_MAP[enc.boss]);
       this.log(`Battle begins: ${enc.name}!`, 'ult');
+      const planet = D.PLANET_MAP[this.planetId];
+      if (planet) this.log(`${planet.name}: ${planet.terrain.name}. ${planet.hazard.name} every ${planet.hazard.every} turns.`, 'hazard');
+      if (!this.prefs.seenKeys && window.matchMedia('(hover: hover)').matches) {
+        this.prefs.seenKeys = true;
+        savePrefs(this.prefs);
+        toast('PC controls: 1–5 abilities, ←/→ target, Enter to attack, ? for help');
+      }
       this.loop();
     },
 
@@ -64,20 +79,24 @@
     renderScreen() {
       const b = this.battle;
       const ships = this.kind === 'ship';
-      const view = el(`<section class="battle ${this.enc.type === 'boss' ? 'boss-fight' : ''}">
+      const chips = (list) => list.map((x) => `<span class="syn-chip ${x.kind}" title="${esc(x.name)}: ${esc(x.desc)}">${x.icon} ${esc(x.name)}</span>`).join('');
+      const view = el(`<section class="battle ${this.enc.type === 'boss' ? 'boss-fight' : ''} env-${ships ? 'space' : (D.PLANET_MAP[this.planetId] || {}).env}">
         <div class="battle-top">
           <h2>${esc(this.enc.name)}</h2>
           <div class="turn-order" data-order></div>
           <span class="spacer"></span>
-          <button class="btn btn-small toggle" type="button" data-auto title="Let the AI play your turns">Auto</button>
-          <button class="btn btn-small" type="button" data-speed title="Animation speed">${this.speed}×</button>
+          <button class="btn btn-small" type="button" data-help title="Keyboard controls (?)">⌨</button>
+          <button class="btn btn-small toggle" type="button" data-auto title="Let the AI play your turns (A)">Auto</button>
+          <button class="btn btn-small" type="button" data-speed title="Animation speed (F)">${this.speed}×</button>
           <button class="btn btn-small btn-danger" type="button" data-retreat>Retreat</button>
         </div>
-        <div class="field ${ships ? 'ships' : ''}" data-field>
-          ${ships ? '<div class="space-layer far"></div><div class="space-layer near"></div><div class="nebula"></div>' : ''}
+        <div class="field ${ships ? 'ships' : 'ground'}" data-field>
+          <canvas class="env-canvas" data-env></canvas>
+          <div class="syn-row enemy">${chips(b.bonuses.enemy)}</div>
           <div class="row enemy-row" data-row="enemy"></div>
           <div class="midline">${ships ? 'Engagement zone' : 'Battlefield'}</div>
           <div class="row player-row" data-row="player"></div>
+          <div class="syn-row player">${chips(b.bonuses.player)}</div>
           <div class="fx-layer" data-fx></div>
         </div>
         <div class="action-bar">
@@ -113,6 +132,7 @@
       screen.innerHTML = '';
       screen.appendChild(view);
       $$('.main-nav button').forEach((btn) => btn.classList.toggle('active', btn.dataset.nav === 'campaign'));
+      this.env = new root.Env($('[data-env]', view), this.planetId || 'tatooine', ships ? 'space' : 'ground');
       this.updateAll();
       this.renderActions(null);
     },
@@ -187,6 +207,7 @@
         const cd = actor.cooldowns[i];
         const ult = ab.ultimate;
         return `<button class="abtn ${ult ? 'ult' : ''} ${ult && ready ? 'ready' : ''} ${i === this.selected ? 'selected' : ''}" type="button" data-ab="${i}" ${ready ? '' : 'disabled'} title="${esc(ab.desc)}">
+          <kbd>${ult ? 'R' : i + 1}</kbd>
           <span class="an">${ult ? '★ ' : ''}${esc(ab.name)}</span>
           <span class="ad">${esc(ab.desc)}</span>
           ${!ult && !ready ? `<span class="acd">${cd}</span>` : ''}
@@ -194,12 +215,12 @@
         </button>`;
       }).join('');
       const ab = actor.abilities[this.selected];
-      const hint = b.needsTarget(actor, this.selected) ? 'Tap a highlighted enemy to attack.'
-        : ab.target === 'allEnemies' ? 'Tap any enemy to hit them all.'
-          : ab.target === 'allAllies' ? 'Tap any ally to use it on your whole squad.'
-            : 'Tap your unit to use it.';
+      const hint = b.needsTarget(actor, this.selected) ? 'Tap a highlighted enemy, or ←/→ then Enter.'
+        : ab.target === 'allEnemies' ? 'Tap any enemy (or Enter) to hit them all.'
+          : ab.target === 'allAllies' ? 'Tap any ally (or Enter) to use it on your whole squad.'
+            : 'Tap your unit (or Enter) to use it.';
       box.innerHTML = `${chip}<div class="actions-main">
-        <div class="actions-title"><b>${esc(actor.def.name)}</b><span class="muted">Your turn · keys 1–${actor.abilities.length}</span></div>
+        <div class="actions-title"><b>${esc(actor.def.name)}</b><span class="muted">Your turn</span></div>
         <div class="ability-buttons">${buttons}</div>
         <div class="hint">${hint}</div>
       </div>`;
@@ -216,15 +237,26 @@
 
     highlightTargets(actor) {
       this.clearTargets();
-      for (const t of this.targetsFor(actor, this.selected)) {
+      const list = this.targetsFor(actor, this.selected);
+      for (const t of list) {
         const c = this.cards[t.uid];
         c.classList.add('targetable');
         if (t.side === actor.side) c.classList.add('friendly');
       }
+      if (!list.some((t) => t.uid === this.focusUid)) {
+        const sorted = [...list].sort((a, b2) => a.hp / a.maxHp - b2.hp / b2.maxHp);
+        this.focusUid = sorted[0] && sorted[0].uid;
+      }
+      this.showFocus();
+    },
+
+    showFocus() {
+      Object.values(this.cards).forEach((c) => c.classList.remove('kbd-focus'));
+      if (this.pending && this.focusUid && this.cards[this.focusUid]) this.cards[this.focusUid].classList.add('kbd-focus');
     },
 
     clearTargets() {
-      Object.values(this.cards).forEach((c) => c.classList.remove('targetable', 'friendly'));
+      Object.values(this.cards).forEach((c) => c.classList.remove('targetable', 'friendly', 'kbd-focus'));
     },
 
     // ---------- Input ----------
@@ -248,50 +280,115 @@
 
     selectAbility(i) {
       const p = this.pending;
-      if (!p || !this.battle.isReady(p.actor, i)) return;
+      if (!p || !this.battle.isReady(p.actor, i)) return false;
       this.selected = i;
       this.renderActions(p.actor, 'input');
       this.highlightTargets(p.actor);
+      return true;
+    },
+
+    fireAt(uid) {
+      if (!this.pending) return;
+      const { actor } = this.pending;
+      const valid = this.targetsFor(actor, this.selected).map((t) => t.uid);
+      const target = valid.includes(uid) ? uid : valid[0];
+      if (!target) return;
+      this.resolvePending({ abilityIndex: this.selected, targetUid: this.battle.needsTarget(actor, this.selected) ? target : null });
+    },
+
+    cycleFocus(dir) {
+      if (!this.pending) return;
+      const list = this.targetsFor(this.pending.actor, this.selected)
+        .sort((a, b) => this.cards[a.uid].getBoundingClientRect().left - this.cards[b.uid].getBoundingClientRect().left);
+      if (!list.length) return;
+      const i = Math.max(0, list.findIndex((t) => t.uid === this.focusUid));
+      this.focusUid = list[(i + dir + list.length) % list.length].uid;
+      this.showFocus();
+    },
+
+    toggleHelp() {
+      const open = $('.keys-help');
+      if (open) return open.remove();
+      const h = el(`<div class="keys-help" role="dialog" aria-label="Keyboard controls">
+        <h3>Keyboard controls</h3>
+        <dl>
+          <div><dt><kbd>1</kbd>–<kbd>5</kbd></dt><dd>Pick an ability (press again to fire)</dd></div>
+          <div><dt><kbd>R</kbd></dt><dd>Pick the ultimate</dd></div>
+          <div><dt><kbd>←</kbd><kbd>→</kbd> / <kbd>Q</kbd><kbd>E</kbd> / <kbd>Tab</kbd></dt><dd>Move between targets</dd></div>
+          <div><dt><kbd>Enter</kbd> / <kbd>Space</kbd></dt><dd>Attack the focused target</dd></div>
+          <div><dt><kbd>A</kbd></dt><dd>Toggle auto battle</dd></div>
+          <div><dt><kbd>F</kbd></dt><dd>Change speed</dd></div>
+          <div><dt><kbd>?</kbd> / <kbd>H</kbd></dt><dd>Show or hide this help</dd></div>
+        </dl>
+        <button class="btn btn-small" type="button">Close</button>
+      </div>`);
+      h.querySelector('button').addEventListener('click', () => h.remove());
+      document.body.appendChild(h);
     },
 
     onKey: (e) => {
       const self = BattleUI;
-      if (!self.pending || e.target.closest('input, textarea')) return;
-      const n = Number(e.key);
-      if (n >= 1 && n <= self.pending.actor.abilities.length) self.selectAbility(n - 1);
+      if (!App.battleActive || e.target.closest('input, textarea') || $('.modal-backdrop')) return;
+      const k = e.key;
+      if (k === '?' || k === 'h' || k === 'H') return self.toggleHelp();
+      if (k === 'Escape' && $('.keys-help')) return $('.keys-help').remove();
+      if (k === 'a' || k === 'A') return self.toggleAuto();
+      if (k === 'f' || k === 'F') return self.cycleSpeed();
+      if (!self.pending) return;
+      const n = Number(k);
+      const abilities = self.pending.actor.abilities;
+      if (n >= 1 && n <= abilities.length) {
+        e.preventDefault();
+        if (self.selected === n - 1 && self.battle.isReady(self.pending.actor, n - 1)) return self.fireAt(self.focusUid);
+        return self.selectAbility(n - 1);
+      }
+      if (k === 'r' || k === 'R') {
+        const u = abilities.length - 1;
+        if (self.selected === u && self.battle.isReady(self.pending.actor, u)) return self.fireAt(self.focusUid);
+        return self.selectAbility(u);
+      }
+      if (k === 'ArrowRight' || k === 'e' || k === 'E' || (k === 'Tab' && !e.shiftKey)) {
+        e.preventDefault();
+        return self.cycleFocus(1);
+      }
+      if (k === 'ArrowLeft' || k === 'q' || k === 'Q' || (k === 'Tab' && e.shiftKey)) {
+        e.preventDefault();
+        return self.cycleFocus(-1);
+      }
+      if (k === 'Enter' || k === ' ') {
+        e.preventDefault();
+        return self.fireAt(self.focusUid);
+      }
+    },
+
+    toggleAuto() {
+      this.prefs.auto = !this.prefs.auto;
+      savePrefs(this.prefs);
+      const btn = $('[data-auto]', this.view);
+      if (btn) btn.classList.toggle('on', this.prefs.auto);
+      if (this.prefs.auto && this.pending) {
+        const actor = this.pending.actor;
+        this.renderActions(actor);
+        this.resolvePending(this.battle.chooseAction(actor));
+      }
+    },
+
+    cycleSpeed() {
+      this.prefs.speed = this.speed >= 3 ? 1 : this.speed + 1;
+      savePrefs(this.prefs);
+      document.documentElement.style.setProperty('--speed', this.speed);
+      const btn = $('[data-speed]', this.view);
+      if (btn) btn.textContent = `${this.speed}×`;
     },
 
     async onClick(e) {
       const abBtn = e.target.closest('[data-ab]');
       if (abBtn) return this.selectAbility(Number(abBtn.dataset.ab));
-
       const card = e.target.closest('.bcard.targetable');
-      if (card && this.pending) {
-        const { actor } = this.pending;
-        const targetUid = this.battle.needsTarget(actor, this.selected) ? card.dataset.uid : null;
-        return this.resolvePending({ abilityIndex: this.selected, targetUid });
-      }
-
-      if (e.target.closest('[data-auto]')) {
-        this.prefs.auto = !this.prefs.auto;
-        savePrefs(this.prefs);
-        e.target.closest('[data-auto]').classList.toggle('on', this.prefs.auto);
-        if (this.prefs.auto && this.pending) {
-          const actor = this.pending.actor;
-          this.renderActions(actor);
-          this.resolvePending(this.battle.chooseAction(actor));
-        }
-        return;
-      }
-
-      if (e.target.closest('[data-speed]')) {
-        this.prefs.speed = this.speed >= 3 ? 1 : this.speed + 1;
-        savePrefs(this.prefs);
-        document.documentElement.style.setProperty('--speed', this.speed);
-        e.target.closest('[data-speed]').textContent = `${this.speed}×`;
-        return;
-      }
-
+      if (card && this.pending) return this.fireAt(card.dataset.uid);
+      if (e.target.closest('[data-auto]')) return this.toggleAuto();
+      if (e.target.closest('[data-speed]')) return this.cycleSpeed();
+      if (e.target.closest('[data-help]')) return this.toggleHelp();
       if (e.target.closest('[data-retreat]')) {
         if (await confirmBox('Retreat from battle?', 'This counts as a defeat. You keep everything you already own.', 'Retreat')) {
           this.ended = true;
@@ -306,16 +403,26 @@
     // ---------- Main loop ----------
     async loop() {
       const b = this.battle;
-      while (!this.ended) {
-        const w = b.winner();
+      // Bail out if a newer battle replaced this one while we were awaiting.
+      const stale = () => this.ended || this.battle !== b;
+      while (!stale()) {
+        let w = b.winner();
         if (w) return this.finish(w);
+        const hz = b.tickHazard();
+        if (hz) {
+          await this.play(hz);
+          if (stale()) return;
+          w = b.winner();
+          if (w) return this.finish(w);
+        }
         const actor = b.advance();
+        if (!actor) return this.finish(b.winner() || 'enemy');
         this.setActive(actor);
         this.updateTurnOrder();
         this.updateAll();
         const { events, skipped } = b.beginTurn(actor);
         await this.play(events);
-        if (this.ended) return;
+        if (stale()) return;
         if (skipped || b.winner()) continue;
 
         let action;
@@ -326,7 +433,7 @@
           await this.wait(actor.side === 'enemy' ? 650 : 380);
           action = b.chooseAction(actor);
         }
-        if (this.ended || !action) return;
+        if (stale() || !action) return;
         this.renderActions(actor);
         const evs = b.act(actor, action.abilityIndex, action.targetUid);
         await this.play(evs);
@@ -336,9 +443,11 @@
     // ---------- Event playback ----------
     async play(events) {
       let aoe = false;
+      const battle = this.battle;
       for (const ev of events) {
-        if (this.ended) return;
+        if (this.ended || this.battle !== battle) return;
         const u = ev.uid ? this.battle.get(ev.uid) : null;
+        if (ev.uid && !u) continue;
         switch (ev.type) {
           case 'use':
             aoe = ev.aoe;
@@ -346,22 +455,31 @@
             break;
           case 'damage':
             this.hit(u, ev);
-            await this.wait(ev.source === 'burn' ? 420 : aoe ? 110 : 280);
+            await this.wait(ev.source === 'burn' || ev.source === 'hazard' ? 300 : aoe ? 90 : 260);
             break;
           case 'heal':
-            this.float(u, `+${fmt(ev.amount)}`, 'heal');
+            this.float(u, `+${fmt(ev.amount)}`, 'heal', ev.source ? 20 : 0);
             this.flash(u, 'flash-heal');
             this.updateCard(u);
-            await this.wait(aoe ? 90 : 240);
+            if (!ev.source) this.env.light(this.center(u.uid).x, this.center(u.uid).y, '#52e08a', 70, 0.5);
+            await this.wait(ev.source ? 60 : aoe ? 90 : 220);
             break;
           case 'status':
             this.float(u, D.STATUS_INFO[ev.status].label, D.STATUS_INFO[ev.status].kind === 'buff' ? 'info' : 'bad', 18);
             this.updateCard(u);
-            await this.wait(110);
+            await this.wait(100);
             break;
           case 'resist':
             this.float(u, ev.immune ? 'IMMUNE' : 'Resisted', 'info', 18);
             await this.wait(80);
+            break;
+          case 'double':
+            this.float(u, 'DOUBLE HIT!', 'double');
+            this.banner('Double hit!', u.side);
+            await this.echoAttack(u, ev.targets.map((id) => this.battle.get(id)));
+            break;
+          case 'hazard':
+            await this.hazard(ev);
             break;
           case 'tm':
             this.updateCard(u);
@@ -374,7 +492,8 @@
             this.updateCard(u);
             this.float(u, 'ENRAGED!', 'crit');
             this.shake();
-            this.wave(this.center(u.uid), '#ff2a2a', 8);
+            this.env.setMood('#ff2020');
+            this.env.blast(this.center(u.uid).x, this.center(u.uid).y, '#ff2a2a', 2);
             await this.wait(700);
             break;
           case 'ko':
@@ -390,15 +509,40 @@
             if (u) this.updateCard(u);
         }
       }
+      if (this.battle !== battle) return;
       this.updateAll();
       this.updateTurnOrder();
-      await this.wait(260);
+      await this.wait(240);
     },
 
+    async hazard(ev) {
+      const planet = D.PLANET_MAP[this.planetId];
+      const node = el(`<div class="hazard-banner"><span>⚠ ${esc(planet ? planet.name : '')}</span><b>${esc(ev.name)}</b></div>`);
+      this.field.appendChild(node);
+      this.env.hazard(ev.id);
+      this.shake();
+      await this.wait(1400);
+      node.remove();
+    },
+
+    // Field-relative center of a card (for fx layer and the environment canvas).
     center(uid) {
       const fr = this.field.getBoundingClientRect();
+      if (!this.cards[uid]) return { x: fr.width / 2, y: fr.height / 2 };
       const r = this.cards[uid].getBoundingClientRect();
       return { x: r.left - fr.left + r.width / 2, y: r.top - fr.top + r.height / 2 };
+    },
+
+    // Viewport center of a card (for full-screen cinematics).
+    vp(uid) {
+      if (!this.cards[uid]) return { x: window.innerWidth / 2, y: window.innerHeight / 2, w: 0, h: 0 };
+      const r = this.cards[uid].getBoundingClientRect();
+      return { x: r.left + r.width / 2, y: r.top + r.height / 2, w: r.width, h: r.height };
+    },
+
+    toField(p) {
+      const fr = this.field.getBoundingClientRect();
+      return { x: p.x - fr.left, y: p.y - fr.top };
     },
 
     shake() {
@@ -417,34 +561,58 @@
       const actor = this.battle.get(ev.uid);
       const ab = actor.abilities[ev.abilityIndex];
       const card = this.cards[actor.uid];
+      const targets = ev.targets.map((uid) => this.battle.get(uid));
       if (ev.ultimate) {
         this.log(`★ ${actor.def.name} unleashes ${ab.name}!`, 'ult');
+        const color = actor.def.faction === 'light' ? '#5ab4ff' : '#ff3a3a';
+        this.env.charge(color);
         await this.cutscene(actor, ab);
+        const anim = D.ULT_ANIM[actor.id] || this.defaultAnim(actor);
+        await this.superMove(anim, actor, targets, ev);
+        this.env.release();
         this.shake();
-      } else if (ev.abilityIndex > 0) {
-        this.banner(ab.name, actor.side);
+        return;
       }
+      if (ev.abilityIndex > 0) this.banner(ab.name, actor.side);
       const motion = !reducedMotion();
-      const targets = ev.targets.map((uid) => this.battle.get(uid));
 
       if (!ev.offensive) {
         if (motion) card.animate([{ filter: 'brightness(1)' }, { filter: 'brightness(1.8) drop-shadow(0 0 16px #52e08a)' }, { filter: 'brightness(1)' }], { duration: 500 / this.speed });
-        for (const t of targets) this.wave(this.center(t.uid), actor.side === 'player' ? '#52e08a' : '#ffb46b');
+        for (const t of targets) {
+          const c = this.center(t.uid);
+          this.wave(c, actor.side === 'player' ? '#52e08a' : '#ffb46b');
+          this.env.light(c.x, c.y, '#52e08a', 90, 0.5);
+        }
         await this.wait(380);
         return;
       }
 
+      // Force users throw a quick lightning / choke on specials.
+      const sig = D.ULT_ANIM[actor.id];
+      if (ev.abilityIndex > 0 && sig === 'lightning') return this.lightning(actor, targets, 650);
+      if (ev.abilityIndex > 0 && sig === 'choke' && !ev.aoe) return this.choke(actor, targets, 700);
+
       if (actor.def.kind === 'ship') return this.shipAttack(actor, ab, ev, targets, motion);
 
-      // Characters: lunge at single targets, shockwave for area attacks.
       const from = this.center(actor.uid);
       if (ev.aoe) {
         if (motion) card.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.15)' }, { transform: 'scale(1)' }], { duration: 420 / this.speed });
         this.wave(from, actor.def.faction === 'light' ? '#5ab4ff' : '#ff4b4b', actor.boss ? 10 : 7);
+        this.env.push(from.x, from.y, 2);
         await this.wait(300);
         return;
       }
       const to = this.center(targets[0].uid);
+      const ranged = D.classesOf(actor.def).includes('ranged');
+      if (ranged) {
+        if (motion) card.animate([{ transform: 'translateY(0)' }, { transform: `translateY(${actor.side === 'player' ? 5 : -5}px)` }, { transform: 'translateY(0)' }], { duration: 220 / this.speed });
+        const color = BOLT[actor.def.faction];
+        this.flashAt(from, color);
+        this.laser(from, to, color, 0);
+        if (ev.abilityIndex > 0) this.laser(from, to, color, 90);
+        await this.wait(300);
+        return;
+      }
       if (motion) {
         card.animate([
           { transform: 'translate(0,0) scale(1)' },
@@ -454,6 +622,27 @@
       }
       await this.wait(200);
       this.slash(to, actor.def.accent);
+      this.env.impact(to.x, to.y, { power: 0.6, color: actor.def.accent || '#ffffff' });
+    },
+
+    // A double hit replays a quick follow-up strike.
+    async echoAttack(actor, targets) {
+      if (!targets.length) return;
+      const from = this.center(actor.uid);
+      for (const t of targets) {
+        const to = this.center(t.uid);
+        if (actor.def.kind === 'ship' || D.classesOf(actor.def).includes('ranged')) this.laser(from, to, BOLT[actor.def.faction], 0);
+        else this.slash(to, actor.def.accent || '#fff');
+      }
+      await this.wait(220);
+    },
+
+    defaultAnim(actor) {
+      if (actor.def.kind === 'ship') return actor.def.role === 'tank' ? 'shield' : 'strafe';
+      if (actor.def.role === 'healer') return 'heal';
+      if (actor.def.role === 'tank') return 'bulwark';
+      if (actor.def.role === 'support') return 'rally';
+      return D.classesOf(actor.def).includes('fighter') ? 'dash' : 'barrage';
     },
 
     // Space combat: the ship strafes forward, fires with muzzle flashes, and
@@ -464,8 +653,7 @@
       const dir = actor.side === 'player' ? -1 : 1;
       const color = BOLT[actor.def.faction];
       const heavy = !ev.aoe && ab.effects.some((e) => e.type === 'damage' && e.mult * (e.hits || 1) >= 1.8);
-      const bolts = ev.ultimate ? 5 : ab.effects.some((e) => e.hits > 1) ? 4 : 3;
-
+      const bolts = ab.effects.some((e) => e.hits > 1) ? 4 : 3;
       if (motion) {
         const tx = targets.length === 1 ? (this.center(targets[0].uid).x - from.x) * 0.18 : 0;
         card.animate([
@@ -477,11 +665,6 @@
       }
       await this.wait(160);
       const muzzle = { x: from.x, y: from.y + dir * 30 };
-
-      if (actor.def.id === 'death_star' && ev.ultimate) {
-        await this.superlaser(muzzle, this.center(targets[0].uid));
-        return;
-      }
       if (heavy) {
         this.flashAt(muzzle, color);
         await this.torpedo(muzzle, this.center(targets[0].uid), actor.def.faction === 'light' ? '#ffb24a' : '#8affb0');
@@ -489,46 +672,51 @@
       }
       targets.forEach((t) => {
         for (let i = 0; i < bolts; i++) {
-          setTimeout(() => this.flashAt({ x: muzzle.x + (i % 2 ? 12 : -12), y: muzzle.y }, color), (i * 85) / this.speed);
-          this.laser({ x: muzzle.x + (i % 2 ? 12 : -12), y: muzzle.y }, this.center(t.uid), color, i * 85);
+          const m = { x: muzzle.x + (i % 2 ? 12 : -12), y: muzzle.y };
+          setTimeout(() => this.flashAt(m, color), (i * 85) / this.speed);
+          this.laser(m, this.center(t.uid), color, i * 85);
         }
       });
       await this.wait(260 + bolts * 60);
     },
 
-    laser(from, to, color, delay) {
+    // ---------- Basic effects (field coordinates) ----------
+    laser(from, to, color, delay, opts = {}) {
       const dx = to.x - from.x;
       const dy = to.y - from.y;
       const len = Math.hypot(dx, dy);
       const ang = Math.atan2(dy, dx);
-      const jitter = (Math.random() - 0.5) * 14;
-      const bolt = el('<div class="laser"></div>');
+      const jitter = opts.jitter != null ? opts.jitter : (Math.random() - 0.5) * 14;
+      const bolt = el(`<div class="laser ${opts.big ? 'big' : ''}"></div>`);
+      const bw = opts.big ? 60 : 38;
       bolt.style.left = from.x + 'px';
       bolt.style.top = from.y + jitter + 'px';
-      bolt.style.width = '38px';
+      bolt.style.width = bw + 'px';
       bolt.style.setProperty('--bolt', color);
       bolt.style.opacity = '0';
       this.fx.appendChild(bolt);
       const anim = bolt.animate([
         { transform: `rotate(${ang}rad) translateX(0)`, opacity: 1 },
-        { transform: `rotate(${ang}rad) translateX(${Math.max(0, len - 38)}px)`, opacity: 1 },
-      ], { duration: 220 / this.speed, delay: delay / this.speed, easing: 'linear' });
+        { transform: `rotate(${ang}rad) translateX(${Math.max(0, len - bw)}px)`, opacity: 1 },
+      ], { duration: (opts.dur || 220) / this.speed, delay: delay / this.speed, easing: 'linear' });
       anim.onfinish = () => {
         bolt.remove();
-        this.sparks({ x: to.x, y: to.y + jitter * 0.5 }, color, 5);
+        const at = { x: to.x, y: to.y + jitter * 0.5 };
+        this.sparks(at, color, opts.big ? 10 : 5);
+        this.env.impact(at.x, at.y, { power: opts.big ? 1.2 : 0.35, color });
       };
     },
 
-    torpedo(from, to, color) {
+    torpedo(from, to, color, opts = {}) {
       return new Promise((resolve) => {
-        const t = el('<div class="torpedo"></div>');
+        const t = el(`<div class="torpedo ${opts.big ? 'big' : ''}"></div>`);
         t.style.setProperty('--glow', color);
         t.style.left = from.x + 'px';
         t.style.top = from.y + 'px';
         this.fx.appendChild(t);
         const dx = to.x - from.x;
         const dy = to.y - from.y;
-        const bend = (Math.random() - 0.5) * 60;
+        const bend = opts.bend != null ? opts.bend : (Math.random() - 0.5) * 60;
         const trail = setInterval(() => {
           const r = t.getBoundingClientRect();
           const fr = this.field.getBoundingClientRect();
@@ -541,35 +729,14 @@
         }, 30);
         t.animate([
           { transform: 'translate(0,0) scale(.6)' },
-          { transform: `translate(${dx * 0.5 + bend}px, ${dy * 0.5}px) scale(1)`, offset: 0.5 },
+          { transform: `translate(${dx * 0.5 + bend}px, ${dy * 0.5 - (opts.arc || 0)}px) scale(1)`, offset: 0.5 },
           { transform: `translate(${dx}px, ${dy}px) scale(1.2)` },
-        ], { duration: 520 / this.speed, easing: 'ease-in' }).onfinish = () => {
+        ], { duration: (opts.dur || 520) / this.speed, easing: opts.easing || 'ease-in' }).onfinish = () => {
           clearInterval(trail);
           t.remove();
-          this.boom(to, color, 1.2);
+          this.boom(to, color, opts.big ? 2 : 1.2);
           resolve();
         };
-      });
-    },
-
-    superlaser(from, to) {
-      return new Promise((resolve) => {
-        const dx = to.x - from.x;
-        const dy = to.y - from.y;
-        const beam = el('<div class="superlaser"></div>');
-        beam.style.left = from.x + 'px';
-        beam.style.top = from.y + 'px';
-        beam.style.width = Math.hypot(dx, dy) + 'px';
-        beam.style.transform = `rotate(${Math.atan2(dy, dx)}rad)`;
-        this.fx.appendChild(beam);
-        beam.animate([{ opacity: 0, height: '2px' }, { opacity: 1, height: '18px', offset: 0.3 }, { opacity: 1, height: '14px', offset: 0.8 }, { opacity: 0, height: '2px' }], { duration: 900 / this.speed }).onfinish = () => {
-          beam.remove();
-          resolve();
-        };
-        setTimeout(() => {
-          this.boom(to, '#4ade80', 2);
-          this.shake();
-        }, 300 / this.speed);
       });
     },
 
@@ -580,6 +747,7 @@
       f.style.setProperty('--glow', color);
       this.fx.appendChild(f);
       f.animate([{ transform: 'scale(.3)', opacity: 1 }, { transform: 'scale(1.4)', opacity: 0 }], { duration: 180 / this.speed }).onfinish = () => f.remove();
+      this.env.light(pos.x, pos.y, color, 50, 0.15);
     },
 
     sparks(pos, color, count) {
@@ -596,7 +764,6 @@
       }
     },
 
-    // Fireball + shock ring + debris.
     boom(pos, color, size) {
       const k = size || 1;
       const ball = el('<div class="fireball"></div>');
@@ -606,6 +773,7 @@
       ball.animate([{ transform: 'scale(.2)', opacity: 1 }, { transform: `scale(${1.6 * k})`, opacity: 0.9, offset: 0.4 }, { transform: `scale(${2.2 * k})`, opacity: 0 }], { duration: 620 / this.speed, easing: 'ease-out' }).onfinish = () => ball.remove();
       this.wave(pos, color || '#ffb24a', 2.6 * k);
       this.sparks(pos, '#ff8a3a', Math.round(10 * k));
+      this.env.blast(pos.x, pos.y, color || '#ffb24a', 0.8 * k);
     },
 
     explode(u) {
@@ -618,6 +786,7 @@
       } else {
         this.wave(pos, '#8a7a6a', 2);
         this.sparks(pos, '#c9b48a', 6);
+        this.env.blast(pos.x, pos.y + 20, '#c9a070', 0.9);
       }
     },
 
@@ -631,30 +800,33 @@
       w.animate([{ transform: 'scale(0.2)', opacity: 1 }, { transform: `scale(${s})`, opacity: 0 }], { duration: 520 / this.speed, easing: 'ease-out' }).onfinish = () => w.remove();
     },
 
-    slash(pos, color) {
+    slash(pos, color, rot) {
       const s = el('<div class="slash"></div>');
       s.style.left = pos.x + 'px';
       s.style.top = pos.y + 'px';
       s.style.setProperty('--wave', color || '#fff');
       this.fx.appendChild(s);
-      const rot = -30 + Math.random() * 20;
+      const r = rot != null ? rot : -30 + Math.random() * 20;
       s.animate([
-        { transform: `rotate(${rot}deg) scaleX(0)`, opacity: 1 },
-        { transform: `rotate(${rot}deg) scaleX(1.2)`, opacity: 1, offset: 0.4 },
-        { transform: `rotate(${rot}deg) scaleX(1.4)`, opacity: 0 },
+        { transform: `rotate(${r}deg) scaleX(0)`, opacity: 1 },
+        { transform: `rotate(${r}deg) scaleX(1.2)`, opacity: 1, offset: 0.4 },
+        { transform: `rotate(${r}deg) scaleX(1.4)`, opacity: 0 },
       ], { duration: 320 / this.speed }).onfinish = () => s.remove();
     },
 
     hit(u, ev) {
-      this.updateCard(u);
       const card = this.cards[u.uid];
-      if (ev.source === 'burn') {
-        this.float(u, `🔥 ${fmt(ev.amount)}`, 'dmg');
-      } else {
-        this.float(u, fmt(ev.amount), ev.crit ? 'crit' : 'dmg');
-      }
+      if (!card) return;
+      this.updateCard(u);
+      if (ev.source === 'burn') this.float(u, `🔥 ${fmt(ev.amount)}`, 'dmg');
+      else if (ev.source === 'hazard') this.float(u, `⚠ ${fmt(ev.amount)}`, 'dmg');
+      else this.float(u, fmt(ev.amount), ev.crit ? 'crit' : 'dmg');
       this.flash(u, 'flash-hit');
-      if (u.def.kind === 'ship' && ev.source !== 'burn') {
+      if (ev.crit) {
+        const c = this.center(u.uid);
+        this.env.impact(c.x, c.y, { power: 1, color: '#ffd23f' });
+      }
+      if (u.def.kind === 'ship' && !ev.source) {
         if (u.statuses.defUp) this.flash(u, 'shield-hit');
         this.sparks(this.center(u.uid), '#ffb24a', ev.crit ? 8 : 4);
       }
@@ -669,6 +841,7 @@
 
     flash(u, cls) {
       const card = this.cards[u.uid];
+      if (!card) return;
       card.classList.remove(cls);
       void card.offsetWidth;
       card.classList.add(cls);
@@ -677,11 +850,607 @@
 
     float(u, text, cls, offset) {
       const card = this.cards[u.uid];
+      if (!card) return;
       const f = el(`<span class="float ${cls}">${esc(text)}</span>`);
       const stack = card.querySelectorAll('.float').length;
       f.style.top = `calc(30% + ${(offset || 0) + stack * 16}px)`;
       card.appendChild(f);
       setTimeout(() => f.remove(), 1200 / this.speed);
+    },
+
+    // ---------- Super moves (ultimate cinematics) ----------
+    cineLayer() {
+      const layer = el('<div class="cine" aria-hidden="true"></div>');
+      document.body.appendChild(layer);
+      return layer;
+    },
+
+    async superMove(anim, actor, targets, ev) {
+      if (reducedMotion()) {
+        for (const t of targets) this.boom(this.center(t.uid), '#ffd23f', 0.8);
+        return this.wait(300);
+      }
+      const fn = this['sm_' + anim] || this.sm_barrage;
+      try {
+        await fn.call(this, actor, targets, ev);
+      } catch (err) {
+        // A missing card mid-animation should never stall the battle.
+      }
+    },
+
+    // Starfighter swoops across the whole screen spraying laser fire.
+    async sm_strafe(actor, targets) {
+      const layer = this.cineLayer();
+      const W = window.innerWidth;
+      const H = window.innerHeight;
+      const size = Math.min(W, H) * 0.7;
+      const ship = el(`<div class="cine-ship">${root.Art.shipOnly(actor.def)}</div>`);
+      ship.style.width = ship.style.height = size + 'px';
+      layer.appendChild(ship);
+      const player = actor.side === 'player';
+      const p0 = player ? { x: W * 0.1, y: H + size } : { x: W * 0.9, y: -size };
+      const p1 = player ? { x: W * 0.55, y: H * 0.35 } : { x: W * 0.45, y: H * 0.6 };
+      const p2 = player ? { x: W + size, y: -size * 0.6 } : { x: -size, y: H + size * 0.6 };
+      const ang = (a, b) => (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI + 90;
+      const dur = 1900 / Math.min(this.speed, 2);
+      const anim = ship.animate([
+        { transform: `translate(${p0.x - size / 2}px, ${p0.y - size / 2}px) rotate(${ang(p0, p1)}deg) scale(.6)` },
+        { transform: `translate(${p1.x - size / 2}px, ${p1.y - size / 2}px) rotate(${ang(p0, p2)}deg) scale(1.15)`, offset: 0.5 },
+        { transform: `translate(${p2.x - size / 2}px, ${p2.y - size / 2}px) rotate(${ang(p1, p2)}deg) scale(1.5)` },
+      ], { duration: dur, easing: 'cubic-bezier(.35,.1,.55,1)' });
+      layer.classList.add('speedlines');
+      const color = BOLT[actor.def.faction];
+      const shots = setInterval(() => {
+        const r = ship.getBoundingClientRect();
+        const from = this.toField({ x: r.left + r.width / 2, y: r.top + r.height / 2 });
+        const t = targets[Math.floor(Math.random() * targets.length)];
+        if (!t || !this.cards[t.uid]) return;
+        const to = this.center(t.uid);
+        this.laser({ x: from.x + rand(-40, 40), y: from.y }, { x: to.x + rand(-20, 20), y: to.y + rand(-20, 20) }, color, 0, { dur: 160 });
+      }, 55);
+      await new Promise((r) => { anim.onfinish = r; });
+      clearInterval(shots);
+      layer.remove();
+      await this.wait(200);
+    },
+
+    // Bomber runs the length of the enemy line, bombs chain-exploding below.
+    async sm_bombrun(actor, targets) {
+      const layer = this.cineLayer();
+      const W = window.innerWidth;
+      const size = Math.min(W, window.innerHeight) * 0.42;
+      const rowY = targets.length ? this.vp(targets[0].uid).y : window.innerHeight * 0.3;
+      const ship = el(`<div class="cine-ship">${root.Art.shipOnly(actor.def)}</div>`);
+      ship.style.width = ship.style.height = size + 'px';
+      layer.appendChild(ship);
+      const seismic = actor.id === 'slave_one';
+      const y = rowY - size * 0.9;
+      const dur = 1700 / Math.min(this.speed, 2);
+      const anim = ship.animate([
+        { transform: `translate(${-size}px, ${y}px) rotate(90deg)` },
+        { transform: `translate(${W + size}px, ${y - 40}px) rotate(90deg)` },
+      ], { duration: dur, easing: 'linear' });
+      const ordered = [...targets].sort((a, b) => this.vp(a.uid).x - this.vp(b.uid).x);
+      ordered.forEach((t) => {
+        const tx = this.vp(t.uid).x;
+        const at = ((tx + size) / (W + size * 2)) * dur;
+        setTimeout(() => {
+          if (!this.cards[t.uid]) return;
+          const to = this.center(t.uid);
+          const bomb = el(`<div class="bomb ${seismic ? 'seismic' : ''}"></div>`);
+          bomb.style.left = to.x + 'px';
+          bomb.style.top = to.y + 'px';
+          this.fx.appendChild(bomb);
+          bomb.animate([{ transform: 'translateY(-160px) scale(.6)' }, { transform: 'translateY(0) scale(1)' }], { duration: 320, easing: 'ease-in' }).onfinish = () => {
+            bomb.remove();
+            if (seismic) {
+              this.wave(to, '#8fd3ff', 9);
+              setTimeout(() => this.boom(to, '#8fd3ff', 1.6), 160);
+            } else this.boom(to, '#ff9a3a', 1.5);
+            this.shake();
+          };
+        }, at);
+      });
+      await new Promise((r) => { anim.onfinish = r; });
+      layer.remove();
+      await this.wait(450);
+    },
+
+    // Slow-motion trench-run torpedo with a massive detonation.
+    async sm_torpedo(actor, targets) {
+      const t = targets[0];
+      this.field.classList.add('slowmo');
+      const from = this.center(actor.uid);
+      const to = this.center(t.uid);
+      this.field.style.transformOrigin = `${to.x}px ${to.y}px`;
+      this.field.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.08)' }], { duration: 1300, fill: 'forwards' });
+      await this.torpedo(from, to, '#ffb24a', { big: true, dur: 1300, bend: 0, easing: 'cubic-bezier(.5,0,.8,.6)' });
+      this.env.flash('#ffffff', 0.9);
+      this.boom(to, '#ffffff', 2.8);
+      this.field.getAnimations().forEach((a) => a.cancel());
+      this.field.classList.remove('slowmo');
+      await this.wait(500);
+    },
+
+    // Capital-class ship slides in and unloads a sweeping broadside.
+    async sm_broadside(actor, targets) {
+      const layer = this.cineLayer();
+      const W = window.innerWidth;
+      const H = window.innerHeight;
+      const size = Math.min(W, H) * 0.55;
+      const ship = el(`<div class="cine-ship">${root.Art.shipOnly(actor.def)}</div>`);
+      ship.style.width = ship.style.height = size + 'px';
+      layer.appendChild(ship);
+      const player = actor.side === 'player';
+      const y = player ? H * 0.62 - size / 2 : H * 0.2 - size / 2;
+      const inX = player ? W * 0.05 : W * 0.95 - size;
+      const outX = player ? -size : W;
+      await new Promise((r) => {
+        ship.animate([{ transform: `translate(${outX}px, ${y}px) rotate(${player ? 30 : 210}deg)` }, { transform: `translate(${inX}px, ${y}px) rotate(${player ? 20 : 200}deg)` }], { duration: 450, easing: 'ease-out', fill: 'forwards' }).onfinish = r;
+      });
+      const color = BOLT[actor.def.faction];
+      for (let i = 0; i < 16; i++) {
+        const r = ship.getBoundingClientRect();
+        const from = this.toField({ x: r.left + r.width / 2 + rand(-30, 30), y: r.top + r.height / 2 + rand(-30, 30) });
+        const t = targets[i % targets.length];
+        if (this.cards[t.uid]) this.laser(from, this.center(t.uid), color, 0, { big: i % 4 === 3, dur: 200 });
+        await this.wait(80);
+      }
+      await new Promise((r) => {
+        ship.animate([{ transform: `translate(${inX}px, ${y}px) rotate(${player ? 20 : 200}deg)` }, { transform: `translate(${outX}px, ${y - 80}px) rotate(${player ? 0 : 180}deg)` }], { duration: 450, easing: 'ease-in', fill: 'forwards' }).onfinish = r;
+      });
+      layer.remove();
+    },
+
+    // Waves of heavy green turbolaser fire rain from above.
+    async sm_turbolaser(actor, targets) {
+      for (let wave = 0; wave < 3; wave++) {
+        for (const t of targets) {
+          if (!this.cards[t.uid]) continue;
+          const to = this.center(t.uid);
+          this.laser({ x: to.x + rand(-120, 120), y: -40 }, { x: to.x + rand(-15, 15), y: to.y }, '#3bff6a', rand(0, 200), { big: true, dur: 260, jitter: 0 });
+        }
+        await this.wait(420);
+      }
+      this.shake();
+      await this.wait(300);
+    },
+
+    async sm_superlaser(actor, targets) {
+      const from = this.center(actor.uid);
+      await this.superlaser(from, this.center(targets[0].uid));
+    },
+
+    superlaser(from, to) {
+      return new Promise((resolve) => {
+        const dx = to.x - from.x;
+        const dy = to.y - from.y;
+        const beam = el('<div class="superlaser"></div>');
+        beam.style.left = from.x + 'px';
+        beam.style.top = from.y + 'px';
+        beam.style.width = Math.hypot(dx, dy) + 'px';
+        beam.style.transform = `rotate(${Math.atan2(dy, dx)}rad)`;
+        this.fx.appendChild(beam);
+        beam.animate([{ opacity: 0, height: '2px' }, { opacity: 1, height: '22px', offset: 0.3 }, { opacity: 1, height: '16px', offset: 0.8 }, { opacity: 0, height: '2px' }], { duration: 1100 / this.speed }).onfinish = () => {
+          beam.remove();
+          resolve();
+        };
+        setTimeout(() => {
+          this.boom(to, '#4ade80', 2.6);
+          this.env.flash('#4ade80', 0.6);
+          this.shake();
+        }, 350 / this.speed);
+      });
+    },
+
+    // Blue energy dome over the whole squad.
+    async sm_shield(actor) {
+      const allies = this.battle.side(actor.side).filter((u) => u.alive);
+      const rects = allies.map((u) => this.cards[u.uid].getBoundingClientRect());
+      const layer = this.cineLayer();
+      const left = Math.min(...rects.map((r) => r.left)) - 30;
+      const right = Math.max(...rects.map((r) => r.right)) + 30;
+      const top = Math.min(...rects.map((r) => r.top)) - 40;
+      const bottom = Math.max(...rects.map((r) => r.bottom)) + 20;
+      const dome = el('<div class="dome"></div>');
+      Object.assign(dome.style, { left: left + 'px', top: top + 'px', width: right - left + 'px', height: bottom - top + 'px' });
+      layer.appendChild(dome);
+      dome.animate([{ transform: 'scale(.2)', opacity: 0 }, { transform: 'scale(1.05)', opacity: 1, offset: 0.4 }, { transform: 'scale(1)', opacity: 0.9, offset: 0.8 }, { transform: 'scale(1)', opacity: 0 }], { duration: 1500 });
+      this.env.flash('#8fd3ff', 0.3);
+      await this.wait(1500);
+      layer.remove();
+    },
+
+    // Rapid-fire blaster barrage from the caster.
+    async sm_barrage(actor, targets) {
+      const from = this.center(actor.uid);
+      const card = this.cards[actor.uid];
+      const color = BOLT[actor.def.faction];
+      const dir = actor.side === 'player' ? 1 : -1;
+      for (let i = 0; i < 20; i++) {
+        const t = targets[i % targets.length];
+        if (!this.cards[t.uid]) continue;
+        const m = { x: from.x + rand(-18, 18), y: from.y - dir * 30 };
+        this.flashAt(m, color);
+        this.laser(m, this.center(t.uid), color, 0, { dur: 170 });
+        card.animate([{ transform: 'translateY(0)' }, { transform: `translateY(${dir * 4}px)` }, { transform: 'translateY(0)' }], { duration: 60 });
+        await this.wait(55);
+      }
+      await this.wait(250);
+    },
+
+    // Laser sight, a held breath, then one devastating shot.
+    async sm_snipe(actor, targets) {
+      const t = targets[0];
+      const from = this.center(actor.uid);
+      const to = this.center(t.uid);
+      const sight = el('<div class="sight"></div>');
+      sight.style.left = from.x + 'px';
+      sight.style.top = from.y + 'px';
+      sight.style.width = Math.hypot(to.x - from.x, to.y - from.y) + 'px';
+      sight.style.transform = `rotate(${Math.atan2(to.y - from.y, to.x - from.x)}rad)`;
+      this.fx.appendChild(sight);
+      const reticle = el('<div class="reticle"></div>');
+      reticle.style.left = to.x + 'px';
+      reticle.style.top = to.y + 'px';
+      this.fx.appendChild(reticle);
+      this.field.classList.add('slowmo');
+      await this.wait(900);
+      sight.remove();
+      reticle.remove();
+      this.laser(from, to, '#ffffff', 0, { big: true, dur: 90, jitter: 0 });
+      await this.wait(100);
+      this.env.flash('#ffffff', 0.7);
+      this.boom(to, '#ffd23f', 2);
+      this.field.classList.remove('slowmo');
+      await this.wait(400);
+    },
+
+    // Swarm of rockets arcing in on every target.
+    async sm_rockets(actor, targets) {
+      const from = this.center(actor.uid);
+      const dir = actor.side === 'player' ? 1 : -1;
+      const all = [];
+      for (let i = 0; i < 10; i++) {
+        const t = targets[i % targets.length];
+        if (!this.cards[t.uid]) continue;
+        all.push(new Promise((res) => setTimeout(() => {
+          if (!this.cards[t.uid]) return res();
+          this.torpedo(from, this.center(t.uid), '#ffb24a', { arc: dir * rand(80, 160), bend: rand(-120, 120), dur: 700 }).then(res);
+        }, (i * 90) / this.speed)));
+      }
+      await Promise.all(all);
+      await this.wait(200);
+    },
+
+    // Targeting reticles lock on, then beams fall from orbit.
+    async sm_orbital(actor, targets) {
+      const marks = targets.map((t) => {
+        const c = this.center(t.uid);
+        const r = el('<div class="reticle spin"></div>');
+        r.style.left = c.x + 'px';
+        r.style.top = c.y + 'px';
+        this.fx.appendChild(r);
+        return r;
+      });
+      await this.wait(800);
+      marks.forEach((m) => m.remove());
+      const layer = this.cineLayer();
+      for (const t of targets) {
+        if (!this.cards[t.uid]) continue;
+        const v = this.vp(t.uid);
+        const beam = el('<div class="orbital-beam"></div>');
+        beam.style.left = v.x + 'px';
+        beam.style.height = v.y + 'px';
+        layer.appendChild(beam);
+        beam.animate([{ opacity: 0, transform: 'translateX(-50%) scaleX(.2)' }, { opacity: 1, transform: 'translateX(-50%) scaleX(1)', offset: 0.3 }, { opacity: 0, transform: 'translateX(-50%) scaleX(.1)' }], { duration: 700 });
+        setTimeout(() => this.boom(this.center(t.uid), '#9fe0ff', 1.6), 200);
+        await this.wait(160);
+      }
+      await this.wait(600);
+      layer.remove();
+    },
+
+    // Gold command banner sweeps the screen; allies surge.
+    async sm_rally(actor) {
+      const layer = this.cineLayer();
+      const bannerEl = el(`<div class="rally-banner ${actor.def.faction}"><span>${esc(actor.def.name)}</span><b>RALLY</b></div>`);
+      layer.appendChild(bannerEl);
+      bannerEl.animate([{ transform: 'translateX(-110%) skewX(-12deg)' }, { transform: 'translateX(0) skewX(-12deg)', offset: 0.3 }, { transform: 'translateX(0) skewX(-12deg)', offset: 0.7 }, { transform: 'translateX(110%) skewX(-12deg)' }], { duration: 1400 });
+      for (const u of this.battle.side(actor.side).filter((x) => x.alive)) {
+        this.cards[u.uid].animate([{ filter: 'none' }, { filter: 'brightness(1.6) drop-shadow(0 0 18px #ffd23f)' }, { filter: 'none' }], { duration: 1100 });
+        const c = this.center(u.uid);
+        for (let i = 0; i < 3; i++) setTimeout(() => this.chevron(c), i * 180);
+      }
+      await this.wait(1400);
+      layer.remove();
+    },
+
+    chevron(c) {
+      const ch = el('<div class="chevron">︽</div>');
+      ch.style.left = c.x + 'px';
+      ch.style.top = c.y + 'px';
+      this.fx.appendChild(ch);
+      ch.animate([{ transform: 'translate(-50%, 0)', opacity: 1 }, { transform: 'translate(-50%, -60px)', opacity: 0 }], { duration: 700 }).onfinish = () => ch.remove();
+    },
+
+    // Pillars of light descend on every ally.
+    async sm_heal(actor) {
+      const layer = this.cineLayer();
+      for (const u of this.battle.side(actor.side).filter((x) => x.alive)) {
+        const v = this.vp(u.uid);
+        const p = el('<div class="heal-pillar"></div>');
+        p.style.left = v.x + 'px';
+        p.style.height = v.y + v.h / 2 + 'px';
+        layer.appendChild(p);
+        p.animate([{ opacity: 0, transform: 'translateX(-50%) scaleY(0)' }, { opacity: 1, transform: 'translateX(-50%) scaleY(1)', offset: 0.4 }, { opacity: 0, transform: 'translateX(-50%) scaleY(1)' }], { duration: 1400, easing: 'ease-out' });
+        const c = this.center(u.uid);
+        this.env.light(c.x, c.y, '#b8ffcf', 140, 1.2);
+        for (let i = 0; i < 6; i++) setTimeout(() => this.sparks(c, '#b8ffcf', 3), i * 120);
+      }
+      await this.wait(1400);
+      layer.remove();
+    },
+
+    // A giant shield emblem slams down on the tank.
+    async sm_bulwark(actor) {
+      const c = this.center(actor.uid);
+      const s = el('<div class="emblem">⛨</div>');
+      s.style.left = c.x + 'px';
+      s.style.top = c.y + 'px';
+      this.fx.appendChild(s);
+      s.animate([{ transform: 'translate(-50%,-50%) scale(4)', opacity: 0 }, { transform: 'translate(-50%,-50%) scale(1)', opacity: 1, offset: 0.35 }, { transform: 'translate(-50%,-50%) scale(1.1)', opacity: 1, offset: 0.7 }, { transform: 'translate(-50%,-50%) scale(1.4)', opacity: 0 }], { duration: 1300 });
+      await this.wait(450);
+      this.wave(c, '#8fd3ff', 8);
+      this.env.push(c.x, c.y, 3);
+      this.shake();
+      for (const u of this.battle.side(actor.side).filter((x) => x.alive)) this.flash(u, 'flash-heal');
+      await this.wait(850);
+    },
+
+    // Wookiee roar: huge shockwaves and a violent shake.
+    async sm_roar(actor) {
+      const c = this.center(actor.uid);
+      for (let i = 0; i < 3; i++) {
+        this.wave(c, '#c9a070', 10 + i * 3);
+        this.env.push(c.x, c.y, 3);
+        this.env.jolt(6);
+        this.shake();
+        await this.wait(280);
+      }
+      await this.wait(300);
+    },
+
+    // A ghost of the caster dashes through every enemy, blade trails behind.
+    async sm_dash(actor, targets) {
+      const color = actor.def.id === 'ahsoka' ? '#eef4ff' : actor.def.accent || SABER[actor.def.faction];
+      const card = this.cards[actor.uid];
+      const r0 = card.getBoundingClientRect();
+      const layer = this.cineLayer();
+      const ghost = card.cloneNode(true);
+      ghost.classList.add('ghost');
+      Object.assign(ghost.style, { position: 'fixed', left: r0.left + 'px', top: r0.top + 'px', width: r0.width + 'px', margin: 0 });
+      layer.appendChild(ghost);
+      card.style.opacity = '0.25';
+      let prev = { x: r0.left, y: r0.top };
+      for (const t of targets) {
+        if (!this.cards[t.uid]) continue;
+        const r = this.cards[t.uid].getBoundingClientRect();
+        const next = { x: r.left + (Math.random() - 0.5) * 20, y: r.top };
+        this.afterimage(layer, ghost, prev);
+        await new Promise((res) => {
+          ghost.animate([{ transform: `translate(${prev.x - r0.left}px, ${prev.y - r0.top}px)` }, { transform: `translate(${next.x - r0.left}px, ${next.y - r0.top}px)` }], { duration: 160 / Math.min(this.speed, 2), fill: 'forwards', easing: 'ease-in' }).onfinish = res;
+        });
+        const c = this.center(t.uid);
+        this.slash(c, color, -35);
+        this.slash(c, color, 35);
+        this.env.impact(c.x, c.y, { power: 1, color });
+        prev = next;
+      }
+      await new Promise((res) => {
+        ghost.animate([{ transform: `translate(${prev.x - r0.left}px, ${prev.y - r0.top}px)` }, { transform: 'translate(0,0)' }], { duration: 220, fill: 'forwards' }).onfinish = res;
+      });
+      card.style.opacity = '';
+      layer.remove();
+    },
+
+    afterimage(layer, ghost, pos) {
+      const a = ghost.cloneNode(true);
+      a.classList.add('after');
+      a.style.transform = `translate(${pos.x - parseFloat(ghost.style.left)}px, ${pos.y - parseFloat(ghost.style.top)}px)`;
+      layer.appendChild(a);
+      a.animate([{ opacity: 0.5 }, { opacity: 0 }], { duration: 400 }).onfinish = () => a.remove();
+    },
+
+    // Leap into the air and slam down on the target.
+    async sm_leap(actor, targets) {
+      const t = targets[0];
+      const card = this.cards[actor.uid];
+      const r0 = card.getBoundingClientRect();
+      const r1 = this.cards[t.uid].getBoundingClientRect();
+      const layer = this.cineLayer();
+      const ghost = card.cloneNode(true);
+      ghost.classList.add('ghost');
+      Object.assign(ghost.style, { position: 'fixed', left: r0.left + 'px', top: r0.top + 'px', width: r0.width + 'px', margin: 0 });
+      layer.appendChild(ghost);
+      card.style.opacity = '0.25';
+      const dx = r1.left - r0.left;
+      const dy = r1.top - r0.top;
+      await new Promise((res) => {
+        ghost.animate([
+          { transform: 'translate(0,0) scale(1) rotate(0)' },
+          { transform: `translate(${dx * 0.5}px, ${dy * 0.5 - 180}px) scale(1.7) rotate(${actor.side === 'player' ? -12 : 12}deg)`, offset: 0.55 },
+          { transform: `translate(${dx}px, ${dy}px) scale(1) rotate(0)` },
+        ], { duration: 900 / Math.min(this.speed, 2), easing: 'cubic-bezier(.4,0,.6,1)', fill: 'forwards' }).onfinish = res;
+      });
+      const c = this.center(t.uid);
+      this.env.flash('#ffffff', 0.5);
+      this.wave(c, actor.def.accent || '#ffffff', 10);
+      this.env.blast(c.x, c.y + 20, actor.def.accent || '#ffffff', 2.4);
+      this.slash(c, actor.def.accent || '#ffffff', 0);
+      this.shake();
+      await this.wait(350);
+      await new Promise((res) => {
+        ghost.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'translate(0,0)' }], { duration: 300, fill: 'forwards' }).onfinish = res;
+      });
+      card.style.opacity = '';
+      layer.remove();
+    },
+
+    // A spinning lightsaber boomerangs through every enemy.
+    async sm_saberthrow(actor, targets) {
+      const color = actor.def.accent || SABER[actor.def.faction];
+      const from = this.center(actor.uid);
+      const saber = el('<div class="thrown-saber"></div>');
+      saber.style.setProperty('--glow', color);
+      saber.style.left = from.x + 'px';
+      saber.style.top = from.y + 'px';
+      this.fx.appendChild(saber);
+      const pts = [from, ...targets.map((t) => this.center(t.uid)), from];
+      const frames = pts.map((p, i) => ({ transform: `translate(${p.x - from.x}px, ${p.y - from.y}px) rotate(${i * 540}deg)` }));
+      const dur = (380 * (pts.length - 1)) / Math.min(this.speed, 2);
+      const anim = saber.animate(frames, { duration: dur, easing: 'linear' });
+      targets.forEach((t, i) => setTimeout(() => {
+        if (!this.cards[t.uid]) return;
+        const c = this.center(t.uid);
+        this.slash(c, color);
+        this.env.impact(c.x, c.y, { power: 0.9, color });
+      }, ((i + 1) / (pts.length - 1)) * dur));
+      await new Promise((r) => { anim.onfinish = r; });
+      saber.remove();
+    },
+
+    // A wall of Force energy sweeps the enemy line back.
+    async sm_forcepush(actor, targets) {
+      const from = this.center(actor.uid);
+      const wave = el('<div class="force-wave"></div>');
+      wave.style.left = from.x + 'px';
+      wave.style.top = from.y + 'px';
+      this.fx.appendChild(wave);
+      wave.animate([{ transform: 'translate(-50%,-50%) scale(.1)', opacity: 0.9 }, { transform: 'translate(-50%,-50%) scale(6)', opacity: 0 }], { duration: 1000, easing: 'ease-out' }).onfinish = () => wave.remove();
+      this.env.push(from.x, from.y, 5);
+      await this.wait(250);
+      const dir = actor.side === 'player' ? -1 : 1;
+      for (const t of targets) {
+        if (!this.cards[t.uid]) continue;
+        this.cards[t.uid].animate([{ transform: 'translateY(0) rotate(0)' }, { transform: `translateY(${dir * 34}px) rotate(${rand(-8, 8)}deg)`, offset: 0.35 }, { transform: 'translateY(0) rotate(0)' }], { duration: 800, easing: 'cubic-bezier(.2,.8,.3,1)' });
+        const c = this.center(t.uid);
+        this.env.impact(c.x, c.y, { power: 1, color: '#8fd3ff' });
+      }
+      this.shake();
+      await this.wait(700);
+    },
+
+    // Jagged Force lightning arcs to every target.
+    async lightning(actor, targets, ms) {
+      const layer = this.cineLayer();
+      const svgNS = 'http://www.w3.org/2000/svg';
+      const svg = document.createElementNS(svgNS, 'svg');
+      svg.setAttribute('class', 'bolt-svg');
+      svg.setAttribute('width', window.innerWidth);
+      svg.setAttribute('height', window.innerHeight);
+      layer.appendChild(svg);
+      const from = this.vp(actor.uid);
+      const end = performance.now() + ms / Math.min(this.speed, 2);
+      await new Promise((resolve) => {
+        const draw = () => {
+          svg.innerHTML = '';
+          for (const t of targets) {
+            if (!this.cards[t.uid]) continue;
+            const to = this.vp(t.uid);
+            for (let k = 0; k < 2; k++) {
+              let d = `M${from.x} ${from.y}`;
+              const n = 9;
+              for (let i = 1; i < n; i++) {
+                const x = from.x + ((to.x - from.x) * i) / n + rand(-26, 26);
+                const y = from.y + ((to.y - from.y) * i) / n + rand(-26, 26);
+                d += ` L${x} ${y}`;
+              }
+              d += ` L${to.x} ${to.y}`;
+              const path = document.createElementNS(svgNS, 'path');
+              path.setAttribute('d', d);
+              path.setAttribute('class', k ? 'core' : 'glow');
+              svg.appendChild(path);
+            }
+            if (Math.random() < 0.3) {
+              const c = this.center(t.uid);
+              this.env.light(c.x, c.y, '#b58cff', 120, 0.2);
+              this.sparks(c, '#d8c8ff', 3);
+            }
+          }
+          if (performance.now() < end) requestAnimationFrame(draw);
+          else resolve();
+        };
+        draw();
+      });
+      this.env.flash('#b58cff', 0.35);
+      layer.remove();
+    },
+
+    sm_lightning(actor, targets) {
+      return this.lightning(actor, targets, 1500);
+    },
+
+    // Targets are lifted and crushed by an invisible grip.
+    async choke(actor, targets, ms) {
+      const caster = this.cards[actor.uid];
+      caster.classList.add('force-glow');
+      const lifted = targets.filter((t) => this.cards[t.uid]);
+      lifted.forEach((t) => this.cards[t.uid].classList.add('choked'));
+      const anims = lifted.map((t) => this.cards[t.uid].animate([
+        { transform: 'translateY(0)' }, { transform: 'translateY(-26px) rotate(-2deg)', offset: 0.3 },
+        { transform: 'translateY(-28px) rotate(2deg)', offset: 0.5 }, { transform: 'translateY(-26px) rotate(-2deg)', offset: 0.7 },
+        { transform: 'translateY(4px)', offset: 0.92 }, { transform: 'translateY(0)' },
+      ], { duration: ms / Math.min(this.speed, 2) }));
+      await Promise.all(anims.map((a) => new Promise((r) => { a.onfinish = r; })));
+      lifted.forEach((t) => {
+        this.cards[t.uid].classList.remove('choked');
+        const c = this.center(t.uid);
+        this.env.impact(c.x, c.y + 30, { power: 1.2, color: '#ff2a2a' });
+      });
+      caster.classList.remove('force-glow');
+      this.shake();
+    },
+
+    sm_choke(actor, targets) {
+      return this.choke(actor, targets, 1600);
+    },
+
+    // Giant claw marks tear across the screen.
+    async sm_claws(actor, targets) {
+      const layer = this.cineLayer();
+      for (let i = 0; i < 3; i++) {
+        const c = el('<div class="claw"></div>');
+        c.style.top = `${22 + i * 12}%`;
+        layer.appendChild(c);
+        c.animate([{ clipPath: 'inset(0 100% 0 0)', opacity: 1 }, { clipPath: 'inset(0 0 0 0)', opacity: 1, offset: 0.35 }, { clipPath: 'inset(0 0 0 0)', opacity: 0 }], { duration: 900, delay: i * 90 });
+      }
+      await this.wait(300);
+      for (const t of targets) {
+        if (!this.cards[t.uid]) continue;
+        const c = this.center(t.uid);
+        this.env.impact(c.x, c.y, { power: 1.4, color: '#ff5a3a' });
+      }
+      this.shake();
+      await this.wait(700);
+      layer.remove();
+    },
+
+    // Four blades whirl around each target in turn.
+    async sm_whirl(actor, targets) {
+      const colors = ['#3d8bff', '#46e070', '#3d8bff', '#46e070'];
+      for (const t of targets) {
+        if (!this.cards[t.uid]) continue;
+        const c = this.center(t.uid);
+        const w = el(`<div class="whirl">${colors.map((col, i) => `<i style="--glow:${col};transform:rotate(${i * 90}deg)"></i>`).join('')}</div>`);
+        w.style.left = c.x + 'px';
+        w.style.top = c.y + 'px';
+        this.fx.appendChild(w);
+        w.animate([{ transform: 'translate(-50%,-50%) rotate(0) scale(.6)' }, { transform: 'translate(-50%,-50%) rotate(720deg) scale(1)' }], { duration: 420 }).onfinish = () => w.remove();
+        this.env.impact(c.x, c.y, { power: 0.8, color: '#3d8bff' });
+        await this.wait(200);
+      }
+      await this.wait(250);
     },
 
     // ---------- Cinematics ----------
@@ -773,6 +1542,8 @@
       App.battleActive = false;
       document.body.classList.remove('in-battle');
       document.removeEventListener('keydown', this.onKey);
+      $$('.cine, .keys-help').forEach((n) => n.remove());
+      if (this.env) this.env.stop();
       this.setActive(null);
     },
 
@@ -785,13 +1556,16 @@
       this.teardown();
       const p = this.params;
       const isStage = p.type === 'stage';
-      const nextUnlocked = won && isStage && p.stage < D.CAMPAIGNS[p.kind].stages.length - 1;
+      const planet = isStage ? D.PLANET_MAP[p.planet] : null;
+      const nextInPlanet = won && isStage && p.stage < planet.stages.length - 1;
+      const nextPlanet = won && isStage && rewards.planetComplete ? D.PLANETS[D.PLANETS.indexOf(planet) + 1] : null;
       const reel = won ? rewards.table.map((t) => `<span class="reel-item" data-mult="${t.mult}">${t.mult}×</span>`).join('') : '';
       const m = openModal(`
         <div class="result-title ${won ? 'win' : 'lose'}">${won ? 'VICTORY' : 'DEFEAT'}</div>
+        ${won && rewards.planetComplete ? `<div class="liberated"><p class="eyebrow">Planet liberated</p><h3>${esc(planet.name)} is free!</h3><p class="muted">${nextPlanet ? `Hyperspace lane to ${esc(nextPlanet.name)} unlocked.` : 'You have liberated the entire galaxy.'}</p></div>` : ''}
         ${won ? `
           <div class="spin-box ${rewards.loaded ? 'loaded' : ''}">
-            <p class="eyebrow">${rewards.loaded ? 'Loaded Dice · luck spin' : 'Luck spin'}</p>
+            <p class="eyebrow">${rewards.loaded ? 'Loaded Dice · luck spin' : 'Luck spin'}${rewards.bounty ? ' · Bounty Hunters +20%' : ''}</p>
             <div class="reel"><div class="reel-track" data-reel>${reel}${reel}${reel}${reel}</div></div>
             <p class="spin-math" data-spin-math>${cur('credits', rewards.base)} × ?</p>
           </div>
@@ -801,11 +1575,11 @@
             ${rewards.aurodium ? `<span class="reward gold">${cur('aurodium', rewards.aurodium)}</span>` : ''}
           </div>
           ${rewards.card ? `<div class="reward-card" data-rewards hidden><p class="eyebrow">Boss trophy</p>${root.UI.unitCard(D.UNIT_MAP[rewards.card.id], { tag: 'div', hideShards: true })}<p class="muted">${rewards.card.isNew ? 'New recruit!' : `+${rewards.card.shards} shards`}</p></div>` : ''}`
-        : '<p class="muted">Train your units in the Collection, use Auto-build, or buy crates in the Black Market to recruit stronger ones, then try again.</p>'}
+        : '<p class="muted">Train your units in the Collection, build a squad with matching traits for synergies, or grab crates in the Night Market, then try again.</p>'}
         <div class="modal-actions">
           <button class="btn" type="button" data-r="retry">Retry</button>
           ${won ? '' : '<button class="btn" type="button" data-r="collection">Collection</button>'}
-          ${nextUnlocked ? '<button class="btn btn-primary" type="button" data-r="next">Next stage</button>' : '<button class="btn btn-primary" type="button" data-r="campaign">Continue</button>'}
+          ${nextInPlanet ? '<button class="btn btn-primary" type="button" data-r="next">Next stage</button>' : nextPlanet ? `<button class="btn btn-primary" type="button" data-r="planet">Travel to ${esc(nextPlanet.name)}</button>` : '<button class="btn btn-primary" type="button" data-r="campaign">Continue</button>'}
         </div>`, { small: true, dismissable: false, cls: 'result-modal' });
       if (won) this.spinReel(m.root, rewards);
       m.root.addEventListener('click', (e) => {
@@ -814,7 +1588,11 @@
         m.close();
         if (r.dataset.r === 'retry') App.go('squad', p);
         else if (r.dataset.r === 'next') App.go('squad', { ...p, stage: p.stage + 1 });
-        else App.go(r.dataset.r);
+        else if (r.dataset.r === 'planet') {
+          App.ui.campaignKind = 'map';
+          App.ui.planet = nextPlanet.id;
+          App.go('campaign');
+        } else App.go(r.dataset.r);
       });
     },
 
@@ -829,7 +1607,7 @@
       const offset = targetIdx * itemW - boxW / 2 + itemW / 2;
       const reveal = () => {
         items[targetIdx].classList.add('hit');
-        $('[data-spin-math]', scope).innerHTML = `${cur('credits', rewards.base)} × <b class="mult m${String(rewards.mult).replace('.', '_')}">${rewards.mult}×</b> = ${cur('credits', rewards.credits)}`;
+        $('[data-spin-math]', scope).innerHTML = `${cur('credits', rewards.base)} × <b class="mult">${rewards.mult}×</b>${rewards.bounty ? ' × 1.2' : ''} = ${cur('credits', rewards.credits)}`;
         $$('[data-rewards]', scope).forEach((n) => { n.hidden = false; });
         updateWallet();
         if (rewards.mult >= 3) toast(`Jackpot! ${rewards.mult}× credits!`);

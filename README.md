@@ -14,24 +14,25 @@ npm run build   # writes dist/galactic-card-battles.html
 
 ## How it plays
 
-- **Turn meter combat.** Every unit fills a turn meter at its Speed; whoever reaches 100% acts next. The upcoming order is shown at the top of the battle screen.
-- **Abilities.** Each unit has a basic attack, one or two specials with cooldowns, and an **ultimate** that charges as the unit fights. Firing an ultimate plays a cutscene.
-- **Status effects.** Stun, Taunt, Offense/Defense Up and Down, and Burn.
-- **Ground and fleet battles.** Ground squads of 4 characters; fleet wings of 3 ships that strafe, fire lasers and torpedoes, and explode when destroyed.
-- **Boss battles.** The Rancor, a Krayt Dragon, Lord Vader, an Imperial Star Destroyer and the Death Star. Bosses are immune to Stun and become Enraged below 50% HP. First wins drop an Epic or Legendary card.
-- **Collection.** 29 characters and 12 ships with hand-drawn cover art. Tap a card to open it: tap again to flip to its description, swipe left for stats and right for upgrades. Sort by strongest, weakest, rarity or name.
-- **Auto-build.** One tap picks your strongest squad with a tank and a healer.
-- **Black Market.** Crates (Contraband, Salvage, Kyber Vault, Aurodium Strongbox), rotating Hot Stock with discounts, lucky charms, a Sabacc table and a Kyber exchange.
-- **Luck.** Every victory spins a credit multiplier (up to 5×, or 10× with Loaded Dice). Crates can drop Holo cards worth double, Chance Cubes boost Legendary odds, and a pity counter guarantees a Legendary every 20 crates.
-- **Currencies.** Galactic Credits, Kyber Crystals and Aurodium Ingots (from bosses).
-- **Auto battle and 1×/2×/3× speed.** Keys 1–4 pick abilities on your turn.
+- **Galaxy Map.** Ten planet campaigns (Tatooine, Hoth, Dagobah, Bespin, Endor, Scarif, Coruscant, Geonosis, Mustafar, Exegol) with 60 stages mixing ground and space battles. Liberating a planet opens the hyperspace lane to the next one.
+- **Living battlefields.** Every planet has an animated backdrop on the surface and in orbit that reacts to the fight: blasts scatter snow and sand, lasers light up the scene, explosions jolt the parallax layers and leave scorch marks and smoke, and ultimates darken the sky.
+- **Terrain and hazards.** Each planet favors certain traits (for both sides) and fires a hazard every few turns: sandstorms, blizzards, eruptions, orbital strikes, Sith lightning and more.
+- **Squads of 5 vs 5.** Every unit fills a turn meter at its Speed; whoever reaches 100% acts next.
+- **Synergies.** Units carry traits (Jedi, Sith, Rebel, Empire, Scoundrel, Bounty Hunter, Droid, Trooper and more). Matching traits, all-Light or all-Dark squads, balanced roles and planet terrain stack bonuses to health, attack, armor, speed, crit, lifesteal, regeneration and the rare chance to double hit.
+- **Abilities and ultimates.** Each unit has a basic attack, specials with cooldowns, and an ultimate with a cutscene plus a signature animation (strafing runs, bombing runs, torpedoes, Force lightning, chokes, saber dashes, leaps, orbital strikes and more).
+- **Boss battles.** The Rancor, a Krayt Dragon, Lord Vader, an Imperial Star Destroyer and the Death Star. Bosses are immune to Stun and become Enraged below 50% HP.
+- **Collection.** 30 characters and 12 ships with hand-drawn cover art, filterable by class (Healer, Tank, Fighter, Ranged, Support, Force User, Starfighter, Bomber, Gunship) with a Light/Dark breakdown. Tap a card to flip it; swipe for stats and upgrades.
+- **Nar Shaddaa Night Market.** Crates, flash sales with countdowns, rotating Hot Stock, lucky charms, a Sabacc table and the Droid Shell Game.
+- **Luck.** Victory credit spins, Holo cards, Chance Cubes, Loaded Dice and a Legendary pity counter.
+- **PC controls.** 1–5 pick abilities, R picks the ultimate, ←/→ move the target, Enter attacks, A toggles auto, F changes speed, ? shows help.
 
 ## Project layout
 
 | Path | Purpose |
 | --- | --- |
-| `js/data.js` | Units, bosses, abilities, ultimates, bios, campaigns, crates, luck tables |
+| `js/data.js` | Units, bosses, abilities, ultimates, traits, synergies, classes, planets, crates, luck tables |
 | `js/art.js` | SVG cover art for every unit, boss, crate and currency |
+| `js/env.js` | Animated, reactive planet backdrops (surface and orbit) and the Galaxy Map |
 | `js/battle.js` | Battle engine (no DOM): turn meter, damage, statuses, AI |
 | `js/state.js` | Save data, currencies, crates, luck, Black Market, auto-build, rewards |
 | `js/ui.js` | Screens: home, campaign, bosses, squad select, collection, card inspector, Black Market |
@@ -42,4 +43,4 @@ npm run build   # writes dist/galactic-card-battles.html
 
 ## Adding content
 
-Add a unit by appending an entry to `UNITS` in `js/data.js`, a bio to `BIOS`, and a drawing to `CHAR` (or a ship shape to `SHIPS`) in `js/art.js`. Give it a unique ultimate in `ULTIMATES`, or leave that out to get the default ultimate for its role. Campaign stages are plain lists of enemy ids and a level.
+Add a unit by appending an entry to `UNITS` in `js/data.js`, a bio to `BIOS`, and a drawing to `CHAR` (or a ship shape to `SHIPS`) in `js/art.js`. Give it a unique ultimate in `ULTIMATES`, or leave that out to get the default ultimate for its role. Planet stages are plain lists of enemy ids and a level; squads are topped up to 5 with the planet's reinforcements.

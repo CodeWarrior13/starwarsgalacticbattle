@@ -40,17 +40,97 @@
       enraged: false,
       statuses: {},
       alive: true,
+      mods: { crit: 0, critDmg: 0, double: 0, lifesteal: 0, regen: 0 },
     };
   }
 
+  // Fold synergy / terrain mods into a combatant's stats.
+  function applyMods(u, m) {
+    u.mods = {
+      crit: m.crit || 0,
+      critDmg: m.critDmg || 0,
+      double: m.double || 0,
+      lifesteal: m.lifesteal || 0,
+      regen: m.regen || 0,
+    };
+    u.maxHp = u.hp = Math.max(1, Math.round(u.maxHp * (1 + (m.hp || 0))));
+    u.atk = Math.round(u.atk * (1 + (m.atk || 0)));
+    u.armor = Math.round(u.armor * (1 + (m.def || 0)));
+    u.spd = Math.max(40, Math.round(u.spd * (1 + (m.spd || 0))));
+    u.tm = Math.min(99, u.tm + (m.tmStart || 0));
+  }
+
   class Battle {
-    constructor(playerSquad, enemySquad, rng) {
+    // opts.planet: planet id for terrain bonuses and hazards.
+    constructor(playerSquad, enemySquad, rng, opts = {}) {
       this.rng = rng || Math.random;
+      this.planet = opts.planet ? D.PLANET_MAP[opts.planet] : null;
       this.units = [
         ...playerSquad.map((e, i) => makeCombatant(e, 'player', i)),
         ...enemySquad.map((e, i) => makeCombatant(e, 'enemy', i)),
       ];
+      this.bonuses = {};
+      for (const side of ['player', 'enemy']) {
+        const squad = this.side(side);
+        const b = D.squadBonuses(squad.map((u) => u.id), opts.planet);
+        squad.forEach((u, i) => applyMods(u, b.perUnit[i]));
+        // Early planets field slightly weaker enemies.
+        if (side === 'enemy' && opts.enemyScale && opts.enemyScale !== 1) {
+          for (const u of squad) {
+            u.maxHp = u.hp = Math.round(u.maxHp * opts.enemyScale);
+            u.atk = Math.round(u.atk * opts.enemyScale);
+          }
+        }
+        this.bonuses[side] = b.active;
+      }
       this.turnCount = 0;
+      this.lastHazard = 0;
+    }
+
+    // Planet hazards fire every N turns. Returns events or null.
+    tickHazard() {
+      const hz = this.planet && this.planet.hazard;
+      if (!hz || this.turnCount === 0 || this.turnCount % hz.every !== 0 || this.lastHazard === this.turnCount) return null;
+      this.lastHazard = this.turnCount;
+      const e = hz.effect;
+      const events = [{ type: 'hazard', id: hz.id, name: hz.name }, { type: 'log', text: `⚠ ${hz.name}! ${hz.desc.replace(/^Every \d+ turns /, '')}`, side: 'hazard' }];
+      let pool = this.units.filter((u) => u.alive);
+      if (e.except) pool = pool.filter((u) => !e.except.some((t) => D.traitsOf(u.id).includes(t)));
+      if (e.faction) pool = pool.filter((u) => u.def.faction === e.faction);
+      if (e.count) {
+        const picked = [];
+        while (picked.length < e.count && pool.length) picked.push(pool.splice(Math.floor(this.rng() * pool.length), 1)[0]);
+        pool = picked;
+      }
+      for (const u of pool) {
+        if (!u.alive) continue;
+        if (e.type === 'damage') {
+          this.applyDamage(u, Math.max(1, Math.round(u.maxHp * e.pct)), false, events, 'hazard');
+          if (e.stun && u.alive && !u.boss && this.rng() < e.stun) {
+            u.statuses.stun = 1;
+            events.push({ type: 'status', uid: u.uid, status: 'stun', turns: 1 });
+          }
+          if (e.burn && u.alive && this.rng() < e.burn) {
+            u.statuses.burn = Math.max(u.statuses.burn || 0, 2);
+            events.push({ type: 'status', uid: u.uid, status: 'burn', turns: 2 });
+          }
+        } else if (e.type === 'heal') {
+          const amount = Math.min(u.maxHp - u.hp, Math.round(u.maxHp * e.pct));
+          u.hp += amount;
+          events.push({ type: 'heal', uid: u.uid, amount, hp: u.hp });
+        } else if (e.type === 'tm') {
+          u.tm = Math.max(0, Math.min(99, u.tm + e.amount));
+          events.push({ type: 'tm', uid: u.uid, amount: e.amount });
+        } else if (e.type === 'stun') {
+          if (u.boss) {
+            events.push({ type: 'resist', uid: u.uid, immune: true });
+          } else {
+            u.statuses.stun = 1;
+            events.push({ type: 'status', uid: u.uid, status: 'stun', turns: 1 });
+          }
+        }
+      }
+      return events;
     }
 
     get(uid) {
@@ -82,6 +162,7 @@
     // Advance every turn meter until someone reaches 100 and return them.
     advance() {
       const alive = this.units.filter((u) => u.alive);
+      if (!alive.length) return null;
       let best = null;
       let bestTime = Infinity;
       for (const u of alive) {
@@ -124,6 +205,11 @@
       if (unit.statuses.burn) {
         const amount = Math.max(1, Math.round(unit.maxHp * 0.08));
         this.applyDamage(unit, amount, false, events, 'burn');
+      }
+      if (unit.alive && unit.mods.regen > 0 && unit.hp < unit.maxHp) {
+        const amount = Math.min(unit.maxHp - unit.hp, Math.round(unit.maxHp * unit.mods.regen));
+        unit.hp += amount;
+        events.push({ type: 'heal', uid: unit.uid, amount, hp: unit.hp, source: 'regen' });
       }
       let skipped = false;
       if (unit.alive && unit.statuses.stun) {
@@ -209,6 +295,19 @@
         }
       }
 
+      // Rare double hit: the attack's damage lands a second time at 60%.
+      if (offensive && unit.alive && this.rng() < unit.mods.double) {
+        const again = targets.filter((t) => t.alive);
+        const dmgEffects = ab.effects.filter((e) => e.type === 'damage' && !e.on);
+        if (again.length && dmgEffects.length) {
+          events.push({ type: 'double', uid: unit.uid, targets: again.map((t) => t.uid) });
+          events.push({ type: 'log', text: `${unit.def.name} strikes again! DOUBLE HIT!`, side: unit.side });
+          for (const eff of dmgEffects) {
+            for (const target of again) if (target.alive) this.applyEffect(unit, target, { ...eff, mult: eff.mult * 0.6 }, events);
+          }
+        }
+      }
+
       this.currentUltimate = false;
       if (ab.ultimate) {
         unit.ult = 0;
@@ -227,6 +326,13 @@
           for (let h = 0; h < eff.hits && target.alive; h++) {
             const { amount, crit } = this.rollDamage(source, target, eff.mult);
             this.applyDamage(target, amount, crit, events);
+            if (source.mods.lifesteal > 0 && source.alive && source.hp < source.maxHp) {
+              const heal = Math.min(source.maxHp - source.hp, Math.round(amount * source.mods.lifesteal));
+              if (heal > 0) {
+                source.hp += heal;
+                events.push({ type: 'heal', uid: source.uid, amount: heal, hp: source.hp, source: 'lifesteal' });
+              }
+            }
             if (!this.currentUltimate) this.chargeUlt(source, (amount / target.maxHp) * ULT_PER_DEALT);
           }
           break;
@@ -274,10 +380,10 @@
 
     rollDamage(source, target, mult) {
       const variance = 0.9 + this.rng() * 0.2;
-      const crit = this.rng() < CRIT_CHANCE;
+      const crit = this.rng() < CRIT_CHANCE + source.mods.crit;
       const mitigation = 150 / (150 + this.effectiveArmor(target));
       let amount = this.effectiveAtk(source) * 1.7 * mult * mitigation * variance;
-      if (crit) amount *= CRIT_MULT;
+      if (crit) amount *= CRIT_MULT + source.mods.critDmg;
       return { amount: Math.max(1, Math.round(amount)), crit };
     }
 

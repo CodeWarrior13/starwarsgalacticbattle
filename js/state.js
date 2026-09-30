@@ -13,15 +13,16 @@
       crystals: D.STARTER.crystals,
       aurodium: 0,
       units,
-      progress: { character: 0, ship: 0 }, // number of stages cleared
+      planets: {}, // planet id -> number of stages cleared
       bosses: {}, // boss id -> wins
       squads: {
-        character: ['rebel_soldier', 'clone_trooper', 'ewok_warrior', 'battle_droid'],
-        ship: ['a_wing', 'y_wing', 'tie_fighter'],
+        character: ['rebel_soldier', 'clone_trooper', 'ewok_warrior', 'battle_droid', 'jawa'],
+        ship: ['a_wing', 'y_wing', 'tie_fighter', 'tie_bomber', 'z95'],
       },
       stats: { battlesWon: 0, battlesLost: 0, packsOpened: 0, bestSpin: 1, holos: 0 },
       luck: { charmCrates: 0, dice: 0, pity: 0 },
       market: { refreshAt: 0, items: [] },
+      flash: { endsAt: 0, items: [] },
     };
   }
 
@@ -60,14 +61,34 @@
         ? {
           ...base,
           ...loaded,
-          progress: { ...base.progress, ...loaded.progress },
+          planets: { ...loaded.planets },
           stats: { ...base.stats, ...loaded.stats },
           luck: { ...base.luck, ...loaded.luck },
           market: { ...base.market, ...loaded.market },
+          flash: { ...base.flash, ...loaded.flash },
           bosses: { ...loaded.bosses },
         }
         : base;
       delete this.state.dailyDeal;
+      // Saves from before the Galaxy Map: carry cleared stages over, planet by planet.
+      if (loaded && loaded.progress && !loaded.planets) {
+        let cleared = (loaded.progress.character || 0) + (loaded.progress.ship || 0);
+        for (const p of D.PLANETS) {
+          const n = Math.min(cleared, p.stages.length);
+          if (n > 0) this.state.planets[p.id] = n;
+          cleared -= n;
+        }
+      }
+      delete this.state.progress;
+      // Squads grew to 5: hand out any missing starter units and fill the gaps.
+      for (const id of D.STARTER.units) if (!this.state.units[id]) this.state.units[id] = { level: 1, stars: 1, shards: 0 };
+      for (const kind of ['character', 'ship']) {
+        const squad = (this.state.squads[kind] || []).filter((id) => this.state.units[id]);
+        if (squad.length < D.SQUAD_SIZE[kind]) {
+          for (const id of this.autoSquad(kind)) if (squad.length < D.SQUAD_SIZE[kind] && !squad.includes(id)) squad.push(id);
+        }
+        this.state.squads[kind] = squad;
+      }
       for (const id of Object.keys(this.state.units)) if (!D.UNIT_MAP[id] || D.UNIT_MAP[id].boss) delete this.state.units[id];
       return this.state;
     },
@@ -269,6 +290,65 @@
       return result;
     },
 
+    // ---------- Flash sales: two steep deals that rotate every 20 minutes ----------
+    flashSale(now) {
+      const t = now || Date.now();
+      if (!this.state.flash.items.length || t >= this.state.flash.endsAt) this.newFlashSale(t);
+      return this.state.flash;
+    },
+
+    newFlashSale(now, rng) {
+      const random = rng || Math.random;
+      const legends = D.UNITS.filter((u) => u.rarity === 'legendary' || u.rarity === 'epic');
+      const unit = legends[Math.floor(random() * legends.length)];
+      const discount = [50, 60, 70][Math.floor(random() * 3)];
+      const full = unit.rarity === 'legendary' ? 1800 : 1100;
+      const pack = D.PACKS[Math.floor(random() * 3)];
+      const packDiscount = 40;
+      const packFull = pack.cost.crystals || pack.cost.credits;
+      const key = pack.cost.crystals ? 'crystals' : 'credits';
+      this.state.flash = {
+        endsAt: now + D.FLASH_MS,
+        items: [
+          { type: 'shards', id: unit.id, shards: 15, discount, full, cost: { credits: Math.round(full * (1 - discount / 100)) }, sold: false },
+          { type: 'pack', id: pack.id, discount: packDiscount, full: packFull, cost: { [key]: Math.round(packFull * (1 - packDiscount / 100)) }, sold: false },
+        ],
+      };
+      this.save();
+      return this.state.flash;
+    },
+
+    buyFlash(index) {
+      const item = this.state.flash.items[index];
+      if (!item || item.sold || !this.spend(item.cost)) return null;
+      item.sold = true;
+      let result;
+      if (item.type === 'pack') {
+        // Refund the crate's normal price so openPack's spend nets out to the sale price.
+        const pack = D.PACKS.find((p) => p.id === item.id);
+        this.state.credits += pack.cost.credits || 0;
+        this.state.crystals += pack.cost.crystals || 0;
+        result = this.openPack(item.id);
+      } else if (!this.owns(item.id)) {
+        result = [this.grantCard(item.id)];
+      } else {
+        this.state.units[item.id].shards += item.shards;
+        result = [{ id: item.id, isNew: false, shards: item.shards }];
+      }
+      this.save();
+      return result;
+    },
+
+    // ---------- Shell game: guess which cup hides the credit chip ----------
+    shellGame(bet, guess, rng) {
+      if (!this.spend({ credits: bet })) return null;
+      const ball = Math.floor((rng || Math.random)() * 3);
+      const won = guess === ball ? Math.round(bet * D.SHELL_PAYOUT) : 0;
+      this.state.credits += won;
+      this.save();
+      return { ball, guess, won, net: won - bet };
+    },
+
     exchangeCrystals() {
       if (!this.spend({ crystals: 50 })) return false;
       this.state.credits += 1000;
@@ -313,17 +393,55 @@
     encounter(params) {
       if (params.type === 'boss') {
         const enc = D.BOSS_ENCOUNTERS.find((b) => b.id === params.boss);
-        const minions = enc.minions;
+        const minions = this.padSquad(enc.minions, D.PLANET_MAP[enc.planet].reinforce[enc.kind], D.SQUAD_SIZE[enc.kind] - 1);
         const half = Math.ceil(minions.length / 2);
         const enemies = [...minions.slice(0, half), enc.id, ...minions.slice(half)];
-        return { ...enc, type: 'boss', boss: enc.id, enemies, label: 'Boss Battle' };
+        return { ...enc, type: 'boss', boss: enc.id, enemies, stars: 1, label: 'Boss Battle' };
       }
-      const st = D.CAMPAIGNS[params.kind].stages[params.stage];
-      return { ...st, type: 'stage', kind: params.kind, stage: params.stage, label: `Stage ${params.stage + 1} · ${D.CAMPAIGNS[params.kind].name}` };
+      const planet = D.PLANET_MAP[params.planet];
+      const stg = planet.stages[params.stage];
+      return {
+        ...stg, enemies: this.padSquad(stg.enemies, planet.reinforce[stg.kind], D.SQUAD_SIZE[stg.kind]),
+        type: 'stage', planet: planet.id, stage: params.stage, finale: params.stage === planet.stages.length - 1,
+        stars: D.enemyStars(planet.id),
+        enemyScale: planet.enemyScale || 1,
+        label: `${planet.name} · Stage ${params.stage + 1} of ${planet.stages.length}`,
+      };
+    },
+
+    // Top enemy squads up to full size with the planet's reinforcements.
+    padSquad(ids, reinforce, size) {
+      const out = ids.slice(0, size);
+      let i = 0;
+      while (out.length < size && reinforce && reinforce.length) out.push(reinforce[i++ % reinforce.length]);
+      return out;
+    },
+
+    // ---------- Planet progress ----------
+    planetCleared(id) {
+      return this.state.planets[id] || 0;
+    },
+
+    planetComplete(id) {
+      return this.planetCleared(id) >= D.PLANET_MAP[id].stages.length;
+    },
+
+    planetUnlocked(id) {
+      const i = D.PLANETS.findIndex((p) => p.id === id);
+      return i === 0 || this.planetComplete(D.PLANETS[i - 1].id);
+    },
+
+    // The furthest planet the player can fight on right now.
+    currentPlanet() {
+      return D.PLANETS.find((p) => this.planetUnlocked(p.id) && !this.planetComplete(p.id)) || D.PLANETS[D.PLANETS.length - 1];
+    },
+
+    totalCleared() {
+      return D.PLANETS.reduce((a, p) => a + this.planetCleared(p.id), 0);
     },
 
     bossUnlocked(enc) {
-      return this.state.progress[enc.unlock.kind] >= enc.unlock.stage;
+      return this.planetComplete(enc.unlock);
     },
 
     // Record a finished battle and grant rewards (with the luck spin applied).
@@ -337,8 +455,10 @@
       this.state.stats.bestSpin = Math.max(this.state.stats.bestSpin, spin.mult);
       this.state.stats.battlesWon += 1;
       let out;
+      let kind;
       if (params.type === 'boss') {
         const enc = D.BOSS_ENCOUNTERS.find((b) => b.id === params.boss);
+        kind = enc.kind;
         const firstClear = !this.state.bosses[enc.id];
         const r = D.bossRewards(enc, firstClear);
         this.state.bosses[enc.id] = (this.state.bosses[enc.id] || 0) + 1;
@@ -350,15 +470,24 @@
         }
         out = { base: r.credits, crystals: r.kyber, aurodium: r.aurodium, firstClear, card };
       } else {
-        const r = D.stageRewards(params.kind, params.stage);
-        const firstClear = this.state.progress[params.kind] === params.stage;
-        if (firstClear) this.state.progress[params.kind] = params.stage + 1;
-        out = { base: r.credits, crystals: firstClear ? r.firstClearCrystals : 0, aurodium: 0, firstClear, card: null };
+        const planet = D.PLANET_MAP[params.planet];
+        kind = planet.stages[params.stage].kind;
+        const r = D.stageRewards(planet.id, params.stage);
+        const firstClear = this.planetCleared(planet.id) === params.stage;
+        let planetBonus = 0;
+        if (firstClear) {
+          this.state.planets[planet.id] = params.stage + 1;
+          if (this.planetComplete(planet.id)) planetBonus = D.PLANET_CLEAR_KYBER;
+        }
+        out = { base: r.credits, crystals: (firstClear ? r.firstClearCrystals : 0) + planetBonus, aurodium: 0, firstClear, card: null, planetComplete: planetBonus > 0 };
       }
+      // Bounty Hunters synergy pays out extra credits.
+      const squad = this.state.squads[kind].filter((id) => this.owns(id));
+      out.bounty = D.squadBonuses(squad).active.some((a) => a.trait === 'bounty');
       out.mult = spin.mult;
       out.table = spin.table;
       out.loaded = spin.loaded;
-      out.credits = Math.round(out.base * spin.mult);
+      out.credits = Math.round(out.base * spin.mult * (out.bounty ? 1.2 : 1));
       this.state.credits += out.credits;
       this.state.crystals += out.crystals;
       this.state.aurodium += out.aurodium;

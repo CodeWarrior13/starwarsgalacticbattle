@@ -234,6 +234,13 @@
 
     // ---------- Ships: Dark Side ----------
     {
+      id: 'z95', name: 'Z-95 Headhunter', kind: 'ship', faction: 'light', rarity: 'common', role: 'attacker', shape: 'z95', spd: 150,
+      abilities: [
+        { name: 'Twin Blasters', cd: 0, target: 'enemy', effects: [dmg(1.0)], desc: 'Deal damage to one enemy.' },
+        { name: 'Concussion Missile', cd: 3, target: 'enemy', effects: [dmg(1.7), debuff('stun', 1, 0.2)], desc: 'Deal heavy damage with a 20% chance to Stun.' },
+      ],
+    },
+    {
       id: 'tie_fighter', name: 'TIE Fighter', kind: 'ship', faction: 'dark', rarity: 'common', role: 'attacker', shape: 'tie', spd: 160,
       abilities: [
         { name: 'Twin Lasers', cd: 0, target: 'enemy', effects: [dmg(1.0)], desc: 'Deal damage to one enemy.' },
@@ -412,7 +419,7 @@
   const BOSSES = [
     {
       id: 'rancor', name: 'The Rancor', kind: 'character', faction: 'dark', rarity: 'legendary', role: 'attacker', spd: 120,
-      boss: { hp: 7.5, atk: 1.12, def: 1.2 },
+      boss: { hp: 10, atk: 1.3, def: 1.2 },
       abilities: [
         { name: 'Crushing Claw', cd: 0, target: 'enemy', effects: [dmg(1.3)], desc: 'Deal damage to one enemy.' },
         { name: 'Ground Pound', cd: 3, target: 'allEnemies', effects: [dmg(0.8), debuff('stun', 1, 0.3)], desc: 'Damage all enemies with a 30% chance to Stun.' },
@@ -422,7 +429,7 @@
     },
     {
       id: 'krayt_dragon', name: 'Krayt Dragon', kind: 'character', faction: 'dark', rarity: 'legendary', role: 'attacker', spd: 125,
-      boss: { hp: 7, atk: 1.05, def: 1.25 },
+      boss: { hp: 10, atk: 1.25, def: 1.25 },
       abilities: [
         { name: 'Tail Lash', cd: 0, target: 'enemy', effects: [dmg(1.25), debuff('defDown', 2, 0.3)], desc: 'Deal damage with a 30% chance of Defense Down.' },
         { name: 'Acid Spit', cd: 3, target: 'allEnemies', effects: [dmg(0.8), debuff('burn', 2, 0.7)], desc: 'Damage all enemies with a 70% chance to Burn.' },
@@ -432,7 +439,7 @@
     },
     {
       id: 'lord_vader', name: 'Lord Vader', kind: 'character', faction: 'dark', rarity: 'legendary', role: 'attacker', accent: '#e23b3b', spd: 140,
-      boss: { hp: 6.5, atk: 1.1, def: 1.25 },
+      boss: { hp: 5.5, atk: 0.95, def: 1.2 },
       abilities: [
         { name: 'Merciless Strike', cd: 0, target: 'enemy', effects: [dmg(1.3), debuff('defDown', 2, 0.5)], desc: 'Deal damage with a 50% chance of Defense Down.' },
         { name: 'Saber Throw', cd: 3, target: 'allEnemies', effects: [dmg(1.0)], desc: 'Damage all enemies.' },
@@ -463,11 +470,11 @@
   ];
 
   const BOSS_ENCOUNTERS = [
-    { id: 'rancor', name: 'The Rancor Pit', kind: 'character', level: 8, minions: [], unlock: { kind: 'character', stage: 3 }, place: 'Jabba\'s Palace, Tatooine' },
-    { id: 'star_destroyer', name: 'Star Destroyer Assault', kind: 'ship', level: 9, minions: ['tie_fighter', 'tie_fighter'], unlock: { kind: 'ship', stage: 3 }, place: 'Outer Rim blockade' },
-    { id: 'krayt_dragon', name: 'The Dune Sea', kind: 'character', level: 14, minions: ['tusken_raider', 'tusken_raider'], unlock: { kind: 'character', stage: 6 }, place: 'Dune Sea, Tatooine' },
-    { id: 'death_star', name: 'That\'s No Moon', kind: 'ship', level: 16, minions: ['tie_interceptor', 'tie_fighter'], unlock: { kind: 'ship', stage: 6 }, place: 'Yavin system' },
-    { id: 'lord_vader', name: 'Vader\'s Fortress', kind: 'character', level: 20, minions: ['death_trooper', 'stormtrooper'], unlock: { kind: 'character', stage: 9 }, place: 'Fortress Vader, Mustafar' },
+    { id: 'rancor', name: 'The Rancor Pit', kind: 'character', level: 8, minions: [], unlock: 'tatooine', planet: 'tatooine', place: 'Jabba\'s Palace, Tatooine' },
+    { id: 'star_destroyer', name: 'Star Destroyer Assault', kind: 'ship', level: 9, minions: ['tie_fighter', 'tie_fighter'], unlock: 'hoth', planet: 'hoth', place: 'Hoth system' },
+    { id: 'krayt_dragon', name: 'The Dune Sea', kind: 'character', level: 14, minions: ['tusken_raider', 'tusken_raider'], unlock: 'bespin', planet: 'tatooine', place: 'Dune Sea, Tatooine' },
+    { id: 'death_star', name: 'That\'s No Moon', kind: 'ship', level: 16, minions: ['tie_interceptor', 'tie_fighter'], unlock: 'scarif', planet: 'scarif', place: 'Scarif system' },
+    { id: 'lord_vader', name: 'Vader\'s Fortress', kind: 'character', level: 20, minions: ['stormtrooper', 'battle_droid', 'stormtrooper', 'battle_droid'], unlock: 'coruscant', planet: 'mustafar', place: 'Fortress Vader, Mustafar' },
   ];
 
   function bossRewards(enc, firstClear) {
@@ -511,6 +518,7 @@
     grievous: 'Supreme commander of the droid army and a collector of Jedi lightsabers. Four arms, four blades.',
     mace_windu: 'Master of the Jedi Council and creator of the Vaapad style. Only he wields a purple blade.',
     thrawn: 'A Chiss tactical genius who studies an enemy\'s art to find the weakness in their soul.',
+    z95: 'A tough old fighter from the Clone Wars era, still flown by Rebel cells and freelancers across the Outer Rim.',
     a_wing: 'The fastest starfighter in the Rebel fleet. Built for interception and hit-and-run strikes.',
     y_wing: 'A rugged Rebel bomber. Slow, heavily armored, and packing an ion cannon that shuts ships down.',
     x_wing: 'The legendary T-65 starfighter that destroyed the first Death Star. Balanced, deadly and iconic.',
@@ -560,44 +568,345 @@
     return Math.round(s.hp * 0.3 + s.atk * 3 + s.def * 2 + s.spd * 1.5);
   }
 
-  const SQUAD_SIZE = { character: 4, ship: 3 };
+  const SQUAD_SIZE = { character: 5, ship: 5 };
 
-  const CAMPAIGNS = {
-    character: {
-      name: 'Ground Campaign',
-      stages: [
-        { name: 'Tatooine Outskirts', level: 1, enemies: ['tusken_raider', 'tusken_raider', 'battle_droid'] },
-        { name: 'Mos Eisley Cantina', level: 2, enemies: ['stormtrooper', 'battle_droid', 'tusken_raider'] },
-        { name: 'Jakku Wreckage', level: 3, enemies: ['stormtrooper', 'stormtrooper', 'battle_droid', 'tusken_raider'] },
-        { name: 'Cloud City', level: 5, enemies: ['boba_fett', 'stormtrooper', 'stormtrooper'] },
-        { name: 'Death Star Detention', level: 6, enemies: ['tarkin', 'stormtrooper', 'stormtrooper', 'battle_droid'] },
-        { name: 'Geonosis Arena', level: 8, enemies: ['count_dooku', 'battle_droid', 'battle_droid', 'battle_droid'] },
-        { name: 'Theed Hangar', level: 10, enemies: ['darth_maul', 'battle_droid', 'battle_droid', 'tarkin'] },
-        { name: 'Starkiller Base', level: 12, enemies: ['kylo_ren', 'stormtrooper', 'stormtrooper', 'boba_fett'] },
-        { name: 'Mustafar', level: 15, enemies: ['vader', 'boba_fett', 'tarkin', 'stormtrooper'] },
-        { name: 'Throne Room', level: 18, enemies: ['palpatine', 'vader', 'count_dooku', 'darth_maul'] },
-      ],
-    },
-    ship: {
-      name: 'Fleet Campaign',
-      stages: [
-        { name: 'Tatooine Orbit', level: 1, enemies: ['tie_fighter', 'tie_fighter'] },
-        { name: 'Hoth Evacuation', level: 2, enemies: ['tie_fighter', 'tie_fighter', 'tie_fighter'] },
-        { name: 'Endor Skirmish', level: 3, enemies: ['tie_bomber', 'tie_fighter', 'tie_fighter'] },
-        { name: 'Bespin Pursuit', level: 5, enemies: ['slave_one', 'tie_fighter'] },
-        { name: 'Scarif Blockade', level: 7, enemies: ['lambda_shuttle', 'tie_bomber', 'tie_fighter'] },
-        { name: 'Death Star Trench', level: 10, enemies: ['tie_advanced', 'tie_fighter', 'tie_fighter'] },
-        { name: 'Battle of Endor', level: 14, enemies: ['tie_advanced', 'slave_one', 'lambda_shuttle'] },
-      ],
-    },
+  // ---------- Traits & synergies ----------
+  const TRAITS = {
+    rebel_soldier: ['rebel', 'trooper'], clone_trooper: ['trooper', 'republic'], ewok_warrior: ['native', 'rebel'],
+    han_solo: ['rebel', 'scoundrel'], chewbacca: ['rebel', 'scoundrel', 'native'], leia: ['rebel', 'leader'],
+    r2d2: ['droid', 'rebel'], obi_wan: ['jedi', 'republic'], luke: ['jedi', 'rebel'], yoda: ['jedi', 'republic'],
+    rey: ['jedi', 'scoundrel'], stormtrooper: ['empire', 'trooper'], battle_droid: ['droid', 'separatist'],
+    tusken_raider: ['native'], boba_fett: ['bounty', 'scoundrel'], tarkin: ['empire', 'leader'], darth_maul: ['sith'],
+    kylo_ren: ['sith', 'empire'], count_dooku: ['sith', 'separatist', 'leader'], vader: ['sith', 'empire'],
+    palpatine: ['sith', 'empire', 'leader'], jawa: ['native', 'scoundrel'], grogu: ['jedi', 'native'],
+    death_trooper: ['empire', 'trooper'], ahsoka: ['jedi', 'republic'], din_djarin: ['bounty', 'mandalorian'],
+    grievous: ['separatist', 'droid', 'leader'], mace_windu: ['jedi', 'republic', 'leader'], thrawn: ['empire', 'leader'],
+    z95: ['fighter', 'rebel', 'scoundrel'], a_wing: ['fighter', 'rebel'], y_wing: ['bomber', 'rebel'], x_wing: ['fighter', 'rebel'], b_wing: ['bomber', 'rebel'],
+    falcon: ['gunship', 'scoundrel', 'rebel'], razor_crest: ['gunship', 'bounty'], tie_fighter: ['fighter', 'empire'],
+    tie_bomber: ['bomber', 'empire'], tie_interceptor: ['fighter', 'empire'], lambda_shuttle: ['gunship', 'empire'],
+    slave_one: ['gunship', 'bounty'], tie_advanced: ['fighter', 'empire', 'sith'],
+    rancor: ['creature'], krayt_dragon: ['creature'], lord_vader: ['sith', 'empire'], star_destroyer: ['capital', 'empire'], death_star: ['capital', 'empire'],
   };
 
-  function stageRewards(kind, index) {
-    const stage = CAMPAIGNS[kind].stages[index];
+  const TRAIT_INFO = {
+    jedi: { label: 'Jedi', icon: '✧' }, sith: { label: 'Sith', icon: '⛧' }, rebel: { label: 'Rebel', icon: '✺' },
+    empire: { label: 'Empire', icon: '⬢' }, republic: { label: 'Republic', icon: '⌬' }, separatist: { label: 'Separatist', icon: '⎔' },
+    scoundrel: { label: 'Scoundrel', icon: '☄' }, bounty: { label: 'Bounty Hunter', icon: '⌖' }, droid: { label: 'Droid', icon: '⚙' },
+    trooper: { label: 'Trooper', icon: '⛉' }, native: { label: 'Native', icon: '❦' }, leader: { label: 'Leader', icon: '♛' },
+    mandalorian: { label: 'Mandalorian', icon: '⟁' }, fighter: { label: 'Fighter', icon: '➶' }, bomber: { label: 'Bomber', icon: '✹' },
+    gunship: { label: 'Gunship', icon: '⛭' }, creature: { label: 'Creature', icon: '☠' }, capital: { label: 'Capital Ship', icon: '▲' },
+  };
+
+  // ---------- Classes (Collection filters). A unit can be in several. ----------
+  const CLASS_INFO = {
+    healer: { label: 'Healer', icon: '✚' }, tank: { label: 'Tank', icon: '⛨' }, fighter: { label: 'Fighter', icon: '⚔' },
+    ranged: { label: 'Ranged', icon: '➹' }, support: { label: 'Support', icon: '✦' }, force: { label: 'Force User', icon: '✧' },
+    starfighter: { label: 'Starfighter', icon: '➶' }, bomber: { label: 'Bomber', icon: '✹' }, gunship: { label: 'Gunship', icon: '⛭' },
+  };
+  const MELEE = ['ewok_warrior', 'tusken_raider', 'obi_wan', 'luke', 'yoda', 'rey', 'darth_maul', 'kylo_ren', 'count_dooku', 'vader', 'ahsoka', 'grievous', 'mace_windu', 'rancor', 'krayt_dragon', 'lord_vader'];
+
+  function classesOf(def) {
+    const tr = TRAITS[def.id] || [];
+    const out = [];
+    if (def.kind === 'ship') {
+      if (tr.includes('fighter')) out.push('starfighter');
+      if (tr.includes('bomber')) out.push('bomber');
+      if (tr.includes('gunship') || tr.includes('capital')) out.push('gunship');
+    } else {
+      out.push(MELEE.includes(def.id) ? 'fighter' : 'ranged');
+      if (tr.includes('jedi') || tr.includes('sith') || def.id === 'grogu') out.push('force');
+    }
+    if (def.role === 'healer') out.push('healer');
+    if (def.role === 'tank') out.push('tank');
+    if (def.role === 'support') out.push('support');
+    return out;
+  }
+
+  // Signature animation for each unit's ultimate (see battle-ui superMove).
+  const ULT_ANIM = {
+    rebel_soldier: 'barrage', stormtrooper: 'barrage', battle_droid: 'barrage', tusken_raider: 'barrage', death_trooper: 'barrage', clone_trooper: 'bulwark',
+    han_solo: 'snipe', din_djarin: 'snipe', chewbacca: 'roar', leia: 'rally', jawa: 'rally', r2d2: 'heal', ewok_warrior: 'heal', grogu: 'heal',
+    obi_wan: 'leap', rey: 'leap', mace_windu: 'leap', luke: 'saberthrow', yoda: 'forcepush', boba_fett: 'rockets', tarkin: 'orbital', thrawn: 'orbital',
+    darth_maul: 'dash', ahsoka: 'dash', grievous: 'whirl', kylo_ren: 'choke', vader: 'choke', lord_vader: 'choke', count_dooku: 'lightning', palpatine: 'lightning',
+    a_wing: 'strafe', x_wing: 'torpedo', z95: 'strafe', tie_fighter: 'strafe', tie_interceptor: 'strafe', tie_advanced: 'strafe', falcon: 'strafe',
+    y_wing: 'shield', lambda_shuttle: 'shield', b_wing: 'broadside', razor_crest: 'broadside', tie_bomber: 'bombrun', slave_one: 'bombrun',
+    rancor: 'claws', krayt_dragon: 'claws', star_destroyer: 'turbolaser', death_star: 'superlaser',
+  };
+
+  // Every unit has a rare 4% chance to strike twice; synergies raise it.
+  const BASE_DOUBLE = 0.04;
+
+  // `scope: 'trait'` buffs only the units with the trait, `'all'` buffs the whole squad.
+  const SYNERGIES = [
+    { trait: 'jedi', name: 'Jedi Order', scope: 'trait', tiers: [
+      { n: 2, mods: { crit: 0.1 }, desc: 'Jedi gain +10% crit chance.' },
+      { n: 3, mods: { crit: 0.2, regen: 0.03 }, desc: 'Jedi gain +20% crit chance and heal 3% each turn.' }] },
+    { trait: 'sith', name: 'Rule of Two', scope: 'trait', tiers: [
+      { n: 2, mods: { double: 0.14, lifesteal: 0.12 }, desc: 'Sith gain +14% double-hit chance and 12% lifesteal.' },
+      { n: 3, mods: { double: 0.2, lifesteal: 0.18, atk: 0.1 }, desc: 'Sith gain +20% double hit, 18% lifesteal and +10% attack.' }] },
+    { trait: 'rebel', name: 'Rebellion', scope: 'trait', tiers: [
+      { n: 2, mods: { spd: 0.08 }, desc: 'Rebels gain +8% speed.' },
+      { n: 3, mods: { spd: 0.15, atk: 0.06 }, desc: 'Rebels gain +15% speed and +6% attack.' }] },
+    { trait: 'empire', name: 'Imperial Might', scope: 'trait', tiers: [
+      { n: 2, mods: { def: 0.15 }, desc: 'Imperials gain +15% armor.' },
+      { n: 3, mods: { def: 0.3, hp: 0.06 }, desc: 'Imperials gain +30% armor and +6% health.' }] },
+    { trait: 'republic', name: 'Grand Army', scope: 'all', tiers: [
+      { n: 2, mods: { hp: 0.06, def: 0.06 }, desc: 'Whole squad gains +6% health and armor.' }] },
+    { trait: 'separatist', name: 'Separatist Alliance', scope: 'all', tiers: [
+      { n: 2, mods: { atk: 0.08 }, desc: 'Whole squad gains +8% attack.' },
+      { n: 3, mods: { atk: 0.15 }, desc: 'Whole squad gains +15% attack.' }] },
+    { trait: 'scoundrel', name: 'Lucky Shots', scope: 'trait', tiers: [
+      { n: 2, mods: { double: 0.16, crit: 0.05 }, desc: 'Scoundrels gain +16% double-hit and +5% crit chance.' }] },
+    { trait: 'bounty', name: 'Bounty Hunters', scope: 'trait', tiers: [
+      { n: 2, mods: { critDmg: 0.35, crit: 0.08 }, desc: 'Bounty Hunters gain +8% crit chance and +35% crit damage. +20% credits on victory.' }] },
+    { trait: 'droid', name: 'Droid Network', scope: 'trait', tiers: [
+      { n: 2, mods: { tmStart: 35, def: 0.1 }, desc: 'Droids start with +35% Turn Meter and +10% armor.' }] },
+    { trait: 'trooper', name: 'Squad Tactics', scope: 'trait', tiers: [
+      { n: 2, mods: { hp: 0.12 }, desc: 'Troopers gain +12% health.' },
+      { n: 3, mods: { hp: 0.25, def: 0.1 }, desc: 'Troopers gain +25% health and +10% armor.' }] },
+    { trait: 'native', name: 'Home Turf', scope: 'trait', tiers: [
+      { n: 2, mods: { spd: 0.12, atk: 0.1 }, desc: 'Natives gain +12% speed and +10% attack.' }] },
+    { trait: 'leader', name: 'Chain of Command', scope: 'all', tiers: [
+      { n: 1, mods: { atk: 0.05, def: 0.05 }, desc: 'A leader gives the whole squad +5% attack and armor.' },
+      { n: 2, mods: { atk: 0.1, def: 0.1 }, desc: 'Two leaders give the whole squad +10% attack and armor.' }] },
+    { trait: 'fighter', name: 'Fighter Wing', scope: 'trait', tiers: [
+      { n: 2, mods: { spd: 0.1, double: 0.08 }, desc: 'Fighters gain +10% speed and +8% double-hit chance.' },
+      { n: 3, mods: { spd: 0.18, double: 0.14 }, desc: 'Fighters gain +18% speed and +14% double-hit chance.' }] },
+    { trait: 'bomber', name: 'Bombing Run', scope: 'trait', tiers: [
+      { n: 2, mods: { atk: 0.2 }, desc: 'Bombers gain +20% attack.' }] },
+    { trait: 'gunship', name: 'Heavy Hulls', scope: 'trait', tiers: [
+      { n: 2, mods: { hp: 0.2, def: 0.1 }, desc: 'Gunships gain +20% health and +10% armor.' }] },
+  ];
+
+  // ---------- Planets ----------
+  // Each planet is its own campaign with a living battlefield, a terrain
+  // bonus that favors certain traits (for both sides) and a periodic hazard.
+  const G = 'character';
+  const F = 'ship';
+  const st = (name, kind, level, enemies) => ({ name, kind, level, enemies });
+  const PLANETS = [
+    {
+      id: 'tatooine', name: 'Tatooine', region: 'Outer Rim', enemyScale: 0.7, env: 'desert', reinforce: { character: ['jawa'], ship: ['tie_fighter'] }, map: { x: 8, y: 64 }, color: '#e0a060',
+      blurb: 'A harsh desert world under twin suns, run by Hutts and haunted by Tusken Raiders.',
+      terrain: { name: 'Twin Suns', desc: 'Natives, Scoundrels and Bounty Hunters gain +15% attack.', rules: [{ traits: ['native', 'scoundrel', 'bounty'], mods: { atk: 0.15 } }] },
+      hazard: { id: 'sandstorm', name: 'Sandstorm', every: 9, desc: 'Every 9 turns a sandstorm drains 20% Turn Meter from everyone except Natives.', effect: { type: 'tm', amount: -20, except: ['native'] } },
+      stages: [
+        st('Jundland Wastes', G, 1, ['jawa', 'jawa', 'battle_droid']),
+        st('Tatooine Orbit', F, 1, ['tie_fighter', 'tie_fighter']),
+        st('Mos Eisley Streets', G, 2, ['stormtrooper', 'battle_droid', 'jawa']),
+        st('Docking Bay 94', F, 3, ['tie_fighter', 'tie_fighter', 'tie_bomber']),
+        st('Dune Sea Ambush', G, 4, ['tusken_raider', 'stormtrooper', 'battle_droid']),
+        st('Jabba\'s Palace', G, 5, ['boba_fett', 'battle_droid', 'jawa']),
+      ],
+    },
+    {
+      id: 'hoth', name: 'Hoth', region: 'Anoat Sector', enemyScale: 0.88, env: 'snow', reinforce: { character: ['stormtrooper'], ship: ['tie_fighter'] }, map: { x: 18, y: 30 }, color: '#cfe4f5',
+      blurb: 'A frozen wasteland hiding the Rebel Echo Base, where AT-ATs march through the snow.',
+      terrain: { name: 'Frozen Wastes', desc: 'Everyone is 8% slower. Rebels gain +15% armor.', rules: [{ mods: { spd: -0.08 } }, { traits: ['rebel'], mods: { def: 0.15 } }] },
+      hazard: { id: 'blizzard', name: 'Blizzard', every: 8, desc: 'Every 8 turns a blizzard deals 5% max HP to everyone except Rebels.', effect: { type: 'damage', pct: 0.05, except: ['rebel'] } },
+      stages: [
+        st('Echo Base Perimeter', G, 4, ['stormtrooper', 'stormtrooper', 'stormtrooper']),
+        st('Ion Cannon Cover', F, 5, ['tie_fighter', 'tie_bomber', 'tie_fighter']),
+        st('Frozen Trenches', G, 5, ['death_trooper', 'stormtrooper', 'stormtrooper']),
+        st('Hangar Breach', G, 6, ['death_trooper', 'stormtrooper', 'tarkin']),
+        st('Asteroid Field', F, 7, ['tie_interceptor', 'tie_fighter', 'tie_fighter']),
+        st('Imperial Assault', G, 8, ['death_trooper', 'death_trooper', 'tarkin', 'stormtrooper']),
+      ],
+    },
+    {
+      id: 'dagobah', name: 'Dagobah', region: 'Sluis Sector', env: 'swamp', reinforce: { character: ['battle_droid', 'jawa'], ship: ['tie_fighter'] }, map: { x: 30, y: 70 }, color: '#6f9a5a',
+      blurb: 'A misty swamp world strong with the Force, where a Jedi Master hides in exile.',
+      terrain: { name: 'Strong with the Force', desc: 'Jedi heal 4% each turn and Sith gain +15% attack.', rules: [{ traits: ['jedi'], mods: { regen: 0.04 } }, { traits: ['sith'], mods: { atk: 0.15 } }] },
+      hazard: { id: 'vision', name: 'Force Vision', every: 9, desc: 'Every 9 turns a Force vision heals every Light Side unit 10%.', effect: { type: 'heal', pct: 0.1, faction: 'light' } },
+      stages: [
+        st('Swamp Landing', F, 6, ['tie_fighter', 'tie_fighter', 'tie_fighter']),
+        st('Separatist Scouts', G, 7, ['battle_droid', 'battle_droid', 'battle_droid', 'battle_droid']),
+        st('Cave of Evil', G, 8, ['kylo_ren', 'battle_droid', 'battle_droid']),
+        st('Mist Hunters', G, 9, ['boba_fett', 'jawa', 'battle_droid', 'battle_droid']),
+        st('Orbital Blockade', F, 9, ['tie_bomber', 'tie_interceptor', 'tie_fighter']),
+        st('Trial of the Jedi', G, 10, ['count_dooku', 'darth_maul']),
+      ],
+    },
+    {
+      id: 'bespin', name: 'Bespin', region: 'Anoat Sector', env: 'clouds', reinforce: { character: ['stormtrooper', 'jawa'], ship: ['tie_fighter', 'tie_bomber'] }, map: { x: 40, y: 22 }, color: '#f0a070',
+      blurb: 'A gas giant with Cloud City floating in its sunset sky, a haven for smugglers and bounty hunters.',
+      terrain: { name: 'Cloud City', desc: 'Bounty Hunters and Imperials gain +12% crit chance.', rules: [{ traits: ['bounty', 'empire'], mods: { crit: 0.12 } }] },
+      hazard: { id: 'carbonite', name: 'Carbonite Leak', every: 10, desc: 'Every 10 turns a carbonite leak freezes (Stuns) one random unit.', effect: { type: 'stun', count: 1 } },
+      stages: [
+        st('Cloud Car Patrol', F, 8, ['tie_fighter', 'tie_interceptor']),
+        st('Landing Platform', G, 9, ['stormtrooper', 'stormtrooper', 'boba_fett']),
+        st('Carbon-Freezing Chamber', G, 10, ['boba_fett', 'stormtrooper', 'stormtrooper', 'tarkin']),
+        st('Tibanna Refinery', G, 11, ['death_trooper', 'jawa', 'boba_fett', 'battle_droid']),
+        st('Slave I Pursuit', F, 11, ['slave_one', 'tie_fighter', 'tie_fighter']),
+        st('Reactor Shaft Duel', G, 12, ['vader', 'stormtrooper', 'boba_fett']),
+      ],
+    },
+    {
+      id: 'endor', name: 'Endor', region: 'Moddell Sector', env: 'forest', reinforce: { character: ['stormtrooper'], ship: ['tie_fighter'] }, map: { x: 52, y: 60 }, color: '#4f8a4a',
+      blurb: 'A forest moon of towering trees, guarded by an Imperial shield generator and very angry Ewoks.',
+      terrain: { name: 'Forest Moon', desc: 'Natives gain +25% attack and speed. Rebels gain +10% armor.', rules: [{ traits: ['native'], mods: { atk: 0.25, spd: 0.25 } }, { traits: ['rebel'], mods: { def: 0.1 } }] },
+      hazard: { id: 'traps', name: 'Ewok Traps', every: 8, desc: 'Every 8 turns Ewok traps deal 8% max HP to two random non-Native units.', effect: { type: 'damage', pct: 0.08, count: 2, except: ['native'] } },
+      stages: [
+        st('Speeder Chase', G, 10, ['stormtrooper', 'stormtrooper', 'stormtrooper', 'stormtrooper']),
+        st('Shield Bunker', G, 11, ['death_trooper', 'stormtrooper', 'stormtrooper', 'tarkin']),
+        st('Forest Ambush', G, 12, ['stormtrooper', 'death_trooper', 'death_trooper']),
+        st('Death Star II Approach', F, 12, ['tie_interceptor', 'tie_fighter', 'tie_fighter']),
+        st('Battle of Endor', F, 13, ['tie_interceptor', 'tie_fighter', 'lambda_shuttle']),
+        st('Imperial Garrison', G, 14, ['thrawn', 'death_trooper', 'stormtrooper', 'stormtrooper']),
+      ],
+    },
+    {
+      id: 'scarif', name: 'Scarif', region: 'Abrion Sector', env: 'beach', reinforce: { character: ['stormtrooper', 'death_trooper'], ship: ['tie_fighter', 'tie_bomber'] }, map: { x: 62, y: 32 }, color: '#46b8d8',
+      blurb: 'A tropical fortress world behind a planetary shield gate, where the Death Star plans are kept.',
+      terrain: { name: 'Shield Gate', desc: 'Imperials gain +15% armor. Every ship gains +10% attack.', rules: [{ traits: ['empire'], mods: { def: 0.15 } }, { kind: 'ship', mods: { atk: 0.1 } }] },
+      hazard: { id: 'orbital', name: 'Orbital Strike', every: 8, desc: 'Every 8 turns an orbital strike deals 10% max HP to one random unit.', effect: { type: 'damage', pct: 0.1, count: 1 } },
+      stages: [
+        st('Shield Gate', F, 12, ['tie_interceptor', 'tie_fighter', 'tie_bomber']),
+        st('Beach Landing', G, 13, ['death_trooper', 'death_trooper', 'stormtrooper', 'stormtrooper']),
+        st('Citadel Tower', G, 14, ['tarkin', 'death_trooper', 'death_trooper', 'stormtrooper']),
+        st('Data Vault', G, 15, ['thrawn', 'death_trooper', 'boba_fett']),
+        st('Hammerhead Push', F, 15, ['tie_bomber', 'tie_interceptor', 'tie_fighter']),
+        st('The Last Transmission', G, 16, ['vader', 'death_trooper', 'death_trooper', 'tarkin']),
+      ],
+    },
+    {
+      id: 'coruscant', name: 'Coruscant', region: 'Core Worlds', env: 'city', reinforce: { character: ['battle_droid', 'stormtrooper'], ship: ['tie_fighter', 'tie_interceptor'] }, map: { x: 72, y: 16 }, color: '#b07ad8',
+      blurb: 'A planet-wide city and the seat of galactic power, glittering with endless traffic.',
+      terrain: { name: 'Galactic Capital', desc: 'Republic units, Troopers and Leaders gain +10% attack and health.', rules: [{ traits: ['republic', 'trooper', 'leader'], mods: { atk: 0.1, hp: 0.1 } }] },
+      hazard: { id: 'traffic', name: 'Speeder Rush', every: 7, desc: 'Every 7 turns a rush of traffic gives everyone +15% Turn Meter.', effect: { type: 'tm', amount: 15 } },
+      stages: [
+        st('Senate Landing', F, 14, ['tie_interceptor', 'tie_interceptor', 'slave_one']),
+        st('Lower Levels', G, 15, ['grievous', 'battle_droid', 'battle_droid', 'battle_droid']),
+        st('Jedi Temple Siege', G, 16, ['vader', 'stormtrooper', 'stormtrooper', 'death_trooper']),
+        st('Senate Chamber', G, 17, ['palpatine', 'count_dooku']),
+        st('Orbital Battle', F, 17, ['tie_advanced', 'slave_one', 'tie_interceptor']),
+        st('Chancellor\'s Office', G, 18, ['palpatine', 'grievous', 'count_dooku', 'darth_maul']),
+      ],
+    },
+    {
+      id: 'geonosis', name: 'Geonosis', region: 'Arkanis Sector', env: 'canyon', reinforce: { character: ['battle_droid'], ship: ['tie_fighter', 'tie_bomber'] }, map: { x: 80, y: 54 }, color: '#d9773a',
+      blurb: 'A rust-red world of rock spires and droid foundries, home of the infamous execution arena.',
+      terrain: { name: 'Droid Foundries', desc: 'Droids and Separatists gain +15% health and armor.', rules: [{ traits: ['droid', 'separatist'], mods: { hp: 0.15, def: 0.15 } }] },
+      hazard: { id: 'swarm', name: 'Geonosian Swarm', every: 8, desc: 'Every 8 turns a winged swarm deals 7% max HP to two random non-Droid units.', effect: { type: 'damage', pct: 0.07, count: 2, except: ['droid'] } },
+      stages: [
+        st('Foundry Skies', F, 17, ['tie_interceptor', 'tie_bomber', 'tie_fighter', 'tie_fighter']),
+        st('Droid Foundry', G, 18, ['battle_droid', 'battle_droid', 'grievous', 'battle_droid', 'jawa']),
+        st('Execution Arena', G, 19, ['count_dooku', 'battle_droid', 'battle_droid', 'tusken_raider', 'jawa']),
+        st('Canyon Run', F, 19, ['slave_one', 'tie_interceptor', 'tie_fighter', 'tie_bomber']),
+        st('Hive Spires', G, 20, ['grievous', 'count_dooku', 'battle_droid', 'battle_droid', 'death_trooper']),
+        st('The Separatist War Room', G, 21, ['grievous', 'count_dooku', 'darth_maul', 'battle_droid', 'battle_droid']),
+      ],
+    },
+    {
+      id: 'mustafar', name: 'Mustafar', region: 'Outer Rim', env: 'lava', reinforce: { character: ['battle_droid', 'death_trooper'], ship: ['tie_interceptor', 'tie_fighter'] }, map: { x: 90, y: 70 }, color: '#e04a2a',
+      blurb: 'A volcanic hellscape of lava rivers and ash, where the dark side is at its strongest.',
+      terrain: { name: 'Lava Fields', desc: 'Sith gain +25% attack. Everyone else loses 8% health.', rules: [{ traits: ['sith'], mods: { atk: 0.25 } }, { notTraits: ['sith'], mods: { hp: -0.08 } }] },
+      hazard: { id: 'eruption', name: 'Eruption', every: 8, desc: 'Every 8 turns a volcano erupts: 6% max HP to all non-Sith units, with a 30% chance to Burn.', effect: { type: 'damage', pct: 0.06, except: ['sith'], burn: 0.3 } },
+      stages: [
+        st('Lava Approach', F, 20, ['tie_advanced', 'tie_interceptor', 'tie_interceptor']),
+        st('Mining Facility', G, 21, ['grievous', 'count_dooku', 'battle_droid', 'battle_droid']),
+        st('Separatist Council', G, 22, ['grievous', 'count_dooku', 'battle_droid', 'death_trooper']),
+        st('River of Fire', G, 23, ['kylo_ren', 'darth_maul', 'death_trooper']),
+        st('Fortress Skies', F, 24, ['tie_advanced', 'slave_one', 'lambda_shuttle']),
+        st('Heart of the Dark Side', G, 25, ['palpatine', 'vader', 'kylo_ren', 'darth_maul']),
+      ],
+    },
+    {
+      id: 'exegol', name: 'Exegol', region: 'Unknown Regions', env: 'storm', reinforce: { character: ['death_trooper', 'stormtrooper'], ship: ['tie_interceptor', 'tie_advanced'] }, map: { x: 94, y: 28 }, color: '#7a6aff',
+      blurb: 'A hidden Sith world wrapped in endless lightning storms, where the Sith Eternal build their final fleet.',
+      terrain: { name: 'Sith Eternal', desc: 'Sith gain +20% attack and +10% crit chance. Light Side units are 8% slower.', rules: [{ traits: ['sith'], mods: { atk: 0.2, crit: 0.1 } }, { faction: 'light', mods: { spd: -0.08 } }] },
+      hazard: { id: 'lightning', name: 'Sith Lightning Storm', every: 7, desc: 'Every 7 turns lightning strikes: 7% max HP to all non-Sith units, with a 20% chance to Stun.', effect: { type: 'damage', pct: 0.07, except: ['sith'], stun: 0.2 } },
+      stages: [
+        st('Navigator Beacon', F, 25, ['tie_advanced', 'tie_interceptor', 'tie_interceptor', 'tie_bomber', 'lambda_shuttle']),
+        st('Sith Citadel Gates', G, 26, ['death_trooper', 'death_trooper', 'kylo_ren', 'stormtrooper', 'thrawn']),
+        st('Hall of the Sith', G, 27, ['vader', 'darth_maul', 'count_dooku', 'death_trooper', 'death_trooper']),
+        st('Final Order Fleet', F, 28, ['tie_advanced', 'slave_one', 'tie_interceptor', 'tie_interceptor', 'lambda_shuttle']),
+        st('Throne of the Sith', G, 29, ['palpatine', 'thrawn', 'grievous', 'kylo_ren', 'death_trooper']),
+        st('Duel of the Fates', G, 30, ['palpatine', 'vader', 'darth_maul', 'kylo_ren', 'count_dooku']),
+      ],
+    },
+  ];
+  const PLANET_MAP = Object.fromEntries(PLANETS.map((p) => [p.id, p]));
+  // Enemies earn stars as you travel further across the galaxy.
+  const enemyStars = (planetId) => 1 + Math.floor(PLANETS.indexOf(PLANET_MAP[planetId]) / 2);
+  const PLANET_CLEAR_KYBER = 150;
+
+  function stageRewards(planetId, index) {
+    const planet = PLANET_MAP[planetId];
+    const stage = planet.stages[index];
     return {
       credits: 120 + stage.level * 40,
-      firstClearCrystals: 40 + index * 10,
+      firstClearCrystals: 30 + PLANETS.indexOf(planet) * 8 + index * 4,
     };
+  }
+
+  const traitsOf = (id) => TRAITS[id] || [];
+
+  function addMods(into, mods) {
+    for (const [k, v] of Object.entries(mods)) into[k] = (into[k] || 0) + v;
+  }
+
+  // Works out every bonus a squad gets from traits, faction unity, role
+  // balance and the planet's terrain. Returns per-unit mods plus a list of
+  // active bonuses (and near-misses) for the UI.
+  function squadBonuses(ids, planetId) {
+    const defs = ids.map((id) => UNIT_MAP[id]);
+    const perUnit = defs.map(() => ({ double: BASE_DOUBLE }));
+    const active = [];
+    const hints = [];
+    const counts = {};
+    defs.forEach((d) => traitsOf(d.id).forEach((t) => { counts[t] = (counts[t] || 0) + 1; }));
+
+    for (const syn of SYNERGIES) {
+      const n = counts[syn.trait] || 0;
+      const tier = [...syn.tiers].reverse().find((t) => n >= t.n);
+      const next = syn.tiers.find((t) => n < t.n);
+      if (tier) {
+        defs.forEach((d, i) => {
+          if (syn.scope === 'all' || traitsOf(d.id).includes(syn.trait)) addMods(perUnit[i], tier.mods);
+        });
+        active.push({ kind: 'synergy', trait: syn.trait, name: syn.name, count: n, need: tier.n, desc: tier.desc, icon: TRAIT_INFO[syn.trait].icon });
+      }
+      if (next && n > 0 && next.n - n === 1) {
+        hints.push({ trait: syn.trait, name: syn.name, count: n, need: next.n, desc: next.desc, icon: TRAIT_INFO[syn.trait].icon });
+      }
+    }
+
+    if (defs.length >= 3) {
+      const light = defs.filter((d) => d.faction === 'light').length;
+      if (light === defs.length) {
+        defs.forEach((d, i) => addMods(perUnit[i], { hp: 0.1, regen: 0.02 }));
+        active.push({ kind: 'unity', name: 'Light Side Unity', desc: 'All Light Side squad: +10% health and 2% healing each turn.', icon: '☀' });
+      } else if (light === 0) {
+        defs.forEach((d, i) => addMods(perUnit[i], { atk: 0.1, crit: 0.05 }));
+        active.push({ kind: 'unity', name: 'Dark Side Fury', desc: 'All Dark Side squad: +10% attack and +5% crit chance.', icon: '☾' });
+      }
+    }
+
+    const roles = new Set(defs.map((d) => d.role));
+    if (defs[0] && defs[0].kind === 'character' && roles.has('tank') && roles.has('healer') && (roles.has('attacker') || roles.has('support'))) {
+      defs.forEach((d, i) => addMods(perUnit[i], { def: 0.08 }));
+      active.push({ kind: 'formation', name: 'Battle Formation', desc: 'Tank, healer and damage dealer together: +8% armor for the squad.', icon: '⛨' });
+    }
+
+    const planet = PLANET_MAP[planetId];
+    if (planet) {
+      let touched = false;
+      for (const rule of planet.terrain.rules) {
+        defs.forEach((d, i) => {
+          const tr = traitsOf(d.id);
+          if (rule.traits && !rule.traits.some((t) => tr.includes(t))) return;
+          if (rule.notTraits && rule.notTraits.some((t) => tr.includes(t))) return;
+          if (rule.kind && d.kind !== rule.kind) return;
+          if (rule.faction && d.faction !== rule.faction) return;
+          addMods(perUnit[i], rule.mods);
+          touched = true;
+        });
+      }
+      if (touched) active.push({ kind: 'terrain', name: planet.terrain.name, desc: planet.terrain.desc, icon: '◉' });
+    }
+
+    return { perUnit, active, hints, counts };
   }
 
   const CURRENCIES = {
@@ -666,16 +975,20 @@
   ];
 
   const MARKET_REFRESH_MS = 4 * 60 * 60 * 1000;
+  const FLASH_MS = 20 * 60 * 1000;
+  const SHELL_PAYOUT = 2.7;
+  const SHELL_BETS = [50, 150, 400];
 
   const STARTER = {
     credits: 600,
     crystals: 100,
-    units: ['rebel_soldier', 'clone_trooper', 'ewok_warrior', 'battle_droid', 'a_wing', 'y_wing', 'tie_fighter'],
+    units: ['rebel_soldier', 'clone_trooper', 'ewok_warrior', 'battle_droid', 'jawa', 'a_wing', 'y_wing', 'tie_fighter', 'tie_bomber', 'z95'],
   };
 
   root.GameData = {
     RARITIES, ROLE_BASE, ROLE_ICONS, STATUS_INFO, UNITS, UNIT_MAP, MAX_LEVEL, MAX_STARS, STAR_COSTS,
-    DUPLICATE_SHARDS, SQUAD_SIZE, CAMPAIGNS, PACKS, STARTER, levelCost, unitStats, power, stageRewards,
-    ultimateFor, abilitiesFor, BOSSES, BOSS_ENCOUNTERS, bossRewards, CURRENCIES, LUCK, CHARMS, MARKET_REFRESH_MS, BIOS,
+    DUPLICATE_SHARDS, SQUAD_SIZE, PACKS, STARTER, levelCost, unitStats, power, stageRewards,
+    ultimateFor, abilitiesFor, BOSSES, BOSS_ENCOUNTERS, bossRewards, CURRENCIES, LUCK, CHARMS, MARKET_REFRESH_MS, FLASH_MS, SHELL_PAYOUT, SHELL_BETS, BIOS,
+    TRAITS, TRAIT_INFO, CLASS_INFO, classesOf, ULT_ANIM, SYNERGIES, PLANETS, PLANET_MAP, enemyStars, PLANET_CLEAR_KYBER, BASE_DOUBLE, traitsOf, squadBonuses,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

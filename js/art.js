@@ -430,6 +430,11 @@
       + R(38, 56, 24, 6, '#8a929e') + eng(30, 84, 5.2, '#9fdcff') + eng(70, 84, 5.2, '#9fdcff')
       + P('M45 12 L55 12 L56 22 L44 22Z', '#152235') + R(42, 30, 16, 3, '#6d7582') + `<path d="M42 40 H58 M42 50 H58 M42 66 H58 M44 70 L56 70" ${LINE}/>`
       + R(46, 44, 8, 4, '#5a4632', 'opacity=".6"'),
+    z95: () => P('M44 58 L12 62 L12 70 L44 72Z', HULL) + P('M56 58 L88 62 L88 70 L56 72Z', HULL)
+      + R(10, 40, 3.4, 34, HULL_D, 'rx="1"') + R(86.6, 40, 3.4, 34, HULL_D, 'rx="1"') + R(18, 63, 14, 3, '#d0a040') + R(68, 63, 14, 3, '#d0a040')
+      + R(36, 58, 7, 22, HULL_D, 'rx="3"') + R(57, 58, 7, 22, HULL_D, 'rx="3"') + eng(39.5, 81, 3) + eng(60.5, 81, 3)
+      + P('M50 8 L55 22 L56 60 L57 82 L43 82 L44 60 L45 22Z', '#e6dcc8') + shade('M50 8 L45 22 L44 60 L43 82 L50 82Z', 0.12)
+      + P('M46.5 34 C46.5 28 53.5 28 53.5 34 L53.5 46 L46.5 46Z', '#152235') + R(46, 50, 8, 3, '#d0a040'),
     tie: () => P('M14 8 L25 27 L25 73 L14 92 L3 73 L3 27Z', '#2a2f38') + P('M86 8 L97 27 L97 73 L86 92 L75 73 L75 27Z', '#2a2f38')
       + P('M14 8 L25 27 L25 73 L14 92 L3 73 L3 27Z', 'none', 'stroke="#8a929e" stroke-width="1.6"') + P('M86 8 L97 27 L97 73 L86 92 L75 73 L75 27Z', 'none', 'stroke="#8a929e" stroke-width="1.6"')
       + `<path d="M14 8 L14 92 M3 27 L25 73 M25 27 L3 73 M86 8 L86 92 M75 27 L97 73 M97 27 L75 73" stroke="#5d6674" stroke-width=".7"/>`
@@ -517,5 +522,10 @@
     </svg>`;
   }
 
-  root.Art = { unitArt, ICONS, crateArt, merchantArt, SHIP_SHAPES: Object.keys(SHIPS), CHARACTER_IDS: Object.keys(CHAR) };
+  // Just the ship, no background: used for full-screen flybys.
+  function shipOnly(def) {
+    return `<svg class="ship-only" viewBox="0 0 100 100" aria-hidden="true">${(SHIPS[def.shape] || SHIPS.xwing)()}</svg>`;
+  }
+
+  root.Art = { unitArt, shipOnly, ICONS, crateArt, merchantArt, SHIP_SHAPES: Object.keys(SHIPS), CHARACTER_IDS: Object.keys(CHAR) };
 })(typeof window !== 'undefined' ? window : globalThis);
