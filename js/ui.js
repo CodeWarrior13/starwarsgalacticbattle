@@ -626,6 +626,232 @@
     ghost.animate([{ transform: 'translateY(0) rotate(0)', opacity: 1 }, { transform: 'translateY(80px) rotate(14deg) scale(.7)', opacity: 0 }], { duration: 380, easing: 'ease-in' }).onfinish = () => ghost.remove();
   }
 
+  // Each synergy gets its own animated backdrop behind the banner.
+  const BANNER_FX = {
+    badbatch: 'lightning', sith: 'lightning', jedi: 'orbs', droid: 'circuit', separatist: 'circuit', empire: 'scan', republic: 'rays',
+    rebel: 'embers', scoundrel: 'coins', bounty: 'reticles', mandalorian: 'coins', trooper: 'bolts', native: 'leaves', leader: 'rays',
+    fighter: 'warp', gunship: 'warp', bomber: 'blasts', nightsister: 'mist', healer: 'plus', tank: 'hex', formation: 'hex',
+    attacker: 'slashes', unity_light: 'rays', unity_dark: 'vortex',
+  };
+
+  function bannerFx(canvas, type, color) {
+    const ctx = canvas.getContext('2d');
+    const dpr = Math.min(1.5, window.devicePixelRatio || 1);
+    const W = window.innerWidth;
+    const H = window.innerHeight;
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    ctx.scale(dpr, dpr);
+    const cy = H / 2;
+    const rnd = (a, b) => a + Math.random() * (b - a);
+    const parts = Array.from({ length: 70 }, () => ({ x: rnd(0, W), y: rnd(0, H), v: rnd(0.4, 1.4), r: rnd(1, 4), a: rnd(0, Math.PI * 2), t: rnd(0, 1) }));
+    let bolts = [];
+    const t0 = performance.now();
+    const hex = (x, y, r) => {
+      ctx.beginPath();
+      for (let i = 0; i < 6; i++) {
+        const a = (Math.PI / 3) * i + Math.PI / 6;
+        ctx[i ? 'lineTo' : 'moveTo'](x + Math.cos(a) * r, y + Math.sin(a) * r);
+      }
+      ctx.closePath();
+    };
+    const frame = (now) => {
+      if (!canvas.isConnected) return;
+      const t = (now - t0) / 1000;
+      ctx.clearRect(0, 0, W, H);
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 12;
+      if (type === 'lightning') {
+        if (Math.random() < 0.18) {
+          const pts = [];
+          let x = rnd(0, W);
+          let y = rnd(-20, H * 0.2);
+          const down = Math.random() > 0.4;
+          for (let i = 0; i < 14; i++) {
+            pts.push([x, y]);
+            x += rnd(-50, 50) + (down ? 0 : rnd(20, 60));
+            y += down ? H / 12 : rnd(-30, 30) + H / 30;
+          }
+          bolts.push({ pts, life: 0 });
+        }
+        bolts = bolts.filter((b) => (b.life += 0.06) < 1);
+        for (const b of bolts) {
+          ctx.globalAlpha = 1 - b.life;
+          for (const [w, a] of [[5, 0.35], [1.6, 1]]) {
+            ctx.lineWidth = w;
+            ctx.globalAlpha = (1 - b.life) * a;
+            ctx.beginPath();
+            b.pts.forEach(([x, y], i) => ctx[i ? 'lineTo' : 'moveTo'](x, y));
+            ctx.stroke();
+          }
+        }
+        ctx.globalAlpha = 0.06 + Math.random() * 0.05 * (bolts.length ? 1 : 0);
+        ctx.fillRect(0, 0, W, H);
+      } else if (type === 'orbs' || type === 'plus' || type === 'embers' || type === 'coins' || type === 'leaves') {
+        for (const p of parts) {
+          const rising = type !== 'coins' && type !== 'leaves';
+          p.y += (rising ? -1 : 1) * p.v * (type === 'orbs' ? 0.6 : 1.8);
+          p.x += Math.sin(t * 2 + p.a) * (type === 'leaves' ? 1.5 : 0.4);
+          if (p.y < -10) p.y = H + 10;
+          if (p.y > H + 10) p.y = -10;
+          ctx.globalAlpha = 0.5 + Math.sin(t * 3 + p.a) * 0.3;
+          if (type === 'plus') {
+            ctx.font = `${8 + p.r * 4}px sans-serif`;
+            ctx.fillText('✚', p.x, p.y);
+          } else if (type === 'coins') {
+            ctx.beginPath();
+            ctx.ellipse(p.x, p.y, p.r * 2.2 * Math.abs(Math.cos(t * 4 + p.a)) + 0.5, p.r * 2.2, 0, 0, Math.PI * 2);
+            ctx.fill();
+          } else if (type === 'leaves') {
+            ctx.save();
+            ctx.translate(p.x, p.y);
+            ctx.rotate(t * 2 + p.a);
+            ctx.fillRect(-p.r * 2, -p.r * 0.6, p.r * 4, p.r * 1.2);
+            ctx.restore();
+          } else {
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, type === 'orbs' ? p.r * 2.4 : p.r, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+      } else if (type === 'circuit') {
+        ctx.lineWidth = 1.5;
+        for (let i = 0; i < 16; i++) {
+          const y = (i / 16) * H + 10;
+          const len = ((t * 400 + i * 97) % (W + 300)) - 150;
+          ctx.globalAlpha = 0.5;
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(len, y);
+          ctx.lineTo(len + 20, y + 20);
+          ctx.stroke();
+          ctx.globalAlpha = 1;
+          ctx.fillRect(len + 17, y + 17, 6, 6);
+        }
+        ctx.globalAlpha = 0.25;
+        ctx.fillRect(0, (t * 300) % H, W, 2);
+      } else if (type === 'scan') {
+        for (let i = 0; i < 3; i++) {
+          const x = ((t * 500 + i * W / 3) % (W + 200)) - 100;
+          const g = ctx.createLinearGradient(x - 80, 0, x + 80, 0);
+          g.addColorStop(0, 'transparent');
+          g.addColorStop(0.5, color);
+          g.addColorStop(1, 'transparent');
+          ctx.fillStyle = g;
+          ctx.globalAlpha = 0.25;
+          ctx.fillRect(x - 80, 0, 160, H);
+        }
+        ctx.globalAlpha = 0.15;
+        ctx.fillStyle = color;
+        for (let y = 0; y < H; y += 6) ctx.fillRect(0, y, W, 1);
+      } else if (type === 'rays' || type === 'vortex') {
+        const n = 24;
+        ctx.save();
+        ctx.translate(W / 2, cy);
+        ctx.rotate(t * (type === 'vortex' ? -0.8 : 0.25));
+        for (let i = 0; i < n; i++) {
+          ctx.globalAlpha = type === 'vortex' ? 0.14 : 0.1;
+          ctx.rotate((Math.PI * 2) / n);
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          if (type === 'vortex') ctx.quadraticCurveTo(W * 0.3, W * 0.1, W * 0.7, 0);
+          else ctx.lineTo(W, -40);
+          ctx.lineTo(W, 40);
+          ctx.closePath();
+          ctx.fill();
+        }
+        ctx.restore();
+      } else if (type === 'reticles') {
+        ctx.lineWidth = 2;
+        parts.slice(0, 7).forEach((p, i) => {
+          const k = (t * 0.8 + p.t) % 1;
+          const r = 60 - k * 40;
+          ctx.globalAlpha = Math.sin(k * Math.PI);
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+          ctx.moveTo(p.x - r - 10, p.y);
+          ctx.lineTo(p.x + r + 10, p.y);
+          ctx.moveTo(p.x, p.y - r - 10);
+          ctx.lineTo(p.x, p.y + r + 10);
+          ctx.stroke();
+          if (k > 0.97) { p.x = rnd(0, W); p.y = rnd(0, H); }
+        });
+      } else if (type === 'bolts' || type === 'warp') {
+        ctx.lineCap = 'round';
+        for (const p of parts) {
+          if (type === 'warp') {
+            const a = p.a;
+            p.t = (p.t + 0.02 * p.v) % 1;
+            const d0 = p.t * W * 0.7;
+            ctx.globalAlpha = p.t;
+            ctx.lineWidth = 1 + p.t * 2;
+            ctx.beginPath();
+            ctx.moveTo(W / 2 + Math.cos(a) * d0, cy + Math.sin(a) * d0);
+            ctx.lineTo(W / 2 + Math.cos(a) * (d0 + 40 * p.t + 5), cy + Math.sin(a) * (d0 + 40 * p.t + 5));
+            ctx.stroke();
+          } else {
+            p.x += (p.a > Math.PI ? 1 : -1) * p.v * 14;
+            if (p.x > W + 40) p.x = -40;
+            if (p.x < -40) p.x = W + 40;
+            ctx.globalAlpha = 0.8;
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(p.x + 34, p.y);
+            ctx.stroke();
+          }
+        }
+      } else if (type === 'mist') {
+        for (let i = 0; i < 7; i++) {
+          const x = W / 2 + Math.cos(t * 0.6 + i) * W * 0.35;
+          const y = cy + Math.sin(t * 0.8 + i * 2) * H * 0.3;
+          const g = ctx.createRadialGradient(x, y, 0, x, y, 220);
+          g.addColorStop(0, color);
+          g.addColorStop(1, 'transparent');
+          ctx.fillStyle = g;
+          ctx.globalAlpha = 0.18;
+          ctx.fillRect(x - 220, y - 220, 440, 440);
+        }
+      } else if (type === 'hex') {
+        ctx.lineWidth = 1.5;
+        const r = 34;
+        for (let y = 0; y < H + r; y += r * 1.5) {
+          for (let x = 0; x < W + r; x += r * 1.73) {
+            const ox = (Math.round(y / (r * 1.5)) % 2) * r * 0.866;
+            const d = Math.hypot(x + ox - W / 2, y - cy);
+            ctx.globalAlpha = Math.max(0, Math.sin(d / 60 - t * 5)) * 0.5;
+            hex(x + ox, y, r * 0.9);
+            ctx.stroke();
+          }
+        }
+      } else if (type === 'slashes' || type === 'blasts') {
+        if (Math.random() < 0.12) bolts.push({ x: rnd(0, W), y: rnd(0, H), a: rnd(-0.6, 0.6), life: 0 });
+        bolts = bolts.filter((b) => (b.life += 0.04) < 1);
+        for (const b of bolts) {
+          ctx.globalAlpha = 1 - b.life;
+          if (type === 'blasts') {
+            ctx.beginPath();
+            ctx.arc(b.x, b.y, 10 + b.life * 90, 0, Math.PI * 2);
+            ctx.lineWidth = 4 * (1 - b.life);
+            ctx.stroke();
+          } else {
+            ctx.save();
+            ctx.translate(b.x, b.y);
+            ctx.rotate(b.a);
+            ctx.fillRect(-180 * Math.min(1, b.life * 3), -2, 360 * Math.min(1, b.life * 3), 4);
+            ctx.restore();
+          }
+        }
+      }
+      ctx.globalAlpha = 1;
+      requestAnimationFrame(frame);
+    };
+    requestAnimationFrame(frame);
+  }
+
   // Full-width banner sweeps across the screen with the member cards.
   let bannerChain = Promise.resolve();
   function synergyBanner(entry, defs, delay) {
@@ -643,6 +869,7 @@
         const cards = defs.slice(0, 5).map((d, i) => `<div class="syn-card" style="--i:${i}">${portrait(d, { plate: false })}</div>`).join('');
         const tierText = entry.need ? `${entry.count}/${entry.need} · ${entry.tier > 0 ? 'Tier ' + (entry.tier + 1) : 'Activated'}` : 'Activated';
         const node = el(`<div class="syn-banner ${epic ? 'epic' : ''}" style="--sc:${color}" role="status">
+          <canvas class="syn-fx" aria-hidden="true"></canvas>
           <div class="syn-band"></div>
           <div class="syn-sparks">${Array.from({ length: 18 }, (_, i) => `<i style="--k:${i}"></i>`).join('')}</div>
           <div class="syn-content">
@@ -667,6 +894,7 @@
         };
         node.addEventListener('click', finish);
         document.body.appendChild(node);
+        bannerFx($('.syn-fx', node), BANNER_FX[entry.key] || 'rays', color);
         setTimeout(finish, epic ? 3200 : 2300);
       }, delay || 0);
     }));
@@ -1292,5 +1520,5 @@
     });
   }
 
-  root.UI = { $, $$, el, esc, fmt, cur, portrait, stars, unitCard, toast, openModal, confirmBox, updateWallet, inspect, App, Screens };
+  root.UI = { $, $$, el, esc, fmt, cur, portrait, stars, unitCard, toast, openModal, confirmBox, updateWallet, inspect, synergyBanner, App, Screens };
 })(window);

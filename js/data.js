@@ -906,7 +906,7 @@
   const SYN_THEME = {
     droid: '#ffb03a', sith: '#ff2a2a', jedi: '#5ab4ff', rebel: '#ff8a4a', empire: '#b8c2cc', republic: '#8fd3ff', separatist: '#6a8aff',
     scoundrel: '#ffd23f', bounty: '#9fe07a', trooper: '#e6ecf5', native: '#8aa04a', leader: '#ffd23f', fighter: '#8fd3ff', bomber: '#ff9a3a',
-    gunship: '#b8c2cc', badbatch: '#9fe07a', nightsister: '#4ade80', healer: '#52e08a', tank: '#8fd3ff', attacker: '#ff6b6b', unity_light: '#ffe08a', unity_dark: '#ff3a3a', formation: '#8fd3ff', terrain: '#52e08a',
+    gunship: '#b8c2cc', badbatch: '#3b8bff', nightsister: '#4ade80', healer: '#52e08a', tank: '#8fd3ff', attacker: '#ff6b6b', unity_light: '#ffe08a', unity_dark: '#ff3a3a', formation: '#8fd3ff', terrain: '#52e08a',
   };
 
   // ---------- Planets ----------
