@@ -286,6 +286,19 @@
 
       this.currentUltimate = !!ab.ultimate;
       for (const eff of ab.effects) {
+        // Revive brings back the first fallen ally instead of targeting the living.
+        if (eff.type === 'revive') {
+          const fallen = this.units.find((u) => u.side === unit.side && !u.alive && u !== unit);
+          if (fallen) {
+            fallen.alive = true;
+            fallen.hp = Math.round(fallen.maxHp * eff.pct);
+            fallen.tm = 0;
+            fallen.statuses = {};
+            events.push({ type: 'revive', uid: fallen.uid, hp: fallen.hp });
+            events.push({ type: 'log', text: `${fallen.def.name} is back in the fight!`, side: unit.side });
+          }
+          continue;
+        }
         let recipients = targets;
         if (eff.on === 'self') recipients = [unit];
         else if (eff.on === 'allies') recipients = this.allies(unit);
@@ -324,7 +337,10 @@
       switch (eff.type) {
         case 'damage':
           for (let h = 0; h < eff.hits && target.alive; h++) {
-            const { amount, crit } = this.rollDamage(source, target, eff.mult);
+            // Execute: bonus damage against badly wounded targets.
+            const exec = eff.execute && target.hp / target.maxHp < eff.execute.below;
+            if (exec) events.push({ type: 'execute', uid: target.uid });
+            const { amount, crit } = this.rollDamage(source, target, eff.mult * (exec ? eff.execute.bonus : 1));
             this.applyDamage(target, amount, crit, events);
             if (source.mods.lifesteal > 0 && source.alive && source.hp < source.maxHp) {
               const heal = Math.min(source.maxHp - source.hp, Math.round(amount * source.mods.lifesteal));
@@ -355,8 +371,16 @@
           events.push({ type: 'status', uid: target.uid, status: eff.status, turns: eff.turns });
           break;
         }
+        case 'cleanse':
+        case 'dispel': {
+          const kind = eff.type === 'cleanse' ? 'debuff' : 'buff';
+          const removed = Object.keys(target.statuses).filter((k) => D.STATUS_INFO[k] && D.STATUS_INFO[k].kind === kind);
+          for (const k of removed) delete target.statuses[k];
+          if (removed.length) events.push({ type: eff.type, uid: target.uid, removed });
+          break;
+        }
         case 'tm':
-          target.tm = Math.min(200, target.tm + eff.amount);
+          target.tm = Math.max(0, Math.min(200, target.tm + eff.amount));
           events.push({ type: 'tm', uid: target.uid, amount: eff.amount });
           break;
         default:

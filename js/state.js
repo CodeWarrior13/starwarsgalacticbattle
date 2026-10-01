@@ -26,6 +26,7 @@
       account: { level: 1, xp: 0 },
       daily: { streak: 0, last: null, best: 0 },
       tower: { floor: 1, best: 0, runs: 0 },
+      secret: { found: false, beaten: {} },
     };
   }
 
@@ -72,6 +73,7 @@
           account: { ...base.account, ...loaded.account },
           daily: { ...base.daily, ...loaded.daily },
           tower: { ...base.tower, ...loaded.tower },
+          secret: { ...base.secret, ...loaded.secret, beaten: { ...(loaded.secret || {}).beaten } },
           bosses: { ...loaded.bosses },
         }
         : base;
@@ -180,7 +182,7 @@
     },
 
     collectable(kind) {
-      return D.UNITS.filter((u) => kind === 'any' || u.kind === kind);
+      return D.UNITS.filter((u) => !u.exclusive && (kind === 'any' || u.kind === kind));
     },
 
     rollRarity(odds, rng) {
@@ -262,7 +264,7 @@
 
     restock(now, rng) {
       const random = rng || Math.random;
-      const pool = D.UNITS.filter((u) => u.rarity !== 'common');
+      const pool = D.UNITS.filter((u) => u.rarity !== 'common' && !u.exclusive);
       const picks = [];
       while (picks.length < 5) {
         const rarity = weighted([{ r: 'rare', weight: 45 }, { r: 'epic', weight: 38 }, { r: 'legendary', weight: 17 }], random).r;
@@ -313,7 +315,7 @@
 
     newFlashSale(now, rng) {
       const random = rng || Math.random;
-      const legends = D.UNITS.filter((u) => u.rarity === 'legendary' || u.rarity === 'epic');
+      const legends = D.UNITS.filter((u) => (u.rarity === 'legendary' || u.rarity === 'epic') && !u.exclusive);
       const unit = legends[Math.floor(random() * legends.length)];
       const discount = [50, 60, 70][Math.floor(random() * 3)];
       const full = unit.rarity === 'legendary' ? 1800 : 1100;
@@ -493,6 +495,16 @@
     // ---------- Encounters ----------
     // params: { type: 'stage', kind, stage } or { type: 'boss', boss }
     encounter(params) {
+      if (params.type === 'secret') {
+        const enc = D.SECRET_BOSSES.find((b) => b.id === params.boss);
+        const minions = enc.minions.slice(0, Math.max(2, this.slots() - 1));
+        const half = Math.ceil(minions.length / 2);
+        return {
+          ...enc, type: 'secret', boss: enc.id, planet: 'mortis', stars: 7, enemyScale: D.SECRET_PLANET.enemyScale,
+          enemies: [...minions.slice(0, half), enc.id, ...minions.slice(half)],
+          label: `The Monolith · ${enc.side === 'light' ? 'Light' : 'Dark'} trial`,
+        };
+      }
       if (params.type === 'tower') {
         const t = this.state.tower;
         if (!t.seed) t.seed = 1 + Math.floor(Math.random() * 1e6);
@@ -556,6 +568,38 @@
       return this.planetComplete(enc.unlock);
     },
 
+    // Hidden zone: first victory over each boss grants its exclusive cards.
+    completeSecret(params, won, rng, slotsBefore) {
+      const enc = this.encounter(params);
+      if (!won) {
+        this.state.stats.battlesLost += 1;
+        const levelUps = this.gainXp(D.XP.loss);
+        this.save();
+        return { lost: true, xp: D.XP.loss, levelUps, newSlot: this.slots() > slotsBefore };
+      }
+      const spin = this.rollSpin(rng);
+      this.state.stats.bestSpin = Math.max(this.state.stats.bestSpin, spin.mult);
+      this.state.stats.battlesWon += 1;
+      const first = !this.state.secret.beaten[enc.id];
+      this.state.secret.beaten[enc.id] = (this.state.secret.beaten[enc.id] || 0) + 1;
+      const r = D.SECRET_REWARD(first);
+      const cards = first ? enc.rewards.map((id) => this.grantCard(id, false)) : [];
+      const out = { base: r.credits, crystals: r.crystals, aurodium: r.aurodium, firstClear: first, card: cards[0] || null, cards, secret: true, mult: spin.mult, table: spin.table, loaded: spin.loaded };
+      out.credits = Math.round(out.base * spin.mult);
+      out.xp = D.XP.boss(enc.level);
+      out.levelUps = this.gainXp(out.xp);
+      out.newSlot = this.slots() > slotsBefore;
+      this.state.credits += out.credits;
+      this.state.crystals += out.crystals;
+      this.state.aurodium += out.aurodium;
+      this.save();
+      return out;
+    },
+
+    secretUnlocked(id) {
+      return D.SECRET_BOSSES.some((b) => b.rewards.includes(id) && this.state.secret.beaten[b.id]);
+    },
+
     // Endless Tower: climb on a win, fall back to the checkpoint on a loss.
     completeTower(params, won, rng, slotsBefore) {
       const t = this.state.tower;
@@ -594,6 +638,7 @@
     completeEncounter(params, won, rng) {
       const slotsBefore = this.slots();
       if (params.type === 'tower') return this.completeTower(params, won, rng, slotsBefore);
+      if (params.type === 'secret') return this.completeSecret(params, won, rng, slotsBefore);
       if (!won) {
         this.state.stats.battlesLost += 1;
         const levelUps = this.gainXp(D.XP.loss);
@@ -613,7 +658,7 @@
         this.state.bosses[enc.id] = (this.state.bosses[enc.id] || 0) + 1;
         let card = null;
         if (r.card) {
-          const pool = D.UNITS.filter((u) => u.kind === enc.kind && (u.rarity === 'epic' || u.rarity === 'legendary'));
+          const pool = D.UNITS.filter((u) => u.kind === enc.kind && !u.exclusive && (u.rarity === 'epic' || u.rarity === 'legendary'));
           const pick = pool[Math.floor((rng || Math.random)() * pool.length)];
           card = this.grantCard(pick.id, false);
         }

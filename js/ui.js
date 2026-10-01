@@ -47,7 +47,25 @@
     return `<span class="stars" aria-label="${n} stars">${s}</span>`;
   }
 
+  // Exclusive cards stay a mystery until their guardian falls.
+  const SECRET_WHISPER = 'They say the hooded one at the night market answers only to five knocks.';
+  function secretHint(def) {
+    const b = D.SECRET_BOSSES.find((x) => x.rewards.includes(def.id));
+    return b ? b.hint : '';
+  }
+  function mysteryCard(def, opts = {}) {
+    const tag = opts.tag || 'button';
+    return `<${tag} class="ucard mystery ${def.faction === 'dark' ? 'dark' : 'light'}" data-id="${def.id}" ${tag === 'button' ? 'type="button" aria-label="Undiscovered card"' : ''}>
+      <div class="portrait mystery-art"><svg viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" fill="#06040e"/><circle cx="50" cy="46" r="30" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="3 4"/><text x="50" y="60" text-anchor="middle" font-size="44" font-weight="800" fill="currentColor" font-family="Oxanium, sans-serif">?</text></svg><span class="nameplate">???</span></div>
+      <div class="ucard-body">
+        <div class="ucard-meta"><span class="rar">Undiscovered</span><span>${def.kind === 'ship' ? 'Ship' : 'Hero'}</span></div>
+        <span class="mystery-hint">${esc(secretHint(def))}</span>
+      </div>
+    </${tag}>`;
+  }
+
   function unitCard(def, opts = {}) {
+    if (def.exclusive && !Player.owns(def.id)) return mysteryCard(def, opts);
     const owned = opts.owned != null ? opts.owned : Player.owns(def.id);
     const u = owned ? Player.unit(def.id) : null;
     const level = opts.level || (u ? u.level : 1);
@@ -769,7 +787,7 @@
     }
 
     v.addEventListener('click', (e) => {
-      if (e.target.closest('[data-back]')) return App.go('home');
+      if (e.target.closest('[data-back]')) return App.go(params.type === 'secret' ? 'secret' : 'home');
       if (e.target.closest('[data-auto-build]')) {
         squad = Player.autoSquad(kind);
         toast('Auto-built your strongest squad.');
@@ -1267,6 +1285,18 @@
   // arrows: left page shows stats, right page shows upgrades.
   function inspect(id, onChange) {
     const def = D.UNIT_MAP[id];
+    if (def.exclusive && !Player.owns(id)) {
+      const m = openModal(`<div class="mystery-modal ${def.faction === 'dark' ? 'dark' : 'light'}">
+        <p class="eyebrow">Undiscovered ${def.kind === 'ship' ? 'ship' : 'hero'} · ${def.faction === 'dark' ? 'Dark Side' : 'Light Side'}</p>
+        <h2>???</h2>
+        <div class="mystery-big">?</div>
+        <p>${esc(secretHint(def))}</p>
+        <p class="muted small"><i>${esc(SECRET_WHISPER)}</i></p>
+        <div class="modal-actions"><button class="btn" type="button" data-close>Close</button></div>
+      </div>`, { small: true });
+      m.root.addEventListener('click', (e) => { if (e.target.closest('[data-close]')) m.close(); });
+      return;
+    }
     let page = 1;
     let flipped = false;
 
@@ -1533,6 +1563,82 @@
     }, motionOK() ? 900 : 0);
   }
 
+  // Five knocks on the merchant in quick succession open the way to the Monolith.
+  const knocks = { n: 0, last: 0 };
+  function knock(node) {
+    const now = performance.now();
+    if (now - knocks.last > 2200) knocks.n = 0;
+    knocks.n += 1;
+    knocks.last = now;
+    node.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-2px)' }, { transform: 'translateX(2px)' }, { transform: 'translateX(0)' }], { duration: 160 });
+    if (knocks.n === 5) {
+      knocks.n = 0;
+      enterSecret();
+    }
+  }
+
+  function enterSecret() {
+    Player.state.secret.found = true;
+    Player.save();
+    if (root.Sound) { root.Sound.play('glitch'); root.Sound.play('ult'); }
+    if (!motionOK()) return App.go('secret');
+    const lines = ['› Unknown signal intercepted', '› Coordinates match no star chart', '› Plotting a course beyond the map…', '› Arriving: The Monolith'];
+    const node = el(`<div class="secret-load" role="status" aria-live="polite">
+      <canvas class="sl-warp"></canvas>
+      <div class="sl-box">
+        <div class="sl-sigil"><i></i><i></i></div>
+        <div class="sl-lines">${lines.map((l, i) => `<p style="--i:${i}">${esc(l)}</p>`).join('')}</div>
+        <div class="sl-bar"><i></i></div>
+      </div>
+    </div>`);
+    document.body.appendChild(node);
+    hyperspace($('.sl-warp', node), '#c8a8ff');
+    setTimeout(() => {
+      node.classList.add('out');
+      App.go('secret');
+      setTimeout(() => node.remove(), 600);
+    }, 3600);
+  }
+
+  Screens.secret = function () {
+    const sec = Player.state.secret;
+    const bossCard = (b) => {
+      const def = D.UNIT_MAP[b.id];
+      const wins = sec.beaten[b.id] || 0;
+      const rewards = b.rewards.map((id) => D.UNIT_MAP[id]);
+      return `<button class="secret-boss ${b.side}" type="button" data-secret="${b.id}">
+        <span class="sb-art">${Art.unitArt(def)}</span>
+        <span class="sb-body">
+          <span class="eyebrow">${b.side === 'light' ? 'Trial of Light' : 'Trial of Shadow'} · Lv ${b.level} · 7★</span>
+          <h3>${esc(b.name)}</h3>
+          <span class="muted">${esc(def.name)}</span>
+          <span class="sb-rewards">${rewards.map((r) => (wins ? `<span class="sb-reward got">${miniPortrait(r)} ${esc(r.name)}</span>` : `<span class="sb-reward">??? ${r.kind === 'ship' ? 'ship' : 'hero'}</span>`)).join('')}</span>
+          <span class="sb-status">${wins ? `Defeated ${wins}× · rewards claimed` : esc(b.hint)}</span>
+        </span>
+      </button>`;
+    };
+    const light = D.SECRET_BOSSES.filter((b) => b.side === 'light');
+    const dark = D.SECRET_BOSSES.filter((b) => b.side === 'dark');
+    const v = el(`<section class="view secret-zone">
+      <div class="secret-hero"><canvas data-secret-env></canvas>
+        <div class="secret-title"><p class="eyebrow">Beyond the map</p><h1>The Monolith</h1><p>${esc(D.SECRET_PLANET.blurb)} Four guardians keep what cannot be found anywhere else.</p></div>
+        <button class="btn" type="button" data-leave>Leave</button>
+      </div>
+      <div class="secret-grid">
+        <div class="secret-side light"><h2>☀ The Light</h2>${light.map(bossCard).join('')}</div>
+        <div class="secret-side dark"><h2>☾ The Dark</h2>${dark.map(bossCard).join('')}</div>
+      </div>
+      <p class="muted small">Terrain: ${esc(D.SECRET_PLANET.terrain.name)}. ${esc(D.SECRET_PLANET.terrain.desc)} Hazard: ${esc(D.SECRET_PLANET.hazard.desc)}</p>
+    </section>`);
+    requestAnimationFrame(() => { const c = $('[data-secret-env]', v); if (c) new root.Env(c, 'mortis', 'ground'); });
+    v.addEventListener('click', (e) => {
+      if (e.target.closest('[data-leave]')) return App.go('market');
+      const b = e.target.closest('[data-secret]');
+      if (b) App.go('squad', { type: 'secret', boss: b.dataset.secret });
+    });
+    return v;
+  };
+
   Screens.market = function () {
     const s = Player.state;
     const luck = s.luck;
@@ -1545,7 +1651,7 @@
 
     const v = el(`<section class="view market">
       <div class="market-hero">
-        <div class="market-merchant">${Art.merchantArt()}</div>
+        <div class="market-merchant" data-merchant>${Art.merchantArt()}</div>
         <div class="market-copy">
           <p class="neon">SMUGGLER'S MOON</p>
           <h1>Nar Shaddaa Night Market</h1>
@@ -1653,6 +1759,7 @@
 
     startCountdowns(v);
     v.addEventListener('click', (e) => {
+      if (e.target.closest('[data-merchant]')) return knock(e.target.closest('[data-merchant]'));
       if (e.target.closest('[data-claim-daily]')) return claimDailyFx(v);
       const p = e.target.closest('[data-pack]');
       if (p) {
@@ -1930,6 +2037,7 @@
     vader: 'mustafar', lord_vader: 'mustafar', darth_revan: 'exegol', starkiller: 'coruscant_siege', palpatine: 'exegol', kylo_ren: 'exegol', rey: 'exegol',
     k2so: 'scarif', death_trooper: 'scarif', tarkin: 'scarif', thrawn: 'scarif', grievous: 'geonosis', count_dooku: 'geonosis', b2_droid: 'geonosis', droideka: 'geonosis', battle_droid: 'geonosis', magnaguard: 'geonosis',
     mace_windu: 'coruscant', ahsoka: 'coruscant', clone_trooper: 'coruscant', hunter: 'coruscant', wrecker: 'coruscant', tech: 'coruscant', crosshair: 'coruscant', echo: 'coruscant', barriss: 'coruscant',
+    the_daughter: 'mortis', temple_guardian: 'mortis', the_son: 'mortis', darth_bane: 'mortis', ebon_hawk: 'mortis', sith_fury: 'mortis', arc_170: 'coruscant', delta7: 'coruscant', tie_defender: 'scarif', tie_silencer: 'exegol',
     anakin: 'mustafar', qui_gon: 'tatooine', padme: 'geonosis', lando: 'bespin', jango_fett: 'geonosis', asajj_ventress: 'mustafar', cad_bane: 'tatooine', moff_gideon: 'tatooine', n1_starfighter: 'coruscant', sith_infiltrator: 'tatooine',
     talzin: 'mustafar', nightsister_acolyte: 'mustafar', grand_inquisitor: 'coruscant_siege', second_sister: 'coruscant_siege', fifth_brother: 'coruscant_siege', seventh_sister: 'coruscant_siege', eighth_brother: 'coruscant_siege',
   };
@@ -1978,7 +2086,8 @@
       const ship = def.kind === 'ship';
       const planet = homeworldOf(def);
       const side = def.faction === 'light';
-      const stepMs = [430, 520, 650, 850, 1000][tier];
+      // ~8.5s total (9s for Mythic): three readable beats, then the card and its stats.
+      const stepMs = 1400;
       const steps = [
         { kicker: 'Allegiance', big: side ? 'Light Side' : 'Dark Side', icon: `<span class="wo-saber" style="--sc:${side ? '#4aa8ff' : '#ff2a2a'}"></span>`, tone: side ? '#4aa8ff' : '#ff2a2a' },
         { kicker: ship ? 'Starship class' : 'Class', big: ROLE_NAMES[def.role] || def.role, icon: `<span class="wo-role">${D.ROLE_ICONS[def.role] || '✦'}</span>`, tone: R_COLOR[rarity] },
@@ -1993,6 +2102,13 @@
           ${mythic ? '<canvas class="br-bolts"></canvas>' : ''}
           ${ship ? `<div class="wo-ship">${Art.shipOnly(def)}</div>` : ''}
           <div class="br-card">${unitCard(def, { tag: 'div', hideShards: true, holo })}</div>
+          <div class="wo-stats">${(() => {
+            const own = Player.unit(def.id) || { level: 1, stars: 1 };
+            const st = D.unitStats(def, own.level, own.stars);
+            return [['Health', st.hp, '#52e08a'], ['Attack', st.atk, '#ff6b6b'], ['Armor', st.def, '#5ab4ff'], ['Speed', st.spd, '#ffd23f']]
+              .map(([l, v, c], k) => `<div class="wo-stat" style="--k:${k};--c:${c}"><span>${l}</span><b data-count="${Math.round(v)}">0</b></div>`).join('')
+              + `<div class="wo-stat power" style="--k:4;--c:var(--rc)"><span>Power</span><b data-count="${D.power(def, own.level, own.stars)}">0</b></div>`;
+          })()}</div>
           <div class="br-text"><span class="br-kicker">${mythic ? 'You found something that should not exist' : ['New recruit', 'Rare recruit', 'Epic recruit', 'A legend joins your cause'][tier]}</span><b class="br-rarity" data-text="${D.RARITIES[rarity].label.toUpperCase()}">${D.RARITIES[rarity].label.toUpperCase()}</b><span class="br-name">${esc(def.name)}</span></div>
           ${Array.from({ length: 10 + tier * 8 }, (_, i) => `<i class="br-spark" style="--a:${(i * 137.5) % 360}deg;--d:${(Math.random() * 0.5).toFixed(2)}s;--r:${30 + Math.random() * 30}vmax"></i>`).join('')}
         </div>
@@ -2012,6 +2128,15 @@
         box.innerHTML = '';
         node.classList.add('final');
         if (root.Sound) root.Sound.play(`reveal_${rarity}`);
+        // Stats pop up one by one and count up so they can be read.
+        $$('.wo-stat b', node).forEach((b, k) => setTimeout(() => {
+          if (!node.isConnected) return;
+          const to = Number(b.dataset.count);
+          const t0 = performance.now();
+          const tick = (now) => { const q = Math.min(1, (now - t0) / 700); b.textContent = fmt(Math.round(to * (1 - Math.pow(1 - q, 3)))); if (q < 1) requestAnimationFrame(tick); };
+          requestAnimationFrame(tick);
+          if (root.Sound) root.Sound.play('click');
+        }, 1100 + k * 380));
         if (mythic) {
           const cv = $('.br-bolts', node);
           const W = (cv.width = innerWidth);
@@ -2037,7 +2162,7 @@
           };
           requestAnimationFrame(step);
         }
-        timer = setTimeout(close, [1300, 1600, 2000, 2400, 3000][tier]);
+        timer = setTimeout(close, mythic ? 5000 : 4400);
       };
       const next = () => {
         if (i >= steps.length) return showFinal();
@@ -2068,7 +2193,7 @@
         setTimeout(() => { node.remove(); resolve(); }, 380);
       };
       node.addEventListener('click', () => (node.classList.contains('final') ? close() : showFinal()));
-      timer = setTimeout(next, 250);
+      timer = setTimeout(next, 300);
     });
   }
 
@@ -2078,21 +2203,39 @@
     const cards = results.map((r, i) => {
       const def = D.UNIT_MAP[r.id];
       const tag = r.isNew ? '<span class="reveal-tag">NEW!</span>' : `<span class="reveal-tag dup">+${r.shards} shards</span>`;
-      return `<div class="flip glow-${def.rarity} r-${def.rarity} side-${def.faction} ${r.holo ? 'is-holo' : ''}" style="--rc:${R_COLOR[def.rarity]};--i:${i};--fc:${def.faction === 'dark' ? '#ff2a3a' : '#5ab4ff'}" data-i="${i}" tabindex="0" role="button" aria-label="Reveal card">
+      return `<div class="flip glow-${def.rarity} r-${def.rarity} side-${def.faction} ${r.holo ? 'is-holo' : ''} ${i > 0 ? 'locked-card' : ''}" style="--rc:${R_COLOR[def.rarity]};--i:${i};--fc:${def.faction === 'dark' ? '#ff2a3a' : '#5ab4ff'}" data-i="${i}" tabindex="0" role="button" aria-label="${i > 0 ? `Card ${i + 1}, locked` : 'Reveal card'}">
+        ${i > 0 ? `<div class="card-lock"><span>🔒</span><b>Card ${i + 1}</b></div>` : ''}
         <div class="flip-face flip-back">${Art.cardBack(def.faction)}</div>
         <div class="flip-face flip-front">${tag}${r.holo ? '<span class="holo-tag">HOLO</span>' : ''}${r.pity ? '<span class="holo-tag pity">PITY</span>' : ''}${unitCard(def, { tag: 'div', hideShards: true, holo: r.holo })}</div>
       </div>`;
     }).join('');
     const m = openModal(`
-      <div style="text-align:center"><p class="eyebrow">${packId ? 'Crate cracked open' : 'Delivery from Vekko'}</p><h2>Tap each card to reveal</h2><p class="muted small">The glow behind a card hints at what's inside.</p></div>
+      <div style="text-align:center"><p class="eyebrow">${packId ? 'Crate cracked open' : 'Delivery from Vekko'}</p><h2 data-reveal-title>${results.length > 1 ? `Card 1 of ${results.length}: tap to reveal` : 'Tap to reveal'}</h2><p class="muted small">The glow behind a card hints at what's inside.</p></div>
       <div class="reveal-row">${cards}</div>
       <div class="modal-actions" style="justify-content:center">
-        <button class="btn" type="button" data-all>Reveal all</button>
-        <button class="btn btn-primary" type="button" data-done>Done</button>
+        <button class="btn btn-primary" type="button" data-next-card hidden>Continue</button>
+        <button class="btn btn-primary" type="button" data-done hidden>Done</button>
       </div>`, { onClose: () => App.refresh(), cls: `reveal-modal best-${best}` });
+    // One card at a time: the next unlocks only after the current reveal and a Continue.
+    let current = 0;
+    const title = $('[data-reveal-title]', m.root);
+    const nextBtn = $('[data-next-card]', m.root);
+    const doneBtn = $('[data-done]', m.root);
+    const afterReveal = (i) => {
+      if (i < results.length - 1) {
+        nextBtn.hidden = false;
+        nextBtn.textContent = `Continue · Card ${i + 2} of ${results.length}`;
+        title.textContent = 'Ready for the next card?';
+        nextBtn.focus();
+      } else {
+        doneBtn.hidden = false;
+        title.textContent = results.length > 1 ? 'All cards revealed' : 'Card revealed';
+        doneBtn.focus();
+      }
+    };
     let busy = Promise.resolve();
     const flip = (f) => {
-      if (f.classList.contains('flipped') || f.classList.contains('charging')) return busy;
+      if (f.classList.contains('flipped') || f.classList.contains('charging') || f.classList.contains('locked-card') || Number(f.dataset.i) !== current) return busy;
       const r = results[Number(f.dataset.i)];
       const def = D.UNIT_MAP[r.id];
       const tier = R_ORDER[def.rarity];
@@ -2128,13 +2271,26 @@
         await walkout(def, def.rarity, r.holo);
         if (r.holo) toast('HOLO card! Double value.');
         await new Promise((res) => setTimeout(res, 120));
+        afterReveal(Number(f.dataset.i));
       });
       return busy;
     };
     m.root.addEventListener('click', (e) => {
       const f = e.target.closest('.flip');
       if (f) flip(f);
-      if (e.target.closest('[data-all]')) $$('.flip', m.root).forEach((x) => flip(x));
+      if (e.target.closest('[data-next-card]')) {
+        nextBtn.hidden = true;
+        current += 1;
+        const nf = $(`.flip[data-i="${current}"]`, m.root);
+        nf.classList.remove('locked-card');
+        nf.setAttribute('aria-label', 'Reveal card');
+        const lock = $('.card-lock', nf);
+        if (lock) lock.remove();
+        title.textContent = `Card ${current + 1} of ${results.length}`;
+        nf.scrollIntoView({ block: 'center', behavior: motionOK() ? 'smooth' : 'auto' });
+        nf.animate([{ transform: 'translateY(-30px) scale(.9)', opacity: 0.4 }, { transform: 'none', opacity: 1 }], { duration: 450, easing: 'cubic-bezier(.2,.9,.3,1.2)' });
+        setTimeout(() => flip(nf), 500);
+      }
       if (e.target.closest('[data-done]')) m.close();
     });
     m.root.addEventListener('keydown', (e) => {
@@ -2145,5 +2301,5 @@
     });
   }
 
-  root.UI = { soundSettings, homeworldOf, $, $$, el, esc, fmt, cur, portrait, stars, unitCard, toast, openModal, confirmBox, updateWallet, inspect, synergyBanner, App, Screens };
+  root.UI = { walkout, soundSettings, homeworldOf, $, $$, el, esc, fmt, cur, portrait, stars, unitCard, toast, openModal, confirmBox, updateWallet, inspect, synergyBanner, App, Screens };
 })(window);

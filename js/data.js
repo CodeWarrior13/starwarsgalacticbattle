@@ -36,6 +36,11 @@
   const buff = (status, turns) => ({ type: 'status', status, turns, chance: 1 });
   const debuff = (status, turns, chance) => ({ type: 'status', status, turns, chance: chance == null ? 1 : chance });
   const tm = (amount) => ({ type: 'tm', amount });
+  const revive = (pct) => ({ type: 'revive', pct });
+  const cleanse = () => ({ type: 'cleanse' });
+  const dispel = () => ({ type: 'dispel' });
+  // Damage that hits harder against targets below a health threshold.
+  const execute = (mult, below, bonus) => ({ type: 'damage', mult, hits: 1, execute: { below, bonus } });
 
   // target: enemy | allEnemies | ally | allAllies | self
   // Effects apply to the ability's target(s) unless `on: 'self'` or `on: 'allies'` is set.
@@ -608,6 +613,80 @@
       ],
     },
 
+    // ---------- Wave 7: new starfighter classes ----------
+    {
+      id: 'arc_170', name: 'ARC-170 Starfighter', kind: 'ship', faction: 'light', rarity: 'epic', role: 'attacker', shape: 'arc170', spd: 146,
+      abilities: [
+        { name: 'Twin Laser Cannons', cd: 0, target: 'enemy', effects: [dmg(1.1)], desc: 'Deal damage to one enemy.' },
+        { name: 'Tail Gunner', cd: 3, target: 'allEnemies', effects: [dmg(0.7), dispel()], desc: 'Damage all enemies and strip their buffs.' },
+      ],
+    },
+    {
+      id: 'delta7', name: 'Jedi Starfighter', kind: 'ship', faction: 'light', rarity: 'epic', role: 'support', shape: 'delta7', spd: 160,
+      abilities: [
+        { name: 'Laser Burst', cd: 0, target: 'enemy', effects: [dmg(1.0)], desc: 'Deal damage to one enemy.' },
+        { name: 'Astromech Repair', cd: 3, target: 'allAllies', effects: [heal(0.15), cleanse()], desc: 'All allies heal 15% and lose their debuffs.' },
+      ],
+    },
+    {
+      id: 'tie_defender', name: 'TIE Defender', kind: 'ship', faction: 'dark', rarity: 'legendary', role: 'attacker', shape: 'tiedefender', spd: 158,
+      abilities: [
+        { name: 'Ion Cannons', cd: 0, target: 'enemy', effects: [dmg(1.15), debuff('offDown', 2, 0.3)], desc: 'Deal damage with a 30% chance of Offense Down.' },
+        { name: 'Tractor Lock', cd: 3, target: 'enemy', effects: [dmg(1.4), debuff('stun', 1, 0.5)], desc: 'Deal damage with a 50% chance to Stun.' },
+      ],
+    },
+    {
+      id: 'tie_silencer', name: 'TIE Silencer', kind: 'ship', faction: 'dark', rarity: 'epic', role: 'attacker', shape: 'tiesilencer', spd: 154,
+      abilities: [
+        { name: 'Heavy Laser', cd: 0, target: 'enemy', effects: [dmg(1.25)], desc: 'Deal damage to one enemy.' },
+        { name: 'Hunt the Wounded', cd: 3, target: 'enemy', effects: [execute(1.3, 0.4, 2)], desc: 'Deal damage; double damage against targets under 40% HP.' },
+      ],
+    },
+
+    // ---------- Secret: earned only in the hidden zone ----------
+    {
+      id: 'the_daughter', name: 'The Daughter', kind: 'character', faction: 'light', rarity: 'legendary', role: 'healer', exclusive: true, accent: '#9fe0ff', spd: 150,
+      abilities: [
+        { name: 'Radiant Touch', cd: 0, target: 'enemy', effects: [dmg(1.0), { ...heal(0.08), on: 'allies' }], desc: 'Deal damage; all allies heal 8%.' },
+        { name: 'Light of Mortis', cd: 3, target: 'allAllies', effects: [heal(0.3), cleanse()], desc: 'All allies heal 30% and lose their debuffs.' },
+      ],
+    },
+    {
+      id: 'temple_guardian', name: 'Temple Guardian Prime', kind: 'character', faction: 'light', rarity: 'legendary', role: 'tank', exclusive: true, accent: '#ffd23f', spd: 126,
+      abilities: [
+        { name: 'Pike Sweep', cd: 0, target: 'enemy', effects: [dmg(1.05), { ...buff('defUp', 1), on: 'self' }], desc: 'Deal damage and gain Defense Up.' },
+        { name: 'Sworn Vigil', cd: 3, target: 'self', effects: [buff('taunt', 2), buff('defUp', 2), heal(0.15)], desc: 'Gain Taunt and Defense Up, heal 15%.' },
+      ],
+    },
+    {
+      id: 'the_son', name: 'The Son', kind: 'character', faction: 'dark', rarity: 'legendary', role: 'attacker', exclusive: true, accent: '#ff3a3a', spd: 156,
+      abilities: [
+        { name: 'Shadow Talon', cd: 0, target: 'enemy', effects: [dmg(1.2), dispel()], desc: 'Deal damage and strip the target\'s buffs.' },
+        { name: 'Corruption', cd: 3, target: 'allEnemies', effects: [dmg(0.85), debuff('offDown', 2), debuff('burn', 2, 0.5)], desc: 'Damage all enemies, inflict Offense Down and a 50% chance to Burn.' },
+      ],
+    },
+    {
+      id: 'darth_bane', name: 'Darth Bane', kind: 'character', faction: 'dark', rarity: 'legendary', role: 'attacker', exclusive: true, accent: '#c8323a', spd: 140,
+      abilities: [
+        { name: 'Orbalisk Strike', cd: 0, target: 'enemy', effects: [dmg(1.3), { ...heal(0.05), on: 'self' }], desc: 'Deal damage and heal 5%.' },
+        { name: 'Thought Bomb', cd: 4, target: 'allEnemies', effects: [execute(1.0, 0.35, 2.2)], desc: 'Damage all enemies; heavy bonus damage to targets under 35% HP.' },
+      ],
+    },
+    {
+      id: 'ebon_hawk', name: 'The Ebon Hawk', kind: 'ship', faction: 'light', rarity: 'legendary', role: 'support', exclusive: true, shape: 'ebonhawk', spd: 156,
+      abilities: [
+        { name: 'Dorsal Turrets', cd: 0, target: 'enemy', effects: [dmg(0.6, 2)], desc: 'Hit one enemy twice.' },
+        { name: 'Evasive Jump', cd: 3, target: 'allAllies', effects: [cleanse(), buff('defUp', 2), tm(20)], desc: 'All allies lose debuffs, gain Defense Up and 20% Turn Meter.' },
+      ],
+    },
+    {
+      id: 'sith_fury', name: 'Sith Fury Interceptor', kind: 'ship', faction: 'dark', rarity: 'legendary', role: 'attacker', exclusive: true, shape: 'sithfury', spd: 158,
+      abilities: [
+        { name: 'Fury Cannons', cd: 0, target: 'enemy', effects: [dmg(1.2)], desc: 'Deal damage to one enemy.' },
+        { name: 'Wing Blades', cd: 3, target: 'allEnemies', effects: [dmg(0.8), dispel()], desc: 'Damage all enemies and strip their buffs.' },
+      ],
+    },
+
     // ---------- Mythic: crate-only, almost never drop ----------
     {
       id: 'darth_revan', name: 'Darth Revan', kind: 'character', faction: 'dark', rarity: 'mythic', role: 'attacker', accent: '#c23bff', spd: 158,
@@ -711,6 +790,16 @@
     moff_gideon: U('The Darksaber', 'allEnemies', [dmg(1.7), debuff('defDown', 2), debuff('stun', 1, 0.3)], 'His cruiser fires on the enemy line: heavy damage, Defense Down, 30% Stun chance.', 'You have something I want.'),
     n1_starfighter: U('Shields Up, Spin Away', 'allEnemies', [dmg(1.5), { ...tm(25), on: 'self' }], 'A golden strafing run hits every enemy; gain 25% Turn Meter.', 'Now this is podracing!'),
     sith_infiltrator: U('Scimitar Strike', 'allEnemies', [dmg(1.6), debuff('stun', 1, 0.4)], 'Seeker droids pour from the cloaked hull: damage all enemies, 40% Stun chance.', 'At last we will reveal ourselves to the Jedi.'),
+    arc_170: U('Clone Squadron Sweep', 'allEnemies', [dmg(1.5), dispel(), debuff('offDown', 2)], 'A squadron sweep strips every enemy buff and inflicts Offense Down.', 'Fox Squadron, form up!'),
+    delta7: U('Force-Guided Run', 'allAllies', [cleanse(), heal(0.25), buff('defUp', 2), tm(40)], 'All allies are cleansed, heal 25%, gain Defense Up and 40% Turn Meter.', 'Let the Force guide you.'),
+    tie_defender: U('Elite Squadron', 'allEnemies', [execute(1.5, 0.35, 2.2), debuff('defDown', 2)], 'Damage all enemies with massive bonus damage to anyone under 35% HP; Defense Down.', 'The Empire\'s finest.'),
+    tie_silencer: U('First Order Hunt', 'enemy', [execute(2.6, 0.5, 1.8), dispel()], 'Devastating strike that hits far harder below 50% HP, and strips buffs.', 'Show me the boy.'),
+    the_daughter: U('Dawn of Mortis', 'allAllies', [revive(0.5), heal(0.35), cleanse(), tm(30)], 'Bring a fallen ally back at 50% HP; all allies heal 35%, are cleansed and gain 30% Turn Meter.', 'There is still light in you.'),
+    temple_guardian: U('Eternal Watch', 'allEnemies', [dmg(1.4), debuff('stun', 1, 0.5), { ...buff('taunt', 3), on: 'self' }, { ...buff('defUp', 3), on: 'allies' }], 'Damage all enemies with a 50% Stun chance; gain Taunt; allies gain Defense Up.', 'None shall pass the temple doors.'),
+    the_son: U('Nightfall', 'allEnemies', [dmg(2.0), dispel(), debuff('defDown', 2), debuff('stun', 1, 0.4)], 'Strips every enemy buff, deals heavy damage, Defense Down and a 40% Stun chance.', 'The dark side is the only path.'),
+    darth_bane: U('Rule of Two', 'allEnemies', [execute(1.8, 0.4, 2), debuff('burn', 2)], 'Heavy damage to all enemies, doubled under 40% HP, and Burn.', 'One to embody the power, the other to crave it.'),
+    ebon_hawk: U('Hawk\'s Escape', 'allAllies', [revive(0.4), heal(0.3), buff('offUp', 2), tm(30)], 'Pull a fallen ally back at 40% HP; all allies heal 30%, gain Offense Up and 30% Turn Meter.', 'Fastest hunk of junk in the Old Republic.'),
+    sith_fury: U('Imperial Talon', 'allEnemies', [execute(1.6, 0.35, 2), dispel(), debuff('offDown', 2)], 'Strip every enemy buff and strike hard, doubled under 35% HP; Offense Down.', 'For the Sith Empire.'),
     darth_revan: U('Mandalorian Wars', 'allEnemies', [dmg(2.3), debuff('defDown', 2), debuff('stun', 1, 0.5)], 'Twin blades carve every enemy: heavy damage, Defense Down and a 50% chance to Stun.', 'I am Revan. I have conquered death itself.'),
     starkiller: U('Unleashed', 'allEnemies', [dmg(2.4), debuff('stun', 1, 0.6)], 'Pull a Star Destroyer out of the sky onto every enemy: devastating damage, 60% Stun chance.', 'I will be your enemy no longer.'),
     master_luke: U('Binary Sunset', 'allAllies', [heal(0.45), buff('offUp', 3), buff('defUp', 3), tm(60)], 'All allies heal 45%, gain Offense Up, Defense Up and 60% Turn Meter.', 'No one\'s ever really gone.'),
@@ -746,6 +835,47 @@
   // Bosses are not collectable. They get big stat multipliers, are immune to
   // Stun, and become Enraged (permanent Offense Up + full ultimate) below 50% HP.
   const BOSSES = [
+    // ---------- The hidden zone ----------
+    {
+      id: 'boss_daughter', name: 'The Daughter', kind: 'character', faction: 'light', rarity: 'legendary', role: 'healer', spd: 150,
+      boss: { hp: 9, atk: 1.15, def: 1.3 },
+      abilities: [
+        { name: 'Radiant Lance', cd: 0, target: 'enemy', effects: [dmg(1.3)], desc: 'Deal damage to one enemy.' },
+        { name: 'Light of Mortis', cd: 3, target: 'allAllies', effects: [heal(0.18), cleanse()], desc: 'All allies heal 18% and are cleansed.' },
+        { name: 'Blinding Dawn', cd: 4, target: 'allEnemies', effects: [dmg(0.9), debuff('offDown', 2)], desc: 'Damage all enemies and inflict Offense Down.' },
+      ],
+      ultimate: U('Dawn of Mortis', 'allEnemies', [dmg(1.7), debuff('stun', 1, 0.4), { ...heal(0.2), on: 'allies' }], 'A blinding dawn damages every enemy; her allies heal 20%.', 'There is still light in you.'),
+    },
+    {
+      id: 'boss_guardian', name: 'Temple Guardian Prime', kind: 'character', faction: 'light', rarity: 'legendary', role: 'tank', spd: 128,
+      boss: { hp: 12, atk: 1.15, def: 1.6 },
+      abilities: [
+        { name: 'Pike Sweep', cd: 0, target: 'enemy', effects: [dmg(1.35)], desc: 'Deal damage to one enemy.' },
+        { name: 'Sworn Vigil', cd: 3, target: 'self', effects: [buff('taunt', 2), buff('defUp', 2), heal(0.08)], desc: 'Gain Taunt, Defense Up and heal 8%.' },
+        { name: 'Spinning Pike', cd: 4, target: 'allEnemies', effects: [dmg(1.0), debuff('stun', 1, 0.35)], desc: 'Damage all enemies with a 35% Stun chance.' },
+      ],
+      ultimate: U('Eternal Watch', 'allEnemies', [dmg(1.9), debuff('defDown', 2)], 'Heavy damage to every enemy and Defense Down.', 'None shall pass the temple doors.'),
+    },
+    {
+      id: 'boss_son', name: 'The Son', kind: 'character', faction: 'dark', rarity: 'legendary', role: 'attacker', spd: 158,
+      boss: { hp: 9, atk: 1.3, def: 1.2 },
+      abilities: [
+        { name: 'Shadow Talon', cd: 0, target: 'enemy', effects: [dmg(1.4), dispel()], desc: 'Deal damage and strip buffs.' },
+        { name: 'Corruption', cd: 3, target: 'allEnemies', effects: [dmg(0.9), debuff('burn', 2)], desc: 'Damage and Burn all enemies.' },
+        { name: 'Feast on Fear', cd: 4, target: 'enemy', effects: [execute(1.8, 0.4, 2), { ...heal(0.1), on: 'self' }], desc: 'Heavy damage, doubled under 40% HP; heal 10%.' },
+      ],
+      ultimate: U('Nightfall', 'allEnemies', [dmg(1.9), dispel(), debuff('stun', 1, 0.4)], 'Strips every buff and deals heavy damage with a 40% Stun chance.', 'The dark side is the only path.'),
+    },
+    {
+      id: 'boss_bane', name: 'Darth Bane', kind: 'character', faction: 'dark', rarity: 'legendary', role: 'attacker', spd: 140,
+      boss: { hp: 11, atk: 1.35, def: 1.4 },
+      abilities: [
+        { name: 'Orbalisk Strike', cd: 0, target: 'enemy', effects: [dmg(1.45), { ...heal(0.05), on: 'self' }], desc: 'Deal damage and heal 5%.' },
+        { name: 'Sith Lightning', cd: 3, target: 'allEnemies', effects: [dmg(0.95), debuff('defDown', 2)], desc: 'Damage all enemies and inflict Defense Down.' },
+        { name: 'Thought Bomb', cd: 5, target: 'allEnemies', effects: [execute(1.1, 0.35, 2.2)], desc: 'Damage all enemies; massive bonus under 35% HP.' },
+      ],
+      ultimate: U('Rule of Two', 'allEnemies', [execute(1.8, 0.4, 2), debuff('burn', 2)], 'Heavy damage to all enemies, doubled under 40% HP, and Burn.', 'One to embody the power, the other to crave it.'),
+    },
     {
       id: 'rancor', name: 'The Rancor', kind: 'character', faction: 'dark', rarity: 'legendary', role: 'attacker', spd: 120,
       boss: { hp: 7, atk: 1.12, def: 1.2 },
@@ -833,6 +963,20 @@
     moff_gideon: 'An Imperial warlord who survived the Empire\'s fall and claimed the ancient Darksaber.',
     n1_starfighter: 'Royal Naboo starfighter: chrome, gold and faster than it looks.',
     sith_infiltrator: 'Darth Maul\'s cloaking ship, carrying a swarm of seeker droids.',
+    boss_daughter: 'The guardian of the light on a world outside time. She heals her allies as fast as you can wound them.',
+    boss_guardian: 'An armored sentinel who has never once stepped aside from the door he guards.',
+    boss_son: 'Pure darkness wearing a face. He strips away every protection before he strikes.',
+    boss_bane: 'The ancient Sith Lord who forged the Rule of Two, still waiting for a worthy apprentice.',
+    arc_170: 'A heavy clone fighter with a rear tail gunner. It tears enemy shields and buffs apart.',
+    delta7: 'A sleek Jedi interceptor flown with an astromech wired into its wing.',
+    tie_defender: 'The Empire\'s elite fighter: shields, hyperdrive and six cannons that finish off the wounded.',
+    tie_silencer: 'Kylo Ren\'s personal fighter, built to hunt down anything already bleeding.',
+    the_daughter: 'A being of pure light from a world outside time. Few have seen her; fewer have earned her trust.',
+    temple_guardian: 'A masked sentinel who has guarded a forgotten temple for a thousand years.',
+    the_son: 'A being of pure darkness from a world outside time, hungry to escape it.',
+    darth_bane: 'The Sith Lord who forged the Rule of Two, armored in living orbalisks.',
+    ebon_hawk: 'A battered Old Republic freighter that has carried legends out of impossible places.',
+    sith_fury: 'An ancient Sith interceptor with folding blade wings.',
     darth_revan: 'A Jedi hero turned Sith conqueror from the Old Republic era, masked and wielding twin blades. A legend most players never see.',
     starkiller: 'Vader\'s secret apprentice, raw Force power unleashed. He once pulled a Star Destroyer out of orbit.',
     master_luke: 'The last Jedi Master, years after the war: a weathered legend whose Force projection held off an entire army.',
@@ -972,6 +1116,8 @@
     anakin: ['jedi', 'republic'], qui_gon: ['jedi', 'republic'], padme: ['republic', 'leader'], lando: ['scoundrel', 'rebel', 'leader'],
     jango_fett: ['bounty', 'mandalorian'], asajj_ventress: ['sith', 'nightsister'], cad_bane: ['bounty', 'scoundrel'], moff_gideon: ['empire', 'leader'],
     n1_starfighter: ['fighter', 'republic'], sith_infiltrator: ['fighter', 'sith'],
+    arc_170: ['fighter', 'republic'], delta7: ['fighter', 'jedi', 'republic'], tie_defender: ['fighter', 'empire'], tie_silencer: ['fighter', 'sith'],
+    the_daughter: ['jedi', 'leader'], temple_guardian: ['jedi', 'republic'], the_son: ['sith'], darth_bane: ['sith', 'leader'], ebon_hawk: ['gunship', 'jedi', 'scoundrel'], sith_fury: ['fighter', 'sith'],
     darth_revan: ['sith', 'leader'], starkiller: ['sith'], master_luke: ['jedi', 'rebel', 'leader'], ghost: ['rebel', 'fighter'],
     c3po: ['droid', 'rebel'], rebel_medic: ['rebel', 'trooper'], two_onebee: ['droid', 'rebel'], nightsister_acolyte: ['nightsister'], barriss: ['jedi', 'republic'], talzin: ['nightsister', 'leader'],
     hunter: ['badbatch', 'trooper', 'leader'], wrecker: ['badbatch', 'trooper'], tech: ['badbatch', 'trooper'], crosshair: ['badbatch', 'trooper'], echo: ['badbatch', 'trooper', 'droid'], bb8: ['droid', 'rebel'], k2so: ['droid', 'rebel'], chopper: ['droid', 'rebel', 'scoundrel'],
@@ -994,7 +1140,7 @@
     ranged: { label: 'Ranged', icon: '➹' }, support: { label: 'Support', icon: '✦' }, force: { label: 'Force User', icon: '✧' },
     droid: { label: 'Droid', icon: '⚙' }, starfighter: { label: 'Starfighter', icon: '➶' }, bomber: { label: 'Bomber', icon: '✹' }, gunship: { label: 'Gunship', icon: '⛭' },
   };
-  const MELEE = ['ewok_warrior', 'tusken_raider', 'obi_wan', 'luke', 'yoda', 'rey', 'darth_maul', 'kylo_ren', 'count_dooku', 'vader', 'ahsoka', 'grievous', 'mace_windu', 'magnaguard', 'k2so', 'hunter', 'grand_inquisitor', 'second_sister', 'fifth_brother', 'seventh_sister', 'eighth_brother', 'darth_revan', 'starkiller', 'master_luke', 'anakin', 'qui_gon', 'asajj_ventress', 'moff_gideon', 'rancor', 'krayt_dragon', 'lord_vader'];
+  const MELEE = ['ewok_warrior', 'tusken_raider', 'obi_wan', 'luke', 'yoda', 'rey', 'darth_maul', 'kylo_ren', 'count_dooku', 'vader', 'ahsoka', 'grievous', 'mace_windu', 'magnaguard', 'k2so', 'hunter', 'grand_inquisitor', 'second_sister', 'fifth_brother', 'seventh_sister', 'eighth_brother', 'darth_revan', 'starkiller', 'master_luke', 'the_daughter', 'temple_guardian', 'the_son', 'darth_bane', 'boss_daughter', 'boss_guardian', 'boss_son', 'boss_bane', 'anakin', 'qui_gon', 'asajj_ventress', 'moff_gideon', 'rancor', 'krayt_dragon', 'lord_vader'];
 
   function classesOf(def) {
     const tr = TRAITS[def.id] || [];
@@ -1025,6 +1171,7 @@
     c3po: 'rally', bb8: 'dash', k2so: 'leap', chopper: 'heal', ig88: 'rockets', droideka: 'bulwark', b2_droid: 'barrage', magnaguard: 'dash', ig11: 'barrage', vulture_droid: 'strafe',
     rebel_medic: 'heal', two_onebee: 'heal', nightsister_acolyte: 'heal', barriss: 'heal', talzin: 'lightning', hunter: 'dash', wrecker: 'rockets', tech: 'rally', crosshair: 'snipe', echo: 'lightning',
     grand_inquisitor: 'saberstorm', second_sister: 'spinsaber', fifth_brother: 'leap', seventh_sister: 'rockets', eighth_brother: 'spinsaber',
+    arc_170: 'strafe', delta7: 'shield', tie_defender: 'strafe', tie_silencer: 'strafe', the_daughter: 'heal', temple_guardian: 'bulwark', the_son: 'lightning', darth_bane: 'lightning', ebon_hawk: 'shield', sith_fury: 'strafe', boss_daughter: 'heal', boss_guardian: 'bulwark', boss_son: 'lightning', boss_bane: 'lightning',
     anakin: 'leap', qui_gon: 'forcepush', padme: 'snipe', lando: 'rally', jango_fett: 'rockets', asajj_ventress: 'dash', cad_bane: 'snipe', moff_gideon: 'orbital', n1_starfighter: 'strafe', sith_infiltrator: 'bombrun',
     darth_revan: 'dash', starkiller: 'lightning', master_luke: 'heal', ghost: 'strafe',
     rancor: 'claws', krayt_dragon: 'claws', star_destroyer: 'turbolaser', death_star: 'superlaser',
@@ -1272,6 +1419,25 @@
     },
   ];
   const PLANET_MAP = Object.fromEntries(PLANETS.map((p) => [p.id, p]));
+
+  // ---------- The hidden zone ----------
+  // Not on the Galaxy Map: reached only through a secret. Four bosses, each
+  // guarding exclusive cards that cannot be found anywhere else.
+  const SECRET_PLANET = {
+    id: 'mortis', name: 'The Monolith', region: 'Beyond the Map', env: 'mortis', enemyScale: 1.1, color: '#c8a8ff', hidden: true,
+    reinforce: { character: ['clone_trooper'], ship: ['tie_fighter'] }, map: { x: 50, y: 50 }, stages: [],
+    blurb: 'A world outside time where light and dark are kept in balance.',
+    terrain: { name: 'The Balance', desc: 'Jedi and Sith gain +12% attack; everyone gains +8% health.', rules: [{ traits: ['jedi', 'sith'], mods: { atk: 0.12 } }, { all: true, mods: { hp: 0.08 } }] },
+    hazard: { id: 'mortis', name: 'Shifting Balance', every: 6, desc: 'Every 6 turns the balance shifts, dealing 6% max HP to everyone.', effect: { type: 'damage', pct: 0.06 } },
+  };
+  PLANET_MAP.mortis = SECRET_PLANET;
+  const SECRET_BOSSES = [
+    { id: 'boss_daughter', name: 'Trial of Light', side: 'light', kind: 'character', level: 30, minions: ['barriss', 'rebel_medic', 'ewok_warrior', 'grogu'], rewards: ['the_daughter'], hint: 'A radiance that heals what it touches waits where no star chart reaches.' },
+    { id: 'boss_guardian', name: 'The Sealed Temple', side: 'light', kind: 'character', level: 30, minions: ['clone_trooper', 'qui_gon', 'obi_wan', 'clone_trooper'], rewards: ['temple_guardian', 'ebon_hawk'], hint: 'A masked sentinel has kept one door shut for a thousand years.' },
+    { id: 'boss_son', name: 'Trial of Shadow', side: 'dark', kind: 'character', level: 30, minions: ['nightsister_acolyte', 'talzin', 'asajj_ventress', 'darth_maul'], rewards: ['the_son'], hint: 'A darkness that feeds on fear is waiting for someone to open the way.' },
+    { id: 'boss_bane', name: 'The Rule of Two', side: 'dark', kind: 'character', level: 30, minions: ['count_dooku', 'death_trooper', 'vader', 'death_trooper'], rewards: ['darth_bane', 'sith_fury'], hint: 'An armored master of an ancient order hoards a ship with folded wings.' },
+  ];
+  const SECRET_REWARD = (first) => ({ credits: first ? 6000 : 1500, crystals: first ? 150 : 25, aurodium: first ? 8 : 2 });
   // Enemies earn stars as you travel further across the galaxy.
   const enemyStars = (planetId) => 1 + Math.floor(PLANETS.indexOf(PLANET_MAP[planetId]) / 2);
   const PLANET_CLEAR_KYBER = 150;
@@ -1473,7 +1639,7 @@
     const planet = pickOf(PLANETS);
     if (floor % TOWER.bossEvery === 0) {
       const enc = pickOf(BOSS_ENCOUNTERS);
-      const pool = UNITS.filter((u) => u.kind === enc.kind && !u.boss && u.faction === 'dark');
+      const pool = UNITS.filter((u) => u.kind === enc.kind && !u.boss && !u.exclusive && u.faction === 'dark');
       const minions = Array.from({ length: n - 1 }, () => pickOf(pool).id);
       const half = Math.ceil(minions.length / 2);
       return { floor, kind: enc.kind, boss: enc.id, planet: enc.planet, level, stars, enemyScale, name: `${enc.name}`, enemies: [...minions.slice(0, half), enc.id, ...minions.slice(half)] };
@@ -1484,10 +1650,10 @@
     let enemies;
     if (r() < 0.45 && groups.length) enemies = pickOf(groups).slice(0, n);
     else {
-      const pool = UNITS.filter((u) => u.kind === kind && !u.boss);
+      const pool = UNITS.filter((u) => u.kind === kind && !u.boss && !u.exclusive);
       enemies = Array.from({ length: n }, () => pickOf(pool).id);
     }
-    while (enemies.length < n) enemies.push(UNITS.filter((u) => u.kind === kind && !u.boss)[Math.floor(r() * 10)].id);
+    while (enemies.length < n) enemies.push(UNITS.filter((u) => u.kind === kind && !u.boss && !u.exclusive)[Math.floor(r() * 10)].id);
     const titles = kind === 'ship' ? ['Ambush in the Void', 'Hyperspace Interdiction', 'Blockade Run', 'Dogfight Over ' + planet.name] : ['Gauntlet on ' + planet.name, 'Hunters in the Dark', 'Last Stand', 'Skirmish on ' + planet.name, 'Kill Squad'];
     return { floor, kind, planet: planet.id, level, stars, enemyScale, name: pickOf(titles), enemies };
   }
@@ -1522,7 +1688,7 @@
   root.GameData = {
     RARITIES, ROLE_BASE, ROLE_ICONS, STATUS_INFO, UNITS, UNIT_MAP, MAX_LEVEL, MAX_STARS, STAR_COSTS,
     DUPLICATE_SHARDS, SQUAD_SIZE, PACKS, STARTER, levelCost, unitStats, power, stageRewards,
-    ultimateFor, abilitiesFor, BOSSES, BOSS_ENCOUNTERS, bossRewards, CURRENCIES, LUCK, CHARMS, MARKET_REFRESH_MS, FLASH_MS, DAILY, TOWER, towerFloor, towerRewards, towerCheckpoint, SHELL_PAYOUT, SHELL_BETS, BIOS,
+    ultimateFor, abilitiesFor, BOSSES, BOSS_ENCOUNTERS, bossRewards, CURRENCIES, LUCK, CHARMS, MARKET_REFRESH_MS, FLASH_MS, DAILY, SECRET_PLANET, SECRET_BOSSES, SECRET_REWARD, TOWER, towerFloor, towerRewards, towerCheckpoint, SHELL_PAYOUT, SHELL_BETS, BIOS,
     BASE_SLOTS, SLOT_UNLOCKS, MAX_ACCOUNT_LEVEL, xpToNext, levelReward, XP, planetSquadSize,
     TRAITS, TRAIT_INFO, ROLE_SYNERGIES, SYN_THEME, CLASS_INFO, classesOf, ULT_ANIM, SYNERGIES, PLANETS, PLANET_MAP, enemyStars, PLANET_CLEAR_KYBER, BASE_DOUBLE, traitsOf, squadBonuses,
   };

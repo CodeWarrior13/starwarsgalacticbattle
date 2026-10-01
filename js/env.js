@@ -49,6 +49,7 @@
     geonosis: { base: '#b25a2e', bands: ['#9a4a22', '#d9773a', '#8a3e1c', '#c8683a'], atmo: '#ffb07a' },
     exegol: { base: '#1a1630', bands: ['#141028', '#2a2250', '#1e1a3a', '#241e44'], atmo: '#8a7aff', cracks: true },
     mustafar: { base: '#3a1a14', bands: ['#2a100c', '#4a2018', '#361410', '#40180f'], atmo: '#ff6a3a', cracks: true },
+    mortis: { base: '#2a1e40', bands: ['#1e3a6a', '#4a1a2a', '#2a2a5a', '#5a2a4a'], atmo: '#c8a8ff', cracks: true },
     coruscant_siege: { base: '#4a3440', bands: ['#3a2430', '#6a4a50', '#4a3040', '#5a3a44'], atmo: '#ff9a5a', lights: true, cracks: true },
   };
 
@@ -1025,6 +1026,88 @@
     }
   }
 
+  // ---------- The Monolith (hidden zone): a world outside time ----------
+  THEMES.mortis = {
+    horizon: 0.66,
+    dust: ['#bfe8ff', '#ff8a8a', '#e8d8ff'],
+    weather: { count: 90, spawn: (e) => ({ x: rand(0, e.w), y: rand(0, e.h), vx: rand(-4, 4), vy: rand(-14, -4), size: rand(0.8, 2.2), color: Math.random() < 0.5 ? '#9fdcff' : '#ff8a8a', alpha: rand(0.3, 0.8), kind: 'spore', phase: rand(0, TAU) }) },
+    sky: () => [[0, '#06040e'], [0.35, '#1a1236'], [0.66, '#3a2a5a']],
+    init(e, r) {
+      e.g.spires = Array.from({ length: 9 }, (_, i) => ({ x: (i + 0.5) / 9 + (r() - 0.5) * 0.06, h: 0.18 + r() * 0.32, w: 0.025 + r() * 0.03, depth: 0.2 + r() * 0.6, ph: r() * TAU, float: r() < 0.5 }));
+      e.g.ribbons = [{ c: '#6ad8ff', y: 0.22, a: 0.05, f: 1.3, sp: 0.4 }, { c: '#ff4a6a', y: 0.3, a: 0.06, f: 1.1, sp: -0.35 }, { c: '#c8a8ff', y: 0.15, a: 0.04, f: 1.7, sp: 0.25 }];
+      e.g.cracks = Array.from({ length: 14 }, () => ({ x: r(), y: 0.7 + r() * 0.28, len: 0.04 + r() * 0.08, a: r() * Math.PI }));
+    },
+    draw(e, ctx, w, h, t, J) {
+      const hz = h * 0.66;
+      // Light and dark halves of the sky.
+      glow(ctx, w * 0.2, h * 0.25, h * 0.7, '#4aa8ff', 0.22 + Math.sin(t * 0.5) * 0.05);
+      glow(ctx, w * 0.8, h * 0.25, h * 0.7, '#ff3a5a', 0.2 + Math.cos(t * 0.5) * 0.05);
+      glow(ctx, w * 0.5, h * 0.12, h * 0.3, '#fff2d8', 0.15);
+      // Aurora ribbons weaving across the sky.
+      ctx.save();
+      ctx.translate(J.x * 0.1, J.y * 0.1);
+      ctx.globalCompositeOperation = 'lighter';
+      for (const rb of e.g.ribbons) {
+        ctx.beginPath();
+        for (let x = -20; x <= w + 20; x += 12) {
+          const y = rb.y * h + Math.sin(x / w * Math.PI * 2 * rb.f + t * rb.sp) * rb.a * h * 2 + Math.sin(t * 0.7 + x * 0.01) * 6;
+          if (x === -20) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.strokeStyle = hexA(rb.c, 0.35);
+        ctx.lineWidth = 14;
+        ctx.stroke();
+        ctx.strokeStyle = hexA(rb.c, 0.7);
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+      ctx.restore();
+      // Floating monolith spires with glowing runes.
+      const spires = e.g.spires.slice().sort((a, b) => a.depth - b.depth);
+      for (const sp of spires) {
+        ctx.save();
+        ctx.translate(J.x * sp.depth, J.y * sp.depth);
+        const x = sp.x * w;
+        const bob = sp.float ? Math.sin(t * 0.6 + sp.ph) * 10 : 0;
+        const base = (sp.float ? hz - h * 0.12 : hz + 6) + bob;
+        const top = base - sp.h * h;
+        const sw = sp.w * w;
+        const shade = Math.round(18 + sp.depth * 30);
+        ctx.fillStyle = `rgb(${shade},${shade - 4},${shade + 18})`;
+        ctx.beginPath();
+        ctx.moveTo(x - sw, base); ctx.lineTo(x - sw * 0.7, top + sw); ctx.lineTo(x, top); ctx.lineTo(x + sw * 0.7, top + sw); ctx.lineTo(x + sw, base);
+        if (sp.float) { ctx.lineTo(x + sw * 0.5, base + sw * 1.6); ctx.lineTo(x - sw * 0.5, base + sw * 1.6); }
+        ctx.closePath();
+        ctx.fill();
+        const col = sp.x < 0.5 ? '#6ad8ff' : '#ff4a6a';
+        ctx.globalCompositeOperation = 'lighter';
+        for (let k = 0; k < 4; k++) {
+          const ry = top + sw * 2 + k * (base - top - sw * 3) / 4;
+          ctx.fillStyle = hexA(col, 0.45 + Math.sin(t * 2 + k + sp.ph) * 0.3);
+          ctx.fillRect(x - 1.5, ry, 3, 6);
+        }
+        if (sp.float) glow(ctx, x, base + sw * 2, sw * 3, col, 0.4);
+        ctx.restore();
+      }
+      // Crystal plateau with light and dark cracks.
+      ctx.save();
+      ctx.translate(J.x, J.y);
+      const g = ctx.createLinearGradient(0, hz, 0, h);
+      g.addColorStop(0, '#1e1630');
+      g.addColorStop(1, '#0a0614');
+      ctx.fillStyle = g;
+      ctx.fillRect(-40, hz, w + 80, h);
+      ctx.globalCompositeOperation = 'lighter';
+      for (const c of e.g.cracks) {
+        const x = c.x * w;
+        const y = c.y * h;
+        ctx.strokeStyle = hexA(c.x < 0.5 ? '#6ad8ff' : '#ff4a6a', 0.35 + Math.sin(t * 1.5 + c.a * 3) * 0.2);
+        ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + Math.cos(c.a) * c.len * w, y + Math.sin(c.a) * c.len * h * 0.3); ctx.stroke();
+      }
+      ctx.restore();
+    },
+  };
+
   THEMES.siege = {
     horizon: 0.64,
     dust: ['#ff9a4a', '#ffd27a', '#6a5a58'],
@@ -1385,6 +1468,7 @@
       e.overlay = { color: '#a04a22', a: 0.25, dur: 2 };
     },
     lightning(e) { e.storm = 4; e.flash('#d8d0ff', 0.8); e.jolt(12); e.overlay = { color: '#6a5aff', a: 0.3, dur: 2.5 }; },
+    mortis(e) { e.overlay = { color: '#c8a8ff', a: 0.3, dur: 2 }; e.flash('#ffffff', 0.4); e.jolt(6); for (let i = 0; i < 50; i++) e.fx.push({ x: rand(0, e.w), y: e.h + 10, vx: rand(-20, 20), vy: rand(-140, -60), life: 0, max: rand(1, 2), size: rand(1, 2.6), color: i % 2 ? '#9fdcff' : '#ff8a8a', grav: 0, drag: 0, type: 'glowdot' }); },
     debris(e) {
       if (e.g.fall) {
         e.g.crash = { x0: rand(e.w * 0.1, e.w * 0.5), x1: rand(e.w * 0.4, e.w * 0.9), life: 0, max: 1.1 };

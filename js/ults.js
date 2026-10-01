@@ -80,6 +80,23 @@
     moff_gideon: { move: 'beam', prop: 'orbital', impact: 'shatter', color: '#e8eef8', sky: true },
     n1_starfighter: { move: 'flyby', prop: 'ship', impact: 'slice', color: '#ffd23f', roll: true },
     sith_infiltrator: { move: 'carpet', prop: 'probe', impact: 'shock', color: '#ff2a2a' },
+    // Wave 7 ships
+    arc_170: { move: 'flyby', prop: 'ship', impact: 'shock', color: '#ff7a3a', wing: 2 },
+    delta7: { move: 'aegis', color: '#ff3a3a', prop: 'astromech' },
+    tie_defender: { move: 'homing', prop: 'dart', impact: 'shatter', color: '#3bff6a', n: 3 },
+    tie_silencer: { move: 'beam', prop: 'snipe', impact: 'xslash', color: '#ff3a3a' },
+    // Secret cards earned in the hidden zone
+    the_daughter: { move: 'heal', color: '#9fe0ff', prop: 'dawn' },
+    temple_guardian: { move: 'shockwave', prop: 'pike', impact: 'stamp', color: '#ffd23f' },
+    the_son: { move: 'storm', prop: 'arc', impact: 'burn', color: '#ff3a3a' },
+    darth_bane: { move: 'arc', prop: 'arc', impact: 'crush', color: '#d84aff' },
+    ebon_hawk: { move: 'rally', color: '#d8c8a0', prop: 'hawk' },
+    sith_fury: { move: 'sweep', prop: 'ship', impact: 'shatter', color: '#ff2a2a' },
+    // Hidden-zone bosses
+    boss_daughter: { move: 'shockwave', prop: 'force', impact: 'freeze', color: '#bfe8ff' },
+    boss_guardian: { move: 'dive', prop: 'staff', impact: 'crush', color: '#ffd23f' },
+    boss_son: { move: 'storm', prop: 'arc', impact: 'freeze', color: '#ff2a2a' },
+    boss_bane: { move: 'pull', prop: 'grip', impact: 'shatter', color: '#d84aff' },
     // Mythic: one-of-a-kind cinematics
     darth_revan: { move: 'mask', prop: 'mask', impact: 'xslash', color: '#c23bff' },
     starkiller: { move: 'unleash', prop: 'isd', impact: 'crush', color: '#7ac8ff' },
@@ -768,7 +785,7 @@
     // ---------- Ally moves ----------
     async mv_heal(S, actor, from, T, spec) {
       S.layer.classList.add('sig-aurora');
-      const glyph = { plus: '✚', leaf: '❦', zap: '⚡', mote: '•', mist: '❂', holo: '◈', ion: '◎', spark: '✷', scan: '▣', force: '◌', bacta: '◯' }[spec.prop] || '✦';
+      const glyph = { dawn: '✺', plus: '✚', leaf: '❦', zap: '⚡', mote: '•', mist: '❂', holo: '◈', ion: '◎', spark: '✷', scan: '▣', force: '◌', bacta: '◯' }[spec.prop] || '✦';
       // Each healer gets its own signature flourish on top of the healing motes.
       const extra = {
         holo: () => `<div class="hx-holo" style="left:${from.x}px;top:${from.y}px"></div>`,

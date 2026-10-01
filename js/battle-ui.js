@@ -600,6 +600,28 @@
           case 'tm':
             this.updateCard(u);
             break;
+          case 'revive':
+            this.updateCard(u);
+            this.float(u, 'REVIVED!', 'heal');
+            if (root.Sound) root.Sound.play('rankup');
+            this.cards[u.uid].animate([{ transform: 'scale(.6)', filter: 'brightness(3) drop-shadow(0 0 30px #ffd23f)' }, { transform: 'scale(1.1)', offset: 0.6 }, { transform: 'scale(1)', filter: 'none' }], { duration: 900 });
+            this.wave(this.center(u.uid), '#ffd23f', 3.4);
+            await this.wait(600);
+            break;
+          case 'cleanse':
+            this.updateCard(u);
+            this.float(u, 'Cleansed', 'info', 24);
+            this.wave(this.center(u.uid), '#9fe0ff', 2);
+            await this.wait(90);
+            break;
+          case 'dispel':
+            this.updateCard(u);
+            this.float(u, 'Buffs stripped', 'bad', 24);
+            await this.wait(90);
+            break;
+          case 'execute':
+            this.float(u, 'EXECUTE!', 'crit', 30);
+            break;
           case 'skip':
             this.float(u, 'STUNNED', 'bad');
             await this.wait(650);
@@ -1899,16 +1921,26 @@
             ${rewards.crystals ? `<span class="reward first">${cur('crystals', rewards.crystals)} ${rewards.firstClear ? 'first clear' : ''}</span>` : ''}
             ${rewards.aurodium ? `<span class="reward gold">${cur('aurodium', rewards.aurodium)}</span>` : ''}
           </div>
-          ${rewards.card ? `<div class="reward-card" data-rewards hidden><p class="eyebrow">Boss trophy</p>${root.UI.unitCard(D.UNIT_MAP[rewards.card.id], { tag: 'div', hideShards: true })}<p class="muted">${rewards.card.isNew ? 'New recruit!' : `+${rewards.card.shards} shards`}</p></div>` : ''}`
+          ${rewards.cards && rewards.cards.length ? `<div class="reward-cards" data-rewards hidden><p class="eyebrow">Exclusive cards unlocked</p><div>${rewards.cards.map((c) => root.UI.unitCard(D.UNIT_MAP[c.id], { tag: 'div', hideShards: true })).join('')}</div></div>`
+            : rewards.card ? `<div class="reward-card" data-rewards hidden><p class="eyebrow">Boss trophy</p>${root.UI.unitCard(D.UNIT_MAP[rewards.card.id], { tag: 'div', hideShards: true })}<p class="muted">${rewards.card.isNew ? 'New recruit!' : `+${rewards.card.shards} shards`}</p></div>` : ''}`
         : '<p class="muted">Train your units in the Collection, build a squad with matching traits for synergies, or grab crates in the Night Market, then try again.</p>'}
         ${xpHtml}
         <div class="modal-actions">
           ${isTower ? '' : '<button class="btn" type="button" data-r="retry">Retry</button>'}
           ${won ? '' : '<button class="btn" type="button" data-r="collection">Collection</button>'}
-          ${isTower ? `<button class="btn" type="button" data-r="tower-exit">Leave tower</button><button class="btn btn-primary" type="button" data-r="tower">${won ? `Climb to floor ${rewards.towerFloor}` : `Restart from floor ${rewards.towerFloor}`}</button>` : nextInPlanet ? '<button class="btn btn-primary" type="button" data-r="next">Next stage</button>' : nextPlanet ? `<button class="btn btn-primary" type="button" data-r="planet">Travel to ${esc(nextPlanet.name)}</button>` : '<button class="btn btn-primary" type="button" data-r="campaign">Continue</button>'}
+          ${p.type === 'secret' ? '<button class="btn btn-primary" type="button" data-r="secret">Return to the Monolith</button>' : isTower ? `<button class="btn" type="button" data-r="tower-exit">Leave tower</button><button class="btn btn-primary" type="button" data-r="tower">${won ? `Climb to floor ${rewards.towerFloor}` : `Restart from floor ${rewards.towerFloor}`}</button>` : nextInPlanet ? '<button class="btn btn-primary" type="button" data-r="next">Next stage</button>' : nextPlanet ? `<button class="btn btn-primary" type="button" data-r="planet">Travel to ${esc(nextPlanet.name)}</button>` : '<button class="btn btn-primary" type="button" data-r="campaign">Continue</button>'}
         </div>`, { small: true, dismissable: false, cls: 'result-modal' });
       if (won) this.spinReel(m.root, rewards);
-      if (rewards.levelUps && rewards.levelUps.length) setTimeout(() => this.rankUp(rewards.levelUps[rewards.levelUps.length - 1]), won ? 4400 : 900);
+      // Exclusive cards get their full walkout once the spin settles.
+      if (won && rewards.cards && rewards.cards.length) {
+        // Wait for any jackpot overlay to clear so the two never stack.
+        const clear = () => new Promise((res) => { const t = setInterval(() => { if (!document.querySelector('.jackpot')) { clearInterval(t); res(); } }, 150); });
+        setTimeout(async () => {
+          await clear();
+          for (const c of rewards.cards) await root.UI.walkout(D.UNIT_MAP[c.id], D.UNIT_MAP[c.id].rarity, false);
+          if (rewards.levelUps && rewards.levelUps.length) this.rankUp(rewards.levelUps[rewards.levelUps.length - 1]);
+        }, 4200);
+      } else if (rewards.levelUps && rewards.levelUps.length) setTimeout(() => this.rankUp(rewards.levelUps[rewards.levelUps.length - 1]), won ? 4400 : 900);
       m.root.addEventListener('click', (e) => {
         const r = e.target.closest('[data-r]');
         if (!r) return;
