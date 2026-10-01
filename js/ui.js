@@ -1978,7 +1978,7 @@
       const ship = def.kind === 'ship';
       const planet = homeworldOf(def);
       const side = def.faction === 'light';
-      const stepMs = [0, 0, 650, 850, 1000][tier];
+      const stepMs = [430, 520, 650, 850, 1000][tier];
       const steps = [
         { kicker: 'Allegiance', big: side ? 'Light Side' : 'Dark Side', icon: `<span class="wo-saber" style="--sc:${side ? '#4aa8ff' : '#ff2a2a'}"></span>`, tone: side ? '#4aa8ff' : '#ff2a2a' },
         { kicker: ship ? 'Starship class' : 'Class', big: ROLE_NAMES[def.role] || def.role, icon: `<span class="wo-role">${D.ROLE_ICONS[def.role] || '✦'}</span>`, tone: R_COLOR[rarity] },
@@ -1993,7 +1993,7 @@
           ${mythic ? '<canvas class="br-bolts"></canvas>' : ''}
           ${ship ? `<div class="wo-ship">${Art.shipOnly(def)}</div>` : ''}
           <div class="br-card">${unitCard(def, { tag: 'div', hideShards: true, holo })}</div>
-          <div class="br-text"><span class="br-kicker">${mythic ? 'You found something that should not exist' : tier === 3 ? 'A legend joins your cause' : 'Epic recruit'}</span><b class="br-rarity" data-text="${D.RARITIES[rarity].label.toUpperCase()}">${D.RARITIES[rarity].label.toUpperCase()}</b><span class="br-name">${esc(def.name)}</span></div>
+          <div class="br-text"><span class="br-kicker">${mythic ? 'You found something that should not exist' : ['New recruit', 'Rare recruit', 'Epic recruit', 'A legend joins your cause'][tier]}</span><b class="br-rarity" data-text="${D.RARITIES[rarity].label.toUpperCase()}">${D.RARITIES[rarity].label.toUpperCase()}</b><span class="br-name">${esc(def.name)}</span></div>
           ${Array.from({ length: 10 + tier * 8 }, (_, i) => `<i class="br-spark" style="--a:${(i * 137.5) % 360}deg;--d:${(Math.random() * 0.5).toFixed(2)}s;--r:${30 + Math.random() * 30}vmax"></i>`).join('')}
         </div>
         <span class="pc-skip">Tap to skip</span>
@@ -2037,7 +2037,7 @@
           };
           requestAnimationFrame(step);
         }
-        timer = setTimeout(close, mythic ? 3000 : 2200);
+        timer = setTimeout(close, [1300, 1600, 2000, 2400, 3000][tier]);
       };
       const next = () => {
         if (i >= steps.length) return showFinal();
@@ -2123,10 +2123,10 @@
             s.animate([{ transform: 'translate(-50%,-50%) scale(1)', opacity: 1 }, { transform: `translate(calc(-50% + ${Math.cos(a) * d}px), calc(-50% + ${Math.sin(a) * d}px)) scale(0)`, opacity: 0 }], { duration: 700 + Math.random() * 400, easing: 'cubic-bezier(.1,.8,.3,1)' }).onfinish = () => s.remove();
           }
         }
-        if (tier >= 2) {
-          await new Promise((res) => setTimeout(res, 300));
-          await walkout(def, def.rarity, r.holo);
-        } else if (r.holo) toast('HOLO card! Double value.');
+        // Every card gets a walkout; rarer cards get a longer, louder one.
+        await new Promise((res) => setTimeout(res, tier >= 2 ? 300 : 150));
+        await walkout(def, def.rarity, r.holo);
+        if (r.holo) toast('HOLO card! Double value.');
         await new Promise((res) => setTimeout(res, 120));
       });
       return busy;

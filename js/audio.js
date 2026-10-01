@@ -136,74 +136,172 @@
     try { SFX[name](ctx.currentTime + 0.01, arg); } catch (e) { /* never break the game over a sound */ }
   }
 
-  // ---------- Music: original themes on a simple sequencer ----------
-  // Each track is a list of bars; each bar has a chord (MIDI notes) and an
-  // optional melody line in 8th notes (null = rest).
+  // ---------- Music: original cinematic themes ----------
+  // Dark, slow and wide: evolving string pads over a sub drone, long brass
+  // swells, deep war drums and a big reverb. No bouncy leads.
+  // Each bar: chord (MIDI), horn line in quarter notes (null = hold/rest).
   const TRACKS = {
     menu: {
-      bpm: 76,
+      bpm: 64,
       bars: [
-        { chord: [48, 55, 60, 64], mel: [72, null, 79, null, 77, 76, 74, null] },
-        { chord: [45, 52, 57, 60], mel: [76, null, null, 72, 74, null, 69, null] },
-        { chord: [41, 48, 53, 57], mel: [69, null, 72, null, 77, null, 76, 74] },
-        { chord: [43, 50, 55, 59], mel: [74, null, null, null, 79, null, 74, null] },
-        { chord: [48, 55, 60, 64], mel: [72, null, 79, null, 84, null, 83, 81] },
-        { chord: [44, 51, 56, 60], mel: [80, null, 79, null, 77, null, 75, null] },
-        { chord: [46, 53, 58, 62], mel: [74, null, 77, null, 82, null, 81, 79] },
-        { chord: [43, 50, 55, 59], mel: [79, null, null, null, 74, null, null, null] },
+        { chord: [38, 50, 53, 57], horn: [62, null, null, null] },
+        { chord: [34, 50, 53, 58], horn: [65, null, 62, null] },
+        { chord: [41, 48, 53, 57], horn: [60, null, null, null] },
+        { chord: [36, 48, 52, 55], horn: [64, null, 67, null] },
+        { chord: [38, 50, 53, 57], horn: [69, null, null, null] },
+        { chord: [34, 50, 53, 58], horn: [70, null, 69, null] },
+        { chord: [43, 50, 55, 58], horn: [67, null, 65, null] },
+        { chord: [45, 49, 52, 57], horn: [64, null, null, null] },
       ],
-      drums: 'march',
+      drums: 'slow',
+      shimmer: true,
     },
     battle: {
-      bpm: 132,
+      bpm: 96,
       bars: [
-        { chord: [45, 52, 57, 60], mel: [69, null, 72, 69, 76, null, 74, 72], ost: 45 },
-        { chord: [45, 52, 57, 60], mel: [71, null, 69, null, 67, 69, null, null], ost: 45 },
-        { chord: [41, 48, 53, 57], mel: [65, null, 69, 72, 77, null, 76, 74], ost: 41 },
-        { chord: [43, 50, 55, 59], mel: [74, null, 71, null, 67, null, null, null], ost: 43 },
-        { chord: [45, 52, 57, 60], mel: [81, null, 79, 77, 76, null, 72, null], ost: 45 },
-        { chord: [46, 53, 58, 62], mel: [77, null, 74, null, 70, 74, 77, null], ost: 46 },
-        { chord: [44, 51, 56, 60], mel: [75, null, 72, null, 68, null, 72, 75], ost: 44 },
-        { chord: [40, 47, 52, 56], mel: [76, null, null, null, 68, 71, 74, 76], ost: 40 },
+        { chord: [36, 48, 51, 55], horn: [60, null, null, null], ost: 36 },
+        { chord: [36, 48, 51, 55], horn: [63, null, 62, null], ost: 36 },
+        { chord: [32, 48, 51, 56], horn: [60, null, null, null], ost: 32 },
+        { chord: [31, 50, 55, 58], horn: [62, null, 55, null], ost: 31 },
+        { chord: [36, 48, 51, 55], horn: [67, null, null, null], ost: 36 },
+        { chord: [39, 51, 55, 58], horn: [70, null, 67, null], ost: 39 },
+        { chord: [32, 48, 51, 56], horn: [68, null, 65, null], ost: 32 },
+        { chord: [31, 47, 50, 55], horn: [67, null, null, 62], ost: 31 },
       ],
-      drums: 'battle',
+      drums: 'war',
     },
   };
 
   const music = { track: null, timer: null, nextTime: 0, step: 0, el: null, custom: {} };
+  let verb = null;
 
-  function voice(type, n, t, d, v, opts) { osc(type, NOTE(n), 0, t, d, v, musicBus, opts); }
+  // A long hall reverb built from decaying noise.
+  function reverbSend() {
+    if (verb) return verb;
+    const len = ctx.sampleRate * 3.2;
+    const ir = ctx.createBuffer(2, len, ctx.sampleRate);
+    for (let c = 0; c < 2; c++) {
+      const d = ir.getChannelData(c);
+      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.6);
+    }
+    const conv = ctx.createConvolver();
+    conv.buffer = ir;
+    const wet = ctx.createGain();
+    wet.gain.value = 0.55;
+    conv.connect(wet);
+    wet.connect(musicBus);
+    verb = ctx.createGain();
+    verb.connect(conv);
+    verb.connect(musicBus);
+    return verb;
+  }
+
+  // Pad voice: several detuned saws through a slowly opening low-pass.
+  function pad(n, t, dur, v) {
+    const out = reverbSend();
+    const f = ctx.createBiquadFilter();
+    f.type = 'lowpass';
+    f.Q.value = 0.7;
+    f.frequency.setValueAtTime(280, t);
+    f.frequency.linearRampToValueAtTime(900, t + dur * 0.5);
+    f.frequency.linearRampToValueAtTime(420, t + dur);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(v, t + dur * 0.35);
+    g.gain.linearRampToValueAtTime(v * 0.8, t + dur * 0.8);
+    g.gain.linearRampToValueAtTime(0.0001, t + dur + 0.6);
+    f.connect(g);
+    g.connect(out);
+    for (const det of [-9, 0, 8]) {
+      const o = ctx.createOscillator();
+      o.type = 'sawtooth';
+      o.frequency.value = NOTE(n);
+      o.detune.value = det;
+      o.connect(f);
+      o.start(t);
+      o.stop(t + dur + 0.7);
+    }
+  }
+
+  // Low brass swell: soft attack, filter that blooms and closes.
+  function horn(n, t, dur, v) {
+    const out = reverbSend();
+    const f = ctx.createBiquadFilter();
+    f.type = 'lowpass';
+    f.Q.value = 1.2;
+    f.frequency.setValueAtTime(300, t);
+    f.frequency.linearRampToValueAtTime(1300, t + 0.35);
+    f.frequency.linearRampToValueAtTime(600, t + dur);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(v, t + 0.3);
+    g.gain.setValueAtTime(v, t + dur * 0.7);
+    g.gain.linearRampToValueAtTime(0.0001, t + dur + 0.4);
+    f.connect(g);
+    g.connect(out);
+    for (const [type, mult, det] of [['sawtooth', 1, 0], ['sawtooth', 1, 6], ['triangle', 0.5, 0]]) {
+      const o = ctx.createOscillator();
+      o.type = type;
+      o.frequency.value = NOTE(n) * mult;
+      o.detune.value = det;
+      o.connect(f);
+      o.start(t);
+      o.stop(t + dur + 0.5);
+    }
+  }
+
+  // War drum: deep pitched thump plus a short burst of filtered noise.
+  function drum(t, v, pitch = 70) {
+    const out = reverbSend();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(pitch, t);
+    o.frequency.exponentialRampToValueAtTime(pitch * 0.45, t + 0.35);
+    g.gain.setValueAtTime(v, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.6);
+    o.connect(g);
+    g.connect(out);
+    o.start(t);
+    o.stop(t + 0.65);
+    noise(t, 0.12, v * 0.25, 'lowpass', 900, 200, out);
+  }
 
   function scheduleStep(tr, step, t) {
-    const spb = 60 / tr.bpm / 2; // 8th-note length
-    const bar = tr.bars[Math.floor(step / 8) % tr.bars.length];
-    const i = step % 8;
+    const s16 = 60 / tr.bpm / 4;
+    const bar = tr.bars[Math.floor(step / 16) % tr.bars.length];
+    const i = step % 16;
+    const barLen = s16 * 16;
     if (i === 0) {
-      // Strings pad: detuned saws through a soft filter.
-      for (const n of bar.chord) {
-        voice('sawtooth', n, t, spb * 8, 0.022, { lp: 1100, a: 0.4, hold: spb * 5, rel: spb * 3 });
-        voice('sawtooth', n + 12, t, spb * 8, 0.012, { lp: 1400, a: 0.5, hold: spb * 5, rel: spb * 3, detune: 9 });
+      // Strings pad held across the bar, plus a sub drone an octave under the root.
+      for (const n of bar.chord.slice(1)) pad(n, t, barLen, 0.018);
+      osc('triangle', NOTE(bar.chord[0] - 12), 0, t, barLen, 0.07, reverbSend(), { a: 0.6, hold: barLen * 0.6, rel: barLen * 0.6 });
+    }
+    if (i % 4 === 0) {
+      const n = bar.horn[i / 4];
+      if (n) {
+        let len = 1;
+        while (i / 4 + len < 4 && bar.horn[i / 4 + len] === null) len++;
+        horn(n, t, s16 * 4 * len, 0.032);
       }
-      voice('triangle', bar.chord[0] - 12, t, spb * 8, 0.06, { a: 0.05, hold: spb * 6, rel: spb * 2 });
     }
-    const m = bar.mel[i];
-    if (m) {
-      // Brass lead.
-      voice('sawtooth', m, t, spb * 1.6, 0.045, { lp: 2200, a: 0.03, hold: spb * 0.9, rel: spb * 0.7 });
-      voice('square', m - 12, t, spb * 1.6, 0.015, { lp: 1600, a: 0.03, hold: spb * 0.9, rel: spb * 0.7 });
+    if (bar.ost && i % 2 === 0) {
+      // Low, muted string ostinato: root and fifth, staccato.
+      const n = bar.ost + (i % 8 === 6 ? 7 : 12);
+      osc('sawtooth', NOTE(n), 0, t, s16 * 0.9, 0.022, reverbSend(), { lp: 700, a: 0.008, rel: s16 * 0.8 });
     }
-    if (bar.ost) {
-      // Driving string ostinato in 16ths.
-      [0, 0.5].forEach((h, k) => voice('sawtooth', bar.ost + (k && i % 2 ? 7 : 12), t + h * spb, spb * 0.45, 0.02, { lp: 1800, a: 0.005, rel: spb * 0.4 }));
+    if (tr.shimmer && i % 4 === 2 && Math.random() < 0.5) {
+      // Distant star shimmer.
+      const n = bar.chord[1 + Math.floor(Math.random() * 3)] + 24;
+      osc('sine', NOTE(n), 0, t, 1.6, 0.01, reverbSend(), { a: 0.3, rel: 1.4 });
     }
-    // Percussion: timpani and snare-like hits.
-    if (tr.drums === 'march') {
-      if (i === 0 || i === 4) { osc('sine', 90, 45, t, 0.4, 0.18, musicBus); }
-      if (i === 6 || i === 7) noise(t, 0.08, 0.04, 'bandpass', 2500, null, musicBus, 1);
+    if (tr.drums === 'slow') {
+      if (i === 0 && Math.floor(step / 16) % 2 === 0) drum(t, 0.35, 55);
+      if (i === 12 && Math.floor(step / 16) % 4 === 3) drum(t, 0.22, 70);
     } else {
-      if (i % 4 === 0) osc('sine', 100, 40, t, 0.35, 0.22, musicBus);
-      if (i % 4 === 2) noise(t, 0.12, 0.09, 'bandpass', 1800, null, musicBus, 1);
-      if (i === 7) osc('sine', 130, 60, t, 0.25, 0.14, musicBus);
+      if (i === 0 || i === 6 || i === 10) drum(t, i === 0 ? 0.42 : 0.28, i === 0 ? 60 : 78);
+      if (i === 12 || i === 14) drum(t, 0.18, 95);
+      if (i === 8) noise(t, 0.3, 0.05, 'bandpass', 3000, 1200, reverbSend(), 2);
     }
   }
 
@@ -216,7 +314,7 @@
       if (!ctx || music.track !== name) return;
       while (music.nextTime < ctx.currentTime + 0.25) {
         scheduleStep(tr, music.step, music.nextTime);
-        music.nextTime += 60 / tr.bpm / 2;
+        music.nextTime += 60 / tr.bpm / 4;
         music.step += 1;
       }
     }, 40);

@@ -9,6 +9,7 @@
   const TAU = Math.PI * 2;
   const rand = (a, b) => a + Math.random() * (b - a);
   const pick = (list) => list[Math.floor(Math.random() * list.length)];
+  const TIER = { common: 0, rare: 1, epic: 2, legendary: 3, mythic: 4 };
   const reduced = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   // move / prop / impact / colour (+ options). Ally ultimates use ally moves.
@@ -47,7 +48,7 @@
     stormtrooper: { move: 'aegis', color: '#e8eef8', prop: 'trooper' },
     battle_droid: { move: 'volley', prop: 'bolt', impact: 'scorch', color: '#ff3a3a', n: 5, miss: 0.35 },
     tusken_raider: { move: 'rain', prop: 'spear', impact: 'knock', color: '#d8b07a' },
-    boba_fett: { move: 'homing', prop: 'rocket', impact: 'burn', color: '#ff7a1a', n: 1 },
+    boba_fett: { move: 'homing', prop: 'rocket', impact: 'burn', color: '#ff7a1a', n: 4 },
     tarkin: { move: 'beam', prop: 'orbital', impact: 'burn', color: '#3bff6a', sky: true },
     darth_maul: { move: 'dive', prop: 'staff', impact: 'slice', color: '#ff2a2a' },
     kylo_ren: { move: 'pull', prop: 'grip', impact: 'freeze', color: '#ff3a3a' },
@@ -145,7 +146,7 @@
     for (let i = 1; i < route.length; i++) cum.push(cum[i - 1] + Math.hypot(route[i].x - route[i - 1].x, route[i].y - route[i - 1].y));
     const total = Math.max(1, cum[cum.length - 1]);
     // Short paths (single targets) still get a readable minimum flight time.
-    const pxPerMs = Math.min((o.speed || 1.9) * S.speed, total / ((o.minMs || 0) / S.speed || 1));
+    const pxPerMs = Math.min((o.speed || 1.9) * 0.72 * S.speed, total / ((o.minMs || 0) / S.speed || 1));
     const cr = (p0, p1, p2, p3, u) => 0.5 * (2 * p1 + (-p0 + p2) * u + (2 * p0 - 5 * p1 + 4 * p2 - p3) * u * u + (-p0 + 3 * p1 - 3 * p2 + p3) * u * u * u);
     const at = (d) => {
       let i = 1;
@@ -242,14 +243,95 @@
       const ally = ev && ev.offensive === false;
       const move = ally && !['heal', 'aegis', 'rally', 'suns'].includes(spec.move) ? 'rally' : spec.move;
       const S = this.sigStage(spec.color, move);
+      // Rarer units get a bigger show: tiers stack on top of the unique move.
+      S.tier = actor.boss ? 3 : (TIER[actor.def.rarity] || 0);
+      S.layer.classList.add(`tier-${S.tier}`);
       const from = this.vp(actor.uid);
       const T = targets.filter((t) => this.cards[t.uid]).map((t) => ({ uid: t.uid, ...this.vp(t.uid) }));
       const hit = (t) => this.sigImpact(spec.impact, t.uid, spec.color, S);
+      const t0 = performance.now();
       try {
+        await this.sigIntro(S, actor, from, spec);
         await this['mv_' + move](S, actor, from, T, spec, hit);
+        await this.sigFinale(S, actor, T, spec);
+        const floor = [1700, 2100, 2600, 3200, 3800][S.tier] / S.speed;
+        const left = floor - (performance.now() - t0);
+        if (left > 120) await this.sigLinger(S, T, spec, left);
       } finally {
         await S.end();
       }
+    },
+
+    // Embers drift over the struck cards while the moment lands.
+    async sigLinger(S, T, spec, ms) {
+      const until = performance.now() + ms;
+      while (performance.now() < until) {
+        for (const t of T) {
+          const e = el(`<i class="sig-mote" style="--c:${spec.color};left:${t.x + rand(-50, 50)}px;top:${t.y + rand(-30, 40)}px"></i>`);
+          S.layer.appendChild(e);
+          e.animate([{ transform: 'translate(-50%,-50%) scale(1)', opacity: 0.9 }, { transform: `translate(-50%, calc(-50% - ${rand(40, 90)}px)) scale(.2)`, opacity: 0 }], { duration: 800 }).onfinish = () => e.remove();
+        }
+        await new Promise((r) => setTimeout(r, 140));
+      }
+    },
+
+    // ---------- Rarity tiers ----------
+    async sigIntro(S, actor, from, spec) {
+      const tier = S.tier;
+      if (tier < 1) return;
+      const color = tier >= 4 ? '#ff2a5a' : tier >= 3 ? '#ffd23f' : spec.color;
+      if (tier >= 2) S.layer.insertAdjacentHTML('beforeend', '<div class="sig-bars"><i></i><i></i></div>');
+      if (tier >= 3) S.layer.insertAdjacentHTML('beforeend', `<div class="sig-godrays" style="left:${from.x}px;top:${from.y}px;--c:${color}"></div>`);
+      if (tier >= 3) {
+        const label = tier >= 4 ? 'MYTHIC ULTIMATE' : 'LEGENDARY ULTIMATE';
+        S.layer.insertAdjacentHTML('beforeend', `<div class="sig-title ${tier >= 4 ? 'mythic' : ''}" style="--c:${color}"><b data-text="${label}">${label}</b></div>`);
+      }
+      if (tier >= 4) {
+        S.layer.classList.add('sig-glitch');
+        S.layer.insertAdjacentHTML('beforeend', '<svg class="cc-shatter sig-cracks" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M50 50 L10 0 M50 50 L92 6 M50 50 L100 70 M50 50 L66 100 M50 50 L18 100 M50 50 L0 40"/></svg>');
+        if (root.Sound) root.Sound.play('glitch');
+      }
+      // Energy converges on the unit before it strikes.
+      const n = 8 + tier * 6;
+      for (let i = 0; i < n; i++) {
+        const a = (i / n) * Math.PI * 2;
+        const d = 160 + tier * 40 + rand(0, 80);
+        const m = el(`<i class="sig-mote" style="--c:${color};left:${from.x}px;top:${from.y}px"></i>`);
+        S.layer.appendChild(m);
+        m.animate([{ transform: `translate(calc(-50% + ${Math.cos(a) * d}px), calc(-50% + ${Math.sin(a) * d}px)) scale(1.4)`, opacity: 0 }, { opacity: 1, offset: 0.3 }, { transform: 'translate(-50%, -50%) scale(.3)', opacity: 0.9 }], { duration: (300 + tier * 120) / S.speed, delay: rand(0, 150), easing: 'cubic-bezier(.5,0,.9,.6)', fill: 'forwards' }).onfinish = () => m.remove();
+      }
+      if (tier >= 2) { this.shake(); this.env.flash(color, 0.15 + tier * 0.05); }
+      const ring = el(`<div class="sig-ring force" style="left:${from.x}px;top:${from.y}px;--c:${color}"></div>`);
+      S.layer.appendChild(ring);
+      await this.wait([0, 380, 560, 820, 1050][tier]);
+      ring.animate([{ width: '0px', height: '0px', opacity: 1 }, { width: '320px', height: '320px', opacity: 0 }], { duration: 450 }).onfinish = () => ring.remove();
+    },
+
+    async sigFinale(S, actor, T, spec) {
+      const tier = S.tier;
+      if (tier < 2) return;
+      const color = tier >= 4 ? '#ff2a5a' : tier >= 3 ? '#ffd23f' : spec.color;
+      const c = T.length ? { x: T.reduce((a, t) => a + t.x, 0) / T.length, y: T.reduce((a, t) => a + t.y, 0) / T.length } : { x: S.W / 2, y: S.H / 2 };
+      const maxR = Math.hypot(S.W, S.H);
+      const ring = el(`<div class="sig-ring" style="left:${c.x}px;top:${c.y}px;--c:${color}"></div>`);
+      S.layer.appendChild(ring);
+      ring.animate([{ width: '0px', height: '0px', opacity: 1 }, { width: `${maxR * 2}px`, height: `${maxR * 2}px`, opacity: 0 }], { duration: 800, easing: 'cubic-bezier(.2,.7,.4,1)' }).onfinish = () => ring.remove();
+      this.shake();
+      if (tier >= 3) {
+        this.field.classList.add('slowmo');
+        this.env.flash('#ffffff', tier >= 4 ? 0.7 : 0.5);
+        if (root.Sound) root.Sound.play('explosion');
+        T.forEach((t, i) => setTimeout(() => { const f = this.toField(t); this.env.blast(f.x, f.y, color, 1.4); this.sparks(f, color, 12); }, i * 90));
+        await this.wait(500);
+        this.field.classList.remove('slowmo');
+      }
+      if (tier >= 4) {
+        const tear = el('<div class="sig-tear"><i></i><i></i></div>');
+        S.layer.appendChild(tear);
+        T.forEach((t) => this.sigBolt(S, { x: t.x + rand(-200, 200), y: -10 }, t, '#ff2a5a', 1));
+        await this.wait(450);
+      }
+      await this.wait(200);
     },
 
     // ---------- Moves ----------
@@ -415,14 +497,26 @@
 
     // Beams: a sniper line from the shooter, or orbital strikes from the sky.
     async mv_beam(S, actor, from, T, spec, hit) {
-      const reps = spec.n || 1;
-      for (const t of T) {
-        for (let k = 0; k < reps; k++) {
+      const reps = Math.max(spec.n || 1, T.length === 1 ? 2 : 1);
+      // Each volley fires at every target with a short stagger.
+      for (let k = 0; k < reps; k++) {
+        await Promise.all(T.map(async (t, i) => {
+          await this.wait(i * 130);
           const src = spec.sky ? { x: t.x + rand(-60, 60), y: -20 } : from;
-          if (spec.prop === 'snipe') await this.sigReticle(S, t, spec.color);
-          await this.sigBeam(S, src, t, spec.color, spec.sky ? 22 : 7, spec.sky ? 420 : 240);
+          if (spec.prop === 'snipe') {
+            this.sigReticle(S, t, spec.color);
+            const charge = el(`<div class="sig-charge" style="left:${src.x}px;top:${src.y}px;--c:${spec.color}"></div>`);
+            S.layer.appendChild(charge);
+            await this.sigBeam(S, src, t, spec.color, 1.2, 650);
+            charge.remove();
+          } else if (spec.sky) {
+            S.layer.insertAdjacentHTML('beforeend', `<div class="sig-target" style="left:${t.x}px;top:${t.y}px;--c:${spec.color}"></div>`);
+            await this.wait(350);
+          }
+          await this.sigBeam(S, src, t, spec.color, spec.sky ? 26 : 10, spec.sky ? 520 : 340);
           if (k === 0) hit(t); else this.sigScorch(t, spec.color);
-        }
+        }));
+        if (!spec.sky) this.env.flash(spec.color, 0.25);
       }
     },
 
@@ -502,10 +596,13 @@
           { transform: 'translateY(-38px) rotate(-3deg)', offset: 0.6 },
           { transform: 'translateY(-44px) rotate(3deg)', offset: 0.75 },
           { transform: 'translateY(0)' },
-        ], { duration: 1300 / S.speed, easing: 'ease-in-out' }).finished;
+        ], { duration: 1900 / S.speed, easing: 'ease-in-out' }).finished;
       });
-      await this.wait(1000);
-      T.forEach((t) => hit(t));
+      const crackle = setInterval(() => T.forEach((t) => this.sigBolt(S, { x: t.x + rand(-60, 60), y: t.y + rand(-70, 70) }, t, spec.color, 0.4)), 90);
+      await this.wait(1500);
+      clearInterval(crackle);
+      T.forEach((t) => { hit(t); const f = this.toField(t); this.env.blast(f.x, f.y + 20, spec.color, 1.2); });
+      this.shake();
       await Promise.all(lifts).catch(() => {});
     },
 
@@ -686,14 +783,16 @@
         mote: () => `<div class="hx-halo" style="left:${from.x}px;top:${from.y}px"></div>`,
       }[spec.prop];
       if (extra) S.layer.insertAdjacentHTML('beforeend', extra());
+      // Healing pillars rise over every ally first.
+      T.forEach((t, i) => setTimeout(() => S.layer.insertAdjacentHTML('beforeend', `<div class="sig-pillar" style="left:${t.x}px;top:${t.y}px;--c:${spec.color}"></div>`), i * 120));
       const motes = [];
       T.forEach((t, i) => {
-        for (let k = 0; k < 7; k++) {
+        for (let k = 0; k < 12; k++) {
           const m = el(`<div class="sp-prop sp-mote" style="--c:${spec.color}">${glyph}</div>`);
           motes.push(follow(S, m, [{ x: t.x + rand(-S.W * 0.3, S.W * 0.3), y: S.H + 30 }, { x: t.x + rand(-60, 60), y: t.y + rand(30, 120) }, { ...t }], {
-            speed: 1.3, delay: i * 90 + k * 60, trail: spec.color, trailWidth: 0.3,
+            speed: 1.1, delay: 250 + i * 110 + k * 70, trail: spec.color, trailWidth: 0.35,
             onNode: (r) => {
-              if (!r.uid || k) return;
+              if (!r.uid || (k !== 0 && k !== 11)) return;
               const card = this.cards[r.uid];
               if (card) card.animate([{ filter: 'brightness(1)', transform: 'scale(1)' }, { filter: `brightness(1.7) drop-shadow(0 0 18px ${spec.color})`, transform: 'scale(1.06)' }, { filter: 'brightness(1)', transform: 'scale(1)' }], { duration: 700 });
               const f = this.toField(r);
@@ -704,6 +803,8 @@
         }
       });
       await Promise.all(motes);
+      if (root.Sound) root.Sound.play('heal');
+      await this.wait(250);
     },
 
     async mv_aegis(S, actor, from, T, spec) {
@@ -726,14 +827,18 @@
       const star = Array.from({ length: 16 }, (_, i) => { const r = i % 2 ? 18 : 46; const a = (i / 16) * TAU - Math.PI / 2; return `${50 + Math.cos(a) * r},${50 + Math.sin(a) * r}`; }).join(' ');
       const flag = el(`<div class="sig-rally" style="--c:${spec.color}"><svg viewBox="0 0 100 100"><polygon points="${star}" fill="${spec.color}"/><circle cx="50" cy="50" r="12" fill="#fff"/></svg></div>`);
       S.layer.appendChild(flag);
-      flag.animate([{ transform: 'translate(-50%, 40vh) scale(.4)', opacity: 0 }, { transform: 'translate(-50%, 0) scale(1.1)', opacity: 1, offset: 0.4 }, { transform: 'translate(-50%, -6vh) scale(1)', opacity: 0 }], { duration: 1300 / S.speed, easing: 'cubic-bezier(.2,.8,.3,1)', fill: 'forwards' });
-      await this.wait(400);
+      flag.animate([{ transform: 'translate(-50%, 40vh) scale(.4)', opacity: 0 }, { transform: 'translate(-50%, 0) scale(1.15)', opacity: 1, offset: 0.35 }, { transform: 'translate(-50%, -2vh) scale(1.05)', opacity: 1, offset: 0.75 }, { transform: 'translate(-50%, -8vh) scale(1)', opacity: 0 }], { duration: 2000 / S.speed, easing: 'cubic-bezier(.2,.8,.3,1)', fill: 'forwards' });
+      S.layer.insertAdjacentHTML('beforeend', `<div class="sig-wall wall-rally" style="--c:${spec.color}"></div>`);
+      const sweep = S.layer.lastElementChild;
+      sweep.animate([{ transform: 'translateX(-110%)' }, { transform: 'translateX(110%)' }], { duration: 1200 / S.speed, delay: 300, easing: 'ease-in-out', fill: 'both' });
+      await this.wait(500);
       T.forEach((t, i) => setTimeout(() => {
         const card = this.cards[t.uid];
-        if (card) card.animate([{ transform: 'translateY(0)' }, { transform: 'translateY(-22px)', filter: `drop-shadow(0 0 16px ${spec.color})` }, { transform: 'translateY(0)' }], { duration: 520, easing: 'cubic-bezier(.3,1.6,.5,1)' });
-        this.wave(this.toField(t), spec.color, 2.4);
-      }, i * 90));
-      await this.wait(800);
+        if (card) card.animate([{ transform: 'translateY(0)' }, { transform: 'translateY(-22px)', filter: `drop-shadow(0 0 16px ${spec.color})` }, { transform: 'translateY(0)' }, { transform: 'translateY(-14px)', filter: `drop-shadow(0 0 22px ${spec.color})`, offset: 0.75 }, { transform: 'translateY(0)' }], { duration: 1000, easing: 'cubic-bezier(.3,1.6,.5,1)' });
+        this.wave(this.toField(t), spec.color, 2.8);
+        this.sparks(this.toField(t), spec.color, 10);
+      }, i * 110));
+      await this.wait(1300);
     },
 
     // ---------- Visual helpers ----------
@@ -812,8 +917,11 @@
       if (!card || !card.isConnected) return;
       if (root.Sound) root.Sound.play({ slice: 'saber', xslash: 'saber', stamp: 'explosion', shock: 'zap', freeze: 'freeze', burn: 'fire', scorch: 'blaster', shatter: 'crack' }[kind] || 'hit');
       const f = this.center(uid);
-      this.sparks(f, color, 10);
-      this.env.impact(f.x, f.y, { power: 1.2, color });
+      const tier = S.tier || 0;
+      this.sparks(f, color, 6 + tier * 4);
+      this.env.impact(f.x, f.y, { power: 1 + tier * 0.25, color });
+      if (tier >= 2) this.wave(f, color, 2 + tier * 0.4);
+      if (tier >= 3) this.env.light(f.x, f.y, color, 160, 0.5);
       const r = card.getBoundingClientRect();
       const layer = S.layer;
       switch (kind) {

@@ -1723,6 +1723,8 @@ kbd { font-family: var(--font-display); font-size: 11px; padding: 1px 6px; borde
 .walkout.final .wo-final { opacity: 1; }
 .walkout.final .wo-bg { filter: brightness(0.45) blur(2px); transition: filter 0.4s; }
 .walkout.final .br-card { animation: br-card 0.9s cubic-bezier(.2,.9,.25,1.2) both; }
+.walkout.common .br-rays, .walkout.rare .br-rays { opacity: 0.55; animation-duration: 14s; }
+.walkout.common .br-rarity, .walkout.rare .br-rarity { font-size: clamp(30px, 6vw, 64px); }
 .walkout.mythic.final .br-card { animation: br-card-m 1.4s cubic-bezier(.2,.9,.25,1.1) both; }
 .walkout:not(.final) .br-card, .walkout:not(.final) .br-text, .walkout:not(.final) .br-spark { animation: none; visibility: hidden; }
 .wo-ship { position: absolute; left: 50%; top: 45%; width: 40vmin; height: 40vmin; margin: -20vmin; animation: wo-ship 0.8s cubic-bezier(.3,.7,.3,1) forwards; pointer-events: none; }
@@ -1811,8 +1813,8 @@ kbd { font-family: var(--font-display); font-size: 11px; padding: 1px 6px; borde
 .sp-twin { } .sp-twin i { width: 44%; } .sp-twin i:nth-child(2) { transform: rotate(150deg); }
 .sp-twin b:nth-of-type(2) { transform: rotate(150deg); }
 .sp-knife i { width: 50%; height: 3px; background: linear-gradient(90deg, #888, #fff); box-shadow: 0 0 6px var(--c); }
-.sp-estaff i { width: 46%; height: 4px; background: #3a3540; box-shadow: none; }
-.sp-estaff i::before, .sp-estaff i::after { content: ''; position: absolute; top: -4px; width: 12px; height: 12px; border-radius: 50%; background: #fff; box-shadow: 0 0 8px 3px var(--c), 0 0 22px 8px var(--c); }
+.sp-estaff i { width: 46%; height: 5px; background: linear-gradient(90deg, #8a8098, #e0d8f0); box-shadow: 0 0 6px var(--c); }
+.sp-estaff i::before, .sp-estaff i::after { content: ''; position: absolute; top: -6px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 0 8px 3px var(--c), 0 0 22px 8px var(--c); }
 .sp-estaff i::before { right: -6px; } .sp-estaff i::after { left: calc(-100% - 6px); }
 .sp-bolt i { position: absolute; left: 50%; top: 0; width: 5px; height: 100%; margin-left: -2.5px; border-radius: 3px; background: #fff; box-shadow: 0 0 6px 2px var(--c), 0 0 16px 4px var(--c); }
 .sp-bolt.big i { width: 8px; margin-left: -4px; }
@@ -1893,6 +1895,36 @@ kbd { font-family: var(--font-display); font-size: 11px; padding: 1px 6px; borde
 .sig-wall.wall-deflector { background: linear-gradient(90deg, transparent 30%, rgba(230, 240, 255, 0.35) 50%, transparent 70%), repeating-linear-gradient(60deg, transparent 0 14px, rgba(230, 240, 255, 0.18) 14px 16px), repeating-linear-gradient(-60deg, transparent 0 14px, rgba(230, 240, 255, 0.18) 14px 16px); }
 .sig-wall.wall-laat { background: linear-gradient(90deg, transparent 30%, rgba(90, 180, 255, 0.45) 46%, #fff 50%, rgba(90, 180, 255, 0.45) 54%, transparent 70%); filter: drop-shadow(0 0 20px #5ab4ff); }
 .sig-wall.wall-trooper { background: repeating-linear-gradient(90deg, transparent 0 40px, rgba(255, 255, 255, 0.25) 40px 46px), linear-gradient(90deg, transparent 30%, rgba(255, 255, 255, 0.4) 50%, transparent 70%); }
+
+/* Richer support, sniper and orbital beats. */
+.sig-pillar { position: absolute; width: 90px; height: 70vh; margin: -60vh 0 0 -45px; background: linear-gradient(0deg, color-mix(in srgb, var(--c) 55%, transparent), color-mix(in srgb, var(--c) 10%, transparent) 70%, transparent); filter: blur(2px); animation: sig-pillar 1.8s ease-out forwards; pointer-events: none; }
+@keyframes sig-pillar { 0% { transform: scaleY(0); opacity: 0; transform-origin: bottom; } 30% { transform: scaleY(1); opacity: 1; transform-origin: bottom; } 100% { opacity: 0; } }
+.sig-charge { position: absolute; width: 60px; height: 60px; margin: -30px; border-radius: 50%; background: radial-gradient(circle, #fff 10%, var(--c) 40%, transparent 70%); animation: sig-charge 0.65s ease-in forwards; }
+@keyframes sig-charge { from { transform: scale(0.2); opacity: 0.4; } to { transform: scale(1.6); opacity: 1; } }
+.sig-target { position: absolute; width: 140px; height: 50px; margin: -25px 0 0 -70px; border-radius: 50%; border: 2px dashed var(--c); box-shadow: 0 0 20px var(--c); animation: sig-target 0.9s ease-out forwards; }
+@keyframes sig-target { from { transform: scale(2) rotate(0); opacity: 0; } 40% { opacity: 1; } to { transform: scale(0.8) rotate(90deg); opacity: 0; } }
+.sig-wall.wall-rally { background: linear-gradient(90deg, transparent 30%, color-mix(in srgb, var(--c) 35%, transparent) 46%, rgba(255, 255, 255, 0.6) 50%, color-mix(in srgb, var(--c) 35%, transparent) 54%, transparent 70%); }
+
+/* Rarity tiers layered on top of every signature ultimate. */
+.sig-mote { position: absolute; width: 7px; height: 7px; border-radius: 50%; background: #fff; box-shadow: 0 0 10px 3px var(--c); pointer-events: none; z-index: 4; }
+.sig-bars i { position: absolute; left: 0; right: 0; height: 9vh; background: #000; z-index: 5; animation: sig-bar 0.4s ease-out both; }
+.sig-bars i:first-child { top: 0; } .sig-bars i:last-child { bottom: 0; transform-origin: bottom; }
+@keyframes sig-bar { from { transform: scaleY(0); } }
+.sig-bars i:first-child { transform-origin: top; }
+.sig-godrays { position: absolute; width: 140vmax; height: 140vmax; margin: -70vmax 0 0 -70vmax; background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--c) 28%, transparent) 0 4deg, transparent 4deg 14deg); mask-image: radial-gradient(circle, #000 5%, transparent 45%); -webkit-mask-image: radial-gradient(circle, #000 5%, transparent 45%); animation: jp-rays 7s linear infinite, fade-in 0.4s; pointer-events: none; z-index: 1; }
+.sig-title { position: absolute; left: 0; right: 0; top: 11vh; text-align: center; z-index: 6; pointer-events: none; animation: sig-title 1.6s cubic-bezier(.2,.9,.2,1) forwards; }
+.sig-title b { position: relative; font-family: var(--font-display); font-weight: 900; letter-spacing: 0.3em; font-size: clamp(16px, 2.6vw, 28px); color: var(--c); text-shadow: 0 0 18px var(--c), 2px 2px 0 rgba(0, 0, 0, 0.6); }
+.sig-title.mythic b::before, .sig-title.mythic b::after { content: attr(data-text); position: absolute; left: 0; top: 0; width: 100%; }
+.sig-title.mythic b::before { color: #0ff; transform: translateX(-3px); clip-path: inset(0 0 55% 0); opacity: 0.7; }
+.sig-title.mythic b::after { color: #ffd23f; transform: translateX(3px); clip-path: inset(55% 0 0 0); opacity: 0.7; }
+@keyframes sig-title { 0% { opacity: 0; transform: translateX(-40vw) skewX(20deg); } 25% { opacity: 1; transform: none; } 80% { opacity: 1; } 100% { opacity: 0; transform: translateX(10vw); } }
+.sig-layer.sig-glitch canvas { filter: drop-shadow(-3px 0 0 rgba(0, 255, 255, 0.5)) drop-shadow(3px 0 0 rgba(255, 0, 80, 0.6)); }
+.sig-layer.sig-glitch .sig-tint { animation: cc-glitch 0.25s steps(2) infinite; }
+.sig-cracks { z-index: 2; opacity: 0.8; }
+.sig-tear i { position: absolute; left: 0; right: 0; height: 50%; background: rgba(255, 42, 90, 0.18); border: 1px solid rgba(255, 120, 150, 0.6); z-index: 6; animation: sig-tear 0.45s ease-in forwards; }
+.sig-tear i:first-child { top: 0; } .sig-tear i:last-child { bottom: 0; animation-name: sig-tear2; }
+@keyframes sig-tear { from { transform: translateX(0); } to { transform: translateX(-8%); opacity: 0; } }
+@keyframes sig-tear2 { from { transform: translateX(0); } to { transform: translateX(8%); opacity: 0; } }
 
 /* ---------- Galaxy hub: modes, tower, arrival cinematic, datapad ---------- */
 .hub-modes { position: absolute; z-index: 4; top: clamp(12px, 3vw, 22px); right: clamp(12px, 3vw, 22px); background: rgba(5, 8, 16, 0.75); backdrop-filter: blur(6px); border: 1px solid rgba(255, 210, 63, 0.3); box-shadow: 0 0 24px rgba(0, 0, 0, 0.5); }
