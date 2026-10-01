@@ -99,6 +99,7 @@
       rp.style.cssText = `left:${e.clientX - r.left}px;top:${e.clientY - r.top}px;width:${size}px;height:${size}px;--fx:${fxColor(host)}`;
       clip.appendChild(rp);
       rp.addEventListener('animationend', () => rp.remove());
+      if (root.Sound && host.matches('button, .map-planet, .mode-card')) root.Sound.play('click');
       host.animate([{ scale: 1 }, { scale: host.matches('button') ? 0.94 : 0.97, offset: 0.35 }, { scale: 1.02, offset: 0.7 }, { scale: 1 }], { duration: 320, easing: 'ease-out' });
       if (host.matches(SPARK_SEL)) {
         for (let i = 0; i < 10; i++) {
@@ -121,6 +122,7 @@
     starfield();
     premiumFx();
     document.querySelector('.topbar').addEventListener('click', (e) => {
+      if (e.target.closest('[data-sound-settings]')) return root.UI.soundSettings();
       const nav = e.target.closest('[data-nav]');
       if (!nav) return;
       if (App.battleActive) {

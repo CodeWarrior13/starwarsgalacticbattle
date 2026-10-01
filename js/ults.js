@@ -68,6 +68,17 @@
     fifth_brother: { move: 'dive', prop: 'spinner', impact: 'crush', color: '#ff2a2a', quake: true },
     seventh_sister: { move: 'orbit', prop: 'probe', impact: 'shock', color: '#ff3a3a', n: 5 },
     eighth_brother: { move: 'sweep', prop: 'spinner', impact: 'xslash', color: '#ff2a2a' },
+    // Wave 6
+    anakin: { move: 'dive', prop: 'saber', impact: 'burn', color: '#4aa8ff' },
+    qui_gon: { move: 'shockwave', prop: 'force', impact: 'knock', color: '#46e070' },
+    padme: { move: 'ricochet', prop: 'bolt', impact: 'spin', color: '#ff8ad0', n: 3 },
+    lando: { move: 'rally', color: '#5ab4ff', prop: 'cape' },
+    jango_fett: { move: 'ricochet', prop: 'bolt', impact: 'knock', color: '#ff5a3a', n: 2, big: true },
+    asajj_ventress: { move: 'loop', prop: 'twin', impact: 'slice', color: '#ff2a2a' },
+    cad_bane: { move: 'beam', prop: 'snipe', impact: 'burn', color: '#ff7a3a' },
+    moff_gideon: { move: 'beam', prop: 'orbital', impact: 'shatter', color: '#e8eef8', sky: true },
+    n1_starfighter: { move: 'flyby', prop: 'ship', impact: 'slice', color: '#ffd23f', roll: true },
+    sith_infiltrator: { move: 'carpet', prop: 'probe', impact: 'shock', color: '#ff2a2a' },
     // Mythic: one-of-a-kind cinematics
     darth_revan: { move: 'mask', prop: 'mask', impact: 'xslash', color: '#c23bff' },
     starkiller: { move: 'unleash', prop: 'isd', impact: 'crush', color: '#7ac8ff' },
@@ -244,6 +255,7 @@
     // ---------- Moves ----------
     // Thrown blade: loops the whole screen, carves every target, returns.
     async mv_loop(S, actor, from, T, spec, hit) {
+      if (root.Sound) root.Sound.play('ignite');
       const { W, H } = S;
       const loop = [[0.88, 0.12], [0.94, 0.55], [0.62, 0.92], [0.1, 0.82], [0.06, 0.28], [0.42, 0.06]].map(([x, y]) => ({ x: x * W, y: y * H }));
       const route = [from, ...loop, ...T, { ...from }];
@@ -416,6 +428,7 @@
 
     // Jagged Force lightning that chains through every target.
     async mv_arc(S, actor, from, T, spec, hit) {
+      if (root.Sound) root.Sound.play('lightning');
       const dur = 1000 / S.speed;
       const t0 = performance.now();
       T.forEach((t, i) => setTimeout(() => hit(t), (i * 160 + 120) / S.speed));
@@ -437,6 +450,7 @@
 
     // Lightning from the actor and from the sky at once.
     async mv_storm(S, actor, from, T, spec, hit) {
+      if (root.Sound) { root.Sound.play('lightning'); setTimeout(() => root.Sound.play('lightning'), 600); }
       S.layer.classList.add('sig-storm');
       const dur = 1400 / S.speed;
       const t0 = performance.now();
@@ -457,6 +471,7 @@
 
     // A ring that expands past the edges of the screen.
     async mv_shockwave(S, actor, from, T, spec, hit) {
+      if (root.Sound) root.Sound.play('whoosh');
       const maxR = Math.hypot(S.W, S.H);
       const dur = 900 / S.speed;
       for (let k = 0; k < (spec.prop === 'roar' ? 3 : 2); k++) {
@@ -496,6 +511,7 @@
 
     // Starfighter strafing run across the whole screen.
     async mv_flyby(S, actor, from, T, spec, hit) {
+      if (root.Sound) root.Sound.play('whoosh');
       const passes = spec.n || 1;
       for (let pass = 0; pass < passes; pass++) {
         const ltr = pass % 2 === 0 ? actor.side === 'player' : actor.side !== 'player';
@@ -794,6 +810,7 @@
     sigImpact(kind, uid, color, S) {
       const card = this.cards[uid];
       if (!card || !card.isConnected) return;
+      if (root.Sound) root.Sound.play({ slice: 'saber', xslash: 'saber', stamp: 'explosion', shock: 'zap', freeze: 'freeze', burn: 'fire', scorch: 'blaster', shatter: 'crack' }[kind] || 'hit');
       const f = this.center(uid);
       this.sparks(f, color, 10);
       this.env.impact(f.x, f.y, { power: 1.2, color });

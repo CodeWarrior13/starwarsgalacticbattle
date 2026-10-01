@@ -14,7 +14,7 @@ npm run build   # writes dist/galactic-card-battles.html
 
 ## How it plays
 
-- **The Galaxy hub.** One screen for every fight: an interactive galaxy map of your progress with dogfights, Star Destroyers, the Falcon jumping to lightspeed, Mando on his jetpack, Grogu's pram, R2's escape pod and probe droids drifting through. Toggle **Ground**, **Fleet**, **Bosses** and the **Endless Tower** at the top. Tap a world to play its arrival cinematic (its living battlefield, spinning sabers and a title band), then pick a stage from the drop-down datapad; each world's finale boss and boss battles sit at the end of its list.
+- **The Galaxy hub.** One screen for every fight: an interactive galaxy map of your progress with dogfights, Star Destroyers, the Falcon jumping to lightspeed, Mando on his jetpack, Grogu's pram, R2's escape pod and probe droids drifting through. Toggle **Ground**, **Fleet**, **Bosses** and the **Endless Tower** at the top. Each world shows its stages as its own themed progress ring (twin suns on Tatooine, ice shards on Hoth, flames on Mustafar…). Tap a world to play its arrival cinematic (its living battlefield, spinning sabers and a title band), then pick a stage from the drop-down datapad; each world's finale boss and boss battles sit at the end of its list.
 - **Endless Tower.** Infinite floors on random worlds with random squads (often a themed group like the Inquisitorius or Bad Batch) and a boss every 10 floors. Enemies get tougher and rewards grow as you climb; losing drops you back to the last checkpoint (floors 1, 11, 21…) and re-rolls the floors above.
 - **Galaxy Map.** Eleven planet campaigns (Tatooine, Hoth, Dagobah, Bespin, Endor, Scarif, Coruscant, Geonosis, Mustafar, Exegol and the post-game Battle of Coruscant) with 70 stages mixing ground and space battles. Liberating a planet opens the hyperspace lane to the next one.
 - **Battle of Coruscant.** Ten stages under battle-scarred skies: Venators and Separatist cruisers trade turbolaser fire, flak bursts, burning wreckage streaks down past the burning Jedi Temple, and LAAT gunships sweep the city. The Falling Wreckage hazard sends a hull section crashing into the battlefield.
@@ -27,13 +27,14 @@ npm run build   # writes dist/galactic-card-battles.html
 - **Squad bonuses in battle.** Both teams' active bonuses sit at the edge of the battlefield; tap one to drop down exactly what it does and who it affects.
 - **Boss battles.** The Rancor, a Krayt Dragon, Lord Vader, an Imperial Star Destroyer and the Death Star. Bosses are immune to Stun and become Enraged below 50% HP.
 - **Mythic cards.** A fifth rarity above Legendary, crate-only and very rare (0.4% in standard crates, up to 3% in the Aurodium Strongbox): Darth Revan, Starkiller, Jedi Master Luke and the Ghost, each with a one-of-a-kind ultimate.
-- **Crate openings.** The crate's build-up scales with the best card inside (Mythic crates pretend to be rare, then glitch). Card backs glow with a hint of their rarity, and Epic, Legendary and Mythic pulls get a FIFA-style walkout: allegiance, class, homeworld (or hyperspace for ships), then the card.
-- **Collection.** 56 characters and 15 ships (including droids like C-3PO, BB-8, K-2SO, Chopper, IG-88, IG-11, Droidekas and MagnaGuards, medics like 2-1B, Barriss Offee and Mother Talzin, and the Bad Batch) with hand-drawn cover art, filterable by class (Healer, Tank, Fighter, Ranged, Support, Force User, Droid, Starfighter, Bomber, Gunship) with a Light/Dark breakdown. Tap a card to flip it; swipe for stats and upgrades.
+- **Crate openings.** The crate's build-up scales with the best card inside (Mythic crates pretend to be rare, then glitch). Card backs show a Light or Dark Side design with its own glow plus a hint of rarity, and Epic, Legendary and Mythic pulls get a FIFA-style walkout: allegiance, class, homeworld (or hyperspace for ships), then the card.
+- **Collection.** 64 characters and 17 ships (including droids like C-3PO, BB-8, K-2SO, Chopper, IG-88, IG-11, Droidekas and MagnaGuards, medics like 2-1B, Barriss Offee and Mother Talzin, and the Bad Batch) with hand-drawn cover art, filterable by class (Healer, Tank, Fighter, Ranged, Support, Force User, Droid, Starfighter, Bomber, Gunship) with a Light/Dark breakdown. Tap a card to flip it; swipe for stats, upgrades and its **Ultimate** page, where **Watch it in action** plays the ultimate in a training simulation.
 - **Daily login streak.** A 7-day reward track in the Night Market (credits, Kyber, Loaded Dice, Chance Cubes and the Hutt's Hoard on day 7). Miss a day and the streak restarts.
 - **Nar Shaddaa Night Market.** Crates, hourly flash sales, rotating Hot Stock, lucky charms, a Sabacc table and the Droid Shell Game.
 - **Luck.** Victory credit spins, Holo cards, Chance Cubes, Loaded Dice and a Legendary pity counter. Landing the top multiplier plays a full-screen Star Wars pun.
 - **Premium feel.** Every button glints on hover, squashes and ripples on press, and primary actions throw sparks; currencies roll up to new totals.
 - **Auto-build.** Builds a balanced squad: one tank, one healer and one support at most, then damage dealers, favoring units that complete synergies.
+- **Sound and music.** Synthesized blasters, sabers, explosions, lightning, crate rumbles, reveal stings and fanfares, plus two original space-opera themes (galaxy and battle). The 🔊 button sets volumes and lets you pick your own music files, which stay in your browser.
 - **PC controls.** 1–5 pick abilities, R picks the ultimate, ←/→ move the target, Enter attacks, A toggles auto, F changes speed, ? shows help.
 
 ## Custom card art
@@ -51,6 +52,7 @@ Drop images named after unit ids (for example `luke.png` or `slave_one.jpg`) int
 | `js/state.js` | Save data, currencies, crates, luck, Black Market, auto-build, rewards |
 | `js/ui.js` | Screens: Galaxy hub (modes, planet cinematic, stage datapad, tower), squad select, collection, card inspector, Black Market and daily streak |
 | `js/battle-ui.js` | Battle screen, animations, ultimate cutscenes, hyperspace intro |
+| `js/audio.js` | Synthesized sound effects, original music themes and custom music |
 | `js/ults.js` | Full-screen signature ultimates: moves, props and card impacts for every unit |
 | `js/art-images.js` | Generated map of custom card art in `art/` (`npm run art`) |
 | `js/main.js` | Boot and ambient starfield |

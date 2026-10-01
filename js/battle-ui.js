@@ -62,6 +62,7 @@
       document.body.classList.add('in-battle');
       document.documentElement.style.setProperty('--speed', this.speed);
       this.renderScreen();
+      if (root.Sound) root.Sound.music('battle');
       await this.hyperspace();
       if (enc.boss) await this.bossIntro(D.UNIT_MAP[enc.boss]);
       this.log(`Battle begins: ${enc.name}!`, 'ult');
@@ -73,6 +74,65 @@
         toast('PC controls: 1–5 abilities, ←/→ target, Enter to attack, ? for help');
       }
       this.loop();
+    },
+
+    // ---------- Ultimate preview (training simulation) ----------
+    async preview(id, back) {
+      const def = D.UNIT_MAP[id];
+      const kind = def.kind;
+      const ult = D.ultimateFor(def);
+      const allyUlt = ['allAllies', 'self'].includes(ult.target);
+      const own = Player.unit(id) || { level: 20, stars: 5 };
+      const planet = root.UI.homeworldOf(def);
+      const fillers = kind === 'ship' ? ['x_wing', 'y_wing'] : ['rebel_soldier', 'clone_trooper'];
+      const foes = kind === 'ship' ? ['tie_fighter', 'tie_interceptor', 'tie_fighter', 'tie_bomber'] : ['battle_droid', 'b2_droid', 'battle_droid', 'battle_droid'];
+      this.params = { type: 'preview', unit: id };
+      this.previewBack = back;
+      this.enc = { name: `Simulation · ${def.name}`, kind, planet: planet.id, type: 'preview' };
+      this.kind = kind;
+      this.ended = false;
+      this.pending = null;
+      this.planetId = planet.id;
+      this.battle = new root.Battle(
+        [{ id, level: Math.max(own.level, 10), stars: own.stars }, ...fillers.filter((f) => f !== id).slice(0, 2).map((f) => ({ id: f, level: 10, stars: 1 }))],
+        foes.map((f) => ({ id: f, level: 8, stars: 1 })),
+        null,
+        { planet: planet.id },
+      );
+      App.battleActive = true;
+      App.current = 'battle';
+      document.body.classList.add('in-battle');
+      this.renderScreen();
+      if (root.Sound) root.Sound.music('battle');
+      this.view.classList.add('preview');
+      $('[data-retreat]', this.view).textContent = 'Exit';
+      this.log(`Training simulation: ${def.name}'s ultimate.`, 'ult');
+      await this.wait(700);
+      if (this.ended) return;
+      const actor = this.battle.units.find((u) => u.id === id && u.side === 'player');
+      // Wound the squad first so healing ultimates have something to show.
+      if (allyUlt) for (const u of this.battle.side('player')) { u.hp = Math.round(u.maxHp * 0.45); this.updateCard(u); }
+      actor.ult = 100;
+      this.updateCard(actor);
+      this.setActive(actor);
+      const idx = actor.abilities.findIndex((ab) => ab.ultimate);
+      const target = ult.target === 'self' || allyUlt ? actor.uid : this.battle.side('enemy')[0].uid;
+      const evs = this.battle.act(actor, idx, target);
+      await this.play(evs);
+      if (this.ended) return;
+      const panel = el(`<div class="preview-panel"><b>★ ${esc(ult.name)}</b><span>${esc(ult.desc)}</span><div><button class="btn" type="button" data-preview-replay>↺ Replay</button><button class="btn btn-primary" type="button" data-preview-exit>Back to card</button></div></div>`);
+      this.field.appendChild(panel);
+    },
+
+    exitPreview(replay) {
+      const id = this.params && this.params.unit;
+      const back = this.previewBack;
+      this.ended = true;
+      this.resolvePending(null);
+      this.teardown();
+      if (root.Sound) root.Sound.music('menu');
+      if (replay) return this.preview(id, back);
+      if (back) back(); else App.go('collection');
     },
 
     // ---------- Rendering ----------
@@ -133,6 +193,7 @@
       const screen = $('#screen');
       screen.innerHTML = '';
       screen.appendChild(view);
+      window.scrollTo({ top: 0 });
       $$('.main-nav button').forEach((btn) => btn.classList.toggle('active', btn.dataset.nav === 'home'));
       this.env = new root.Env($('[data-env]', view), this.planetId || 'tatooine', ships ? 'space' : 'ground');
       this.updateAll();
@@ -439,6 +500,10 @@
       if (e.target.closest('[data-auto]')) return this.toggleAuto();
       if (e.target.closest('[data-speed]')) return this.cycleSpeed();
       if (e.target.closest('[data-help]')) return this.toggleHelp();
+      if (this.params && this.params.type === 'preview') {
+        if (e.target.closest('[data-preview-replay]')) return this.exitPreview(true);
+        if (e.target.closest('[data-preview-exit], [data-retreat]')) return this.exitPreview(false);
+      }
       if (e.target.closest('[data-retreat]')) {
         if (await confirmBox('Retreat from battle?', 'This counts as a defeat. You keep everything you already own.', 'Retreat')) {
           this.ended = true;
@@ -548,6 +613,7 @@
             await this.wait(700);
             break;
           case 'ko':
+            if (root.Sound) root.Sound.play(u.def.kind === 'ship' ? 'explosion' : 'ko');
             this.updateCard(u);
             this.explode(u);
             this.cards[u.uid].animate([{ transform: 'scale(1)' }, { transform: 'scale(1.1) rotate(-3deg)' }, { transform: 'scale(0.92)' }], { duration: 500 / this.speed });
@@ -615,6 +681,7 @@
       const targets = ev.targets.map((uid) => this.battle.get(uid));
       if (ev.ultimate) {
         this.log(`★ ${actor.def.name} unleashes ${ab.name}!`, 'ult');
+        if (root.Sound) root.Sound.play('ult');
         const color = actor.def.faction === 'light' ? '#5ab4ff' : '#ff3a3a';
         this.env.charge(color);
         await this.cutscene(actor, ab);
@@ -627,6 +694,7 @@
       if (ev.abilityIndex > 0) this.banner(ab.name, actor.side);
       const motion = !reducedMotion();
 
+      if (root.Sound) root.Sound.play(!ev.offensive ? 'heal' : actor.def.kind === 'ship' ? 'laser' : D.classesOf(actor.def).includes('fighter') ? 'saber' : 'blaster');
       if (!ev.offensive) {
         if (motion) card.animate([{ filter: 'brightness(1)' }, { filter: 'brightness(1.8) drop-shadow(0 0 16px #52e08a)' }, { filter: 'brightness(1)' }], { duration: 500 / this.speed });
         for (const t of targets) {
@@ -866,6 +934,7 @@
     },
 
     hit(u, ev) {
+      if (root.Sound) root.Sound.play(ev.crit ? 'crit' : 'hit');
       const card = this.cards[u.uid];
       if (!card) return;
       this.updateCard(u);
@@ -1797,6 +1866,7 @@
       // A real beat after the last hit, whatever the battle speed.
       await new Promise((r) => setTimeout(r, 1000));
       const won = winner === 'player';
+      if (root.Sound) { root.Sound.play(won ? 'victory' : 'defeat'); root.Sound.music('menu'); }
       const rewards = Player.completeEncounter(this.params, won);
       this.teardown();
       const p = this.params;
@@ -1859,6 +1929,7 @@
     rankUp(up) {
       if (reducedMotion() || !up) return;
       const big = up.level % 5 === 0;
+      if (root.Sound) root.Sound.play('rankup');
       const node = el(`<div class="jackpot rank-up" role="status" aria-live="polite">
         <div class="jp-rays"></div>
         <div class="jp-text">
@@ -1880,6 +1951,7 @@
         ? [['Unlimited credits!', 'The Loaded Dice are strong with this one'], ['I have the high roll!', "Don't try it. It's a max multiplier"]]
         : [['Never tell me the odds!', 'You beat them anyway'], ['These are the credits you\'re looking for', 'Move along… to the bank'], ['The odds are strong with this one', 'A max roll, as the Force wills it']];
       const [line, sub] = puns[Math.floor(Math.random() * puns.length)];
+      if (root.Sound) root.Sound.play('jackpot');
       const coins = reducedMotion() ? '' : Array.from({ length: 36 }, (_, i) => `<i style="--x:${Math.random() * 100}%;--d:${(Math.random() * 0.9).toFixed(2)}s;--s:${(0.7 + Math.random() * 0.7).toFixed(2)};--r:${Math.round(rand(-540, 540))}deg"></i>`).join('');
       const streaks = reducedMotion() ? '' : Array.from({ length: 22 }, (_, i) => `<b style="--y:${Math.random() * 100}%;--d:${(Math.random() * 0.5).toFixed(2)}s;--w:${Math.round(rand(80, 320))}px"></b>`).join('');
       const node = el(`<div class="jackpot" role="status" aria-live="assertive">

@@ -534,6 +534,80 @@
       ],
     },
 
+    // ---------- Wave 6: heroes and hunters of every era ----------
+    {
+      id: 'anakin', name: 'Anakin Skywalker', kind: 'character', faction: 'light', rarity: 'legendary', role: 'attacker', accent: '#4aa8ff', spd: 156,
+      abilities: [
+        { name: 'Aggressive Strike', cd: 0, target: 'enemy', effects: [dmg(1.25), debuff('burn', 2, 0.25)], desc: 'Deal damage with a 25% chance to Burn.' },
+        { name: 'Djem So Fury', cd: 3, target: 'enemy', effects: [dmg(0.85, 3)], desc: 'Hit one enemy three times.' },
+        { name: 'Chosen One', cd: 4, target: 'allEnemies', effects: [dmg(1.0), { ...buff('offUp', 2), on: 'self' }], desc: 'Damage all enemies and gain Offense Up.' },
+      ],
+    },
+    {
+      id: 'qui_gon', name: 'Qui-Gon Jinn', kind: 'character', faction: 'light', rarity: 'epic', role: 'tank', accent: '#46e070', spd: 128,
+      abilities: [
+        { name: 'Patient Strike', cd: 0, target: 'enemy', effects: [dmg(1.0), { ...heal(0.06), on: 'self' }], desc: 'Deal damage and heal 6%.' },
+        { name: 'Living Force', cd: 3, target: 'allAllies', effects: [heal(0.15), buff('defUp', 2)], desc: 'All allies heal 15% and gain Defense Up.' },
+        { name: 'Stand Firm', cd: 4, target: 'self', effects: [buff('taunt', 2), buff('defUp', 2)], desc: 'Gain Taunt and Defense Up.' },
+      ],
+    },
+    {
+      id: 'padme', name: 'Padmé Amidala', kind: 'character', faction: 'light', rarity: 'rare', role: 'support', accent: '#ff8ad0', spd: 146,
+      abilities: [
+        { name: 'Senator\'s Aim', cd: 0, target: 'enemy', effects: [dmg(1.0), debuff('offDown', 2, 0.3)], desc: 'Deal damage with a 30% chance of Offense Down.' },
+        { name: 'Diplomatic Immunity', cd: 3, target: 'allAllies', effects: [buff('defUp', 2), tm(20)], desc: 'All allies gain Defense Up and 20% Turn Meter.' },
+      ],
+    },
+    {
+      id: 'lando', name: 'Lando Calrissian', kind: 'character', faction: 'light', rarity: 'rare', role: 'support', accent: '#5ab4ff', spd: 150,
+      abilities: [
+        { name: 'Smooth Shot', cd: 0, target: 'enemy', effects: [dmg(1.05)], desc: 'Deal damage to one enemy.' },
+        { name: 'Sabacc Gambit', cd: 3, target: 'allEnemies', effects: [dmg(0.7), debuff('stun', 1, 0.3)], desc: 'Damage all enemies with a 30% chance to Stun.' },
+      ],
+    },
+    {
+      id: 'jango_fett', name: 'Jango Fett', kind: 'character', faction: 'dark', rarity: 'epic', role: 'attacker', accent: '#7ab8d8', spd: 150,
+      abilities: [
+        { name: 'Twin Westars', cd: 0, target: 'enemy', effects: [dmg(0.6, 2)], desc: 'Shoot one enemy twice.' },
+        { name: 'Jetpack Rocket', cd: 3, target: 'enemy', effects: [dmg(2.0), debuff('burn', 2)], desc: 'Deal heavy damage and Burn.' },
+      ],
+    },
+    {
+      id: 'asajj_ventress', name: 'Asajj Ventress', kind: 'character', faction: 'dark', rarity: 'epic', role: 'attacker', accent: '#ff2a2a', spd: 154,
+      abilities: [
+        { name: 'Curved Blades', cd: 0, target: 'enemy', effects: [dmg(0.65, 2)], desc: 'Strike one enemy twice.' },
+        { name: 'Nightsister Ambush', cd: 3, target: 'allEnemies', effects: [dmg(0.8), { ...heal(0.1), on: 'self' }], desc: 'Damage all enemies and heal 10%.' },
+      ],
+    },
+    {
+      id: 'cad_bane', name: 'Cad Bane', kind: 'character', faction: 'dark', rarity: 'epic', role: 'attacker', accent: '#ff7a3a', spd: 152,
+      abilities: [
+        { name: 'Quickdraw', cd: 0, target: 'enemy', effects: [dmg(1.2)], desc: 'Deal damage to one enemy.' },
+        { name: 'Dead or Alive', cd: 3, target: 'enemy', effects: [dmg(2.2), debuff('defDown', 2)], desc: 'Deal heavy damage and inflict Defense Down.' },
+      ],
+    },
+    {
+      id: 'moff_gideon', name: 'Moff Gideon', kind: 'character', faction: 'dark', rarity: 'epic', role: 'support', accent: '#e8eef8', spd: 144,
+      abilities: [
+        { name: 'Darksaber Slash', cd: 0, target: 'enemy', effects: [dmg(1.1), debuff('defDown', 2, 0.3)], desc: 'Deal damage with a 30% chance of Defense Down.' },
+        { name: 'Dark Trooper Protocol', cd: 3, target: 'allAllies', effects: [buff('offUp', 2), buff('defUp', 2)], desc: 'All allies gain Offense Up and Defense Up.' },
+      ],
+    },
+    {
+      id: 'n1_starfighter', name: 'Naboo N-1 Starfighter', kind: 'ship', faction: 'light', rarity: 'rare', role: 'attacker', shape: 'n1', spd: 158,
+      abilities: [
+        { name: 'Twin Blasters', cd: 0, target: 'enemy', effects: [dmg(0.6, 2)], desc: 'Hit one enemy twice.' },
+        { name: 'Proton Torpedo', cd: 3, target: 'enemy', effects: [dmg(2.0)], desc: 'Deal heavy damage.' },
+      ],
+    },
+    {
+      id: 'sith_infiltrator', name: 'Sith Infiltrator', kind: 'ship', faction: 'dark', rarity: 'epic', role: 'attacker', shape: 'scimitar', spd: 152,
+      abilities: [
+        { name: 'Laser Cannons', cd: 0, target: 'enemy', effects: [dmg(1.15)], desc: 'Deal damage to one enemy.' },
+        { name: 'Cloaked Strike', cd: 3, target: 'allEnemies', effects: [dmg(0.85), debuff('offDown', 2, 0.4)], desc: 'Damage all enemies with a 40% chance of Offense Down.' },
+      ],
+    },
+
     // ---------- Mythic: crate-only, almost never drop ----------
     {
       id: 'darth_revan', name: 'Darth Revan', kind: 'character', faction: 'dark', rarity: 'mythic', role: 'attacker', accent: '#c23bff', spd: 158,
@@ -627,6 +701,16 @@
     second_sister: U('Hunt Them Down', 'enemy', [dmg(3.6), debuff('stun', 1)], 'A spinning blade strike that deals massive damage and Stuns.', 'I will find you.'),
     fifth_brother: U('Brutal Charge', 'allEnemies', [dmg(1.2), debuff('stun', 1, 0.35), { ...buff('taunt', 2), on: 'self' }], 'Crash into all enemies with a 35% Stun chance; gain Taunt.', 'There is nowhere to run.'),
     seventh_sister: U('Seeker Protocol', 'allEnemies', [dmg(1.3), debuff('offDown', 2), debuff('defDown', 2)], 'A swarm of probe droids hits all enemies with Offense Down and Defense Down.', 'My seekers will find you.'),
+    anakin: U('The Chosen One', 'allEnemies', [dmg(2.1), debuff('burn', 2), debuff('stun', 1, 0.4)], 'Leap through every enemy: heavy damage, Burn and a 40% chance to Stun.', 'This is where the fun begins.'),
+    qui_gon: U('Will of the Force', 'allEnemies', [dmg(1.3), debuff('offDown', 2), { ...buff('taunt', 2), on: 'self' }], 'A Force wave damages all enemies and inflicts Offense Down; gain Taunt.', 'Your focus determines your reality.'),
+    padme: U('Aggressive Negotiations', 'enemy', [dmg(3.0), debuff('stun', 1)], 'Bank shots off the walls: massive damage and Stun.', 'So this is how liberty dies.'),
+    lando: U('Cloud City Rally', 'allAllies', [heal(0.25), buff('offUp', 2), tm(40)], 'All allies heal 25%, gain Offense Up and 40% Turn Meter.', 'Hello, what have we here?'),
+    jango_fett: U('Bounty of Kamino', 'allEnemies', [dmg(1.5), debuff('defDown', 2)], 'Ricocheting twin-blaster fire hits all enemies and inflicts Defense Down.', 'I\'m just a simple man trying to make my way in the universe.'),
+    asajj_ventress: U('Shadow of Dathomir', 'allEnemies', [dmg(1.6), debuff('burn', 2)], 'Twin curved blades carve all enemies and Burn them.', 'I am fear. I am the queen of a blood-soaked planet.'),
+    cad_bane: U('Hired Gun', 'enemy', [dmg(3.6), debuff('burn', 3)], 'A charged shot from the shadows: massive damage and Burn for 3 turns.', 'You\'ll find I\'m a very patient man.'),
+    moff_gideon: U('The Darksaber', 'allEnemies', [dmg(1.7), debuff('defDown', 2), debuff('stun', 1, 0.3)], 'His cruiser fires on the enemy line: heavy damage, Defense Down, 30% Stun chance.', 'You have something I want.'),
+    n1_starfighter: U('Shields Up, Spin Away', 'allEnemies', [dmg(1.5), { ...tm(25), on: 'self' }], 'A golden strafing run hits every enemy; gain 25% Turn Meter.', 'Now this is podracing!'),
+    sith_infiltrator: U('Scimitar Strike', 'allEnemies', [dmg(1.6), debuff('stun', 1, 0.4)], 'Seeker droids pour from the cloaked hull: damage all enemies, 40% Stun chance.', 'At last we will reveal ourselves to the Jedi.'),
     darth_revan: U('Mandalorian Wars', 'allEnemies', [dmg(2.3), debuff('defDown', 2), debuff('stun', 1, 0.5)], 'Twin blades carve every enemy: heavy damage, Defense Down and a 50% chance to Stun.', 'I am Revan. I have conquered death itself.'),
     starkiller: U('Unleashed', 'allEnemies', [dmg(2.4), debuff('stun', 1, 0.6)], 'Pull a Star Destroyer out of the sky onto every enemy: devastating damage, 60% Stun chance.', 'I will be your enemy no longer.'),
     master_luke: U('Binary Sunset', 'allAllies', [heal(0.45), buff('offUp', 3), buff('defUp', 3), tm(60)], 'All allies heal 45%, gain Offense Up, Defense Up and 60% Turn Meter.', 'No one\'s ever really gone.'),
@@ -739,6 +823,16 @@
     fifth_brother: 'A hulking Inquisitor who prefers overwhelming force to finesse.',
     seventh_sister: 'A cunning Inquisitor who hunts with a swarm of ID9 seeker probe droids.',
     eighth_brother: 'An Inquisitor who spins his blade like a rotor to glide down on his prey.',
+    anakin: 'The Chosen One at the height of the Clone Wars: reckless, brilliant and the most powerful Jedi of his age.',
+    qui_gon: 'A maverick Jedi Master who followed the living Force and found the Chosen One on Tatooine.',
+    padme: 'Queen, then Senator of Naboo. A crack shot who never waited for others to fight her battles.',
+    lando: 'Gambler, smuggler, Baron Administrator of Cloud City and a general of the Rebellion.',
+    jango_fett: 'The bounty hunter whose DNA became the clone army. Twin blasters, jetpack, no mercy.',
+    asajj_ventress: 'Dooku\'s Nightsister assassin, wielding twin curved red sabers.',
+    cad_bane: 'The deadliest bounty hunter of the Clone Wars, hat low and blasters fast.',
+    moff_gideon: 'An Imperial warlord who survived the Empire\'s fall and claimed the ancient Darksaber.',
+    n1_starfighter: 'Royal Naboo starfighter: chrome, gold and faster than it looks.',
+    sith_infiltrator: 'Darth Maul\'s cloaking ship, carrying a swarm of seeker droids.',
     darth_revan: 'A Jedi hero turned Sith conqueror from the Old Republic era, masked and wielding twin blades. A legend most players never see.',
     starkiller: 'Vader\'s secret apprentice, raw Force power unleashed. He once pulled a Star Destroyer out of orbit.',
     master_luke: 'The last Jedi Master, years after the war: a weathered legend whose Force projection held off an entire army.',
@@ -875,6 +969,9 @@
     tie_bomber: ['bomber', 'empire'], tie_interceptor: ['fighter', 'empire'], lambda_shuttle: ['gunship', 'empire'],
     slave_one: ['gunship', 'bounty'], vulture_droid: ['fighter', 'droid', 'separatist'],
     grand_inquisitor: ['inquisitor', 'empire', 'leader'], second_sister: ['inquisitor', 'empire'], fifth_brother: ['inquisitor', 'empire'], seventh_sister: ['inquisitor', 'empire'], eighth_brother: ['inquisitor', 'empire'],
+    anakin: ['jedi', 'republic'], qui_gon: ['jedi', 'republic'], padme: ['republic', 'leader'], lando: ['scoundrel', 'rebel', 'leader'],
+    jango_fett: ['bounty', 'mandalorian'], asajj_ventress: ['sith', 'nightsister'], cad_bane: ['bounty', 'scoundrel'], moff_gideon: ['empire', 'leader'],
+    n1_starfighter: ['fighter', 'republic'], sith_infiltrator: ['fighter', 'sith'],
     darth_revan: ['sith', 'leader'], starkiller: ['sith'], master_luke: ['jedi', 'rebel', 'leader'], ghost: ['rebel', 'fighter'],
     c3po: ['droid', 'rebel'], rebel_medic: ['rebel', 'trooper'], two_onebee: ['droid', 'rebel'], nightsister_acolyte: ['nightsister'], barriss: ['jedi', 'republic'], talzin: ['nightsister', 'leader'],
     hunter: ['badbatch', 'trooper', 'leader'], wrecker: ['badbatch', 'trooper'], tech: ['badbatch', 'trooper'], crosshair: ['badbatch', 'trooper'], echo: ['badbatch', 'trooper', 'droid'], bb8: ['droid', 'rebel'], k2so: ['droid', 'rebel'], chopper: ['droid', 'rebel', 'scoundrel'],
@@ -897,7 +994,7 @@
     ranged: { label: 'Ranged', icon: '➹' }, support: { label: 'Support', icon: '✦' }, force: { label: 'Force User', icon: '✧' },
     droid: { label: 'Droid', icon: '⚙' }, starfighter: { label: 'Starfighter', icon: '➶' }, bomber: { label: 'Bomber', icon: '✹' }, gunship: { label: 'Gunship', icon: '⛭' },
   };
-  const MELEE = ['ewok_warrior', 'tusken_raider', 'obi_wan', 'luke', 'yoda', 'rey', 'darth_maul', 'kylo_ren', 'count_dooku', 'vader', 'ahsoka', 'grievous', 'mace_windu', 'magnaguard', 'k2so', 'hunter', 'grand_inquisitor', 'second_sister', 'fifth_brother', 'seventh_sister', 'eighth_brother', 'darth_revan', 'starkiller', 'master_luke', 'rancor', 'krayt_dragon', 'lord_vader'];
+  const MELEE = ['ewok_warrior', 'tusken_raider', 'obi_wan', 'luke', 'yoda', 'rey', 'darth_maul', 'kylo_ren', 'count_dooku', 'vader', 'ahsoka', 'grievous', 'mace_windu', 'magnaguard', 'k2so', 'hunter', 'grand_inquisitor', 'second_sister', 'fifth_brother', 'seventh_sister', 'eighth_brother', 'darth_revan', 'starkiller', 'master_luke', 'anakin', 'qui_gon', 'asajj_ventress', 'moff_gideon', 'rancor', 'krayt_dragon', 'lord_vader'];
 
   function classesOf(def) {
     const tr = TRAITS[def.id] || [];
@@ -928,6 +1025,7 @@
     c3po: 'rally', bb8: 'dash', k2so: 'leap', chopper: 'heal', ig88: 'rockets', droideka: 'bulwark', b2_droid: 'barrage', magnaguard: 'dash', ig11: 'barrage', vulture_droid: 'strafe',
     rebel_medic: 'heal', two_onebee: 'heal', nightsister_acolyte: 'heal', barriss: 'heal', talzin: 'lightning', hunter: 'dash', wrecker: 'rockets', tech: 'rally', crosshair: 'snipe', echo: 'lightning',
     grand_inquisitor: 'saberstorm', second_sister: 'spinsaber', fifth_brother: 'leap', seventh_sister: 'rockets', eighth_brother: 'spinsaber',
+    anakin: 'leap', qui_gon: 'forcepush', padme: 'snipe', lando: 'rally', jango_fett: 'rockets', asajj_ventress: 'dash', cad_bane: 'snipe', moff_gideon: 'orbital', n1_starfighter: 'strafe', sith_infiltrator: 'bombrun',
     darth_revan: 'dash', starkiller: 'lightning', master_luke: 'heal', ghost: 'strafe',
     rancor: 'claws', krayt_dragon: 'claws', star_destroyer: 'turbolaser', death_star: 'superlaser',
   };
@@ -1348,7 +1446,7 @@
     ['hunter', 'wrecker', 'tech', 'crosshair', 'echo'],
     ['vader', 'palpatine', 'darth_maul', 'count_dooku', 'kylo_ren'],
     ['b2_droid', 'droideka', 'magnaguard', 'grievous', 'battle_droid'],
-    ['boba_fett', 'din_djarin', 'ig88', 'bossk', 'cad_bane'],
+    ['boba_fett', 'din_djarin', 'ig88', 'jango_fett', 'cad_bane'],
     ['stormtrooper', 'death_trooper', 'thrawn', 'stormtrooper', 'death_trooper'],
     ['talzin', 'nightsister_acolyte', 'asajj_ventress', 'nightsister_acolyte', 'talzin'],
     ['luke', 'leia', 'han_solo', 'chewbacca', 'r2d2'],

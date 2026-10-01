@@ -261,7 +261,7 @@ test('luck: pity guarantees a legendary, strongbox always has one, charms boost 
   assert.ok(res.some((r) => D.UNIT_MAP[r.id].rarity === 'legendary'));
   assert.strictEqual(Player.state.luck.pity, 0);
   Player.state.aurodium = 12;
-  assert.ok(Player.openPack('strongbox').some((r) => D.UNIT_MAP[r.id].rarity === 'legendary'));
+  assert.ok(Player.openPack('strongbox').some((r) => ['legendary', 'mythic'].includes(D.UNIT_MAP[r.id].rarity)));
   const pack = D.PACKS[0];
   const base = Player.effectiveOdds(pack).legendary;
   Player.state.crystals = 100;

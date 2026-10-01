@@ -188,6 +188,7 @@
       container.appendChild(Screens[screen](App.params));
       updateWallet();
       if (!opts.keepScroll) window.scrollTo({ top: 0 });
+      if (root.Sound && screen !== 'battle') root.Sound.music('menu');
     },
 
     // Re-render in place: shop buys, gambling and toggles keep your scroll position.
@@ -234,8 +235,9 @@
       const beaten = bs.filter((b) => Player.state.bosses[b.id]).length;
       return `☠ ${bs.map((b) => D.UNIT_MAP[b.id].name).join(', ')}${beaten ? ' ✓' : ''}`;
     }
-    const c = planetCounts(p, mode);
-    return `${c.done}/${c.total} complete`;
+    const c = planetCounts(p, 'all');
+    const k = mode === 'character' || mode === 'ship' ? planetCounts(p, mode) : null;
+    return `${c.done}/${c.total} stages${k ? ` · ${mode === 'ship' ? '✈' : '⚔'} ${k.done}/${k.total}` : ''}`;
   }
 
   Screens.home = function () {
@@ -531,6 +533,8 @@
     mando: `<svg viewBox="0 0 100 100"><path d="M40 60 L36 96 L44 62Z" fill="#ffb03a"/><path d="M41 60 L39 84 L43 61Z" fill="#fff4c0"/><rect x="36" y="38" width="10" height="24" rx="3" fill="#9aa0a8"/><path d="M50 40 L34 74 L52 68Z" fill="#6a5440"/><rect x="47" y="38" width="20" height="28" rx="5" fill="#8a8f84"/><rect x="49" y="40" width="16" height="10" rx="3" fill="#c8ced4"/><rect x="50" y="64" width="7" height="20" rx="2" fill="#5a5a50"/><rect x="59" y="64" width="7" height="18" rx="2" fill="#5a5a50" transform="rotate(-20 62 64)"/><circle cx="58" cy="28" r="11" fill="#c8ced4"/><path d="M50 26 H66 V30 H60 V39 H56 V30 H50Z" fill="#111"/><ellipse cx="54" cy="22" rx="4" ry="2" fill="#fff" opacity=".6"/></svg>`,
     grogu: `<svg viewBox="0 0 100 100"><ellipse cx="50" cy="84" rx="22" ry="5" fill="#8fd3ff" opacity=".35"/><path d="M18 56 L82 56 Q80 74 50 76 Q20 74 18 56Z" fill="#9aa0a8"/><path d="M41 48 L20 40 L40 53Z" fill="#8ab870"/><path d="M59 48 L80 40 L60 53Z" fill="#8ab870"/><ellipse cx="50" cy="48" rx="10" ry="9" fill="#9ac880"/><circle cx="46" cy="47" r="2.4" fill="#111"/><circle cx="54" cy="47" r="2.4" fill="#111"/><circle cx="46.6" cy="46.3" r=".8" fill="#fff"/><circle cx="54.6" cy="46.3" r=".8" fill="#fff"/><path d="M36 56 Q50 50 64 56Z" fill="#b89a70"/><path d="M16 56 A34 26 0 0 1 36 34" stroke="#c8ccd0" stroke-width="4" fill="none"/><rect x="16" y="54" width="68" height="4" rx="2" fill="#c8ccd0"/></svg>`,
     pod: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="24" fill="#d8dce0"/><path d="M26 50 A24 24 0 0 0 74 50Z" fill="#aab0b8"/><circle cx="44" cy="44" r="8" fill="#1a2433"/><path d="M38 44 A6 6 0 0 1 50 44Z" fill="#5a8ad8"/><circle cx="44" cy="41" r="1.4" fill="#ff3a3a"/><rect x="70" y="46" width="12" height="8" rx="2" fill="#8a929e"/><circle cx="84" cy="50" r="3" fill="#9fdcff" opacity=".8"/></svg>`,
+    purrgil: `<svg viewBox="0 0 100 100"><path d="M8 50 C20 30 60 26 84 40 C92 44 96 50 92 56 C70 70 26 70 8 50Z" fill="#6a8ab8"/><path d="M8 50 C26 62 64 64 92 56" stroke="#3a5a88" stroke-width="3" fill="none"/><path d="M20 58 L10 80 M34 62 L28 86 M50 63 L48 88" stroke="#5a7aa8" stroke-width="4" stroke-linecap="round"/><circle cx="80" cy="44" r="3" fill="#fff"/><path d="M30 42 C40 38 56 38 66 42" stroke="#9fc4ff" stroke-width="2" fill="none" opacity=".6"/></svg>`,
+    rock: `<svg viewBox="0 0 100 100"><path d="M20 30 L46 12 L78 22 L90 52 L72 84 L36 88 L12 62Z" fill="#6a6560"/><path d="M46 12 L78 22 L90 52 L60 46Z" fill="#8a847c"/><circle cx="40" cy="56" r="8" fill="#4a4540"/><circle cx="66" cy="68" r="5" fill="#4a4540"/></svg>`,
     probe: `<svg viewBox="0 0 100 100"><g stroke="#3a3d44" stroke-width="2" fill="none"><path d="M44 58 L38 84 L34 92"/><path d="M50 60 L50 90"/><path d="M56 58 L62 84 L66 92"/><path d="M40 52 L24 70"/></g><circle cx="50" cy="44" r="16" fill="#2a2d33"/><ellipse cx="45" cy="38" rx="6" ry="3" fill="#6a707a" opacity=".6"/><circle cx="44" cy="46" r="2.4" fill="#ff3a3a"/><circle cx="52" cy="48" r="2" fill="#ff3a3a"/><circle cx="57" cy="44" r="1.6" fill="#ff3a3a"/><path d="M50 28 L50 12 M56 30 L62 16" stroke="#6a707a" stroke-width="1.4"/></svg>`,
   };
 
@@ -582,7 +586,16 @@
       () => fly(ACTOR_ART.pod, { size: 40, nose: false, spin: true, dur: 14000 }),
       () => fly(ACTOR_ART.probe, { size: 46, nose: false, dur: 16000, dy: 0.1, cls: 'bob' }),
     ];
-    const weights = [3, 1, 2, 2, 1, 2, 1.5, 1, 1];
+    // More diorama moments: a squadron in formation, a chase, space whales,
+    // a tumbling asteroid and a Star Destroyer with its TIE escort.
+    scenes.push(
+      () => { const dir = Math.random() < 0.5 ? 1 : -1; const y = 0.15 + Math.random() * 0.6; [0, 1, 2, 3].forEach((i) => fly(shipSvg('x_wing'), { dir, y: y + (i % 2 ? 0.05 : -0.05) * Math.ceil(i / 2), dy: 0.05, size: 34, dur: 6400, delay: i * 180 })); },
+      () => { const dir = Math.random() < 0.5 ? 1 : -1; const y = 0.2 + Math.random() * 0.5; fly(shipSvg('falcon'), { dir, y, dy: -0.1, size: 50, dur: 4600 }); const s1 = fly(shipSvg('slave_one') + '<i class="hg-bolt"></i>', { dir, y: y + 0.04, dy: -0.1, size: 42, dur: 4600, delay: 600 }); s1.classList.add('gunner'); },
+      () => { const dir = Math.random() < 0.5 ? 1 : -1; const y = 0.25 + Math.random() * 0.45; [0, 1, 2].forEach((i) => fly(ACTOR_ART.purrgil, { dir, y: y + i * 0.06, dy: -0.04, size: 70 - i * 14, nose: false, dur: 15000, delay: i * 900, cls: 'bob far2' })); },
+      () => fly(ACTOR_ART.rock, { size: 30 + Math.random() * 30, nose: false, spin: true, dur: 12000 }),
+      () => { const dir = Math.random() < 0.5 ? 1 : -1; const y = 0.1 + Math.random() * 0.2; fly(Art.shipOnly({ shape: 'isd' }), { dir, y, dy: 0.03, size: 110, dur: 20000, cls: 'far' }); [0, 1, 2].forEach((i) => fly(shipSvg('tie_fighter'), { dir, y: y + 0.08 + i * 0.03, dy: 0.03, size: 20, dur: 20000, delay: 400 + i * 300, cls: 'far' })); },
+    );
+    const weights = [3, 1, 2, 2, 1, 2, 1.5, 1, 1, 1.5, 1.5, 1, 1.2, 0.8];
     const pickScene = () => {
       let r = Math.random() * weights.reduce((a, b) => a + b, 0);
       for (let i = 0; i < scenes.length; i++) { r -= weights[i]; if (r <= 0) return scenes[i]; }
@@ -1333,7 +1346,19 @@
       </div>`;
     }
 
-    const labels = ['Stats', 'Card', 'Upgrades'];
+    function ultPage() {
+      const ult = D.abilitiesFor(def).find((ab) => ab.ultimate);
+      return `<div class="ipage-inner ult-page">
+        <p class="eyebrow">Ultimate</p>
+        <h2>★ ${esc(ult ? ult.name : 'Ultimate')}</h2>
+        ${ult ? `<p>${esc(ult.desc)}</p>${ult.quote ? `<q class="ult-quote">${esc(ult.quote)}</q>` : ''}` : ''}
+        <div class="ult-preview">${portrait(def)}<span class="ult-play">▶</span></div>
+        <button class="btn btn-primary" type="button" data-watch>▶ Watch it in action</button>
+        <p class="muted small">Plays the full cutscene and ultimate in a training simulation. Nothing is spent or earned.</p>
+      </div>`;
+    }
+
+    const labels = ['Stats', 'Card', 'Upgrades', 'Ultimate'];
     function body() {
       return `<div class="inspect">
         <div class="inspect-top">
@@ -1346,6 +1371,7 @@
             <div class="ipage">${statsPage()}</div>
             <div class="ipage">${cardPage()}</div>
             <div class="ipage">${upgradePage()}</div>
+            <div class="ipage">${ultPage()}</div>
           </div>
         </div>
         <div class="modal-actions"><button class="btn" type="button" data-close>Close</button></div>
@@ -1353,7 +1379,7 @@
     }
 
     const go = (p) => {
-      page = Math.max(0, Math.min(2, p));
+      page = Math.max(0, Math.min(3, p));
       render();
     };
     const m = openModal(body(), {
@@ -1397,6 +1423,12 @@
 
     modal.addEventListener('click', (e) => {
       if (e.target.closest('[data-close]')) return m.close();
+      if (e.target.closest('[data-watch]')) {
+        const from = App.current;
+        const params = App.params;
+        m.close();
+        return root.BattleUI.preview(id, () => { App.go(from, params, { keepScroll: true }); inspect(id, onChange); });
+      }
       if (e.target.closest('[data-prev]')) return go(page - 1);
       if (e.target.closest('[data-next]')) return go(page + 1);
       const pg = e.target.closest('[data-page]');
@@ -1477,6 +1509,7 @@
   function claimDailyFx(v) {
     const res = Player.claimDaily();
     if (!res) return;
+    if (root.Sound) root.Sound.play('coins');
     const cell = $('.daily-cell.today', v);
     updateWallet();
     if (cell && motionOK()) {
@@ -1794,6 +1827,44 @@
     }, 1000);
   }
 
+  // ---------- Sound & music settings ----------
+  function soundSettings() {
+    const S = root.Sound;
+    if (!S) return;
+    const p = S.prefs;
+    const track = (key, label) => `<div class="snd-track"><div><b>${label}</b><span class="muted small" data-status="${key}">${S.hasCustom(key) ? 'Using your file' : 'Original theme'}</span></div>
+      <label class="btn btn-small">Choose file<input type="file" accept="audio/*" data-file="${key}" hidden></label>
+      <button class="btn btn-small" type="button" data-clear="${key}" ${S.hasCustom(key) ? '' : 'disabled'}>Reset</button></div>`;
+    const m = openModal(`
+      <p class="eyebrow">Settings</p><h2>Sound & music</h2>
+      <div class="snd-row"><label><input type="checkbox" data-pref="sfx" ${p.sfx ? 'checked' : ''}> Sound effects</label><input type="range" min="0" max="1" step="0.05" value="${p.sfxVol}" data-vol="sfxVol" aria-label="Effects volume"></div>
+      <div class="snd-row"><label><input type="checkbox" data-pref="music" ${p.music ? 'checked' : ''}> Music</label><input type="range" min="0" max="1" step="0.05" value="${p.musicVol}" data-vol="musicVol" aria-label="Music volume"></div>
+      <div class="snd-tracks">
+        <p class="eyebrow">Your own music</p>
+        <p class="muted small">Pick any audio file on this device to replace the built-in themes. It's saved only in this browser and never uploaded anywhere.</p>
+        ${track('menu', 'Galaxy & menus')}
+        ${track('battle', 'Battles')}
+      </div>
+      <div class="modal-actions"><button class="btn" type="button" data-test-sfx>Test sound</button><button class="btn btn-primary" type="button" data-close>Done</button></div>`, { small: true, cls: 'sound-modal' });
+    m.root.addEventListener('change', async (e) => {
+      const pref = e.target.dataset.pref;
+      if (pref) S.set(pref, e.target.checked);
+      const key = e.target.dataset.file;
+      if (key && e.target.files[0]) {
+        await S.saveCustom(key, e.target.files[0]);
+        $(`[data-status="${key}"]`, m.root).textContent = `Using ${e.target.files[0].name}`;
+        $(`[data-clear="${key}"]`, m.root).disabled = false;
+      }
+    });
+    m.root.addEventListener('input', (e) => { if (e.target.dataset.vol) S.set(e.target.dataset.vol, Number(e.target.value)); });
+    m.root.addEventListener('click', async (e) => {
+      if (e.target.closest('[data-close]')) return m.close();
+      if (e.target.closest('[data-test-sfx]')) { S.play('saber'); setTimeout(() => S.play('blaster'), 400); setTimeout(() => S.play('explosion'), 750); }
+      const c = e.target.closest('[data-clear]');
+      if (c) { await S.saveCustom(c.dataset.clear, null); $(`[data-status="${c.dataset.clear}"]`, m.root).textContent = 'Original theme'; c.disabled = true; }
+    });
+  }
+
   // ---------- Crate opening & card reveals ----------
   // The crate's build-up scales with the best card inside, and every card's
   // reveal scales with its own rarity, up to full-screen moments for
@@ -1817,6 +1888,10 @@
         <span class="pc-skip">Tap to skip</span>
       </div>`);
       document.body.appendChild(node);
+      if (root.Sound) {
+        root.Sound.play('rumble', dur / 1000);
+        [0.3, 0.5, 0.65].slice(0, tier + 1).forEach((k) => setTimeout(() => root.Sound.play('crack'), dur * k));
+      }
       const crate = $('.cc-crate', node);
       const shake = Math.min(14, 2 + tier * 3);
       crate.animate(Array.from({ length: 12 }, (_, i) => ({ transform: `translate(${(i % 2 ? 1 : -1) * shake * (i / 12)}px, ${(i % 3 - 1) * shake * 0.4 * (i / 12)}px) rotate(${(i % 2 ? 1 : -1) * (i / 12) * (2 + tier)}deg) scale(${1 + i * 0.012})` })), { duration: dur * 0.85, easing: 'ease-in', fill: 'forwards' });
@@ -1824,6 +1899,7 @@
       if (mythic) {
         glitchTimer = setTimeout(() => {
           node.classList.add('glitch');
+          if (root.Sound) root.Sound.play('glitch');
           node.style.setProperty('--rc', R_COLOR.mythic);
           $('.cc-label', node).innerHTML = '<b data-text="⚠ ANOMALY DETECTED">⚠ ANOMALY DETECTED</b>';
           node.insertAdjacentHTML('beforeend', `<svg class="cc-shatter" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M50 50 L12 4 M50 50 L88 10 M50 50 L96 62 M50 50 L70 98 M50 50 L22 94 M50 50 L2 46 M30 26 L40 20 M74 30 L84 40 M76 78 L62 84 M26 70 L16 62"/></svg>`);
@@ -1835,6 +1911,7 @@
         done = true;
         clearTimeout(glitchTimer);
         node.classList.add('burst');
+        if (root.Sound) root.Sound.play('burst');
         const flash = el(`<div class="cc-flash" style="--rc:${R_COLOR[best]}"></div>`);
         document.body.appendChild(flash);
         setTimeout(() => flash.remove(), 700);
@@ -1853,6 +1930,7 @@
     vader: 'mustafar', lord_vader: 'mustafar', darth_revan: 'exegol', starkiller: 'coruscant_siege', palpatine: 'exegol', kylo_ren: 'exegol', rey: 'exegol',
     k2so: 'scarif', death_trooper: 'scarif', tarkin: 'scarif', thrawn: 'scarif', grievous: 'geonosis', count_dooku: 'geonosis', b2_droid: 'geonosis', droideka: 'geonosis', battle_droid: 'geonosis', magnaguard: 'geonosis',
     mace_windu: 'coruscant', ahsoka: 'coruscant', clone_trooper: 'coruscant', hunter: 'coruscant', wrecker: 'coruscant', tech: 'coruscant', crosshair: 'coruscant', echo: 'coruscant', barriss: 'coruscant',
+    anakin: 'mustafar', qui_gon: 'tatooine', padme: 'geonosis', lando: 'bespin', jango_fett: 'geonosis', asajj_ventress: 'mustafar', cad_bane: 'tatooine', moff_gideon: 'tatooine', n1_starfighter: 'coruscant', sith_infiltrator: 'tatooine',
     talzin: 'mustafar', nightsister_acolyte: 'mustafar', grand_inquisitor: 'coruscant_siege', second_sister: 'coruscant_siege', fifth_brother: 'coruscant_siege', seventh_sister: 'coruscant_siege', eighth_brother: 'coruscant_siege',
   };
   function homeworldOf(def) {
@@ -1933,6 +2011,7 @@
         clearTimeout(timer);
         box.innerHTML = '';
         node.classList.add('final');
+        if (root.Sound) root.Sound.play(`reveal_${rarity}`);
         if (mythic) {
           const cv = $('.br-bolts', node);
           const W = (cv.width = innerWidth);
@@ -1963,6 +2042,7 @@
       const next = () => {
         if (i >= steps.length) return showFinal();
         const s = steps[i++];
+        if (root.Sound) root.Sound.play(i === 1 ? 'ignite' : 'whoosh');
         box.innerHTML = `<div class="wo-chip" style="--tone:${s.tone}"><div class="wo-icon">${s.icon}</div><div class="wo-words"><span>${esc(s.kicker)}</span><b>${esc(s.big)}</b></div></div>`;
         const sc = $('.wo-sphere', box);
         if (sc) {
@@ -1998,8 +2078,8 @@
     const cards = results.map((r, i) => {
       const def = D.UNIT_MAP[r.id];
       const tag = r.isNew ? '<span class="reveal-tag">NEW!</span>' : `<span class="reveal-tag dup">+${r.shards} shards</span>`;
-      return `<div class="flip glow-${def.rarity} r-${def.rarity} ${r.holo ? 'is-holo' : ''}" style="--rc:${R_COLOR[def.rarity]};--i:${i}" data-i="${i}" tabindex="0" role="button" aria-label="Reveal card">
-        <div class="flip-face flip-back">${Art.ICONS.crystals}</div>
+      return `<div class="flip glow-${def.rarity} r-${def.rarity} side-${def.faction} ${r.holo ? 'is-holo' : ''}" style="--rc:${R_COLOR[def.rarity]};--i:${i};--fc:${def.faction === 'dark' ? '#ff2a3a' : '#5ab4ff'}" data-i="${i}" tabindex="0" role="button" aria-label="Reveal card">
+        <div class="flip-face flip-back">${Art.cardBack(def.faction)}</div>
         <div class="flip-face flip-front">${tag}${r.holo ? '<span class="holo-tag">HOLO</span>' : ''}${r.pity ? '<span class="holo-tag pity">PITY</span>' : ''}${unitCard(def, { tag: 'div', hideShards: true, holo: r.holo })}</div>
       </div>`;
     }).join('');
@@ -2024,6 +2104,7 @@
           f.classList.remove('charging');
         }
         f.classList.add('flipped');
+        if (root.Sound) root.Sound.play(`reveal_${def.rarity}`);
         if (!motionOK()) return;
         const rect = f.getBoundingClientRect();
         const cx = rect.left + rect.width / 2;
@@ -2064,5 +2145,5 @@
     });
   }
 
-  root.UI = { $, $$, el, esc, fmt, cur, portrait, stars, unitCard, toast, openModal, confirmBox, updateWallet, inspect, synergyBanner, App, Screens };
+  root.UI = { soundSettings, homeworldOf, $, $$, el, esc, fmt, cur, portrait, stars, unitCard, toast, openModal, confirmBox, updateWallet, inspect, synergyBanner, App, Screens };
 })(window);

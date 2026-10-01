@@ -1756,6 +1756,66 @@
     }
   }
 
+  // ---------- Per-planet progress rings ----------
+  // Every world shows its stages as its own themed segments around the sphere.
+  const PROGRESS_STYLE = {
+    tatooine: 'suns', hoth: 'shards', dagobah: 'leaves', bespin: 'clouds', endor: 'chevrons', scarif: 'hex',
+    coruscant: 'lights', geonosis: 'spikes', mustafar: 'flames', exegol: 'bolts', coruscant_siege: 'blasts',
+  };
+  function glyph(ctx, style, s, lit) {
+    ctx.beginPath();
+    switch (style) {
+      case 'suns': ctx.arc(-s * 0.35, 0, s * 0.42, 0, TAU); ctx.moveTo(s * 0.62, 0); ctx.arc(s * 0.4, 0, s * 0.28, 0, TAU); break;
+      case 'shards': ctx.moveTo(0, -s); ctx.lineTo(s * 0.45, 0); ctx.lineTo(0, s); ctx.lineTo(-s * 0.45, 0); break;
+      case 'leaves': ctx.moveTo(0, -s); ctx.quadraticCurveTo(s * 0.8, 0, 0, s); ctx.quadraticCurveTo(-s * 0.8, 0, 0, -s); break;
+      case 'clouds': ctx.arc(-s * 0.3, s * 0.1, s * 0.4, 0, TAU); ctx.arc(s * 0.25, -s * 0.05, s * 0.48, 0, TAU); break;
+      case 'chevrons': ctx.moveTo(-s * 0.6, -s * 0.5); ctx.lineTo(0, s * 0.3); ctx.lineTo(s * 0.6, -s * 0.5); ctx.lineTo(s * 0.6, 0); ctx.lineTo(0, s * 0.8); ctx.lineTo(-s * 0.6, 0); break;
+      case 'hex': for (let i = 0; i < 6; i++) { const a = (i / 6) * TAU; ctx[i ? 'lineTo' : 'moveTo'](Math.cos(a) * s * 0.7, Math.sin(a) * s * 0.7); } break;
+      case 'lights': ctx.rect(-s * 0.25, -s * 0.9, s * 0.5, s * 1.8); break;
+      case 'spikes': ctx.moveTo(-s * 0.5, s * 0.7); ctx.lineTo(0, -s); ctx.lineTo(s * 0.5, s * 0.7); break;
+      case 'flames': ctx.moveTo(0, -s); ctx.quadraticCurveTo(s * 0.7, s * 0.2, 0, s * 0.8); ctx.quadraticCurveTo(-s * 0.7, s * 0.2, 0, -s); break;
+      case 'bolts': ctx.moveTo(s * 0.2, -s); ctx.lineTo(-s * 0.4, s * 0.1); ctx.lineTo(s * 0.05, s * 0.1); ctx.lineTo(-s * 0.2, s); ctx.lineTo(s * 0.45, -s * 0.15); ctx.lineTo(0, -s * 0.15); break;
+      case 'blasts': for (let i = 0; i < 8; i++) { const a = (i / 8) * TAU; const rr = i % 2 ? s * 0.4 : s; ctx[i ? 'lineTo' : 'moveTo'](Math.cos(a) * rr, Math.sin(a) * rr); } break;
+      default: ctx.arc(0, 0, s * 0.5, 0, TAU);
+    }
+    ctx.closePath();
+    if (lit) ctx.fill(); else ctx.stroke();
+  }
+  function drawProgress(ctx, p, x, y, r, cleared, t) {
+    const n = p.stages.length;
+    const style = PROGRESS_STYLE[p.id] || 'dots';
+    const color = p.color || '#ffd23f';
+    const done = cleared >= n;
+    const R = r + 12;
+    const s = Math.max(4, Math.min(8, r * 0.2));
+    ctx.save();
+    // Thin track the glyphs sit on.
+    ctx.strokeStyle = hexA(color, 0.18);
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(x, y, R, 0, TAU); ctx.stroke();
+    for (let i = 0; i < n; i++) {
+      const a = -Math.PI / 2 + (i / n) * TAU + (done ? t * 0.25 : 0);
+      const lit = i < cleared;
+      const next = i === cleared;
+      ctx.save();
+      ctx.translate(x + Math.cos(a) * R, y + Math.sin(a) * R);
+      ctx.rotate(a + Math.PI / 2);
+      const pulse = next ? 1 + Math.sin(t * 5) * 0.25 : 1;
+      ctx.scale(pulse, pulse);
+      ctx.fillStyle = done ? '#ffffff' : color;
+      ctx.strokeStyle = next ? hexA(color, 0.95) : 'rgba(255,255,255,0.28)';
+      ctx.lineWidth = 1;
+      if (lit || next) { ctx.shadowColor = color; ctx.shadowBlur = lit ? 8 : 12; }
+      glyph(ctx, style, s, lit);
+      ctx.restore();
+    }
+    if (done) {
+      ctx.globalCompositeOperation = 'lighter';
+      glow(ctx, x, y, R * 1.4, color, 0.18 + Math.sin(t * 2) * 0.06);
+    }
+    ctx.restore();
+  }
+
   // ---------- Galaxy Map ----------
   class GalaxyMap {
     constructor(canvas, planets, getState) {
@@ -1772,6 +1832,9 @@
         const a = arm * (TAU / 3) + d * 5.2 + (r() - 0.5) * 0.6;
         return { a, d, s: r() * 1.3 + 0.2, c: r() > 0.85 ? '#ffd9a8' : r() > 0.7 ? '#a8c8ff' : '#ffffff', tw: r() * TAU };
       });
+      // Drifting nebula clouds and the odd comet.
+      this.nebulae = Array.from({ length: 7 }, () => ({ x: r(), y: r(), rad: 0.18 + r() * 0.25, c: pick(['#6a3aa0', '#2a6ad0', '#c04a8a', '#3aa08a', '#d07a3a']), sp: (r() - 0.5) * 0.004, ph: r() * TAU }));
+      this.comets = [];
       this.resize();
       this.onResize = () => this.resize();
       window.addEventListener('resize', this.onResize);
@@ -1811,6 +1874,26 @@
       const R = Math.max(w, h) * 0.62;
       glow(ctx, cx, cy, R * 0.45, '#ffd9a8', 0.18);
       glow(ctx, cx, cy, R * 0.9, '#6a5aff', 0.08);
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      for (const n of this.nebulae) {
+        const nx = ((n.x + t * n.sp) % 1 + 1) % 1;
+        glow(ctx, nx * w, n.y * h, n.rad * Math.max(w, h), n.c, 0.07 + Math.sin(t * 0.4 + n.ph) * 0.025);
+      }
+      ctx.restore();
+      if (Math.random() < 0.004) this.comets.push({ x: Math.random() * w, y: -10, vx: (Math.random() - 0.5) * 220, vy: 120 + Math.random() * 120, life: 0 });
+      this.comets = this.comets.filter((c) => (c.life += 0.016) < 3 && c.y < h + 40);
+      for (const c of this.comets) {
+        c.x += c.vx * 0.016;
+        c.y += c.vy * 0.016;
+        const g = ctx.createLinearGradient(c.x, c.y, c.x - c.vx * 0.35, c.y - c.vy * 0.35);
+        g.addColorStop(0, 'rgba(220,240,255,0.9)');
+        g.addColorStop(1, 'rgba(120,180,255,0)');
+        ctx.strokeStyle = g;
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(c.x, c.y); ctx.lineTo(c.x - c.vx * 0.35, c.y - c.vy * 0.35); ctx.stroke();
+        glow(ctx, c.x, c.y, 6, '#dff0ff', 0.8);
+      }
       for (const s of this.stars) {
         const a = s.a + t * 0.01;
         const x = cx + Math.cos(a) * s.d * R;
@@ -1855,15 +1938,7 @@
         ctx.globalAlpha = unlocked ? 1 : 0.35;
         drawSphere(ctx, x, y, r, p.id, t, { halo: unlocked ? 0.45 : 0.1 });
         ctx.globalAlpha = 1;
-        const cleared = st.cleared(p.id);
-        const total = p.stages.length;
-        ctx.strokeStyle = 'rgba(255,255,255,0.12)';
-        ctx.lineWidth = 3;
-        ctx.beginPath(); ctx.arc(x, y, r + 6, 0, TAU); ctx.stroke();
-        if (cleared) {
-          ctx.strokeStyle = cleared >= total ? '#52e08a' : '#ffd23f';
-          ctx.beginPath(); ctx.arc(x, y, r + 6, -Math.PI / 2, -Math.PI / 2 + (cleared / total) * TAU); ctx.stroke();
-        }
+        if (unlocked) drawProgress(ctx, p, x, y, r, st.cleared(p.id), t);
       }
     }
   }
