@@ -1168,6 +1168,13 @@
           <p class="eyebrow">${Object.keys(Player.state.units).length} of ${D.UNITS.length} collected</p>
           <h1>Collection</h1>
         </div>
+        <button class="btn filter-toggle ${ui.collectionFiltersOpen ? 'open' : ''}" type="button" data-filters-toggle aria-expanded="${!!ui.collectionFiltersOpen}">
+          ${root.Icons.svg('reticle')}<span>Filter & sort</span><b class="ft-count" data-ft-count></b><i class="ft-chev">▾</i>
+        </button>
+      </div>
+      <div class="ft-summary" data-ft-summary></div>
+      <div class="filter-drawer ${ui.collectionFiltersOpen ? 'open' : ''}" data-drawer>
+        <div class="fd-inner">
         <div class="filters-row">
           <div class="seg" data-filter="kind">
             <button type="button" data-v="all">All</button><button type="button" data-v="character">Heroes</button><button type="button" data-v="ship">Ships</button>
@@ -1178,9 +1185,11 @@
           <div class="seg" data-filter="sort" aria-label="Sort">
             ${Object.entries(SORTS).map(([k, so]) => `<button type="button" data-v="${k}">${k === 'strong' ? '▼ ' : k === 'weak' ? '▲ ' : ''}${so.label}</button>`).join('')}
           </div>
+          <button class="linkish" type="button" data-filters-reset>Reset</button>
+        </div>
+        <div class="class-bar" data-classes></div>
         </div>
       </div>
-      <div class="class-bar" data-classes></div>
       <div class="card-grid" data-grid></div>
     </section>`);
 
@@ -1211,6 +1220,15 @@
       $$('[data-filter="faction"] button', v).forEach((b) => b.classList.toggle('active', b.dataset.v === ui.collectionFaction));
       $$('[data-filter="sort"] button', v).forEach((b) => b.classList.toggle('active', b.dataset.v === ui.collectionSort));
       renderClasses();
+      // Closed drawer: a one-line summary of what is filtered.
+      const parts = [];
+      if (ui.collectionKind !== 'all') parts.push(ui.collectionKind === 'ship' ? 'Ships' : 'Heroes');
+      if (ui.collectionFaction !== 'all') parts.push(ui.collectionFaction === 'light' ? 'Light Side' : 'Dark Side');
+      if (ui.collectionClass !== 'all') parts.push(D.CLASS_INFO[ui.collectionClass].label);
+      const n = parts.length;
+      parts.push(SORTS[ui.collectionSort].label);
+      $('[data-ft-count]', v).textContent = n ? String(n) : '';
+      $('[data-ft-summary]', v).innerHTML = parts.map((x) => `<span>${esc(x)}</span>`).join('');
       const list = D.UNITS
         .filter((u) => ui.collectionKind === 'all' || u.kind === ui.collectionKind)
         .filter((u) => ui.collectionFaction === 'all' || u.faction === ui.collectionFaction)
@@ -1224,6 +1242,19 @@
     }
 
     v.addEventListener('click', (e) => {
+      if (e.target.closest('[data-filters-toggle]')) {
+        ui.collectionFiltersOpen = !ui.collectionFiltersOpen;
+        const t = $('[data-filters-toggle]', v);
+        t.classList.toggle('open', ui.collectionFiltersOpen);
+        t.setAttribute('aria-expanded', ui.collectionFiltersOpen);
+        $('[data-drawer]', v).classList.toggle('open', ui.collectionFiltersOpen);
+        return;
+      }
+      if (e.target.closest('[data-filters-reset]')) {
+        Object.assign(ui, { collectionKind: 'all', collectionFaction: 'all', collectionClass: 'all', collectionSort: 'strong' });
+        render();
+        return;
+      }
       const f = e.target.closest('[data-filter] button');
       if (f) {
         const which = f.parentElement.dataset.filter;
