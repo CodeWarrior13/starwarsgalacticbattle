@@ -14,7 +14,8 @@ npm run build   # writes dist/galactic-card-battles.html
 
 ## How it plays
 
-- **Living home galaxy.** The home screen is an interactive galaxy map of your progress, with dogfights, Star Destroyers, the Falcon jumping to lightspeed, Mando on his jetpack, Grogu's pram, R2's escape pod and probe droids drifting through. Tap a world to jump to it.
+- **The Galaxy hub.** One screen for every fight: an interactive galaxy map of your progress with dogfights, Star Destroyers, the Falcon jumping to lightspeed, Mando on his jetpack, Grogu's pram, R2's escape pod and probe droids drifting through. Toggle **Ground**, **Fleet**, **Bosses** and the **Endless Tower** at the top. Tap a world to play its arrival cinematic (its living battlefield, spinning sabers and a title band), then pick a stage from the drop-down datapad; each world's finale boss and boss battles sit at the end of its list.
+- **Endless Tower.** Infinite floors on random worlds with random squads (often a themed group like the Inquisitorius or Bad Batch) and a boss every 10 floors. Enemies get tougher and rewards grow as you climb; losing drops you back to the last checkpoint (floors 1, 11, 21…) and re-rolls the floors above.
 - **Galaxy Map.** Eleven planet campaigns (Tatooine, Hoth, Dagobah, Bespin, Endor, Scarif, Coruscant, Geonosis, Mustafar, Exegol and the post-game Battle of Coruscant) with 70 stages mixing ground and space battles. Liberating a planet opens the hyperspace lane to the next one.
 - **Battle of Coruscant.** Ten stages under battle-scarred skies: Venators and Separatist cruisers trade turbolaser fire, flak bursts, burning wreckage streaks down past the burning Jedi Temple, and LAAT gunships sweep the city. The Falling Wreckage hazard sends a hull section crashing into the battlefield.
 - **Living battlefields.** Every planet has an animated backdrop on the surface and in orbit that reacts to the fight: blasts scatter snow and sand, lasers light up the scene, explosions jolt the parallax layers and leave scorch marks and smoke, and ultimates darken the sky.
@@ -22,13 +23,19 @@ npm run build   # writes dist/galactic-card-battles.html
 - **Account level and squad slots.** Every battle earns XP; each account level pays out credits and Kyber. Squads start with 3 slots (ground and fleet). Slot 4 needs account level 4 and Tatooine liberated; slot 5 needs level 6 and Hoth liberated. Enemy squads grow the same way (3 on Tatooine, 4 on Hoth, then 5).
 - **Turn meter combat.** Every unit fills a turn meter at its Speed; whoever reaches 100% acts next.
 - **Synergies.** Units carry traits (Jedi, Sith, Rebel, Empire, Scoundrel, Bounty Hunter, Droid, Trooper, Bad Batch, Nightsister, Inquisitor and more), and roles form their own synergies (Medical Corps for healers, Iron Wall for tanks, Strike Team for damage dealers). Fielding all five of the Bad Batch, or all five of the Inquisitorius (Grand Inquisitor, Second Sister, Fifth Brother, Seventh Sister, Eighth Brother), unlocks a full-squad bonus. Units fly into their squad slots and every new synergy plays an activation banner. Matching traits, all-Light or all-Dark squads, balanced roles and planet terrain stack bonuses to health, attack, armor, speed, crit, lifesteal, regeneration and the rare chance to double hit.
-- **Abilities and ultimates.** Each unit has a basic attack, specials with cooldowns, and an ultimate with a cutscene plus a signature animation (strafing runs, bombing runs, torpedoes, spinning Inquisitor sabers, the Grand Inquisitor's screen-wide saber throw that slices cards in half, Force lightning, chokes, saber dashes, leaps, orbital strikes and more).
+- **Abilities and ultimates.** Each unit has a basic attack, specials with cooldowns, and an ultimate with a cutscene plus a full-screen signature animation that breaks out of the battlefield. Every unit has its own mix of move, weapon, impact and color: thrown sabers that slice cards in half, Han's bolts ricocheting off the screen edges, Palpatine's lightning storm, Vader's choke lifting cards, Boba's homing rockets, Slave I's seismic charges shattering cards, X-wings and TIE formations strafing across the whole screen, healing auroras and shield walls for support ultimates.
+- **Squad bonuses in battle.** Both teams' active bonuses sit at the edge of the battlefield; tap one to drop down exactly what it does and who it affects.
 - **Boss battles.** The Rancor, a Krayt Dragon, Lord Vader, an Imperial Star Destroyer and the Death Star. Bosses are immune to Stun and become Enraged below 50% HP.
 - **Collection.** 53 characters and 14 ships (including droids like C-3PO, BB-8, K-2SO, Chopper, IG-88, IG-11, Droidekas and MagnaGuards, medics like 2-1B, Barriss Offee and Mother Talzin, and the Bad Batch) with hand-drawn cover art, filterable by class (Healer, Tank, Fighter, Ranged, Support, Force User, Droid, Starfighter, Bomber, Gunship) with a Light/Dark breakdown. Tap a card to flip it; swipe for stats and upgrades.
+- **Daily login streak.** A 7-day reward track in the Night Market (credits, Kyber, Loaded Dice, Chance Cubes and the Hutt's Hoard on day 7). Miss a day and the streak restarts.
 - **Nar Shaddaa Night Market.** Crates, flash sales with countdowns, rotating Hot Stock, lucky charms, a Sabacc table and the Droid Shell Game.
 - **Luck.** Victory credit spins, Holo cards, Chance Cubes, Loaded Dice and a Legendary pity counter. Landing the top multiplier plays a full-screen Star Wars pun.
 - **Premium feel.** Every button glints on hover, squashes and ripples on press, and primary actions throw sparks; currencies roll up to new totals.
 - **PC controls.** 1–5 pick abilities, R picks the ultimate, ←/→ move the target, Enter attacks, A toggles auto, F changes speed, ? shows help.
+
+## Custom card art
+
+Drop images named after unit ids (for example `luke.png` or `slave_one.jpg`) into `art/`, run `npm run art`, then `npm run build`. Matching images replace the drawn cover art everywhere and are embedded in the single-file build. See `art/README.md`.
 
 ## Project layout
 
@@ -39,8 +46,10 @@ npm run build   # writes dist/galactic-card-battles.html
 | `js/env.js` | Animated, reactive planet backdrops (surface and orbit) and the Galaxy Map |
 | `js/battle.js` | Battle engine (no DOM): turn meter, damage, statuses, AI |
 | `js/state.js` | Save data, currencies, crates, luck, Black Market, auto-build, rewards |
-| `js/ui.js` | Screens: home, campaign, bosses, squad select, collection, card inspector, Black Market |
+| `js/ui.js` | Screens: Galaxy hub (modes, planet cinematic, stage datapad, tower), squad select, collection, card inspector, Black Market and daily streak |
 | `js/battle-ui.js` | Battle screen, animations, ultimate cutscenes, hyperspace intro |
+| `js/ults.js` | Full-screen signature ultimates: moves, props and card impacts for every unit |
+| `js/art-images.js` | Generated map of custom card art in `art/` (`npm run art`) |
 | `js/main.js` | Boot and ambient starfield |
 | `css/styles.css` | All styling and animation |
 | `tests/sim.test.js` | Headless engine and balance checks (`npm test`) |

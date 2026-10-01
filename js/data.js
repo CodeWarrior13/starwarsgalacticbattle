@@ -1293,6 +1293,80 @@
 
   const MARKET_REFRESH_MS = 4 * 60 * 60 * 1000;
   const FLASH_MS = 20 * 60 * 1000;
+
+  // ---------- Endless Tower ----------
+  // Infinite floors on random worlds. Every 10th floor is a boss; losing drops
+  // you back to the last checkpoint (floors 1, 11, 21...) with a fresh roll.
+  const TOWER = { checkpoint: 10, bossEvery: 10 };
+  const TOWER_GROUPS = [
+    ['grand_inquisitor', 'second_sister', 'fifth_brother', 'seventh_sister', 'eighth_brother'],
+    ['hunter', 'wrecker', 'tech', 'crosshair', 'echo'],
+    ['vader', 'palpatine', 'darth_maul', 'count_dooku', 'kylo_ren'],
+    ['b2_droid', 'droideka', 'magnaguard', 'grievous', 'battle_droid'],
+    ['boba_fett', 'din_djarin', 'ig88', 'bossk', 'cad_bane'],
+    ['stormtrooper', 'death_trooper', 'thrawn', 'stormtrooper', 'death_trooper'],
+    ['talzin', 'nightsister_acolyte', 'asajj_ventress', 'nightsister_acolyte', 'talzin'],
+    ['luke', 'leia', 'han_solo', 'chewbacca', 'r2d2'],
+    ['tie_advanced', 'tie_interceptor', 'tie_interceptor', 'tie_bomber', 'tie_fighter'],
+    ['vulture_droid', 'vulture_droid', 'slave_one', 'vulture_droid', 'tie_advanced'],
+  ];
+  function seededRng(seed) {
+    let a = seed >>> 0;
+    return () => {
+      a = (a + 0x6D2B79F5) >>> 0;
+      let t = a;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function towerFloor(floor, seed, size) {
+    const r = seededRng((seed || 1) * 7919 + floor * 104729);
+    const pickOf = (list) => list[Math.floor(r() * list.length)];
+    const level = Math.min(MAX_LEVEL, 2 + floor);
+    const stars = Math.min(MAX_STARS, 1 + Math.floor(floor / 5));
+    const enemyScale = +(0.82 + floor * 0.012 + Math.max(0, floor - 28) * 0.03).toFixed(3);
+    const n = Math.max(3, Math.min(5, size || 5));
+    const planet = pickOf(PLANETS);
+    if (floor % TOWER.bossEvery === 0) {
+      const enc = pickOf(BOSS_ENCOUNTERS);
+      const pool = UNITS.filter((u) => u.kind === enc.kind && !u.boss && u.faction === 'dark');
+      const minions = Array.from({ length: n - 1 }, () => pickOf(pool).id);
+      const half = Math.ceil(minions.length / 2);
+      return { floor, kind: enc.kind, boss: enc.id, planet: enc.planet, level, stars, enemyScale, name: `${enc.name}`, enemies: [...minions.slice(0, half), enc.id, ...minions.slice(half)] };
+    }
+    const kind = r() < 0.3 ? 'ship' : 'character';
+    const exists = (id) => UNIT_MAP[id] && UNIT_MAP[id].kind === kind;
+    const groups = TOWER_GROUPS.map((g) => g.filter(exists)).filter((g) => g.length >= 3);
+    let enemies;
+    if (r() < 0.45 && groups.length) enemies = pickOf(groups).slice(0, n);
+    else {
+      const pool = UNITS.filter((u) => u.kind === kind && !u.boss);
+      enemies = Array.from({ length: n }, () => pickOf(pool).id);
+    }
+    while (enemies.length < n) enemies.push(UNITS.filter((u) => u.kind === kind && !u.boss)[Math.floor(r() * 10)].id);
+    const titles = kind === 'ship' ? ['Ambush in the Void', 'Hyperspace Interdiction', 'Blockade Run', 'Dogfight Over ' + planet.name] : ['Gauntlet on ' + planet.name, 'Hunters in the Dark', 'Last Stand', 'Skirmish on ' + planet.name, 'Kill Squad'];
+    return { floor, kind, planet: planet.id, level, stars, enemyScale, name: pickOf(titles), enemies };
+  }
+  function towerRewards(floor) {
+    const boss = floor % TOWER.bossEvery === 0;
+    return {
+      credits: 220 + floor * 35 + (boss ? 600 : 0),
+      crystals: boss ? Math.min(60, 15 + floor) : floor % 5 === 0 ? Math.min(30, 4 + Math.floor(floor / 2)) : 0,
+    };
+  }
+  const towerCheckpoint = (floor) => floor - ((floor - 1) % TOWER.checkpoint);
+
+  // Daily login: a 7-day cycle that escalates, then repeats while the streak holds.
+  const DAILY = [
+    { day: 1, credits: 600, label: 'Credit stash' },
+    { day: 2, credits: 1000, label: 'Smuggler\'s cut' },
+    { day: 3, crystals: 25, label: 'Kyber shard' },
+    { day: 4, credits: 1800, label: 'Spice run' },
+    { day: 5, crystals: 40, dice: 1, label: 'Loaded Dice' },
+    { day: 6, credits: 2500, charm: 1, label: 'Chance Cube' },
+    { day: 7, crystals: 100, aurodium: 1, label: 'Hutt\'s Hoard', big: true },
+  ];
   const SHELL_PAYOUT = 2.7;
   const SHELL_BETS = [50, 150, 400];
 
@@ -1305,7 +1379,7 @@
   root.GameData = {
     RARITIES, ROLE_BASE, ROLE_ICONS, STATUS_INFO, UNITS, UNIT_MAP, MAX_LEVEL, MAX_STARS, STAR_COSTS,
     DUPLICATE_SHARDS, SQUAD_SIZE, PACKS, STARTER, levelCost, unitStats, power, stageRewards,
-    ultimateFor, abilitiesFor, BOSSES, BOSS_ENCOUNTERS, bossRewards, CURRENCIES, LUCK, CHARMS, MARKET_REFRESH_MS, FLASH_MS, SHELL_PAYOUT, SHELL_BETS, BIOS,
+    ultimateFor, abilitiesFor, BOSSES, BOSS_ENCOUNTERS, bossRewards, CURRENCIES, LUCK, CHARMS, MARKET_REFRESH_MS, FLASH_MS, DAILY, TOWER, towerFloor, towerRewards, towerCheckpoint, SHELL_PAYOUT, SHELL_BETS, BIOS,
     BASE_SLOTS, SLOT_UNLOCKS, MAX_ACCOUNT_LEVEL, xpToNext, levelReward, XP, planetSquadSize,
     TRAITS, TRAIT_INFO, ROLE_SYNERGIES, SYN_THEME, CLASS_INFO, classesOf, ULT_ANIM, SYNERGIES, PLANETS, PLANET_MAP, enemyStars, PLANET_CLEAR_KYBER, BASE_DOUBLE, traitsOf, squadBonuses,
   };

@@ -5,6 +5,7 @@
   "description": "A turn-based Star Wars card battler: collect heroes and ships, build squads, fight campaign battles.",
   "scripts": {
     "test": "node tests/sim.test.js",
-    "build": "node scripts/build.js"
+    "build": "node scripts/build.js",
+    "art": "node scripts/art-manifest.js"
   }
 }

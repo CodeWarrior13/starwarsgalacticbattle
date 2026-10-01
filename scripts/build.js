@@ -16,12 +16,29 @@ const body = html.match(/<body>([\s\S]*)<\/body>/)[1]
   .trim();
 const scripts = [...html.matchAll(/<script src="([^"]+)"><\/script>/g)].map((m) => m[1]);
 
+// Custom card art is embedded as data URIs so the single file stays self-contained.
+function inlineArt() {
+  global.window = global;
+  delete global.ART_IMAGES;
+  eval(read('js/art-images.js'));
+  const map = global.ART_IMAGES || {};
+  const types = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', gif: 'image/gif', svg: 'image/svg+xml' };
+  const out = {};
+  for (const [id, file] of Object.entries(map)) {
+    const full = path.join(rootDir, file);
+    if (!fs.existsSync(full)) continue;
+    const ext = path.extname(file).slice(1).toLowerCase();
+    out[id] = `data:${types[ext] || 'application/octet-stream'};base64,${fs.readFileSync(full).toString('base64')}`;
+  }
+  return `window.ART_IMAGES = ${JSON.stringify(out)};`;
+}
+
 const out = [
   title,
   fonts,
   `<style>\n${read('css/styles.css')}\n</style>`,
   body,
-  ...scripts.map((src) => `<script>\n${read(src).replace(/<\/script/gi, '<\\/script')}\n</script>`),
+  ...scripts.map((src) => `<script>\n${(src === 'js/art-images.js' ? inlineArt() : read(src)).replace(/<\/script/gi, '<\\/script')}\n</script>`),
 ].join('\n');
 
 fs.mkdirSync(path.join(rootDir, 'dist'), { recursive: true });

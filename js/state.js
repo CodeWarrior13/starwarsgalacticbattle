@@ -24,6 +24,8 @@
       market: { refreshAt: 0, items: [] },
       flash: { endsAt: 0, items: [] },
       account: { level: 1, xp: 0 },
+      daily: { streak: 0, last: null, best: 0 },
+      tower: { floor: 1, best: 0, runs: 0 },
     };
   }
 
@@ -68,6 +70,8 @@
           market: { ...base.market, ...loaded.market },
           flash: { ...base.flash, ...loaded.flash },
           account: { ...base.account, ...loaded.account },
+          daily: { ...base.daily, ...loaded.daily },
+          tower: { ...base.tower, ...loaded.tower },
           bosses: { ...loaded.bosses },
         }
         : base;
@@ -356,6 +360,43 @@
       return { ball, guess, won, net: won - bet };
     },
 
+    // ---------- Daily login streak ----------
+    dayKey(date) {
+      const d = date || new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    },
+
+    dailyStatus(now) {
+      const d = this.state.daily;
+      const today = this.dayKey(now ? new Date(now) : new Date());
+      const y = new Date(now || Date.now());
+      y.setDate(y.getDate() - 1);
+      const yesterday = this.dayKey(y);
+      const claimed = d.last === today;
+      const alive = claimed || d.last === yesterday;
+      const streak = alive ? d.streak : 0;
+      // Which day of the 7-day cycle is (or was) claimable today.
+      const nextStreak = claimed ? streak : streak + 1;
+      return { claimed, streak, nextStreak, dayIndex: (nextStreak - 1) % D.DAILY.length, best: d.best };
+    },
+
+    claimDaily(now) {
+      const st = this.dailyStatus(now);
+      if (st.claimed) return null;
+      const reward = D.DAILY[st.dayIndex];
+      const d = this.state.daily;
+      d.streak = st.nextStreak;
+      d.last = this.dayKey(now ? new Date(now) : new Date());
+      d.best = Math.max(d.best || 0, d.streak);
+      this.state.credits += reward.credits || 0;
+      this.state.crystals += reward.crystals || 0;
+      this.state.aurodium += reward.aurodium || 0;
+      this.state.luck.dice += reward.dice || 0;
+      this.state.luck.charmCrates += (reward.charm || 0) * 3;
+      this.save();
+      return { reward, streak: d.streak };
+    },
+
     exchangeCrystals() {
       if (!this.spend({ crystals: 50 })) return false;
       this.state.credits += 1000;
@@ -431,6 +472,16 @@
     // ---------- Encounters ----------
     // params: { type: 'stage', kind, stage } or { type: 'boss', boss }
     encounter(params) {
+      if (params.type === 'tower') {
+        const t = this.state.tower;
+        if (!t.seed) t.seed = 1 + Math.floor(Math.random() * 1e6);
+        const floor = params.floor || t.floor;
+        const f = D.towerFloor(floor, t.seed, this.slots());
+        return {
+          ...f, type: 'tower', floor,
+          label: `Endless Tower · Floor ${floor}${f.boss ? ' · Boss' : ''}`,
+        };
+      }
       if (params.type === 'boss') {
         const enc = D.BOSS_ENCOUNTERS.find((b) => b.id === params.boss);
         const minions = this.padSquad(enc.minions, D.PLANET_MAP[enc.planet].reinforce[enc.kind], D.planetSquadSize(enc.unlock) - 1);
@@ -484,9 +535,44 @@
       return this.planetComplete(enc.unlock);
     },
 
+    // Endless Tower: climb on a win, fall back to the checkpoint on a loss.
+    completeTower(params, won, rng, slotsBefore) {
+      const t = this.state.tower;
+      const enc = this.encounter(params);
+      const floor = enc.floor;
+      if (!won) {
+        this.state.stats.battlesLost += 1;
+        const back = D.towerCheckpoint(floor);
+        const fell = t.floor !== back;
+        t.floor = back;
+        t.runs = (t.runs || 0) + 1;
+        if (fell) t.seed = (t.seed || 1) + 1;
+        const levelUps = this.gainXp(D.XP.loss);
+        this.save();
+        return { lost: true, xp: D.XP.loss, levelUps, newSlot: this.slots() > slotsBefore, towerFloor: back, fell };
+      }
+      const spin = this.rollSpin(rng);
+      this.state.stats.bestSpin = Math.max(this.state.stats.bestSpin, spin.mult);
+      this.state.stats.battlesWon += 1;
+      const r = D.towerRewards(floor);
+      const newBest = floor > (t.best || 0);
+      if (floor === t.floor) t.floor = floor + 1;
+      t.best = Math.max(t.best || 0, floor);
+      const out = { base: r.credits, crystals: r.crystals, aurodium: 0, firstClear: newBest, card: null, mult: spin.mult, table: spin.table, loaded: spin.loaded, towerFloor: t.floor, newBest };
+      out.credits = Math.round(out.base * spin.mult);
+      out.xp = enc.boss ? D.XP.boss(enc.level) : D.XP.stage(enc.level);
+      out.levelUps = this.gainXp(out.xp);
+      out.newSlot = this.slots() > slotsBefore;
+      this.state.credits += out.credits;
+      this.state.crystals += out.crystals;
+      this.save();
+      return out;
+    },
+
     // Record a finished battle and grant rewards (with the luck spin applied).
     completeEncounter(params, won, rng) {
       const slotsBefore = this.slots();
+      if (params.type === 'tower') return this.completeTower(params, won, rng, slotsBefore);
       if (!won) {
         this.state.stats.battlesLost += 1;
         const levelUps = this.gainXp(D.XP.loss);

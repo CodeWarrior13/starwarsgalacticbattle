@@ -180,7 +180,7 @@
       App.current = screen;
       App.params = params || {};
       $$('.main-nav button').forEach((b) => {
-        const active = b.dataset.nav === screen || (b.dataset.nav === 'campaign' && screen === 'squad');
+        const active = b.dataset.nav === screen || (b.dataset.nav === 'home' && ['squad', 'campaign', 'battle'].includes(screen));
         b.classList.toggle('active', active);
       });
       const container = $('#screen');
@@ -198,65 +198,122 @@
   // ---------- Screens ----------
   const Screens = {};
 
+  // ---------- The Galaxy hub ----------
+  // One screen for every fight: Ground, Fleet, Bosses and the Endless Tower
+  // live on the same animated map. Tapping a world plays its arrival
+  // cinematic, then drops down a datapad of stages.
+  const HUB_MODES = [
+    { id: 'character', icon: '⚔', label: 'Ground' },
+    { id: 'ship', icon: '✈', label: 'Fleet' },
+    { id: 'boss', icon: '☠', label: 'Bosses' },
+    { id: 'tower', icon: '♜', label: 'Tower' },
+  ];
+
+  function planetCounts(p, mode) {
+    const cleared = Player.planetCleared(p.id);
+    if (mode === 'character' || mode === 'ship') {
+      const idx = p.stages.map((s, i) => (s.kind === mode ? i : -1)).filter((i) => i >= 0);
+      return { done: idx.filter((i) => i < cleared).length, total: idx.length };
+    }
+    return { done: cleared, total: p.stages.length };
+  }
+
+  function planetBosses(p) {
+    return D.BOSS_ENCOUNTERS.filter((b) => b.unlock === p.id);
+  }
+
+  function mapLabel(p, mode) {
+    const unlocked = Player.planetUnlocked(p.id);
+    if (!unlocked) return '🔒';
+    if (mode === 'boss') {
+      const bs = planetBosses(p);
+      if (!bs.length) return 'Finale boss';
+      const beaten = bs.filter((b) => Player.state.bosses[b.id]).length;
+      return `☠ ${bs.map((b) => D.UNIT_MAP[b.id].name).join(', ')}${beaten ? ' ✓' : ''}`;
+    }
+    const c = planetCounts(p, mode);
+    return `${c.done}/${c.total} complete`;
+  }
+
   Screens.home = function () {
     const s = Player.state;
     const owned = Object.keys(s.units).length;
     const liberated = D.PLANETS.filter((p) => Player.planetComplete(p.id)).length;
     const bossesBeaten = Object.keys(s.bosses).length;
     const current = Player.currentPlanet();
+    const mode = App.ui.hubMode || 'character';
+    const totalStages = D.PLANETS.reduce((a, p) => a + p.stages.length, 0);
+    const t = s.tower;
 
-    const v = el(`<section class="view">
-      <div class="home-galaxy galaxy-map" data-home-map>
+    const towerPanel = () => {
+      const enc = Player.encounter({ type: 'tower' });
+      const r = D.towerRewards(enc.floor);
+      const cp = D.towerCheckpoint(enc.floor);
+      const tiers = Array.from({ length: 7 }, (_, i) => enc.floor + 3 - i).filter((f) => f >= 1);
+      return `<div class="tower-panel">
+        <div class="tower-shaft">${tiers.map((f) => `<span class="tower-tier ${f === enc.floor ? 'now' : f < enc.floor ? 'below' : ''} ${f % D.TOWER.bossEvery === 0 ? 'boss' : ''}">${f % D.TOWER.bossEvery === 0 ? '☠ ' : ''}${f}</span>`).join('')}</div>
+        <div class="tower-info">
+          <p class="eyebrow">Endless Tower · Checkpoint ${cp}</p>
+          <h2>Floor ${enc.floor}</h2>
+          <p class="tower-name">${esc(enc.name)} · ${enc.kind === 'ship' ? '✈ Fleet' : '⚔ Ground'} · ${esc(D.PLANET_MAP[enc.planet].name)}</p>
+          <div class="mini-row">${enc.enemies.map((id) => miniPortrait(D.UNIT_MAP[id])).join('')}</div>
+          <p class="muted small">Enemy Lv ${enc.level} · ${enc.stars}★ · Best floor ${t.best || 0}</p>
+          <div class="tower-rewards">${cur('credits', r.credits)}${r.crystals ? cur('crystals', r.crystals) : ''}<span class="muted small">+ luck spin & XP</span></div>
+          <button class="btn btn-primary" type="button" data-tower-go>Enter floor ${enc.floor}</button>
+          <p class="muted small">Random worlds, random squads, a boss every ${D.TOWER.bossEvery} floors. Lose and you drop back to the last checkpoint.</p>
+        </div>
+      </div>`;
+    };
+
+    const v = el(`<section class="view hub">
+      <div class="home-galaxy galaxy-map mode-${mode}" data-home-map>
         <canvas data-map-canvas></canvas>
-        <div class="hg-actors" data-actors aria-hidden="true"></div>
+        <div class="hg-actors" data-actors data-mode="${mode}" aria-hidden="true"></div>
         ${D.PLANETS.map((p) => {
           const unlocked = Player.planetUnlocked(p.id);
-          const cleared = Player.planetCleared(p.id);
-          return `<button class="map-planet ${unlocked ? '' : 'locked'} ${p.id === current.id ? 'selected' : ''} ${Player.planetComplete(p.id) ? 'done' : ''}" type="button" data-go="campaign" data-planet="${p.id}" style="left:${p.map.x}%;top:${p.map.y}%" ${unlocked ? '' : 'disabled'} aria-label="${esc(p.name)}">
-            <span class="map-label">${esc(p.name)}<small>${unlocked ? `${cleared}/${p.stages.length}` : '🔒'}</small></span>
+          const dim = mode === 'boss' && !planetBosses(p).length && !Player.planetComplete(p.id);
+          return `<button class="map-planet ${unlocked ? '' : 'locked'} ${dim ? 'dim' : ''} ${p.id === current.id ? 'selected' : ''} ${Player.planetComplete(p.id) ? 'done' : ''}" type="button" data-planet="${p.id}" style="left:${p.map.x}%;top:${p.map.y}%;--pc:${p.color || '#ffd23f'}" ${unlocked ? '' : 'disabled'} aria-label="${esc(p.name)}">
+            <span class="map-label">${esc(p.name)}<small>${esc(mapLabel(p, mode))}</small></span>
           </button>`;
         }).join('')}
         <div class="hg-title">
           <p class="eyebrow">A long time ago, in a galaxy far, far away…</p>
           <h1>Command <em>the galaxy.</em></h1>
         </div>
-        <div class="hg-progress"><b>${liberated}/${D.PLANETS.length}</b> worlds liberated<i style="--p:${(Player.totalCleared() / D.PLANETS.reduce((a, p) => a + p.stages.length, 0)) * 100}%"></i></div>
+        <div class="hub-modes seg" role="tablist" aria-label="Battle mode">
+          ${HUB_MODES.map((m) => `<button type="button" role="tab" data-mode="${m.id}" class="${mode === m.id ? 'active' : ''}" aria-selected="${mode === m.id}"><span>${m.icon}</span> ${m.label}</button>`).join('')}
+        </div>
+        ${mode === 'tower' ? towerPanel() : ''}
+        <div class="hg-progress"><b>${liberated}/${D.PLANETS.length}</b> worlds liberated<i style="--p:${(Player.totalCleared() / totalStages) * 100}%"></i><small>${Player.totalCleared()}/${totalStages} stages · ${bossesBeaten}/${D.BOSS_ENCOUNTERS.length} bosses</small></div>
         <div class="hg-actions">
-          <button class="btn btn-primary" type="button" data-go="campaign" data-planet="${current.id}">Continue on ${esc(current.name)}</button>
-          <button class="btn" type="button" data-go="campaign" data-kind="boss">Boss Battles</button>
+          ${mode === 'tower' ? '' : `<button class="btn btn-primary" type="button" data-planet="${current.id}">Continue on ${esc(current.name)}</button>`}
         </div>
       </div>
-      <p class="hg-blurb muted">Collect heroes, villains and starfighters, combine their traits for powerful synergies, and liberate ${D.PLANETS.length} worlds in turn-based battles on living battlefields. Tap a world to jump straight to it.</p>
+      <p class="hg-blurb muted">${mode === 'tower' ? 'The Endless Tower never ends: every floor is a new world and a new squad, and the deeper you climb the harder it hits and the more it pays.' : mode === 'boss' ? 'Each liberated world unlocks its boss. Bosses are immune to Stun and enrage below half health.' : 'Tap a world to travel there and pick a stage. Switch between Ground, Fleet, Bosses and the Endless Tower at the top of the map.'}</p>
 
       ${accountPanel()}
 
       <div class="stat-row">
         <div class="stat"><b>${owned}/${D.UNITS.length}</b><span>Units collected</span></div>
         <div class="stat"><b>${liberated}/${D.PLANETS.length}</b><span>Planets liberated</span></div>
-        <div class="stat"><b>${bossesBeaten}/${D.BOSS_ENCOUNTERS.length}</b><span>Bosses defeated</span></div>
+        <div class="stat"><b>${t.best || 0}</b><span>Best tower floor</span></div>
         <div class="stat"><b>${s.stats.bestSpin}×</b><span>Luckiest spin</span></div>
       </div>
 
-      <div class="mode-grid">
-        <button class="mode-card" type="button" data-go="campaign" data-kind="map">
-          <span class="mode-art planet-art" data-sphere="${current.id}"><canvas></canvas></span>
-          <span class="mode-text"><span class="eyebrow">Galaxy Map</span><h3>${D.PLANETS.length} Worlds</h3><span class="muted">${Player.totalCleared()} of ${D.PLANETS.reduce((a, p) => a + p.stages.length, 0)} stages cleared. Next: ${esc(current.name)}.</span></span>
-        </button>
-        ${modeCard('boss', 'Boss Battles', 'Giant Threats', `Rancors, dragons, Star Destroyers. ${bossesBeaten} of ${D.BOSS_ENCOUNTERS.length} defeated.`, 'rancor')}
+      <div class="mode-grid two">
         <button class="mode-card" type="button" data-go="collection">
           <span class="mode-art">${Art.unitArt(D.UNIT_MAP.luke)}</span>
           <span class="mode-text"><span class="eyebrow">Collection</span><h3>Classes & Traits</h3><span class="muted">${owned} units. Filter by class, plan synergies, upgrade your squad.</span></span>
         </button>
         <button class="mode-card market-card" type="button" data-go="market">
           <span class="mode-art">${Art.merchantArt()}</span>
-          <span class="mode-text"><span class="eyebrow">Night Market</span><h3>Nar Shaddaa</h3><span class="muted">Crates, flash sales, lucky charms, Sabacc and the shell game.</span></span>
+          <span class="mode-text"><span class="eyebrow">Night Market</span><h3>Nar Shaddaa</h3><span class="muted">${Player.dailyStatus().claimed ? 'Crates, flash sales, Sabacc and the shell game.' : '🔥 Your daily login reward is waiting!'}</span></span>
         </button>
       </div>
 
       <p class="muted" style="font-size:13px">Progress saves automatically in this browser. <button class="linkish" type="button" data-reset>Reset progress</button></p>
     </section>`);
 
-    $$('[data-sphere]', v).forEach((n) => spinSphere($('canvas', n), n.dataset.sphere));
     requestAnimationFrame(() => {
       const mc = $('[data-map-canvas]', v);
       if (mc) new root.GalaxyMap(mc, D.PLANETS, () => ({
@@ -265,17 +322,28 @@
         current: current.id,
       }));
       homeActors($('[data-actors]', v));
+      // Arriving from a result screen ("Travel to…"): open that world straight away.
+      if (App.ui.openPlanet) {
+        const id = App.ui.openPlanet;
+        App.ui.openPlanet = null;
+        const btn = $(`.map-planet[data-planet="${id}"]`, v);
+        if (btn && !btn.disabled) openPlanet(id, btn, mode);
+      }
     });
     v.addEventListener('click', async (e) => {
-      const go = e.target.closest('[data-go]');
-      if (go) {
-        if (go.dataset.kind) App.ui.campaignKind = go.dataset.kind;
-        if (go.dataset.planet) {
-          App.ui.campaignKind = 'map';
-          App.ui.planet = go.dataset.planet;
-        }
-        App.go(go.dataset.go);
+      const m = e.target.closest('[data-mode]');
+      if (m) {
+        App.ui.hubMode = m.dataset.mode;
+        return App.refresh();
       }
+      if (e.target.closest('[data-tower-go]')) return App.go('squad', { type: 'tower' });
+      const pl = e.target.closest('[data-planet]');
+      if (pl && !pl.disabled) {
+        const btn = $(`.map-planet[data-planet="${pl.dataset.planet}"]`, v);
+        return openPlanet(pl.dataset.planet, btn, mode === 'tower' ? 'character' : mode);
+      }
+      const go = e.target.closest('[data-go]');
+      if (go) App.go(go.dataset.go);
       if (e.target.closest('[data-reset]')) {
         if (await confirmBox('Reset all progress?', 'Your roster, currencies and campaign progress will be wiped and you will start over with the starter squad.', 'Reset')) {
           Player.reset();
@@ -286,6 +354,172 @@
     });
     return v;
   };
+
+  // Old routes land on the hub.
+  Screens.campaign = function (params) {
+    App.current = 'home';
+    if (App.ui.planet && params && params.open) App.ui.openPlanet = App.ui.planet;
+    return Screens.home(params);
+  };
+
+  // ---------- Planet arrival cinematic ----------
+  const PLANET_FX = { desert: 'embers', snow: 'warp', swamp: 'mist', clouds: 'rays', forest: 'leaves', beach: 'orbs', city: 'scan', canyon: 'embers', lava: 'embers', storm: 'lightning', siege: 'blasts' };
+
+  function openPlanet(id, btn, mode) {
+    const p = D.PLANET_MAP[id];
+    if (btn) {
+      btn.classList.remove('lit');
+      void btn.offsetWidth;
+      btn.classList.add('lit');
+    }
+    if (!motionOK()) return planetDropdown(p, mode);
+    const from = btn ? btn.getBoundingClientRect() : { left: innerWidth / 2, top: innerHeight / 2, width: 0, height: 0 };
+    const c = planetCounts(p, 'all');
+    const color = p.color || '#ffd23f';
+    const node = el(`<div class="planet-cine" style="--pc:${color}" role="status">
+      <canvas class="pc-env"></canvas>
+      <canvas class="pc-fx"></canvas>
+      <div class="pc-vignette"></div>
+      <canvas class="pc-planet"></canvas>
+      <div class="pc-band"><div class="syn-sheen"></div></div>
+      <div class="pc-sabers"><i></i><i></i><b></b></div>
+      <div class="pc-text">
+        <span class="pc-kicker">${esc(p.region)} · Planet ${D.PLANETS.indexOf(p) + 1} of ${D.PLANETS.length}</span>
+        <b class="pc-name">${esc(p.name)}</b>
+        <span class="pc-sub">${c.done}/${c.total} stages complete · ${esc(p.terrain.name)}</span>
+      </div>
+      <span class="pc-skip">Tap to skip</span>
+    </div>`);
+    document.body.appendChild(node);
+    // Living backdrop: the planet's own battlefield, plus a themed overlay.
+    let env = null;
+    try { env = new root.Env($('.pc-env', node), p.id, 'ground'); } catch (err) { env = null; }
+    bannerFx($('.pc-fx', node), PLANET_FX[p.env] || 'rays', color);
+    // The planet flies from the map to centre stage and keeps spinning.
+    const pc = $('.pc-planet', node);
+    const size = Math.min(innerWidth, innerHeight) * 0.5;
+    const dpr = Math.min(1.5, window.devicePixelRatio || 1);
+    pc.width = pc.height = size * dpr;
+    pc.style.width = pc.style.height = size + 'px';
+    const ctx = pc.getContext('2d');
+    ctx.scale(dpr, dpr);
+    let tt = 0;
+    const spin = () => {
+      if (!node.isConnected) return;
+      tt += 0.016;
+      ctx.clearRect(0, 0, size, size);
+      root.drawPlanetSphere(ctx, size / 2, size / 2, size * 0.36, p.id, tt * 3, { halo: 0.55 });
+      requestAnimationFrame(spin);
+    };
+    spin();
+    const fx0 = from.left + from.width / 2 - innerWidth / 2;
+    const fy0 = from.top + from.height / 2 - innerHeight / 2;
+    pc.animate([
+      { transform: `translate(calc(-50% + ${fx0}px), calc(-50% + ${fy0}px)) scale(.12)`, opacity: 0.8 },
+      { transform: 'translate(-50%, -50%) scale(1.1)', opacity: 1, offset: 0.35 },
+      { transform: 'translate(-50%, -50%) scale(1)', opacity: 1, offset: 0.8 },
+      { transform: 'translate(-50%, -62%) scale(.55)', opacity: 0 },
+    ], { duration: 2500, easing: 'cubic-bezier(.2,.8,.3,1)', fill: 'forwards' });
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      node.classList.add('out');
+      if (env) env.stop();
+      setTimeout(() => node.remove(), 380);
+      planetDropdown(p, mode);
+    };
+    node.addEventListener('click', finish);
+    setTimeout(finish, 2500);
+  }
+
+  // ---------- Stage datapad (drop-down) ----------
+  function planetDropdown(p, mode) {
+    $$('.planet-drop-wrap').forEach((n) => n.remove());
+    let filter = mode === 'character' || mode === 'ship' || mode === 'boss' ? mode : 'all';
+    const cleared = Player.planetCleared(p.id);
+    const c = planetCounts(p, 'all');
+    const bosses = planetBosses(p);
+    const wrap = el(`<div class="planet-drop-wrap" style="--pc:${p.color || '#ffd23f'}">
+      <div class="planet-drop" role="dialog" aria-label="${esc(p.name)} stages">
+        <span class="pd-corner tl"></span><span class="pd-corner tr"></span><span class="pd-corner bl"></span><span class="pd-corner br"></span>
+        <div class="pd-head">
+          <canvas class="pd-sphere"></canvas>
+          <div class="pd-title">
+            <p class="eyebrow">${esc(p.region)} · ${c.done}/${c.total} complete</p>
+            <h2>${esc(p.name)}</h2>
+            <div class="banner-progress"><i style="width:${(c.done / c.total) * 100}%"></i></div>
+          </div>
+          <button class="icon-btn pd-close" type="button" data-close aria-label="Close">×</button>
+        </div>
+        <p class="pd-blurb muted">${esc(p.blurb)}</p>
+        <div class="pd-rules">
+          <span class="pd-rule">◉ <b>${esc(p.terrain.name)}</b> ${esc(p.terrain.desc)}</span>
+          <span class="pd-rule hazard">⚠ <b>${esc(p.hazard.name)}</b> ${esc(p.hazard.desc)}</span>
+        </div>
+        <div class="seg pd-filter" role="tablist">
+          ${[['all', 'All'], ['character', '⚔ Ground'], ['ship', '✈ Fleet'], ['boss', '☠ Boss']].map(([k, l]) => `<button type="button" data-filter="${k}">${l}</button>`).join('')}
+        </div>
+        <div class="pd-list" data-list></div>
+      </div>
+    </div>`);
+    const renderList = () => {
+      $$('[data-filter]', wrap).forEach((b) => b.classList.toggle('active', b.dataset.filter === filter));
+      const rows = p.stages.map((stg, i) => ({ stg, i })).filter(({ stg, i }) => {
+        if (filter === 'boss') return i === p.stages.length - 1;
+        // The stage you're up to always shows, whatever the filter.
+        return filter === 'all' || stg.kind === filter || i === cleared;
+      }).map(({ stg, i }, k) => {
+        const state = i < cleared ? 'cleared' : i === cleared ? 'current' : 'locked';
+        const r = D.stageRewards(p.id, i);
+        const enc = Player.encounter({ type: 'stage', planet: p.id, stage: i });
+        const enemyPower = enc.enemies.reduce((a, id) => a + D.power(D.UNIT_MAP[id], stg.level, enc.stars), 0);
+        const finale = i === p.stages.length - 1;
+        return `<button class="pd-stage ${state} ${finale ? 'finale' : ''}" type="button" data-stage="${i}" ${state === 'locked' ? 'disabled' : ''} style="--k:${k}">
+          <span class="stage-num">${state === 'cleared' ? '✓' : finale ? '☠' : i + 1}</span>
+          <span class="pd-stage-body">
+            <b><span class="kind-badge ${stg.kind}">${stg.kind === 'ship' ? '✈ Fleet' : '⚔ Ground'}</span> ${esc(stg.name)}${finale ? ' <span class="tag">Finale boss</span>' : ''}</b>
+            <span class="stage-info"><span>Lv ${stg.level} · ${enc.stars}★</span><span>⚡ ${fmt(enemyPower)}</span>${cur('credits', r.credits)}${state !== 'cleared' ? `<span class="first-clear">${cur('crystals', r.firstClearCrystals + (finale ? D.PLANET_CLEAR_KYBER : 0))}</span>` : ''}</span>
+          </span>
+          <span class="mini-row">${enc.enemies.map((id) => miniPortrait(D.UNIT_MAP[id])).join('')}</span>
+        </button>`;
+      });
+      const bossRows = (filter === 'all' || filter === 'boss') ? bosses.map((enc, k) => {
+        const def = D.UNIT_MAP[enc.id];
+        const unlocked = Player.bossUnlocked(enc);
+        const wins = Player.state.bosses[enc.id] || 0;
+        const r = D.bossRewards(enc, !wins);
+        return `<button class="pd-stage boss-row ${unlocked ? '' : 'locked'}" type="button" data-boss="${enc.id}" ${unlocked ? '' : 'disabled'} style="--k:${rows.length + k}">
+          <span class="boss-thumb">${Art.unitArt(def)}</span>
+          <span class="pd-stage-body">
+            <b><span class="kind-badge boss">☠ Boss</span> ${esc(enc.name)}</b>
+            <span class="stage-info"><span>${esc(def.name)} · Lv ${enc.level}</span>${cur('credits', r.credits)}${cur('aurodium', r.aurodium)}${r.kyber ? cur('crystals', r.kyber) : ''}<span>${unlocked ? (wins ? `Defeated ${wins}×` : 'Not yet defeated') : `🔒 Liberate ${esc(p.name)}`}</span></span>
+          </span>
+        </button>`;
+      }) : [];
+      const all = rows.concat(bossRows);
+      $('[data-list]', wrap).innerHTML = all.length ? all.join('') : '<p class="muted">No battles of this type on this world.</p>';
+    };
+    renderList();
+    document.body.appendChild(wrap);
+    spinSphere($('.pd-sphere', wrap), p.id);
+    const close = () => {
+      wrap.classList.add('out');
+      setTimeout(() => wrap.remove(), 300);
+      document.removeEventListener('keydown', onKey);
+    };
+    const onKey = (e) => { if (e.key === 'Escape') close(); };
+    document.addEventListener('keydown', onKey);
+    wrap.addEventListener('click', (e) => {
+      if (e.target === wrap || e.target.closest('[data-close]')) return close();
+      const f = e.target.closest('[data-filter]');
+      if (f) { filter = f.dataset.filter; return renderList(); }
+      const st = e.target.closest('[data-stage]');
+      if (st && !st.disabled) { close(); return App.go('squad', { type: 'stage', planet: p.id, stage: Number(st.dataset.stage) }); }
+      const b = e.target.closest('[data-boss]');
+      if (b && !b.disabled) { close(); App.go('squad', { type: 'boss', boss: b.dataset.boss }); }
+    });
+  }
 
   // Ambient scenes drifting across the home galaxy, like a title-screen diorama:
   // dogfights, Star Destroyers, the Falcon jumping to lightspeed, Mando on his
@@ -403,32 +637,6 @@
     requestAnimationFrame(draw);
   }
 
-  function modeCard(kind, eyebrow, title, text, artId) {
-    return `<button class="mode-card" type="button" data-go="campaign" data-kind="${kind}">
-      <span class="mode-art">${Art.unitArt(D.UNIT_MAP[artId])}</span>
-      <span class="mode-text"><span class="eyebrow">${eyebrow}</span><h3>${title}</h3><span class="muted">${text}</span></span>
-    </button>`;
-  }
-
-  function bossListHtml() {
-    return `<div class="boss-grid">${D.BOSS_ENCOUNTERS.map((enc) => {
-      const def = D.UNIT_MAP[enc.id];
-      const unlocked = Player.bossUnlocked(enc);
-      const wins = Player.state.bosses[enc.id] || 0;
-      const r = D.bossRewards(enc, !wins);
-      return `<button class="boss-card ${unlocked ? '' : 'locked'}" type="button" data-boss="${enc.id}" ${unlocked ? '' : 'disabled'}>
-        <span class="boss-art">${Art.unitArt(def)}</span>
-        <span class="boss-info">
-          <span class="eyebrow">${enc.kind === 'ship' ? 'Fleet boss' : 'Ground boss'} · Lv ${enc.level}</span>
-          <h3>${esc(enc.name)}</h3>
-          <span class="muted">${esc(def.name)} · ${esc(enc.place)}</span>
-          <span class="boss-rewards">${cur('credits', r.credits)}${cur('aurodium', r.aurodium)}${r.kyber ? cur('crystals', r.kyber) : ''}${r.card ? '<span class="tag">+ Epic/Legendary card</span>' : ''}</span>
-          <span class="boss-status">${unlocked ? (wins ? `Defeated ${wins}×` : 'Not yet defeated') : `🔒 Liberate ${esc(D.PLANET_MAP[enc.unlock].name)}`}</span>
-        </span>
-      </button>`;
-    }).join('')}</div>`;
-  }
-
   function bonusList(items, empty) {
     if (!items.length) return `<p class="muted small">${empty}</p>`;
     return `<ul class="bonus-list">${items.map((b) => `<li class="bonus ${b.kind || ''}"><span class="bonus-icon">${b.icon}</span><span><b>${esc(b.name)}</b>${b.need ? ` <em>${b.count}/${b.need}</em>` : ''}<small>${esc(b.desc)}</small></span></li>`).join('')}</ul>`;
@@ -448,121 +656,6 @@
   function traitChips(id) {
     return D.traitsOf(id).map((t) => `<span class="trait" title="${D.TRAIT_INFO[t].label}">${D.TRAIT_INFO[t].icon} ${D.TRAIT_INFO[t].label}</span>`).join('');
   }
-
-  Screens.campaign = function () {
-    const tab = App.ui.campaignKind === 'boss' ? 'boss' : 'map';
-    const planetId = App.ui.planet && Player.planetUnlocked(App.ui.planet) ? App.ui.planet : Player.currentPlanet().id;
-    App.ui.planet = planetId;
-    const planet = D.PLANET_MAP[planetId];
-    const totalStages = D.PLANETS.reduce((a, p) => a + p.stages.length, 0);
-
-    const mapHtml = `<div class="galaxy-map" data-map>
-      <canvas data-map-canvas></canvas>
-      ${D.PLANETS.map((p) => {
-        const unlocked = Player.planetUnlocked(p.id);
-        const cleared = Player.planetCleared(p.id);
-        return `<button class="map-planet ${unlocked ? '' : 'locked'} ${p.id === planetId ? 'selected' : ''} ${Player.planetComplete(p.id) ? 'done' : ''}" type="button" data-planet="${p.id}" style="left:${p.map.x}%;top:${p.map.y}%" ${unlocked ? '' : 'disabled'} aria-label="${esc(p.name)}">
-          <span class="map-label">${esc(p.name)}<small>${unlocked ? `${cleared}/${p.stages.length}` : '🔒'}</small></span>
-        </button>`;
-      }).join('')}
-    </div>`;
-
-    const cleared = Player.planetCleared(planet.id);
-    const stagesHtml = planet.stages.map((stg, i) => {
-      const state = i < cleared ? 'cleared' : i === cleared ? 'current' : 'locked';
-      const r = D.stageRewards(planet.id, i);
-      const enc = Player.encounter({ type: 'stage', planet: planet.id, stage: i });
-      const enemyPower = enc.enemies.reduce((a, id) => a + D.power(D.UNIT_MAP[id], stg.level, enc.stars), 0);
-      const finale = i === planet.stages.length - 1;
-      return `<button class="stage ${state} ${finale ? 'finale' : ''}" type="button" data-stage="${i}" ${state === 'locked' ? 'disabled' : ''}>
-        <span class="stage-num">${state === 'cleared' ? '✓' : i + 1}</span>
-        <span>
-          <h3><span class="kind-badge ${stg.kind}">${stg.kind === 'ship' ? '✈ Fleet' : '⚔ Ground'}</span> ${esc(stg.name)}${finale ? ' <span class="tag">Finale</span>' : ''}</h3>
-          <span class="stage-info">
-            <span>Enemy Lv ${stg.level} · ${enc.stars}★</span>
-            <span>⚡ ${fmt(enemyPower)}</span>
-            ${cur('credits', r.credits)}
-            ${state !== 'cleared' ? `<span class="first-clear">${cur('crystals', r.firstClearCrystals + (finale ? D.PLANET_CLEAR_KYBER : 0))} first clear</span>` : ''}
-          </span>
-        </span>
-        <span class="mini-row">${enc.enemies.map((id) => miniPortrait(D.UNIT_MAP[id])).join('')}</span>
-      </button>`;
-    }).join('');
-
-    const planetBosses = D.BOSS_ENCOUNTERS.filter((b) => b.unlock === planet.id);
-    const panelHtml = `<div class="planet-panel">
-      <div class="planet-banner"><canvas class="env-canvas" data-banner></canvas>
-        <div class="banner-text">
-          <p class="eyebrow">${esc(planet.region)} · Planet ${D.PLANETS.indexOf(planet) + 1} of ${D.PLANETS.length}</p>
-          <h2>${esc(planet.name)}</h2>
-          <p>${esc(planet.blurb)}</p>
-          <div class="banner-progress"><i style="width:${(cleared / planet.stages.length) * 100}%"></i></div>
-        </div>
-        <div class="banner-toggle seg"><button type="button" data-view="ground" class="active">Surface</button><button type="button" data-view="space">Orbit</button></div>
-      </div>
-      <div class="planet-rules">
-        <div class="rule terrain"><span class="rule-icon">◉</span><div><b>Terrain: ${esc(planet.terrain.name)}</b><p>${esc(planet.terrain.desc)} Applies to both sides.</p></div></div>
-        <div class="rule hazard"><span class="rule-icon">⚠</span><div><b>Hazard: ${esc(planet.hazard.name)}</b><p>${esc(planet.hazard.desc)}</p></div></div>
-      </div>
-      <div class="stage-list">${stagesHtml}</div>
-      ${planetBosses.length ? `<p class="muted small">Liberate ${esc(planet.name)} to unlock: ${planetBosses.map((b) => `<b>${esc(b.name)}</b>`).join(', ')}.</p>` : ''}
-    </div>`;
-
-    const v = el(`<section class="view">
-      <div class="view-head">
-        <div>
-          <p class="eyebrow">${tab === 'boss' ? 'Enrage below 50% HP · immune to Stun' : `${D.PLANETS.length} planets · ${Player.totalCleared()}/${totalStages} stages cleared`}</p>
-          <h1>${tab === 'boss' ? 'Boss Battles' : 'Galaxy Map'}</h1>
-        </div>
-        <div class="seg" role="tablist">
-          <button type="button" data-tab="map" class="${tab === 'map' ? 'active' : ''}">Galaxy Map</button>
-          <button type="button" data-tab="boss" class="${tab === 'boss' ? 'active' : ''}">Bosses</button>
-        </div>
-      </div>
-      ${tab === 'boss' ? bossListHtml() : mapHtml + panelHtml}
-    </section>`);
-
-    if (tab === 'map') {
-      requestAnimationFrame(() => {
-        const mc = $('[data-map-canvas]', v);
-        if (mc) new root.GalaxyMap(mc, D.PLANETS, () => ({
-          unlocked: (id) => Player.planetUnlocked(id),
-          cleared: (id) => Player.planetCleared(id),
-          current: Player.currentPlanet().id,
-        }));
-        const bc = $('[data-banner]', v);
-        if (bc) App.bannerEnv = new root.Env(bc, planet.id, 'ground');
-      });
-    }
-
-    v.addEventListener('click', (e) => {
-      const t = e.target.closest('[data-tab]');
-      if (t) {
-        App.ui.campaignKind = t.dataset.tab;
-        return App.refresh();
-      }
-      const pl = e.target.closest('[data-planet]');
-      if (pl && !pl.disabled) {
-        App.ui.planet = pl.dataset.planet;
-        return App.refresh();
-      }
-      const vw = e.target.closest('[data-view]');
-      if (vw) {
-        $$('[data-view]', v).forEach((b) => b.classList.toggle('active', b === vw));
-        if (App.bannerEnv) App.bannerEnv.stop();
-        const old = $('[data-banner]', v);
-        const fresh = el('<canvas class="env-canvas" data-banner></canvas>');
-        old.replaceWith(fresh);
-        App.bannerEnv = new root.Env(fresh, planet.id, vw.dataset.view);
-        return;
-      }
-      const st = e.target.closest('[data-stage]');
-      if (st && !st.disabled) return App.go('squad', { type: 'stage', planet: planet.id, stage: Number(st.dataset.stage) });
-      const b = e.target.closest('[data-boss]');
-      if (b && !b.disabled) App.go('squad', { type: 'boss', boss: b.dataset.boss });
-    });
-    return v;
-  };
 
   Screens.squad = function (params) {
     const enc = Player.encounter(params);
@@ -587,7 +680,7 @@
           <button class="btn btn-primary" type="button" data-fight>Engage</button>
         </div>
       </div>
-      <div class="versus ${enc.type === 'boss' ? 'boss-versus' : ''}">
+      <div class="versus ${enc.boss ? 'boss-versus' : ''}">
         <div><div class="side-label"><span>Your squad · ${size}/${maxSize} slots</span><b data-mypower></b></div><div class="slots" data-slots style="--n:${maxSize}"></div></div>
         <div class="vs">VS</div>
         <div><div class="side-label"><span>Enemy · Lv ${enc.level} · ${enc.stars}★</span><b>⚡ ${fmt(enemyPower)}</b></div>
@@ -660,7 +753,7 @@
     }
 
     v.addEventListener('click', (e) => {
-      if (e.target.closest('[data-back]')) return App.go('campaign');
+      if (e.target.closest('[data-back]')) return App.go('home');
       if (e.target.closest('[data-auto-build]')) {
         squad = Player.autoSquad(kind);
         toast('Auto-built your strongest squad.');
@@ -1345,6 +1438,65 @@
     return m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m}m`;
   }
 
+  // Daily login streak: a 7-day reward track at the top of the Night Market.
+  function dailyRewardHtml(r) {
+    return [r.credits ? cur('credits', r.credits) : '', r.crystals ? cur('crystals', r.crystals) : '', r.aurodium ? cur('aurodium', r.aurodium) : '',
+      r.dice ? `<span class="daily-extra">🎰 Loaded Dice ×${r.dice}</span>` : '', r.charm ? `<span class="daily-extra">🎲 Chance Cubes ×${r.charm * 3}</span>` : ''].join('');
+  }
+
+  function dailyPanel() {
+    const st = Player.dailyStatus();
+    const pos = st.claimed ? (st.streak - 1) % D.DAILY.length : st.dayIndex;
+    const cells = D.DAILY.map((r, i) => {
+      const state = i < pos ? 'done' : i === pos ? (st.claimed ? 'done today' : 'today') : 'future';
+      return `<div class="daily-cell ${state} ${r.big ? 'big' : ''}" style="--i:${i}">
+        <span class="daily-day">Day ${r.day}</span>
+        <span class="daily-icon">${r.big ? '👑' : r.crystals && !r.credits ? '◆' : r.charm ? '🎲' : r.dice ? '🎰' : '¤'}</span>
+        <b class="daily-label">${esc(r.label)}</b>
+        <span class="daily-reward">${dailyRewardHtml(r)}</span>
+        ${state.includes('done') ? '<span class="daily-check">✓</span>' : ''}
+      </div>`;
+    }).join('');
+    return `<div class="daily-panel ${st.claimed ? 'claimed' : 'ready'}" data-daily>
+      <div class="daily-head">
+        <div>
+          <p class="eyebrow">Vekko's loyalty ledger</p>
+          <h2 class="section-title">🔥 Daily Login Streak</h2>
+        </div>
+        <div class="daily-streak"><b>${st.streak}</b><span>day streak</span><small>Best ${Math.max(st.best || 0, st.streak)}</small></div>
+        <button class="btn btn-primary daily-claim" type="button" data-claim-daily ${st.claimed ? 'disabled' : ''}>${st.claimed ? 'Come back tomorrow' : `Claim day ${pos + 1}`}</button>
+      </div>
+      <div class="daily-track">${cells}</div>
+      <p class="muted small">Log in every day to climb the track. Miss a day and the streak starts over; day 7 pays the Hutt's Hoard, then the cycle repeats.</p>
+    </div>`;
+  }
+
+  function claimDailyFx(v) {
+    const res = Player.claimDaily();
+    if (!res) return;
+    const cell = $('.daily-cell.today', v);
+    updateWallet();
+    if (cell && motionOK()) {
+      cell.classList.add('claiming');
+      const r = cell.getBoundingClientRect();
+      for (let i = 0; i < 24; i++) {
+        const c = document.createElement('i');
+        c.className = 'daily-coin';
+        c.style.left = r.left + r.width / 2 + 'px';
+        c.style.top = r.top + r.height / 2 + 'px';
+        document.body.appendChild(c);
+        const a = Math.random() * Math.PI * 2;
+        const d = 60 + Math.random() * 120;
+        c.animate([{ transform: 'translate(-50%,-50%) scale(.4)', opacity: 1 }, { transform: `translate(calc(-50% + ${Math.cos(a) * d}px), calc(-50% + ${Math.sin(a) * d - 40}px)) scale(1)`, opacity: 1, offset: 0.6 }, { transform: `translate(calc(-50% + ${Math.cos(a) * d}px), calc(-50% + ${Math.sin(a) * d + 60}px)) scale(.6)`, opacity: 0 }], { duration: 900 + Math.random() * 300, easing: 'cubic-bezier(.2,.8,.3,1)' }).onfinish = () => c.remove();
+      }
+    }
+    toast(`Day ${res.streak} claimed! ${res.reward.label}.`);
+    setTimeout(() => {
+      const panel = $('[data-daily]', v);
+      if (panel) panel.outerHTML = dailyPanel();
+    }, motionOK() ? 900 : 0);
+  }
+
   Screens.market = function () {
     const s = Player.state;
     const luck = s.luck;
@@ -1370,6 +1522,8 @@
           </div>
         </div>
       </div>
+
+      ${dailyPanel()}
 
       <div class="section-head">
         <h2 class="section-title flash-title">⚡ Flash Sales</h2>
@@ -1463,6 +1617,7 @@
 
     startCountdowns(v);
     v.addEventListener('click', (e) => {
+      if (e.target.closest('[data-claim-daily]')) return claimDailyFx(v);
       const p = e.target.closest('[data-pack]');
       if (p) {
         const results = Player.openPack(p.dataset.pack);

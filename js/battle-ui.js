@@ -63,7 +63,7 @@
       document.documentElement.style.setProperty('--speed', this.speed);
       this.renderScreen();
       await this.hyperspace();
-      if (enc.type === 'boss') await this.bossIntro(D.UNIT_MAP[enc.boss]);
+      if (enc.boss) await this.bossIntro(D.UNIT_MAP[enc.boss]);
       this.log(`Battle begins: ${enc.name}!`, 'ult');
       const planet = D.PLANET_MAP[this.planetId];
       if (planet) this.log(`${planet.name}: ${planet.terrain.name}. ${planet.hazard.name} every ${planet.hazard.every} turns.`, 'hazard');
@@ -79,8 +79,10 @@
     renderScreen() {
       const b = this.battle;
       const ships = this.kind === 'ship';
-      const chips = (list) => list.map((x) => `<span class="syn-chip ${x.kind}" title="${esc(x.name)}: ${esc(x.desc)}">${x.icon} ${esc(x.name)}</span>`).join('');
-      const view = el(`<section class="battle ${this.enc.type === 'boss' ? 'boss-fight' : ''} env-${ships ? 'space' : (D.PLANET_MAP[this.planetId] || {}).env}">
+      // Squad bonuses sit at the edge of the field; tap one to drop down what it does.
+      const chips = (list, side) => (list.length ? `<span class="syn-label">${side === 'enemy' ? '☠ Enemy bonuses' : '★ Your bonuses'}</span>` : '')
+        + list.map((x, i) => `<button type="button" class="syn-chip ${x.kind}" data-chip="${side}:${i}" aria-expanded="false">${x.icon} ${esc(x.name)}${x.need ? ` <em>${x.count}/${x.need}</em>` : ''} <span class="chev">▾</span></button>`).join('');
+      const view = el(`<section class="battle ${this.enc.boss ? 'boss-fight' : ''} env-${ships ? 'space' : (D.PLANET_MAP[this.planetId] || {}).env}">
         <div class="battle-top">
           <h2>${esc(this.enc.name)}</h2>
           <div class="turn-order" data-order></div>
@@ -92,11 +94,11 @@
         </div>
         <div class="field ${ships ? 'ships' : 'ground'}" data-field>
           <canvas class="env-canvas" data-env></canvas>
-          <div class="syn-row enemy">${chips(b.bonuses.enemy)}</div>
+          <div class="syn-row enemy">${chips(b.bonuses.enemy, 'enemy')}</div>
           <div class="row enemy-row" data-row="enemy"></div>
           <div class="midline">${ships ? 'Engagement zone' : 'Battlefield'}</div>
           <div class="row player-row" data-row="player"></div>
-          <div class="syn-row player">${chips(b.bonuses.player)}</div>
+          <div class="syn-row player">${chips(b.bonuses.player, 'player')}</div>
           <div class="fx-layer" data-fx></div>
         </div>
         <div class="action-bar">
@@ -131,7 +133,7 @@
       const screen = $('#screen');
       screen.innerHTML = '';
       screen.appendChild(view);
-      $$('.main-nav button').forEach((btn) => btn.classList.toggle('active', btn.dataset.nav === 'campaign'));
+      $$('.main-nav button').forEach((btn) => btn.classList.toggle('active', btn.dataset.nav === 'home'));
       this.env = new root.Env($('[data-env]', view), this.planetId || 'tatooine', ships ? 'space' : 'ground');
       this.updateAll();
       this.renderActions(null);
@@ -403,7 +405,33 @@
       if (btn) btn.textContent = `${this.speed}×`;
     },
 
+    toggleChip(btn) {
+      const open = btn.getAttribute('aria-expanded') === 'true';
+      $$('.chip-pop', this.view).forEach((n) => n.remove());
+      $$('[data-chip]', this.view).forEach((c) => c.setAttribute('aria-expanded', 'false'));
+      if (open) return;
+      const [side, i] = btn.dataset.chip.split(':');
+      const x = this.battle.bonuses[side][Number(i)];
+      if (!x) return;
+      const units = (x.members || []).map((m) => this.battle.units.filter((u) => u.side === side)[m]).filter(Boolean);
+      const pop = el(`<div class="chip-pop ${side}" role="tooltip">
+        <b>${x.icon} ${esc(x.name)}</b>${x.need ? `<span class="chip-tier">${x.count}/${x.need}${x.tier != null ? ` · Tier ${x.tier + 1}` : ''}</span>` : ''}
+        <p>${esc(x.desc)}</p>
+        ${units.length ? `<div class="chip-units">${units.map((u) => `<span>${esc(u.def.name)}</span>`).join('')}</div>` : ''}
+      </div>`);
+      btn.setAttribute('aria-expanded', 'true');
+      const fr = this.field.getBoundingClientRect();
+      const br = btn.getBoundingClientRect();
+      pop.style.left = Math.max(8, Math.min(fr.width - 268, br.left - fr.left + br.width / 2 - 130)) + 'px';
+      if (side === 'enemy') pop.style.top = (br.bottom - fr.top + 6) + 'px';
+      else pop.style.bottom = (fr.bottom - br.top + 6) + 'px';
+      this.field.appendChild(pop);
+    },
+
     async onClick(e) {
+      const chip = e.target.closest('[data-chip]');
+      if (chip) return this.toggleChip(chip);
+      if (!e.target.closest('.chip-pop')) $$('.chip-pop', this.view).forEach((n) => { n.remove(); $$('[data-chip]', this.view).forEach((c) => c.setAttribute('aria-expanded', 'false')); });
       const abBtn = e.target.closest('[data-ab]');
       if (abBtn) return this.selectAbility(Number(abBtn.dataset.ab));
       const card = e.target.closest('.bcard.targetable');
@@ -1612,11 +1640,13 @@
     },
 
     // Slice a card along a diagonal: the halves split apart in a puff of smoke, then snap back.
-    cutCard(uid, layer) {
+    cutCard(uid, layer, color, flip) {
       const card = this.cards[uid];
       if (!card || !card.isConnected) return;
       const r = card.getBoundingClientRect();
-      const a = rand(30, 70);
+      const tone = color || '#ff2a2a';
+      const lo = rand(22, 38);
+      const a = flip ? 100 - lo : lo;
       const b = 100 - a;
       const halves = [[`polygon(0 0, 100% 0, 100% ${b}%, 0 ${a}%)`, -1], [`polygon(0 ${a}%, 100% ${b}%, 100% 100%, 0 100%)`, 1]];
       card.style.visibility = 'hidden';
@@ -1633,7 +1663,7 @@
       const cx = r.left + r.width / 2;
       const cy = r.top + r.height * ((a + b) / 200);
       const ang = (Math.atan2(((b - a) / 100) * r.height, r.width) * 180) / Math.PI;
-      const line = el(`<div class="cut-line" style="left:${r.left - 20}px;top:${cy}px;width:${r.width + 40}px;transform:rotate(${ang}deg)"></div>`);
+      const line = el(`<div class="cut-line" style="left:${r.left - 20}px;top:${cy}px;width:${r.width + 40}px;transform:rotate(${ang}deg);--c:${tone}"></div>`);
       layer.appendChild(line);
       line.animate([{ opacity: 1, transform: `rotate(${ang}deg) scaleX(0)` }, { opacity: 1, transform: `rotate(${ang}deg) scaleX(1)`, offset: 0.3 }, { opacity: 0, transform: `rotate(${ang}deg) scaleX(1.1)` }], { duration: 500 }).onfinish = () => line.remove();
       for (let i = 0; i < 14; i++) {
@@ -1646,8 +1676,8 @@
         p.animate([{ transform: 'translate(-50%,-50%) scale(.3)', opacity: 0.9 }, { transform: `translate(calc(-50% + ${Math.cos(t) * dist}px), calc(-50% + ${Math.sin(t) * dist}px)) scale(${1.4 + Math.random()})`, opacity: 0 }], { duration: 700 + Math.random() * 300, easing: 'ease-out' }).onfinish = () => p.remove();
       }
       const fc = this.center(uid);
-      this.sparks(fc, '#ff2a2a', 14);
-      this.env.impact(fc.x, fc.y, { power: 1.3, color: '#ff2a2a' });
+      this.sparks(fc, tone, 14);
+      this.env.impact(fc.x, fc.y, { power: 1.3, color: tone });
       this.shake();
     },
 
@@ -1769,6 +1799,7 @@
       const rewards = Player.completeEncounter(this.params, won);
       this.teardown();
       const p = this.params;
+      const isTower = p.type === 'tower';
       const isStage = p.type === 'stage';
       const planet = isStage ? D.PLANET_MAP[p.planet] : null;
       const nextInPlanet = won && isStage && p.stage < planet.stages.length - 1;
@@ -1784,6 +1815,7 @@
         ${rewards.newSlot ? `<div class="level-up slot-up"><b>NEW SQUAD SLOT!</b> You can now field ${Player.slots()} units in ground and fleet battles.</div>` : ''}` : '';
       const m = openModal(`
         <div class="result-title ${won ? 'win' : 'lose'}">${won ? 'VICTORY' : 'DEFEAT'}</div>
+        ${isTower ? `<div class="liberated tower-result"><p class="eyebrow">Endless Tower</p><h3>${won ? `Floor ${p.floor || rewards.towerFloor - 1} cleared${rewards.newBest ? ' · New best!' : ''}` : rewards.fell ? `Fell back to floor ${rewards.towerFloor}` : `Checkpoint holds at floor ${rewards.towerFloor}`}</h3><p class="muted">${won ? 'Deeper floors hit harder and pay more.' : 'Checkpoints every 10 floors. The floors above have been re-rolled.'}</p></div>` : ''}
         ${won && rewards.planetComplete ? `<div class="liberated"><p class="eyebrow">Planet liberated</p><h3>${esc(planet.name)} is free!</h3><p class="muted">${nextPlanet ? `Hyperspace lane to ${esc(nextPlanet.name)} unlocked.` : 'You have liberated the entire galaxy.'}</p></div>` : ''}
         ${won ? `
           <div class="spin-box ${rewards.loaded ? 'loaded' : ''}">
@@ -1800,21 +1832,23 @@
         : '<p class="muted">Train your units in the Collection, build a squad with matching traits for synergies, or grab crates in the Night Market, then try again.</p>'}
         ${xpHtml}
         <div class="modal-actions">
-          <button class="btn" type="button" data-r="retry">Retry</button>
+          ${isTower ? '' : '<button class="btn" type="button" data-r="retry">Retry</button>'}
           ${won ? '' : '<button class="btn" type="button" data-r="collection">Collection</button>'}
-          ${nextInPlanet ? '<button class="btn btn-primary" type="button" data-r="next">Next stage</button>' : nextPlanet ? `<button class="btn btn-primary" type="button" data-r="planet">Travel to ${esc(nextPlanet.name)}</button>` : '<button class="btn btn-primary" type="button" data-r="campaign">Continue</button>'}
+          ${isTower ? `<button class="btn" type="button" data-r="tower-exit">Leave tower</button><button class="btn btn-primary" type="button" data-r="tower">${won ? `Climb to floor ${rewards.towerFloor}` : `Restart from floor ${rewards.towerFloor}`}</button>` : nextInPlanet ? '<button class="btn btn-primary" type="button" data-r="next">Next stage</button>' : nextPlanet ? `<button class="btn btn-primary" type="button" data-r="planet">Travel to ${esc(nextPlanet.name)}</button>` : '<button class="btn btn-primary" type="button" data-r="campaign">Continue</button>'}
         </div>`, { small: true, dismissable: false, cls: 'result-modal' });
       if (won) this.spinReel(m.root, rewards);
       m.root.addEventListener('click', (e) => {
         const r = e.target.closest('[data-r]');
         if (!r) return;
         m.close();
-        if (r.dataset.r === 'retry') App.go('squad', p);
+        if (r.dataset.r === 'tower') App.go('squad', { type: 'tower', floor: rewards.towerFloor });
+        else if (r.dataset.r === 'tower-exit') { App.ui.hubMode = 'tower'; App.go('home'); }
+        else if (r.dataset.r === 'retry') App.go('squad', p);
         else if (r.dataset.r === 'next') App.go('squad', { ...p, stage: p.stage + 1 });
         else if (r.dataset.r === 'planet') {
-          App.ui.campaignKind = 'map';
-          App.ui.planet = nextPlanet.id;
-          App.go('campaign');
+          App.ui.hubMode = 'character';
+          App.ui.openPlanet = nextPlanet.id;
+          App.go('home');
         } else App.go(r.dataset.r);
       });
     },

@@ -376,6 +376,54 @@ test('Battle of Coruscant: ten stages after Exegol with a wreckage hazard', () =
   assert.strictEqual(p.hazard.id, 'debris');
 });
 
+test('daily login: streak climbs on consecutive days, resets after a gap, cycles through 7 days', () => {
+  Player.reset();
+  const day = (n) => new Date(2026, 9, 1 + n, 12).getTime();
+  const c0 = Player.state.credits;
+  assert.strictEqual(Player.claimDaily(day(0)).streak, 1);
+  assert.strictEqual(Player.claimDaily(day(0)), null, 'only once per day');
+  assert.strictEqual(Player.state.credits, c0 + D.DAILY[0].credits);
+  for (let n = 1; n < 7; n++) assert.strictEqual(Player.claimDaily(day(n)).streak, n + 1);
+  assert.ok(Player.state.aurodium >= 1, 'day 7 pays aurodium');
+  assert.strictEqual(Player.dailyStatus(day(7)).dayIndex, 0, 'cycle repeats');
+  assert.strictEqual(Player.claimDaily(day(9)).streak, 1, 'a missed day resets the streak');
+  assert.strictEqual(Player.state.daily.best, 7);
+});
+
+test('endless tower: deterministic floors, bosses every 10, climbing, checkpoints and scaling', () => {
+  const a = D.towerFloor(7, 42, 5);
+  const b = D.towerFloor(7, 42, 5);
+  assert.deepStrictEqual(a, b, 'same seed, same floor');
+  assert.ok(D.towerFloor(10, 42, 5).boss && D.towerFloor(20, 42, 5).boss);
+  assert.ok(D.towerFloor(30, 1, 5).enemies.includes(D.towerFloor(30, 1, 5).boss));
+  for (let f = 1; f <= 60; f++) {
+    const fl = D.towerFloor(f, 9, 4);
+    assert.strictEqual(fl.enemies.length, 4, `floor ${f} squad size`);
+    for (const id of fl.enemies) assert.ok(D.UNIT_MAP[id], `${id} exists`);
+    assert.ok(D.PLANET_MAP[fl.planet]);
+  }
+  assert.ok(D.towerFloor(40, 3, 5).enemyScale > D.towerFloor(5, 3, 5).enemyScale);
+  assert.ok(D.towerRewards(30).credits > D.towerRewards(3).credits);
+  assert.strictEqual(D.towerCheckpoint(17), 11);
+  Player.reset();
+  const won = Player.completeEncounter({ type: 'tower', floor: 1 }, true, seeded(1));
+  assert.strictEqual(won.towerFloor, 2);
+  Player.state.tower.floor = 14;
+  const lost = Player.completeEncounter({ type: 'tower', floor: 14 }, false);
+  assert.strictEqual(lost.towerFloor, 11);
+  assert.strictEqual(Player.state.tower.best, 1);
+  const enc = Player.encounter({ type: 'tower' });
+  const battle = new Battle(Player.squadEntries(enc.kind), enc.enemies.map((id) => ({ id, level: enc.level, stars: enc.stars })), seeded(3), { planet: enc.planet, enemyScale: enc.enemyScale });
+  assert.ok(runAuto(battle).winner, 'tower battles finish');
+});
+
+test('every unit has a full-screen signature ultimate', () => {
+  const src = require('fs').readFileSync(require('path').join(__dirname, '../js/ults.js'), 'utf8');
+  const body = src.slice(src.indexOf('const SIG = {'), src.indexOf('// ---------- Props'));
+  const keys = [...body.matchAll(/^\s+([a-z0-9_]+): \{/gm)].map((m) => m[1]);
+  for (const u of D.UNITS) assert.ok(keys.includes(u.id), `${u.id} has a signature ultimate`);
+});
+
 test('every unit and boss has cover art and a bio', () => {
   require('../js/art.js');
   for (const u of [...D.UNITS, ...D.BOSSES]) {
