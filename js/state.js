@@ -569,6 +569,20 @@
     },
 
     // Hidden zone: first victory over each boss grants its exclusive cards.
+    // What a secret trial still needs before it can be fought.
+    secretReqs(id) {
+      const req = (D.SECRET_BOSSES.find((b) => b.id === id) || {}).req || {};
+      const out = [];
+      if (req.level) out.push({ label: `Account Lv ${req.level}`, ok: this.state.account.level >= req.level });
+      if (req.planet) out.push({ label: `Liberate ${D.PLANET_MAP[req.planet].name}`, ok: this.planetComplete(req.planet) });
+      if (req.trial) out.push({ label: `Beat ${D.SECRET_BOSSES.find((b) => b.id === req.trial).name}`, ok: !!this.state.secret.beaten[req.trial] });
+      return out;
+    },
+
+    secretOpen(id) {
+      return this.secretReqs(id).every((r) => r.ok);
+    },
+
     // Kyber cost of the next attempt at a secret trial.
     secretCost(id) {
       return D.secretCost(this.state.secret.fails[id]);

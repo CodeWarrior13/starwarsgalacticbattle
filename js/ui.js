@@ -1586,15 +1586,18 @@
       const def = D.UNIT_MAP[b.id];
       const wins = sec.beaten[b.id] || 0;
       const rewards = b.rewards.map((id) => D.UNIT_MAP[id]);
-      return `<button class="secret-boss ${b.side}" type="button" data-secret="${b.id}">
-        <span class="sb-art">${Art.unitArt(def)}</span>
+      const open = Player.secretOpen(b.id);
+      const reqs = Player.secretReqs(b.id);
+      return `<button class="secret-boss ${b.side} ${open ? '' : 'sealed'}" type="button" data-secret="${b.id}" ${open ? '' : 'aria-disabled="true"'}>
+        <span class="sb-art">${Art.unitArt(def)}${open ? '' : `<span class="sb-seal">${root.Icons.svg('lock')}</span>`}</span>
         <span class="sb-body">
           <span class="eyebrow">${b.side === 'light' ? 'Trial of Light' : 'Trial of Shadow'} · Lv ${b.level} · 7★</span>
           <h3>${esc(b.name)}</h3>
           <span class="muted">${esc(def.name)}</span>
           <span class="sb-rewards">${rewards.map((r) => (wins ? `<span class="sb-reward got">${miniPortrait(r)} ${esc(r.name)}</span>` : `<span class="sb-reward">??? ${r.kind === 'ship' ? 'ship' : 'hero'}</span>`)).join('')}</span>
           <span class="sb-status">${wins ? `Defeated ${wins}× · win again for more shards` : esc(b.hint)}</span>
-          <span class="sb-cost ${Player.secretCost(b.id) ? '' : 'free'}">${Player.secretCost(b.id) ? `Entry ${cur('crystals', Player.secretCost(b.id))} · ${sec.fails[b.id]} defeat${sec.fails[b.id] === 1 ? '' : 's'}` : 'Entry free'}</span>
+          ${open ? '' : `<span class="sb-reqs"><b>Sealed until</b>${reqs.map((r) => `<span class="sb-req ${r.ok ? 'ok' : ''}">${r.ok ? '✓' : root.Icons.svg('lock')} ${esc(r.label)}</span>`).join('')}</span>`}
+          ${open ? `<span class="sb-cost ${Player.secretCost(b.id) ? '' : 'free'}">${Player.secretCost(b.id) ? `Entry ${cur('crystals', Player.secretCost(b.id))} · ${sec.fails[b.id]} defeat${sec.fails[b.id] === 1 ? '' : 's'}` : 'Entry free'}</span>` : ''}
         </span>
       </button>`;
     };
@@ -1615,6 +1618,13 @@
     v.addEventListener('click', (e) => {
       if (e.target.closest('[data-leave]')) return App.go('market');
       const b = e.target.closest('[data-secret]');
+      if (b && !Player.secretOpen(b.dataset.secret)) {
+        b.classList.remove('shake');
+        void b.offsetWidth;
+        b.classList.add('shake');
+        if (root.Sound) root.Sound.play('glitch');
+        return toast(`The way is sealed. ${Player.secretReqs(b.dataset.secret).filter((r) => !r.ok).map((r) => r.label).join(' · ')}.`);
+      }
       if (b) App.go('squad', { type: 'secret', boss: b.dataset.secret });
     });
     return v;

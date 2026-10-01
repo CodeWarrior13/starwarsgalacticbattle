@@ -2636,3 +2636,17 @@ button.ult-preview:hover, button.ult-preview:focus-visible { transform: scale(1.
   .enemy-row .bcard .hp-num { justify-content: center; }
   .abtn .astat { font-size: 10px; }
 }
+
+/* ---------- Sealed secret trials ---------- */
+.secret-boss.sealed { cursor: not-allowed; border-color: rgba(255, 255, 255, 0.08); }
+.secret-boss.sealed .sb-art { position: relative; }
+.secret-boss.sealed .sb-art > :not(.sb-seal) { filter: grayscale(0.9) brightness(0.4); }
+.sb-seal { position: absolute; inset: 0; display: grid; place-items: center; color: #e8ecff; font-size: 30px; filter: drop-shadow(0 0 8px #000); }
+.secret-boss.sealed h3, .secret-boss.sealed .muted { opacity: 0.6; }
+.sb-reqs { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 4px; font-size: 11.5px; }
+.sb-reqs b { width: 100%; font-family: var(--font-display); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: #c8a8ff; }
+.sb-req { display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px; border-radius: 999px; background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(255, 255, 255, 0.14); color: #cfd8e8; }
+.sb-req.ok { border-color: rgba(82, 224, 138, 0.5); color: #8ff0b4; }
+.secret-boss.shake { animation: sb-shake 0.45s; }
+@keyframes sb-shake { 20% { transform: translateX(-6px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(3px); } }
+.sb-seal .swi { width: 30px !important; height: 30px !important; color: #e8ecff; }

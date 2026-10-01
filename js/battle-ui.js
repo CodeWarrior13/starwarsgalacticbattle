@@ -45,6 +45,7 @@
       const squad = Player.squadEntries(enc.kind);
       if (!squad.length) return toast('Pick at least one unit for your squad.');
       if (params.type === 'secret' && !params.preview) {
+        if (!Player.secretOpen(params.boss)) return toast(`Sealed: ${Player.secretReqs(params.boss).filter((r) => !r.ok).map((r) => r.label).join(' · ')}`);
         const cost = Player.secretCost(params.boss);
         if (!Player.paySecretEntry(params.boss)) return toast(`The Monolith asks ${cost} Kyber to try again. You have ${Player.state.crystals}.`);
         if (cost) { toast(`Paid ${cost} Kyber to enter the trial.`); root.UI.updateWallet(); }

@@ -1431,11 +1431,14 @@
     hazard: { id: 'mortis', name: 'Shifting Balance', every: 6, desc: 'Every 6 turns the balance shifts, dealing 6% max HP to everyone.', effect: { type: 'damage', pct: 0.06 } },
   };
   PLANET_MAP.mortis = SECRET_PLANET;
+  // Each trial unlocks with account level and campaign progress (and the
+  // later two need the earlier trial on their side), so the exclusive cards
+  // arrive as the player grows instead of all at once.
   const SECRET_BOSSES = [
-    { id: 'boss_daughter', name: 'Trial of Light', side: 'light', kind: 'character', level: 30, minions: ['barriss', 'rebel_medic', 'ewok_warrior', 'grogu'], rewards: ['the_daughter'], hint: 'A radiance that heals what it touches waits where no star chart reaches.' },
-    { id: 'boss_guardian', name: 'The Sealed Temple', side: 'light', kind: 'character', level: 30, minions: ['clone_trooper', 'qui_gon', 'obi_wan', 'clone_trooper'], rewards: ['temple_guardian', 'ebon_hawk'], hint: 'A masked sentinel has kept one door shut for a thousand years.' },
-    { id: 'boss_son', name: 'Trial of Shadow', side: 'dark', kind: 'character', level: 30, minions: ['nightsister_acolyte', 'talzin', 'asajj_ventress', 'darth_maul'], rewards: ['the_son'], hint: 'A darkness that feeds on fear is waiting for someone to open the way.' },
-    { id: 'boss_bane', name: 'The Rule of Two', side: 'dark', kind: 'character', level: 30, minions: ['count_dooku', 'death_trooper', 'vader', 'death_trooper'], rewards: ['darth_bane', 'sith_fury'], hint: 'An armored master of an ancient order hoards a ship with folded wings.' },
+    { id: 'boss_daughter', name: 'Trial of Light', side: 'light', kind: 'character', level: 9, req: { level: 5, planet: 'tatooine' }, minions: ['barriss', 'rebel_medic', 'ewok_warrior', 'grogu'], rewards: ['the_daughter'], hint: 'A radiance that heals what it touches waits where no star chart reaches.' },
+    { id: 'boss_guardian', name: 'The Sealed Temple', side: 'light', kind: 'character', level: 20, req: { level: 14, planet: 'endor', trial: 'boss_daughter' }, minions: ['clone_trooper', 'qui_gon', 'obi_wan', 'clone_trooper'], rewards: ['temple_guardian', 'ebon_hawk'], hint: 'A masked sentinel has kept one door shut for a thousand years.' },
+    { id: 'boss_son', name: 'Trial of Shadow', side: 'dark', kind: 'character', level: 14, req: { level: 9, planet: 'dagobah' }, minions: ['nightsister_acolyte', 'talzin', 'asajj_ventress', 'darth_maul'], rewards: ['the_son'], hint: 'A darkness that feeds on fear is waiting for someone to open the way.' },
+    { id: 'boss_bane', name: 'The Rule of Two', side: 'dark', kind: 'character', level: 27, req: { level: 20, planet: 'geonosis', trial: 'boss_son' }, minions: ['count_dooku', 'death_trooper', 'vader', 'death_trooper'], rewards: ['darth_bane', 'sith_fury'], hint: 'An armored master of an ancient order hoards a ship with folded wings.' },
   ];
   // The trials pay in cards only. The first attempt is free; every loss makes
   // the next entry cost more Kyber: 5, 10, 15, 20, 25, then 50 for good.

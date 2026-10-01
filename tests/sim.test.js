@@ -468,4 +468,23 @@ test('secret trials: entry cost climbs on defeat, wins pay cards only', () => {
   assert.ok(!again.cards[0].isNew && again.cards[0].shards > 0, 'repeat wins pay shards');
 });
 
+test('secret trials unlock with level, campaign progress and the earlier trial', () => {
+  Player.reset();
+  for (const b of D.SECRET_BOSSES) assert.ok(!Player.secretOpen(b.id), `${b.id} starts sealed`);
+  Player.state.account.level = 5;
+  const clear = (id) => { Player.state.planets[id] = D.PLANET_MAP[id].stages.length; };
+  clear('tatooine');
+  assert.ok(Player.planetComplete('tatooine'), 'progress helper clears a planet');
+  assert.ok(Player.secretOpen('boss_daughter'), 'Trial of Light: Lv 5 + Tatooine');
+  assert.ok(!Player.secretOpen('boss_son'));
+  Player.state.account.level = 14;
+  ['hoth', 'dagobah', 'bespin', 'endor'].forEach(clear);
+  assert.ok(Player.secretOpen('boss_son'), 'Trial of Shadow: Lv 9 + Dagobah');
+  assert.ok(!Player.secretOpen('boss_guardian'), 'Sealed Temple needs the Trial of Light won');
+  Player.state.secret.beaten.boss_daughter = 1;
+  assert.ok(Player.secretOpen('boss_guardian'));
+  const levels = D.SECRET_BOSSES.map((b) => b.level);
+  assert.ok(levels.every((l) => l >= 9 && l <= 30), 'trial enemy levels stay in range');
+});
+
 console.log(`\n${passed} tests passed`);
