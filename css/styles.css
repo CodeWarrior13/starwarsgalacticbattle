@@ -939,14 +939,14 @@ body.in-battle .main-nav, body.in-battle .brand { pointer-events: none; opacity:
   font-size: clamp(36px, 8vw, 64px);
   letter-spacing: 0.08em;
   line-height: 1;
-  animation: result-in 0.6s cubic-bezier(0.2, 1.4, 0.4, 1);
+  animation: result-in 1.1s cubic-bezier(0.2, 1.3, 0.4, 1);
 }
 .result-title.win { color: var(--crawl); text-shadow: 0 0 30px rgba(255, 210, 63, 0.5); }
 .result-title.lose { color: var(--dark); }
 @keyframes result-in { from { transform: scale(2.2); opacity: 0; letter-spacing: 0.5em; } }
 .rewards { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
-.reward { padding: 10px 16px; border-radius: 10px; background: var(--panel-2); border: 1px solid var(--line); font-weight: 700; font-variant-numeric: tabular-nums; animation: pop 0.4s both; }
-.reward:nth-child(2) { animation-delay: 0.15s; }
+.reward { padding: 10px 16px; border-radius: 10px; background: var(--panel-2); border: 1px solid var(--line); font-weight: 700; font-variant-numeric: tabular-nums; animation: pop 0.6s both; }
+.reward:nth-child(2) { animation-delay: 0.3s; }
 .reward.first { border-color: var(--epic); }
 
 /* ---------- Currency chips ---------- */
@@ -1524,7 +1524,7 @@ kbd { font-family: var(--font-display); font-size: 11px; padding: 1px 6px; borde
 .xp-bar { height: 6px; border-radius: 3px; background: #1b2436; overflow: hidden; }
 .xp-bar i { display: block; height: 100%; background: var(--crawl); animation: xp-fill 1s ease-out; }
 @keyframes xp-fill { from { width: 0 !important; } }
-.level-up { padding: 10px 12px; border-radius: 10px; border: 1px solid var(--crawl); background: rgba(255, 210, 63, 0.12); display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; align-items: center; animation: pop 0.5s both; }
+.level-up { padding: 10px 12px; border-radius: 10px; border: 1px solid var(--crawl); background: rgba(255, 210, 63, 0.12); display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; align-items: center; animation: pop 0.7s 0.6s both; }
 .level-up b { font-family: var(--font-display); color: var(--crawl); letter-spacing: 0.08em; }
 .level-up.slot-up { border-color: var(--heal); background: rgba(82, 224, 138, 0.12); }
 .level-up.slot-up b { color: var(--heal); }

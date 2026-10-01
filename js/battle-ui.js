@@ -1794,7 +1794,8 @@
     async finish(winner) {
       this.ended = true;
       this.setActive(null);
-      await this.wait(500);
+      // A real beat after the last hit, whatever the battle speed.
+      await new Promise((r) => setTimeout(r, 1000));
       const won = winner === 'player';
       const rewards = Player.completeEncounter(this.params, won);
       this.teardown();
@@ -1837,7 +1838,7 @@
           ${isTower ? `<button class="btn" type="button" data-r="tower-exit">Leave tower</button><button class="btn btn-primary" type="button" data-r="tower">${won ? `Climb to floor ${rewards.towerFloor}` : `Restart from floor ${rewards.towerFloor}`}</button>` : nextInPlanet ? '<button class="btn btn-primary" type="button" data-r="next">Next stage</button>' : nextPlanet ? `<button class="btn btn-primary" type="button" data-r="planet">Travel to ${esc(nextPlanet.name)}</button>` : '<button class="btn btn-primary" type="button" data-r="campaign">Continue</button>'}
         </div>`, { small: true, dismissable: false, cls: 'result-modal' });
       if (won) this.spinReel(m.root, rewards);
-      if (rewards.levelUps && rewards.levelUps.length) setTimeout(() => this.rankUp(rewards.levelUps[rewards.levelUps.length - 1]), won ? 2600 : 600);
+      if (rewards.levelUps && rewards.levelUps.length) setTimeout(() => this.rankUp(rewards.levelUps[rewards.levelUps.length - 1]), won ? 4400 : 900);
       m.root.addEventListener('click', (e) => {
         const r = e.target.closest('[data-r]');
         if (!r) return;
@@ -1928,7 +1929,7 @@
           track.style.transform = `translateX(${-offset}px)`;
           return reveal();
         }
-        track.animate([{ transform: 'translateX(0)' }, { transform: `translateX(${-offset}px)` }], { duration: 1600, easing: 'cubic-bezier(.12,.8,.2,1)', fill: 'forwards' }).onfinish = reveal;
+        track.animate([{ transform: 'translateX(0)' }, { transform: `translateX(${-offset}px)` }], { duration: 2600, delay: 700, easing: 'cubic-bezier(.12,.8,.2,1)', fill: 'forwards' }).onfinish = reveal;
       }));
     },
   };
