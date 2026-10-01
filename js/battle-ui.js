@@ -44,6 +44,11 @@
       const enc = Player.encounter(params);
       const squad = Player.squadEntries(enc.kind);
       if (!squad.length) return toast('Pick at least one unit for your squad.');
+      if (params.type === 'secret' && !params.preview) {
+        const cost = Player.secretCost(params.boss);
+        if (!Player.paySecretEntry(params.boss)) return toast(`The Monolith asks ${cost} Kyber to try again. You have ${Player.state.crystals}.`);
+        if (cost) { toast(`Paid ${cost} Kyber to enter the trial.`); root.UI.updateWallet(); }
+      }
       this.params = params;
       this.enc = enc;
       this.kind = enc.kind;
@@ -1892,6 +1897,7 @@
       const rewards = Player.completeEncounter(this.params, won);
       this.teardown();
       const p = this.params;
+      if (p.type === 'secret' && won) return this.secretVictory(p, rewards);
       const isTower = p.type === 'tower';
       const isStage = p.type === 'stage';
       const planet = isStage ? D.PLANET_MAP[p.planet] : null;
@@ -1923,7 +1929,7 @@
           </div>
           ${rewards.cards && rewards.cards.length ? `<div class="reward-cards" data-rewards hidden><p class="eyebrow">Exclusive cards unlocked</p><div>${rewards.cards.map((c) => root.UI.unitCard(D.UNIT_MAP[c.id], { tag: 'div', hideShards: true })).join('')}</div></div>`
             : rewards.card ? `<div class="reward-card" data-rewards hidden><p class="eyebrow">Boss trophy</p>${root.UI.unitCard(D.UNIT_MAP[rewards.card.id], { tag: 'div', hideShards: true })}<p class="muted">${rewards.card.isNew ? 'New recruit!' : `+${rewards.card.shards} shards`}</p></div>` : ''}`
-        : '<p class="muted">Train your units in the Collection, build a squad with matching traits for synergies, or grab crates in the Night Market, then try again.</p>'}
+        : `<p class="muted">Train your units in the Collection, build a squad with matching traits for synergies, or grab crates in the Night Market, then try again.</p>${rewards.secret ? `<div class="liberated secret-cost"><p class="eyebrow">The Monolith's price</p><h3>Next attempt: ${cur('crystals', rewards.nextCost)}</h3><p class="muted">Each defeat raises the price of the trial, up to 50 Kyber. A victory resets it.</p></div>` : ''}`}
         ${xpHtml}
         <div class="modal-actions">
           ${isTower ? '' : '<button class="btn" type="button" data-r="retry">Retry</button>'}
@@ -1931,16 +1937,7 @@
           ${p.type === 'secret' ? '<button class="btn btn-primary" type="button" data-r="secret">Return to the Monolith</button>' : isTower ? `<button class="btn" type="button" data-r="tower-exit">Leave tower</button><button class="btn btn-primary" type="button" data-r="tower">${won ? `Climb to floor ${rewards.towerFloor}` : `Restart from floor ${rewards.towerFloor}`}</button>` : nextInPlanet ? '<button class="btn btn-primary" type="button" data-r="next">Next stage</button>' : nextPlanet ? `<button class="btn btn-primary" type="button" data-r="planet">Travel to ${esc(nextPlanet.name)}</button>` : '<button class="btn btn-primary" type="button" data-r="campaign">Continue</button>'}
         </div>`, { small: true, dismissable: false, cls: 'result-modal' });
       if (won) this.spinReel(m.root, rewards);
-      // Exclusive cards get their full walkout once the spin settles.
-      if (won && rewards.cards && rewards.cards.length) {
-        // Wait for any jackpot overlay to clear so the two never stack.
-        const clear = () => new Promise((res) => { const t = setInterval(() => { if (!document.querySelector('.jackpot')) { clearInterval(t); res(); } }, 150); });
-        setTimeout(async () => {
-          await clear();
-          for (const c of rewards.cards) await root.UI.walkout(D.UNIT_MAP[c.id], D.UNIT_MAP[c.id].rarity, false);
-          if (rewards.levelUps && rewards.levelUps.length) this.rankUp(rewards.levelUps[rewards.levelUps.length - 1]);
-        }, 4200);
-      } else if (rewards.levelUps && rewards.levelUps.length) setTimeout(() => this.rankUp(rewards.levelUps[rewards.levelUps.length - 1]), won ? 4400 : 900);
+      if (rewards.levelUps && rewards.levelUps.length) setTimeout(() => this.rankUp(rewards.levelUps[rewards.levelUps.length - 1]), won ? 4400 : 900);
       m.root.addEventListener('click', (e) => {
         const r = e.target.closest('[data-r]');
         if (!r) return;
@@ -1954,6 +1951,50 @@
           App.ui.openPlanet = nextPlanet.id;
           App.go('home');
         } else App.go(r.dataset.r);
+      });
+    },
+
+    // Beating a secret trial: no luck spin and no credits, just a victory
+    // banner and the longest, loudest card walkouts in the game.
+    async secretVictory(p, rewards) {
+      const trial = D.SECRET_BOSSES.find((b) => b.id === p.boss);
+      const boss = D.UNIT_MAP[p.boss];
+      const light = trial.side === 'light';
+      if (!reducedMotion()) {
+        await new Promise((resolve) => {
+          const node = el(`<div class="sv-banner ${trial.side}" role="status" aria-live="assertive">
+            <div class="sv-split"></div>
+            <i class="sv-saber blue"></i><i class="sv-saber red"></i>
+            <div class="sv-text">
+              <span class="sv-kicker">${esc(trial.name)}</span>
+              <b class="sv-title" data-text="VICTORY">VICTORY</b>
+              <span class="sv-sub">${esc(boss.name)} has fallen</span>
+              <span class="sv-line">${rewards.firstClear ? 'The Monolith yields its secret…' : 'The Monolith remembers you…'}</span>
+            </div>
+            ${Array.from({ length: 40 }, (_, i) => `<i class="sv-mote" style="--x:${(Math.random() * 100).toFixed(1)}%;--d:${(Math.random() * 3).toFixed(2)}s;--c:${i % 2 ? '#5ab4ff' : '#ff3a4a'}"></i>`).join('')}
+          </div>`);
+          document.body.appendChild(node);
+          if (root.Sound) { root.Sound.play('ignite'); setTimeout(() => root.Sound.play('jackpot'), 900); }
+          let done = false;
+          const close = () => { if (done) return; done = true; node.classList.add('out'); setTimeout(() => { node.remove(); resolve(); }, 500); };
+          node.addEventListener('click', close);
+          setTimeout(close, 4400);
+        });
+      }
+      for (const c of rewards.cards) await root.UI.walkout(D.UNIT_MAP[c.id], D.UNIT_MAP[c.id].rarity, false, { exclusive: true, isNew: c.isNew, shards: c.shards });
+      const acct = Player.state.account;
+      const m = openModal(`
+        <div class="result-title win sv-result ${light ? 'light' : 'dark'}">TRIAL COMPLETE</div>
+        <p class="muted" style="text-align:center">${rewards.firstClear ? `${esc(boss.name)} is defeated. What the Monolith guarded is yours.` : `${esc(boss.name)} falls again. The Monolith grants more of its power.`}</p>
+        <div class="reward-cards"><p class="eyebrow">${rewards.firstClear ? 'Exclusive cards unlocked' : 'Exclusive shards'}</p><div>${rewards.cards.map((c) => `<div class="rc-wrap">${root.UI.unitCard(D.UNIT_MAP[c.id], { tag: 'div', hideShards: true })}<span class="rs-tag ${c.isNew ? 'new' : ''}">${c.isNew ? 'New!' : `+${c.shards} shards`}</span></div>`).join('')}</div></div>
+        <div class="xp-box"><span class="xp-gain">+${rewards.xp} XP</span><span class="xp-bar"><i style="width:${acct.level >= D.MAX_ACCOUNT_LEVEL ? 100 : Math.min(100, (acct.xp / D.xpToNext(acct.level)) * 100)}%"></i></span><span class="muted small">Account Lv ${acct.level}</span></div>
+        ${rewards.levelUps.map((u) => `<div class="level-up"><b>LEVEL UP!</b> Account level ${u.level} · ${cur('credits', u.reward.credits)} ${cur('crystals', u.reward.crystals)}</div>`).join('')}
+        <div class="modal-actions"><button class="btn btn-primary" type="button" data-r="secret">Return to the Monolith</button></div>`, { small: true, dismissable: false, cls: 'result-modal' });
+      if (rewards.levelUps.length) setTimeout(() => this.rankUp(rewards.levelUps[rewards.levelUps.length - 1]), 600);
+      m.root.addEventListener('click', (e) => {
+        if (!e.target.closest('[data-r]')) return;
+        m.close();
+        App.go('secret');
       });
     },
 

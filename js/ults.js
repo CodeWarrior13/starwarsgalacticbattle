@@ -805,7 +805,7 @@
       const motes = [];
       T.forEach((t, i) => {
         for (let k = 0; k < 12; k++) {
-          const m = el(`<div class="sp-prop sp-mote" style="--c:${spec.color}">${glyph}</div>`);
+          const m = el(`<div class="sp-prop sp-mote" data-noico style="--c:${spec.color}">${glyph}</div>`);
           motes.push(follow(S, m, [{ x: t.x + rand(-S.W * 0.3, S.W * 0.3), y: S.H + 30 }, { x: t.x + rand(-60, 60), y: t.y + rand(30, 120) }, { ...t }], {
             speed: 1.1, delay: 250 + i * 110 + k * 70, trail: spec.color, trailWidth: 0.35,
             onNode: (r) => {

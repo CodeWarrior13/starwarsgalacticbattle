@@ -1131,7 +1131,7 @@
     scoundrel: { label: 'Scoundrel', icon: '☄' }, bounty: { label: 'Bounty Hunter', icon: '⌖' }, droid: { label: 'Droid', icon: '⚙' },
     trooper: { label: 'Trooper', icon: '⛉' }, native: { label: 'Native', icon: '❦' }, leader: { label: 'Leader', icon: '♛' },
     mandalorian: { label: 'Mandalorian', icon: '⟁' }, badbatch: { label: 'Bad Batch', icon: '⚑' }, inquisitor: { label: 'Inquisitor', icon: '⊗' }, nightsister: { label: 'Nightsister', icon: '☽' }, fighter: { label: 'Fighter', icon: '➶' }, bomber: { label: 'Bomber', icon: '✹' },
-    gunship: { label: 'Gunship', icon: '⛭' }, creature: { label: 'Creature', icon: '☠' }, capital: { label: 'Capital Ship', icon: '▲' },
+    gunship: { label: 'Gunship', icon: '⛭' }, creature: { label: 'Creature', icon: '⚘' }, capital: { label: 'Capital Ship', icon: '▲' },
   };
 
   // ---------- Classes (Collection filters). A unit can be in several. ----------
@@ -1437,7 +1437,10 @@
     { id: 'boss_son', name: 'Trial of Shadow', side: 'dark', kind: 'character', level: 30, minions: ['nightsister_acolyte', 'talzin', 'asajj_ventress', 'darth_maul'], rewards: ['the_son'], hint: 'A darkness that feeds on fear is waiting for someone to open the way.' },
     { id: 'boss_bane', name: 'The Rule of Two', side: 'dark', kind: 'character', level: 30, minions: ['count_dooku', 'death_trooper', 'vader', 'death_trooper'], rewards: ['darth_bane', 'sith_fury'], hint: 'An armored master of an ancient order hoards a ship with folded wings.' },
   ];
-  const SECRET_REWARD = (first) => ({ credits: first ? 6000 : 1500, crystals: first ? 150 : 25, aurodium: first ? 8 : 2 });
+  // The trials pay in cards only. The first attempt is free; every loss makes
+  // the next entry cost more Kyber: 5, 10, 15, 20, 25, then 50 for good.
+  const SECRET_COSTS = [0, 5, 10, 15, 20, 25, 50];
+  const secretCost = (fails) => SECRET_COSTS[Math.min(fails || 0, SECRET_COSTS.length - 1)];
   // Enemies earn stars as you travel further across the galaxy.
   const enemyStars = (planetId) => 1 + Math.floor(PLANETS.indexOf(PLANET_MAP[planetId]) / 2);
   const PLANET_CLEAR_KYBER = 150;
@@ -1688,7 +1691,7 @@
   root.GameData = {
     RARITIES, ROLE_BASE, ROLE_ICONS, STATUS_INFO, UNITS, UNIT_MAP, MAX_LEVEL, MAX_STARS, STAR_COSTS,
     DUPLICATE_SHARDS, SQUAD_SIZE, PACKS, STARTER, levelCost, unitStats, power, stageRewards,
-    ultimateFor, abilitiesFor, BOSSES, BOSS_ENCOUNTERS, bossRewards, CURRENCIES, LUCK, CHARMS, MARKET_REFRESH_MS, FLASH_MS, DAILY, SECRET_PLANET, SECRET_BOSSES, SECRET_REWARD, TOWER, towerFloor, towerRewards, towerCheckpoint, SHELL_PAYOUT, SHELL_BETS, BIOS,
+    ultimateFor, abilitiesFor, BOSSES, BOSS_ENCOUNTERS, bossRewards, CURRENCIES, LUCK, CHARMS, MARKET_REFRESH_MS, FLASH_MS, DAILY, SECRET_PLANET, SECRET_BOSSES, SECRET_COSTS, secretCost, TOWER, towerFloor, towerRewards, towerCheckpoint, SHELL_PAYOUT, SHELL_BETS, BIOS,
     BASE_SLOTS, SLOT_UNLOCKS, MAX_ACCOUNT_LEVEL, xpToNext, levelReward, XP, planetSquadSize,
     TRAITS, TRAIT_INFO, ROLE_SYNERGIES, SYN_THEME, CLASS_INFO, classesOf, ULT_ANIM, SYNERGIES, PLANETS, PLANET_MAP, enemyStars, PLANET_CLEAR_KYBER, BASE_DOUBLE, traitsOf, squadBonuses,
   };

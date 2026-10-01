@@ -205,6 +205,8 @@
       container.innerHTML = '';
       container.appendChild(Screens[screen](App.params));
       updateWallet();
+      const mk = $('.main-nav [data-nav="market"]');
+      if (mk) mk.classList.toggle('has-dot', !Player.dailyStatus().claimed);
       if (!opts.keepScroll) window.scrollTo({ top: 0 });
       if (root.Sound && screen !== 'battle') root.Sound.music('menu');
     },
@@ -312,29 +314,6 @@
           ${mode === 'tower' ? '' : `<button class="btn btn-primary" type="button" data-planet="${current.id}">Continue on ${esc(current.name)}</button>`}
         </div>
       </div>
-      <p class="hg-blurb muted">${mode === 'tower' ? 'The Endless Tower never ends: every floor is a new world and a new squad, and the deeper you climb the harder it hits and the more it pays.' : mode === 'boss' ? 'Each liberated world unlocks its boss. Bosses are immune to Stun and enrage below half health.' : 'Tap a world to travel there and pick a stage. Switch between Ground, Fleet, Bosses and the Endless Tower at the top of the map.'}</p>
-
-      ${accountPanel()}
-
-      <div class="stat-row">
-        <div class="stat"><b>${owned}/${D.UNITS.length}</b><span>Units collected</span></div>
-        <div class="stat"><b>${liberated}/${D.PLANETS.length}</b><span>Planets liberated</span></div>
-        <div class="stat"><b>${t.best || 0}</b><span>Best tower floor</span></div>
-        <div class="stat"><b>${s.stats.bestSpin}×</b><span>Luckiest spin</span></div>
-      </div>
-
-      <div class="mode-grid two">
-        <button class="mode-card" type="button" data-go="collection">
-          <span class="mode-art">${Art.unitArt(D.UNIT_MAP.luke)}</span>
-          <span class="mode-text"><span class="eyebrow">Collection</span><h3>Classes & Traits</h3><span class="muted">${owned} units. Filter by class, plan synergies, upgrade your squad.</span></span>
-        </button>
-        <button class="mode-card market-card" type="button" data-go="market">
-          <span class="mode-art">${Art.merchantArt()}</span>
-          <span class="mode-text"><span class="eyebrow">Night Market</span><h3>Nar Shaddaa</h3><span class="muted">${Player.dailyStatus().claimed ? 'Crates, flash sales, Sabacc and the shell game.' : '🔥 Your daily login reward is waiting!'}</span></span>
-        </button>
-      </div>
-
-      <p class="muted" style="font-size:13px">Progress saves automatically in this browser. <button class="linkish" type="button" data-reset>Reset progress</button></p>
     </section>`);
 
     requestAnimationFrame(() => {
@@ -364,15 +343,6 @@
       if (pl && !pl.disabled) {
         const btn = $(`.map-planet[data-planet="${pl.dataset.planet}"]`, v);
         return openPlanet(pl.dataset.planet, btn, mode === 'tower' ? 'character' : mode);
-      }
-      const go = e.target.closest('[data-go]');
-      if (go) App.go(go.dataset.go);
-      if (e.target.closest('[data-reset]')) {
-        if (await confirmBox('Reset all progress?', 'Your roster, currencies and campaign progress will be wiped and you will start over with the starter squad.', 'Reset')) {
-          Player.reset();
-          toast('Progress reset. Welcome back, Commander.');
-          App.go('home');
-        }
       }
     });
     return v;
@@ -711,7 +681,7 @@
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn" type="button" data-back>Back</button>
           <button class="btn" type="button" data-auto-build title="Pick your strongest balanced squad">⚙ Auto-build</button>
-          <button class="btn btn-primary" type="button" data-fight>Engage</button>
+          <button class="btn btn-primary" type="button" data-fight>${params.type === 'secret' && Player.secretCost(params.boss) ? `Engage · ${cur('crystals', Player.secretCost(params.boss))}` : 'Engage'}</button>
         </div>
       </div>
       <div class="versus ${enc.boss ? 'boss-versus' : ''}">
@@ -1503,10 +1473,14 @@
     return m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m}m`;
   }
 
-  // Daily login streak: a 7-day reward track at the top of the Night Market.
+  // Daily login streak: seven flip cards at the top of the Night Market.
+  // The front only says which day it is, and each day looks rarer than the
+  // last; tap a card to flip it and see exactly what it pays.
+  const DAILY_EMBLEM = ['rank', 'blaster', 'kyber', 'sabacc', 'cubes', 'holocron', 'kybercrown'];
   function dailyRewardHtml(r) {
-    return [r.credits ? cur('credits', r.credits) : '', r.crystals ? cur('crystals', r.crystals) : '', r.aurodium ? cur('aurodium', r.aurodium) : '',
-      r.dice ? `<span class="daily-extra">🎰 Loaded Dice ×${r.dice}</span>` : '', r.charm ? `<span class="daily-extra">🎲 Chance Cubes ×${r.charm * 3}</span>` : ''].join('');
+    const item = (html) => `<span class="dr-item">${html}</span>`;
+    return [r.credits ? item(cur('credits', r.credits)) : '', r.crystals ? item(cur('crystals', r.crystals)) : '', r.aurodium ? item(cur('aurodium', r.aurodium)) : '',
+      r.dice ? item(`${root.Icons.svg('sabacc')}<b>×${r.dice}</b>`) : '', r.charm ? item(`${root.Icons.svg('cubes')}<b>×${r.charm * 3}</b>`) : ''].join('');
   }
 
   function dailyPanel() {
@@ -1514,25 +1488,28 @@
     const pos = st.claimed ? (st.streak - 1) % D.DAILY.length : st.dayIndex;
     const cells = D.DAILY.map((r, i) => {
       const state = i < pos ? 'done' : i === pos ? (st.claimed ? 'done today' : 'today') : 'future';
-      return `<div class="daily-cell ${state} ${r.big ? 'big' : ''}" style="--i:${i}">
-        <span class="daily-day">Day ${r.day}</span>
-        <span class="daily-icon">${r.big ? '👑' : r.crystals && !r.credits ? '◆' : r.charm ? '🎲' : r.dice ? '🎰' : '¤'}</span>
-        <b class="daily-label">${esc(r.label)}</b>
-        <span class="daily-reward">${dailyRewardHtml(r)}</span>
-        ${state.includes('done') ? '<span class="daily-check">✓</span>' : ''}
-      </div>`;
+      return `<button class="daily-card tier-${i} ${state}" type="button" data-daily-card style="--i:${i}" aria-label="Day ${r.day} reward, tap to flip">
+        <span class="dc-inner">
+          <span class="dc-face dc-front">
+            <span class="dc-rays"></span>
+            <span class="dc-emblem">${root.Icons.svg(DAILY_EMBLEM[i])}</span>
+            <span class="dc-day"><small>Day</small><b>${r.day}</b></span>
+            ${state.includes('done') ? '<span class="dc-check">✓</span>' : ''}
+          </span>
+          <span class="dc-face dc-back">${dailyRewardHtml(r)}</span>
+        </span>
+      </button>`;
     }).join('');
     return `<div class="daily-panel ${st.claimed ? 'claimed' : 'ready'}" data-daily>
       <div class="daily-head">
         <div>
           <p class="eyebrow">Vekko's loyalty ledger</p>
-          <h2 class="section-title">🔥 Daily Login Streak</h2>
+          <h2 class="section-title">${root.Icons.svg('flame')} Daily Streak</h2>
         </div>
-        <div class="daily-streak"><b>${st.streak}</b><span>day streak</span><small>Best ${Math.max(st.best || 0, st.streak)}</small></div>
-        <button class="btn btn-primary daily-claim" type="button" data-claim-daily ${st.claimed ? 'disabled' : ''}>${st.claimed ? 'Come back tomorrow' : `Claim day ${pos + 1}`}</button>
+        <div class="daily-streak"><b>${st.streak}</b><span>days</span></div>
+        <button class="btn btn-primary daily-claim" type="button" data-claim-daily ${st.claimed ? 'disabled' : ''}>${st.claimed ? 'Back tomorrow' : `Claim day ${pos + 1}`}</button>
       </div>
       <div class="daily-track">${cells}</div>
-      <p class="muted small">Log in every day to climb the track. Miss a day and the streak starts over; day 7 pays the Hutt's Hoard, then the cycle repeats.</p>
     </div>`;
   }
 
@@ -1540,10 +1517,10 @@
     const res = Player.claimDaily();
     if (!res) return;
     if (root.Sound) root.Sound.play('coins');
-    const cell = $('.daily-cell.today', v);
+    const cell = $('.daily-card.today', v);
     updateWallet();
     if (cell && motionOK()) {
-      cell.classList.add('claiming');
+      cell.classList.add('claiming', 'flipped');
       const r = cell.getBoundingClientRect();
       for (let i = 0; i < 24; i++) {
         const c = document.createElement('i');
@@ -1560,7 +1537,7 @@
     setTimeout(() => {
       const panel = $('[data-daily]', v);
       if (panel) panel.outerHTML = dailyPanel();
-    }, motionOK() ? 900 : 0);
+    }, motionOK() ? 1800 : 0);
   }
 
   // Five knocks on the merchant in quick succession open the way to the Monolith.
@@ -1613,7 +1590,8 @@
           <h3>${esc(b.name)}</h3>
           <span class="muted">${esc(def.name)}</span>
           <span class="sb-rewards">${rewards.map((r) => (wins ? `<span class="sb-reward got">${miniPortrait(r)} ${esc(r.name)}</span>` : `<span class="sb-reward">??? ${r.kind === 'ship' ? 'ship' : 'hero'}</span>`)).join('')}</span>
-          <span class="sb-status">${wins ? `Defeated ${wins}× · rewards claimed` : esc(b.hint)}</span>
+          <span class="sb-status">${wins ? `Defeated ${wins}× · win again for more shards` : esc(b.hint)}</span>
+          <span class="sb-cost ${Player.secretCost(b.id) ? '' : 'free'}">${Player.secretCost(b.id) ? `Entry ${cur('crystals', Player.secretCost(b.id))} · ${sec.fails[b.id]} defeat${sec.fails[b.id] === 1 ? '' : 's'}` : 'Entry free'}</span>
         </span>
       </button>`;
     };
@@ -1625,8 +1603,8 @@
         <button class="btn" type="button" data-leave>Leave</button>
       </div>
       <div class="secret-grid">
-        <div class="secret-side light"><h2>☀ The Light</h2>${light.map(bossCard).join('')}</div>
-        <div class="secret-side dark"><h2>☾ The Dark</h2>${dark.map(bossCard).join('')}</div>
+        <div class="secret-side light"><h2>${root.Icons.svg('jedi')} The Light</h2>${light.map(bossCard).join('')}</div>
+        <div class="secret-side dark"><h2>${root.Icons.svg('sith')} The Dark</h2>${dark.map(bossCard).join('')}</div>
       </div>
       <p class="muted small">Terrain: ${esc(D.SECRET_PLANET.terrain.name)}. ${esc(D.SECRET_PLANET.terrain.desc)} Hazard: ${esc(D.SECRET_PLANET.hazard.desc)}</p>
     </section>`);
@@ -1761,6 +1739,8 @@
     v.addEventListener('click', (e) => {
       if (e.target.closest('[data-merchant]')) return knock(e.target.closest('[data-merchant]'));
       if (e.target.closest('[data-claim-daily]')) return claimDailyFx(v);
+      const dc = e.target.closest('[data-daily-card]');
+      if (dc) { dc.classList.toggle('flipped'); if (root.Sound) root.Sound.play('whoosh'); return; }
       const p = e.target.closest('[data-pack]');
       if (p) {
         const results = Player.openPack(p.dataset.pack);
@@ -1934,25 +1914,38 @@
     }, 1000);
   }
 
-  // ---------- Sound & music settings ----------
-  function soundSettings() {
+  // ---------- Settings: sound, music and save data ----------
+  function settings() {
     const S = root.Sound;
-    if (!S) return;
-    const p = S.prefs;
+    const p = S ? S.prefs : {};
     const track = (key, label) => `<div class="snd-track"><div><b>${label}</b><span class="muted small" data-status="${key}">${S.hasCustom(key) ? 'Using your file' : 'Original theme'}</span></div>
       <label class="btn btn-small">Choose file<input type="file" accept="audio/*" data-file="${key}" hidden></label>
       <button class="btn btn-small" type="button" data-clear="${key}" ${S.hasCustom(key) ? '' : 'disabled'}>Reset</button></div>`;
+    const a = Player.state.account;
     const m = openModal(`
-      <p class="eyebrow">Settings</p><h2>Sound & music</h2>
-      <div class="snd-row"><label><input type="checkbox" data-pref="sfx" ${p.sfx ? 'checked' : ''}> Sound effects</label><input type="range" min="0" max="1" step="0.05" value="${p.sfxVol}" data-vol="sfxVol" aria-label="Effects volume"></div>
-      <div class="snd-row"><label><input type="checkbox" data-pref="music" ${p.music ? 'checked' : ''}> Music</label><input type="range" min="0" max="1" step="0.05" value="${p.musicVol}" data-vol="musicVol" aria-label="Music volume"></div>
-      <div class="snd-tracks">
-        <p class="eyebrow">Your own music</p>
-        <p class="muted small">Pick any audio file on this device to replace the built-in themes. It's saved only in this browser and never uploaded anywhere.</p>
+      <div class="set-head">${root.Icons.svg('settings')}<div><p class="eyebrow">Command console</p><h2>Settings</h2></div></div>
+      ${S ? `<section class="set-sec">
+        <h3>${root.Icons.svg('speaker')} Sound</h3>
+        <div class="snd-row"><label class="switch"><input type="checkbox" data-pref="sfx" ${p.sfx ? 'checked' : ''}><i></i> Effects</label><input type="range" min="0" max="1" step="0.05" value="${p.sfxVol}" data-vol="sfxVol" aria-label="Effects volume"></div>
+        <div class="snd-row"><label class="switch"><input type="checkbox" data-pref="music" ${p.music ? 'checked' : ''}><i></i> Music</label><input type="range" min="0" max="1" step="0.05" value="${p.musicVol}" data-vol="musicVol" aria-label="Music volume"></div>
+        <button class="btn btn-small" type="button" data-test-sfx>Test sound</button>
+      </section>
+      <section class="set-sec">
+        <h3>${root.Icons.svg('sabacc')} Your own music</h3>
+        <p class="muted small">Pick any audio file on this device to replace the built-in themes. It stays in this browser.</p>
         ${track('menu', 'Galaxy & menus')}
         ${track('battle', 'Battles')}
-      </div>
-      <div class="modal-actions"><button class="btn" type="button" data-test-sfx>Test sound</button><button class="btn btn-primary" type="button" data-close>Done</button></div>`, { small: true, cls: 'sound-modal' });
+      </section>` : ''}
+      <section class="set-sec">
+        <h3>${root.Icons.svg('holocron')} Account</h3>
+        <dl class="set-info">
+          <div><dt>Commander level</dt><dd>${a.level}</dd></div>
+          <div><dt>Cards collected</dt><dd>${Object.keys(Player.state.units).length}/${D.UNITS.length}</dd></div>
+          <div><dt>Save data</dt><dd>Saved automatically in this browser</dd></div>
+        </dl>
+        <button class="btn btn-danger" type="button" data-reset>Reset all progress</button>
+      </section>
+      <div class="modal-actions"><button class="btn btn-primary" type="button" data-close>Done</button></div>`, { small: true, cls: 'settings-modal' });
     m.root.addEventListener('change', async (e) => {
       const pref = e.target.dataset.pref;
       if (pref) S.set(pref, e.target.checked);
@@ -1969,6 +1962,142 @@
       if (e.target.closest('[data-test-sfx]')) { S.play('saber'); setTimeout(() => S.play('blaster'), 400); setTimeout(() => S.play('explosion'), 750); }
       const c = e.target.closest('[data-clear]');
       if (c) { await S.saveCustom(c.dataset.clear, null); $(`[data-status="${c.dataset.clear}"]`, m.root).textContent = 'Original theme'; c.disabled = true; }
+      if (e.target.closest('[data-reset]')) {
+        m.close();
+        if (await confirmBox('Reset all progress?', 'Your roster, currencies and campaign progress will be wiped and you will start over with the starter squad.', 'Reset')) {
+          Player.reset();
+          toast('Progress reset. Welcome back, Commander.');
+          App.battleActive = false;
+          App.go('home');
+        }
+      }
+    });
+  }
+
+  // ---------- Commander profile ----------
+  // Tap the level chip: rank road, world badges, records, luck and feats.
+  function achievements() {
+    const s = Player.state;
+    const st = s.stats;
+    const owned = Object.keys(s.units).length;
+    const worlds = D.PLANETS.filter((p) => Player.planetComplete(p.id)).length;
+    const list = [
+      { icon: 'sabers', name: 'First Blood', desc: 'Win your first battle', have: st.battlesWon, need: 1 },
+      { icon: 'trooper', name: 'Veteran', desc: 'Win 100 battles', have: st.battlesWon, need: 100 },
+      { icon: 'planet', name: 'Liberator', desc: 'Liberate 5 worlds', have: worlds, need: 5 },
+      { icon: 'starbird', name: 'Hero of the Galaxy', desc: 'Liberate every world', have: worlds, need: D.PLANETS.length },
+      { icon: 'deathstar', name: 'Big Game', desc: 'Defeat 5 bosses', have: Object.keys(s.bosses).length, need: 5 },
+      { icon: 'holocron', name: 'Archivist', desc: 'Collect 50 cards', have: owned, need: 50 },
+      { icon: 'sabacc', name: 'Crate Cracker', desc: 'Open 25 crates', have: st.packsOpened, need: 25 },
+      { icon: 'kybercrown', name: 'Chosen One', desc: 'Pull a Mythic card', have: st.mythics || 0, need: 1 },
+      { icon: 'cubes', name: 'Never Tell Me the Odds', desc: 'Hit a 5× luck spin', have: st.bestSpin >= 5 ? 1 : 0, need: 1 },
+      { icon: 'spire', name: 'Climber', desc: 'Reach tower floor 20', have: s.tower.best || 0, need: 20 },
+    ];
+    // Hidden until you have found it yourself.
+    if (s.secret.found) list.push({ icon: 'crescent', name: 'Beyond the Map', desc: 'Defeat all four trials of the Monolith', have: Object.keys(s.secret.beaten).length, need: D.SECRET_BOSSES.length });
+    return list;
+  }
+
+  function badgeHtml(p, earned) {
+    return `<div class="world-badge ${earned ? 'earned' : ''}" style="--pc:${p.color || '#ffd23f'}" title="${esc(p.name)}${earned ? ' liberated' : ''}">
+      <div class="wb-medal"><canvas data-badge="${p.id}" width="64" height="64"></canvas>${earned ? '' : `<span class="wb-lock">${root.Icons.svg('lock')}</span>`}</div>
+      <b>${esc(p.name)}</b>
+    </div>`;
+  }
+
+  function profile() {
+    const s = Player.state;
+    const a = s.account;
+    const st = s.stats;
+    const need = D.xpToNext(a.level);
+    const pct = a.level >= D.MAX_ACCOUNT_LEVEL ? 100 : Math.round((a.xp / need) * 100);
+    const slotAt = {};
+    D.SLOT_UNLOCKS.forEach((r) => { slotAt[r.level] = r; });
+    const road = Array.from({ length: D.MAX_ACCOUNT_LEVEL }, (_, i) => i + 1).map((lv) => {
+      const r = D.levelReward(lv);
+      const big = lv % 5 === 0;
+      const slot = slotAt[lv];
+      const state = lv < a.level ? 'done' : lv === a.level ? 'now' : 'todo';
+      return `<div class="rr-node ${state} ${big ? 'big' : ''} ${slot ? 'slot' : ''}">
+        <span class="rr-lv">${lv}</span>
+        <span class="rr-gem">${root.Icons.svg(slot ? 'sabers' : big ? 'kybercrown' : 'kyber')}</span>
+        <span class="rr-rew">${lv === 1 ? 'Start' : slot ? `Squad slot ${slot.slot}` : `${fmt(r.credits)}¢${r.crystals ? ` · ${r.crystals} Kyber` : ''}`}</span>
+      </div>`;
+    }).join('');
+    const ach = achievements();
+    const achDone = ach.filter((x) => x.have >= x.need).length;
+    const luck = s.luck;
+    const won = st.battlesWon;
+    const lost = st.battlesLost;
+    const m = openModal(`
+      <div class="pf-head">
+        <div class="acct-ring big" style="--p:${pct}"><b>${a.level}</b><span>Level</span></div>
+        <div class="pf-title">
+          <p class="eyebrow">Commander profile</p>
+          <h2>${a.level >= D.MAX_ACCOUNT_LEVEL ? 'Grand Master' : a.level >= 30 ? 'Fleet Admiral' : a.level >= 15 ? 'General' : a.level >= 6 ? 'Commander' : 'Captain'}</h2>
+          <div class="pf-xp"><i style="width:${pct}%"></i></div>
+          <p class="muted small">${a.level >= D.MAX_ACCOUNT_LEVEL ? 'Maximum rank reached.' : `${fmt(a.xp)} / ${fmt(need)} XP to level ${a.level + 1}`}</p>
+        </div>
+      </div>
+      <div class="pf-tabs seg" role="tablist">
+        <button type="button" class="active" data-pf="road">${root.Icons.svg('rank')} Rank road</button>
+        <button type="button" data-pf="worlds">${root.Icons.svg('planet')} Worlds</button>
+        <button type="button" data-pf="records">${root.Icons.svg('chart')} Records</button>
+        <button type="button" data-pf="feats">${root.Icons.svg('trophy')} Feats <em>${achDone}/${ach.length}</em></button>
+      </div>
+      <div class="pf-pane active" data-pane="road">
+        <p class="muted small">Every level pays out credits and Kyber. Every fifth level is a milestone.</p>
+        <div class="rank-road" data-road>${road}</div>
+      </div>
+      <div class="pf-pane" data-pane="worlds">
+        <p class="muted small">Liberate every stage on a world to earn its badge.</p>
+        <div class="badge-grid">${D.PLANETS.map((p) => badgeHtml(p, Player.planetComplete(p.id))).join('')}</div>
+      </div>
+      <div class="pf-pane" data-pane="records">
+        <div class="rec-grid">
+          <div><b>${fmt(won)}</b><span>Battles won</span></div>
+          <div><b>${won + lost ? Math.round((won / (won + lost)) * 100) : 0}%</b><span>Win rate</span></div>
+          <div><b>${Object.keys(s.units).length}/${D.UNITS.length}</b><span>Cards collected</span></div>
+          <div><b>${Object.keys(s.bosses).length}/${D.BOSS_ENCOUNTERS.length}</b><span>Bosses defeated</span></div>
+          <div><b>${s.tower.best || 0}</b><span>Best tower floor</span></div>
+          <div><b>${fmt(st.packsOpened)}</b><span>Crates opened</span></div>
+          <div><b>${st.mythics || 0}</b><span>Mythics pulled</span></div>
+          <div><b>${st.holos || 0}</b><span>Holo cards</span></div>
+        </div>
+        <h3 class="pf-sub">${root.Icons.svg('cubes')} Luck</h3>
+        <div class="rec-grid">
+          <div><b>${st.bestSpin}×</b><span>Best luck spin</span></div>
+          <div><b>${luck.pity}/${D.LUCK.pityCrates}</b><span>Legendary pity</span></div>
+          <div><b>${luck.charmCrates}</b><span>Chance Cube crates</span></div>
+          <div><b>${luck.dice}</b><span>Loaded Dice spins</span></div>
+        </div>
+      </div>
+      <div class="pf-pane" data-pane="feats">
+        <div class="feat-list">${ach.map((x) => {
+          const done = x.have >= x.need;
+          return `<div class="feat ${done ? 'done' : ''}"><span class="feat-ico">${root.Icons.svg(x.icon)}</span><div><b>${esc(x.name)}</b><span class="muted small">${esc(x.desc)}</span><i class="feat-bar"><i style="width:${Math.min(100, (x.have / x.need) * 100)}%"></i></i></div><em>${done ? '✓' : `${fmt(Math.min(x.have, x.need))}/${fmt(x.need)}`}</em></div>`;
+        }).join('')}</div>
+      </div>
+      <div class="modal-actions"><button class="btn btn-primary" type="button" data-close>Close</button></div>`, { cls: 'profile-modal' });
+    const roadEl = $('[data-road]', m.root);
+    requestAnimationFrame(() => {
+      const now = $('.rr-node.now', roadEl);
+      if (now) roadEl.scrollLeft = now.offsetLeft - roadEl.clientWidth / 2 + now.offsetWidth / 2;
+    });
+    const drawBadges = () => $$('[data-badge]', m.root).forEach((c) => {
+      if (c.dataset.drawn) return;
+      c.dataset.drawn = 1;
+      const ctx = c.getContext('2d');
+      root.drawPlanetSphere(ctx, 32, 32, 22, c.dataset.badge, 1.2, { halo: 0.4 });
+    });
+    m.root.addEventListener('click', (e) => {
+      if (e.target.closest('[data-close]')) return m.close();
+      const t = e.target.closest('[data-pf]');
+      if (t) {
+        $$('[data-pf]', m.root).forEach((b) => b.classList.toggle('active', b === t));
+        $$('[data-pane]', m.root).forEach((pn) => pn.classList.toggle('active', pn.dataset.pane === t.dataset.pf));
+        if (t.dataset.pf === 'worlds') drawBadges();
+      }
     });
   }
 
@@ -2078,28 +2207,33 @@
     step();
   }
 
-  function walkout(def, rarity, holo) {
+  function walkout(def, rarity, holo, opts = {}) {
     return new Promise((resolve) => {
       if (!motionOK()) return resolve();
       const tier = R_ORDER[rarity];
       const mythic = rarity === 'mythic';
+      // Exclusive cards from the Monolith get the longest show of all.
+      const ex = !!opts.exclusive;
+      const storm = mythic || ex;
       const ship = def.kind === 'ship';
       const planet = homeworldOf(def);
       const side = def.faction === 'light';
       // ~8.5s total (9s for Mythic): three readable beats, then the card and its stats.
-      const stepMs = 1400;
+      const stepMs = ex ? 1700 : 1400;
       const steps = [
+        ...(ex ? [{ kicker: 'From beyond the map', big: 'Exclusive', icon: `<span class="wo-role wo-holocron">${root.Icons.svg('holocron')}</span>`, tone: '#ffffff' }] : []),
         { kicker: 'Allegiance', big: side ? 'Light Side' : 'Dark Side', icon: `<span class="wo-saber" style="--sc:${side ? '#4aa8ff' : '#ff2a2a'}"></span>`, tone: side ? '#4aa8ff' : '#ff2a2a' },
         { kicker: ship ? 'Starship class' : 'Class', big: ROLE_NAMES[def.role] || def.role, icon: `<span class="wo-role">${D.ROLE_ICONS[def.role] || '✦'}</span>`, tone: R_COLOR[rarity] },
         { kicker: ship ? 'Jumping from' : 'Homeworld', big: ship ? 'Hyperspace' : planet.name, icon: ship ? '<span class="wo-role">✈</span>' : '<canvas class="wo-sphere"></canvas>', tone: planet.color || R_COLOR[rarity] },
       ];
-      const node = el(`<div class="walkout ${rarity} ${ship ? 'is-ship' : ''}" style="--rc:${R_COLOR[rarity]}" role="status" aria-label="New card">
+      const node = el(`<div class="walkout ${rarity} ${ship ? 'is-ship' : ''} ${ex ? `exclusive side-${def.faction}` : ''}" style="--rc:${ex ? (def.faction === 'light' ? '#7cc8ff' : '#ff3a4a') : R_COLOR[rarity]}" role="status" aria-label="New card">
         <canvas class="wo-bg"></canvas>
         <div class="wo-vignette"></div>
         <div class="wo-step" aria-live="polite"></div>
         <div class="wo-final">
           <div class="br-rays"></div>
-          ${mythic ? '<canvas class="br-bolts"></canvas>' : ''}
+          ${storm ? '<canvas class="br-bolts"></canvas>' : ''}
+          ${ex ? '<div class="ex-split"></div><div class="ex-shock"></div>' : ''}
           ${ship ? `<div class="wo-ship">${Art.shipOnly(def)}</div>` : ''}
           <div class="br-card">${unitCard(def, { tag: 'div', hideShards: true, holo })}</div>
           <div class="wo-stats">${(() => {
@@ -2109,8 +2243,8 @@
               .map(([l, v, c], k) => `<div class="wo-stat" style="--k:${k};--c:${c}"><span>${l}</span><b data-count="${Math.round(v)}">0</b></div>`).join('')
               + `<div class="wo-stat power" style="--k:4;--c:var(--rc)"><span>Power</span><b data-count="${D.power(def, own.level, own.stars)}">0</b></div>`;
           })()}</div>
-          <div class="br-text"><span class="br-kicker">${mythic ? 'You found something that should not exist' : ['New recruit', 'Rare recruit', 'Epic recruit', 'A legend joins your cause'][tier]}</span><b class="br-rarity" data-text="${D.RARITIES[rarity].label.toUpperCase()}">${D.RARITIES[rarity].label.toUpperCase()}</b><span class="br-name">${esc(def.name)}</span></div>
-          ${Array.from({ length: 10 + tier * 8 }, (_, i) => `<i class="br-spark" style="--a:${(i * 137.5) % 360}deg;--d:${(Math.random() * 0.5).toFixed(2)}s;--r:${30 + Math.random() * 30}vmax"></i>`).join('')}
+          <div class="br-text"><span class="br-kicker">${ex ? (opts.isNew === false ? `+${opts.shards} shards · the Monolith grants more` : 'Found nowhere else in the galaxy') : mythic ? 'You found something that should not exist' : ['New recruit', 'Rare recruit', 'Epic recruit', 'A legend joins your cause'][tier]}</span><b class="br-rarity" data-text="${ex ? 'EXCLUSIVE' : D.RARITIES[rarity].label.toUpperCase()}">${ex ? 'EXCLUSIVE' : D.RARITIES[rarity].label.toUpperCase()}</b><span class="br-name">${esc(def.name)}</span></div>
+          ${Array.from({ length: ex ? 64 : 10 + tier * 8 }, (_, i) => `<i class="br-spark" style="--a:${(i * 137.5) % 360}deg;--d:${(Math.random() * 0.5).toFixed(2)}s;--r:${30 + Math.random() * 30}vmax"></i>`).join('')}
         </div>
         <span class="pc-skip">Tap to skip</span>
       </div>`);
@@ -2127,7 +2261,8 @@
         clearTimeout(timer);
         box.innerHTML = '';
         node.classList.add('final');
-        if (root.Sound) root.Sound.play(`reveal_${rarity}`);
+        if (root.Sound) root.Sound.play(ex ? 'reveal_mythic' : `reveal_${rarity}`);
+        if (ex && root.Sound) setTimeout(() => { root.Sound.play('burst'); root.Sound.play('reveal_legendary'); }, 500);
         // Stats pop up one by one and count up so they can be read.
         $$('.wo-stat b', node).forEach((b, k) => setTimeout(() => {
           if (!node.isConnected) return;
@@ -2137,7 +2272,7 @@
           requestAnimationFrame(tick);
           if (root.Sound) root.Sound.play('click');
         }, 1100 + k * 380));
-        if (mythic) {
+        if (storm) {
           const cv = $('.br-bolts', node);
           const W = (cv.width = innerWidth);
           const H = (cv.height = innerHeight);
@@ -2146,15 +2281,16 @@
           const step = (now) => {
             if (!node.isConnected) return;
             ctx.clearRect(0, 0, W, H);
-            if (now - t0 < 1800 && Math.random() < 0.5) {
+            if (now - t0 < (ex ? 3200 : 1800) && Math.random() < 0.5) {
+              const blue = ex && (def.faction === 'light' ? Math.random() < 0.65 : Math.random() < 0.35);
               let x = Math.random() * W;
               let y = 0;
               ctx.beginPath();
               ctx.moveTo(x, y);
               while (y < H) { x += (Math.random() - 0.5) * 80; y += H / 10; ctx.lineTo(x, y); }
-              ctx.strokeStyle = 'rgba(255,60,100,0.9)';
+              ctx.strokeStyle = blue ? 'rgba(110,190,255,0.9)' : 'rgba(255,60,100,0.9)';
               ctx.lineWidth = 2.5;
-              ctx.shadowColor = '#ff2a5a';
+              ctx.shadowColor = blue ? '#4aa8ff' : '#ff2a5a';
               ctx.shadowBlur = 18;
               ctx.stroke();
             }
@@ -2162,7 +2298,7 @@
           };
           requestAnimationFrame(step);
         }
-        timer = setTimeout(close, mythic ? 5000 : 4400);
+        timer = setTimeout(close, ex ? 7000 : mythic ? 5000 : 4400);
       };
       const next = () => {
         if (i >= steps.length) return showFinal();
@@ -2182,6 +2318,7 @@
           spin();
         }
         if (mythic && i === steps.length) node.classList.add('glitch');
+        if (ex) { node.classList.remove('ex-beat'); void node.offsetWidth; node.classList.add('ex-beat'); if (root.Sound) root.Sound.play('burst'); }
         timer = setTimeout(next, stepMs);
       };
       const close = () => {
@@ -2203,39 +2340,49 @@
     const cards = results.map((r, i) => {
       const def = D.UNIT_MAP[r.id];
       const tag = r.isNew ? '<span class="reveal-tag">NEW!</span>' : `<span class="reveal-tag dup">+${r.shards} shards</span>`;
-      return `<div class="flip glow-${def.rarity} r-${def.rarity} side-${def.faction} ${r.holo ? 'is-holo' : ''} ${i > 0 ? 'locked-card' : ''}" style="--rc:${R_COLOR[def.rarity]};--i:${i};--fc:${def.faction === 'dark' ? '#ff2a3a' : '#5ab4ff'}" data-i="${i}" tabindex="0" role="button" aria-label="${i > 0 ? `Card ${i + 1}, locked` : 'Reveal card'}">
-        ${i > 0 ? `<div class="card-lock"><span>🔒</span><b>Card ${i + 1}</b></div>` : ''}
+      return `<div class="flip glow-${def.rarity} r-${def.rarity} side-${def.faction} ${r.holo ? 'is-holo' : ''} ${i > 0 ? 'stack-hidden' : ''}" style="--rc:${R_COLOR[def.rarity]};--i:${i};--fc:${def.faction === 'dark' ? '#ff2a3a' : '#5ab4ff'}" data-i="${i}" tabindex="0" role="button" aria-label="Reveal card">
         <div class="flip-face flip-back">${Art.cardBack(def.faction)}</div>
         <div class="flip-face flip-front">${tag}${r.holo ? '<span class="holo-tag">HOLO</span>' : ''}${r.pity ? '<span class="holo-tag pity">PITY</span>' : ''}${unitCard(def, { tag: 'div', hideShards: true, holo: r.holo })}</div>
       </div>`;
     }).join('');
     const m = openModal(`
-      <div style="text-align:center"><p class="eyebrow">${packId ? 'Crate cracked open' : 'Delivery from Vekko'}</p><h2 data-reveal-title>${results.length > 1 ? `Card 1 of ${results.length}: tap to reveal` : 'Tap to reveal'}</h2><p class="muted small">The glow behind a card hints at what's inside.</p></div>
-      <div class="reveal-row">${cards}</div>
+      <div style="text-align:center"><p class="eyebrow">${packId ? 'Crate cracked open' : 'Delivery from Vekko'}</p><h2 data-reveal-title>Tap to reveal</h2></div>
+      <div class="reveal-stack" data-stack>${cards}</div>
+      <div class="reveal-summary" data-summary hidden></div>
       <div class="modal-actions" style="justify-content:center">
-        <button class="btn btn-primary" type="button" data-next-card hidden>Continue</button>
+        <button class="btn btn-primary" type="button" data-next-card hidden>Next card</button>
         <button class="btn btn-primary" type="button" data-done hidden>Done</button>
       </div>`, { onClose: () => App.refresh(), cls: `reveal-modal best-${best}` });
-    // One card at a time: the next unlocks only after the current reveal and a Continue.
+    // One card at a time: the next one stays hidden under the deck until the
+    // current reveal finishes and the player asks for it.
     let current = 0;
     const title = $('[data-reveal-title]', m.root);
     const nextBtn = $('[data-next-card]', m.root);
     const doneBtn = $('[data-done]', m.root);
     const afterReveal = (i) => {
+      const def = D.UNIT_MAP[results[i].id];
       if (i < results.length - 1) {
         nextBtn.hidden = false;
-        nextBtn.textContent = `Continue · Card ${i + 2} of ${results.length}`;
-        title.textContent = 'Ready for the next card?';
+        title.textContent = def.name;
         nextBtn.focus();
+      } else if (results.length > 1) {
+        // Crate finished: lay out everything you pulled.
+        const sum = $('[data-summary]', m.root);
+        sum.innerHTML = results.map((r, k) => `<div class="rs-card" style="--k:${k}">${unitCard(D.UNIT_MAP[r.id], { tag: 'div', hideShards: true, holo: r.holo })}<span class="rs-tag ${r.isNew ? 'new' : ''}">${r.isNew ? 'New!' : `+${r.shards} shards`}</span></div>`).join('');
+        $('[data-stack]', m.root).hidden = true;
+        sum.hidden = false;
+        doneBtn.hidden = false;
+        title.textContent = 'Crate complete';
+        doneBtn.focus();
       } else {
         doneBtn.hidden = false;
-        title.textContent = results.length > 1 ? 'All cards revealed' : 'Card revealed';
+        title.textContent = def.name;
         doneBtn.focus();
       }
     };
     let busy = Promise.resolve();
     const flip = (f) => {
-      if (f.classList.contains('flipped') || f.classList.contains('charging') || f.classList.contains('locked-card') || Number(f.dataset.i) !== current) return busy;
+      if (f.classList.contains('flipped') || f.classList.contains('charging') || f.classList.contains('stack-hidden') || Number(f.dataset.i) !== current) return busy;
       const r = results[Number(f.dataset.i)];
       const def = D.UNIT_MAP[r.id];
       const tier = R_ORDER[def.rarity];
@@ -2280,16 +2427,19 @@
       if (f) flip(f);
       if (e.target.closest('[data-next-card]')) {
         nextBtn.hidden = true;
+        const old = $(`.flip[data-i="${current}"]`, m.root);
         current += 1;
         const nf = $(`.flip[data-i="${current}"]`, m.root);
-        nf.classList.remove('locked-card');
-        nf.setAttribute('aria-label', 'Reveal card');
-        const lock = $('.card-lock', nf);
-        if (lock) lock.remove();
-        title.textContent = `Card ${current + 1} of ${results.length}`;
-        nf.scrollIntoView({ block: 'center', behavior: motionOK() ? 'smooth' : 'auto' });
-        nf.animate([{ transform: 'translateY(-30px) scale(.9)', opacity: 0.4 }, { transform: 'none', opacity: 1 }], { duration: 450, easing: 'cubic-bezier(.2,.9,.3,1.2)' });
-        setTimeout(() => flip(nf), 500);
+        title.textContent = 'Tap to reveal';
+        const deal = () => {
+          old.classList.add('stack-hidden');
+          nf.classList.remove('stack-hidden');
+          if (motionOK()) nf.animate([{ transform: 'translateY(40px) scale(.85) rotate(-4deg)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 420, easing: 'cubic-bezier(.2,.9,.3,1.2)' });
+          if (root.Sound) root.Sound.play('click');
+          nf.focus({ preventScroll: true });
+        };
+        if (motionOK()) old.animate([{ transform: 'none', opacity: 1 }, { transform: 'translateX(-130%) rotate(-18deg)', opacity: 0 }], { duration: 320, easing: 'ease-in', fill: 'forwards' }).onfinish = deal;
+        else deal();
       }
       if (e.target.closest('[data-done]')) m.close();
     });
@@ -2301,5 +2451,5 @@
     });
   }
 
-  root.UI = { walkout, soundSettings, homeworldOf, $, $$, el, esc, fmt, cur, portrait, stars, unitCard, toast, openModal, confirmBox, updateWallet, inspect, synergyBanner, App, Screens };
+  root.UI = { walkout, settings, profile, soundSettings: settings, homeworldOf, $, $$, el, esc, fmt, cur, portrait, stars, unitCard, toast, openModal, confirmBox, updateWallet, inspect, synergyBanner, App, Screens };
 })(window);

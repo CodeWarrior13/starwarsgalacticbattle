@@ -116,13 +116,84 @@
     });
   }
 
+  // ---------- Swipe between tabs (phones) ----------
+  // Drag the page sideways to slide to the next tab, like Clash Royale.
+  const TABS = ['home', 'collection', 'market'];
+  function swipeTabs() {
+    const screen = document.getElementById('screen');
+    const NO_SWIPE = 'input, select, textarea, .modal-backdrop, .rank-road, .seg, .hub-modes, .planet-drop, .pd-stages, .showcase, .reel, [data-noswipe]';
+    let sx = 0, sy = 0, dx = 0, t0 = 0, mode = null;
+    const idx = () => TABS.indexOf(App.current === 'campaign' ? 'home' : App.current);
+    screen.addEventListener('touchstart', (e) => {
+      mode = null;
+      if (e.touches.length !== 1 || App.battleActive || idx() < 0 || e.target.closest(NO_SWIPE) || document.querySelector('.modal-backdrop, .walkout, .crate-cine, .secret-load, .planet-cine')) return;
+      sx = e.touches[0].clientX; sy = e.touches[0].clientY; dx = 0; t0 = performance.now(); mode = 'wait';
+    }, { passive: true });
+    screen.addEventListener('touchmove', (e) => {
+      if (!mode || mode === 'scroll') return;
+      const x = e.touches[0].clientX - sx;
+      const y = e.touches[0].clientY - sy;
+      if (mode === 'wait') {
+        if (Math.abs(x) < 10 && Math.abs(y) < 10) return;
+        mode = Math.abs(x) > Math.abs(y) * 1.3 ? 'swipe' : 'scroll';
+        if (mode === 'scroll') return;
+        screen.classList.add('swiping');
+      }
+      const i = idx();
+      // Rubber-band at the first and last tab.
+      dx = (i === 0 && x > 0) || (i === TABS.length - 1 && x < 0) ? x * 0.25 : x;
+      screen.style.transform = `translateX(${dx}px)`;
+      screen.style.opacity = String(1 - Math.min(0.5, Math.abs(dx) / innerWidth));
+    }, { passive: true });
+    const end = () => {
+      if (mode !== 'swipe') { mode = null; return; }
+      mode = null;
+      screen.classList.remove('swiping');
+      const i = idx();
+      const fast = Math.abs(dx) / Math.max(1, performance.now() - t0) > 0.5;
+      const dir = dx < 0 ? 1 : -1;
+      const target = TABS[i + dir];
+      if (target && (Math.abs(dx) > innerWidth * 0.25 || (fast && Math.abs(dx) > 40))) {
+        screen.style.transition = 'transform .16s ease-in, opacity .16s';
+        screen.style.transform = `translateX(${-dir * innerWidth * 0.6}px)`;
+        screen.style.opacity = '0';
+        setTimeout(() => {
+          screen.style.transition = 'none';
+          App.go(target);
+          screen.style.transform = `translateX(${dir * innerWidth * 0.6}px)`;
+          requestAnimationFrame(() => requestAnimationFrame(() => {
+            screen.style.transition = 'transform .24s cubic-bezier(.2,.9,.3,1), opacity .24s';
+            screen.style.transform = '';
+            screen.style.opacity = '';
+          }));
+        }, 160);
+      } else {
+        screen.style.transition = 'transform .25s cubic-bezier(.2,.9,.3,1.2), opacity .25s';
+        screen.style.transform = '';
+        screen.style.opacity = '';
+      }
+      setTimeout(() => { screen.style.transition = ''; }, 450);
+    };
+    screen.addEventListener('touchend', end);
+    screen.addEventListener('touchcancel', end);
+  }
+
   function boot() {
     root.Player.load();
     document.querySelectorAll('[data-icon]').forEach((i) => { i.innerHTML = root.Art.ICONS[i.dataset.icon]; });
+    document.querySelector('[data-settings]').innerHTML = root.Icons.svg('settings');
+    document.querySelectorAll('[data-nav-ico]').forEach((n) => { n.innerHTML = root.Icons.svg(n.dataset.navIco); });
+    swipeTabs();
+    root.Icons.watch();
+    const bar = document.querySelector('.topbar');
+    const setBar = () => document.documentElement.style.setProperty('--topbar-h', bar.offsetHeight + 'px');
+    setBar();
+    if (window.ResizeObserver) new ResizeObserver(setBar).observe(bar);
     starfield();
     premiumFx();
     document.querySelector('.topbar').addEventListener('click', (e) => {
-      if (e.target.closest('[data-sound-settings]')) return root.UI.soundSettings();
+      if (e.target.closest('[data-settings]')) return root.UI.settings();
+      if (e.target.closest('[data-profile]')) return root.UI.profile();
       const nav = e.target.closest('[data-nav]');
       if (!nav) return;
       if (App.battleActive) {

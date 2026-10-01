@@ -26,7 +26,7 @@
       account: { level: 1, xp: 0 },
       daily: { streak: 0, last: null, best: 0 },
       tower: { floor: 1, best: 0, runs: 0 },
-      secret: { found: false, beaten: {} },
+      secret: { found: false, beaten: {}, fails: {} },
     };
   }
 
@@ -73,7 +73,7 @@
           account: { ...base.account, ...loaded.account },
           daily: { ...base.daily, ...loaded.daily },
           tower: { ...base.tower, ...loaded.tower },
-          secret: { ...base.secret, ...loaded.secret, beaten: { ...(loaded.secret || {}).beaten } },
+          secret: { ...base.secret, ...loaded.secret, beaten: { ...(loaded.secret || {}).beaten }, fails: { ...(loaded.secret || {}).fails } },
           bosses: { ...loaded.bosses },
         }
         : base;
@@ -569,29 +569,41 @@
     },
 
     // Hidden zone: first victory over each boss grants its exclusive cards.
+    // Kyber cost of the next attempt at a secret trial.
+    secretCost(id) {
+      return D.secretCost(this.state.secret.fails[id]);
+    },
+
+    // Pay the entry fee; false when the player cannot afford it.
+    paySecretEntry(id) {
+      const cost = this.secretCost(id);
+      if (this.state.crystals < cost) return false;
+      this.state.crystals -= cost;
+      this.save();
+      return true;
+    },
+
+    // Trials pay out cards only: the exclusive cards on the first win, shards
+    // of them after that. Losing raises the next entry fee.
     completeSecret(params, won, rng, slotsBefore) {
       const enc = this.encounter(params);
+      const sec = this.state.secret;
       if (!won) {
         this.state.stats.battlesLost += 1;
+        sec.fails[enc.id] = (sec.fails[enc.id] || 0) + 1;
         const levelUps = this.gainXp(D.XP.loss);
         this.save();
-        return { lost: true, xp: D.XP.loss, levelUps, newSlot: this.slots() > slotsBefore };
+        return { lost: true, secret: true, xp: D.XP.loss, levelUps, newSlot: this.slots() > slotsBefore, nextCost: this.secretCost(enc.id) };
       }
-      const spin = this.rollSpin(rng);
-      this.state.stats.bestSpin = Math.max(this.state.stats.bestSpin, spin.mult);
       this.state.stats.battlesWon += 1;
-      const first = !this.state.secret.beaten[enc.id];
-      this.state.secret.beaten[enc.id] = (this.state.secret.beaten[enc.id] || 0) + 1;
-      const r = D.SECRET_REWARD(first);
-      const cards = first ? enc.rewards.map((id) => this.grantCard(id, false)) : [];
-      const out = { base: r.credits, crystals: r.crystals, aurodium: r.aurodium, firstClear: first, card: cards[0] || null, cards, secret: true, mult: spin.mult, table: spin.table, loaded: spin.loaded };
-      out.credits = Math.round(out.base * spin.mult);
+      const first = !sec.beaten[enc.id];
+      sec.beaten[enc.id] = (sec.beaten[enc.id] || 0) + 1;
+      sec.fails[enc.id] = 0;
+      const cards = enc.rewards.map((id) => this.grantCard(id, false));
+      const out = { secret: true, firstClear: first, cards, card: cards[0] || null, credits: 0, crystals: 0, aurodium: 0 };
       out.xp = D.XP.boss(enc.level);
       out.levelUps = this.gainXp(out.xp);
       out.newSlot = this.slots() > slotsBefore;
-      this.state.credits += out.credits;
-      this.state.crystals += out.crystals;
-      this.state.aurodium += out.aurodium;
       this.save();
       return out;
     },

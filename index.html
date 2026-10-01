@@ -17,15 +17,15 @@
       <span class="brand-bottom">Galactic Card Battles</span>
     </button>
     <nav class="main-nav" aria-label="Main">
-      <button type="button" data-nav="home">Galaxy</button>
-      <button type="button" data-nav="collection">Collection</button>
-      <button type="button" data-nav="market">Black Market</button>
+      <button type="button" data-nav="home"><span class="nav-ico" data-nav-ico="planet"></span><span class="nav-lbl">Galaxy</span></button>
+      <button type="button" data-nav="collection"><span class="nav-ico" data-nav-ico="sabacc"></span><span class="nav-lbl">Collection</span></button>
+      <button type="button" data-nav="market"><span class="nav-ico" data-nav-ico="crate"></span><span class="nav-lbl">Black Market</span></button>
     </nav>
-    <div class="account" title="Account level: earn XP from every battle" aria-live="polite">
+    <button class="account" type="button" data-profile title="Commander profile" aria-live="polite">
       <span class="acct-lv">LV <b id="acct-level">1</b></span>
       <span class="acct-bar"><i id="acct-bar"></i></span>
-    </div>
-    <button class="icon-btn sound-btn" type="button" data-sound-settings aria-label="Sound settings" title="Sound & music">🔊</button>
+    </button>
+    <button class="icon-btn settings-btn" type="button" data-settings aria-label="Settings" title="Settings"></button>
     <div class="wallet" aria-live="polite">
       <span class="currency credits" title="Galactic Credits"><i data-icon="credits"></i><b id="credits">0</b></span>
       <span class="currency crystals" title="Kyber Crystals"><i data-icon="crystals"></i><b id="crystals">0</b></span>
@@ -40,6 +40,7 @@
 
   <script src="js/audio.js"></script>
   <script src="js/data.js"></script>
+  <script src="js/icons.js"></script>
   <script src="js/art-images.js"></script>
   <script src="js/art.js"></script>
   <script src="js/env.js"></script>

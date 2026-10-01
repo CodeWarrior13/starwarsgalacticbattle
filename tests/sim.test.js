@@ -441,4 +441,31 @@ test('every unit and boss has cover art and a bio', () => {
   }
 });
 
+test('secret trials: entry cost climbs on defeat, wins pay cards only', () => {
+  Player.reset();
+  const id = 'boss_daughter';
+  assert.strictEqual(Player.secretCost(id), 0, 'first attempt is free');
+  const ladder = [];
+  for (let i = 0; i < 8; i++) {
+    Player.completeSecret({ type: 'secret', boss: id }, false, seeded(i), 3);
+    ladder.push(Player.secretCost(id));
+  }
+  assert.deepStrictEqual(ladder, [5, 10, 15, 20, 25, 50, 50, 50]);
+  Player.state.crystals = 10;
+  assert.ok(!Player.paySecretEntry(id), 'cannot enter without enough Kyber');
+  Player.state.crystals = 60;
+  assert.ok(Player.paySecretEntry(id) && Player.state.crystals === 10, 'entry fee is charged');
+  const before = { credits: Player.state.credits, crystals: Player.state.crystals, aurodium: Player.state.aurodium };
+  const win = Player.completeSecret({ type: 'secret', boss: id }, true, seeded(1), 3);
+  assert.ok(win.firstClear && win.cards.length && win.cards[0].isNew, 'first win grants the exclusive card');
+  assert.ok(Player.owns('the_daughter'));
+  assert.strictEqual(Player.secretCost(id), 0, 'a win resets the price');
+  // Only account level-ups (from XP) can pay credits; the trial itself pays none.
+  const lvl = win.levelUps.reduce((a, u) => a + u.reward.credits, 0);
+  assert.strictEqual(Player.state.credits - before.credits, lvl, 'no credits from trials');
+  assert.strictEqual(Player.state.aurodium, before.aurodium, 'no aurodium from trials');
+  const again = Player.completeSecret({ type: 'secret', boss: id }, true, seeded(2), 3);
+  assert.ok(!again.cards[0].isNew && again.cards[0].shards > 0, 'repeat wins pay shards');
+});
+
 console.log(`\n${passed} tests passed`);
