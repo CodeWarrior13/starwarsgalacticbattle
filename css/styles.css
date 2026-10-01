@@ -2668,3 +2668,88 @@ button.ult-preview:hover, button.ult-preview:focus-visible { transform: scale(1.
 .filter-drawer.open .fd-inner { padding: 12px; border: 1px solid var(--line); border-radius: 14px; background: rgba(10, 14, 24, 0.75); }
 .filter-drawer .filters-row { align-items: center; }
 .filter-drawer [data-filters-reset] { margin-left: auto; font-size: 12px; }
+
+/* ---------- Secret rarity: above Mythic, split between Light and Dark ---------- */
+:root { --secret: #e8f0ff; }
+.ucard.rarity-secret, .bigcard.rarity-secret, .stock.rarity-secret { --r: var(--secret); }
+.ucard.rarity-secret { animation: secret-frame 3s linear infinite; }
+@keyframes secret-frame {
+  0%, 100% { box-shadow: -6px 0 18px rgba(74, 168, 255, 0.6), 6px 0 18px rgba(255, 42, 70, 0.6), 0 0 0 1px #e8f0ff; }
+  50% { box-shadow: 6px 0 18px rgba(74, 168, 255, 0.6), -6px 0 18px rgba(255, 42, 70, 0.6), 0 0 0 1px #ffffff; }
+}
+.ucard.rarity-secret::after, .bigcard.rarity-secret .bigface.front::after { content: ''; position: absolute; inset: 0; pointer-events: none; border-radius: inherit; background: linear-gradient(115deg, transparent 30%, rgba(120, 200, 255, 0.25) 45%, rgba(255, 90, 110, 0.25) 55%, transparent 70%); background-size: 250% 100%; animation: shine 3.2s linear infinite; mix-blend-mode: screen; }
+.rarity-secret .rar, .rarity-secret .rarity { background: linear-gradient(90deg, #7cc8ff, #ffffff, #ff6a7a); -webkit-background-clip: text; background-clip: text; color: transparent !important; }
+
+/* ---------- Crates: themed shop cards ---------- */
+.shop-grid { grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px; }
+.pack {
+  padding: 0; gap: 0; border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--pc) 35%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--pc) 10%, #0c1120), #070a12 70%);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition: transform 0.3s cubic-bezier(.2,.9,.3,1.2), box-shadow 0.3s, border-color 0.3s;
+  clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 18px 100%, 0 calc(100% - 18px));
+}
+.pack:hover { transform: translateY(-6px); border-color: var(--pc); box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55), 0 0 30px color-mix(in srgb, var(--pc) 35%, transparent); }
+.pack::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(115deg, transparent 35%, rgba(255, 255, 255, 0.12) 48%, transparent 60%); background-size: 260% 100%; background-position: 120% 0; transition: background-position 0.9s ease; }
+.pack:hover::after { background-position: -40% 0; }
+.pack-stage {
+  position: relative; height: 180px; display: grid; place-items: center; overflow: hidden;
+  background:
+    radial-gradient(ellipse at 50% 100%, color-mix(in srgb, var(--pc) 40%, transparent), transparent 60%),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.03) 0 1px, transparent 1px 22px),
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.03) 0 1px, transparent 1px 22px),
+    linear-gradient(180deg, #05070d, #0b1222);
+  border-bottom: 1px solid color-mix(in srgb, var(--pc) 30%, transparent);
+}
+.pack-stage .pack-art { height: auto; background: none; border-radius: 0; position: relative; z-index: 2; overflow: visible; }
+.pack-stage .crate-art { width: 140px; height: 140px; animation: crate-bob 3.4s ease-in-out infinite; filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.6)); }
+.pack:hover .pack-stage .crate-art { transform: none; animation-duration: 1.6s; }
+@keyframes crate-bob { 0%, 100% { transform: translateY(0) rotate(-1deg); } 50% { transform: translateY(-8px) rotate(1deg); } }
+.pack-beam { position: absolute; left: 50%; bottom: 0; width: 120px; height: 100%; transform: translateX(-50%); background: linear-gradient(0deg, color-mix(in srgb, var(--pc) 45%, transparent), transparent 80%); clip-path: polygon(30% 100%, 70% 100%, 100% 0, 0 0); opacity: 0.5; transition: opacity 0.3s; }
+.pack:hover .pack-beam { opacity: 0.9; }
+.pack-ring { position: absolute; left: 50%; bottom: 14px; width: 150px; height: 26px; transform: translateX(-50%); border-radius: 50%; border: 2px solid var(--pc); box-shadow: 0 0 16px var(--pc), inset 0 0 12px var(--pc); opacity: 0.7; animation: ring-pulse 2.4s ease-in-out infinite; }
+@keyframes ring-pulse { 50% { opacity: 0.35; transform: translateX(-50%) scale(1.08); } }
+.pack-floor { position: absolute; left: 0; right: 0; bottom: 0; height: 30px; background: linear-gradient(0deg, rgba(0, 0, 0, 0.5), transparent); }
+.pack-mote { position: absolute; bottom: 10px; left: var(--x); width: 3px; height: 3px; border-radius: 50%; background: var(--pc); box-shadow: 0 0 6px var(--pc); animation: pack-mote 3.2s var(--d) linear infinite; opacity: 0; }
+@keyframes pack-mote { 0% { transform: translateY(0); opacity: 0; } 20% { opacity: 1; } 100% { transform: translateY(-150px); opacity: 0; } }
+.pack-badge { position: absolute; top: 10px; right: 22px; z-index: 3; padding: 3px 10px; border-radius: 999px; font-size: 10.5px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: #1a1206; background: linear-gradient(90deg, #ffe08a, #f2b632); box-shadow: 0 0 12px rgba(242, 182, 50, 0.6); }
+.pack-info { display: grid; gap: 8px; padding: 14px 16px 16px; }
+.pack-kicker { font-family: var(--font-display); font-size: 10.5px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--pc); }
+.pack-info h3 { font-size: 19px; margin: 0; }
+.pack-info p { margin: 0; color: var(--muted); font-size: 13px; }
+.odds-bar { display: flex; height: 7px; border-radius: 4px; overflow: hidden; gap: 1px; background: #0a0e18; }
+.odds-bar i { min-width: 3px; }
+.ob-common { background: var(--common); } .ob-rare { background: var(--rare); } .ob-epic { background: var(--epic); } .ob-legendary { background: var(--legendary); } .ob-mythic { background: var(--mythic); box-shadow: 0 0 8px var(--mythic); }
+.pack-info .odds { gap: 8px; font-size: 11.5px; }
+.pack-open { margin-top: 4px; }
+/* Animated crate parts */
+.crate-art .crate-glow { animation: crate-glow 2.4s ease-in-out infinite; }
+.crate-art .crate-core { animation: crate-core 1.8s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+.crate-art .crate-scan { animation: crate-scan 2.6s ease-in-out infinite; }
+.crate-art .crate-float { animation: crate-float 3s ease-in-out infinite; }
+.crate-art .crate-lid { transition: transform 0.35s cubic-bezier(.2,.9,.3,1.3); transform-box: fill-box; transform-origin: 50% 100%; }
+.pack:hover .crate-art .crate-lid { transform: translateY(-4px) rotate(-3deg); }
+@keyframes crate-glow { 50% { opacity: 0.2; } }
+@keyframes crate-core { 50% { opacity: 0.55; transform: scale(0.9); } }
+@keyframes crate-scan { 0%, 100% { opacity: 0.15; } 50% { opacity: 1; } }
+@keyframes crate-float { 50% { transform: translateY(-3px); } }
+.holocron .crate-art .crate-scan, .crate-holocron .crate-scan { animation: holo-sweep 2.8s linear infinite; }
+@keyframes holo-sweep { 0% { transform: translateY(-34px); opacity: 0; } 15%, 85% { opacity: 0.7; } 100% { transform: translateY(34px); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .pack-stage .crate-art, .pack-mote, .pack-ring, .crate-art * { animation: none !important; } }
+.cc-ring { position: absolute; left: 50%; top: calc(50% + 110px); width: 280px; height: 46px; transform: translateX(-50%); border-radius: 50%; border: 2px solid var(--rc); box-shadow: 0 0 24px var(--rc), inset 0 0 18px var(--rc); opacity: 0.7; animation: ring-pulse 1.6s ease-in-out infinite; pointer-events: none; }
+@media (max-width: 600px) { .cc-ring { width: 200px; height: 34px; top: calc(50% + 80px); } }
+@media (max-width: 600px) {
+  .shop-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .pack-stage { height: 124px; }
+  .pack-stage .crate-art { width: 96px; height: 96px; }
+  .pack-ring { width: 104px; height: 18px; bottom: 10px; }
+  .pack-beam { width: 84px; }
+  .pack-badge { top: 6px; right: 14px; font-size: 8.5px; padding: 2px 7px; }
+  .pack-info { padding: 10px 10px 12px; gap: 6px; }
+  .pack-kicker { font-size: 9px; letter-spacing: 0.14em; }
+  .pack-info h3 { font-size: 15px; }
+  .pack-info p { display: none; }
+  .pack-info .odds { font-size: 10px; gap: 5px; }
+  .pack-open { font-size: 11px; padding: 8px 6px; }
+}

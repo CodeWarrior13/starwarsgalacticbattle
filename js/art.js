@@ -1195,22 +1195,105 @@
     aurodium: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 16l3-8h12l3 8z" fill="#f2b632"/><path d="M6 8h12l-2 4H8z" fill="#ffd97a"/><path d="M3 16l3-8h12l3 8z" fill="none" stroke="#8a5a0a" stroke-width="1.1"/><path d="M8 14h8" stroke="#8a5a0a" stroke-width=".9"/></svg>',
   };
 
-  function crateArt(id) {
-    const color = { recruit: '#5ab4ff', squadron: '#ff6b4b', holocron: '#8fd3ff', strongbox: '#f2b632' }[id] || '#8a929e';
-    const glyph = {
-      recruit: C(50, 54, 7, 'none', `stroke="${color}" stroke-width="2.4"`) + L(50, 44, 50, 64, color, 2),
-      squadron: P('M50 44 L58 62 L50 58 L42 62Z', color),
-      holocron: P('M50 42 L60 54 L50 66 L40 54Z', color, 'opacity=".9"') + P('M50 42 L60 54 L50 66Z', '#fff', 'opacity=".25"'),
-      strongbox: P('M38 60 L42 48 H58 L62 60Z', color) + P('M42 48 H58 L56 53 H44Z', '#fff3c4'),
-    }[id] || '';
-    return `<svg class="crate-art" viewBox="0 0 100 100" aria-hidden="true">
-      ${E(50, 86, 34, 6, '#000', 'opacity=".45"')}
-      ${P('M18 34 L50 20 L82 34 L82 76 L50 90 L18 76Z', '#2a303a')}
-      ${P('M18 34 L50 48 L50 90 L18 76Z', '#3a424e')}${P('M82 34 L50 48 L50 90 L82 76Z', '#232830')}
-      ${P('M18 34 L50 20 L82 34 L50 48Z', '#4a5462')}
-      ${P('M18 44 L50 58 L50 62 L18 48Z', color, 'opacity=".75"')}${P('M82 44 L50 58 L50 62 L82 48Z', color, 'opacity=".55"')}
-      <g style="filter:drop-shadow(0 0 3px ${color})" transform="translate(34 68) scale(.7) translate(-50 -54)">${glyph}</g>
-    </svg>`;
+  // ---------- Crates ----------
+  // Two complete crate sets. CRATE_STYLE picks which one the game shows:
+  //   'faction' — each crate belongs to a side of the galaxy: a Rebel supply
+  //               drop, an Imperial cargo crate, a Jedi holocron vault and a
+  //               Hutt treasure chest, each with its emblem.
+  //   'holo'    — the same four crates as glowing hologram projections over a
+  //               projector disc, with scanlines and flicker.
+  // Change the line below to 'holo' to switch every crate in the game.
+  let CRATE_STYLE = 'faction';
+
+  // Emblems drawn from the shared icon set onto an isometric crate face.
+  const glyphPath = (name) => (root.Icons && root.Icons.SHAPES[name]) || '';
+  const onLeftFace = (name, cx, cy, color, s = 0.9) => `<g transform="matrix(${s} ${s * 0.39} 0 ${s} ${cx - 12 * s} ${cy - 12 * s - 12 * s * 0.39})" fill="${color}" color="${color}">${glyphPath(name)}</g>`;
+  const onRightFace = (name, cx, cy, color, s = 0.9) => `<g transform="matrix(${s} ${-s * 0.39} 0 ${s} ${cx - 12 * s} ${cy - 12 * s + 12 * s * 0.39})" fill="${color}" color="${color}">${glyphPath(name)}</g>`;
+  // Isometric box: top, left and right faces.
+  const BOX = { top: 'M14 36 L50 22 L86 36 L50 50Z', left: 'M14 36 L50 50 L50 90 L14 74Z', right: 'M86 36 L50 50 L50 90 L86 74Z' };
+  const HUTT_CREST = 'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18z M12 6.5c-2.6 0-4.4 1.6-4.4 3.8 0 1.8 1.2 2.6 2.4 3.1-1 .5-1.6 1.3-1.6 2.4h7.2c0-1.1-.6-1.9-1.6-2.4 1.2-.5 2.4-1.3 2.4-3.1 0-2.2-1.8-3.8-4.4-3.8z M5 5.5l2.4 3M19 5.5l-2.4 3';
+
+  function crateFaction(id) {
+    const shadow = E(50, 91, 32, 4.5, '#000', 'opacity=".5"');
+    if (id === 'squadron') {
+      // Imperial cargo crate: white-grey armour plates, the cog, red status lights.
+      const [glow, gd] = RG([[0, '#ff6a6a'], [0.5, '#ff3a3a', 0.35], [1, '#ff3a3a', 0]]);
+      return `${gd}${shadow}${C(50, 58, 38, glow, 'class="crate-glow" opacity=".45"')}
+        ${P(BOX.left, '#b9c0ca')}${P(BOX.right, '#7c8492')}
+        <g class="crate-lid">${P(BOX.top, '#e4e8ee')}${P('M22 36 L50 25 L78 36 L50 47Z', 'none', 'stroke="#8a929e" stroke-width=".9"')}${P('M36 30.5 L64 30.5', 'none', 'stroke="#8a929e" stroke-width=".7"')}</g>
+        ${P('M14 48 L50 62 M50 62 L86 48', 'none', 'stroke="#2a2f38" stroke-width="1.6"')}
+        ${P('M14 58 L50 72 L86 58', 'none', 'stroke="#2a2f38" stroke-width=".8" opacity=".6"')}
+        ${onLeftFace('cog', 32, 61, '#1c2028', 1)}
+        ${[0, 1, 2].map((i) => P(`M${58 + i * 7} ${55 - i * 2.7} l4.5 -1.8 l0 3 l-4.5 1.8Z`, '#ff3a3a', `class="crate-scan" style="animation-delay:${i * 0.25}s;filter:drop-shadow(0 0 2px #ff3a3a)"`)).join('')}
+        ${P('M58 68 L80 59.5 L80 64 L58 72.5Z', '#2a2f38')}${[0, 1, 2, 3].map((i) => P(`M${60 + i * 5} ${69.5 - i * 1.95} l3 -1.2 l0 2 l-3 1.2Z`, '#c9ced6')).join('')}
+        ${P('M48 50 L52 50 L52 90 L48 90Z', '#2a2f38', 'opacity=".5"')}`;
+    }
+    if (id === 'holocron') {
+      // Jedi holocron vault: a blue crystal cube in gold corner caps.
+      const [glow, gd] = RG([[0, '#e0f6ff'], [0.45, '#5ab4ff', 0.6], [1, '#2a7ad0', 0]]);
+      const [lf, lfd] = LG([[0, '#2a6ab8'], [1, '#0c2a58']]);
+      const [rf, rfd] = LG([[0, '#1a4a88'], [1, '#081a3a']]);
+      const cap = (x, y, r) => P(`M${x} ${y - 4} L${x + 4} ${y - 2} L${x + 4} ${y + 2} L${x} ${y + 4} L${x - 4} ${y + 2} L${x - 4} ${y - 2}Z`, '#f2c14a', `transform="rotate(${r} ${x} ${y})" stroke="#8a5a0a" stroke-width=".6"`);
+      return `${gd}${lfd}${rfd}${shadow}${C(50, 54, 40, glow, 'class="crate-glow" opacity=".55"')}
+        <g class="crate-float">
+        ${P(BOX.left, lf)}${P(BOX.right, rf)}${P(BOX.top, '#5a9ae0')}
+        ${P('M20 39 L50 51 L50 84 L20 71Z M80 39 L50 51 L50 84 L80 71Z', 'none', 'stroke="#bfe4ff" stroke-width=".7" opacity=".55"')}
+        ${P('M22 36 L50 25 L78 36 L50 47Z', 'none', 'stroke="#bfe4ff" stroke-width=".7" opacity=".6"')}
+        <g class="crate-core" style="filter:drop-shadow(0 0 3px #bfe4ff) drop-shadow(0 0 6px #5ab4ff)">${onLeftFace('jedi', 32, 62, '#e8f6ff', 1.05)}${onRightFace('kyber', 68, 62, '#bfe4ff', 0.7)}</g>
+        ${C(50, 36, 3, '#e0f6ff', 'class="crate-core" style="filter:drop-shadow(0 0 4px #8fd3ff)"')}
+        ${cap(14, 36, 0)}${cap(86, 36, 0)}${cap(50, 22, 0)}${cap(50, 50, 0)}${cap(14, 74, 0)}${cap(86, 74, 0)}${cap(50, 90, 0)}
+        </g>`;
+    }
+    if (id === 'strongbox') {
+      // Hutt treasure chest: gold, rounded lid, the cartel crest and a ruby lock.
+      const [gold, gld] = LG([[0, '#ffe08a'], [0.5, '#f2b632'], [1, '#8a5a0a']]);
+      const [lid, ld] = LG([[0, '#fff0b8'], [0.6, '#e2a52a'], [1, '#a8700f']]);
+      const [glow, gd] = RG([[0, '#fff3c4'], [0.5, '#f2b632', 0.5], [1, '#f2b632', 0]]);
+      return `${gld}${ld}${gd}${shadow}${C(50, 56, 40, glow, 'class="crate-glow" opacity=".55"')}
+        ${P('M14 50 L50 64 L50 90 L14 76Z', gold, 'stroke="#5a3a06" stroke-width="1"')}${P('M86 50 L50 64 L50 90 L86 76Z', '#a8700f', 'stroke="#5a3a06" stroke-width="1"')}
+        <g class="crate-lid">${P('M14 50 C14 34 30 26 50 22 C70 26 86 34 86 50 L50 64Z', lid, 'stroke="#5a3a06" stroke-width="1"')}
+        ${P('M14 50 C16 40 30 34 50 36 L50 64Z', '#000', 'opacity=".08"')}
+        ${P('M30 42 C34 34 44 30 50 30', 'none', 'stroke="#fff6d0" stroke-width="1.4" opacity=".7"')}</g>
+        ${P('M22 53 L22 79 M42 61 L42 87 M58 61 L58 87 M78 53 L78 79', 'none', 'stroke="#5a3a06" stroke-width="2" opacity=".55"')}
+        <g transform="matrix(.75 .29 0 .75 23 55)" fill="#5a3a06" color="#5a3a06" opacity=".8">${P(HUTT_CREST, '#5a3a06', 'fill-rule="evenodd" stroke="#5a3a06" stroke-width=".8"')}</g>
+        ${P('M46 62 L54 62 L54 72 L50 75 L46 72Z', '#5a3a06')}${P('M50 64.5 L52.5 68 L50 71.5 L47.5 68Z', '#ff2a4a', 'class="crate-core" style="filter:drop-shadow(0 0 4px #ff2a4a)"')}
+        ${C(66, 66, 2, '#5ab4ff', 'style="filter:drop-shadow(0 0 2px #5ab4ff)"')}${C(74, 63, 1.6, '#52e08a', 'style="filter:drop-shadow(0 0 2px #52e08a)"')}
+        ${C(36, 39, 1.2, '#fff', 'class="crate-glow"')}`;
+    }
+    // Rebel supply drop (Contraband Crate): olive drum-crate, straps, the starbird.
+    const [glow, gd] = RG([[0, '#ffc08a'], [0.5, '#ff8a3a', 0.4], [1, '#ff8a3a', 0]]);
+    return `${gd}${shadow}${C(50, 58, 38, glow, 'class="crate-glow" opacity=".4"')}
+      ${P(BOX.left, '#6e7a4a')}${P(BOX.right, '#4a5432')}
+      <g class="crate-lid">${P(BOX.top, '#87945c')}${P('M50 22 L50 50 M14 36 L86 36', 'none', 'stroke="#c8b48a" stroke-width="3" opacity=".9"')}
+      ${C(50, 36, 3.4, 'none', 'stroke="#d8dce4" stroke-width="1.4"')}</g>
+      ${P('M23 39.5 L23 77.5 M77 39.5 L77 77.5', 'none', 'stroke="#c8b48a" stroke-width="3.2" opacity=".9"')}
+      ${P('M14 66 L50 80 L86 66', 'none', 'stroke="#c8b48a" stroke-width="3.2" opacity=".9"')}
+      ${onLeftFace('starbird', 34, 59, '#ff7a2a', 1)}
+      ${P('M56 52 L80 43 L80 47 L56 56Z', '#1e2414', 'opacity=".7"')}${P('M58 58 L74 52 M58 61 L70 56.5', 'none', 'stroke="#1e2414" stroke-width="1.2" opacity=".6"')}
+      ${C(64, 70, 2.4, '#ff8a3a', 'class="crate-core" style="filter:drop-shadow(0 0 4px #ff8a3a)"')}
+      ${L(16, 47, 26, 51, '#000', 1.2, 'opacity=".3"')}${L(70, 74, 82, 69, '#000', 1.4, 'opacity=".3"')}`;
+  }
+
+  // Hologram versions: the same silhouettes projected in light.
+  function crateHolo(id) {
+    const hue = { recruit: '#ff9a4a', squadron: '#ff5a5a', holocron: '#7cd8ff', strongbox: '#ffd23f' }[id] || '#7cd8ff';
+    const [cone, cd] = LG([[0, hue, 0], [1, hue, 0.45]]);
+    const pat = 'hs' + (++gradSeq).toString(36);
+    const outline = (d) => P(d, hue, `fill-opacity=".14" stroke="${hue}" stroke-width="1.1" stroke-linejoin="round"`);
+    const shape = id === 'strongbox'
+      ? outline('M14 50 L50 64 L50 90 L14 76Z') + outline('M86 50 L50 64 L50 90 L86 76Z') + outline('M14 50 C14 34 30 26 50 22 C70 26 86 34 86 50 L50 64Z')
+      : outline(BOX.left) + outline(BOX.right) + outline(BOX.top);
+    const emblem = { recruit: onLeftFace('starbird', 34, 60, hue, 0.8), squadron: onLeftFace('cog', 32, 61, hue, 0.8), holocron: onLeftFace('jedi', 32, 62, hue, 0.9) + onRightFace('kyber', 68, 62, hue, 0.7), strongbox: `<g transform="matrix(.75 .29 0 .75 23 55)">${P(HUTT_CREST, 'none', `stroke="${hue}" stroke-width="1"`)}</g>` }[id] || '';
+    return `${cd}<defs><pattern id="${pat}" width="4" height="4" patternUnits="userSpaceOnUse"><rect width="4" height="1.3" fill="#fff" opacity=".22"/></pattern></defs>
+      ${E(50, 92, 26, 5, hue, 'opacity=".35"')}${E(50, 92, 16, 3, '#fff', 'opacity=".55"')}
+      ${P('M34 92 L66 92 L90 20 L10 20Z', cone, 'opacity=".5"')}
+      <g class="crate-float crate-holo" style="filter:drop-shadow(0 0 3px ${hue}) drop-shadow(0 0 8px ${hue})">${shape}<g class="crate-core">${emblem}</g></g>
+      ${P(id === 'strongbox' ? 'M14 50 C14 34 30 26 50 22 C70 26 86 34 86 50 L86 76 L50 90 L14 76Z' : 'M14 36 L50 22 L86 36 L86 74 L50 90 L14 74Z', `url(#${pat})`, 'class="crate-scan"')}`;
+  }
+
+  function crateArt(id, style) {
+    const use = style || CRATE_STYLE;
+    return `<svg class="crate-art crate-${id} crate-style-${use}" viewBox="0 0 100 100" aria-hidden="true">${use === 'holo' ? crateHolo(id) : crateFaction(id)}</svg>`;
   }
 
   // Shady merchant for the Black Market.
@@ -1263,5 +1346,5 @@
     return `<svg class="ship-only" viewBox="0 0 100 100" aria-hidden="true">${(SHIPS[def.shape] || SHIPS.xwing)()}</svg>`;
   }
 
-  root.Art = { unitArt, shipOnly, cardBack, ICONS, crateArt, merchantArt, SHIP_SHAPES: Object.keys(SHIPS), CHARACTER_IDS: Object.keys(CHAR) };
+  root.Art = { unitArt, shipOnly, cardBack, ICONS, crateArt, setCrateStyle: (v) => { CRATE_STYLE = v === 'holo' ? 'holo' : 'faction'; }, get crateStyle() { return CRATE_STYLE; }, merchantArt, SHIP_SHAPES: Object.keys(SHIPS), CHARACTER_IDS: Object.keys(CHAR) };
 })(typeof window !== 'undefined' ? window : globalThis);

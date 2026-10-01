@@ -8,6 +8,8 @@
     epic: { label: 'Epic', mult: 1.25, weight: 2 },
     legendary: { label: 'Legendary', mult: 1.4, weight: 3 },
     mythic: { label: 'Mythic', mult: 1.55, weight: 4 },
+    // Secret cards never drop from crates: only the Monolith's trials grant them.
+    secret: { label: 'Secret', mult: 1.65, weight: 5 },
   };
 
   // Base stats by role at level 1, 1 star, common rarity.
@@ -645,42 +647,42 @@
 
     // ---------- Secret: earned only in the hidden zone ----------
     {
-      id: 'the_daughter', name: 'The Daughter', kind: 'character', faction: 'light', rarity: 'legendary', role: 'healer', exclusive: true, accent: '#9fe0ff', spd: 150,
+      id: 'the_daughter', name: 'The Daughter', kind: 'character', faction: 'light', rarity: 'secret', role: 'healer', exclusive: true, accent: '#9fe0ff', spd: 150,
       abilities: [
         { name: 'Radiant Touch', cd: 0, target: 'enemy', effects: [dmg(1.0), { ...heal(0.08), on: 'allies' }], desc: 'Deal damage; all allies heal 8%.' },
         { name: 'Light of Mortis', cd: 3, target: 'allAllies', effects: [heal(0.3), cleanse()], desc: 'All allies heal 30% and lose their debuffs.' },
       ],
     },
     {
-      id: 'temple_guardian', name: 'Temple Guardian Prime', kind: 'character', faction: 'light', rarity: 'legendary', role: 'tank', exclusive: true, accent: '#ffd23f', spd: 126,
+      id: 'temple_guardian', name: 'Temple Guardian Prime', kind: 'character', faction: 'light', rarity: 'secret', role: 'tank', exclusive: true, accent: '#ffd23f', spd: 126,
       abilities: [
         { name: 'Pike Sweep', cd: 0, target: 'enemy', effects: [dmg(1.05), { ...buff('defUp', 1), on: 'self' }], desc: 'Deal damage and gain Defense Up.' },
         { name: 'Sworn Vigil', cd: 3, target: 'self', effects: [buff('taunt', 2), buff('defUp', 2), heal(0.15)], desc: 'Gain Taunt and Defense Up, heal 15%.' },
       ],
     },
     {
-      id: 'the_son', name: 'The Son', kind: 'character', faction: 'dark', rarity: 'legendary', role: 'attacker', exclusive: true, accent: '#ff3a3a', spd: 156,
+      id: 'the_son', name: 'The Son', kind: 'character', faction: 'dark', rarity: 'secret', role: 'attacker', exclusive: true, accent: '#ff3a3a', spd: 156,
       abilities: [
         { name: 'Shadow Talon', cd: 0, target: 'enemy', effects: [dmg(1.2), dispel()], desc: 'Deal damage and strip the target\'s buffs.' },
         { name: 'Corruption', cd: 3, target: 'allEnemies', effects: [dmg(0.85), debuff('offDown', 2), debuff('burn', 2, 0.5)], desc: 'Damage all enemies, inflict Offense Down and a 50% chance to Burn.' },
       ],
     },
     {
-      id: 'darth_bane', name: 'Darth Bane', kind: 'character', faction: 'dark', rarity: 'legendary', role: 'attacker', exclusive: true, accent: '#c8323a', spd: 140,
+      id: 'darth_bane', name: 'Darth Bane', kind: 'character', faction: 'dark', rarity: 'secret', role: 'attacker', exclusive: true, accent: '#c8323a', spd: 140,
       abilities: [
         { name: 'Orbalisk Strike', cd: 0, target: 'enemy', effects: [dmg(1.3), { ...heal(0.05), on: 'self' }], desc: 'Deal damage and heal 5%.' },
         { name: 'Thought Bomb', cd: 4, target: 'allEnemies', effects: [execute(1.0, 0.35, 2.2)], desc: 'Damage all enemies; heavy bonus damage to targets under 35% HP.' },
       ],
     },
     {
-      id: 'ebon_hawk', name: 'The Ebon Hawk', kind: 'ship', faction: 'light', rarity: 'legendary', role: 'support', exclusive: true, shape: 'ebonhawk', spd: 156,
+      id: 'ebon_hawk', name: 'The Ebon Hawk', kind: 'ship', faction: 'light', rarity: 'secret', role: 'support', exclusive: true, shape: 'ebonhawk', spd: 156,
       abilities: [
         { name: 'Dorsal Turrets', cd: 0, target: 'enemy', effects: [dmg(0.6, 2)], desc: 'Hit one enemy twice.' },
         { name: 'Evasive Jump', cd: 3, target: 'allAllies', effects: [cleanse(), buff('defUp', 2), tm(20)], desc: 'All allies lose debuffs, gain Defense Up and 20% Turn Meter.' },
       ],
     },
     {
-      id: 'sith_fury', name: 'Sith Fury Interceptor', kind: 'ship', faction: 'dark', rarity: 'legendary', role: 'attacker', exclusive: true, shape: 'sithfury', spd: 158,
+      id: 'sith_fury', name: 'Sith Fury Interceptor', kind: 'ship', faction: 'dark', rarity: 'secret', role: 'attacker', exclusive: true, shape: 'sithfury', spd: 158,
       abilities: [
         { name: 'Fury Cannons', cd: 0, target: 'enemy', effects: [dmg(1.2)], desc: 'Deal damage to one enemy.' },
         { name: 'Wing Blades', cd: 3, target: 'allEnemies', effects: [dmg(0.8), dispel()], desc: 'Damage all enemies and strip their buffs.' },
@@ -1056,7 +1058,7 @@
   const MAX_STARS = 7;
   // Shards needed to go from star N to N+1 (index 0 = 1★ -> 2★).
   const STAR_COSTS = [10, 25, 50, 80, 120, 170];
-  const DUPLICATE_SHARDS = { common: 5, rare: 8, epic: 12, legendary: 20, mythic: 30 };
+  const DUPLICATE_SHARDS = { common: 5, rare: 8, epic: 12, legendary: 20, mythic: 30, secret: 40 };
 
   function levelCost(level) {
     return 100 * level + 20 * level * level;

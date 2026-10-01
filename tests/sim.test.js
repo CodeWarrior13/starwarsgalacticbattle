@@ -487,4 +487,21 @@ test('secret trials unlock with level, campaign progress and the earlier trial',
   assert.ok(levels.every((l) => l >= 9 && l <= 30), 'trial enemy levels stay in range');
 });
 
+test('secret cards have their own rarity and never come from crates, shops or bosses', () => {
+  const secret = D.UNITS.filter((u) => u.exclusive);
+  assert.strictEqual(secret.length, 6);
+  for (const u of secret) assert.strictEqual(u.rarity, 'secret', `${u.id} is Secret rarity`);
+  assert.ok(D.RARITIES.secret.weight > D.RARITIES.mythic.weight, 'Secret ranks above Mythic');
+  for (const pack of D.PACKS) assert.ok(!('secret' in pack.odds), `${pack.id} has no Secret odds`);
+  Player.reset();
+  Object.assign(Player.state, { credits: 1e9, crystals: 1e9, aurodium: 1e9 });
+  const seen = new Set();
+  for (const pack of D.PACKS) for (let i = 0; i < 300; i++) (Player.openPack(pack.id, seeded(i * 7 + pack.id.length)) || []).forEach((r) => seen.add(r.id));
+  for (let i = 0; i < 200; i++) {
+    Player.restock(Date.now() + i * 1e7, seeded(i));
+    (Player.state.market.items || []).forEach((it) => seen.add(it.id));
+  }
+  for (const u of secret) assert.ok(!seen.has(u.id), `${u.id} never drops outside the Monolith`);
+});
+
 console.log(`\n${passed} tests passed`);

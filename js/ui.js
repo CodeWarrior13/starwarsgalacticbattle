@@ -1489,6 +1489,8 @@
     'The Hutts take a cut. Everyone takes a cut.',
     'Feeling lucky? The Sabacc table is always open.',
   ];
+  const PACK_COLOR = { recruit: '#ff8a3a', squadron: '#ff4a52', holocron: '#5ab4ff', strongbox: '#f2b632' };
+  const PACK_ORIGIN = { recruit: 'Rebel supply drop', squadron: 'Imperial cargo', holocron: 'Jedi holocron vault', strongbox: 'Hutt treasure' };
   const oddsHtml = (o) => {
     const total = Object.values(o).reduce((a, b) => a + b, 0);
     const pct = (k) => `${((o[k] / total) * 100).toFixed(o[k] / total < 0.1 ? 1 : 0)}%`;
@@ -1708,15 +1710,30 @@
 
       <h2 class="section-title">Crates</h2>
       <div class="shop-grid">
-        ${D.PACKS.map((p) => `
-          <div class="pack">
-            <div class="pack-art">${Art.crateArt(p.id)}</div>
-            <h3>${p.name}</h3>
-            <p>${p.desc}</p>
-            ${oddsHtml(Player.effectiveOdds(p))}
-            ${luck.charmCrates && p.id !== 'strongbox' ? '<span class="tag glow">Chance Cubes active</span>' : ''}
-            <button class="btn btn-primary" type="button" data-pack="${p.id}" ${Player.canAfford(p.cost) ? '' : 'disabled'}>Open · ${costLabel(p.cost)}</button>
-          </div>`).join('')}
+        ${D.PACKS.map((p) => {
+          const odds = Player.effectiveOdds(p);
+          const total = Object.values(odds).reduce((a, b) => a + b, 0);
+          const kicker = `${PACK_ORIGIN[p.id] || ''} · ${p.kind === 'character' ? 'Heroes' : p.kind === 'ship' ? 'Ships' : 'All'}`;
+          return `
+          <div class="pack pack-${p.id}" style="--pc:${PACK_COLOR[p.id] || '#5ab4ff'}">
+            <div class="pack-stage">
+              <i class="pack-beam"></i><i class="pack-ring"></i>
+              ${Array.from({ length: 8 }, (_, k) => `<i class="pack-mote" style="--x:${10 + k * 11}%;--d:${(k * 0.37).toFixed(2)}s"></i>`).join('')}
+              <div class="pack-art">${Art.crateArt(p.id)}</div>
+              <i class="pack-floor"></i>
+              ${p.guarantee ? `<span class="pack-badge">Guaranteed ${esc(D.RARITIES[p.guarantee].label)}</span>` : ''}
+            </div>
+            <div class="pack-info">
+              <span class="pack-kicker">${kicker}</span>
+              <h3>${p.name}</h3>
+              <p>${p.desc}</p>
+              <div class="odds-bar" aria-hidden="true">${Object.entries(odds).filter(([, v]) => v > 0).map(([k, v]) => `<i class="ob-${k}" style="flex:${v}" title="${D.RARITIES[k].label} ${((v / total) * 100).toFixed(1)}%"></i>`).join('')}</div>
+              ${oddsHtml(odds)}
+              ${luck.charmCrates && p.id !== 'strongbox' ? '<span class="tag glow">Chance Cubes active</span>' : ''}
+              <button class="btn btn-primary pack-open" type="button" data-pack="${p.id}" ${Player.canAfford(p.cost) ? '' : 'disabled'}>Open · ${costLabel(p.cost)}</button>
+            </div>
+          </div>`;
+        }).join('')}
       </div>
 
       <div class="section-head">
@@ -2142,8 +2159,8 @@
   // The crate's build-up scales with the best card inside, and every card's
   // reveal scales with its own rarity, up to full-screen moments for
   // Legendary and Mythic pulls.
-  const R_ORDER = { common: 0, rare: 1, epic: 2, legendary: 3, mythic: 4 };
-  const R_COLOR = { common: '#9aa8bc', rare: '#4fa3ff', epic: '#b77bff', legendary: '#ffb938', mythic: '#ff2a5a' };
+  const R_ORDER = { common: 0, rare: 1, epic: 2, legendary: 3, mythic: 4, secret: 4 };
+  const R_COLOR = { common: '#9aa8bc', rare: '#4fa3ff', epic: '#b77bff', legendary: '#ffb938', mythic: '#ff2a5a', secret: '#e8f0ff' };
 
   function crateCinematic(packId, best) {
     return new Promise((resolve) => {
@@ -2157,6 +2174,7 @@
         <div class="cc-rays"></div>
         <div class="cc-glow"></div>
         <div class="cc-crate">${Art.crateArt(packId)}<i class="cc-crack c1"></i><i class="cc-crack c2"></i><i class="cc-crack c3"></i></div>
+        <i class="cc-ring"></i>
         <div class="cc-label">${['Cracking the seal…', 'Something shines…', 'Rare energy detected…', 'LEGENDARY SIGNAL', 'Cracking the seal…'][tier]}</div>
         <span class="pc-skip">Tap to skip</span>
       </div>`);
@@ -2250,7 +2268,7 @@
       const tier = R_ORDER[rarity];
       const mythic = rarity === 'mythic';
       // Exclusive cards from the Monolith get the longest show of all.
-      const ex = !!opts.exclusive;
+      const ex = !!opts.exclusive || rarity === 'secret';
       const storm = mythic || ex;
       const ship = def.kind === 'ship';
       const planet = homeworldOf(def);

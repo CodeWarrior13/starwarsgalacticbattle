@@ -9,7 +9,7 @@
   const TAU = Math.PI * 2;
   const rand = (a, b) => a + Math.random() * (b - a);
   const pick = (list) => list[Math.floor(Math.random() * list.length)];
-  const TIER = { common: 0, rare: 1, epic: 2, legendary: 3, mythic: 4 };
+  const TIER = { common: 0, rare: 1, epic: 2, legendary: 3, mythic: 4, secret: 4 };
   const reduced = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   // move / prop / impact / colour (+ options). Ally ultimates use ally moves.
