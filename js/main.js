@@ -121,12 +121,12 @@
   const TABS = ['home', 'collection', 'market'];
   function swipeTabs() {
     const screen = document.getElementById('screen');
-    const NO_SWIPE = 'input, select, textarea, .modal-backdrop, .rank-road, .seg, .hub-modes, .planet-drop, .pd-stages, .showcase, .reel, [data-noswipe]';
-    let sx = 0, sy = 0, dx = 0, t0 = 0, mode = null;
+    const NO_SWIPE = 'input, select, textarea, .modal-backdrop, .rank-road, .planet-drop, .pd-stages, .showcase, .reel, [data-noswipe]';
+    let sx = 0, sy = 0, dx = 0, t0 = 0, mode = null, busy = false;
     const idx = () => TABS.indexOf(App.current === 'campaign' ? 'home' : App.current);
     screen.addEventListener('touchstart', (e) => {
       mode = null;
-      if (e.touches.length !== 1 || App.battleActive || idx() < 0 || e.target.closest(NO_SWIPE) || document.querySelector('.modal-backdrop, .walkout, .crate-cine, .secret-load, .planet-cine')) return;
+      if (busy || e.touches.length !== 1 || App.battleActive || idx() < 0 || e.target.closest(NO_SWIPE) || document.querySelector('.modal-backdrop, .walkout, .crate-cine, .secret-load, .planet-cine')) return;
       sx = e.touches[0].clientX; sy = e.touches[0].clientY; dx = 0; t0 = performance.now(); mode = 'wait';
     }, { passive: true });
     screen.addEventListener('touchmove', (e) => {
@@ -138,6 +138,7 @@
         mode = Math.abs(x) > Math.abs(y) * 1.3 ? 'swipe' : 'scroll';
         if (mode === 'scroll') return;
         screen.classList.add('swiping');
+        screen.style.transition = 'none';
       }
       const i = idx();
       // Rubber-band at the first and last tab.
@@ -154,6 +155,9 @@
       const dir = dx < 0 ? 1 : -1;
       const target = TABS[i + dir];
       if (target && (Math.abs(dx) > innerWidth * 0.25 || (fast && Math.abs(dx) > 40))) {
+        // Ignore new drags until this slide has fully landed.
+        busy = true;
+        setTimeout(() => { busy = false; }, 1200);
         screen.style.transition = 'transform .16s ease-in, opacity .16s';
         screen.style.transform = `translateX(${-dir * innerWidth * 0.6}px)`;
         screen.style.opacity = '0';
@@ -165,14 +169,16 @@
             screen.style.transition = 'transform .24s cubic-bezier(.2,.9,.3,1), opacity .24s';
             screen.style.transform = '';
             screen.style.opacity = '';
+            setTimeout(() => { screen.style.transition = ''; busy = false; }, 280);
           }));
         }, 160);
       } else {
         screen.style.transition = 'transform .25s cubic-bezier(.2,.9,.3,1.2), opacity .25s';
         screen.style.transform = '';
         screen.style.opacity = '';
+        setTimeout(() => { if (!mode) screen.style.transition = ''; }, 260);
       }
-      setTimeout(() => { screen.style.transition = ''; }, 450);
+
     };
     screen.addEventListener('touchend', end);
     screen.addEventListener('touchcancel', end);

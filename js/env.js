@@ -1934,6 +1934,8 @@
       this.dpr = Math.min(1.5, window.devicePixelRatio || 1);
       this.canvas.width = Math.round(this.w * this.dpr);
       this.canvas.height = Math.round(this.h * this.dpr);
+      // Narrow screens pull the planets in from the edges so labels fit.
+      this.inset = (parseFloat(getComputedStyle(this.canvas).getPropertyValue('--map-inset')) || 0) / 100;
     }
 
     frame(now) {
@@ -1988,7 +1990,7 @@
       }
       ctx.globalAlpha = 1;
       const st = this.getState();
-      const pos = this.planets.map((p) => ({ p, x: (p.map.x / 100) * w, y: (p.map.y / 100) * h }));
+      const pos = this.planets.map((p) => ({ p, x: (this.inset + (p.map.x / 100) * (1 - 2 * this.inset)) * w, y: (p.map.y / 100) * h }));
       // Hyperspace lanes.
       for (let i = 1; i < pos.length; i++) {
         const a = pos[i - 1];

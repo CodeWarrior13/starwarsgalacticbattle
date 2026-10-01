@@ -38,7 +38,7 @@ npm run build   # writes dist/galactic-card-battles.html
 - **Premium feel.** Every button glints on hover, squashes and ripples on press, and primary actions throw sparks; currencies roll up to new totals.
 - **Auto-build.** Builds a balanced squad: one tank, one healer and one support at most, then damage dealers, favoring units that complete synergies.
 - **Sound and music.** Synthesized blasters, sabers, explosions, lightning, crate rumbles, reveal stings and fanfares, plus two original cinematic themes: a slow, dark galaxy theme and a war-drum battle theme, with strings, low brass and a big hall reverb. The settings button in the top bar holds volumes, your own music files (which stay in your browser) and the progress reset.
-- **Phones, portrait or landscape.** On a phone the tabs move to a bottom bar (a side rail in landscape) and you can swipe left and right between Galaxy, Collection and Black Market. Landscape battles put the battlefield on the left and your abilities on the right.
+- **Phones, portrait or landscape.** On a phone the tabs move to a starship-console bar (a side rail in landscape) with hexagonal holo buttons and a lightsaber that slides to the active tab (blue for Galaxy, green for Collection, red for the Black Market) and you can swipe left and right between Galaxy, Collection and Black Market. Landscape battles put the battlefield on the left and your abilities on the right.
 - **Star Wars icons.** Every icon is a custom drawing (crossed sabers, X-wings, the Death Star, the Rebel starbird, the Imperial cog, trooper helmets) instead of emoji.
 - **PC controls.** 1–5 pick abilities, R picks the ultimate, ←/→ move the target, Enter attacks, A toggles auto, F changes speed, ? shows help.
 

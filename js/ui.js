@@ -205,6 +205,10 @@
       container.innerHTML = '';
       container.appendChild(Screens[screen](App.params));
       updateWallet();
+      // Slide the console's saber under the active tab.
+      const navEl = $('.main-nav');
+      const ti = ['home', 'collection', 'market'].indexOf(['squad', 'campaign', 'battle', 'secret'].includes(screen) ? 'home' : screen);
+      if (navEl && ti >= 0) { navEl.style.setProperty('--ti', ti); navEl.dataset.tab = ti; }
       const mk = $('.main-nav [data-nav="market"]');
       if (mk) mk.classList.toggle('has-dot', !Player.dailyStatus().claimed);
       if (!opts.keepScroll) window.scrollTo({ top: 0 });
@@ -297,7 +301,7 @@
         ${D.PLANETS.map((p) => {
           const unlocked = Player.planetUnlocked(p.id);
           const dim = mode === 'boss' && !planetBosses(p).length && !Player.planetComplete(p.id);
-          return `<button class="map-planet ${unlocked ? '' : 'locked'} ${dim ? 'dim' : ''} ${p.id === current.id ? 'selected' : ''} ${Player.planetComplete(p.id) ? 'done' : ''}" type="button" data-planet="${p.id}" style="left:${p.map.x}%;top:${p.map.y}%;--pc:${p.color || '#ffd23f'}" ${unlocked ? '' : 'disabled'} aria-label="${esc(p.name)}">
+          return `<button class="map-planet ${unlocked ? '' : 'locked'} ${dim ? 'dim' : ''} ${p.id === current.id ? 'selected' : ''} ${Player.planetComplete(p.id) ? 'done' : ''}" type="button" data-planet="${p.id}" style="left:calc(var(--map-inset, 0%) + (100% - 2 * var(--map-inset, 0%)) * ${p.map.x / 100});top:${p.map.y}%;--pc:${p.color || '#ffd23f'}" ${unlocked ? '' : 'disabled'} aria-label="${esc(p.name)}">
             <span class="map-label">${esc(p.name)}<small>${esc(mapLabel(p, mode))}</small></span>
           </button>`;
         }).join('')}

@@ -2535,3 +2535,67 @@ body:has(.view.hub) .screen { padding-bottom: 16px; }
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 .dr-item { font-size: clamp(13px, 1.7vw, 18px); } .dc-day small { margin-bottom: 3px; }
+
+/* ---------- Galaxy map: keep edge planets and labels on narrow screens ---------- */
+@media (max-width: 760px) and (orientation: portrait) { .home-galaxy { --map-inset: 12%; } }
+
+/* ---------- Phone tab bar: a starship console of our own ---------- */
+.nav-saber { display: none; }
+.main-nav { --sc: #4aa8ff; }
+.main-nav[data-tab="1"] { --sc: #52e08a; }
+.main-nav[data-tab="2"] { --sc: #ff3a46; }
+@media (max-width: 760px) and (orientation: portrait), (max-height: 520px) and (orientation: landscape) {
+  .main-nav {
+    background:
+      linear-gradient(90deg, transparent calc(33.333% - 1px), rgba(255, 255, 255, 0.06) calc(33.333% - 1px) 33.333%, transparent 33.333% calc(66.666% - 1px), rgba(255, 255, 255, 0.06) calc(66.666% - 1px) 66.666%, transparent 66.666%),
+      repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.015) 0 6px, transparent 6px 12px),
+      linear-gradient(180deg, #1b2232, #0a0e17 70%);
+    border: 0; box-shadow: 0 -8px 26px rgba(0, 0, 0, 0.7);
+  }
+  .main-nav button { position: relative; color: #8a97ad; background: none !important; box-shadow: none !important; transform: none !important; border: 0; }
+  .main-nav button .nav-ico {
+    width: 44px; height: 38px; display: grid; place-items: center; position: relative;
+    clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%);
+    background: linear-gradient(180deg, #273149, #121826); transition: background 0.3s, color 0.3s;
+  }
+  .main-nav button .nav-ico::after { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.12) 0 1px, transparent 1px 3px); opacity: 0; }
+  .main-nav button .nav-ico .swi { width: 22px; height: 22px; }
+  .main-nav button.active { color: var(--sc); }
+  .main-nav button.active .nav-ico { color: #fff; background: radial-gradient(circle at 50% 55%, var(--sc), color-mix(in srgb, var(--sc) 35%, #0a0e17) 70%); }
+  .main-nav button.active .nav-ico::after { opacity: 1; animation: holo-scan 2.4s linear infinite; }
+  .main-nav button.active .nav-ico .swi { filter: drop-shadow(0 0 4px #fff) drop-shadow(0 0 10px var(--sc)); animation: holo-flicker 3.2s steps(1) infinite; }
+  .main-nav button.active .nav-lbl { text-shadow: 0 0 8px var(--sc); }
+  .main-nav button:active .nav-ico { transform: scale(0.9); }
+  .main-nav button.has-dot::after { top: 2px; right: calc(50% - 26px); }
+}
+@keyframes holo-scan { from { background-position: 0 0; } to { background-position: 0 24px; } }
+@keyframes holo-flicker { 0%, 100% { opacity: 1; } 47% { opacity: 0.55; } 48% { opacity: 1; } 82% { opacity: 0.8; } 83% { opacity: 1; } }
+@media (max-width: 760px) and (orientation: portrait) {
+  .main-nav {
+    clip-path: polygon(0 12px, 18px 0, calc(100% - 18px) 0, 100% 12px, 100% 100%, 0 100%);
+    padding-top: 12px;
+  }
+  .main-nav::before { content: ''; position: absolute; left: 18px; right: 18px; top: 0; height: 1px; background: linear-gradient(90deg, transparent, rgba(255, 210, 63, 0.5), transparent); }
+  /* A lightsaber slides along the top edge to the active tab, and takes its colour. */
+  .nav-saber {
+    display: block; position: absolute; top: 3px; height: 3px; border-radius: 2px;
+    left: calc(var(--ti, 0) * 33.333% + 33.333% * 0.22); width: calc(33.333% * 0.56);
+    background: #fff; box-shadow: 0 0 4px var(--sc), 0 0 10px var(--sc), 0 0 18px var(--sc);
+    transition: left 0.38s cubic-bezier(.2,.9,.3,1.15), box-shadow 0.3s; animation: saber-hum 0.12s ease-in-out infinite alternate;
+  }
+  .nav-saber::before { content: ''; position: absolute; left: -12px; top: -1px; width: 12px; height: 5px; border-radius: 1px; background: linear-gradient(90deg, #555c68, #c9ced6 40%, #3a404a); }
+  .main-nav button { padding-top: 8px; }
+}
+@keyframes saber-hum { to { opacity: 0.85; } }
+@media (max-height: 520px) and (orientation: landscape) {
+  .main-nav { clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 12px, 100% calc(100% - 12px), calc(100% - 10px) 100%, 0 100%); }
+  .main-nav button .nav-ico { width: 40px; height: 34px; }
+  /* In the side rail the blade lights up beside the active tab. */
+  .main-nav button.active::before { content: ''; position: absolute; right: -6px; top: 18%; bottom: 18%; width: 3px; border-radius: 2px; background: #fff; box-shadow: 0 0 4px var(--sc), 0 0 10px var(--sc), 0 0 18px var(--sc); animation: saber-on 0.3s ease-out, saber-hum 0.12s ease-in-out infinite alternate; }
+}
+@keyframes saber-on { from { transform: scaleY(0); } }
+html, body { overflow-x: clip; }
+@media (max-height: 520px) and (orientation: landscape) {
+  .main-nav { background: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.015) 0 6px, transparent 6px 12px), linear-gradient(90deg, #0a0e17, #1b2232); }
+  .main-nav button.active::before { right: 1px; }
+}
