@@ -645,6 +645,71 @@
       ],
     },
 
+    // ---------- Wave 8: heroes of the Clone Wars and beyond ----------
+    {
+      id: 'cal_kestis', name: 'Cal Kestis', kind: 'character', faction: 'light', rarity: 'epic', role: 'attacker', accent: '#ff8a2a', spd: 150,
+      abilities: [
+        { name: 'Double-Bladed Flurry', cd: 0, target: 'enemy', effects: [dmg(0.6, 2)], desc: 'Strike one enemy twice.' },
+        { name: 'Force Slow', cd: 3, target: 'enemy', effects: [dmg(1.2), debuff('offDown', 2), tm(-30)], desc: 'Deal damage, inflict Offense Down and drain 30% Turn Meter.' },
+      ],
+    },
+    {
+      id: 'bo_katan', name: 'Bo-Katan Kryze', kind: 'character', faction: 'light', rarity: 'legendary', role: 'attacker', accent: '#5ab4ff', spd: 152,
+      abilities: [
+        { name: 'Wrist Blasters', cd: 0, target: 'enemy', effects: [dmg(0.65, 2)], desc: 'Hit one enemy twice.' },
+        { name: 'Jetpack Assault', cd: 3, target: 'allEnemies', effects: [dmg(0.85), debuff('defDown', 2, 0.6)], desc: 'Damage all enemies with a 60% chance of Defense Down.' },
+      ],
+    },
+    {
+      id: 'sabine', name: 'Sabine Wren', kind: 'character', faction: 'light', rarity: 'rare', role: 'attacker', accent: '#ff5ac8', spd: 148,
+      abilities: [
+        { name: 'Twin Blasters', cd: 0, target: 'enemy', effects: [dmg(0.55, 2)], desc: 'Hit one enemy twice.' },
+        { name: 'Paint Bomb', cd: 3, target: 'allEnemies', effects: [dmg(0.7), debuff('burn', 2, 0.5)], desc: 'Damage all enemies with a 50% chance to Burn.' },
+      ],
+    },
+    {
+      id: 'captain_rex', name: 'Captain Rex', kind: 'character', faction: 'light', rarity: 'epic', role: 'tank', accent: '#3d6fd6', spd: 128,
+      abilities: [
+        { name: 'Dual DC-17s', cd: 0, target: 'enemy', effects: [dmg(0.55, 2)], desc: 'Hit one enemy twice.' },
+        { name: 'Hold the Line', cd: 3, target: 'self', effects: [buff('taunt', 2), buff('defUp', 2), { ...buff('offUp', 1), on: 'allies' }], desc: 'Gain Taunt and Defense Up; all allies gain Offense Up.' },
+      ],
+    },
+    {
+      id: 'hondo', name: 'Hondo Ohnaka', kind: 'character', faction: 'dark', rarity: 'rare', role: 'support', accent: '#ffd23f', spd: 140,
+      abilities: [
+        { name: 'Pirate\'s Pistol', cd: 0, target: 'enemy', effects: [dmg(1.0)], desc: 'Deal damage to one enemy.' },
+        { name: 'A Better Deal', cd: 3, target: 'allAllies', effects: [buff('offUp', 2), tm(20)], desc: 'All allies gain Offense Up and 20% Turn Meter.' },
+      ],
+    },
+    {
+      id: 'savage_opress', name: 'Savage Opress', kind: 'character', faction: 'dark', rarity: 'epic', role: 'tank', accent: '#c8a040', spd: 124,
+      abilities: [
+        { name: 'Brute Strike', cd: 0, target: 'enemy', effects: [dmg(1.1), debuff('stun', 1, 0.25)], desc: 'Deal damage with a 25% chance to Stun.' },
+        { name: 'Nightbrother Rage', cd: 3, target: 'self', effects: [buff('taunt', 2), buff('offUp', 2), heal(0.12)], desc: 'Gain Taunt and Offense Up, heal 12%.' },
+      ],
+    },
+    {
+      id: 'u_wing', name: 'U-Wing', kind: 'ship', faction: 'light', rarity: 'rare', role: 'support', shape: 'uwing', spd: 140,
+      abilities: [
+        { name: 'Ion Cannons', cd: 0, target: 'enemy', effects: [dmg(1.0), debuff('offDown', 2, 0.3)], desc: 'Deal damage with a 30% chance of Offense Down.' },
+        { name: 'Drop Commandos', cd: 3, target: 'allAllies', effects: [buff('offUp', 2), tm(15)], desc: 'All allies gain Offense Up and 15% Turn Meter.' },
+      ],
+    },
+    {
+      id: 'upsilon_shuttle', name: 'Upsilon Command Shuttle', kind: 'ship', faction: 'dark', rarity: 'epic', role: 'tank', shape: 'upsilon', spd: 118,
+      abilities: [
+        { name: 'Laser Cannons', cd: 0, target: 'enemy', effects: [dmg(0.9)], desc: 'Deal damage to one enemy.' },
+        { name: 'Wing Shields', cd: 3, target: 'self', effects: [buff('taunt', 2), buff('defUp', 2)], desc: 'Gain Taunt and Defense Up.' },
+      ],
+    },
+    {
+      id: 'hounds_tooth', name: 'Hound\'s Tooth', kind: 'ship', faction: 'dark', rarity: 'epic', role: 'attacker', shape: 'houndstooth', spd: 144,
+      abilities: [
+        { name: 'Concussion Missile', cd: 0, target: 'enemy', effects: [dmg(1.15), debuff('burn', 2, 0.3)], desc: 'Deal damage with a 30% chance to Burn.' },
+        { name: 'Trandoshan Hunt', cd: 3, target: 'enemy', effects: [execute(1.3, 0.4, 2)], desc: 'Deal damage; double damage against targets under 40% HP.' },
+      ],
+    },
+
     // ---------- Secret: earned only in the hidden zone ----------
     {
       id: 'the_daughter', name: 'The Daughter', kind: 'character', faction: 'light', rarity: 'secret', role: 'healer', exclusive: true, accent: '#9fe0ff', spd: 150,
@@ -802,6 +867,15 @@
     darth_bane: U('Rule of Two', 'allEnemies', [execute(1.8, 0.4, 2), debuff('burn', 2)], 'Heavy damage to all enemies, doubled under 40% HP, and Burn.', 'One to embody the power, the other to crave it.'),
     ebon_hawk: U('Hawk\'s Escape', 'allAllies', [revive(0.4), heal(0.3), buff('offUp', 2), tm(30)], 'Pull a fallen ally back at 40% HP; all allies heal 30%, gain Offense Up and 30% Turn Meter.', 'Fastest hunk of junk in the Old Republic.'),
     sith_fury: U('Imperial Talon', 'allEnemies', [execute(1.6, 0.35, 2), dispel(), debuff('offDown', 2)], 'Strip every enemy buff and strike hard, doubled under 35% HP; Offense Down.', 'For the Sith Empire.'),
+    cal_kestis: U('Echoes of the Order', 'allEnemies', [dmg(1.6), debuff('stun', 1, 0.35), { ...tm(30), on: 'self' }], 'Spin the split saber through every enemy: heavy damage, 35% Stun chance; gain 30% Turn Meter.', 'The Order lives on in me.'),
+    bo_katan: U('Darksaber\'s Claim', 'enemy', [execute(2.8, 0.5, 1.6), { ...buff('offUp', 2), on: 'allies' }], 'A Darksaber strike that hits far harder below 50% HP; all allies gain Offense Up.', 'Mandalore will rise again.'),
+    sabine: U('Masterpiece', 'allEnemies', [dmg(1.45), debuff('burn', 2), debuff('offDown', 2, 0.5)], 'Paint bombs blanket every enemy: Burn and a 50% chance of Offense Down.', 'Art is a weapon too.'),
+    captain_rex: U('501st, With Me', 'allAllies', [heal(0.25), buff('defUp', 3), tm(25), { ...buff('taunt', 3), on: 'self' }], 'All allies heal 25%, gain Defense Up and 25% Turn Meter; Rex gains Taunt.', 'Experience outranks everything.'),
+    hondo: U('Ohnaka Gang', 'allEnemies', [dmg(1.1), dispel(), { ...tm(35), on: 'allies' }], 'The pirates raid every enemy and strip their buffs; all allies gain 35% Turn Meter.', 'Business is business, my friend.'),
+    savage_opress: U('Unstoppable Brother', 'allEnemies', [dmg(1.5), debuff('stun', 1, 0.4), { ...buff('taunt', 2), on: 'self' }, { ...buff('defUp', 2), on: 'self' }], 'A brutal charge through every enemy with a 40% Stun chance; gain Taunt and Defense Up.', 'I will crush you.'),
+    u_wing: U('Rogue Insertion', 'allAllies', [buff('offUp', 3), buff('defUp', 2), tm(45)], 'Commandos hit the ground: all allies gain Offense Up, Defense Up and 45% Turn Meter.', 'Rebellions are built on hope.'),
+    upsilon_shuttle: U('Supreme Escort', 'self', [buff('taunt', 3), buff('defUp', 3), heal(0.3), { ...buff('defUp', 2), on: 'allies' }], 'Wings unfold into a shield: Taunt, Defense Up and 30% repair; all allies gain Defense Up.', 'Prepare my shuttle.'),
+    hounds_tooth: U('Bossk\'s Bounty', 'allEnemies', [execute(1.5, 0.35, 2), debuff('burn', 2)], 'A missile barrage on every enemy, doubled under 35% HP, and Burn.', 'The hunt is on.'),
     darth_revan: U('Mandalorian Wars', 'allEnemies', [dmg(2.3), debuff('defDown', 2), debuff('stun', 1, 0.5)], 'Twin blades carve every enemy: heavy damage, Defense Down and a 50% chance to Stun.', 'I am Revan. I have conquered death itself.'),
     starkiller: U('Unleashed', 'allEnemies', [dmg(2.4), debuff('stun', 1, 0.6)], 'Pull a Star Destroyer out of the sky onto every enemy: devastating damage, 60% Stun chance.', 'I will be your enemy no longer.'),
     master_luke: U('Binary Sunset', 'allAllies', [heal(0.45), buff('offUp', 3), buff('defUp', 3), tm(60)], 'All allies heal 45%, gain Offense Up, Defense Up and 60% Turn Meter.', 'No one\'s ever really gone.'),
@@ -969,6 +1043,15 @@
     boss_guardian: 'An armored sentinel who has never once stepped aside from the door he guards.',
     boss_son: 'Pure darkness wearing a face. He strips away every protection before he strikes.',
     boss_bane: 'The ancient Sith Lord who forged the Rule of Two, still waiting for a worthy apprentice.',
+    cal_kestis: 'A Padawan who survived Order 66 hiding as a scrapper, now rebuilding the Jedi way with BD-1 at his side.',
+    bo_katan: 'Heir to the clans of Mandalore. A born commander who has fought on every side to win her world back.',
+    sabine: 'Mandalorian demolitions artist of the Ghost crew. Her armor is her canvas and her bombs are her signature.',
+    captain_rex: 'Captain of the 501st Legion. Loyal to his brothers first, and one of the finest soldiers the clones ever produced.',
+    hondo: 'Pirate captain of the Ohnaka Gang. Always smiling, always scheming, always one step from his next deal.',
+    savage_opress: 'A Nightbrother transformed by Nightsister magic into a towering, brutal apprentice of the dark side.',
+    u_wing: 'A Rebel troop carrier that drops commandos into the hottest zones, wings swept forward for the run in.',
+    upsilon_shuttle: 'A command shuttle whose towering wings fold down into a black shield around its passengers.',
+    hounds_tooth: 'Bossk\'s heavily armed transport, rigged to hunt down and hold the galaxy\'s most valuable bounties.',
     arc_170: 'A heavy clone fighter with a rear tail gunner. It tears enemy shields and buffs apart.',
     delta7: 'A sleek Jedi interceptor flown with an astromech wired into its wing.',
     tie_defender: 'The Empire\'s elite fighter: shields, hyperdrive and six cannons that finish off the wounded.',
@@ -1118,6 +1201,8 @@
     anakin: ['jedi', 'republic'], qui_gon: ['jedi', 'republic'], padme: ['republic', 'leader'], lando: ['scoundrel', 'rebel', 'leader'],
     jango_fett: ['bounty', 'mandalorian'], asajj_ventress: ['sith', 'nightsister'], cad_bane: ['bounty', 'scoundrel'], moff_gideon: ['empire', 'leader'],
     n1_starfighter: ['fighter', 'republic'], sith_infiltrator: ['fighter', 'sith'],
+    cal_kestis: ['jedi', 'scoundrel'], bo_katan: ['mandalorian', 'leader'], sabine: ['mandalorian', 'rebel'], captain_rex: ['trooper', 'republic', 'leader'],
+    hondo: ['scoundrel', 'leader'], savage_opress: ['sith', 'nightsister'], u_wing: ['gunship', 'rebel'], upsilon_shuttle: ['gunship', 'empire'], hounds_tooth: ['gunship', 'bounty'],
     arc_170: ['fighter', 'republic'], delta7: ['fighter', 'jedi', 'republic'], tie_defender: ['fighter', 'empire'], tie_silencer: ['fighter', 'sith'],
     the_daughter: ['jedi', 'leader'], temple_guardian: ['jedi', 'republic'], the_son: ['sith'], darth_bane: ['sith', 'leader'], ebon_hawk: ['gunship', 'jedi', 'scoundrel'], sith_fury: ['fighter', 'sith'],
     darth_revan: ['sith', 'leader'], starkiller: ['sith'], master_luke: ['jedi', 'rebel', 'leader'], ghost: ['rebel', 'fighter'],
@@ -1142,7 +1227,7 @@
     ranged: { label: 'Ranged', icon: '➹' }, support: { label: 'Support', icon: '✦' }, force: { label: 'Force User', icon: '✧' },
     droid: { label: 'Droid', icon: '⚙' }, starfighter: { label: 'Starfighter', icon: '➶' }, bomber: { label: 'Bomber', icon: '✹' }, gunship: { label: 'Gunship', icon: '⛭' },
   };
-  const MELEE = ['ewok_warrior', 'tusken_raider', 'obi_wan', 'luke', 'yoda', 'rey', 'darth_maul', 'kylo_ren', 'count_dooku', 'vader', 'ahsoka', 'grievous', 'mace_windu', 'magnaguard', 'k2so', 'hunter', 'grand_inquisitor', 'second_sister', 'fifth_brother', 'seventh_sister', 'eighth_brother', 'darth_revan', 'starkiller', 'master_luke', 'the_daughter', 'temple_guardian', 'the_son', 'darth_bane', 'boss_daughter', 'boss_guardian', 'boss_son', 'boss_bane', 'anakin', 'qui_gon', 'asajj_ventress', 'moff_gideon', 'rancor', 'krayt_dragon', 'lord_vader'];
+  const MELEE = ['cal_kestis', 'bo_katan', 'savage_opress', 'ewok_warrior', 'tusken_raider', 'obi_wan', 'luke', 'yoda', 'rey', 'darth_maul', 'kylo_ren', 'count_dooku', 'vader', 'ahsoka', 'grievous', 'mace_windu', 'magnaguard', 'k2so', 'hunter', 'grand_inquisitor', 'second_sister', 'fifth_brother', 'seventh_sister', 'eighth_brother', 'darth_revan', 'starkiller', 'master_luke', 'the_daughter', 'temple_guardian', 'the_son', 'darth_bane', 'boss_daughter', 'boss_guardian', 'boss_son', 'boss_bane', 'anakin', 'qui_gon', 'asajj_ventress', 'moff_gideon', 'rancor', 'krayt_dragon', 'lord_vader'];
 
   function classesOf(def) {
     const tr = TRAITS[def.id] || [];
@@ -1173,6 +1258,7 @@
     c3po: 'rally', bb8: 'dash', k2so: 'leap', chopper: 'heal', ig88: 'rockets', droideka: 'bulwark', b2_droid: 'barrage', magnaguard: 'dash', ig11: 'barrage', vulture_droid: 'strafe',
     rebel_medic: 'heal', two_onebee: 'heal', nightsister_acolyte: 'heal', barriss: 'heal', talzin: 'lightning', hunter: 'dash', wrecker: 'rockets', tech: 'rally', crosshair: 'snipe', echo: 'lightning',
     grand_inquisitor: 'saberstorm', second_sister: 'spinsaber', fifth_brother: 'leap', seventh_sister: 'rockets', eighth_brother: 'spinsaber',
+    cal_kestis: 'spinsaber', bo_katan: 'dash', sabine: 'rockets', captain_rex: 'bulwark', hondo: 'rally', savage_opress: 'whirl', u_wing: 'rally', upsilon_shuttle: 'shield', hounds_tooth: 'torpedo',
     arc_170: 'strafe', delta7: 'shield', tie_defender: 'strafe', tie_silencer: 'strafe', the_daughter: 'heal', temple_guardian: 'bulwark', the_son: 'lightning', darth_bane: 'lightning', ebon_hawk: 'shield', sith_fury: 'strafe', boss_daughter: 'heal', boss_guardian: 'bulwark', boss_son: 'lightning', boss_bane: 'lightning',
     anakin: 'leap', qui_gon: 'forcepush', padme: 'snipe', lando: 'rally', jango_fett: 'rockets', asajj_ventress: 'dash', cad_bane: 'snipe', moff_gideon: 'orbital', n1_starfighter: 'strafe', sith_infiltrator: 'bombrun',
     darth_revan: 'dash', starkiller: 'lightning', master_luke: 'heal', ghost: 'strafe',
@@ -1556,7 +1642,7 @@
       kind: 'character', count: 3, odds: { common: 60, rare: 28, epic: 9.6, legendary: 2, mythic: 0.4 },
     },
     {
-      id: 'squadron', name: 'Ace Pilot\'s Helmet', desc: '3 ship cards from a veteran pilot\'s flight log', cost: { credits: 300 },
+      id: 'squadron', name: 'Carbonite Block', desc: '3 ship cards frozen in carbonite for safekeeping', cost: { credits: 300 },
       kind: 'ship', count: 3, odds: { common: 55, rare: 31, epic: 10.6, legendary: 3, mythic: 0.4 },
     },
     {

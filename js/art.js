@@ -833,6 +833,59 @@
       + glowEyes(44.5, 55.5, 45, '#ffb030', 1.6) + brows('#5a3a2a', { angry: true, w: 1.8 }) + nose() + mouth('frown', { color: '#6a3a2a' })
       + `<path d="M40 50 Q42 58 46 61 M60 50 Q58 58 54 61" stroke="#a88068" stroke-width=".8" fill="none"/>`;
   };
+  // ---------- Wave 8 ----------
+  CHAR.cal_kestis = () => SCENES.endor()
+    + saber(28, 98, 18, 52, '#ff8a2a', { hilt: '#b8bec8' }) + saber(28, 98, 38, 142, '#ff8a2a', { noHilt: true })
+    + shoulders('#4a5a5e') + P('M20 80 L50 74 L80 80 L72 100 L28 100Z', '#7a5a3a') + P('M30 80 L50 76 L70 80 L64 88 L36 88Z', '#8e6a44')
+    + neck('#f0c8a8') + head('#f0c8a8') + eyes({ iris: '#3a7a4a' }) + brows('#b8501e', { w: 1.1 }) + nose() + mouth('smirk', { color: '#8a3a2e' })
+    + P('M36.5 42 C35 28 42 25 50 25 C59 25 66 29 63.5 42 C62 36 58 33 50 32.5 C46 33 42 34 40 38 C39 36 37.5 38 36.5 42Z', '#c8602a')
+    + P('M42 27 C46 23 54 23 58 26 C54 25 48 26 44 30Z', '#e07a3a') + R(60, 80, 9, 7, '#e8ecf0', 'rx="2"') + C(64.5, 83.5, 1.6, '#3a8aff');
+
+  CHAR.bo_katan = () => SCENES.city()
+    + saber(78, 96, 92, 50, '#f4f6ff', { hilt: '#2a2d33' }) + L(78, 96, 92, 50, '#08080a', 1.2)
+    + shoulders('#3a5a8a') + P('M30 78 L50 74 L70 78 L66 96 L34 96Z', '#5a7ab0') + P('M36 82 L50 79 L64 82 L62 88 L38 88Z', '#c8ccd2')
+    + R(18, 80, 12, 8, '#c8ccd2', 'rx="2"') + R(70, 80, 12, 8, '#c8ccd2', 'rx="2"')
+    + neck('#f2d0b6') + head('#f2d0b6') + eyes({ iris: '#3a6a9a' }) + brows('#a8401e', { w: 1.1 }) + nose() + mouth('', { color: '#a04a3e' })
+    + P('M36 44 C34 28 42 24 50 24 C58 24 66 28 64 44 C66 56 64 66 60 72 C60 60 60 50 58 38 C54 33 46 33 42 38 C40 50 40 60 40 72 C36 66 34 56 36 44Z', '#c84a1e')
+    + P('M42 28 C46 25 54 25 58 28 C54 27 46 27 42 31Z', '#e06a3a');
+
+  CHAR.sabine = () => SCENES.warm()
+    + blaster(10, 84, -70, '#3a3d44') + blaster(90, 84, -110, '#3a3d44')
+    + shoulders('#e8e4dc') + P('M8 92 L24 78 L30 86 L14 98Z', '#ff8a2a') + P('M92 92 L76 78 L70 86 L86 98Z', '#ff5ac8')
+    + P('M34 76 L50 72 L66 76 L62 92 L38 92Z', '#ffd23f') + P('M40 80 L50 78 L60 80 L58 86 L42 86Z', '#ff5ac8') + C(50, 84, 2.4, '#5a3aa8')
+    + neck('#e8b896') + head('#e8b896') + eyes({ iris: '#3a2616' }) + brows('#2a2a5a', { w: 1 }) + nose() + mouth('smirk', { color: '#9a4a3e' })
+    + P('M36 42 C35 28 42 24 50 24 C58 24 65 28 64 42 L62 50 C61 40 58 34 50 33 C43 33 39 38 38 50Z', '#4a3ab8')
+    + P('M40 28 C46 24 56 24 62 30 C56 28 48 28 42 32Z', '#ff5ac8') + P('M56 33 L64 36 L62 46 C61 40 59 36 56 33Z', '#ff8a2a');
+
+  CHAR.captain_rex = () => SCENES.city()
+    + blaster(10, 86, -64, '#2a2d33') + blaster(90, 86, -116, '#2a2d33')
+    + shoulders('#f2f2f2') + R(44, 80, 12, 20, '#d9dde2') + P('M8 88 L22 78 L26 84 L12 94Z', '#3d6fd6') + P('M92 88 L78 78 L74 84 L88 94Z', '#3d6fd6')
+    + P('M36 80 L48 78 L48 84 L36 86Z', '#3d6fd6') + P('M64 80 L52 78 L52 84 L64 86Z', '#3d6fd6')
+    + P('M33.5 44 C33.5 27 41 21 50 21 C59 21 66.5 27 66.5 44 L66.5 58 C62 65 38 65 33.5 58Z', '#f3f3f3') + shade('M33.5 44 C33.5 27 41 21 50 21 L50 64 C42 64 36 62 33.5 58Z', 0.1)
+    + P('M38 30 C42 25 46 23 50 23 L50 28 C46 28 42 30 39 34Z', '#3d6fd6') + P('M62 30 C58 25 54 23 50 23 L50 28 C54 28 58 30 61 34Z', '#3d6fd6')
+    + P('M38.5 39 L61.5 39 L61.5 44 L54 44 L54 56 L46 56 L46 44 L38.5 44Z', '#101114')
+    + P('M36 36 L40 30 L44 36Z', '#3d6fd6') + P('M64 36 L60 30 L56 36Z', '#3d6fd6')
+    + R(64, 26, 3, 16, '#3a3d44') + L(65.5, 26, 72, 18, '#3a3d44', 1.4) + R(46, 58, 8, 3, '#b8bfc7', 'rx="1"');
+
+  CHAR.hondo = () => SCENES.desert()
+    + blaster(80, 94, -40, '#2a2d33')
+    + shoulders('#6a3a2a') + P('M30 76 L50 90 L70 76 L66 72 L50 82 L34 72Z', '#c8282a') + P('M4 100 C6 86 18 78 30 76 L34 100Z', '#3a2a22') + P('M96 100 C94 86 82 78 70 76 L66 100Z', '#3a2a22')
+    + neck('#a8805a') + head('#b08a62', { rx: 13, ry: 15.5 })
+    + [[38, 40, 44, 41], [56, 41, 62, 40], [40, 52, 44, 56], [60, 52, 56, 56], [46, 34, 54, 34]].map(([a, b, c, d]) => L(a, b, c, d, '#7a5a3a', 0.9)).join('')
+    + eyes({ iris: '#2a1a10' }) + brows('#5a3a22', { w: 1.2 }) + nose() + mouth('smile', { color: '#5a2a1e' })
+    + P('M36 34 C38 24 44 20 50 20 C56 20 62 24 64 34 L60 30 L56 32 L50 28 L44 32 L40 30Z', '#2a1a12')
+    + R(36, 28, 28, 5, '#4a3a2a', 'rx="2"') + C(43, 30.5, 3.4, '#c8a040') + C(57, 30.5, 3.4, '#c8a040') + C(43, 30.5, 2, '#3a6a8a') + C(57, 30.5, 2, '#3a6a8a')
+    + P('M38 58 L36 66 M62 58 L64 66', 'none', 'stroke="#2a1a12" stroke-width="1.6"');
+
+  CHAR.savage_opress = () => SCENES.dathomir()
+    + saber(20, 96, 8, 40, '#ff2a2a') + saber(20, 96, 32, 152, '#ff2a2a', { noHilt: true })
+    + P('M0 100 C2 76 20 66 50 66 C80 66 98 76 100 100Z', '#2a2226') + P('M30 70 L70 70 L66 100 L34 100Z', '#3a3036')
+    + P('M8 80 L28 72 L30 82 L12 90Z', '#5a5058') + P('M92 80 L72 72 L70 82 L88 90Z', '#5a5058')
+    + neck('#d8b048') + head('#dcb44c', { rx: 13.5, ry: 15.5 })
+    + `<path d="M50 30 L50 38 M42 32 L44 40 M58 32 L56 40 M38 50 L42 56 M62 50 L58 56 M46 58 L54 58" stroke="#1a1410" stroke-width="1.4" fill="none"/>`
+    + [[40, 26], [46, 22], [54, 22], [60, 26], [37, 33], [63, 33]].map(([x, y]) => P(`M${x - 1.6} ${y + 2} L${x} ${y - 4} L${x + 1.6} ${y + 2}Z`, '#e8dcc0')).join('')
+    + glowEyes(44.5, 55.5, 45, '#ffb030', 1.5) + brows('#1a1410', { angry: true, w: 1.8 }) + nose() + mouth('snarl');
+
   CHAR.boss_daughter = CHAR.the_daughter;
   CHAR.boss_guardian = CHAR.temple_guardian;
   CHAR.boss_son = CHAR.the_son;
@@ -1127,6 +1180,38 @@
         + E(50, 34, 4, 7, '#2a0a0a') + `<g style="filter:drop-shadow(0 0 2px #ff2a2a)">${E(50, 34, 2.4, 4.4, '#ff3a3a', 'opacity=".7"')}</g>`
         + eng(46, 88, 2.4, '#ff6a4a') + eng(54, 88, 2.4, '#ff6a4a');
     },
+    uwing: () => {
+      const [h, hd] = LG([[0, '#dcd8cc'], [1, '#8a8678']], 0, 0, 1, 0.3);
+      return hd
+        + P('M42 52 L8 34 L6 40 L40 62Z', h) + P('M58 52 L92 34 L94 40 L60 62Z', h) + shade('M42 52 L8 34 L6 40 L40 62Z', 0.12)
+        + R(4, 32, 6, 14, '#a8a498', 'rx="2"') + R(90, 32, 6, 14, '#a8a498', 'rx="2"') + eng(7, 48, 2.6, '#9fdcff') + eng(93, 48, 2.6, '#9fdcff')
+        + R(10, 37, 20, 2.4, '#8a6a3a', 'transform="rotate(28 10 37)"') + R(70, 46, 20, 2.4, '#8a6a3a', 'transform="rotate(-28 90 37)"')
+        + P('M40 26 L60 26 L64 80 L36 80Z', h) + shade('M40 26 L50 26 L50 80 L36 80Z', 0.12)
+        + P('M42 10 C42 6 58 6 58 10 L60 28 L40 28Z', h) + P('M44 12 L56 12 L57 22 L43 22Z', '#2a3a4a')
+        + R(38, 40, 24, 22, '#b8b4a8', 'rx="2"') + L(50, 40, 50, 62, '#6a665a', 1) + R(40, 44, 8, 4, '#8a6a3a') + R(52, 44, 8, 4, '#8a6a3a')
+        + eng(42, 82, 3.2, '#9fdcff') + eng(58, 82, 3.2, '#9fdcff');
+    },
+    upsilon: () => {
+      const [w, wd] = LG([[0, '#2a2a30'], [1, '#08080a']], 0, 0, 1, 0);
+      return wd
+        + P('M46 44 L6 30 L4 36 L46 54Z', w, 'stroke="#3a3a42" stroke-width=".6"') + P('M54 44 L94 30 L96 36 L54 54Z', w, 'stroke="#3a3a42" stroke-width=".6"')
+        + P('M46 54 L10 70 L12 74 L46 62Z', '#1a1a1e') + P('M54 54 L90 70 L88 74 L54 62Z', '#1a1a1e')
+        + L(8, 33, 44, 47, '#ff3a3a', 0.8, 'opacity=".7"') + L(92, 33, 56, 47, '#ff3a3a', 0.8, 'opacity=".7"')
+        + P('M44 14 C44 8 56 8 56 14 L58 84 L42 84Z', '#1e1e24') + shade('M44 14 C44 8 50 8 50 8 L50 84 L42 84Z', 0.2)
+        + P('M46 16 L54 16 L54 30 L46 30Z', '#5a1218') + R(46.5, 18, 7, 3, '#ff3a3a', 'opacity=".7"')
+        + L(50, 34, 50, 80, '#3a3a42', 1) + eng(46, 86, 3, '#ff8a6a') + eng(54, 86, 3, '#ff8a6a');
+    },
+    houndstooth: () => {
+      const [h, hd] = LG([[0, '#c8c0a8'], [1, '#5a5444']], 0, 0, 1, 0.4);
+      return hd
+        + P('M50 14 C72 14 88 30 88 50 C88 70 72 84 50 84 C28 84 12 70 12 50 C12 30 28 14 50 14Z', h)
+        + shade('M50 14 C28 14 12 30 12 50 C12 70 28 84 50 84Z', 0.15)
+        + P('M30 18 L24 4 L34 6 L40 16Z', '#9a9480') + P('M70 18 L76 4 L66 6 L60 16Z', '#9a9480')
+        + C(50, 50, 14, '#8a8470') + C(50, 50, 9, '#5a5444') + C(50, 50, 4, '#ff8a3a', 'style="filter:drop-shadow(0 0 3px #ff8a3a)"')
+        + E(76, 34, 8, 6, '#6a6452') + E(77, 33, 5, 3.4, '#1a2a2a') + R(18, 46, 12, 3, '#8a3a2a') + R(70, 58, 12, 3, '#8a3a2a')
+        + P('M14 52 L4 56 L6 60 L16 58Z', '#6a6452') + P('M86 52 L96 56 L94 60 L84 58Z', '#6a6452')
+        + eng(36, 84, 3.2, '#ffb07a') + eng(50, 86, 3.4, '#ffb07a') + eng(64, 84, 3.2, '#ffb07a');
+    },
     ebonhawk: () => {
       const [h, hd] = LG([[0, '#d8ccb4'], [1, '#7a6e58']], 0, 0, 1, 0.4);
       return hd
@@ -1198,7 +1283,7 @@
   // ---------- Crates ----------
   // Three complete sets. CRATE_STYLE picks which one the game shows:
   //   'relic'   — iconic Star Wars objects instead of boxes: an astromech
-  //               droid, an ace pilot's helmet, a Jedi holocron and a Sith
+  //               droid, a carbonite block, a Jedi holocron and a Sith
   //               holocron.
   //   'faction' — each crate belongs to a side of the galaxy: a Rebel supply
   //               drop, an Imperial cargo crate, a Jedi holocron vault and a
@@ -1297,21 +1382,25 @@
   function crateRelic(id) {
     const shadow = E(50, 92, 26, 4, '#000', 'opacity=".5"');
     if (id === 'squadron') {
-      // Ace pilot's helmet: Rebel orange, white crest, dark visor, starbird decal.
-      const [shell, sd] = LG([[0, '#ffb070'], [0.55, '#ff7a2a'], [1, '#a8400c']], 0, 0, 1, 1);
-      const [visor, vd] = LG([[0, '#3a4a5e'], [0.5, '#0a1018'], [1, '#1a2a3a']]);
-      const [glow, gd] = RG([[0, '#ffd0a0'], [0.5, '#ff7a2a', 0.4], [1, '#ff7a2a', 0]]);
-      return `${sd}${vd}${gd}${shadow}${C(50, 52, 40, glow, 'class="crate-glow" opacity=".45"')}
+      // Carbonite block: a frozen slab with a figure's relief and glowing side panels.
+      const [slab, sd] = LG([[0, '#6a7480'], [0.5, '#3a424c'], [1, '#1e242c']], 0, 0, 1, 0);
+      const [face, fd] = LG([[0, '#8a96a4'], [1, '#4a5560']]);
+      const [glow, gd] = RG([[0, '#ffd0a0'], [0.5, '#ff7a2a', 0.35], [1, '#ff7a2a', 0]]);
+      return `${sd}${fd}${gd}${shadow}${C(50, 54, 40, glow, 'class="crate-glow" opacity=".4"')}
         <g class="crate-float">
-        ${P('M20 60 C18 34 32 16 50 16 C68 16 82 34 80 60 L76 76 C66 82 34 82 24 76Z', shell, 'stroke="#5a2406" stroke-width="1.2"')}
-        ${P('M44 17 C46 16 54 16 56 17 L57 46 L43 46Z', '#f4f4f0')}${P('M47 17 L53 17 L53 46 L47 46Z', '#ff3a2a', 'opacity=".85"')}
-        ${P('M22 50 C30 44 70 44 78 50 L76 64 C66 60 34 60 24 64Z', visor, 'stroke="#05080c" stroke-width="1"')}
-        ${P('M28 51 C36 47 50 47 56 48 L54 52 C46 51 36 52 30 55Z', '#bfe4ff', 'opacity=".35"')}
-        ${P('M26 66 C36 70 64 70 74 66 L72 74 C62 78 38 78 28 74Z', '#e8e8e4', 'stroke="#5a2406" stroke-width=".8"')}
-        ${C(30, 70, 2.4, '#3a3a3a')}${C(70, 70, 2.4, '#3a3a3a')}
-        <g transform="translate(26 26) scale(.55)" fill="#f4f4f0">${glyphPath('starbird')}</g>
-        <g transform="translate(62 26) scale(.5)" fill="#1a1a1a" opacity=".75">${glyphPath('xwing')}</g>
-        ${P('M34 21 C40 18 46 17 48 17', 'none', 'stroke="#fff" stroke-width="1.4" opacity=".6"')}
+        ${P('M24 12 L76 12 L80 16 L80 86 L76 90 L24 90 L20 86 L20 16Z', slab, 'stroke="#14181e" stroke-width="1.2"')}
+        ${P('M28 18 L72 18 L72 84 L28 84Z', face, 'opacity=".9"')}
+        ${P('M50 24 C57 24 61 30 60 37 C59 42 56 45 50 45 C44 45 41 42 40 37 C39 30 43 24 50 24Z', '#9aa6b4')}
+        ${P('M40 34 C38 40 38 46 40 50 M60 34 C62 40 62 46 60 50', 'none', 'stroke="#5a6470" stroke-width="1.4"')}
+        ${P('M36 52 C40 48 46 47 50 47 C54 47 60 48 64 52 L66 78 L34 78Z', '#8a96a4')}
+        ${P('M34 54 C30 46 30 38 34 30 L38 32 C35 40 36 46 38 52Z', '#9aa6b4')}${P('M66 54 C70 46 70 38 66 30 L62 32 C65 40 64 46 62 52Z', '#9aa6b4')}
+        ${P('M45 36 Q47 34 48 36 M52 36 Q53 34 55 36 M46 41 Q50 43 54 41', 'none', 'stroke="#4a5560" stroke-width="1"')}
+        ${P('M28 18 L72 18 L72 84 L28 84Z', 'none', 'stroke="#c8d4e0" stroke-width=".6" opacity=".4"')}
+        ${R(13, 30, 7, 40, '#2a3038', 'rx="1.5"')}${R(80, 30, 7, 40, '#2a3038', 'rx="1.5"')}
+        ${[0, 1, 2, 3].map((i) => R(14.5, 34 + i * 8, 4, 4, i % 2 ? '#ff3a2a' : '#ff9a3a', `rx=".8" class="crate-scan" style="animation-delay:${i * 0.3}s;filter:drop-shadow(0 0 2px #ff7a2a)"`)).join('')}
+        ${[0, 1, 2, 3].map((i) => R(81.5, 34 + i * 8, 4, 4, i % 2 ? '#52e08a' : '#ff9a3a', `rx=".8" class="crate-scan" style="animation-delay:${0.15 + i * 0.3}s;filter:drop-shadow(0 0 2px #52e08a)"`)).join('')}
+        ${P('M24 12 L76 12 L74 16 L26 16Z', '#aab4c0', 'opacity=".5"')}
+        ${P('M30 70 C36 66 40 72 46 68', 'none', 'stroke="#c8e4ff" stroke-width="1" opacity=".5" class="crate-core"')}
         </g>`;
     }
     if (id === 'holocron') {

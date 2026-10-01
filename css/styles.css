@@ -2758,3 +2758,5 @@ button.ult-preview:hover, button.ult-preview:focus-visible { transform: scale(1.
 .crate-art .relic-wobble { animation: relic-wobble 2.6s ease-in-out infinite; transform-box: fill-box; transform-origin: 50% 100%; }
 @keyframes relic-wobble { 0%, 100% { transform: rotate(-2.5deg); } 50% { transform: rotate(2.5deg); } }
 .pack:hover .crate-relic-lid, .pack:hover .crate-style-relic .crate-lid { transform: translateY(-6px); }
+.sig-wall.wall-rex { background: linear-gradient(90deg, transparent 30%, rgba(61, 111, 214, 0.45) 46%, #fff 50%, rgba(61, 111, 214, 0.45) 54%, transparent 70%), repeating-linear-gradient(90deg, transparent 0 24px, rgba(255, 255, 255, 0.12) 24px 26px); filter: drop-shadow(0 0 18px #3d6fd6); }
+.sig-wall.wall-upsilon { background: linear-gradient(90deg, transparent 28%, rgba(20, 20, 24, 0.85) 42%, rgba(255, 58, 58, 0.6) 50%, rgba(20, 20, 24, 0.85) 58%, transparent 72%), repeating-linear-gradient(60deg, transparent 0 14px, rgba(255, 58, 58, 0.2) 14px 16px); filter: drop-shadow(0 0 20px #ff3a3a); }

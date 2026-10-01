@@ -85,6 +85,16 @@
     delta7: { move: 'aegis', color: '#ff3a3a', prop: 'astromech' },
     tie_defender: { move: 'homing', prop: 'dart', impact: 'shatter', color: '#3bff6a', n: 3 },
     tie_silencer: { move: 'beam', prop: 'snipe', impact: 'xslash', color: '#ff3a3a' },
+    // Wave 8
+    cal_kestis: { move: 'loop', prop: 'staff', impact: 'xslash', color: '#ff8a2a' },
+    bo_katan: { move: 'dive', prop: 'saber', impact: 'shatter', color: '#e8eef8' },
+    sabine: { move: 'rain', prop: 'detonator', impact: 'burn', color: '#ff5ac8' },
+    captain_rex: { move: 'aegis', color: '#3d6fd6', prop: 'rex' },
+    hondo: { move: 'rally', color: '#ffd23f', prop: 'credits' },
+    savage_opress: { move: 'shockwave', prop: 'staff', impact: 'crush', color: '#ff2a2a', quake: true },
+    u_wing: { move: 'rally', color: '#9ab4d0', prop: 'commando' },
+    upsilon_shuttle: { move: 'aegis', color: '#ff3a3a', prop: 'upsilon' },
+    hounds_tooth: { move: 'homing', prop: 'rocket', impact: 'scorch', color: '#ff9a3a', n: 4 },
     // Secret cards earned in the hidden zone
     the_daughter: { move: 'heal', color: '#9fe0ff', prop: 'dawn' },
     temple_guardian: { move: 'shockwave', prop: 'pike', impact: 'stamp', color: '#ffd23f' },
