@@ -1552,19 +1552,19 @@
   // Black market crates. `odds` are rarity weights per card.
   const PACKS = [
     {
-      id: 'recruit', name: 'Contraband Crate', desc: '3 character cards, smuggled in from the Outer Rim', cost: { credits: 300 },
+      id: 'recruit', name: 'Astromech Delivery', desc: 'An R2 unit rolls in with 3 hero datacards', cost: { credits: 300 },
       kind: 'character', count: 3, odds: { common: 60, rare: 28, epic: 9.6, legendary: 2, mythic: 0.4 },
     },
     {
-      id: 'squadron', name: 'Salvage Crate', desc: '3 ship cards, pulled from a starship graveyard', cost: { credits: 300 },
+      id: 'squadron', name: 'Ace Pilot\'s Helmet', desc: '3 ship cards from a veteran pilot\'s flight log', cost: { credits: 300 },
       kind: 'ship', count: 3, odds: { common: 55, rare: 31, epic: 10.6, legendary: 3, mythic: 0.4 },
     },
     {
-      id: 'holocron', name: 'Kyber Vault', desc: '3 cards, rare or better', cost: { crystals: 80 },
+      id: 'holocron', name: 'Jedi Holocron', desc: '3 cards, rare or better, kept by the Jedi Order', cost: { crystals: 80 },
       kind: 'any', count: 3, odds: { common: 0, rare: 55, epic: 33.5, legendary: 10, mythic: 1.5 },
     },
     {
-      id: 'strongbox', name: 'Aurodium Strongbox', desc: '1 guaranteed Legendary and 2 Epic-or-better cards', cost: { aurodium: 12 },
+      id: 'strongbox', name: 'Sith Holocron', desc: '1 guaranteed Legendary and 2 Epic-or-better cards', cost: { aurodium: 12 },
       kind: 'any', count: 3, odds: { common: 0, rare: 0, epic: 67, legendary: 30, mythic: 3 }, guarantee: 'legendary',
     },
   ];

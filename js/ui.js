@@ -1489,8 +1489,8 @@
     'The Hutts take a cut. Everyone takes a cut.',
     'Feeling lucky? The Sabacc table is always open.',
   ];
-  const PACK_COLOR = { recruit: '#ff8a3a', squadron: '#ff4a52', holocron: '#5ab4ff', strongbox: '#f2b632' };
-  const PACK_ORIGIN = { recruit: 'Rebel supply drop', squadron: 'Imperial cargo', holocron: 'Jedi holocron vault', strongbox: 'Hutt treasure' };
+  const PACK_COLOR = { recruit: '#4a8aff', squadron: '#ff7a2a', holocron: '#5ab4ff', strongbox: '#ff2a3a' };
+  const PACK_ORIGIN = { recruit: 'Droid courier', squadron: 'Rebel flight deck', holocron: 'Jedi Archives', strongbox: 'Sith vault' };
   const oddsHtml = (o) => {
     const total = Object.values(o).reduce((a, b) => a + b, 0);
     const pct = (k) => `${((o[k] / total) * 100).toFixed(o[k] / total < 0.1 ? 1 : 0)}%`;
@@ -1708,7 +1708,7 @@
         }).join('')}
       </div>
 
-      <h2 class="section-title">Crates</h2>
+      <h2 class="section-title">Relics</h2>
       <div class="shop-grid">
         ${D.PACKS.map((p) => {
           const odds = Player.effectiveOdds(p);
@@ -2401,7 +2401,7 @@
       </div>`;
     }).join('');
     const m = openModal(`
-      <div style="text-align:center"><p class="eyebrow">${packId ? 'Crate cracked open' : 'Delivery from Vekko'}</p><h2 data-reveal-title>Tap to reveal</h2></div>
+      <div style="text-align:center"><p class="eyebrow">${packId ? 'Relic unsealed' : 'Delivery from Vekko'}</p><h2 data-reveal-title>Tap to reveal</h2></div>
       <div class="reveal-stack" data-stack>${cards}</div>
       <div class="reveal-summary" data-summary hidden></div>
       <div class="modal-actions" style="justify-content:center">

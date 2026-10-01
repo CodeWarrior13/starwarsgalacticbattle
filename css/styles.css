@@ -2753,3 +2753,8 @@ button.ult-preview:hover, button.ult-preview:focus-visible { transform: scale(1.
   .pack-info .odds { font-size: 10px; gap: 5px; }
   .pack-open { font-size: 11px; padding: 8px 6px; }
 }
+.crate-art .relic-spin { animation: relic-spin 6s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes relic-spin { 0%, 100% { transform: translateY(0) rotate(-4deg); } 50% { transform: translateY(-3px) rotate(4deg); } }
+.crate-art .relic-wobble { animation: relic-wobble 2.6s ease-in-out infinite; transform-box: fill-box; transform-origin: 50% 100%; }
+@keyframes relic-wobble { 0%, 100% { transform: rotate(-2.5deg); } 50% { transform: rotate(2.5deg); } }
+.pack:hover .crate-relic-lid, .pack:hover .crate-style-relic .crate-lid { transform: translateY(-6px); }

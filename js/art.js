@@ -1196,14 +1196,17 @@
   };
 
   // ---------- Crates ----------
-  // Two complete crate sets. CRATE_STYLE picks which one the game shows:
+  // Three complete sets. CRATE_STYLE picks which one the game shows:
+  //   'relic'   — iconic Star Wars objects instead of boxes: an astromech
+  //               droid, an ace pilot's helmet, a Jedi holocron and a Sith
+  //               holocron.
   //   'faction' — each crate belongs to a side of the galaxy: a Rebel supply
   //               drop, an Imperial cargo crate, a Jedi holocron vault and a
   //               Hutt treasure chest, each with its emblem.
   //   'holo'    — the same four crates as glowing hologram projections over a
   //               projector disc, with scanlines and flicker.
-  // Change the line below to 'holo' to switch every crate in the game.
-  let CRATE_STYLE = 'faction';
+  // Change the line below to 'faction' or 'holo' to switch every crate.
+  let CRATE_STYLE = 'relic';
 
   // Emblems drawn from the shared icon set onto an isometric crate face.
   const glyphPath = (name) => (root.Icons && root.Icons.SHAPES[name]) || '';
@@ -1291,9 +1294,83 @@
       ${P(id === 'strongbox' ? 'M14 50 C14 34 30 26 50 22 C70 26 86 34 86 50 L86 76 L50 90 L14 76Z' : 'M14 36 L50 22 L86 36 L86 74 L50 90 L14 74Z', `url(#${pat})`, 'class="crate-scan"')}`;
   }
 
+  function crateRelic(id) {
+    const shadow = E(50, 92, 26, 4, '#000', 'opacity=".5"');
+    if (id === 'squadron') {
+      // Ace pilot's helmet: Rebel orange, white crest, dark visor, starbird decal.
+      const [shell, sd] = LG([[0, '#ffb070'], [0.55, '#ff7a2a'], [1, '#a8400c']], 0, 0, 1, 1);
+      const [visor, vd] = LG([[0, '#3a4a5e'], [0.5, '#0a1018'], [1, '#1a2a3a']]);
+      const [glow, gd] = RG([[0, '#ffd0a0'], [0.5, '#ff7a2a', 0.4], [1, '#ff7a2a', 0]]);
+      return `${sd}${vd}${gd}${shadow}${C(50, 52, 40, glow, 'class="crate-glow" opacity=".45"')}
+        <g class="crate-float">
+        ${P('M20 60 C18 34 32 16 50 16 C68 16 82 34 80 60 L76 76 C66 82 34 82 24 76Z', shell, 'stroke="#5a2406" stroke-width="1.2"')}
+        ${P('M44 17 C46 16 54 16 56 17 L57 46 L43 46Z', '#f4f4f0')}${P('M47 17 L53 17 L53 46 L47 46Z', '#ff3a2a', 'opacity=".85"')}
+        ${P('M22 50 C30 44 70 44 78 50 L76 64 C66 60 34 60 24 64Z', visor, 'stroke="#05080c" stroke-width="1"')}
+        ${P('M28 51 C36 47 50 47 56 48 L54 52 C46 51 36 52 30 55Z', '#bfe4ff', 'opacity=".35"')}
+        ${P('M26 66 C36 70 64 70 74 66 L72 74 C62 78 38 78 28 74Z', '#e8e8e4', 'stroke="#5a2406" stroke-width=".8"')}
+        ${C(30, 70, 2.4, '#3a3a3a')}${C(70, 70, 2.4, '#3a3a3a')}
+        <g transform="translate(26 26) scale(.55)" fill="#f4f4f0">${glyphPath('starbird')}</g>
+        <g transform="translate(62 26) scale(.5)" fill="#1a1a1a" opacity=".75">${glyphPath('xwing')}</g>
+        ${P('M34 21 C40 18 46 17 48 17', 'none', 'stroke="#fff" stroke-width="1.4" opacity=".6"')}
+        </g>`;
+    }
+    if (id === 'holocron') {
+      // Jedi holocron: a crystal cube in a silver frame, blue light seeping out.
+      const [glow, gd] = RG([[0, '#e8f8ff'], [0.4, '#5ab4ff', 0.65], [1, '#2a7ad0', 0]]);
+      const [core, cd] = RG([[0, '#ffffff'], [0.5, '#8fd3ff'], [1, '#2a6ab8']]);
+      const frame = (d) => P(d, 'none', 'stroke="#d8e4f0" stroke-width="2.6" stroke-linejoin="round"');
+      return `${gd}${cd}${shadow}${C(50, 52, 42, glow, 'class="crate-glow" opacity=".6"')}
+        <g class="crate-float relic-spin">
+        ${P('M50 18 L80 32 L80 66 L50 80 L20 66 L20 32Z', core, 'opacity=".9" class="crate-core"')}
+        ${P('M50 46 L80 32 L80 66 L50 80Z', '#0c2a58', 'opacity=".45"')}${P('M50 46 L20 32 L20 66 L50 80Z', '#2a6ab8', 'opacity=".25"')}
+        ${frame('M50 18 L80 32 L80 66 L50 80 L20 66 L20 32Z')}${frame('M20 32 L50 46 L80 32 M50 46 L50 80')}
+        ${P('M35 25 L65 39 M65 25 L35 39 M20 49 L50 63 L80 49 M35 39 L35 73 M65 39 L65 73', 'none', 'stroke="#d8e4f0" stroke-width="1" opacity=".55"')}
+        ${[[50, 18], [80, 32], [80, 66], [50, 80], [20, 66], [20, 32], [50, 46]].map(([x, y]) => C(x, y, 2.6, '#f0f6ff', 'stroke="#8a9aae" stroke-width=".6"')).join('')}
+        <g class="crate-core" style="filter:drop-shadow(0 0 3px #fff) drop-shadow(0 0 8px #5ab4ff)">${onLeftFace('jedi', 35, 60, '#ffffff', 0.85)}</g>
+        </g>`;
+    }
+    if (id === 'strongbox') {
+      // Sith holocron: a black pyramid with molten red seams and a floating capstone.
+      const [glow, gd] = RG([[0, '#ffb0a0'], [0.4, '#ff2a2a', 0.6], [1, '#8a0010', 0]]);
+      const [lf, lfd] = LG([[0, '#3a0a10'], [1, '#0a0204']]);
+      const [rf, rfd] = LG([[0, '#1a0408'], [1, '#050102']]);
+      const seam = 'stroke="#ff3a2a" stroke-width="1.3" style="filter:drop-shadow(0 0 2px #ff2a2a) drop-shadow(0 0 5px #ff2a2a)"';
+      return `${gd}${lfd}${rfd}${shadow}${C(50, 54, 42, glow, 'class="crate-glow" opacity=".55"')}
+        <g class="crate-float">
+        <g class="crate-lid">${P('M50 15 L59 27 L50 30.5 L41 27Z', lf, `stroke="#ff3a2a" stroke-width="1"`)}${P('M50 15 L59 27 L50 30.5Z', '#000', 'opacity=".4"')}</g>
+        ${P('M50 34 L84 82 L50 90Z', rf)}${P('M50 34 L16 82 L50 90Z', lf)}
+        ${P('M50 34 L16 82 L50 90 L84 82Z', 'none', seam)}${P('M50 34 L50 90', 'none', seam)}
+        ${P('M33 58 L50 64 L67 58 M25 70 L50 77 L75 70', 'none', 'stroke="#ff3a2a" stroke-width=".8" opacity=".7"')}
+        ${P('M43 31.5 L57 31.5 L55 33.5 L45 33.5Z', '#ff3a2a', 'class="crate-core" opacity=".9" style="filter:drop-shadow(0 0 4px #ff2a2a)"')}
+        <g class="crate-core" style="filter:drop-shadow(0 0 3px #ff2a2a) drop-shadow(0 0 6px #ff2a2a)"><g transform="matrix(.62 .12 0 .62 26 62)" fill="#ff6a5a" color="#ff6a5a">${glyphPath('sith')}</g></g>
+        </g>`;
+    }
+    // Astromech delivery: an R2-series droid with a hero datacard in its slot.
+    const [body, bd] = LG([[0, '#ffffff'], [0.6, '#d8dee8'], [1, '#9aa4b2']], 0, 0, 1, 0);
+    const [dome, dd] = LG([[0, '#f4f6fa'], [1, '#9aa4b2']], 0, 0, 1, 0);
+    const [glow, gd] = RG([[0, '#bfe4ff'], [0.5, '#4a8aff', 0.4], [1, '#4a8aff', 0]]);
+    return `${bd}${dd}${gd}${shadow}${C(50, 54, 40, glow, 'class="crate-glow" opacity=".45"')}
+      <g class="crate-float relic-wobble">
+      ${P('M18 44 L28 44 L30 84 L16 84Z', '#c8d0dc', 'stroke="#5a6472" stroke-width="1"')}${P('M82 44 L72 44 L70 84 L84 84Z', '#9aa4b2', 'stroke="#5a6472" stroke-width="1"')}
+      ${R(20, 50, 6, 12, '#2a5ac8', 'rx="1"')}${R(74, 50, 6, 12, '#1a3a8a', 'rx="1"')}
+      ${P('M12 84 H34 L32 89 H14Z M66 84 H88 L86 89 H68Z', '#5a6472')}
+      ${P('M28 40 H72 V80 C66 84 34 84 28 80Z', body, 'stroke="#5a6472" stroke-width="1.2"')}
+      ${P('M42 82 H58 L60 89 H40Z', '#5a6472')}
+      ${P('M28 40 C28 22 38 14 50 14 C62 14 72 22 72 40Z', dome, 'stroke="#5a6472" stroke-width="1.2"')}
+      ${P('M36 20 C40 16 46 15 50 15 L50 24 L38 26Z', '#2a5ac8')}${R(54, 22, 8, 7, '#2a5ac8', 'rx="1"')}
+      ${C(44, 30, 4.4, '#0a0e14')}${C(44, 30, 2, '#ff3a3a', 'class="crate-core" style="filter:drop-shadow(0 0 3px #ff3a3a)"')}
+      ${C(60, 33, 1.8, '#4aa8ff', 'class="crate-core" style="filter:drop-shadow(0 0 3px #4aa8ff)"')}
+      ${P('M28 38 H72 V41 H28Z', '#2a5ac8')}
+      ${R(34, 46, 12, 8, '#2a5ac8', 'rx="1"')}${R(54, 46, 12, 4, '#2a5ac8', 'rx="1"')}${R(54, 52, 12, 2, '#5a6472')}
+      ${R(38, 60, 24, 14, '#14181e', 'rx="1.5"')}
+      <g class="crate-lid">${R(41, 56, 18, 13, '#ffd23f', 'rx="1.2" stroke="#8a6a12" stroke-width=".6"')}${R(43, 58, 6, 6, '#fff3c4', 'rx=".6"')}${P('M51 59 H57 M51 62 H56 M43 66 H57', 'none', 'stroke="#8a6a12" stroke-width=".8"')}</g>
+      ${R(34, 76, 32, 2, '#2a5ac8')}
+      </g>`;
+  }
+
   function crateArt(id, style) {
     const use = style || CRATE_STYLE;
-    return `<svg class="crate-art crate-${id} crate-style-${use}" viewBox="0 0 100 100" aria-hidden="true">${use === 'holo' ? crateHolo(id) : crateFaction(id)}</svg>`;
+    return `<svg class="crate-art crate-${id} crate-style-${use}" viewBox="0 0 100 100" aria-hidden="true">${use === 'holo' ? crateHolo(id) : use === 'faction' ? crateFaction(id) : crateRelic(id)}</svg>`;
   }
 
   // Shady merchant for the Black Market.
@@ -1346,5 +1423,5 @@
     return `<svg class="ship-only" viewBox="0 0 100 100" aria-hidden="true">${(SHIPS[def.shape] || SHIPS.xwing)()}</svg>`;
   }
 
-  root.Art = { unitArt, shipOnly, cardBack, ICONS, crateArt, setCrateStyle: (v) => { CRATE_STYLE = v === 'holo' ? 'holo' : 'faction'; }, get crateStyle() { return CRATE_STYLE; }, merchantArt, SHIP_SHAPES: Object.keys(SHIPS), CHARACTER_IDS: Object.keys(CHAR) };
+  root.Art = { unitArt, shipOnly, cardBack, ICONS, crateArt, setCrateStyle: (v) => { CRATE_STYLE = ['holo', 'faction'].includes(v) ? v : 'relic'; }, get crateStyle() { return CRATE_STYLE; }, merchantArt, SHIP_SHAPES: Object.keys(SHIPS), CHARACTER_IDS: Object.keys(CHAR) };
 })(typeof window !== 'undefined' ? window : globalThis);
