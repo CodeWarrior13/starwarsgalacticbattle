@@ -175,7 +175,7 @@
     params: {},
     ui: { collectionKind: 'all', collectionFaction: 'all', collectionSort: 'strong', campaignKind: 'character', betIndex: 0 },
 
-    go(screen, params) {
+    go(screen, params, opts = {}) {
       if (App.battleActive && screen !== 'battle') return;
       App.current = screen;
       App.params = params || {};
@@ -187,11 +187,14 @@
       container.innerHTML = '';
       container.appendChild(Screens[screen](App.params));
       updateWallet();
-      window.scrollTo({ top: 0 });
+      if (!opts.keepScroll) window.scrollTo({ top: 0 });
     },
 
+    // Re-render in place: shop buys, gambling and toggles keep your scroll position.
     refresh() {
-      App.go(App.current, App.params);
+      const y = window.scrollY;
+      App.go(App.current, App.params, { keepScroll: true });
+      window.scrollTo({ top: y });
     },
   };
 
@@ -1430,7 +1433,7 @@
   const oddsHtml = (o) => {
     const total = Object.values(o).reduce((a, b) => a + b, 0);
     const pct = (k) => `${((o[k] / total) * 100).toFixed(o[k] / total < 0.1 ? 1 : 0)}%`;
-    return `<div class="odds">${o.common ? `<span class="c">C ${pct('common')}</span>` : ''}${o.rare ? `<span class="r">R ${pct('rare')}</span>` : ''}<span class="e">E ${pct('epic')}</span><span class="l">L ${pct('legendary')}</span></div>`;
+    return `<div class="odds">${o.common ? `<span class="c">C ${pct('common')}</span>` : ''}${o.rare ? `<span class="r">R ${pct('rare')}</span>` : ''}<span class="e">E ${pct('epic')}</span><span class="l">L ${pct('legendary')}</span>${o.mythic ? `<span class="m">M ${pct('mythic')}</span>` : ''}</div>`;
   };
 
   function timeLeft(ms) {
@@ -1623,7 +1626,7 @@
         const results = Player.openPack(p.dataset.pack);
         if (!results) return toast('Not enough currency. Win battles to earn more.');
         updateWallet();
-        packReveal(results);
+        packReveal(results, p.dataset.pack);
         return;
       }
       const ins = e.target.closest('[data-inspect]');
@@ -1791,32 +1794,266 @@
     }, 1000);
   }
 
-  function packReveal(results) {
-    const cards = results.map((r) => {
+  // ---------- Crate opening & card reveals ----------
+  // The crate's build-up scales with the best card inside, and every card's
+  // reveal scales with its own rarity, up to full-screen moments for
+  // Legendary and Mythic pulls.
+  const R_ORDER = { common: 0, rare: 1, epic: 2, legendary: 3, mythic: 4 };
+  const R_COLOR = { common: '#9aa8bc', rare: '#4fa3ff', epic: '#b77bff', legendary: '#ffb938', mythic: '#ff2a5a' };
+
+  function crateCinematic(packId, best) {
+    return new Promise((resolve) => {
+      if (!motionOK()) return resolve();
+      const tier = R_ORDER[best];
+      const mythic = best === 'mythic';
+      // Mythic crates pretend to be rare until the very end.
+      const shown = mythic ? 'rare' : best;
+      const dur = [1300, 1500, 2000, 2800, 4200][tier];
+      const node = el(`<div class="crate-cine tier-${tier}" style="--rc:${R_COLOR[shown]};--dur:${dur}ms" role="status" aria-label="Opening crate">
+        <div class="cc-rays"></div>
+        <div class="cc-glow"></div>
+        <div class="cc-crate">${Art.crateArt(packId)}<i class="cc-crack c1"></i><i class="cc-crack c2"></i><i class="cc-crack c3"></i></div>
+        <div class="cc-label">${['Cracking the seal…', 'Something shines…', 'Rare energy detected…', 'LEGENDARY SIGNAL', 'Cracking the seal…'][tier]}</div>
+        <span class="pc-skip">Tap to skip</span>
+      </div>`);
+      document.body.appendChild(node);
+      const crate = $('.cc-crate', node);
+      const shake = Math.min(14, 2 + tier * 3);
+      crate.animate(Array.from({ length: 12 }, (_, i) => ({ transform: `translate(${(i % 2 ? 1 : -1) * shake * (i / 12)}px, ${(i % 3 - 1) * shake * 0.4 * (i / 12)}px) rotate(${(i % 2 ? 1 : -1) * (i / 12) * (2 + tier)}deg) scale(${1 + i * 0.012})` })), { duration: dur * 0.85, easing: 'ease-in', fill: 'forwards' });
+      let glitchTimer = null;
+      if (mythic) {
+        glitchTimer = setTimeout(() => {
+          node.classList.add('glitch');
+          node.style.setProperty('--rc', R_COLOR.mythic);
+          $('.cc-label', node).innerHTML = '<b data-text="⚠ ANOMALY DETECTED">⚠ ANOMALY DETECTED</b>';
+          node.insertAdjacentHTML('beforeend', `<svg class="cc-shatter" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M50 50 L12 4 M50 50 L88 10 M50 50 L96 62 M50 50 L70 98 M50 50 L22 94 M50 50 L2 46 M30 26 L40 20 M74 30 L84 40 M76 78 L62 84 M26 70 L16 62"/></svg>`);
+        }, dur * 0.5);
+      }
+      let done = false;
+      const finish = () => {
+        if (done) return;
+        done = true;
+        clearTimeout(glitchTimer);
+        node.classList.add('burst');
+        const flash = el(`<div class="cc-flash" style="--rc:${R_COLOR[best]}"></div>`);
+        document.body.appendChild(flash);
+        setTimeout(() => flash.remove(), 700);
+        setTimeout(() => { node.remove(); resolve(); }, 320);
+      };
+      node.addEventListener('click', finish);
+      setTimeout(finish, dur);
+    });
+  }
+
+  // FIFA-style walkout for Epic, Legendary and Mythic pulls: allegiance,
+  // class, homeworld (or hyperspace for ships), then the card itself.
+  const HOMEWORLD = {
+    luke: 'tatooine', master_luke: 'tatooine', obi_wan: 'tatooine', r2d2: 'tatooine', c3po: 'tatooine', jawa: 'tatooine', tusken_raider: 'tatooine', boba_fett: 'tatooine', din_djarin: 'tatooine', grogu: 'tatooine',
+    yoda: 'dagobah', han_solo: 'bespin', chewbacca: 'endor', ewok_warrior: 'endor', leia: 'hoth', rebel_soldier: 'hoth', rebel_medic: 'hoth', two_onebee: 'hoth',
+    vader: 'mustafar', lord_vader: 'mustafar', darth_revan: 'exegol', starkiller: 'coruscant_siege', palpatine: 'exegol', kylo_ren: 'exegol', rey: 'exegol',
+    k2so: 'scarif', death_trooper: 'scarif', tarkin: 'scarif', thrawn: 'scarif', grievous: 'geonosis', count_dooku: 'geonosis', b2_droid: 'geonosis', droideka: 'geonosis', battle_droid: 'geonosis', magnaguard: 'geonosis',
+    mace_windu: 'coruscant', ahsoka: 'coruscant', clone_trooper: 'coruscant', hunter: 'coruscant', wrecker: 'coruscant', tech: 'coruscant', crosshair: 'coruscant', echo: 'coruscant', barriss: 'coruscant',
+    talzin: 'mustafar', nightsister_acolyte: 'mustafar', grand_inquisitor: 'coruscant_siege', second_sister: 'coruscant_siege', fifth_brother: 'coruscant_siege', seventh_sister: 'coruscant_siege', eighth_brother: 'coruscant_siege',
+  };
+  function homeworldOf(def) {
+    if (HOMEWORLD[def.id] && D.PLANET_MAP[HOMEWORLD[def.id]]) return D.PLANET_MAP[HOMEWORLD[def.id]];
+    const found = D.PLANETS.find((p) => p.stages.some((s) => s.enemies.includes(def.id)));
+    return found || D.PLANET_MAP[def.faction === 'light' ? 'hoth' : 'mustafar'];
+  }
+  const ROLE_NAMES = { attacker: 'Damage Dealer', tank: 'Tank', support: 'Support', healer: 'Healer' };
+
+  function hyperspace(canvas, color) {
+    const W = (canvas.width = innerWidth);
+    const H = (canvas.height = innerHeight);
+    const ctx = canvas.getContext('2d');
+    const stars = Array.from({ length: 260 }, () => ({ a: Math.random() * Math.PI * 2, d: Math.random() * 0.2, v: 0.004 + Math.random() * 0.01 }));
+    let speed = 0.3;
+    const step = () => {
+      if (!canvas.isConnected) return;
+      ctx.fillStyle = 'rgba(2,3,10,0.35)';
+      ctx.fillRect(0, 0, W, H);
+      speed = Math.min(4, speed * 1.02);
+      const R = Math.hypot(W, H) / 2;
+      ctx.lineCap = 'round';
+      for (const s of stars) {
+        const d0 = s.d;
+        s.d += s.v * speed;
+        if (s.d > 1.1) { s.d = Math.random() * 0.05; s.a = Math.random() * Math.PI * 2; }
+        const x0 = W / 2 + Math.cos(s.a) * d0 * R;
+        const y0 = H / 2 + Math.sin(s.a) * d0 * R;
+        const x1 = W / 2 + Math.cos(s.a) * s.d * R;
+        const y1 = H / 2 + Math.sin(s.a) * s.d * R;
+        ctx.strokeStyle = Math.random() < 0.15 ? color : 'rgba(210,230,255,0.9)';
+        ctx.lineWidth = 0.6 + s.d * 2.4;
+        ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+      }
+      requestAnimationFrame(step);
+    };
+    step();
+  }
+
+  function walkout(def, rarity, holo) {
+    return new Promise((resolve) => {
+      if (!motionOK()) return resolve();
+      const tier = R_ORDER[rarity];
+      const mythic = rarity === 'mythic';
+      const ship = def.kind === 'ship';
+      const planet = homeworldOf(def);
+      const side = def.faction === 'light';
+      const stepMs = [0, 0, 650, 850, 1000][tier];
+      const steps = [
+        { kicker: 'Allegiance', big: side ? 'Light Side' : 'Dark Side', icon: `<span class="wo-saber" style="--sc:${side ? '#4aa8ff' : '#ff2a2a'}"></span>`, tone: side ? '#4aa8ff' : '#ff2a2a' },
+        { kicker: ship ? 'Starship class' : 'Class', big: ROLE_NAMES[def.role] || def.role, icon: `<span class="wo-role">${D.ROLE_ICONS[def.role] || '✦'}</span>`, tone: R_COLOR[rarity] },
+        { kicker: ship ? 'Jumping from' : 'Homeworld', big: ship ? 'Hyperspace' : planet.name, icon: ship ? '<span class="wo-role">✈</span>' : '<canvas class="wo-sphere"></canvas>', tone: planet.color || R_COLOR[rarity] },
+      ];
+      const node = el(`<div class="walkout ${rarity} ${ship ? 'is-ship' : ''}" style="--rc:${R_COLOR[rarity]}" role="status" aria-label="New card">
+        <canvas class="wo-bg"></canvas>
+        <div class="wo-vignette"></div>
+        <div class="wo-step" aria-live="polite"></div>
+        <div class="wo-final">
+          <div class="br-rays"></div>
+          ${mythic ? '<canvas class="br-bolts"></canvas>' : ''}
+          ${ship ? `<div class="wo-ship">${Art.shipOnly(def)}</div>` : ''}
+          <div class="br-card">${unitCard(def, { tag: 'div', hideShards: true, holo })}</div>
+          <div class="br-text"><span class="br-kicker">${mythic ? 'You found something that should not exist' : tier === 3 ? 'A legend joins your cause' : 'Epic recruit'}</span><b class="br-rarity" data-text="${D.RARITIES[rarity].label.toUpperCase()}">${D.RARITIES[rarity].label.toUpperCase()}</b><span class="br-name">${esc(def.name)}</span></div>
+          ${Array.from({ length: 10 + tier * 8 }, (_, i) => `<i class="br-spark" style="--a:${(i * 137.5) % 360}deg;--d:${(Math.random() * 0.5).toFixed(2)}s;--r:${30 + Math.random() * 30}vmax"></i>`).join('')}
+        </div>
+        <span class="pc-skip">Tap to skip</span>
+      </div>`);
+      document.body.appendChild(node);
+      const bg = $('.wo-bg', node);
+      let env = null;
+      if (ship) hyperspace(bg, R_COLOR[rarity]);
+      else { try { env = new root.Env(bg, planet.id, 'ground'); } catch (e) { env = null; } }
+      const box = $('.wo-step', node);
+      let i = 0;
+      let timer = null;
+      let finished = false;
+      const showFinal = () => {
+        clearTimeout(timer);
+        box.innerHTML = '';
+        node.classList.add('final');
+        if (mythic) {
+          const cv = $('.br-bolts', node);
+          const W = (cv.width = innerWidth);
+          const H = (cv.height = innerHeight);
+          const ctx = cv.getContext('2d');
+          const t0 = performance.now();
+          const step = (now) => {
+            if (!node.isConnected) return;
+            ctx.clearRect(0, 0, W, H);
+            if (now - t0 < 1800 && Math.random() < 0.5) {
+              let x = Math.random() * W;
+              let y = 0;
+              ctx.beginPath();
+              ctx.moveTo(x, y);
+              while (y < H) { x += (Math.random() - 0.5) * 80; y += H / 10; ctx.lineTo(x, y); }
+              ctx.strokeStyle = 'rgba(255,60,100,0.9)';
+              ctx.lineWidth = 2.5;
+              ctx.shadowColor = '#ff2a5a';
+              ctx.shadowBlur = 18;
+              ctx.stroke();
+            }
+            requestAnimationFrame(step);
+          };
+          requestAnimationFrame(step);
+        }
+        timer = setTimeout(close, mythic ? 3000 : 2200);
+      };
+      const next = () => {
+        if (i >= steps.length) return showFinal();
+        const s = steps[i++];
+        box.innerHTML = `<div class="wo-chip" style="--tone:${s.tone}"><div class="wo-icon">${s.icon}</div><div class="wo-words"><span>${esc(s.kicker)}</span><b>${esc(s.big)}</b></div></div>`;
+        const sc = $('.wo-sphere', box);
+        if (sc) {
+          const size = 120;
+          const dpr = Math.min(1.5, window.devicePixelRatio || 1);
+          sc.width = sc.height = size * dpr;
+          sc.style.width = sc.style.height = size + 'px';
+          const ctx = sc.getContext('2d');
+          ctx.scale(dpr, dpr);
+          let t = 0;
+          const spin = () => { if (!sc.isConnected) return; t += 0.03; ctx.clearRect(0, 0, size, size); root.drawPlanetSphere(ctx, size / 2, size / 2, size * 0.4, planet.id, t * 3, { halo: 0.6 }); requestAnimationFrame(spin); };
+          spin();
+        }
+        if (mythic && i === steps.length) node.classList.add('glitch');
+        timer = setTimeout(next, stepMs);
+      };
+      const close = () => {
+        if (finished) return;
+        finished = true;
+        clearTimeout(timer);
+        node.classList.add('out');
+        if (env) env.stop();
+        setTimeout(() => { node.remove(); resolve(); }, 380);
+      };
+      node.addEventListener('click', () => (node.classList.contains('final') ? close() : showFinal()));
+      timer = setTimeout(next, 250);
+    });
+  }
+
+  async function packReveal(results, packId) {
+    const best = results.reduce((b, r) => (R_ORDER[D.UNIT_MAP[r.id].rarity] > R_ORDER[b] ? D.UNIT_MAP[r.id].rarity : b), 'common');
+    if (packId) await crateCinematic(packId, best);
+    const cards = results.map((r, i) => {
       const def = D.UNIT_MAP[r.id];
       const tag = r.isNew ? '<span class="reveal-tag">NEW!</span>' : `<span class="reveal-tag dup">+${r.shards} shards</span>`;
-      return `<div class="flip glow-${def.rarity} ${r.holo ? 'is-holo' : ''}" tabindex="0" role="button" aria-label="Reveal card">
+      return `<div class="flip glow-${def.rarity} r-${def.rarity} ${r.holo ? 'is-holo' : ''}" style="--rc:${R_COLOR[def.rarity]};--i:${i}" data-i="${i}" tabindex="0" role="button" aria-label="Reveal card">
         <div class="flip-face flip-back">${Art.ICONS.crystals}</div>
         <div class="flip-face flip-front">${tag}${r.holo ? '<span class="holo-tag">HOLO</span>' : ''}${r.pity ? '<span class="holo-tag pity">PITY</span>' : ''}${unitCard(def, { tag: 'div', hideShards: true, holo: r.holo })}</div>
       </div>`;
     }).join('');
     const m = openModal(`
-      <div style="text-align:center"><p class="eyebrow">Crate cracked open</p><h2>Tap each card to reveal</h2></div>
+      <div style="text-align:center"><p class="eyebrow">${packId ? 'Crate cracked open' : 'Delivery from Vekko'}</p><h2>Tap each card to reveal</h2><p class="muted small">The glow behind a card hints at what's inside.</p></div>
       <div class="reveal-row">${cards}</div>
       <div class="modal-actions" style="justify-content:center">
         <button class="btn" type="button" data-all>Reveal all</button>
         <button class="btn btn-primary" type="button" data-done>Done</button>
-      </div>`, { onClose: () => App.refresh() });
+      </div>`, { onClose: () => App.refresh(), cls: `reveal-modal best-${best}` });
+    let busy = Promise.resolve();
     const flip = (f) => {
-      if (f.classList.contains('flipped')) return;
-      f.classList.add('flipped');
-      if (f.classList.contains('glow-legendary')) toast('LEGENDARY!');
-      else if (f.classList.contains('is-holo')) toast('HOLO card! Double value.');
+      if (f.classList.contains('flipped') || f.classList.contains('charging')) return busy;
+      const r = results[Number(f.dataset.i)];
+      const def = D.UNIT_MAP[r.id];
+      const tier = R_ORDER[def.rarity];
+      busy = busy.then(async () => {
+        // Rarer cards hold their breath before turning over.
+        if (tier >= 1 && motionOK()) {
+          f.classList.add('charging');
+          await new Promise((res) => setTimeout(res, [0, 250, 450, 750, 1100][tier]));
+          f.classList.remove('charging');
+        }
+        f.classList.add('flipped');
+        if (!motionOK()) return;
+        const rect = f.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        if (tier >= 1) {
+          const ring = el(`<div class="reveal-ring" style="left:${cx}px;top:${cy}px;--rc:${R_COLOR[def.rarity]}"></div>`);
+          document.body.appendChild(ring);
+          setTimeout(() => ring.remove(), 900);
+        }
+        if (tier >= 2) {
+          for (let k = 0; k < 8 + tier * 6; k++) {
+            const s = el(`<i class="reveal-spark" style="left:${cx}px;top:${cy}px;--rc:${R_COLOR[def.rarity]}"></i>`);
+            document.body.appendChild(s);
+            const a = Math.random() * Math.PI * 2;
+            const d = 60 + Math.random() * (60 + tier * 40);
+            s.animate([{ transform: 'translate(-50%,-50%) scale(1)', opacity: 1 }, { transform: `translate(calc(-50% + ${Math.cos(a) * d}px), calc(-50% + ${Math.sin(a) * d}px)) scale(0)`, opacity: 0 }], { duration: 700 + Math.random() * 400, easing: 'cubic-bezier(.1,.8,.3,1)' }).onfinish = () => s.remove();
+          }
+        }
+        if (tier >= 2) {
+          await new Promise((res) => setTimeout(res, 300));
+          await walkout(def, def.rarity, r.holo);
+        } else if (r.holo) toast('HOLO card! Double value.');
+        await new Promise((res) => setTimeout(res, 120));
+      });
+      return busy;
     };
     m.root.addEventListener('click', (e) => {
       const f = e.target.closest('.flip');
       if (f) flip(f);
-      if (e.target.closest('[data-all]')) $$('.flip', m.root).forEach((x, i) => setTimeout(() => flip(x), i * 180));
+      if (e.target.closest('[data-all]')) $$('.flip', m.root).forEach((x) => flip(x));
       if (e.target.closest('[data-done]')) m.close();
     });
     m.root.addEventListener('keydown', (e) => {

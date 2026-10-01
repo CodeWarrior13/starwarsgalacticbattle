@@ -192,6 +192,7 @@
       const odds = { ...pack.odds };
       if (this.state.luck.charmCrates > 0) {
         odds.legendary *= D.LUCK.charmOdds.legendary;
+        if (odds.mythic) odds.mythic *= D.LUCK.charmOdds.mythic;
         odds.epic *= D.LUCK.charmOdds.epic;
       }
       return odds;
@@ -206,9 +207,10 @@
       const odds = this.effectiveOdds(pack);
       const rarities = [];
       for (let i = 0; i < pack.count; i++) rarities.push(this.rollRarity(odds, random));
-      const pityHit = !rarities.includes('legendary') && luck.pity + 1 >= D.LUCK.pityCrates;
+      const top = rarities.includes('legendary') || rarities.includes('mythic');
+      const pityHit = !top && luck.pity + 1 >= D.LUCK.pityCrates;
       if (pack.guarantee === 'legendary' || pityHit) {
-        if (!rarities.includes('legendary')) rarities[rarities.length - 1] = 'legendary';
+        if (!top) rarities[rarities.length - 1] = 'legendary';
       }
       const results = rarities.map((rarity) => {
         let pool = this.collectable(pack.kind).filter((u) => u.rarity === rarity);
@@ -217,7 +219,8 @@
         const holo = random() < (charmed ? D.LUCK.holoChanceCharmed : D.LUCK.holoChance);
         return { ...this.grantCard(pick.id, holo), pity: pityHit && rarity === 'legendary' };
       });
-      luck.pity = rarities.includes('legendary') ? 0 : luck.pity + 1;
+      luck.pity = rarities.includes('legendary') || rarities.includes('mythic') ? 0 : luck.pity + 1;
+      if (rarities.includes('mythic')) this.state.stats.mythics = (this.state.stats.mythics || 0) + 1;
       if (charmed) luck.charmCrates -= 1;
       this.state.stats.packsOpened += 1;
       this.save();
@@ -442,24 +445,42 @@
       this.save();
     },
 
-    // Strongest squad with a balanced core: best tank, best healer (ground
-    // only), then the highest-power units to fill the rest.
+    // Balanced auto-build: one tank, one healer and one support at most, the
+    // rest damage dealers, preferring units that complete synergies over raw
+    // power alone.
     autoSquad(kind) {
       const size = this.slots();
       const owned = D.UNITS.filter((u) => u.kind === kind && this.owns(u.id))
         .sort((a, b) => this.powerOf(b.id) - this.powerOf(a.id));
+      if (!owned.length) return [];
+      const caps = { tank: 1, healer: 1, support: 1, attacker: size };
+      const top = owned.slice(0, size);
+      const avg = top.reduce((a, u) => a + this.powerOf(u.id), 0) / top.length;
+      const synScore = (ids) => D.squadBonuses(ids).active.filter((x) => x.kind !== 'terrain').reduce((n, x) => n + 1 + (x.tier || 0), 0);
       const squad = [];
+      const count = {};
+      const add = (u) => { squad.push(u.id); count[u.role] = (count[u.role] || 0) + 1; };
       const tank = owned.find((u) => u.role === 'tank');
-      if (tank) squad.push(tank.id);
-      if (kind === 'character') {
+      if (tank) add(tank);
+      if (kind === 'character' && size >= 3) {
         const healer = owned.find((u) => u.role === 'healer');
-        if (healer) squad.push(healer.id);
+        if (healer) add(healer);
       }
-      for (const u of owned) {
-        if (squad.length >= size) break;
-        if (!squad.includes(u.id)) squad.push(u.id);
+      while (squad.length < size) {
+        const base = synScore(squad);
+        let best = null;
+        let bestScore = -Infinity;
+        for (const u of owned) {
+          if (squad.includes(u.id) || (count[u.role] || 0) >= caps[u.role]) continue;
+          const sc = this.powerOf(u.id) + (synScore([...squad, u.id]) - base) * avg * 0.12;
+          if (sc > bestScore) { bestScore = sc; best = u; }
+        }
+        // Not enough variety owned: relax the role caps.
+        if (!best) best = owned.find((u) => !squad.includes(u.id));
+        if (!best) break;
+        add(best);
       }
-      return squad.sort((a, b) => this.powerOf(b) - this.powerOf(a)).slice(0, size);
+      return squad.sort((a, b) => this.powerOf(b) - this.powerOf(a));
     },
 
     squadEntries(kind) {

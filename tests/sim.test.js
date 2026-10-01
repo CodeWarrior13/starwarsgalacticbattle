@@ -422,6 +422,14 @@ test('every unit has a full-screen signature ultimate', () => {
   const body = src.slice(src.indexOf('const SIG = {'), src.indexOf('// ---------- Props'));
   const keys = [...body.matchAll(/^\s+([a-z0-9_]+): \{/gm)].map((m) => m[1]);
   for (const u of D.UNITS) assert.ok(keys.includes(u.id), `${u.id} has a signature ultimate`);
+  // No two units share the same move + prop + impact combination.
+  const seen = {};
+  for (const [, id, o] of body.matchAll(/^\s+([a-z0-9_]+): (\{.*\}),?$/gm)) {
+    if (o.includes('legacy')) continue;
+    const k = ['move', 'prop', 'impact'].map((f) => (o.match(new RegExp(`${f}: '(\\w+)'`)) || [])[1]).join('/');
+    assert.ok(!seen[k], `${id} duplicates ${seen[k]}'s ultimate (${k})`);
+    seen[k] = id;
+  }
 });
 
 test('every unit and boss has cover art and a bio', () => {

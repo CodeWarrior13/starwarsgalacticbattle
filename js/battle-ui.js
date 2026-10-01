@@ -1837,6 +1837,7 @@
           ${isTower ? `<button class="btn" type="button" data-r="tower-exit">Leave tower</button><button class="btn btn-primary" type="button" data-r="tower">${won ? `Climb to floor ${rewards.towerFloor}` : `Restart from floor ${rewards.towerFloor}`}</button>` : nextInPlanet ? '<button class="btn btn-primary" type="button" data-r="next">Next stage</button>' : nextPlanet ? `<button class="btn btn-primary" type="button" data-r="planet">Travel to ${esc(nextPlanet.name)}</button>` : '<button class="btn btn-primary" type="button" data-r="campaign">Continue</button>'}
         </div>`, { small: true, dismissable: false, cls: 'result-modal' });
       if (won) this.spinReel(m.root, rewards);
+      if (rewards.levelUps && rewards.levelUps.length) setTimeout(() => this.rankUp(rewards.levelUps[rewards.levelUps.length - 1]), won ? 2600 : 600);
       m.root.addEventListener('click', (e) => {
         const r = e.target.closest('[data-r]');
         if (!r) return;
@@ -1851,6 +1852,25 @@
           App.go('home');
         } else App.go(r.dataset.r);
       });
+    },
+
+    // Account level-up: a short full-screen rank-up moment.
+    rankUp(up) {
+      if (reducedMotion() || !up) return;
+      const big = up.level % 5 === 0;
+      const node = el(`<div class="jackpot rank-up" role="status" aria-live="polite">
+        <div class="jp-rays"></div>
+        <div class="jp-text">
+          <span class="jp-kicker">${big ? 'Milestone rank · bonus Kyber' : 'Commander rank up'}</span>
+          <b class="jp-line">Level ${up.level}</b>
+          <span class="jp-sub">${big ? 'The Rebellion takes notice.' : 'Your legend grows across the galaxy.'}</span>
+          <span class="jp-amount">${cur('credits', up.reward.credits)} ${cur('crystals', up.reward.crystals)}</span>
+        </div>
+      </div>`);
+      document.body.appendChild(node);
+      const close = () => { if (!node.isConnected) return; node.classList.add('out'); setTimeout(() => node.remove(), 450); };
+      node.addEventListener('click', close);
+      setTimeout(close, 2600);
     },
 
     // Hitting the top multiplier gets a full-screen Star Wars pun instead of a toast.

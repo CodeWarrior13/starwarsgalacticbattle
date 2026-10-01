@@ -14,35 +14,35 @@
   // move / prop / impact / colour (+ options). Ally ultimates use ally moves.
   const SIG = {
     // Light side, ground
-    rebel_soldier: { move: 'volley', prop: 'bolt', impact: 'scorch', color: '#ff5a3a', n: 4 },
+    rebel_soldier: { move: 'volley', prop: 'bolt', impact: 'knock', color: '#ff7a3a', n: 4 },
     clone_trooper: { move: 'aegis', color: '#5ab4ff', prop: 'laat' },
     ewok_warrior: { move: 'heal', color: '#9ad86a', prop: 'leaf' },
     han_solo: { move: 'ricochet', prop: 'bolt', impact: 'scorch', color: '#ff3a2a', n: 3, big: true },
     chewbacca: { move: 'shockwave', prop: 'roar', impact: 'knock', color: '#e0954a' },
     leia: { move: 'rally', color: '#ffd23f', prop: 'starbird' },
-    r2d2: { move: 'heal', color: '#5ab4ff', prop: 'zap' },
+    r2d2: { move: 'heal', color: '#5ab4ff', prop: 'holo' },
     obi_wan: { move: 'dive', prop: 'saber', impact: 'slice', color: '#4aa8ff' },
     luke: { move: 'loop', prop: 'saber', impact: 'slice', color: '#3bff6a' },
     yoda: { move: 'shockwave', prop: 'force', impact: 'spin', color: '#8aff9a' },
     rey: { move: 'dive', prop: 'staff', impact: 'shatter', color: '#ffd23f' },
-    jawa: { move: 'heal', color: '#7ab8ff', prop: 'zap' },
-    grogu: { move: 'heal', color: '#8aff9a', prop: 'mote' },
+    jawa: { move: 'heal', color: '#ffb03a', prop: 'ion' },
+    grogu: { move: 'heal', color: '#8aff9a', prop: 'force' },
     ahsoka: { move: 'loop', prop: 'twin', impact: 'xslash', color: '#f2f6ff' },
     din_djarin: { move: 'homing', prop: 'dart', impact: 'scorch', color: '#ffb03a', n: 5 },
     mace_windu: { move: 'dive', prop: 'saber', impact: 'xslash', color: '#b45aff' },
     c3po: { move: 'orbit', prop: 'gold', impact: 'spin', color: '#ffd23f', n: 6 },
-    chopper: { move: 'heal', color: '#ff9a3a', prop: 'zap' },
+    chopper: { move: 'heal', color: '#ff9a3a', prop: 'spark' },
     bb8: { move: 'roll', prop: 'bb8', impact: 'knock', color: '#ff9a3a' },
     k2so: { move: 'dive', prop: 'card', impact: 'crush', color: '#9aa8c0' },
     ig11: { move: 'turret', prop: 'bolt', impact: 'scorch', color: '#ff4a3a' },
     rebel_medic: { move: 'heal', color: '#52e08a', prop: 'plus' },
-    two_onebee: { move: 'heal', color: '#6ad8ff', prop: 'plus' },
+    two_onebee: { move: 'heal', color: '#6ad8ff', prop: 'bacta' },
     barriss: { move: 'heal', color: '#5affc8', prop: 'mote' },
     hunter: { move: 'dive', prop: 'knife', impact: 'xslash', color: '#ff8a3a' },
     wrecker: { move: 'rain', prop: 'detonator', impact: 'stamp', color: '#ff7a1a' },
-    tech: { move: 'heal', color: '#5affe0', prop: 'zap' },
+    tech: { move: 'heal', color: '#5affe0', prop: 'scan' },
     crosshair: { move: 'beam', prop: 'snipe', impact: 'scorch', color: '#ff2a2a' },
-    echo: { move: 'arc', prop: 'arc', impact: 'shock', color: '#6ad8ff' },
+    echo: { move: 'beam', prop: 'scomp', impact: 'shock', color: '#6ad8ff' },
     // Dark side, ground
     stormtrooper: { move: 'aegis', color: '#e8eef8', prop: 'trooper' },
     battle_droid: { move: 'volley', prop: 'bolt', impact: 'scorch', color: '#ff3a3a', n: 5, miss: 0.35 },
@@ -58,31 +58,36 @@
     grievous: { move: 'orbit', prop: 'saber', impact: 'xslash', color: '#46e070', n: 4, multi: ['#3d8bff', '#46e070', '#3d8bff', '#46e070'] },
     thrawn: { move: 'beam', prop: 'orbital', impact: 'stamp', color: '#5ab4ff', sky: true, n: 2 },
     b2_droid: { move: 'homing', prop: 'rocket', impact: 'stamp', color: '#ff9a3a', n: 2 },
-    droideka: { move: 'turret', prop: 'bolt', impact: 'scorch', color: '#ff3a3a', shield: true },
+    droideka: { move: 'turret', prop: 'bolt', impact: 'stamp', color: '#ff3a3a', shield: true },
     magnaguard: { move: 'dive', prop: 'electrostaff', impact: 'shock', color: '#c88aff' },
     ig88: { move: 'ricochet', prop: 'bolt', impact: 'stamp', color: '#ff2a2a', n: 2 },
     nightsister_acolyte: { move: 'heal', color: '#5aff8a', prop: 'mist' },
     talzin: { move: 'arc', prop: 'arc', impact: 'burn', color: '#5aff6a' },
     grand_inquisitor: { legacy: 'saberstorm' },
     second_sister: { move: 'loop', prop: 'spinner', impact: 'slice', color: '#ff2a2a' },
-    fifth_brother: { move: 'dive', prop: 'card', impact: 'crush', color: '#ff2a2a', quake: true },
+    fifth_brother: { move: 'dive', prop: 'spinner', impact: 'crush', color: '#ff2a2a', quake: true },
     seventh_sister: { move: 'orbit', prop: 'probe', impact: 'shock', color: '#ff3a3a', n: 5 },
     eighth_brother: { move: 'sweep', prop: 'spinner', impact: 'xslash', color: '#ff2a2a' },
+    // Mythic: one-of-a-kind cinematics
+    darth_revan: { move: 'mask', prop: 'mask', impact: 'xslash', color: '#c23bff' },
+    starkiller: { move: 'unleash', prop: 'isd', impact: 'crush', color: '#7ac8ff' },
+    master_luke: { move: 'suns', prop: 'projection', color: '#ffd27a' },
+    ghost: { move: 'phantom', prop: 'ship', impact: 'stamp', color: '#ff8a3a' },
     // Ships
-    a_wing: { move: 'flyby', prop: 'ship', impact: 'scorch', color: '#ff5a3a', fast: true },
+    a_wing: { move: 'flyby', prop: 'ship', impact: 'knock', color: '#ff5a3a', fast: true },
     y_wing: { move: 'aegis', color: '#8fd3ff', prop: 'ion' },
     x_wing: { move: 'flyby', prop: 'ship', impact: 'stamp', color: '#ff7a3a', torpedo: true },
-    b_wing: { move: 'flyby', prop: 'ship', impact: 'stamp', color: '#ff5a3a', roll: true },
-    falcon: { move: 'flyby', prop: 'ship', impact: 'scorch', color: '#ff5a3a', roll: true, n: 2 },
-    z95: { move: 'flyby', prop: 'ship', impact: 'burn', color: '#ffb03a' },
+    b_wing: { move: 'flyby', prop: 'ship', impact: 'crush', color: '#ff5a3a', roll: true },
+    falcon: { move: 'flyby', prop: 'ship', impact: 'spin', color: '#ff5a3a', roll: true, n: 2 },
+    z95: { move: 'flyby', prop: 'ship', impact: 'lift', color: '#ffb03a' },
     tie_fighter: { move: 'flyby', prop: 'ship', impact: 'scorch', color: '#3bff6a', wing: 2 },
     tie_bomber: { move: 'carpet', prop: 'bomb', impact: 'stamp', color: '#ff9a3a' },
-    lambda_shuttle: { move: 'aegis', color: '#e8eef8', prop: 'ion' },
+    lambda_shuttle: { move: 'aegis', color: '#e8eef8', prop: 'deflector' },
     slave_one: { move: 'carpet', prop: 'seismic', impact: 'shatter', color: '#6ad8ff' },
     tie_advanced: { move: 'flyby', prop: 'ship', impact: 'xslash', color: '#3bff6a', lock: true },
-    razor_crest: { move: 'flyby', prop: 'ship', impact: 'burn', color: '#ffb03a', rail: true },
-    tie_interceptor: { move: 'flyby', prop: 'ship', impact: 'scorch', color: '#3bff6a', fast: true, n: 2 },
-    vulture_droid: { move: 'flyby', prop: 'ship', impact: 'stamp', color: '#ff9a3a', wing: 3 },
+    razor_crest: { move: 'flyby', prop: 'ship', impact: 'freeze', color: '#ffb03a', rail: true },
+    tie_interceptor: { move: 'flyby', prop: 'ship', impact: 'shatter', color: '#3bff6a', fast: true, n: 2 },
+    vulture_droid: { move: 'flyby', prop: 'ship', impact: 'burn', color: '#ff9a3a', wing: 3 },
   };
 
   // ---------- Props ----------
@@ -224,7 +229,7 @@
     async sig(actor, targets, ev) {
       const spec = SIG[actor.id];
       const ally = ev && ev.offensive === false;
-      const move = ally && !['heal', 'aegis', 'rally'].includes(spec.move) ? 'rally' : spec.move;
+      const move = ally && !['heal', 'aegis', 'rally', 'suns'].includes(spec.move) ? 'rally' : spec.move;
       const S = this.sigStage(spec.color, move);
       const from = this.vp(actor.uid);
       const T = targets.filter((t) => this.cards[t.uid]).map((t) => ({ uid: t.uid, ...this.vp(t.uid) }));
@@ -560,10 +565,111 @@
       await follow(S, propEl(spec.prop, spec.color, actor), route, { speed: 2.2, minMs: 1300, onNode: (r) => r.uid && hit(r) });
     },
 
+    // ---------- Mythic moves ----------
+    // Revan: the mask fills the sky, then twin blades cross the whole screen.
+    async mv_mask(S, actor, from, T, spec, hit) {
+      const mask = el(`<div class="sig-mask"><svg viewBox="0 0 100 100"><path d="M24 30 C24 18 36 12 50 12 C64 12 76 18 76 30 L76 66 C76 80 64 90 50 92 C36 90 24 80 24 66Z" fill="#9aa0aa"/><path d="M24 40 H76 V52 H24Z" fill="#14090c"/><rect x="32" y="43" width="14" height="5" rx="2" fill="#ff3a3a"/><rect x="54" y="43" width="14" height="5" rx="2" fill="#ff3a3a"/><path d="M50 12 V40 M50 52 V92" stroke="#4a4f58" stroke-width="1.5"/></svg></div>`);
+      S.layer.appendChild(mask);
+      mask.animate([{ opacity: 0, transform: 'translate(-50%,-50%) scale(1.6)' }, { opacity: 0.5, transform: 'translate(-50%,-50%) scale(1)', offset: 0.4 }, { opacity: 0.35, transform: 'translate(-50%,-50%) scale(.95)', offset: 0.8 }, { opacity: 0, transform: 'translate(-50%,-50%) scale(.9)' }], { duration: 2000 / S.speed, fill: 'forwards' });
+      await this.wait(700);
+      const corners = [[{ x: -80, y: -80 }, { x: S.W + 80, y: S.H + 80 }, '#ff2a2a'], [{ x: S.W + 80, y: -80 }, { x: -80, y: S.H + 80 }, '#c23bff']];
+      await Promise.all(corners.map(([a, b, col], k) => {
+        const route = [a, ...T.slice().sort((p, q) => (k ? q.x - p.x : p.x - q.x)).map((t) => ({ ...t })), b];
+        const blade = propEl('saber', col, actor);
+        blade.style.setProperty('--c', col);
+        return follow(S, blade, route, { speed: 2.4, delay: k * 220, minMs: 900, trail: col, onNode: (r) => { if (r.uid) { if (k) hit(r); else this.cutCard(r.uid, S.layer, col); } } });
+      }));
+    },
+
+    // Starkiller: drags a Star Destroyer out of the sky onto the enemy line.
+    async mv_unleash(S, actor, from, T, spec, hit) {
+      S.layer.classList.add('sig-quake');
+      const cx = T.reduce((a, t) => a + t.x, 0) / Math.max(1, T.length);
+      const cy = T.reduce((a, t) => a + t.y, 0) / Math.max(1, T.length);
+      const dur = 1700 / S.speed;
+      const t0 = performance.now();
+      const ship = el(`<div class="sp-prop sig-isd">${root.Art.shipOnly({ shape: 'isd' })}</div>`);
+      S.layer.appendChild(ship);
+      const size = S.W * 0.55;
+      ship.style.width = ship.style.height = size + 'px';
+      await new Promise((resolve) => {
+        const step = (now) => {
+          const k = Math.min(1, (now - t0) / dur);
+          // Lightning from his hands to the falling hull.
+          const e = k * k * k;
+          const sx = cx + (1 - e) * S.W * 0.25;
+          const sy = -size * 0.6 + (cy + size * 0.6) * e;
+          ship.style.transform = `translate(${sx}px, ${sy}px) translate(-50%,-50%) rotate(${200 - e * 30}deg) scale(${1.2 - e * 0.5})`;
+          if (k < 0.9) this.sigBolt(S, from, { x: sx, y: sy }, spec.color, 0.9);
+          if (Math.random() < 0.3) this.sigBolt(S, from, { x: sx + rand(-80, 80), y: sy + rand(-40, 40) }, spec.color, 0.5);
+          if (k < 1) requestAnimationFrame(step); else resolve();
+        };
+        requestAnimationFrame(step);
+      });
+      ship.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 300, fill: 'forwards' });
+      this.env.flash('#ffd27a', 0.7);
+      const f = this.toField({ x: cx, y: cy });
+      this.boom(f, '#ff8a2a', 2.6);
+      T.forEach((t) => hit(t));
+      await this.wait(500);
+    },
+
+    // Master Luke: twin suns rise and his Force projection walks out to the squad.
+    async mv_suns(S, actor, from, T, spec) {
+      S.layer.classList.add('sig-dusk');
+      const suns = el('<div class="sig-suns"><i></i><i></i></div>');
+      S.layer.appendChild(suns);
+      const ghost = propEl('card', '#7ac8ff', actor);
+      ghost.classList.add('sig-projection');
+      await follow(S, ghost, [from, { x: S.W / 2, y: S.H * 0.45 }], { speed: 0.6, minMs: 1100, trail: false, keep: true });
+      T.forEach((t, i) => setTimeout(() => {
+        const card = this.cards[t.uid];
+        if (card) card.animate([{ filter: 'brightness(1)' }, { filter: 'brightness(1.8) drop-shadow(0 0 20px #ffd27a)' }, { filter: 'brightness(1)' }], { duration: 800 });
+        this.wave(this.toField(t), '#ffd27a', 3);
+      }, i * 100));
+      await this.wait(900);
+      ghost.animate([{ opacity: 0.8 }, { opacity: 0, filter: 'blur(8px)' }], { duration: 500, fill: 'forwards' }).onfinish = () => ghost.remove();
+      await this.wait(400);
+    },
+
+    // The Ghost decloaks overhead, rakes the line, then the Phantom peels off.
+    async mv_phantom(S, actor, from, T, spec, hit) {
+      const ship = propEl('ship', spec.color, actor);
+      ship.classList.remove('heading');
+      ship.classList.add('sig-decloak');
+      const pos = { x: S.W / 2, y: S.H * 0.2 };
+      ship.style.transform = `translate(${pos.x}px, ${pos.y}px) translate(-50%,-50%) rotate(180deg) scale(1.4)`;
+      S.layer.appendChild(ship);
+      await this.wait(700);
+      for (const t of T) {
+        for (let k = 0; k < 3; k++) follow(S, propEl('bolt', '#ff5a3a', actor), [{ x: pos.x + rand(-10, 10), y: pos.y + 20 }, { x: t.x + rand(-14, 14), y: t.y }], { speed: 3.4, delay: k * 60, trailWidth: 0.5 });
+        setTimeout(() => hit(t), 160 / S.speed);
+        await this.wait(200);
+      }
+      const phantom = el(`<div class="sp-prop sig-phantom heading" style="--c:#7ac8ff"><svg viewBox="0 0 100 100"><path d="M50 10 L70 60 L60 86 L40 86 L30 60Z" fill="#d8d2c0"/><path d="M42 30 L58 30 L56 44 L44 44Z" fill="#12263a"/><circle cx="44" cy="88" r="4" fill="#9fdcff"/><circle cx="56" cy="88" r="4" fill="#9fdcff"/></svg></div>`);
+      await follow(S, phantom, [{ ...pos }, { x: S.W * 0.2, y: S.H * 0.6 }, { x: S.W * 0.8, y: S.H * 0.7 }, { x: S.W + 100, y: S.H * 0.3 }], { speed: 2.4, trail: '#7ac8ff' });
+      ship.animate([{ opacity: 1 }, { opacity: 0, filter: 'blur(6px)' }], { duration: 400, fill: 'forwards' });
+      await this.wait(300);
+    },
+
     // ---------- Ally moves ----------
     async mv_heal(S, actor, from, T, spec) {
       S.layer.classList.add('sig-aurora');
-      const glyph = { plus: '✚', leaf: '❦', zap: '⚡', mote: '•', mist: '❂' }[spec.prop] || '✦';
+      const glyph = { plus: '✚', leaf: '❦', zap: '⚡', mote: '•', mist: '❂', holo: '◈', ion: '◎', spark: '✷', scan: '▣', force: '◌', bacta: '◯' }[spec.prop] || '✦';
+      // Each healer gets its own signature flourish on top of the healing motes.
+      const extra = {
+        holo: () => `<div class="hx-holo" style="left:${from.x}px;top:${from.y}px"></div>`,
+        scan: () => '<div class="hx-scan"></div>',
+        ion: () => T.map((t) => `<div class="hx-ion" style="left:${t.x}px;top:${t.y}px"></div>`).join(''),
+        spark: () => `<div class="hx-spark" style="left:${from.x}px;top:${from.y}px"></div>`,
+        force: () => `<div class="hx-force" style="left:${from.x}px;top:${from.y}px"></div>`,
+        bacta: () => T.map((t) => `<div class="hx-bacta" style="left:${t.x}px;top:${t.y}px"></div>`).join(''),
+        leaf: () => '<div class="hx-leaves"></div>',
+        mist: () => '<div class="hx-mist"></div>',
+        plus: () => `<div class="hx-cross" style="left:${S.W / 2}px;top:${S.H / 2}px"></div>`,
+        mote: () => `<div class="hx-halo" style="left:${from.x}px;top:${from.y}px"></div>`,
+      }[spec.prop];
+      if (extra) S.layer.insertAdjacentHTML('beforeend', extra());
       const motes = [];
       T.forEach((t, i) => {
         for (let k = 0; k < 7; k++) {
@@ -585,7 +691,7 @@
     },
 
     async mv_aegis(S, actor, from, T, spec) {
-      const wall = el(`<div class="sig-wall" style="--c:${spec.color}"></div>`);
+      const wall = el(`<div class="sig-wall wall-${spec.prop}" style="--c:${spec.color}"></div>`);
       S.layer.appendChild(wall);
       const ltr = actor.side === 'player';
       wall.animate([{ transform: `translateX(${ltr ? '-110%' : '110%'})` }, { transform: `translateX(${ltr ? '110%' : '-110%'})` }], { duration: 1100 / S.speed, easing: 'cubic-bezier(.4,0,.6,1)' });

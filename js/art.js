@@ -680,6 +680,74 @@
       + rim('M60 22 C64.5 28 66.5 36 66 46 L65 60 C64 62 63 63 61.5 64 C63 56 64 46 63 38 C62.5 30 61 26 58 21Z', 0.5);
   };
 
+  // ---------- Mythic ----------
+  // Mythic cards get a crimson-gold aura frame baked into the art.
+  const mythicAura = (c1, c2) => {
+    const [g, gd] = RG([[0, c1, 0.75], [0.55, c2, 0.35], [1, '#000', 0]], 0.5, 0.42, 0.65);
+    return gd + R(0, 0, 100, 100, g);
+  };
+
+  CHAR.darth_revan = () => {
+    const [mk, mkd] = LG([[0, '#d8dce2'], [0.5, '#9aa0aa'], [1, '#4a4f58']], 0, 0, 0.4, 1);
+    const [hd, hdd] = LG([[0, '#4a1418'], [0.6, '#24090c'], [1, '#0a0304']]);
+    return R(0, 0, 100, 100, '#0a0610') + mythicAura('#8a2aff', '#3a0a40')
+      + [12, 30, 70, 88].map((x, i) => `<path d="M${x} 0 L${x + (i % 2 ? -6 : 6)} 30 L${x + (i % 2 ? 4 : -4)} 48 L${x + (i % 2 ? -8 : 8)} 70" stroke="#c88aff" stroke-width=".8" fill="none" opacity=".35"/>`).join('')
+      // Crossed red and violet blades behind him.
+      + saber(28, 92, 78, 14, '#ff2a2a') + saber(72, 92, 22, 14, '#c23bff')
+      + mkd + hdd
+      + P('M2 100 C4 80 22 70 50 70 C78 70 96 80 98 100Z', '#1a0a10') + P('M30 72 L50 100 L70 72 L60 72 L50 88 L40 72Z', '#5a1a20')
+      + P('M36 86 L64 86 L62 92 L38 92Z', '#3a2a20') + R(46, 86, 8, 6, '#9a7a3a')
+      // Deep hood framing the mask.
+      + P('M24 74 C20 44 30 18 50 16 C70 18 80 44 76 74 C70 64 64 58 50 58 C36 58 30 64 24 74Z', hd)
+      + P('M30 66 C28 44 36 26 50 25 C64 26 72 44 70 66 C64 58 58 56 50 56 C42 56 36 58 30 66Z', '#050204')
+      // The iconic mask: silver plates, a dark visor band trimmed in red.
+      + P('M38 34 C38 30 44 28 50 28 C56 28 62 30 62 34 L62 52 C62 58 56 63 50 64 C44 63 38 58 38 52Z', mk)
+      + P('M38 40 L62 40 L62 46 L38 46Z', '#14090c') + L(38, 40, 62, 40, '#c8323a', 0.8) + L(38, 46, 62, 46, '#c8323a', 0.8)
+      + `<g style="filter:drop-shadow(0 0 2px #ff3a3a)">${R(42, 42, 6, 2, '#ff4a4a', 'rx="1"')}${R(52, 42, 6, 2, '#ff4a4a', 'rx="1"')}</g>`
+      + L(50, 28, 50, 40, '#5a5f68', 0.8) + L(50, 46, 50, 63, '#5a5f68', 0.8)
+      + `<path d="M42 50 L46 54 L54 54 L58 50 M44 58 L56 58" stroke="#4a4f58" stroke-width=".8" fill="none"/>`
+      + E(44, 32, 4, 1.4, '#fff', 'opacity=".4" transform="rotate(-12 44 32)"');
+  };
+
+  CHAR.starkiller = () => {
+    const [sk, skd] = LG([[0, '#e6c0a0'], [1, '#a87a5a']]);
+    const bolt = (x1, y1, pts) => `<polyline points="${x1},${y1} ${pts}" stroke="#bfe6ff" stroke-width="1.3" fill="none"/><polyline points="${x1},${y1} ${pts}" stroke="#4aa8ff" stroke-width="3.5" fill="none" opacity=".45"/>`;
+    return R(0, 0, 100, 100, '#140a14') + mythicAura('#ff6a2a', '#3a0a10')
+      // A Star Destroyer torn out of the sky, burning, behind him.
+      + `<g transform="translate(66 22) rotate(28)">${P('M-34 0 L30 -10 L30 10Z', '#9aa0aa')}${P('M-34 0 L30 10 L30 4Z', '#5a5f68')}${R(16, -16, 8, 8, '#8a9098')}</g>`
+      + C(80, 30, 9, '#ff8a2a', 'opacity=".5"') + C(86, 36, 5, '#ffd27a', 'opacity=".6"')
+      + skd
+      + P('M2 100 C4 80 22 72 50 72 C78 72 96 80 98 100Z', '#2a2d33') + P('M36 74 L64 74 L60 100 L40 100Z', '#3a3d44')
+      + `<path d="M22 84 L40 76 M78 84 L60 76 M40 88 H60" stroke="#5a5f68" stroke-width="1.6"/>` + R(36, 92, 28, 4, '#1a1c20')
+      + neck('#d4ae8e') + head('#dcb898', { rx: 12.5, ry: 15 })
+      + P('M37 40 C36 28 42 24 50 24 C58 24 64 28 63 40 C60 33 56 31 50 31 C44 31 40 33 37 40Z', '#1a1412')
+      + eyes({ iris: '#4a3a2a' }) + brows('#1a1412', { angry: true, w: 1.6 }) + nose() + mouth('', { color: '#7a4a3a' })
+      + `<path d="M56 49 L60 53" stroke="#a05a4a" stroke-width=".8"/>` + shade('M38 48 Q42 56 50 59 Q44 54 40 47Z', 0.2)
+      // Crackling Force lightning from his raised hand, red saber in reverse grip.
+      + C(20, 70, 5, '#dcb898') + `<g style="filter:drop-shadow(0 0 2px #7ac8ff)">${bolt(20, 66, '14,56 18,48 8,38 12,26 4,14')}${bolt(18, 64, '28,54 24,44 34,34 30,22')}</g>`
+      + saber(80, 70, 92, 98, '#ff2a2a');
+  };
+
+  CHAR.master_luke = () => {
+    const [sky, skyd] = LG([[0, '#3a2a5a'], [0.5, '#e8804a'], [1, '#ffd27a']]);
+    const [sk, skd] = LG([[0, '#e2c0a2'], [1, '#a8826a']]);
+    const [rb, rbd] = LG([[0, '#8a7a68'], [1, '#4a3e32']]);
+    return skyd + R(0, 0, 100, 100, sky) + mythicAura('#ffd27a', '#5a2a10')
+      // Binary sunset.
+      + C(22, 64, 8, '#fff2c0') + C(36, 70, 5.5, '#ffe0a0') + R(0, 74, 100, 26, '#5a3a2a') + R(0, 74, 100, 2, '#ffb070', 'opacity=".6"')
+      + skd + rbd
+      + P('M2 100 C4 78 22 70 50 70 C78 70 96 78 98 100Z', rb) + P('M38 70 L50 100 L62 70Z', '#2a2420') + P('M40 72 L50 94 L60 72Z', '#d8cbb4', 'opacity=".25"')
+      + neck('#c8a688') + head('#d4b296', { rx: 12.5, ry: 15 })
+      // Weathered face, swept grey hair and full beard.
+      + P('M36 42 C34 26 42 22 50 22 C59 22 66 27 64 42 C62 34 58 30 50 30 C43 30 38 34 36 42Z', '#c8c4bc')
+      + `<path d="M40 26 C46 23 56 23 61 27" stroke="#f0ede6" stroke-width=".8" fill="none"/>`
+      + P('M37 47 C37 58 42 66 50 68 C58 66 63 58 63 47 C60 54 56 56 50 56 C44 56 40 54 37 47Z', '#b8b2a8')
+      + P('M44 54 Q50 52 56 54 Q50 57 44 54Z', '#9a948a') + `<path d="M42 58 L44 64 M50 60 L50 67 M58 58 L56 64" stroke="#8a847a" stroke-width=".7"/>`
+      + eyes({ iris: '#3a6aa8', y: 44.5 }) + brows('#a8a49c', { sad: true, w: 1.6, y: 41 }) + nose({ y: 45.5 })
+      + `<path d="M40 39 L44 38.6 M56 38.6 L60 39 M38.5 47 L41 48" stroke="#8a6a52" stroke-width=".6"/>`
+      + saber(70, 96, 84, 58, '#3bff6a') + C(70, 96, 3, '#d4b296');
+  };
+
   // ---------- Bosses ----------
   CHAR.rancor = () => SCENES.pit()
     + P('M8 100 C8 70 22 52 50 50 C78 52 92 70 92 100Z', '#6a5c4e')
@@ -844,6 +912,22 @@
         + R(39, 88, 4, 9, '#2a2d33', 'rx="1"') + R(57, 88, 4, 9, '#2a2d33', 'rx="1"') + C(41, 97, 1.3, '#ff5a3a', 'opacity=".85"') + C(59, 97, 1.3, '#ff5a3a', 'opacity=".85"')
         + P(hull, 'none', 'stroke="#1e2618" stroke-width="1"') + `<path d="M41 11 C44 8 50 7.4 55 8" stroke="#eef4dc" stroke-width=".7" fill="none" opacity=".7"/>`
         + eng(32, 90, 2.6, '#ffb070') + eng(68, 90, 2.6, '#ffb070') + eng(50, 94, 3, '#ffb070');
+    },
+    ghost: () => {
+      // VCX-100 freighter, top-down: broad rounded hull, nose cockpit, dorsal
+      // turret, twin engines and the Phantom docked at the stern.
+      const [hg, hgd] = LG([[0, '#e8e2d2'], [0.5, '#bdb6a4'], [1, '#7a7464']], 0, 0, 1, 0.3);
+      return hgd
+        + P('M50 6 C60 6 66 14 70 24 L92 70 C94 76 90 80 84 80 L64 80 L60 92 L40 92 L36 80 L16 80 C10 80 6 76 8 70 L30 24 C34 14 40 6 50 6Z', hg)
+        + shade('M50 6 C40 6 34 14 30 24 L8 70 C6 76 10 80 16 80 L36 80 L40 92 L50 92Z', 0.14)
+        + P('M30 24 L18 52 L26 52 L36 26Z', '#d0582a') + P('M70 24 L82 52 L74 52 L64 26Z', '#d0582a')
+        + P('M14 66 L30 66 L30 74 L12 74Z', '#d0582a', 'opacity=".9"') + P('M86 66 L70 66 L70 74 L88 74Z', '#d0582a', 'opacity=".9"')
+        + `<path d="M50 14 L50 80 M30 40 H70 M22 60 H78" stroke="#6a6454" stroke-width=".7"/>`
+        + E(50, 14, 7, 5, '#3a3628') + E(50, 13.5, 5, 3.4, '#12263a') + E(48.6, 12.6, 1.8, 0.8, '#9fd8ff', 'opacity=".7"')
+        + C(50, 46, 7, '#5a5648') + C(50, 46, 4.5, '#2a2a22') + L(50, 46, 50, 34, '#3a3a32', 2) + L(47, 46, 47, 35, '#3a3a32', 1.2)
+        + R(14, 76, 18, 8, '#6a6454', 'rx="3"') + R(68, 76, 18, 8, '#6a6454', 'rx="3"')
+        + P('M42 74 L58 74 L60 90 L40 90Z', '#a8a290') + P('M44 76 L56 76 L57 86 L43 86Z', '#4a6a8a', 'opacity=".5"')
+        + eng(20, 86, 4, '#9fdcff') + eng(28, 86, 3.2, '#9fdcff') + eng(72, 86, 3.2, '#9fdcff') + eng(80, 86, 4, '#9fdcff') + eng(50, 93, 2.4, '#9fdcff');
     },
     isd: () => P('M50 4 L88 92 L12 92Z', '#c9ced6') + shade('M50 4 L12 92 L50 92Z', 0.12)
       + `<path d="M50 10 L50 90 M30 50 L70 50 M22 70 L78 70 M40 30 L60 30" stroke="#8a929e" stroke-width=".8"/>` + P('M46 30 L54 30 L55 44 L45 44Z', '#3a414c')

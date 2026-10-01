@@ -17,6 +17,7 @@
   --rare: #46c2ff;
   --epic: #b77bff;
   --legendary: #ffb938;
+  --mythic: #ff2a5a;
   --font-display: 'Oxanium', 'Eurostile', 'Segoe UI', system-ui, sans-serif;
   --font-body: 'Chakra Petch', 'Segoe UI', system-ui, sans-serif;
   --radius: 10px;
@@ -260,6 +261,8 @@ body.in-battle .main-nav, body.in-battle .brand { pointer-events: none; opacity:
 .ucard.rarity-rare { --r: var(--rare); }
 .ucard.rarity-epic { --r: var(--epic); }
 .ucard.rarity-legendary { --r: var(--legendary); }
+.ucard.rarity-mythic { --r: var(--mythic); animation: mythic-frame 2.4s linear infinite; }
+@keyframes mythic-frame { 0%, 100% { box-shadow: 0 0 14px rgba(255, 42, 90, 0.55), 0 0 0 1px #ff2a5a; } 50% { box-shadow: 0 0 22px rgba(255, 210, 63, 0.6), 0 0 0 1px #ffd23f; } }
 .ucard.rarity-legendary::after {
   content: '';
   position: absolute;
@@ -522,7 +525,7 @@ body.in-battle .main-nav, body.in-battle .brand { pointer-events: none; opacity:
 .pack p { margin: 0; color: var(--muted); font-size: 13px; }
 .odds { display: flex; gap: 10px; flex-wrap: wrap; font-size: 12px; }
 .odds span { font-variant-numeric: tabular-nums; }
-.odds .c { color: var(--common); } .odds .r { color: var(--rare); } .odds .e { color: var(--epic); } .odds .l { color: var(--legendary); }
+.odds .c { color: var(--common); } .odds .r { color: var(--rare); } .odds .e { color: var(--epic); } .odds .l { color: var(--legendary); } .odds .m { color: var(--mythic); text-shadow: 0 0 6px rgba(255, 42, 90, 0.7); }
 /* Pack opening */
 .reveal-row { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; perspective: 1000px; }
 .flip {
@@ -1065,7 +1068,7 @@ body.in-battle .main-nav, body.in-battle .brand { pointer-events: none; opacity:
   transition: transform 0.7s cubic-bezier(0.3, 1.3, 0.5, 1);
   cursor: pointer;
 }
-.bigcard.rarity-rare { --r: var(--rare); } .bigcard.rarity-epic { --r: var(--epic); } .bigcard.rarity-legendary { --r: var(--legendary); }
+.bigcard.rarity-rare { --r: var(--rare); } .bigcard.rarity-epic { --r: var(--epic); } .bigcard.rarity-legendary { --r: var(--legendary); } .bigcard.rarity-mythic { --r: var(--mythic); }
 .bigcard.flipped { transform: rotateY(180deg); }
 .bigface {
   position: absolute;
@@ -1168,7 +1171,7 @@ body.in-battle .main-nav, body.in-battle .brand { pointer-events: none; opacity:
   background: var(--panel);
   border: 1px solid color-mix(in srgb, var(--r) 45%, var(--line));
 }
-.stock.rarity-rare { --r: var(--rare); } .stock.rarity-epic { --r: var(--epic); } .stock.rarity-legendary { --r: var(--legendary); }
+.stock.rarity-rare { --r: var(--rare); } .stock.rarity-epic { --r: var(--epic); } .stock.rarity-legendary { --r: var(--legendary); } .stock.rarity-mythic { --r: var(--mythic); }
 .stock.sold { opacity: 0.45; filter: grayscale(0.8); }
 .stock-art { display: block; width: 100%; padding: 0; border: 0; background: none; cursor: zoom-in; }
 .stock-body { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; justify-content: space-between; padding: 8px 10px 10px; font-size: 12px; }
@@ -1627,6 +1630,98 @@ kbd { font-family: var(--font-display); font-size: 11px; padding: 1px 6px; borde
 .bigface.front::before { content: ''; position: absolute; inset: 0; z-index: 3; pointer-events: none; background: linear-gradient(115deg, transparent 38%, rgba(255, 255, 255, 0.2) 50%, transparent 62%); background-size: 250% 100%; background-position: 150% 0; opacity: 0; transition: opacity 0.2s; }
 .bigcard:hover .bigface.front::before { opacity: 1; animation: shine 1.2s ease-out; }
 
+/* ---------- Crate opening cinematic ---------- */
+.crate-cine { position: fixed; inset: 0; z-index: 160; display: grid; place-items: center; overflow: hidden; cursor: pointer; background: radial-gradient(ellipse at center, color-mix(in srgb, var(--rc) 18%, #02030a), #000 75%); animation: fade-in 0.25s; }
+.cc-rays { position: absolute; inset: -50%; background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--rc) 30%, transparent) 0 5deg, transparent 5deg 15deg); opacity: 0; animation: cc-rays var(--dur) ease-in forwards, jp-rays 6s linear infinite; mask-image: radial-gradient(circle, #000 10%, transparent 55%); -webkit-mask-image: radial-gradient(circle, #000 10%, transparent 55%); }
+@keyframes cc-rays { to { opacity: 1; } }
+.tier-0 .cc-rays, .tier-1 .cc-rays { animation-duration: var(--dur), 14s; }
+.cc-glow { position: absolute; left: 50%; top: 50%; width: 40vmin; height: 40vmin; margin: -20vmin; border-radius: 50%; background: radial-gradient(circle, var(--rc), transparent 65%); opacity: 0.2; animation: cc-glow var(--dur) ease-in forwards; }
+@keyframes cc-glow { to { opacity: 0.95; transform: scale(2.2); } }
+.cc-crate { position: relative; width: min(46vmin, 300px); aspect-ratio: 1; filter: drop-shadow(0 0 30px color-mix(in srgb, var(--rc) 70%, transparent)); }
+.cc-crate svg { width: 100%; height: 100%; display: block; }
+.cc-crack { position: absolute; width: 4px; border-radius: 2px; background: #fff; box-shadow: 0 0 10px 4px var(--rc), 0 0 30px 10px var(--rc); opacity: 0; transform-origin: top center; }
+.cc-crack.c1 { left: 48%; top: 20%; height: 40%; transform: rotate(14deg); animation: cc-crack var(--dur) ease-in forwards; animation-delay: calc(var(--dur) * 0.3); }
+.cc-crack.c2 { left: 34%; top: 40%; height: 30%; transform: rotate(-30deg); animation: cc-crack var(--dur) ease-in forwards; animation-delay: calc(var(--dur) * 0.5); }
+.cc-crack.c3 { left: 62%; top: 38%; height: 34%; transform: rotate(40deg); animation: cc-crack var(--dur) ease-in forwards; animation-delay: calc(var(--dur) * 0.65); }
+.tier-0 .cc-crack.c2, .tier-0 .cc-crack.c3, .tier-1 .cc-crack.c3 { display: none; }
+@keyframes cc-crack { from { opacity: 0; transform: scaleY(0) rotate(var(--r, 0deg)); } 20% { opacity: 1; } to { opacity: 1; } }
+.cc-label { position: absolute; bottom: 16%; left: 0; right: 0; text-align: center; font-family: var(--font-display); font-weight: 800; letter-spacing: 0.3em; text-transform: uppercase; font-size: clamp(14px, 2.4vw, 22px); color: #fff; text-shadow: 0 0 16px var(--rc); animation: cc-label 1s ease-in-out infinite alternate; }
+@keyframes cc-label { from { opacity: 0.55; } to { opacity: 1; } }
+.tier-3 .cc-label { color: var(--legendary); font-size: clamp(18px, 3.4vw, 34px); }
+.crate-cine.burst .cc-crate { animation: cc-burst 0.32s ease-in forwards; }
+@keyframes cc-burst { to { transform: scale(2.4); opacity: 0; filter: brightness(4) blur(6px); } }
+.cc-flash { position: fixed; inset: 0; z-index: 170; pointer-events: none; background: radial-gradient(circle, #fff 10%, var(--rc) 40%, transparent 75%); animation: cc-flash 0.7s ease-out forwards; }
+@keyframes cc-flash { from { opacity: 1; } to { opacity: 0; transform: scale(1.4); } }
+/* Mythic fake-out: a "rare" crate glitches into something else entirely. */
+.crate-cine.glitch { animation: cc-glitch 0.18s steps(2) infinite; background: radial-gradient(ellipse at center, rgba(120, 0, 30, 0.6), #000 70%); }
+@keyframes cc-glitch { 0% { filter: none; transform: none; } 25% { filter: hue-rotate(40deg) contrast(1.6); transform: translate(3px, -2px); } 50% { filter: invert(0.12) saturate(2); transform: translate(-4px, 1px); } 75% { filter: hue-rotate(-30deg); transform: translate(2px, 3px); } }
+.crate-cine.glitch .cc-crate { filter: drop-shadow(-6px 0 0 rgba(0, 255, 255, 0.6)) drop-shadow(6px 0 0 rgba(255, 0, 80, 0.7)) drop-shadow(0 0 40px #ff2a5a); }
+.cc-label b { position: relative; color: #ff2a5a; font-size: clamp(18px, 3.6vw, 36px); text-shadow: 0 0 20px #ff2a5a; }
+.cc-label b::before, .cc-label b::after { content: attr(data-text); position: absolute; left: 0; top: 0; width: 100%; }
+.cc-label b::before { color: #0ff; transform: translate(-3px, 0); clip-path: inset(0 0 55% 0); opacity: 0.8; }
+.cc-label b::after { color: #ff0; transform: translate(3px, 0); clip-path: inset(55% 0 0 0); opacity: 0.7; }
+.cc-shatter { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.cc-shatter path { fill: none; stroke: #fff; stroke-width: 0.35; filter: drop-shadow(0 0 1px #ff2a5a) drop-shadow(0 0 3px #ff2a5a); stroke-dasharray: 120; stroke-dashoffset: 120; animation: cc-shatter 0.6s ease-out forwards; }
+@keyframes cc-shatter { to { stroke-dashoffset: 0; } }
+
+/* ---------- Card reveals ---------- */
+.flip.r-rare:not(.flipped) .flip-back { box-shadow: 0 0 14px color-mix(in srgb, var(--rc) 60%, transparent); }
+.flip.r-epic:not(.flipped) .flip-back { box-shadow: 0 0 22px var(--rc), inset 0 0 18px color-mix(in srgb, var(--rc) 50%, transparent); }
+.flip.r-legendary:not(.flipped) .flip-back { box-shadow: 0 0 30px var(--rc), inset 0 0 26px color-mix(in srgb, var(--rc) 60%, transparent); animation: deal-in 0.5s backwards, back-pulse 1.2s ease-in-out infinite; }
+.flip.r-mythic:not(.flipped) .flip-back { border-color: #ff2a5a; box-shadow: 0 0 34px #ff2a5a, inset 0 0 30px rgba(255, 42, 90, 0.6); animation: deal-in 0.5s backwards, back-glitch 0.9s steps(3) infinite; }
+@keyframes back-pulse { 50% { filter: brightness(1.5); } }
+@keyframes back-glitch { 0%, 70% { filter: none; transform: none; } 80% { filter: hue-rotate(60deg) contrast(1.5); transform: translateX(2px); } 90% { filter: invert(0.15); transform: translateX(-2px); } }
+.flip.charging { animation: card-charge 0.12s linear infinite !important; filter: brightness(1.3) drop-shadow(0 0 24px var(--rc)); }
+@keyframes card-charge { 25% { transform: translate(2px, -1px) rotate(1deg); } 50% { transform: translate(-2px, 1px) rotate(-1deg); } 75% { transform: translate(1px, 2px); } }
+.flip.r-mythic .flip-front { box-shadow: 0 0 50px #ff2a5a, 0 0 90px rgba(255, 210, 63, 0.4); animation: mythic-frame 2.4s linear infinite; }
+.reveal-ring { position: fixed; z-index: 140; width: 30px; height: 30px; margin: -15px; border-radius: 50%; border: 3px solid var(--rc); box-shadow: 0 0 20px var(--rc), inset 0 0 20px var(--rc); pointer-events: none; animation: reveal-ring 0.9s ease-out forwards; }
+@keyframes reveal-ring { to { transform: scale(12); opacity: 0; } }
+.reveal-spark { position: fixed; z-index: 141; width: 6px; height: 6px; border-radius: 50%; background: #fff; box-shadow: 0 0 8px 2px var(--rc); pointer-events: none; }
+.big-reveal { position: fixed; inset: 0; z-index: 180; display: grid; place-items: center; overflow: hidden; cursor: pointer; background: radial-gradient(ellipse at center, color-mix(in srgb, var(--rc) 28%, #000), #000 75%); animation: fade-in 0.3s; }
+.big-reveal.out { animation: syn-out 0.38s forwards; }
+.br-rays { position: absolute; inset: -60%; background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--rc) 35%, transparent) 0 6deg, transparent 6deg 16deg); animation: jp-rays 8s linear infinite; mask-image: radial-gradient(circle, #000 15%, transparent 55%); -webkit-mask-image: radial-gradient(circle, #000 15%, transparent 55%); }
+.br-bolts { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.br-card { position: relative; width: min(42vmin, 250px); animation: br-card 0.9s cubic-bezier(.2,.9,.25,1.2) both; filter: drop-shadow(0 0 40px var(--rc)); }
+@keyframes br-card { from { transform: scale(0.2) rotateY(540deg) translateY(30vh); opacity: 0; } }
+.mythic .br-card { animation: br-card-m 1.4s cubic-bezier(.2,.9,.25,1.1) both; }
+@keyframes br-card-m { 0% { transform: translateY(60vh) scale(0.4); opacity: 0; filter: brightness(5) blur(10px); } 50% { transform: translateY(-4vh) scale(1.15); opacity: 1; filter: brightness(2) drop-shadow(0 0 60px #ff2a5a); } 100% { transform: none; filter: drop-shadow(0 0 50px #ff2a5a); } }
+.br-text { position: absolute; left: 0; right: 0; bottom: 8%; display: grid; justify-items: center; gap: 4px; text-align: center; padding: 0 16px; }
+.br-kicker { font-size: 13px; letter-spacing: 0.25em; text-transform: uppercase; color: #fff; opacity: 0.8; animation: jp-pop 0.5s 0.6s both; }
+.br-rarity { position: relative; font-family: var(--font-display); font-weight: 900; font-size: clamp(40px, 9vw, 100px); line-height: 1; color: var(--rc); text-shadow: 0 0 30px var(--rc), 4px 4px 0 rgba(0, 0, 0, 0.6); animation: jp-sweep 0.7s cubic-bezier(.2,.9,.2,1) 0.3s both; }
+.mythic .br-rarity::before, .mythic .br-rarity::after { content: attr(data-text); position: absolute; left: 0; top: 0; width: 100%; animation: cc-glitch 0.3s steps(2) infinite; }
+.mythic .br-rarity::before { color: #0ff; clip-path: inset(0 0 60% 0); transform: translateX(-4px); opacity: 0.7; }
+.mythic .br-rarity::after { color: #ffd23f; clip-path: inset(60% 0 0 0); transform: translateX(4px); opacity: 0.7; }
+.br-name { font-family: var(--font-display); font-weight: 800; font-size: clamp(18px, 3vw, 30px); color: #fff; animation: jp-pop 0.5s 0.8s both; }
+.br-spark { position: absolute; left: 50%; top: 45%; width: 5px; height: 26px; margin: -13px -2.5px; border-radius: 3px; background: linear-gradient(transparent, #fff, var(--rc)); transform: rotate(var(--a)) translateY(0); animation: br-spark 1.4s ease-out var(--d) both; }
+@keyframes br-spark { from { opacity: 1; transform: rotate(var(--a)) translateY(0); } to { opacity: 0; transform: rotate(var(--a)) translateY(calc(-1 * var(--r))); } }
+
+/* ---------- FIFA-style walkout ---------- */
+.walkout { position: fixed; inset: 0; z-index: 180; overflow: hidden; cursor: pointer; background: #02030a; animation: fade-in 0.3s; }
+.walkout.out { animation: syn-out 0.38s forwards; }
+.wo-bg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.walkout:not(.is-ship) .wo-bg { animation: pc-env 3s ease-out forwards; }
+.wo-vignette { position: absolute; inset: 0; background: radial-gradient(ellipse at center, transparent 25%, rgba(0, 0, 0, 0.8)), linear-gradient(90deg, color-mix(in srgb, var(--rc) 22%, transparent), transparent 35%, transparent 65%, color-mix(in srgb, var(--rc) 22%, transparent)); pointer-events: none; }
+.wo-step { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; }
+.wo-chip { display: flex; align-items: center; gap: clamp(14px, 3vw, 28px); padding: clamp(14px, 3vw, 24px) clamp(20px, 5vw, 48px); border-top: 3px solid var(--tone); border-bottom: 3px solid var(--tone); background: linear-gradient(90deg, transparent, rgba(4, 6, 14, 0.88) 12%, rgba(4, 6, 14, 0.88) 88%, transparent); box-shadow: 0 0 60px color-mix(in srgb, var(--tone) 40%, transparent); transform: skewX(-8deg); animation: wo-chip 0.6s cubic-bezier(.2,.9,.2,1) both; }
+@keyframes wo-chip { 0% { opacity: 0; transform: skewX(-8deg) translateX(70vw); } 55% { opacity: 1; transform: skewX(-8deg) translateX(-2vw); } 100% { transform: skewX(-8deg) translateX(0); } }
+.wo-icon { display: grid; place-items: center; width: clamp(80px, 14vw, 130px); height: clamp(80px, 14vw, 130px); transform: skewX(8deg); }
+.wo-role { font-size: clamp(54px, 10vw, 96px); line-height: 1; color: var(--tone); text-shadow: 0 0 24px var(--tone), 0 0 50px var(--tone); }
+.wo-saber { display: block; width: 14px; height: 100%; border-radius: 7px; background: #fff; box-shadow: 0 0 12px 4px var(--sc), 0 0 40px 12px var(--sc); transform: rotate(20deg); animation: wo-ignite 0.4s ease-out both; transform-origin: bottom; }
+@keyframes wo-ignite { from { transform: rotate(20deg) scaleY(0); } }
+.wo-words { display: grid; transform: skewX(8deg); }
+.wo-words span { font-family: var(--font-display); font-size: clamp(11px, 1.6vw, 15px); letter-spacing: 0.35em; text-transform: uppercase; color: var(--tone); }
+.wo-words b { font-family: var(--font-display); font-weight: 900; font-size: clamp(32px, 7vw, 76px); line-height: 1; text-transform: uppercase; color: #fff; text-shadow: 0 0 26px var(--tone), 3px 3px 0 rgba(0, 0, 0, 0.6); }
+.wo-final { position: absolute; inset: 0; display: grid; place-items: center; opacity: 0; pointer-events: none; }
+.walkout.final .wo-final { opacity: 1; }
+.walkout.final .wo-bg { filter: brightness(0.45) blur(2px); transition: filter 0.4s; }
+.walkout.final .br-card { animation: br-card 0.9s cubic-bezier(.2,.9,.25,1.2) both; }
+.walkout.mythic.final .br-card { animation: br-card-m 1.4s cubic-bezier(.2,.9,.25,1.1) both; }
+.walkout:not(.final) .br-card, .walkout:not(.final) .br-text, .walkout:not(.final) .br-spark { animation: none; visibility: hidden; }
+.wo-ship { position: absolute; left: 50%; top: 45%; width: 40vmin; height: 40vmin; margin: -20vmin; animation: wo-ship 0.8s cubic-bezier(.3,.7,.3,1) forwards; pointer-events: none; }
+.wo-ship svg { width: 100%; height: 100%; filter: drop-shadow(0 0 30px var(--rc)); }
+@keyframes wo-ship { from { transform: scale(0.05); opacity: 1; } 70% { opacity: 1; } to { transform: scale(3.2) translateY(-30%); opacity: 0; } }
+.walkout.glitch .wo-chip { animation: wo-chip 0.6s cubic-bezier(.2,.9,.2,1) both, cc-glitch 0.2s steps(2) 0.6s infinite; }
+
 /* ---------- Daily login streak ---------- */
 .daily-panel { position: relative; margin: 18px 0 8px; padding: 16px; border-radius: 16px; border: 1px solid rgba(255, 140, 60, 0.35); background: linear-gradient(135deg, rgba(255, 110, 40, 0.1), rgba(10, 12, 22, 0.9) 45%, rgba(255, 46, 136, 0.08)); overflow: hidden; }
 .daily-panel.ready { box-shadow: 0 0 30px rgba(255, 120, 40, 0.18); }
@@ -1754,6 +1849,42 @@ kbd { font-family: var(--font-display); font-size: 11px; padding: 1px 6px; borde
 @keyframes imp-scorch { 0% { opacity: 0; transform: scale(0.2); } 15% { opacity: 1; transform: scale(var(--s)); } 70% { opacity: 1; } 100% { opacity: 0; } }
 .imp-flash { background: radial-gradient(circle, #fff, color-mix(in srgb, var(--c) 60%, transparent) 50%, transparent 75%); animation: imp-burn 0.6s ease-out forwards; }
 
+.sig-mask { position: absolute; left: 50%; top: 45%; width: min(80vw, 80vh); filter: drop-shadow(0 0 40px #c23bff); pointer-events: none; }
+.sig-mask svg { width: 100%; display: block; }
+.sig-quake { animation: sig-quake 0.12s linear infinite; }
+@keyframes sig-quake { 25% { transform: translate(2px, -1px); } 50% { transform: translate(-2px, 1px); } 75% { transform: translate(1px, 2px); } }
+.sig-isd svg { width: 100%; height: 100%; display: block; filter: drop-shadow(0 0 30px #ff8a2a) brightness(0.85); }
+.sig-dusk .sig-tint { background: linear-gradient(0deg, rgba(255, 150, 60, 0.45), rgba(80, 30, 90, 0.25) 60%, transparent); }
+.sig-suns i { position: absolute; bottom: -10%; width: 22vmin; height: 22vmin; border-radius: 50%; background: radial-gradient(circle, #fffbe6, #ffd27a 45%, rgba(255, 140, 60, 0) 70%); animation: sig-sun 2.4s ease-out forwards; }
+.sig-suns i:first-child { left: 18%; } .sig-suns i:last-child { left: 34%; width: 15vmin; height: 15vmin; animation-delay: 0.2s; }
+@keyframes sig-sun { from { transform: translateY(40%); opacity: 0; } 40% { opacity: 1; } to { transform: translateY(-120%); opacity: 0.9; } }
+.sig-projection { opacity: 0.8; filter: saturate(0.3) brightness(1.3) drop-shadow(0 0 20px #7ac8ff); mix-blend-mode: screen; }
+.sig-decloak svg { animation: sig-decloak 0.8s ease-out; }
+@keyframes sig-decloak { from { opacity: 0; filter: blur(10px) hue-rotate(90deg); } 50% { opacity: 0.6; } }
+.sig-phantom { width: 60px; height: 60px; }
+
+/* Healer signature flourishes and shield-wall variants. */
+.hx-holo { position: absolute; width: 260px; height: 320px; margin: -300px 0 0 -130px; background: linear-gradient(0deg, rgba(90, 180, 255, 0.5), transparent); clip-path: polygon(46% 100%, 54% 100%, 100% 0, 0 0); animation: imp-burn 1.6s ease-out forwards; }
+.hx-scan { position: absolute; left: 0; right: 0; height: 4px; top: 0; background: var(--c); box-shadow: 0 0 20px 6px var(--c); animation: hx-scan 1.2s ease-in-out 2 alternate; }
+@keyframes hx-scan { to { top: 100%; } }
+.hx-ion { position: absolute; width: 20px; height: 20px; margin: -10px; border-radius: 50%; border: 2px solid var(--c); box-shadow: 0 0 14px var(--c); animation: hx-ion 0.9s ease-out 3; }
+@keyframes hx-ion { to { transform: scale(8); opacity: 0; } }
+.hx-spark { position: absolute; width: 140px; height: 140px; margin: -70px; background: conic-gradient(from 0deg, transparent, var(--c), transparent 30%, var(--c), transparent 60%, var(--c), transparent); border-radius: 50%; mask-image: radial-gradient(circle, transparent 40%, #000 42%, #000 50%, transparent 52%); -webkit-mask-image: radial-gradient(circle, transparent 40%, #000 42%, #000 50%, transparent 52%); animation: ssSpin 0.4s linear infinite, imp-burn 1.6s ease-out forwards; }
+.hx-force { position: absolute; width: 40px; height: 40px; margin: -20px; border-radius: 50%; box-shadow: 0 0 0 3px var(--c), 0 0 40px var(--c); animation: hx-force 1.6s ease-out 2; }
+@keyframes hx-force { to { transform: scale(18); opacity: 0; } }
+.hx-bacta { position: absolute; width: 110px; height: 150px; margin: -75px 0 0 -55px; border-radius: 30px; background: linear-gradient(0deg, rgba(90, 210, 255, 0.55), rgba(90, 210, 255, 0.1)); border: 2px solid rgba(160, 230, 255, 0.7); animation: hx-bacta 1.6s ease-out forwards; }
+@keyframes hx-bacta { 0% { clip-path: inset(100% 0 0 0); } 50% { clip-path: inset(0 0 0 0); opacity: 1; } 100% { opacity: 0; } }
+.hx-leaves { position: absolute; inset: 0; background: radial-gradient(circle at 20% 80%, rgba(150, 220, 100, 0.35), transparent 30%), radial-gradient(circle at 80% 70%, rgba(150, 220, 100, 0.3), transparent 30%); animation: imp-burn 1.8s ease-out forwards; }
+.hx-mist { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 100%, rgba(90, 255, 140, 0.45), transparent 60%); filter: blur(10px); animation: hx-mist 1.8s ease-in-out forwards; }
+@keyframes hx-mist { 0% { opacity: 0; transform: translateY(30%); } 50% { opacity: 1; } 100% { opacity: 0; transform: translateY(-10%); } }
+.hx-cross { position: absolute; width: 30vmin; height: 30vmin; margin: -15vmin; background: linear-gradient(var(--c), var(--c)) center / 30% 100% no-repeat, linear-gradient(var(--c), var(--c)) center / 100% 30% no-repeat; filter: drop-shadow(0 0 30px var(--c)); opacity: 0.6; animation: hx-cross 1.4s ease-out forwards; }
+@keyframes hx-cross { from { transform: scale(0.2) rotate(-45deg); opacity: 0.9; } to { transform: scale(1.4) rotate(0); opacity: 0; } }
+.hx-halo { position: absolute; width: 200px; height: 200px; margin: -100px; border-radius: 50%; background: radial-gradient(circle, transparent 50%, color-mix(in srgb, var(--c) 50%, transparent) 60%, transparent 70%); animation: hx-force 1.6s ease-out forwards; }
+.sig-wall.wall-ion { background: linear-gradient(90deg, transparent 35%, rgba(140, 210, 255, 0.4) 48%, #fff 50%, rgba(140, 210, 255, 0.4) 52%, transparent 65%), repeating-linear-gradient(0deg, transparent 0 18px, rgba(140, 210, 255, 0.25) 18px 20px); }
+.sig-wall.wall-deflector { background: linear-gradient(90deg, transparent 30%, rgba(230, 240, 255, 0.35) 50%, transparent 70%), repeating-linear-gradient(60deg, transparent 0 14px, rgba(230, 240, 255, 0.18) 14px 16px), repeating-linear-gradient(-60deg, transparent 0 14px, rgba(230, 240, 255, 0.18) 14px 16px); }
+.sig-wall.wall-laat { background: linear-gradient(90deg, transparent 30%, rgba(90, 180, 255, 0.45) 46%, #fff 50%, rgba(90, 180, 255, 0.45) 54%, transparent 70%); filter: drop-shadow(0 0 20px #5ab4ff); }
+.sig-wall.wall-trooper { background: repeating-linear-gradient(90deg, transparent 0 40px, rgba(255, 255, 255, 0.25) 40px 46px), linear-gradient(90deg, transparent 30%, rgba(255, 255, 255, 0.4) 50%, transparent 70%); }
+
 /* ---------- Galaxy hub: modes, tower, arrival cinematic, datapad ---------- */
 .hub-modes { position: absolute; z-index: 4; top: clamp(12px, 3vw, 22px); right: clamp(12px, 3vw, 22px); background: rgba(5, 8, 16, 0.75); backdrop-filter: blur(6px); border: 1px solid rgba(255, 210, 63, 0.3); box-shadow: 0 0 24px rgba(0, 0, 0, 0.5); }
 .hub-modes button { display: inline-flex; gap: 6px; align-items: center; }
@@ -1879,7 +2010,10 @@ button:focus-visible, .mode-card:focus-visible, .stage:focus-visible { outline: 
 .currency, .account { transition: transform 0.2s, box-shadow 0.2s; }
 .currency:hover, .account:hover { transform: translateY(-1px); box-shadow: 0 0 14px rgba(255, 210, 63, 0.18); }
 
-/* ---------- Max multiplier jackpot ---------- */
+/* ---------- Max multiplier jackpot / rank up ---------- */
+.jackpot.rank-up { background: radial-gradient(ellipse at center, rgba(10, 30, 60, 0.6), rgba(0, 0, 0, 0.88)); }
+.rank-up .jp-rays { background: repeating-conic-gradient(from 0deg, rgba(90, 180, 255, 0.16) 0 6deg, transparent 6deg 18deg); }
+.rank-up .jp-line { background: linear-gradient(180deg, #ffffff 10%, #8fd3ff 55%, #3d8bff 90%); -webkit-background-clip: text; background-clip: text; filter: drop-shadow(0 0 22px rgba(90, 180, 255, 0.7)) drop-shadow(4px 4px 0 rgba(0, 0, 0, 0.6)); }
 .jackpot { position: fixed; inset: 0; z-index: 500; display: grid; place-items: center; overflow: hidden; cursor: pointer; background: radial-gradient(ellipse at center, rgba(40, 26, 0, 0.55), rgba(0, 0, 0, 0.88)); animation: jp-in 0.35s ease-out both; }
 .jackpot.out { animation: jp-out 0.45s ease-in forwards; }
 @keyframes jp-in { from { opacity: 0; } }

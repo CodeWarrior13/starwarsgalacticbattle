@@ -7,6 +7,7 @@
     rare: { label: 'Rare', mult: 1.12, weight: 1 },
     epic: { label: 'Epic', mult: 1.25, weight: 2 },
     legendary: { label: 'Legendary', mult: 1.4, weight: 3 },
+    mythic: { label: 'Mythic', mult: 1.55, weight: 4 },
   };
 
   // Base stats by role at level 1, 1 star, common rarity.
@@ -532,6 +533,40 @@
         { name: 'Blade Copter', cd: 3, target: 'allEnemies', effects: [dmg(0.8), debuff('burn', 2, 0.4)], desc: 'Spin through all enemies with a 40% chance to Burn.' },
       ],
     },
+
+    // ---------- Mythic: crate-only, almost never drop ----------
+    {
+      id: 'darth_revan', name: 'Darth Revan', kind: 'character', faction: 'dark', rarity: 'mythic', role: 'attacker', accent: '#c23bff', spd: 158,
+      abilities: [
+        { name: 'Twin Blades', cd: 0, target: 'enemy', effects: [dmg(0.75, 2), debuff('defDown', 2, 0.4)], desc: 'Strike twice with a 40% chance of Defense Down.' },
+        { name: 'Conqueror\'s Will', cd: 3, target: 'allEnemies', effects: [dmg(1.0), debuff('offDown', 2)], desc: 'Damage all enemies and inflict Offense Down.' },
+        { name: 'Mask of Malachor', cd: 4, target: 'enemy', effects: [dmg(2.2), { ...heal(0.25), on: 'self' }], desc: 'Deal heavy damage and heal 25%.' },
+      ],
+    },
+    {
+      id: 'starkiller', name: 'Starkiller', kind: 'character', faction: 'dark', rarity: 'mythic', role: 'attacker', accent: '#7ac8ff', spd: 160,
+      abilities: [
+        { name: 'Lightning Lunge', cd: 0, target: 'enemy', effects: [dmg(1.25), debuff('stun', 1, 0.2)], desc: 'Deal damage with a 20% chance to Stun.' },
+        { name: 'Force Repulse', cd: 3, target: 'allEnemies', effects: [dmg(1.1), tm(-20)], desc: 'Damage all enemies and blast 20% of their Turn Meter away.' },
+        { name: 'Saber Throw Barrage', cd: 4, target: 'enemy', effects: [dmg(0.8, 3)], desc: 'Hit one enemy three times.' },
+      ],
+    },
+    {
+      id: 'master_luke', name: 'Jedi Master Luke', kind: 'character', faction: 'light', rarity: 'mythic', role: 'support', accent: '#3bff6a', spd: 154,
+      abilities: [
+        { name: 'Master\'s Strike', cd: 0, target: 'enemy', effects: [dmg(1.15), { ...tm(15), on: 'self' }], desc: 'Deal damage and gain 15% Turn Meter.' },
+        { name: 'See You Around', cd: 3, target: 'allAllies', effects: [heal(0.2), buff('defUp', 2)], desc: 'All allies heal 20% and gain Defense Up.' },
+        { name: 'Legend of the Jedi', cd: 4, target: 'allEnemies', effects: [dmg(1.2), debuff('stun', 1, 0.4)], desc: 'Damage all enemies with a 40% chance to Stun.' },
+      ],
+    },
+    {
+      id: 'ghost', name: 'The Ghost', kind: 'ship', faction: 'light', rarity: 'mythic', role: 'support', shape: 'ghost', spd: 156,
+      abilities: [
+        { name: 'Dorsal Turret', cd: 0, target: 'enemy', effects: [dmg(1.0, 2)], desc: 'Hit one enemy twice.' },
+        { name: 'Phantom Launch', cd: 3, target: 'allEnemies', effects: [dmg(0.9), debuff('offDown', 2, 0.5)], desc: 'Damage all enemies with a 50% chance of Offense Down.' },
+        { name: 'Spectre Formation', cd: 4, target: 'allAllies', effects: [heal(0.2), buff('offUp', 2), tm(25)], desc: 'All allies heal 20%, gain Offense Up and 25% Turn Meter.' },
+      ],
+    },
   ];
 
   // Ultimates charge as a unit acts, deals damage and takes damage.
@@ -592,6 +627,10 @@
     second_sister: U('Hunt Them Down', 'enemy', [dmg(3.6), debuff('stun', 1)], 'A spinning blade strike that deals massive damage and Stuns.', 'I will find you.'),
     fifth_brother: U('Brutal Charge', 'allEnemies', [dmg(1.2), debuff('stun', 1, 0.35), { ...buff('taunt', 2), on: 'self' }], 'Crash into all enemies with a 35% Stun chance; gain Taunt.', 'There is nowhere to run.'),
     seventh_sister: U('Seeker Protocol', 'allEnemies', [dmg(1.3), debuff('offDown', 2), debuff('defDown', 2)], 'A swarm of probe droids hits all enemies with Offense Down and Defense Down.', 'My seekers will find you.'),
+    darth_revan: U('Mandalorian Wars', 'allEnemies', [dmg(2.3), debuff('defDown', 2), debuff('stun', 1, 0.5)], 'Twin blades carve every enemy: heavy damage, Defense Down and a 50% chance to Stun.', 'I am Revan. I have conquered death itself.'),
+    starkiller: U('Unleashed', 'allEnemies', [dmg(2.4), debuff('stun', 1, 0.6)], 'Pull a Star Destroyer out of the sky onto every enemy: devastating damage, 60% Stun chance.', 'I will be your enemy no longer.'),
+    master_luke: U('Binary Sunset', 'allAllies', [heal(0.45), buff('offUp', 3), buff('defUp', 3), tm(60)], 'All allies heal 45%, gain Offense Up, Defense Up and 60% Turn Meter.', 'No one\'s ever really gone.'),
+    ghost: U('Specters, Attack', 'allEnemies', [dmg(2.0), debuff('offDown', 2), { ...tm(30), on: 'allies' }], 'The Ghost decloaks and rakes every enemy; all allies gain 30% Turn Meter.', 'Spectre One, standing by.'),
     eighth_brother: U('Rotor Descent', 'allEnemies', [dmg(1.5), debuff('burn', 2)], 'Drop in on a spinning blade: heavy damage and Burn to all enemies.', 'Surrender, Jedi.'),
   };
 
@@ -700,6 +739,10 @@
     fifth_brother: 'A hulking Inquisitor who prefers overwhelming force to finesse.',
     seventh_sister: 'A cunning Inquisitor who hunts with a swarm of ID9 seeker probe droids.',
     eighth_brother: 'An Inquisitor who spins his blade like a rotor to glide down on his prey.',
+    darth_revan: 'A Jedi hero turned Sith conqueror from the Old Republic era, masked and wielding twin blades. A legend most players never see.',
+    starkiller: 'Vader\'s secret apprentice, raw Force power unleashed. He once pulled a Star Destroyer out of orbit.',
+    master_luke: 'The last Jedi Master, years after the war: a weathered legend whose Force projection held off an entire army.',
+    ghost: 'A modified freighter that hides a smaller shuttle, the Phantom. Home of a small rebel cell called the Spectres.',
     rebel_medic: 'A combat medic of the Rebel Alliance who runs toward the blaster fire so others can walk away from it.',
     two_onebee: 'A surgical droid who has patched up everyone from Luke Skywalker to half the Rebel fleet.',
     nightsister_acolyte: 'A young witch of Dathomir who draws on green ichor magick to mend her sisters.',
@@ -775,7 +818,7 @@
   const MAX_STARS = 7;
   // Shards needed to go from star N to N+1 (index 0 = 1★ -> 2★).
   const STAR_COSTS = [10, 25, 50, 80, 120, 170];
-  const DUPLICATE_SHARDS = { common: 5, rare: 8, epic: 12, legendary: 20 };
+  const DUPLICATE_SHARDS = { common: 5, rare: 8, epic: 12, legendary: 20, mythic: 30 };
 
   function levelCost(level) {
     return 100 * level + 20 * level * level;
@@ -832,6 +875,7 @@
     tie_bomber: ['bomber', 'empire'], tie_interceptor: ['fighter', 'empire'], lambda_shuttle: ['gunship', 'empire'],
     slave_one: ['gunship', 'bounty'], vulture_droid: ['fighter', 'droid', 'separatist'],
     grand_inquisitor: ['inquisitor', 'empire', 'leader'], second_sister: ['inquisitor', 'empire'], fifth_brother: ['inquisitor', 'empire'], seventh_sister: ['inquisitor', 'empire'], eighth_brother: ['inquisitor', 'empire'],
+    darth_revan: ['sith', 'leader'], starkiller: ['sith'], master_luke: ['jedi', 'rebel', 'leader'], ghost: ['rebel', 'fighter'],
     c3po: ['droid', 'rebel'], rebel_medic: ['rebel', 'trooper'], two_onebee: ['droid', 'rebel'], nightsister_acolyte: ['nightsister'], barriss: ['jedi', 'republic'], talzin: ['nightsister', 'leader'],
     hunter: ['badbatch', 'trooper', 'leader'], wrecker: ['badbatch', 'trooper'], tech: ['badbatch', 'trooper'], crosshair: ['badbatch', 'trooper'], echo: ['badbatch', 'trooper', 'droid'], bb8: ['droid', 'rebel'], k2so: ['droid', 'rebel'], chopper: ['droid', 'rebel', 'scoundrel'],
     ig88: ['droid', 'bounty'], droideka: ['droid', 'separatist'], b2_droid: ['droid', 'separatist'], magnaguard: ['droid', 'separatist'], ig11: ['droid', 'bounty'], tie_advanced: ['fighter', 'empire', 'sith'],
@@ -853,7 +897,7 @@
     ranged: { label: 'Ranged', icon: '➹' }, support: { label: 'Support', icon: '✦' }, force: { label: 'Force User', icon: '✧' },
     droid: { label: 'Droid', icon: '⚙' }, starfighter: { label: 'Starfighter', icon: '➶' }, bomber: { label: 'Bomber', icon: '✹' }, gunship: { label: 'Gunship', icon: '⛭' },
   };
-  const MELEE = ['ewok_warrior', 'tusken_raider', 'obi_wan', 'luke', 'yoda', 'rey', 'darth_maul', 'kylo_ren', 'count_dooku', 'vader', 'ahsoka', 'grievous', 'mace_windu', 'magnaguard', 'k2so', 'hunter', 'grand_inquisitor', 'second_sister', 'fifth_brother', 'seventh_sister', 'eighth_brother', 'rancor', 'krayt_dragon', 'lord_vader'];
+  const MELEE = ['ewok_warrior', 'tusken_raider', 'obi_wan', 'luke', 'yoda', 'rey', 'darth_maul', 'kylo_ren', 'count_dooku', 'vader', 'ahsoka', 'grievous', 'mace_windu', 'magnaguard', 'k2so', 'hunter', 'grand_inquisitor', 'second_sister', 'fifth_brother', 'seventh_sister', 'eighth_brother', 'darth_revan', 'starkiller', 'master_luke', 'rancor', 'krayt_dragon', 'lord_vader'];
 
   function classesOf(def) {
     const tr = TRAITS[def.id] || [];
@@ -884,6 +928,7 @@
     c3po: 'rally', bb8: 'dash', k2so: 'leap', chopper: 'heal', ig88: 'rockets', droideka: 'bulwark', b2_droid: 'barrage', magnaguard: 'dash', ig11: 'barrage', vulture_droid: 'strafe',
     rebel_medic: 'heal', two_onebee: 'heal', nightsister_acolyte: 'heal', barriss: 'heal', talzin: 'lightning', hunter: 'dash', wrecker: 'rockets', tech: 'rally', crosshair: 'snipe', echo: 'lightning',
     grand_inquisitor: 'saberstorm', second_sister: 'spinsaber', fifth_brother: 'leap', seventh_sister: 'rockets', eighth_brother: 'spinsaber',
+    darth_revan: 'dash', starkiller: 'lightning', master_luke: 'heal', ghost: 'strafe',
     rancor: 'claws', krayt_dragon: 'claws', star_destroyer: 'turbolaser', death_star: 'superlaser',
   };
 
@@ -1236,19 +1281,19 @@
   const PACKS = [
     {
       id: 'recruit', name: 'Contraband Crate', desc: '3 character cards, smuggled in from the Outer Rim', cost: { credits: 300 },
-      kind: 'character', count: 3, odds: { common: 60, rare: 28, epic: 10, legendary: 2 },
+      kind: 'character', count: 3, odds: { common: 60, rare: 28, epic: 9.6, legendary: 2, mythic: 0.4 },
     },
     {
       id: 'squadron', name: 'Salvage Crate', desc: '3 ship cards, pulled from a starship graveyard', cost: { credits: 300 },
-      kind: 'ship', count: 3, odds: { common: 55, rare: 31, epic: 11, legendary: 3 },
+      kind: 'ship', count: 3, odds: { common: 55, rare: 31, epic: 10.6, legendary: 3, mythic: 0.4 },
     },
     {
       id: 'holocron', name: 'Kyber Vault', desc: '3 cards, rare or better', cost: { crystals: 80 },
-      kind: 'any', count: 3, odds: { common: 0, rare: 55, epic: 35, legendary: 10 },
+      kind: 'any', count: 3, odds: { common: 0, rare: 55, epic: 33.5, legendary: 10, mythic: 1.5 },
     },
     {
       id: 'strongbox', name: 'Aurodium Strongbox', desc: '1 guaranteed Legendary and 2 Epic-or-better cards', cost: { aurodium: 12 },
-      kind: 'any', count: 3, odds: { common: 0, rare: 0, epic: 70, legendary: 30 }, guarantee: 'legendary',
+      kind: 'any', count: 3, odds: { common: 0, rare: 0, epic: 67, legendary: 30, mythic: 3 }, guarantee: 'legendary',
     },
   ];
 
@@ -1272,7 +1317,7 @@
     ],
     holoChance: 0.08,
     holoChanceCharmed: 0.22,
-    charmOdds: { legendary: 2.5, epic: 1.6 },
+    charmOdds: { legendary: 2.5, epic: 1.6, mythic: 2 },
     pityCrates: 20,
     sabacc: [
       { mult: 0, weight: 38, label: 'Bust' },
@@ -1292,7 +1337,7 @@
   ];
 
   const MARKET_REFRESH_MS = 4 * 60 * 60 * 1000;
-  const FLASH_MS = 20 * 60 * 1000;
+  const FLASH_MS = 60 * 60 * 1000;
 
   // ---------- Endless Tower ----------
   // Infinite floors on random worlds. Every 10th floor is a boss; losing drops
