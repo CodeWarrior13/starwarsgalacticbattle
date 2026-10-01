@@ -48,18 +48,12 @@
   }
 
   // Exclusive cards stay a mystery until their guardian falls.
-  const SECRET_WHISPER = 'They say the hooded one at the night market answers only to five knocks.';
-  function secretHint(def) {
-    const b = D.SECRET_BOSSES.find((x) => x.rewards.includes(def.id));
-    return b ? b.hint : '';
-  }
   function mysteryCard(def, opts = {}) {
     const tag = opts.tag || 'button';
     return `<${tag} class="ucard mystery ${def.faction === 'dark' ? 'dark' : 'light'}" data-id="${def.id}" ${tag === 'button' ? 'type="button" aria-label="Undiscovered card"' : ''}>
       <div class="portrait mystery-art"><svg viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" fill="#06040e"/><circle cx="50" cy="46" r="30" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="3 4"/><text x="50" y="60" text-anchor="middle" font-size="44" font-weight="800" fill="currentColor" font-family="Oxanium, sans-serif">?</text></svg><span class="nameplate">???</span></div>
       <div class="ucard-body">
         <div class="ucard-meta"><span class="rar">Undiscovered</span><span>${def.kind === 'ship' ? 'Ship' : 'Hero'}</span></div>
-        <span class="mystery-hint">${esc(secretHint(def))}</span>
       </div>
     </${tag}>`;
   }
@@ -1264,8 +1258,7 @@
         <p class="eyebrow">Undiscovered ${def.kind === 'ship' ? 'ship' : 'hero'} · ${def.faction === 'dark' ? 'Dark Side' : 'Light Side'}</p>
         <h2>???</h2>
         <div class="mystery-big">?</div>
-        <p>${esc(secretHint(def))}</p>
-        <p class="muted small"><i>${esc(SECRET_WHISPER)}</i></p>
+        <p class="muted">Not yet discovered.</p>
         <div class="modal-actions"><button class="btn" type="button" data-close>Close</button></div>
       </div>`, { small: true });
       m.root.addEventListener('click', (e) => { if (e.target.closest('[data-close]')) m.close(); });
