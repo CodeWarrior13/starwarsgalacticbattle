@@ -1229,22 +1229,29 @@
   };
   const MELEE = ['cal_kestis', 'bo_katan', 'savage_opress', 'ewok_warrior', 'tusken_raider', 'obi_wan', 'luke', 'yoda', 'rey', 'darth_maul', 'kylo_ren', 'count_dooku', 'vader', 'ahsoka', 'grievous', 'mace_windu', 'magnaguard', 'k2so', 'hunter', 'grand_inquisitor', 'second_sister', 'fifth_brother', 'seventh_sister', 'eighth_brother', 'darth_revan', 'starkiller', 'master_luke', 'the_daughter', 'temple_guardian', 'the_son', 'darth_bane', 'boss_daughter', 'boss_guardian', 'boss_son', 'boss_bane', 'anakin', 'qui_gon', 'asajj_ventress', 'moff_gideon', 'rancor', 'krayt_dragon', 'lord_vader'];
 
+  // Classes lead with what the card actually does in a squad: Tank, Healer or
+  // Support, and Fighter (melee) or Ranged only for damage dealers. Ships add
+  // their hull type; Force users and droids get their own tag on top.
   function classesOf(def) {
     const tr = TRAITS[def.id] || [];
     const out = [];
+    const role = { tank: 'tank', healer: 'healer', support: 'support' }[def.role];
+    if (role) out.push(role);
     if (def.kind === 'ship') {
       if (tr.includes('fighter')) out.push('starfighter');
       if (tr.includes('bomber')) out.push('bomber');
       if (tr.includes('gunship') || tr.includes('capital')) out.push('gunship');
     } else {
-      out.push(MELEE.includes(def.id) ? 'fighter' : 'ranged');
+      if (!role) out.push(attackStyle(def));
       if (tr.includes('jedi') || tr.includes('sith') || tr.includes('inquisitor') || tr.includes('nightsister') || def.id === 'grogu') out.push('force');
     }
     if (tr.includes('droid')) out.push('droid');
-    if (def.role === 'healer') out.push('healer');
-    if (def.role === 'tank') out.push('tank');
-    if (def.role === 'support') out.push('support');
     return out;
+  }
+
+  // How a character attacks on the battlefield, whatever its role.
+  function attackStyle(def) {
+    return MELEE.includes(def.id) ? 'fighter' : 'ranged';
   }
 
   // Signature animation for each unit's ultimate (see battle-ui superMove).
@@ -1784,6 +1791,6 @@
     DUPLICATE_SHARDS, SQUAD_SIZE, PACKS, STARTER, levelCost, unitStats, power, stageRewards,
     ultimateFor, abilitiesFor, BOSSES, BOSS_ENCOUNTERS, bossRewards, CURRENCIES, LUCK, CHARMS, MARKET_REFRESH_MS, FLASH_MS, DAILY, SECRET_PLANET, SECRET_BOSSES, SECRET_COSTS, secretCost, TOWER, towerFloor, towerRewards, towerCheckpoint, SHELL_PAYOUT, SHELL_BETS, BIOS,
     BASE_SLOTS, SLOT_UNLOCKS, MAX_ACCOUNT_LEVEL, xpToNext, levelReward, XP, planetSquadSize,
-    TRAITS, TRAIT_INFO, ROLE_SYNERGIES, SYN_THEME, CLASS_INFO, classesOf, ULT_ANIM, SYNERGIES, PLANETS, PLANET_MAP, enemyStars, PLANET_CLEAR_KYBER, BASE_DOUBLE, traitsOf, squadBonuses,
+    TRAITS, TRAIT_INFO, ROLE_SYNERGIES, SYN_THEME, CLASS_INFO, classesOf, attackStyle, ULT_ANIM, SYNERGIES, PLANETS, PLANET_MAP, enemyStars, PLANET_CLEAR_KYBER, BASE_DOUBLE, traitsOf, squadBonuses,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -2760,3 +2760,15 @@ button.ult-preview:hover, button.ult-preview:focus-visible { transform: scale(1.
 .pack:hover .crate-relic-lid, .pack:hover .crate-style-relic .crate-lid { transform: translateY(-6px); }
 .sig-wall.wall-rex { background: linear-gradient(90deg, transparent 30%, rgba(61, 111, 214, 0.45) 46%, #fff 50%, rgba(61, 111, 214, 0.45) 54%, transparent 70%), repeating-linear-gradient(90deg, transparent 0 24px, rgba(255, 255, 255, 0.12) 24px 26px); filter: drop-shadow(0 0 18px #3d6fd6); }
 .sig-wall.wall-upsilon { background: linear-gradient(90deg, transparent 28%, rgba(20, 20, 24, 0.85) 42%, rgba(255, 58, 58, 0.6) 50%, rgba(20, 20, 24, 0.85) 58%, transparent 72%), repeating-linear-gradient(60deg, transparent 0 14px, rgba(255, 58, 58, 0.2) 14px 16px); filter: drop-shadow(0 0 20px #ff3a3a); }
+
+/* ---------- Squad builder filters ---------- */
+.roster-filters { display: grid; gap: 6px; margin: 6px 0 12px; }
+.rf-row { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.rf-row::-webkit-scrollbar { display: none; }
+.rf-chip { flex: none; display: inline-flex; align-items: center; gap: 5px; padding: 5px 11px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); color: var(--muted); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; transition: border-color 0.2s, color 0.2s, background 0.2s; }
+.rf-chip em { font-style: normal; font-size: 10.5px; padding: 0 6px; border-radius: 8px; background: rgba(255, 255, 255, 0.08); color: var(--text); }
+.rf-chip:hover { border-color: var(--crawl); color: var(--text); }
+.rf-chip.on { background: var(--crawl); border-color: var(--crawl); color: var(--void); }
+.rf-chip.on em { background: rgba(0, 0, 0, 0.18); color: var(--void); }
+.rf-chip.in-squad:not(.on) { border-color: rgba(82, 224, 138, 0.55); color: #c8f5d8; }
+.rf-chip.in-squad:not(.on) em { background: rgba(82, 224, 138, 0.2); }

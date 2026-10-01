@@ -699,6 +699,7 @@
       </div>
       <div>
         <div class="side-label"><span>Tap to add or remove (up to ${size}) · trait icons show synergies</span></div>
+        <div class="roster-filters" data-roster-filters></div>
         <div class="card-grid" data-roster></div>
       </div>
     </section>`);
@@ -746,8 +747,22 @@
       }
       prevSyn = now;
       $$('.bonus', v).forEach((row, k) => { row.style.animationDelay = `${k * 40}ms`; });
-      const roster = D.UNITS.filter((u) => u.kind === kind && Player.owns(u.id)).sort((a, b) => Player.powerOf(b.id) - Player.powerOf(a.id));
-      $('[data-roster]', v).innerHTML = roster.map((def) => {
+      const owned = D.UNITS.filter((u) => u.kind === kind && Player.owns(u.id)).sort((a, b) => Player.powerOf(b.id) - Player.powerOf(a.id));
+      // Filters: one role and one trait at a time. Trait chips show how many
+      // you own and how many are already in the squad, to plan synergies.
+      const rf = App.ui.squadRole || 'all';
+      const tf = App.ui.squadTrait || 'all';
+      const ROLES = [['attacker', 'Attacker', '⚔'], ['tank', 'Tank', '⛨'], ['healer', 'Healer', '✚'], ['support', 'Support', '✦']];
+      const traitCount = {};
+      owned.forEach((u) => (D.TRAITS[u.id] || []).forEach((t) => { traitCount[t] = (traitCount[t] || 0) + 1; }));
+      const inSquad = {};
+      squad.forEach((id) => (D.TRAITS[id] || []).forEach((t) => { inSquad[t] = (inSquad[t] || 0) + 1; }));
+      const traits = Object.keys(traitCount).filter((t) => D.TRAIT_INFO[t]).sort((a, b) => (inSquad[b] || 0) - (inSquad[a] || 0) || traitCount[b] - traitCount[a]);
+      $('[data-roster-filters]', v).innerHTML = `
+        <div class="rf-row"><button type="button" class="rf-chip ${rf === 'all' ? 'on' : ''}" data-rf="all">All roles</button>${ROLES.filter(([k]) => owned.some((u) => u.role === k)).map(([k, l, ic]) => `<button type="button" class="rf-chip ${rf === k ? 'on' : ''}" data-rf="${k}">${ic} ${l}<em>${owned.filter((u) => u.role === k).length}</em></button>`).join('')}</div>
+        <div class="rf-row"><button type="button" class="rf-chip ${tf === 'all' ? 'on' : ''}" data-tf="all">All traits</button>${traits.map((t) => `<button type="button" class="rf-chip trait-chip ${tf === t ? 'on' : ''} ${inSquad[t] ? 'in-squad' : ''}" data-tf="${t}" title="${inSquad[t] ? `${inSquad[t]} in your squad` : 'None in your squad yet'}">${D.TRAIT_INFO[t].icon} ${D.TRAIT_INFO[t].label}<em>${inSquad[t] ? `${inSquad[t]}/` : ''}${traitCount[t]}</em></button>`).join('')}</div>`;
+      const roster = owned.filter((u) => (rf === 'all' || u.role === rf) && (tf === 'all' || (D.TRAITS[u.id] || []).includes(tf)));
+      $('[data-roster]', v).innerHTML = (roster.length ? '' : '<p class="muted">No units match these filters.</p>') + roster.map((def) => {
         const idx = squad.indexOf(def.id);
         return unitCard(def, { selected: idx >= 0, badge: idx >= 0 ? idx + 1 : null, hideShards: true, traits: true });
       }).join('');
@@ -756,6 +771,10 @@
 
     v.addEventListener('click', (e) => {
       if (e.target.closest('[data-back]')) return App.go(params.type === 'secret' ? 'secret' : 'home');
+      const rfb = e.target.closest('[data-rf]');
+      if (rfb) { App.ui.squadRole = rfb.dataset.rf; return render(); }
+      const tfb = e.target.closest('[data-tf]');
+      if (tfb) { App.ui.squadTrait = tfb.dataset.tf; return render(); }
       if (e.target.closest('[data-auto-build]')) {
         squad = Player.autoSquad(kind);
         toast('Auto-built your strongest squad.');

@@ -775,7 +775,7 @@
       if (ev.abilityIndex > 0) this.banner(ab.name, actor.side);
       const motion = !reducedMotion();
 
-      if (root.Sound) root.Sound.play(!ev.offensive ? 'heal' : actor.def.kind === 'ship' ? 'laser' : D.classesOf(actor.def).includes('fighter') ? 'saber' : 'blaster');
+      if (root.Sound) root.Sound.play(!ev.offensive ? 'heal' : actor.def.kind === 'ship' ? 'laser' : D.attackStyle(actor.def) === 'fighter' ? 'saber' : 'blaster');
       if (!ev.offensive) {
         if (motion) card.animate([{ filter: 'brightness(1)' }, { filter: 'brightness(1.8) drop-shadow(0 0 16px #52e08a)' }, { filter: 'brightness(1)' }], { duration: 500 / this.speed });
         for (const t of targets) {
@@ -803,7 +803,7 @@
         return;
       }
       const to = this.center(targets[0].uid);
-      const ranged = D.classesOf(actor.def).includes('ranged');
+      const ranged = D.attackStyle(actor.def) === 'ranged';
       if (ranged) {
         if (motion) card.animate([{ transform: 'translateY(0)' }, { transform: `translateY(${actor.side === 'player' ? 5 : -5}px)` }, { transform: 'translateY(0)' }], { duration: 220 / this.speed });
         const color = BOLT[actor.def.faction];
@@ -831,7 +831,7 @@
       const from = this.center(actor.uid);
       for (const t of targets) {
         const to = this.center(t.uid);
-        if (actor.def.kind === 'ship' || D.classesOf(actor.def).includes('ranged')) this.laser(from, to, BOLT[actor.def.faction], 0);
+        if (actor.def.kind === 'ship' || D.attackStyle(actor.def) === 'ranged') this.laser(from, to, BOLT[actor.def.faction], 0);
         else this.slash(to, actor.def.accent || '#fff');
       }
       await this.wait(220);
@@ -842,7 +842,7 @@
       if (actor.def.role === 'healer') return 'heal';
       if (actor.def.role === 'tank') return 'bulwark';
       if (actor.def.role === 'support') return 'rally';
-      return D.classesOf(actor.def).includes('fighter') ? 'dash' : 'barrage';
+      return D.attackStyle(actor.def) === 'fighter' ? 'dash' : 'barrage';
     },
 
     // Space combat: the ship strafes forward, fires with muzzle flashes, and

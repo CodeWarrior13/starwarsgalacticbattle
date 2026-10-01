@@ -135,7 +135,16 @@ test('planet hazards trigger on schedule', () => {
 
 test('classes: every unit has at least one and units can have several', () => {
   for (const u of D.UNITS) assert.ok(D.classesOf(u).length >= 1, u.id);
-  assert.ok(D.classesOf(D.UNIT_MAP.obi_wan).length >= 3);
+  assert.ok(D.classesOf(D.UNIT_MAP.obi_wan).length >= 2);
+  // The first tag is always what the card does: tanks, healers and supports
+  // lead with their role, attackers with Fighter or Ranged.
+  for (const u of D.UNITS) {
+    const first = D.classesOf(u)[0];
+    const want = { tank: 'tank', healer: 'healer', support: 'support' }[u.role];
+    if (want) assert.strictEqual(first, want, `${u.id} leads with ${want}`);
+    else assert.ok(['fighter', 'ranged', 'starfighter', 'bomber', 'gunship'].includes(first), `${u.id} leads with an attack class (${first})`);
+  }
+  assert.deepStrictEqual(D.classesOf(D.UNIT_MAP.clone_trooper), ['tank']);
 });
 
 test('flash sale and shell game', () => {
