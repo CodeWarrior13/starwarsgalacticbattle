@@ -1356,9 +1356,8 @@
         <p class="eyebrow">Ultimate</p>
         <h2>★ ${esc(ult ? ult.name : 'Ultimate')}</h2>
         ${ult ? `<p>${esc(ult.desc)}</p>${ult.quote ? `<q class="ult-quote">${esc(ult.quote)}</q>` : ''}` : ''}
-        <div class="ult-preview">${portrait(def)}<span class="ult-play">▶</span></div>
-        <button class="btn btn-primary" type="button" data-watch>▶ Watch it in action</button>
-        <p class="muted small">Plays the full cutscene and ultimate in a training simulation. Nothing is spent or earned.</p>
+        <button class="ult-preview" type="button" data-watch aria-label="Watch ${esc(ult ? ult.name : 'the ultimate')} in action">${portrait(def)}<span class="ult-play">▶</span><span class="ult-tap">Tap to watch</span></button>
+        <p class="muted small">Tap the card to play its full cutscene and ultimate in a training simulation. Nothing is spent or earned.</p>
       </div>`;
     }
 

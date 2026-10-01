@@ -299,6 +299,7 @@
         return `<button class="abtn ${ult ? 'ult' : ''} ${ult && ready ? 'ready' : ''} ${i === this.selected ? 'selected' : ''}" type="button" data-ab="${i}" ${ready ? '' : 'disabled'} title="${esc(ab.desc)}">
           <kbd>${ult ? 'R' : i + 1}</kbd>
           <span class="an">${ult ? '★ ' : ''}${esc(ab.name)}</span>
+          ${this.estimateHtml(actor, i)}
           <span class="ad">${esc(ab.desc)}</span>
           ${!ult && !ready ? `<span class="acd">${cd}</span>` : ''}
           ${ult ? `<span class="ult-fill" style="width:${actor.ult}%"></span>` : ''}
@@ -313,7 +314,57 @@
         <div class="actions-title"><b>${esc(actor.def.name)}</b><span class="muted">Your turn</span></div>
         <div class="ability-buttons">${buttons}</div>
         <div class="hint">${hint}</div>
+        <div class="est-line" data-est></div>
       </div>`;
+    },
+
+    // Expected numbers for an ability, so you can do the maths in your head.
+    // Damage is the average roll against the focused (or likeliest) target;
+    // statuses like taunt or stun are left to the description.
+    estimate(actor, index) {
+      const b = this.battle;
+      const ab = actor.abilities[index];
+      const foes = b.opponents(actor);
+      const friends = b.allies(actor);
+      const pick = (list) => list.find((t) => t.uid === this.focusUid) || [...list].sort((x, y) => x.hp / x.maxHp - y.hp / y.maxHp)[0];
+      const foe = pick(foes);
+      const out = [];
+      for (const eff of ab.effects) {
+        if (eff.type === 'damage' && foe) {
+          const per = Math.round(b.effectiveAtk(actor) * 1.7 * eff.mult * (150 / (150 + b.effectiveArmor(foe))));
+          const each = ab.target === 'allEnemies';
+          let txt = eff.hits > 1 ? `${eff.hits}×${fmt(per)}` : fmt(per);
+          if (eff.execute) txt += ` (×${eff.execute.bonus} under ${Math.round(eff.execute.below * 100)}%)`;
+          out.push({ cls: 'dmg', icon: '⚔', text: `${txt}${each ? ' each' : ''}`, tip: `about ${fmt(per * eff.hits)} damage${each ? ' to every enemy' : ` to ${foe.def.name}`} (±10%, crits ×${(1.5 + actor.mods.critDmg).toFixed(1)})` });
+        } else if (eff.type === 'heal') {
+          const rec = eff.on === 'self' || ab.target === 'self' ? [actor] : eff.on === 'allies' || ab.target === 'allAllies' ? friends : [pick(friends) || actor];
+          const amt = Math.round(rec.reduce((a, u) => a + u.maxHp * eff.pct, 0) / rec.length);
+          out.push({ cls: 'heal', icon: '✚', text: `+${fmt(amt)}${rec.length > 1 ? ' each' : ''}`, tip: `heals ${Math.round(eff.pct * 100)}% max HP${rec.length > 1 ? ' to each ally' : rec[0] === actor ? ' to itself' : ` to ${rec[0].def.name}`}` });
+        } else if (eff.type === 'revive') {
+          out.push({ cls: 'heal', icon: '✚', text: `Revive ${Math.round(eff.pct * 100)}%`, tip: `brings back a fallen ally at ${Math.round(eff.pct * 100)}% HP` });
+        }
+      }
+      return out;
+    },
+
+    estimateHtml(actor, index) {
+      const est = this.estimate(actor, index);
+      return est.length ? `<span class="astat">${est.map((e) => `<span class="${e.cls}" title="${esc(e.tip)}">${e.icon} ${esc(e.text)}</span>`).join('')}</span>` : '';
+    },
+
+    // Refresh the numbers when the focused target changes.
+    updateEstimates() {
+      const p = this.pending;
+      if (!p || !this.view) return;
+      $$('[data-ab]', this.view).forEach((btn) => {
+        const old = $('.astat', btn);
+        const html = this.estimateHtml(p.actor, Number(btn.dataset.ab));
+        if (old) old.outerHTML = html || '';
+        else if (html) $('.an', btn).insertAdjacentHTML('afterend', html);
+      });
+      const est = this.estimate(p.actor, this.selected);
+      const line = $('[data-est]', this.view);
+      if (line) line.textContent = est.length ? `${est.map((e) => e.tip).join(' · ')}.` : '';
     },
 
     targetsFor(actor, index) {
@@ -338,6 +389,7 @@
         this.focusUid = sorted[0] && sorted[0].uid;
       }
       this.showFocus();
+      this.updateEstimates();
     },
 
     showFocus() {
@@ -394,6 +446,7 @@
       const i = Math.max(0, list.findIndex((t) => t.uid === this.focusUid));
       this.focusUid = list[(i + dir + list.length) % list.length].uid;
       this.showFocus();
+      this.updateEstimates();
     },
 
     toggleHelp() {

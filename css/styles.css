@@ -2599,3 +2599,40 @@ html, body { overflow-x: clip; }
   .main-nav { background: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.015) 0 6px, transparent 6px 12px), linear-gradient(90deg, #0a0e17, #1b2232); }
   .main-nav button.active::before { right: 1px; }
 }
+
+/* ---------- Card inspector fits phones ---------- */
+.inspect { grid-template-columns: minmax(0, 1fr); }
+.inspect-top { min-width: 0; }
+.pager { flex: 1 1 auto; min-width: 0; justify-content: space-between; }
+.pager button { flex: 1 1 0; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 520px) {
+  .modal.inspect-modal { padding: 12px; }
+  .inspect-top .icon-btn { width: 34px; height: 34px; font-size: 20px; flex: none; }
+  .pager button { padding: 5px 4px; font-size: 10px; letter-spacing: 0.04em; }
+  .bigcard { width: min(300px, 100%, calc((100dvh - 230px) * 5 / 7)); }
+}
+
+/* Tap the portrait itself to watch the ultimate. */
+button.ult-preview { padding: 0; border: 2px solid rgba(255, 210, 63, 0.5); background: none; cursor: pointer; display: block; margin: 0 auto; transition: transform 0.2s, box-shadow 0.2s; }
+button.ult-preview:hover, button.ult-preview:focus-visible { transform: scale(1.04); box-shadow: 0 0 40px rgba(255, 210, 63, 0.6); outline: none; }
+.ult-tap { position: absolute; left: 0; right: 0; bottom: 0; padding: 6px 0; font-family: var(--font-display); font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: #fff; background: linear-gradient(transparent, rgba(0, 0, 0, 0.8)); }
+
+/* ---------- Ability numbers ---------- */
+.abtn .astat { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; font-size: 11px; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.abtn .astat span { display: inline-flex; align-items: center; gap: 3px; padding: 1px 6px; border-radius: 6px; background: rgba(0, 0, 0, 0.35); white-space: nowrap; }
+.abtn .astat .dmg { color: #ff8a7a; }
+.abtn .astat .heal { color: #7cf0a8; }
+.abtn .astat .swi { width: 0.95em; height: 0.95em; }
+.abtn:disabled .astat { opacity: 0.6; }
+.est-line { font-size: 12px; color: #cfe0ff; min-height: 1em; text-align: center; }
+.est-line:empty { display: none; }
+
+/* ---------- Enemy health reads a little bigger ---------- */
+.enemy-row .bar.hp { height: 9px; }
+.enemy-row .hp-num { font-size: 11.5px; font-weight: 700; color: #e6ecf7; }
+@media (max-width: 600px) {
+  .enemy-row .bcard .hp-num { display: flex; font-size: 10px; }
+  .enemy-row .bcard .hp-num span:last-child { display: none; }
+  .enemy-row .bcard .hp-num { justify-content: center; }
+  .abtn .astat { font-size: 10px; }
+}
