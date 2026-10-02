@@ -1434,7 +1434,7 @@
           </div>
         </div>
         <div class="insp-foot">
-          <div class="insp-status">${msg ? `<span class="insp-msg" style="--k:${msg.n}">${esc(msg.text)}${msg.n > 1 ? ` <b>×${msg.n}</b>` : ''}</span>` : cards.length > 1 && pos() >= 0 ? `<span class="muted small">Card ${pos() + 1} of ${cards.length} · swipe past ${page === 3 ? 'here' : 'Ultimate'} for the next card</span>` : ''}</div>
+          <div class="insp-status">${msg ? `<span class="insp-msg" style="--k:${msg.n}">${esc(msg.text)}${msg.n > 1 ? ` <b>×${msg.n}</b>` : ''}</span>` : cards.length > 1 && pos() >= 0 ? `<span class="muted small">Card ${pos() + 1} of ${cards.length} · ${page === 3 ? 'swipe again for the next card' : 'swipe past Ultimate for the next card'}</span>` : ''}</div>
           <button class="btn insp-close" type="button" data-close>Close</button>
         </div>
       </div>`;
@@ -1448,15 +1448,26 @@
       flipped = false;
       msg = null;
       render();
-      const track = $('.inspect-stage', modal);
-      if (track && motionOK()) track.animate([{ transform: `translateX(${dir * 40}%)`, opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 320, easing: 'cubic-bezier(.2,.9,.3,1)' });
+      // The new cover deals in from the side with a little spin and a glint.
+      const big = $('.ipage:nth-child(2) .bigcard', modal);
+      if (big && motionOK()) {
+        big.animate([
+          { transform: `translateX(${dir * 70}%) rotateY(${dir * -55}deg) scale(.82)`, opacity: 0, filter: 'brightness(1.8)' },
+          { transform: `translateX(${dir * -4}%) rotateY(${dir * 6}deg) scale(1.02)`, opacity: 1, filter: 'brightness(1.15)', offset: 0.7 },
+          { transform: 'none', opacity: 1, filter: 'none' },
+        ], { duration: 520, easing: 'cubic-bezier(.2,.9,.3,1)' });
+        big.classList.remove('deal-glint');
+        void big.offsetWidth;
+        big.classList.add('deal-glint');
+      }
       if (root.Sound) root.Sound.play('whoosh');
     };
     const go = (p) => {
       const i = pos();
       if (cards.length > 1 && i >= 0) {
-        if (p > 3) return switchCard(cards[(i + 1) % cards.length], 0, 1);
-        if (p < 0) return switchCard(cards[(i - 1 + cards.length) % cards.length], 3, -1);
+        // Either way, land on the next card's cover art.
+        if (p > 3) return switchCard(cards[(i + 1) % cards.length], 1, 1);
+        if (p < 0) return switchCard(cards[(i - 1 + cards.length) % cards.length], 1, -1);
       }
       page = Math.max(0, Math.min(3, p));
       render();

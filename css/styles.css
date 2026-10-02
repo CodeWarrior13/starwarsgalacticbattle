@@ -2781,3 +2781,5 @@ button.ult-preview:hover, button.ult-preview:focus-visible { transform: scale(1.
 @keyframes insp-pop { from { transform: scale(0.7); opacity: 0.4; } }
 .insp-close { width: 100%; padding: 12px; }
 .inspect > .modal-actions { display: none; }
+.bigcard.deal-glint::after { content: ''; position: absolute; inset: 0; z-index: 5; pointer-events: none; border-radius: inherit; background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.55) 48%, transparent 62%); background-size: 260% 100%; animation: deal-glint 0.9s 0.25s ease-out both; }
+@keyframes deal-glint { from { background-position: 130% 0; } to { background-position: -60% 0; } }
