@@ -668,7 +668,7 @@
       ],
     },
     {
-      id: 'captain_rex', name: 'Captain Rex', kind: 'character', faction: 'light', rarity: 'epic', role: 'tank', accent: '#3d6fd6', spd: 128,
+      id: 'captain_rex', name: 'Captain Rex', kind: 'character', faction: 'light', rarity: 'secret', role: 'tank', exclusive: true, accent: '#3d6fd6', spd: 128,
       abilities: [
         { name: 'Dual DC-17s', cd: 0, target: 'enemy', effects: [dmg(0.55, 2)], desc: 'Hit one enemy twice.' },
         { name: 'Hold the Line', cd: 3, target: 'self', effects: [buff('taunt', 2), buff('defUp', 2), { ...buff('offUp', 1), on: 'allies' }], desc: 'Gain Taunt and Defense Up; all allies gain Offense Up.' },

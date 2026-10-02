@@ -115,6 +115,11 @@
       // A new recruit gets theirs from the tutorial instead.
       if (!this.awaitingStarter()) this.grantStarterUnits();
       for (const id of Object.keys(this.state.units)) if (!D.UNIT_MAP[id] || D.UNIT_MAP[id].boss) delete this.state.units[id];
+      // Captain Rex is earned only by maxing the tutorial badge.
+      if (this.state.units.captain_rex && !((this.state.tutorial.replays || 0) >= 9)) {
+        delete this.state.units.captain_rex;
+        for (const kind of ['character', 'ship']) this.state.squads[kind] = (this.state.squads[kind] || []).filter((id) => id !== 'captain_rex');
+      }
       return this.state;
     },
 
@@ -179,8 +184,14 @@
       // Beating it again on a replay earns the secret "Back for More?" badge.
       const again = how === 'completed' && !!t.badge;
       // The rewind counter tops out at TAKE 10.
-      if (again) t.replays = Math.min(9, (t.replays || 0) + 1);
+      const before = t.replays || 0;
+      if (again) t.replays = Math.min(9, before + 1);
       const out = { how, units, credits: 0, crystals: 0, again };
+      // Maxing the badge (TAKE 10) is the only way to recruit Captain Rex.
+      if (again && before < 9 && t.replays === 9 && !this.state.units.captain_rex) {
+        this.state.units.captain_rex = { level: 1, stars: 1, shards: 0 };
+        out.rex = true;
+      }
       if (t.fresh) {
         out.credits = D.STARTER.credits;
         out.crystals = D.STARTER.crystals;

@@ -237,7 +237,7 @@
         if (res.again) {
           this.active = false;
           ui().markFeatSeen('tutorial_again');
-          return setTimeout(() => ui().playFeat({ id: 'tutorial_again', secret: true, tier: 5, icon: 'badge', name: 'Back for More?', desc: 'Oh, really? You just love the tutorial that much?', have: 1, need: 1 }), 450);
+          return setTimeout(() => ui().playFeat({ id: 'tutorial_again', secret: true, tier: 5, icon: 'badge', level: Player.state.tutorial.replays, rexUnlock: !!res.rex, name: 'Back for More?', desc: 'Oh, really? You just love the tutorial that much?', have: 1, need: 1 }), 450);
         }
         setTimeout(() => this.tour(), 450);
       });

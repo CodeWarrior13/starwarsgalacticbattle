@@ -498,7 +498,7 @@ test('secret trials unlock with level, campaign progress and the earlier trial',
 
 test('secret cards have their own rarity and never come from crates, shops or bosses', () => {
   const secret = D.UNITS.filter((u) => u.exclusive);
-  assert.strictEqual(secret.length, 6);
+  assert.strictEqual(secret.length, 7);
   for (const u of secret) assert.strictEqual(u.rarity, 'secret', `${u.id} is Secret rarity`);
   assert.ok(D.RARITIES.secret.weight > D.RARITIES.mythic.weight, 'Secret ranks above Mythic');
   for (const pack of D.PACKS) assert.ok(!('secret' in pack.odds), `${pack.id} has no Secret odds`);
@@ -558,8 +558,11 @@ test('beating a replayed tutorial earns the secret badge, skipping a replay does
   Player.replayTutorial();
   assert.ok(!Player.finishTutorial('skipped').again, 'skipping a replay is not a clear');
   assert.strictEqual(Player.state.tutorial.replays, 1);
-  for (let i = 0; i < 20; i++) { Player.replayTutorial(); Player.finishTutorial('completed'); }
+  assert.ok(!Player.owns('captain_rex'), 'Rex is not handed out early');
+  let rex = 0;
+  for (let i = 0; i < 20; i++) { Player.replayTutorial(); if (Player.finishTutorial('completed').rex) rex++; }
   assert.strictEqual(Player.state.tutorial.replays, 9, 'counter caps so the tape reads TAKE 10 at most');
+  assert.ok(Player.owns('captain_rex') && rex === 1, 'maxing the badge recruits Captain Rex, once');
 });
 
 test('the training battle cannot be lost', () => {

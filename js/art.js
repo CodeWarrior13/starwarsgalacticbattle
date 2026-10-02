@@ -857,15 +857,40 @@
     + P('M36 42 C35 28 42 24 50 24 C58 24 65 28 64 42 L62 50 C61 40 58 34 50 33 C43 33 39 38 38 50Z', '#4a3ab8')
     + P('M40 28 C46 24 56 24 62 30 C56 28 48 28 42 32Z', '#ff5ac8') + P('M56 33 L64 36 L62 46 C61 40 59 36 56 33Z', '#ff8a2a');
 
-  CHAR.captain_rex = () => SCENES.city()
-    + blaster(10, 86, -64, '#2a2d33') + blaster(90, 86, -116, '#2a2d33')
-    + shoulders('#f2f2f2') + R(44, 80, 12, 20, '#d9dde2') + P('M8 88 L22 78 L26 84 L12 94Z', '#3d6fd6') + P('M92 88 L78 78 L74 84 L88 94Z', '#3d6fd6')
-    + P('M36 80 L48 78 L48 84 L36 86Z', '#3d6fd6') + P('M64 80 L52 78 L52 84 L64 86Z', '#3d6fd6')
-    + P('M33.5 44 C33.5 27 41 21 50 21 C59 21 66.5 27 66.5 44 L66.5 58 C62 65 38 65 33.5 58Z', '#f3f3f3') + shade('M33.5 44 C33.5 27 41 21 50 21 L50 64 C42 64 36 62 33.5 58Z', 0.1)
-    + P('M38 30 C42 25 46 23 50 23 L50 28 C46 28 42 30 39 34Z', '#3d6fd6') + P('M62 30 C58 25 54 23 50 23 L50 28 C54 28 58 30 61 34Z', '#3d6fd6')
-    + P('M38.5 39 L61.5 39 L61.5 44 L54 44 L54 56 L46 56 L46 44 L38.5 44Z', '#101114')
-    + P('M36 36 L40 30 L44 36Z', '#3d6fd6') + P('M64 36 L60 30 L56 36Z', '#3d6fd6')
-    + R(64, 26, 3, 16, '#3a3d44') + L(65.5, 26, 72, 18, '#3a3d44', 1.4) + R(46, 58, 8, 3, '#b8bfc7', 'rx="1"');
+  // Captain Rex: Phase II helmet with his 501st blue (jaig-eye wedges, the
+  // three forehead stripes, brow band, visor and chin trim), his tally marks
+  // on both cheeks, grey ear caps, breathers and the rangefinder.
+  CHAR.captain_rex = () => {
+    const B = '#2f6fe0';
+    // Kill count: four scratched strokes and a strike-through, on one side.
+    const tally = (x0, y0) => [0, 1, 2, 3].map((i) => L(x0 + i * 1.3, y0, x0 + i * 1.3, y0 + 4.2, '#3a3e45', 0.7)).join('') + L(x0 - 0.6, y0 + 3.6, x0 + 4.6, y0 + 0.6, '#3a3e45', 0.7);
+    return SCENES.city()
+      + blaster(10, 86, -64, '#2a2d33') + blaster(90, 86, -116, '#2a2d33')
+      + shoulders('#f2f2f2') + R(44, 80, 12, 20, '#d9dde2') + P('M8 88 L22 78 L26 84 L12 94Z', B) + P('M92 88 L78 78 L74 84 L88 94Z', B)
+      + P('M36 80 L48 78 L48 84 L36 86Z', B) + P('M64 80 L52 78 L52 84 L64 86Z', B) + R(43, 70, 14, 5, '#3a3d44', 'rx="1.5"')
+      // rangefinder (behind the dome, on his right)
+      + R(29.2, 23, 1.8, 24, '#7a828c') + R(25.6, 20.6, 8.6, 3.6, '#5a6068', 'rx=".7"') + R(32.2, 21.3, 3, 2.2, '#22252b')
+      // helmet shell, cheeks bulging out at the bottom
+      + P('M31 46 C31 28 39 19 50 19 C61 19 69 28 69 46 L70 57 C70 65 64 70.5 58 71.5 L42 71.5 C36 70.5 30 65 30 57Z', '#f4f5f6', 'stroke="#c3c9d1" stroke-width=".6"')
+      + shade('M31 46 C31 28 39 19 50 19 L50 71.5 L42 71.5 C36 70.5 30 65 30 57Z', 0.08)
+      + R(47.6, 19.4, 4.8, 12.5, '#ffffff', 'rx="1.2" stroke="#d3d8de" stroke-width=".5"')
+      + E(41.5, 25.5, 4.5, 1.8, '#ffffff', 'opacity=".9" transform="rotate(-28 41.5 25.5)"')
+      + L(35.6, 47.5, 36.6, 61.5, '#c3c9d1', 0.5) + L(64.4, 47.5, 63.4, 61.5, '#c3c9d1', 0.5) + L(33, 47, 67, 47, '#dfe3e8', 0.35)
+      + L(61.5, 30, 63.5, 31.5, '#9aa3ad', 0.5) + L(38, 61.5, 39.6, 60.2, '#9aa3ad', 0.5) + L(62.5, 59.5, 64, 60.8, '#9aa3ad', 0.45)
+      + C(30.6, 50.5, 2.6, '#a9b0b9') + C(69.4, 50.5, 2.6, '#a9b0b9') + C(30.6, 50.5, 1.1, '#6a717b') + C(69.4, 50.5, 1.1, '#6a717b')
+      // angular jaig eyes above the visor
+      + P('M34.8 39 L37 30.5 L46.4 26.4 L45 31.6 L40.6 33.4 L39.2 38.4Z', B) + P('M65.2 39 L63 30.5 L53.6 26.4 L55 31.6 L59.4 33.4 L60.8 38.4Z', B)
+      // brow band and the T visor with blue trim
+      + P('M33.2 40.6 C40 38.2 60 38.2 66.8 40.6 L66.8 43 C60 41 40 41 33.2 43Z', B)
+      + P('M45.4 47 L41.6 49.2 L42.8 60.6 L46 60.6Z', B) + P('M54.6 47 L58.4 49.2 L57.2 60.6 L54 60.6Z', B)
+      + P('M34.8 43 C42 41.4 58 41.4 65.2 43 L64.6 47.6 C60 46.6 56.4 46.8 54.6 47.2 L54 60.6 L46 60.6 L45.4 47.2 C43.6 46.8 40 46.6 35.4 47.6Z', '#0c0e12')
+      + P('M37.2 43.9 C43 42.8 52 42.7 58.5 43.1', 'none', 'stroke="#ffffff" stroke-opacity=".35" stroke-width=".8"')
+      + tally(59.4, 51.6)
+      // chin trim, grille and breathers
+      + R(47.3, 60.6, 5.4, 6.4, B) + R(44.6, 66.6, 10.8, 2.4, '#8a929c', 'rx=".8"')
+      + C(39.6, 65.6, 3.5, '#1a1c20') + C(39.6, 65.6, 2.2, '#c9ced6') + C(39.6, 65.6, 0.9, '#3a3d44')
+      + C(60.4, 65.6, 3.5, '#1a1c20') + C(60.4, 65.6, 2.2, '#c9ced6') + C(60.4, 65.6, 0.9, '#3a3d44');
+  };
 
   CHAR.hondo = () => SCENES.desert()
     + blaster(80, 94, -40, '#2a2d33')

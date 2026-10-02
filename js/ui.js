@@ -2150,7 +2150,10 @@
     // Secret feats stay off the list entirely until they are earned.
     if (s.secret.found) list.push({ id: 'secret_found', secret: true, tier: 5, icon: 'crescent', name: 'Into the Unknown', desc: 'Found the hidden way to the Monolith', have: 1, need: 1 });
     if (D.SECRET_BOSSES.every((b) => s.secret.beaten[b.id])) list.push({ id: 'secret_all', secret: true, tier: 6, icon: 'spark', name: 'Master of the Monolith', desc: 'Defeated all four trials beyond the map', have: 1, need: 1 });
-    if (s.tutorial && s.tutorial.replays) list.push({ id: 'tutorial_again', secret: true, tier: 5, icon: 'badge', name: 'Back for More?', desc: 'Oh, really? You just love the tutorial that much?', have: 1, need: 1 });
+    if (s.tutorial && s.tutorial.replays) {
+      const lv = Math.min(9, s.tutorial.replays);
+      list.push({ id: 'tutorial_again', secret: true, tier: 5, icon: 'badge', level: lv, name: `Back for More? · ${lv >= 9 ? 'MAX' : `Take ${lv + 1}`}`, desc: 'Oh, really? You just love the tutorial that much?', have: 1, need: 1 });
+    }
     if (s.account.level >= D.MAX_ACCOUNT_LEVEL) list.push({ id: 'grinder', secret: true, tier: 7, icon: 'spire', name: 'Galactic Grinder', desc: 'New features coming soon', have: 1, need: 1 });
     return list;
   }
@@ -2329,40 +2332,66 @@
       <g>${Array.from({ length: t }, (_, k) => star((k - (t - 1) / 2) * 17, 74, 7)).join('')}</g>
     </svg>`;
   };
-  // Back for More? (beating the tutorial twice): a training remote bobbing
-  // inside a rewind arrow that never stops turning backwards.
-  const againCrest = () => {
+  // Back for More? (beating the tutorial again): a training remote bobbing
+  // inside a rewind arrow that never stops turning backwards. Like a
+  // progressive achievement it upgrades with every replay clear, from TAKE 2
+  // up to a maxed-out TAKE 10, keeping the same core pieces throughout.
+  const againLevel = () => Math.max(1, Math.min(9, (Player.state.tutorial && Player.state.tutorial.replays) || 1));
+  const againCrest = (x) => {
+    const lv = Math.max(1, Math.min(9, (x && x.level) || againLevel()));
+    const take = lv + 1;
+    const max = lv >= 9;
     const u = `ag${++crestSeq}`;
-    const nubs = [-60, -20, 20, 60, 120, 160, 200, 240].map((a) => { const r = (a * Math.PI) / 180; return `<circle cx="${(Math.cos(r) * 36).toFixed(1)}" cy="${(Math.sin(r) * 36).toFixed(1)}" r="3.2" fill="#2a303c" stroke="#9aa4b4" stroke-width="1"/>`; }).join('');
+    const accent = lv >= 7 ? '#ffd23f' : '#7cd0ff';
+    const nubs = [-60, -20, 20, 60, 120, 160, 200, 240].map((a) => { const r = (a * Math.PI) / 180; return `<circle cx="${(Math.cos(r) * 36).toFixed(1)}" cy="${(Math.sin(r) * 36).toFixed(1)}" r="3.2" fill="#2a303c" stroke="${lv >= 5 ? '#ffd23f' : '#9aa4b4'}" stroke-width="1"/>`; }).join('');
     const bob = motionOK() ? '<animateTransform attributeName="transform" type="translate" values="0 0;0 -5;0 0" dur="2.4s" repeatCount="indefinite"/>' : '';
+    const pt = (r, deg) => { const t = (deg * Math.PI) / 180; return [(Math.cos(t) * r).toFixed(1), (Math.sin(t) * r).toFixed(1)]; };
+    // Nine progress pips across the top of the ring, one lit per take earned.
+    const pips = Array.from({ length: 9 }, (_, k) => { const [px, py] = pt(74, 210 + k * 15); const on = k < lv; return `<circle cx="${px}" cy="${py}" r="3.4" fill="${on ? accent : '#0a1420'}" stroke="${on ? '#fff' : '#3a4a5a'}" stroke-width="1" ${on ? `filter="url(#${u}f)"` : ''}/>`; }).join('');
+    const laurel = () => Array.from({ length: 7 }, (_, k) => { const deg = 128 + k * 15; const [lx, ly] = pt(84, deg); return `<ellipse cx="${lx}" cy="${ly}" rx="11" ry="4.6" transform="rotate(${deg + 70} ${lx} ${ly})"/>`; }).join('');
+    const wing = `<g>${A.rock(-5, -70, 0, 3.2)}${[-30, -10, 10, 30].map((a, k) => `<g transform="translate(-72,${k * 4 - 6}) rotate(${a})"><ellipse cx="-20" rx="${26 - k * 3}" ry="7"/></g>`).join('')}</g>`;
+    const minis = lv >= 6 ? `<g>${A.spin(9)}${Array.from({ length: lv - 4 }, (_, k) => { const [mx, my] = pt(92, (360 / (lv - 4)) * k); return `<g transform="translate(${mx},${my})"><circle r="6" fill="url(#${u}m)" stroke="#1a1f26" stroke-width="1"/><circle r="1.6" fill="#ff3a4a"/></g>`; }).join('')}</g>` : '';
+    const bolts = (lv >= 7 ? [[-26, 62, 0], [26, 62, 0.8], [0, 70, 1.6]] : [[-26, 62, 0]]).map(([bx, by, d]) => `<line x1="0" y1="20" x2="${bx}" y2="${by}" stroke="#ff3a4a" stroke-width="3" stroke-linecap="round" filter="url(#${u}f)" opacity="0">${A.fade('0;0;1;0', 2.4, -d)}</line>`).join('');
+    const gems = max ? [['#4aa8ff', -135], ['#ff2a3a', -45], ['#c77dff', 45], ['#7cffb0', 135]].map(([c, deg], k) => { const [gx, gy] = pt(74, deg); return `<g transform="translate(${gx},${gy})"><path d="M0,-9 L7,0 L0,9 L-7,0Z" fill="${c}" stroke="#fff6c8" stroke-width="1.5" filter="url(#${u}f)">${A.pop(2.6, k * 0.3)}</path></g>`; }).join('') : '';
     return `<svg class="mc ag" viewBox="-100 -100 200 200" aria-hidden="true">
       <defs>${gold(`${u}g`)}${glowDefs(u)}
-        <radialGradient id="${u}h"><stop offset="0" stop-color="#7cd0ff" stop-opacity=".6"/><stop offset="1" stop-color="#7cd0ff" stop-opacity="0"/></radialGradient>
+        <radialGradient id="${u}h"><stop offset="0" stop-color="${max ? '#ffffff' : accent}" stop-opacity=".65"/><stop offset=".55" stop-color="${max ? '#c77dff' : accent}" stop-opacity=".25"/><stop offset="1" stop-color="${accent}" stop-opacity="0"/></radialGradient>
         <radialGradient id="${u}m" cx=".38" cy=".32"><stop offset="0" stop-color="#f4f7fb"/><stop offset=".45" stop-color="#9aa4b4"/><stop offset="1" stop-color="#2a303c"/></radialGradient>
-        <radialGradient id="${u}c"><stop offset="0" stop-color="#14304e"/><stop offset="1" stop-color="#05080f"/></radialGradient>
+        <radialGradient id="${u}c"><stop offset="0" stop-color="${lv >= 7 ? '#3a2a10' : '#14304e'}"/><stop offset="1" stop-color="#05080f"/></radialGradient>
+        <linearGradient id="${u}w" x1="1" x2="0"><stop offset="0" stop-color="#eaf8ff"/><stop offset="1" stop-color="${accent}"/></linearGradient>
       </defs>
       <circle r="99" fill="url(#${u}h)">${A.fade('1;.5;1', 2.6)}</circle>
-      <circle r="74" fill="url(#${u}c)" stroke="url(#${u}g)" stroke-width="6"/>
-      <circle r="66" fill="none" stroke="#7cd0ff" stroke-width="1" stroke-dasharray="3 6" opacity=".6">${A.spin(14)}</circle>
-      <g filter="url(#${u}f)">${A.spin(5, true)}
+      ${lv >= 4 ? `<g fill="${accent}" opacity="${lv >= 7 ? 0.42 : 0.3}">${A.spin(lv >= 7 ? 22 : 34)}${Array.from({ length: 20 }, (_, k) => `<polygon points="0,${k % 2 ? -86 : -100} 4,0 -4,0" transform="rotate(${k * 18})"/>`).join('')}</g>` : ''}
+      ${lv >= 8 ? `<g fill="url(#${u}w)" stroke="#0a1a3a" stroke-width=".8">${wing}</g><g transform="scale(-1,1)"><g fill="url(#${u}w)" stroke="#0a1a3a" stroke-width=".8">${wing}</g></g>` : ''}
+      ${minis}
+      ${lv >= 3 ? `<g fill="url(#${u}g)" stroke="#1a1208" stroke-width=".8">${laurel()}<g transform="scale(-1,1)">${laurel()}</g></g>` : ''}
+      <circle r="74" fill="url(#${u}c)" stroke="url(#${u}g)" stroke-width="${lv >= 5 ? 8 : 6}"/>
+      ${lv >= 5 ? `<circle r="79" fill="none" stroke="url(#${u}g)" stroke-width="1.5"/><g stroke="#3a2400" stroke-width="1.2">${Array.from({ length: 24 }, (_, k) => { const [a1, b1] = pt(71, k * 15); const [a2, b2] = pt(77, k * 15); return `<line x1="${a1}" y1="${b1}" x2="${a2}" y2="${b2}"/>`; }).join('')}</g>` : ''}
+      <circle r="66" fill="none" stroke="${accent}" stroke-width="1" stroke-dasharray="3 6" opacity=".6">${A.spin(14)}</circle>
+      <g filter="url(#${u}f)">${A.spin(lv >= 7 ? 3.5 : 5, true)}
         <path d="M0,-86 A86,86 0 1,1 -74.5,-43" fill="none" stroke="#7cd0ff" stroke-width="5" stroke-linecap="round"/>
         <path d="M-88,-50 L-74.5,-43 L-66,-58Z" fill="#7cd0ff" stroke="#7cd0ff" stroke-width="3" stroke-linejoin="round"/>
       </g>
+      ${lv >= 2 ? `<g filter="url(#${u}f)">${A.spin(7)}<path d="M0,58 A58,58 0 1,1 50.2,29" fill="none" stroke="url(#${u}g)" stroke-width="3" stroke-linecap="round"/><path d="M58,34 L50.2,29 L45,40Z" fill="#ffd23f"/></g>` : ''}
       <g>${bob}
         <line x1="-10" y1="-36" x2="-16" y2="-50" stroke="#9aa4b4" stroke-width="2.5" stroke-linecap="round"/><line x1="10" y1="-36" x2="16" y2="-50" stroke="#9aa4b4" stroke-width="2.5" stroke-linecap="round"/>
         <circle r="38" fill="url(#${u}m)" stroke="#1a1f26" stroke-width="2"/>
-        <path d="M-38,0 A38,10 0 0,0 38,0" fill="none" stroke="#1a1f26" stroke-width="3"/>
+        <path d="M-38,0 A38,10 0 0,0 38,0" fill="none" stroke="${lv >= 5 ? '#ffd23f' : '#1a1f26'}" stroke-width="${lv >= 5 ? 4 : 3}"/>
         <path d="M-38,0 A38,10 0 0,1 38,0" fill="none" stroke="#c8ced8" stroke-width="1" opacity=".6"/>
         ${nubs}
-        <circle cx="0" cy="14" r="6" fill="#ff3a4a" filter="url(#${u}f)">${A.fade('1;.3;1', 1.2)}</circle>
-        <line x1="0" y1="20" x2="-26" y2="62" stroke="#ff3a4a" stroke-width="3" stroke-linecap="round" filter="url(#${u}f)" opacity="0">${A.fade('0;0;1;0', 2.4)}</line>
+        <circle cx="0" cy="14" r="${max ? 7.5 : 6}" fill="${max ? '#fff' : '#ff3a4a'}" stroke="${max ? '#ff3a4a' : 'none'}" stroke-width="2" filter="url(#${u}f)">${A.fade('1;.3;1', 1.2)}</circle>
+        ${bolts}
       </g>
-      ${ribbon(u, 'AGAIN?', '#0a1a2a', '#123a6a')}
+      ${pips}
+      ${gems}
+      ${max ? `<g transform="translate(0,-92)"><path d="M0,-13 L3,-3 L13,0 L3,3 L0,13 L-3,3 L-13,0 L-3,-3Z" fill="#fff" stroke="url(#${u}g)" stroke-width="1.5" filter="url(#${u}f)">${A.twist(2)}</path></g>` : ''}
+      ${ribbon(u, max ? 'MAXED' : 'AGAIN?', max ? '#3a0a10' : '#0a1a2a', max ? '#a01a24' : '#123a6a')}
+      <g transform="translate(0,${max ? 62 : 63})"><rect x="-17" y="-8" width="34" height="13" rx="6.5" fill="#05080f" stroke="${accent}" stroke-width="1.5"/><text y="2.6" text-anchor="middle" font-size="9" font-weight="800" fill="${accent}" font-family="inherit">×${take}</text></g>
     </svg>`;
   };
-  const CRESTS = { secret_all: () => monolithCrest(), grinder: () => grinderCrest(), tutorial_again: () => againCrest() };
+  const CRESTS = { secret_all: () => monolithCrest(), grinder: () => grinderCrest(), tutorial_again: (x) => againCrest(x) };
   const featBadge = (x, cls = '') => {
-    if (CRESTS[x.id]) return `<div class="fs-badge master-crest ${cls}">${CRESTS[x.id]()}</div>`;
+    if (CRESTS[x.id]) return `<div class="fs-badge master-crest ${cls}">${CRESTS[x.id](x)}</div>`;
     if (!x.secret) return `<div class="fs-badge medal-crest ${cls}" style="--m1:${FEAT_TIER[x.tier || 1][1]}">${medalCrest(x)}</div>`;
     return `<div class="fs-badge ${cls} secret" style="--m1:${FEAT_TIER[x.tier || 1][1]};--m2:${FEAT_TIER[x.tier || 1][2]}"><span class="fs-medal"><span class="fs-ico">${root.Icons.svg(x.icon)}</span></span></div>`;
   };
@@ -2458,16 +2487,16 @@
   // Back for More?: the tape rewinds to Rex, who is not impressed.
   function againCutscene(x) {
     const rex = D.UNIT_MAP.captain_rex;
-    const takes = Math.min(10, ((Player.state.tutorial && Player.state.tutorial.replays) || 1) + 1);
+    const takes = Math.min(10, (x.level || againLevel()) + 1);
     const node = el(`<div class="feat-cine again" role="dialog" aria-label="${esc(x.name)}">
       <div class="fa-vhs"></div>
       <span class="fa-tag fa-rew">◀◀ REWIND</span><span class="fa-tag fa-take">TAKE ${takes}</span>
       <div class="fa-rex">${portrait(rex, { plate: false })}</div>
-      <div class="fa-lines"><p style="--i:0">Wait…</p><p style="--i:1">Commander, you've clearly done this before.</p><p style="--i:2">You just love the tutorial that much?</p></div>
+      <div class="fa-lines">${takes >= 10 ? '<p style="--i:0">Wait…</p><p style="--i:1">Ten times, Commander. Ten.</p><p style="--i:2">Fine. You\'ve earned a place in the 501st.</p>' : '<p style="--i:0">Wait…</p><p style="--i:1">Commander, you\'ve clearly done this before.</p><p style="--i:2">You just love the tutorial that much?</p>'}</div>
       <i class="fc-flash"></i>
       ${featBadge(x, 'fc-badge')}
       ${Array.from({ length: 70 }, (_, k) => `<i class="fs-spark" style="--a:${(k * 137.5) % 360}deg;--d:${(k % 9) * 0.05}s;--r:${22 + (k % 6) * 7}vmin;--c:${k % 2 ? '#7cd0ff' : '#ffffff'}"></i>`).join('')}
-      <div class="fs-text fc-text"><span class="fs-kicker">Secret achievement</span><b data-text="${esc(x.name)}">${esc(x.name)}</b><span>${esc(x.desc)}</span></div>
+      <div class="fs-text fc-text"><span class="fs-kicker">Secret achievement · ${takes >= 10 ? 'Maxed out' : `Take ${takes} of 10`}</span><b data-text="Back for More?">Back for More?</b><span>${esc(x.desc)}</span></div>
       <span class="pc-skip">Tap to skip</span>
     </div>`);
     document.body.appendChild(node);
@@ -2484,7 +2513,12 @@
       node.querySelector('.pc-skip').textContent = 'Tap to close';
       if (S) { S.play('burst'); S.play('reveal_epic'); setTimeout(() => S.play('rankup'), 350); }
     };
-    node.addEventListener('click', () => (node.classList.contains('reveal') ? close() : reveal(true)));
+    node.addEventListener('click', () => {
+      if (!node.classList.contains('reveal')) return reveal(true);
+      close();
+      // TAKE 10: Rex himself joins up.
+      if (x.rexUnlock) setTimeout(() => walkout(D.UNIT_MAP.captain_rex, 'secret', false, { exclusive: true, isNew: true }), 520);
+    });
     at(REVEAL, () => reveal(false));
   }
 
@@ -2585,7 +2619,7 @@
       <div class="pf-pane" data-pane="feats">
         <div class="feat-list">${ach.map((x) => {
           const done = x.have >= x.need;
-          return `<button type="button" class="feat ${done ? 'done' : ''} ${x.secret ? 'secret' : ''} t-${x.tier || 1}" data-feat="${ach.indexOf(x)}"><span class="feat-ico ${CRESTS[x.id] ? 'crest' : ''}">${CRESTS[x.id] ? CRESTS[x.id]() : root.Icons.svg(x.icon)}</span><div><b>${esc(x.name)}${x.secret ? ` <span class="feat-secret ${x.tier === 7 ? 'legend' : ''}">${x.tier === 7 ? 'Legendary' : 'Secret'}</span>` : ''}</b><span class="muted small">${esc(x.desc)}</span><i class="feat-bar"><i style="width:${Math.min(100, (x.have / x.need) * 100)}%"></i></i></div><em>${done ? '✓' : `${fmt(Math.min(x.have, x.need))}/${fmt(x.need)}`}</em></button>`;
+          return `<button type="button" class="feat ${done ? 'done' : ''} ${x.secret ? 'secret' : ''} t-${x.tier || 1}" data-feat="${ach.indexOf(x)}"><span class="feat-ico ${CRESTS[x.id] ? 'crest' : ''}">${CRESTS[x.id] ? CRESTS[x.id](x) : root.Icons.svg(x.icon)}</span><div><b>${esc(x.name)}${x.secret ? ` <span class="feat-secret ${x.tier === 7 ? 'legend' : ''}">${x.tier === 7 ? 'Legendary' : 'Secret'}</span>` : ''}</b><span class="muted small">${esc(x.desc)}</span><i class="feat-bar"><i style="width:${Math.min(100, (x.have / x.need) * 100)}%"></i></i></div><em>${done ? '✓' : `${fmt(Math.min(x.have, x.need))}/${fmt(x.need)}`}</em></button>`;
         }).join('')}</div>
       </div>
       <div class="modal-actions"><button class="btn btn-primary" type="button" data-close>Close</button></div>`, { cls: 'profile-modal' });
