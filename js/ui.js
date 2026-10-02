@@ -323,11 +323,27 @@
 
     requestAnimationFrame(() => {
       const mc = $('[data-map-canvas]', v);
+      // The newest world you have reached sets the map's backdrop.
+      const frontier = [...D.PLANETS].reverse().find((p) => Player.planetUnlocked(p.id)) || D.PLANETS[0];
       if (mc) new root.GalaxyMap(mc, D.PLANETS, () => ({
         unlocked: (id) => Player.planetUnlocked(id),
         cleared: (id) => Player.planetCleared(id),
         current: current.id,
+        frontier: frontier.id,
       }));
+      // First time a new backdrop shows: a short "new sector" banner.
+      let seen = null;
+      try { seen = localStorage.getItem('swcg-map-sector'); } catch (e) { seen = null; }
+      if (seen !== frontier.id) {
+        try { localStorage.setItem('swcg-map-sector', frontier.id); } catch (e) { /* storage unavailable */ }
+        if (seen && motionOK()) {
+          const host = $('[data-home-map]', v);
+          const ban = el(`<div class="sector-banner" style="--pc:${frontier.color || '#ffd23f'}"><span>New sector reached</span><b>${esc(frontier.name)}</b></div>`);
+          host.appendChild(ban);
+          if (root.Sound) root.Sound.play('whoosh');
+          setTimeout(() => ban.remove(), 3600);
+        }
+      }
       homeActors($('[data-actors]', v));
       // Arriving from a result screen ("Travel to…"): open that world straight away.
       if (App.ui.openPlanet) {
@@ -705,7 +721,7 @@
         </div>
       </div>
       <div>
-        <div class="side-label"><span>Tap to add or remove (up to ${size}) · trait icons show synergies</span></div>
+        <div class="roster-head"><span class="eyebrow">Your roster</span><span class="muted small">Tap to add or remove · up to ${size}</span></div>
         <div class="roster-filters" data-roster-filters></div>
         <div class="card-grid" data-roster></div>
       </div>
@@ -766,8 +782,11 @@
       squad.forEach((id) => (D.TRAITS[id] || []).forEach((t) => { inSquad[t] = (inSquad[t] || 0) + 1; }));
       const traits = Object.keys(traitCount).filter((t) => D.TRAIT_INFO[t]).sort((a, b) => (inSquad[b] || 0) - (inSquad[a] || 0) || traitCount[b] - traitCount[a]);
       $('[data-roster-filters]', v).innerHTML = `
-        <div class="rf-row"><button type="button" class="rf-chip ${rf === 'all' ? 'on' : ''}" data-rf="all">All roles</button>${ROLES.filter(([k]) => owned.some((u) => u.role === k)).map(([k, l, ic]) => `<button type="button" class="rf-chip ${rf === k ? 'on' : ''}" data-rf="${k}">${ic} ${l}<em>${owned.filter((u) => u.role === k).length}</em></button>`).join('')}</div>
-        <div class="rf-row"><button type="button" class="rf-chip ${tf === 'all' ? 'on' : ''}" data-tf="all">All traits</button>${traits.map((t) => `<button type="button" class="rf-chip trait-chip ${tf === t ? 'on' : ''} ${inSquad[t] ? 'in-squad' : ''}" data-tf="${t}" title="${inSquad[t] ? `${inSquad[t]} in your squad` : 'None in your squad yet'}">${D.TRAIT_INFO[t].icon} ${D.TRAIT_INFO[t].label}<em>${inSquad[t] ? `${inSquad[t]}/` : ''}${traitCount[t]}</em></button>`).join('')}</div>`;
+        <div class="rf-bar">
+          <div class="rf-roles" role="group" aria-label="Filter by role"><button type="button" class="${rf === 'all' ? 'on' : ''}" data-rf="all" title="All roles">All</button>${ROLES.filter(([k]) => owned.some((u) => u.role === k)).map(([k, l, ic]) => `<button type="button" class="${rf === k ? 'on' : ''}" data-rf="${k}" title="${l} · ${owned.filter((u) => u.role === k).length} owned">${ic}<span class="rf-l">${l}</span><sup>${owned.filter((u) => u.role === k).length}</sup></button>`).join('')}</div>
+          <i class="rf-div"></i>
+          <div class="rf-traits" aria-label="Filter by trait"><button type="button" class="rf-chip ${tf === 'all' ? 'on' : ''}" data-tf="all">All</button>${traits.map((t) => `<button type="button" class="rf-chip ${tf === t ? 'on' : ''} ${inSquad[t] ? 'in-squad' : ''}" data-tf="${t}" title="${D.TRAIT_INFO[t].label}: ${inSquad[t] ? `${inSquad[t]} in your squad, ` : ''}${traitCount[t]} owned">${D.TRAIT_INFO[t].icon} ${D.TRAIT_INFO[t].label}<em>${inSquad[t] ? `${inSquad[t]}/` : ''}${traitCount[t]}</em></button>`).join('')}</div>
+        </div>`;
       const roster = owned.filter((u) => (rf === 'all' || u.role === rf) && (tf === 'all' || (D.TRAITS[u.id] || []).includes(tf)));
       $('[data-roster]', v).innerHTML = (roster.length ? '' : '<p class="muted">No units match these filters.</p>') + roster.map((def) => {
         const idx = squad.indexOf(def.id);
@@ -2472,6 +2491,7 @@
     const m = openModal(`
       <div style="text-align:center"><p class="eyebrow">${packId ? 'Relic unsealed' : 'Delivery from Vekko'}</p><h2 data-reveal-title>Tap to reveal</h2></div>
       <div class="reveal-stack" data-stack>${cards}</div>
+      <p class="reveal-hint" data-reveal-hint hidden>Tap the card for the next one</p>
       <div class="reveal-summary" data-summary hidden></div>
       <div class="modal-actions" style="justify-content:center">
         <button class="btn btn-primary" type="button" data-next-card hidden>Next card</button>
@@ -2486,9 +2506,13 @@
     const afterReveal = (i) => {
       const def = D.UNIT_MAP[results[i].id];
       if (i < results.length - 1) {
-        nextBtn.hidden = false;
+        // Tap the revealed card itself to deal and open the next one.
         title.textContent = def.name;
-        nextBtn.focus();
+        const cur = $(`.flip[data-i="${i}"]`, m.root);
+        cur.classList.add('tap-next');
+        cur.setAttribute('aria-label', 'Next card');
+        $('[data-reveal-hint]', m.root).hidden = false;
+        cur.focus({ preventScroll: true });
       } else if (results.length > 1) {
         // Crate finished: lay out everything you pulled.
         const sum = $('[data-summary]', m.root);
@@ -2548,19 +2572,24 @@
     };
     m.root.addEventListener('click', (e) => {
       const f = e.target.closest('.flip');
-      if (f) flip(f);
-      if (e.target.closest('[data-next-card]')) {
+      const tapNext = f && f.classList.contains('tap-next');
+      if (f && !tapNext) flip(f);
+      if (tapNext || e.target.closest('[data-next-card]')) {
+        if (tapNext) f.classList.remove('tap-next');
+        $('[data-reveal-hint]', m.root).hidden = true;
         nextBtn.hidden = true;
         const old = $(`.flip[data-i="${current}"]`, m.root);
         current += 1;
         const nf = $(`.flip[data-i="${current}"]`, m.root);
-        title.textContent = 'Tap to reveal';
+        title.textContent = 'Opening…';
         const deal = () => {
           old.classList.add('stack-hidden');
           nf.classList.remove('stack-hidden');
           if (motionOK()) nf.animate([{ transform: 'translateY(40px) scale(.85) rotate(-4deg)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 420, easing: 'cubic-bezier(.2,.9,.3,1.2)' });
           if (root.Sound) root.Sound.play('click');
           nf.focus({ preventScroll: true });
+          // The next card opens by itself once it lands.
+          setTimeout(() => flip(nf), motionOK() ? 450 : 0);
         };
         if (motionOK()) old.animate([{ transform: 'none', opacity: 1 }, { transform: 'translateX(-130%) rotate(-18deg)', opacity: 0 }], { duration: 320, easing: 'ease-in', fill: 'forwards' }).onfinish = deal;
         else deal();
@@ -2570,7 +2599,8 @@
     m.root.addEventListener('keydown', (e) => {
       if ((e.key === 'Enter' || e.key === ' ') && e.target.classList.contains('flip')) {
         e.preventDefault();
-        flip(e.target);
+        if (e.target.classList.contains('tap-next')) e.target.click();
+        else flip(e.target);
       }
     });
   }

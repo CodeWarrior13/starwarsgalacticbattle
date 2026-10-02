@@ -2152,8 +2152,8 @@ kbd { font-family: var(--font-display); font-size: 11px; padding: 1px 6px; borde
 .btn-primary:not(:disabled) { background-image: linear-gradient(105deg, transparent 38%, rgba(255, 255, 255, 0.55) 50%, transparent 62%); background-size: 260% 100%; background-repeat: no-repeat; animation: btn-idle 3.6s ease-in-out infinite; }
 @keyframes btn-idle { 0%, 55% { background-position: -30% 0; box-shadow: 0 0 0 rgba(255, 210, 63, 0); } 75% { box-shadow: 0 0 18px rgba(255, 210, 63, 0.4); } 100% { background-position: 130% 0; box-shadow: 0 0 0 rgba(255, 210, 63, 0); } }
 button:focus-visible, .mode-card:focus-visible, .stage:focus-visible { outline: 2px solid var(--crawl); outline-offset: 2px; box-shadow: 0 0 16px rgba(255, 210, 63, 0.4); }
-.main-nav button { transition: color 0.2s, background 0.25s, letter-spacing 0.25s; }
-.main-nav button:hover:not(.active) { letter-spacing: 0.24em; text-shadow: 0 0 10px rgba(255, 210, 63, 0.5); }
+.main-nav button { transition: color 0.2s, background 0.25s, text-shadow 0.25s; }
+.main-nav button:hover:not(.active) { color: var(--text); text-shadow: 0 0 10px rgba(255, 210, 63, 0.55); }
 .seg button { transition: color 0.2s, background 0.2s, transform 0.15s; }
 .seg button:hover:not(.active) { color: var(--text); transform: translateY(-1px); }
 .icon-btn { transition: transform 0.2s, border-color 0.2s, color 0.2s; }
@@ -2358,7 +2358,7 @@ body:has(.view.hub) .screen { padding-bottom: 16px; }
 }
 
 /* ---------- Phones: landscape gets a slim top bar and a side rail ---------- */
-@media (max-height: 520px) and (orientation: landscape) {
+@media (max-height: 520px) and (orientation: landscape) and (pointer: coarse) {
   .topbar { flex-wrap: nowrap; gap: 8px; padding: 6px 12px 6px 84px; min-height: 0; }
   .brand { display: none; }
   .account { margin-left: 0; }
@@ -2385,12 +2385,12 @@ body:has(.view.hub) .screen { padding-bottom: 16px; }
 }
 
 /* Phones: fixed tab bars must not be trapped by the header's blur. */
-@media (max-width: 760px) and (orientation: portrait), (max-height: 520px) and (orientation: landscape) {
+@media (max-width: 760px) and (orientation: portrait), (max-height: 520px) and (orientation: landscape) and (pointer: coarse) {
   .topbar { backdrop-filter: none; -webkit-backdrop-filter: none; background: rgba(6, 8, 15, 0.97); }
 }
 
 /* ---------- Landscape phone battles: field left, controls right ---------- */
-@media (max-height: 520px) and (orientation: landscape) {
+@media (max-height: 520px) and (orientation: landscape) and (pointer: coarse) {
   body.in-battle .topbar { display: none; }
   body.in-battle .battle {
     height: calc(100dvh - 14px); min-height: 0; gap: 6px;
@@ -2427,7 +2427,7 @@ body:has(.view.hub) .screen { padding-bottom: 16px; }
 .rs-tag { font-size: 11px; font-weight: 700; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
 .rs-tag.new { color: var(--crawl); }
 @keyframes rs-in { from { opacity: 0; transform: translateY(24px) scale(0.85); } }
-@media (max-height: 520px) and (orientation: landscape) { .reveal-stack .flip { width: clamp(110px, 22vw, 170px); } }
+@media (max-height: 520px) and (orientation: landscape) and (pointer: coarse) { .reveal-stack .flip { width: clamp(110px, 22vw, 170px); } }
 .reveal-stack[hidden], .reveal-summary[hidden] { display: none; }
 .reveal-summary { flex-wrap: nowrap; }
 .rs-card { flex: 0 1 150px; width: auto; min-width: 0; }
@@ -2544,7 +2544,7 @@ body:has(.view.hub) .screen { padding-bottom: 16px; }
 .main-nav { --sc: #4aa8ff; }
 .main-nav[data-tab="1"] { --sc: #52e08a; }
 .main-nav[data-tab="2"] { --sc: #ff3a46; }
-@media (max-width: 760px) and (orientation: portrait), (max-height: 520px) and (orientation: landscape) {
+@media (max-width: 760px) and (orientation: portrait), (max-height: 520px) and (orientation: landscape) and (pointer: coarse) {
   .main-nav {
     background:
       linear-gradient(90deg, transparent calc(33.333% - 1px), rgba(255, 255, 255, 0.06) calc(33.333% - 1px) 33.333%, transparent 33.333% calc(66.666% - 1px), rgba(255, 255, 255, 0.06) calc(66.666% - 1px) 66.666%, transparent 66.666%),
@@ -2587,7 +2587,7 @@ body:has(.view.hub) .screen { padding-bottom: 16px; }
   .main-nav button { padding-top: 8px; }
 }
 @keyframes saber-hum { to { opacity: 0.85; } }
-@media (max-height: 520px) and (orientation: landscape) {
+@media (max-height: 520px) and (orientation: landscape) and (pointer: coarse) {
   .main-nav { clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 12px, 100% calc(100% - 12px), calc(100% - 10px) 100%, 0 100%); }
   .main-nav button .nav-ico { width: 40px; height: 34px; }
   /* In the side rail the blade lights up beside the active tab. */
@@ -2595,7 +2595,7 @@ body:has(.view.hub) .screen { padding-bottom: 16px; }
 }
 @keyframes saber-on { from { transform: scaleY(0); } }
 html, body { overflow-x: clip; }
-@media (max-height: 520px) and (orientation: landscape) {
+@media (max-height: 520px) and (orientation: landscape) and (pointer: coarse) {
   .main-nav { background: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.015) 0 6px, transparent 6px 12px), linear-gradient(90deg, #0a0e17, #1b2232); }
   .main-nav button.active::before { right: 1px; }
 }
@@ -2761,17 +2761,33 @@ button.ult-preview:hover, button.ult-preview:focus-visible { transform: scale(1.
 .sig-wall.wall-rex { background: linear-gradient(90deg, transparent 30%, rgba(61, 111, 214, 0.45) 46%, #fff 50%, rgba(61, 111, 214, 0.45) 54%, transparent 70%), repeating-linear-gradient(90deg, transparent 0 24px, rgba(255, 255, 255, 0.12) 24px 26px); filter: drop-shadow(0 0 18px #3d6fd6); }
 .sig-wall.wall-upsilon { background: linear-gradient(90deg, transparent 28%, rgba(20, 20, 24, 0.85) 42%, rgba(255, 58, 58, 0.6) 50%, rgba(20, 20, 24, 0.85) 58%, transparent 72%), repeating-linear-gradient(60deg, transparent 0 14px, rgba(255, 58, 58, 0.2) 14px 16px); filter: drop-shadow(0 0 20px #ff3a3a); }
 
-/* ---------- Squad builder filters ---------- */
-.roster-filters { display: grid; gap: 6px; margin: 6px 0 12px; }
-.rf-row { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
-.rf-row::-webkit-scrollbar { display: none; }
-.rf-chip { flex: none; display: inline-flex; align-items: center; gap: 5px; padding: 5px 11px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); color: var(--muted); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; transition: border-color 0.2s, color 0.2s, background 0.2s; }
-.rf-chip em { font-style: normal; font-size: 10.5px; padding: 0 6px; border-radius: 8px; background: rgba(255, 255, 255, 0.08); color: var(--text); }
-.rf-chip:hover { border-color: var(--crawl); color: var(--text); }
-.rf-chip.on { background: var(--crawl); border-color: var(--crawl); color: var(--void); }
-.rf-chip.on em { background: rgba(0, 0, 0, 0.18); color: var(--void); }
-.rf-chip.in-squad:not(.on) { border-color: rgba(82, 224, 138, 0.55); color: #c8f5d8; }
-.rf-chip.in-squad:not(.on) em { background: rgba(82, 224, 138, 0.2); }
+/* ---------- Squad builder filters: one slim premium bar ---------- */
+.roster-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.roster-head .eyebrow { margin: 0; }
+.roster-filters { margin: 8px 0 12px; }
+.rf-bar { display: flex; align-items: center; gap: 8px; padding: 5px; border-radius: 14px; border: 1px solid rgba(255, 210, 63, 0.18); background: linear-gradient(180deg, rgba(20, 28, 46, 0.9), rgba(8, 12, 22, 0.92)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 6px 18px rgba(0, 0, 0, 0.35); }
+.rf-roles { display: flex; flex: none; gap: 2px; padding: 2px; border-radius: 10px; background: rgba(0, 0, 0, 0.35); }
+.rf-roles button { position: relative; display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border: 0; border-radius: 8px; background: none; color: var(--muted); font: inherit; font-size: 11.5px; font-weight: 700; cursor: pointer; transition: background 0.2s, color 0.2s; }
+.rf-roles button:hover { color: var(--text); }
+.rf-roles button.on { background: linear-gradient(180deg, #ffe17a, var(--crawl)); color: var(--void); box-shadow: 0 2px 8px rgba(255, 210, 63, 0.35); }
+.rf-roles sup { font-size: 9px; opacity: 0.7; }
+.rf-div { width: 1px; align-self: stretch; background: rgba(255, 255, 255, 0.1); flex: none; }
+.rf-traits { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; min-width: 0; flex: 1; mask-image: linear-gradient(90deg, #000 92%, transparent); }
+.rf-traits::-webkit-scrollbar { display: none; }
+.rf-chip { flex: none; display: inline-flex; align-items: center; gap: 4px; padding: 4px 9px; border-radius: 8px; border: 1px solid transparent; background: rgba(255, 255, 255, 0.04); color: var(--muted); font: inherit; font-size: 11px; font-weight: 700; cursor: pointer; white-space: nowrap; transition: border-color 0.2s, color 0.2s, background 0.2s; }
+.rf-chip em { font-style: normal; font-size: 9.5px; opacity: 0.75; }
+.rf-chip:hover { color: var(--text); border-color: rgba(255, 210, 63, 0.4); }
+.rf-chip.on { background: var(--crawl); color: var(--void); }
+.rf-chip.on em { opacity: 0.8; }
+.rf-chip.in-squad:not(.on) { color: #c8f5d8; border-color: rgba(82, 224, 138, 0.45); background: rgba(82, 224, 138, 0.08); }
+@media (max-width: 760px) {
+  .rf-bar { flex-wrap: wrap; gap: 6px; }
+  .rf-roles { flex: 1 1 100%; justify-content: space-between; }
+  .rf-roles button { flex: 1; justify-content: center; padding: 5px 4px; }
+  .rf-roles .rf-l { display: none; }
+  .rf-div { display: none; }
+  .rf-traits { flex: 1 1 100%; }
+}
 
 /* ---------- Inspector footer: status line + full-width close ---------- */
 .insp-foot { display: grid; gap: 8px; margin-top: 4px; }
@@ -2783,3 +2799,23 @@ button.ult-preview:hover, button.ult-preview:focus-visible { transform: scale(1.
 .inspect > .modal-actions { display: none; }
 .bigcard.deal-glint::after { content: ''; position: absolute; inset: 0; z-index: 5; pointer-events: none; border-radius: inherit; background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.55) 48%, transparent 62%); background-size: 260% 100%; animation: deal-glint 0.9s 0.25s ease-out both; }
 @keyframes deal-glint { from { background-position: 130% 0; } to { background-position: -60% 0; } }
+
+/* Keep the page width steady when a scrollbar comes and goes, so desktop
+   windows near a layout breakpoint can't flip back and forth. */
+html { scrollbar-gutter: stable; }
+
+/* Crate reveal: a bigger card you tap to move on. */
+.reveal-stack .flip { width: min(clamp(180px, 56vw, 270px), calc((100dvh - 250px) * 3 / 4.6)); }
+.reveal-stack .flip.tap-next { cursor: pointer; }
+.reveal-stack .flip.tap-next .flip-front { animation: tap-next-glow 1.6s ease-in-out infinite; }
+@keyframes tap-next-glow { 50% { box-shadow: 0 0 26px var(--rc), 0 0 0 2px var(--rc); } }
+.reveal-hint { border: 0; background: none; padding: 0; margin: 6px 0 0; text-align: center; font-family: var(--font-display); font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--crawl); animation: hint-fade 1.6s ease-in-out infinite; }
+@keyframes hint-fade { 50% { opacity: 0.45; } }
+.reveal-hint[hidden] { display: none; }
+@media (max-height: 520px) and (orientation: landscape) and (pointer: coarse) { .reveal-stack .flip { width: min(170px, calc((100dvh - 150px) * 3 / 4.6)); } }
+.squad-layout > div, .roster-filters, .rf-bar { min-width: 0; max-width: 100%; }
+.rf-roles { min-width: 0; }
+.sector-banner { position: absolute; left: 50%; top: 42%; z-index: 6; transform: translate(-50%, -50%); display: grid; justify-items: center; gap: 4px; padding: 14px 34px; pointer-events: none; text-align: center; background: linear-gradient(90deg, transparent, rgba(4, 6, 13, 0.85) 20%, rgba(4, 6, 13, 0.85) 80%, transparent); border-top: 1px solid var(--pc); border-bottom: 1px solid var(--pc); animation: sector-in 3.6s ease forwards; }
+.sector-banner span { font-family: var(--font-display); font-size: 11px; letter-spacing: 0.35em; text-transform: uppercase; color: var(--pc); }
+.sector-banner b { font-family: var(--font-display); font-size: clamp(22px, 4vw, 38px); letter-spacing: 0.12em; color: #fff; text-shadow: 0 0 18px var(--pc); }
+@keyframes sector-in { 0% { opacity: 0; transform: translate(-50%, -50%) scaleX(0.4); } 12%, 80% { opacity: 1; transform: translate(-50%, -50%) scaleX(1); } 100% { opacity: 0; transform: translate(-50%, -50%) scaleX(1.05); } }

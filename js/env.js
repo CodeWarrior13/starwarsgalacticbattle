@@ -1901,6 +1901,56 @@
   }
 
   // ---------- Galaxy Map ----------
+  // ---------- Galaxy map themes ----------
+  // The map takes on the look of the newest world you have reached: its own
+  // nebula colours, a signature backdrop, ambient particles and the ships
+  // that patrol that sector.
+  const MAP_THEMES = {
+    tatooine: { name: 'Outer Rim', glow: ['#ffb070', '#c06a2a'], neb: ['#d07a3a', '#a0502a', '#e0a060'], feature: 'suns', particle: 'dust', ships: ['xwing', 'falcon', 'tie'] },
+    hoth: { name: 'Anoat Ice Fields', glow: ['#bfe4ff', '#3a6ad0'], neb: ['#3a8ad0', '#6ac8ff', '#2a4a9a'], feature: 'aurora', particle: 'snow', ships: ['isd', 'tie', 'xwing'] },
+    dagobah: { name: 'Sluis Swamps', glow: ['#9aff9a', '#2a6a3a'], neb: ['#3aa06a', '#2a6a4a', '#6aa03a'], feature: 'mist', particle: 'fireflies', ships: ['xwing', 'ywing'] },
+    bespin: { name: 'Cloud City', glow: ['#ffc0a0', '#d0607a'], neb: ['#e08a6a', '#c0607a', '#f0b07a'], feature: 'clouds', particle: 'dust', ships: ['falcon', 'tie', 'shuttle'] },
+    endor: { name: 'Sanctuary Moon', glow: ['#a0e0a0', '#3a6a5a'], neb: ['#3a8a5a', '#5aa08a', '#2a5a6a'], feature: 'deathstar', particle: 'leaves', ships: ['xwing', 'tie', 'awing', 'isd'] },
+    scarif: { name: 'Abrion Shield Gate', glow: ['#8affff', '#2a8ab0'], neb: ['#2aa0b0', '#3ad0c0', '#2a6a9a'], feature: 'shieldgate', particle: 'dust', ships: ['xwing', 'ywing', 'tie', 'isd'] },
+    coruscant: { name: 'Core Worlds', glow: ['#d0a0ff', '#6a3ab0'], neb: ['#8a5ad0', '#c06ad0', '#4a3a9a'], feature: 'city', particle: 'traffic', ships: ['shuttle', 'venator', 'tie'] },
+    geonosis: { name: 'Arkanis Belt', glow: ['#ffa070', '#a03a1a'], neb: ['#d0602a', '#a0401a', '#e08a4a'], feature: 'ring', particle: 'rocks', ships: ['venator', 'vulture', 'arc'] },
+    mustafar: { name: 'Mustafar Fires', glow: ['#ff7040', '#8a1a0a'], neb: ['#e0401a', '#a0200a', '#ff8a3a'], feature: 'lava', particle: 'embers', ships: ['isd', 'tie', 'shuttle'] },
+    exegol: { name: 'Unknown Regions', glow: ['#b0a0ff', '#3a1a6a'], neb: ['#6a3ad0', '#3a2a8a', '#a03ad0'], feature: 'storm', particle: 'sparks', ships: ['isd', 'isd', 'falcon', 'xwing'] },
+    coruscant_siege: { name: 'Battle of Coruscant', glow: ['#ffb060', '#a03a1a'], neb: ['#d0602a', '#8a3ad0', '#e0a03a'], feature: 'battle', particle: 'flak', ships: ['venator', 'vulture', 'arc', 'venator'] },
+  };
+
+  // Tiny ship silhouettes for the map, pointing right (+x).
+  function mapShip(ctx, kind, x, y, s, color) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(s, s);
+    ctx.fillStyle = color || '#cfd6e0';
+    ctx.strokeStyle = color || '#cfd6e0';
+    ctx.lineWidth = 1.4;
+    const P = (pts) => { ctx.beginPath(); pts.forEach(([px, py], i) => (i ? ctx.lineTo(px, py) : ctx.moveTo(px, py))); ctx.closePath(); ctx.fill(); };
+    if (kind === 'tie' || kind === 'vulture') {
+      ctx.fillRect(-2, -9, 4, 18); ctx.beginPath(); ctx.arc(0, 0, 3.4, 0, TAU); ctx.fill();
+      ctx.fillRect(-6, -9, 12, 2); ctx.fillRect(-6, 7, 12, 2);
+    } else if (kind === 'isd') {
+      P([[22, 0], [-16, -12], [-16, 12]]); ctx.fillRect(-14, -3, 8, 6); ctx.fillRect(-12, -6, 4, 3);
+    } else if (kind === 'venator') {
+      P([[24, 0], [-14, -10], [-10, 0], [-14, 10]]); ctx.fillStyle = '#c8302a'; P([[18, 0], [-6, -6], [-6, 6]]);
+    } else if (kind === 'falcon') {
+      ctx.beginPath(); ctx.arc(0, 0, 8, 0, TAU); ctx.fill(); P([[6, -4], [15, -3], [15, -1], [7, -1]]); P([[6, 4], [15, 3], [15, 1], [7, 1]]); ctx.fillRect(-2, 6, 6, 3);
+    } else if (kind === 'shuttle') {
+      P([[10, 0], [-8, -3], [-8, 3]]); P([[-2, 0], [-10, -12], [-6, 0]]); P([[-2, 0], [-10, 12], [-6, 0]]);
+    } else if (kind === 'ywing') {
+      ctx.fillRect(-10, -1.5, 18, 3); ctx.fillRect(-10, -7, 12, 2.4); ctx.fillRect(-10, 4.6, 12, 2.4); ctx.fillRect(-4, -7, 2, 14);
+    } else if (kind === 'awing') {
+      P([[12, 0], [-8, -8], [-5, 0], [-8, 8]]);
+    } else {
+      // X-wing / ARC-170 style: long nose, crossed wings.
+      P([[14, 0], [-8, -2], [-8, 2]]);
+      ctx.beginPath(); ctx.moveTo(-4, 0); ctx.lineTo(-10, -9); ctx.moveTo(-4, 0); ctx.lineTo(-10, 9); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
   class GalaxyMap {
     constructor(canvas, planets, getState) {
       this.canvas = canvas;
@@ -1919,6 +1969,13 @@
       // Drifting nebula clouds and the odd comet.
       this.nebulae = Array.from({ length: 7 }, () => ({ x: r(), y: r(), rad: 0.18 + r() * 0.25, c: pick(['#6a3aa0', '#2a6ad0', '#c04a8a', '#3aa08a', '#d07a3a']), sp: (r() - 0.5) * 0.004, ph: r() * TAU }));
       this.comets = [];
+      // Parallax starfield drifting in three depths.
+      this.drift = Array.from({ length: 160 }, () => ({ x: r(), y: r(), z: [0.3, 0.6, 1][Math.floor(r() * 3)], tw: r() * TAU }));
+      this.particles = Array.from({ length: 70 }, () => ({ x: r(), y: r(), v: 0.2 + r() * 0.8, ph: r() * TAU, s: r() }));
+      this.flyers = [];
+      this.bolts = [];
+      this.flash = 0;
+      this.themeId = null;
       this.resize();
       this.onResize = () => this.resize();
       window.addEventListener('resize', this.onResize);
@@ -1958,8 +2015,23 @@
       const cx = w * 0.5;
       const cy = h * 0.5;
       const R = Math.max(w, h) * 0.62;
-      glow(ctx, cx, cy, R * 0.45, '#ffd9a8', 0.18);
-      glow(ctx, cx, cy, R * 0.9, '#6a5aff', 0.08);
+      const st0 = this.getState();
+      const theme = MAP_THEMES[st0.frontier] || MAP_THEMES.tatooine;
+      if (this.themeId !== st0.frontier) {
+        this.themeId = st0.frontier;
+        this.nebulae.forEach((n, i) => { n.c = theme.neb[i % theme.neb.length]; });
+      }
+      glow(ctx, cx, cy, R * 0.45, theme.glow[0], 0.16);
+      glow(ctx, cx, cy, R * 0.9, theme.glow[1], 0.12);
+      this.drawFeature(ctx, theme, w, h, t);
+      // Parallax stars drift past at three speeds.
+      for (const d of this.drift) {
+        const x = ((d.x + t * 0.006 * d.z) % 1) * w;
+        ctx.globalAlpha = (0.25 + Math.sin(t * 2 + d.tw) * 0.2) * d.z + 0.1;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(x, d.y * h, d.z * 1.6, d.z * 1.6);
+      }
+      ctx.globalAlpha = 1;
       ctx.save();
       ctx.globalCompositeOperation = 'lighter';
       for (const n of this.nebulae) {
@@ -1989,7 +2061,9 @@
         ctx.fillRect(x, y, s.s, s.s);
       }
       ctx.globalAlpha = 1;
-      const st = this.getState();
+      this.drawParticles(ctx, theme, w, h, t);
+      this.drawFlyers(ctx, theme, w, h, t);
+      const st = st0;
       const pos = this.planets.map((p) => ({ p, x: (this.inset + (p.map.x / 100) * (1 - 2 * this.inset)) * w, y: (p.map.y / 100) * h }));
       // Hyperspace lanes.
       for (let i = 1; i < pos.length; i++) {
@@ -2026,6 +2100,140 @@
         ctx.globalAlpha = 1;
         if (unlocked) drawProgress(ctx, p, x, y, r, st.cleared(p.id), t);
       }
+    }
+
+    // Each world's signature backdrop, painted behind the stars.
+    drawFeature(ctx, theme, w, h, t) {
+      const f = theme.feature;
+      ctx.save();
+      if (f === 'suns') {
+        glow(ctx, w * 0.86, h * 0.16, h * 0.32, '#ffcf8a', 0.35);
+        ctx.fillStyle = '#fff1d0'; ctx.beginPath(); ctx.arc(w * 0.84, h * 0.15, h * 0.045, 0, TAU); ctx.fill();
+        ctx.fillStyle = '#ffd9a0'; ctx.beginPath(); ctx.arc(w * 0.9, h * 0.2, h * 0.032, 0, TAU); ctx.fill();
+      } else if (f === 'aurora') {
+        ctx.globalCompositeOperation = 'lighter';
+        for (let k = 0; k < 3; k++) {
+          ctx.beginPath();
+          for (let x = 0; x <= w; x += 12) {
+            const y = h * (0.18 + k * 0.06) + Math.sin(x * 0.008 + t * 0.6 + k) * h * 0.05;
+            x ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+          }
+          ctx.strokeStyle = ['rgba(90,255,200,0.16)', 'rgba(90,180,255,0.14)', 'rgba(180,120,255,0.1)'][k];
+          ctx.lineWidth = h * 0.05;
+          ctx.stroke();
+        }
+      } else if (f === 'mist' || f === 'clouds') {
+        const cols = f === 'mist' ? ['rgba(120,200,140,0.07)', 'rgba(80,160,120,0.06)'] : ['rgba(255,190,150,0.09)', 'rgba(230,140,160,0.08)'];
+        for (let k = 0; k < 6; k++) {
+          const x = (((k * 0.23 + t * 0.008 * (k % 2 ? 1 : -1)) % 1) + 1) % 1;
+          ctx.fillStyle = cols[k % 2];
+          ctx.beginPath(); ctx.ellipse(x * w, h * (f === 'mist' ? 0.8 : 0.72) + k * 8, w * 0.28, h * 0.08, 0, 0, TAU); ctx.fill();
+        }
+        if (f === 'clouds') {
+          // Cloud City floating low on the horizon.
+          const x = w * 0.14; const y = h * 0.78;
+          ctx.fillStyle = 'rgba(40,30,40,0.55)';
+          ctx.beginPath(); ctx.ellipse(x, y, w * 0.05, h * 0.018, 0, 0, TAU); ctx.fill();
+          ctx.fillRect(x - 3, y, 6, h * 0.05);
+          for (let i = -3; i <= 3; i++) ctx.fillRect(x + i * w * 0.011, y - h * (0.015 + (3 - Math.abs(i)) * 0.008), 3, h * (0.015 + (3 - Math.abs(i)) * 0.008));
+        }
+      } else if (f === 'deathstar') {
+        const x = w * 0.84; const y = h * 0.22; const r = h * 0.11;
+        glow(ctx, x, y, r * 2, '#9fd0ff', 0.12);
+        ctx.fillStyle = 'rgba(120,130,150,0.55)'; ctx.beginPath(); ctx.arc(x, y, r, Math.PI * 0.25, Math.PI * 1.55); ctx.fill();
+        ctx.strokeStyle = 'rgba(160,170,190,0.5)'; ctx.lineWidth = 1;
+        for (let k = 0; k < 5; k++) { ctx.beginPath(); ctx.arc(x, y, r, Math.PI * (1.55 + k * 0.08), Math.PI * (1.58 + k * 0.08)); ctx.stroke(); }
+        ctx.fillStyle = 'rgba(40,50,60,0.7)'; ctx.beginPath(); ctx.arc(x - r * 0.35, y - r * 0.25, r * 0.22, 0, TAU); ctx.fill();
+      } else if (f === 'shieldgate') {
+        ctx.strokeStyle = `rgba(120,255,255,${0.08 + Math.sin(t) * 0.03})`; ctx.lineWidth = 1;
+        const step = 34;
+        for (let y = 0; y < h; y += step * 0.86) for (let x = (Math.round(y / (step * 0.86)) % 2) * step / 2; x < w; x += step) {
+          ctx.beginPath(); for (let i = 0; i < 6; i++) { const a = i * TAU / 6; const px = x + Math.cos(a) * step * 0.5; const py = y + Math.sin(a) * step * 0.5; i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); } ctx.closePath(); ctx.stroke();
+        }
+        glow(ctx, w * 0.12, h * 0.85, h * 0.3, '#3ad0c0', 0.18);
+      } else if (f === 'city') {
+        glow(ctx, w * 0.5, h * 1.05, w * 0.6, '#ffb070', 0.18);
+        ctx.fillStyle = 'rgba(20,12,30,0.75)';
+        for (let i = 0; i < 40; i++) { const bw = w / 40; const bh = h * (0.04 + ((i * 37) % 11) / 100); ctx.fillRect(i * bw, h - bh, bw - 1, bh); }
+      } else if (f === 'ring') {
+        ctx.translate(w * 0.5, h * 0.5); ctx.rotate(-0.18);
+        ctx.strokeStyle = 'rgba(220,140,90,0.12)'; ctx.lineWidth = h * 0.08;
+        ctx.beginPath(); ctx.ellipse(0, 0, w * 0.62, h * 0.32, 0, 0, TAU); ctx.stroke();
+      } else if (f === 'lava') {
+        glow(ctx, w * 0.5, h * 1.1, w * 0.7, '#ff4a1a', 0.3);
+        glow(ctx, w * 0.1, h * 0.9, h * 0.4, '#ff8a3a', 0.2);
+      } else if (f === 'storm') {
+        if (Math.random() < 0.006) this.flash = 1;
+        if (this.flash > 0) {
+          ctx.fillStyle = `rgba(190,170,255,${this.flash * 0.18})`; ctx.fillRect(0, 0, w, h);
+          ctx.strokeStyle = `rgba(220,210,255,${this.flash})`; ctx.lineWidth = 2;
+          ctx.beginPath(); let x = this.boltX || (this.boltX = Math.random() * w); let y = 0; ctx.moveTo(x, y);
+          while (y < h * 0.6) { x += (Math.random() - 0.5) * 40; y += h * 0.06; ctx.lineTo(x, y); }
+          ctx.stroke();
+          this.flash -= 0.06;
+          if (this.flash <= 0) this.boltX = null;
+        }
+      } else if (f === 'battle') {
+        glow(ctx, w * 0.5, h * 1.05, w * 0.6, '#ff7a3a', 0.16);
+        if (Math.random() < 0.05) this.bolts.push({ x: Math.random() * w, y: Math.random() * h * 0.6, life: 1, flak: true });
+      }
+      ctx.restore();
+    }
+
+    // Ambient particles that belong to the theme.
+    drawParticles(ctx, theme, w, h, t) {
+      const kind = theme.particle;
+      ctx.save();
+      for (const p of this.particles) {
+        let x; let y; let c; let sz = 1.4;
+        if (kind === 'snow') { x = (p.x * w + Math.sin(t + p.ph) * 12) % w; y = ((p.y + t * 0.03 * p.v) % 1) * h; c = 'rgba(230,245,255,0.7)'; sz = 1 + p.s * 1.6; }
+        else if (kind === 'embers' || kind === 'sparks') { x = (p.x * w + Math.sin(t * 2 + p.ph) * 8) % w; y = (1 - ((p.y + t * 0.04 * p.v) % 1)) * h; c = kind === 'embers' ? `rgba(255,${120 + p.s * 80 | 0},60,0.8)` : 'rgba(200,180,255,0.7)'; }
+        else if (kind === 'fireflies') { x = p.x * w + Math.sin(t * 0.7 + p.ph) * 20; y = p.y * h + Math.cos(t * 0.5 + p.ph) * 14; c = `rgba(200,255,140,${0.3 + Math.sin(t * 3 + p.ph) * 0.3})`; sz = 2; }
+        else if (kind === 'leaves') { x = ((p.x + t * 0.01 * p.v) % 1) * w; y = ((p.y + t * 0.012 * p.v) % 1) * h; c = 'rgba(140,200,120,0.5)'; sz = 2.2; }
+        else if (kind === 'rocks') { x = ((p.x + t * 0.004 * p.v) % 1) * w; y = p.y * h; c = 'rgba(160,110,80,0.6)'; sz = 1.5 + p.s * 3; }
+        else if (kind === 'traffic') { x = ((p.x + t * 0.05 * p.v * (p.s > 0.5 ? 1 : -1)) % 1 + 1) % 1 * w; y = h * (0.35 + Math.round(p.y * 4) * 0.12); c = p.s > 0.5 ? 'rgba(255,220,140,0.8)' : 'rgba(255,90,90,0.7)'; sz = 1.6; }
+        else if (kind === 'flak') { continue; }
+        else { x = ((p.x + t * 0.006 * p.v) % 1) * w; y = p.y * h + Math.sin(t * 0.3 + p.ph) * 6; c = 'rgba(255,220,170,0.35)'; }
+        ctx.fillStyle = c;
+        ctx.fillRect(x, y, sz, sz);
+      }
+      ctx.restore();
+    }
+
+    // The sector's ships cross the map now and then, trading laser fire.
+    drawFlyers(ctx, theme, w, h, t) {
+      const dt = 1 / 60;
+      if (this.flyers.length < 3 && Math.random() < 0.006) {
+        const kind = theme.ships[Math.floor(Math.random() * theme.ships.length)];
+        const dir = Math.random() < 0.5 ? 1 : -1;
+        const big = kind === 'isd' || kind === 'venator';
+        const y = h * (0.12 + Math.random() * 0.76);
+        const n = big ? 1 : 1 + Math.floor(Math.random() * 3);
+        for (let i = 0; i < n; i++) {
+          this.flyers.push({ kind, dir, x: dir > 0 ? -40 - i * 26 : w + 40 + i * 26, y: y + i * 12, v: (big ? 18 : 70 + Math.random() * 50) * dir, s: big ? 1.4 + Math.random() * 0.6 : 0.8 + Math.random() * 0.3, fire: Math.random() });
+        }
+      }
+      this.flyers = this.flyers.filter((f) => f.x > -80 && f.x < w + 80);
+      for (const f of this.flyers) {
+        f.x += f.v * dt;
+        const evil = ['tie', 'isd', 'vulture', 'shuttle'].includes(f.kind);
+        ctx.save();
+        ctx.globalAlpha = 0.85;
+        glow(ctx, f.x - f.dir * 10 * f.s, f.y, 6 * f.s, evil ? '#8affb0' : '#ffb07a', 0.5);
+        ctx.translate(f.x, f.y);
+        if (f.dir < 0) ctx.scale(-1, 1);
+        mapShip(ctx, f.kind, 0, 0, f.s, evil ? '#9aa4b2' : '#e0e4ea');
+        ctx.restore();
+        if (Math.random() < 0.012) this.bolts.push({ x: f.x, y: f.y, vx: f.dir * 380, life: 1, c: evil ? '#3bff6a' : '#ff3b3b' });
+      }
+      this.bolts = this.bolts.filter((b) => (b.life -= dt * (b.flak ? 2.4 : 1.6)) > 0);
+      for (const b of this.bolts) {
+        if (b.flak) { glow(ctx, b.x, b.y, 10 * (1 - b.life) + 3, '#ffb060', b.life * 0.8); continue; }
+        b.x += b.vx * dt;
+        ctx.strokeStyle = b.c; ctx.globalAlpha = b.life; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(b.x, b.y); ctx.lineTo(b.x - Math.sign(b.vx) * 14, b.y); ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
     }
   }
 
