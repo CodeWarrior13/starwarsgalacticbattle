@@ -1773,11 +1773,11 @@
   const DAILY = [
     { day: 1, credits: 600, label: 'Credit stash' },
     { day: 2, credits: 1000, label: 'Smuggler\'s cut' },
-    { day: 3, crystals: 25, label: 'Kyber shard' },
+    { day: 3, crystals: 20, label: 'Kyber shard' },
     { day: 4, credits: 1800, label: 'Spice run' },
-    { day: 5, crystals: 40, dice: 1, label: 'Loaded Dice' },
+    { day: 5, crystals: 30, dice: 1, label: 'Loaded Dice' },
     { day: 6, credits: 2500, charm: 1, label: 'Chance Cube' },
-    { day: 7, crystals: 100, aurodium: 1, label: 'Hutt\'s Hoard', big: true },
+    { day: 7, crystals: 80, aurodium: 1, label: 'Hutt\'s Hoard', big: true },
   ];
   // Kyber sinks in the Night Market, priced against 1-2 Kyber per win.
   const RESTOCK_KYBER = 10;
