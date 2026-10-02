@@ -4,7 +4,15 @@ A turn-based Star Wars card battler inspired by *Star Wars: Galaxy of Heroes*. C
 
 ## Play
 
-Open `index.html` in a modern browser. No build step or server is needed. Progress saves automatically in `localStorage`.
+**In your browser:** https://codewarrior13.github.io/turn-based-star-wars-card-game/ (once GitHub Pages is switched on for this repo).
+
+**On your own computer:** click the green **Code** button above, choose **Download ZIP**, unzip it and open `index.html` in Chrome, Edge, Firefox or Safari. No install, build step or server is needed. Progress saves automatically in your browser.
+
+Works on PC (mouse and keyboard: 1–5 abilities, ←/→ targets, Enter attacks) and on phones in portrait or landscape (swipe between tabs).
+
+### Testers
+
+This is an early build. Things worth trying: the galaxy campaign, ground and fleet battles, opening relics in the Black Market, upgrading cards in the Collection, the Endless Tower and boss fights. If something looks wrong, a screenshot plus what you tapped right before it helps a lot. Settings (gear icon, top right) has sound options and a progress reset.
 
 To produce a single self-contained HTML file (handy for sharing):
 
