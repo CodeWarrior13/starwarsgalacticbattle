@@ -89,9 +89,16 @@
   }
 
   // ---------- Toasts and modals ----------
+  // Never let toasts pile up: the same message refreshes in place and at
+  // most two are on screen at once.
   function toast(text) {
+    const rootEl = $('#toast-root');
+    const same = [...rootEl.children].find((n) => n.dataset.text === text);
+    if (same) same.remove();
+    while (rootEl.children.length >= 2) rootEl.firstElementChild.remove();
     const t = el(`<div class="toast">${esc(text)}</div>`);
-    $('#toast-root').appendChild(t);
+    t.dataset.text = text;
+    rootEl.appendChild(t);
     setTimeout(() => t.remove(), 2700);
   }
 
@@ -1292,7 +1299,7 @@
         return;
       }
       const card = e.target.closest('.ucard');
-      if (card) inspect(card.dataset.id, render);
+      if (card) inspect(card.dataset.id, render, $$('[data-grid] .ucard', v).map((c) => c.dataset.id));
     });
     render();
     return v;
@@ -1301,8 +1308,10 @@
   // ---------- Card inspector ----------
   // Center: the card (tap to flip to its description). Swipe or use the
   // arrows: left page shows stats, right page shows upgrades.
-  function inspect(id, onChange) {
-    const def = D.UNIT_MAP[id];
+  // list: the card ids to page through, so swiping past the last page moves
+  // on to the next card (and back past the first page to the previous one).
+  function inspect(id, onChange, list) {
+    let def = D.UNIT_MAP[id];
     if (def.exclusive && !Player.owns(id)) {
       const m = openModal(`<div class="mystery-modal ${def.faction === 'dark' ? 'dark' : 'light'}">
         <p class="eyebrow">Undiscovered ${def.kind === 'ship' ? 'ship' : 'hero'} · ${def.faction === 'dark' ? 'Dark Side' : 'Light Side'}</p>
@@ -1316,6 +1325,10 @@
     }
     let page = 1;
     let flipped = false;
+    // Upgrade feedback lives inside the inspector instead of stacking toasts.
+    let msg = null;
+    const cards = (list || []).filter((x) => { const u = D.UNIT_MAP[x]; return u && !(u.exclusive && !Player.owns(x)); });
+    const pos = () => cards.indexOf(id);
 
     function statsPage() {
       const owned = Player.owns(id);
@@ -1420,11 +1433,31 @@
             <div class="ipage">${ultPage()}</div>
           </div>
         </div>
-        <div class="modal-actions"><button class="btn" type="button" data-close>Close</button></div>
+        <div class="insp-foot">
+          <div class="insp-status">${msg ? `<span class="insp-msg" style="--k:${msg.n}">${esc(msg.text)}${msg.n > 1 ? ` <b>×${msg.n}</b>` : ''}</span>` : cards.length > 1 && pos() >= 0 ? `<span class="muted small">Card ${pos() + 1} of ${cards.length} · swipe past ${page === 3 ? 'here' : 'Ultimate'} for the next card</span>` : ''}</div>
+          <button class="btn insp-close" type="button" data-close>Close</button>
+        </div>
       </div>`;
     }
 
+    // Swiping off either end moves to the neighbouring card in the list.
+    const switchCard = (nid, pg, dir) => {
+      id = nid;
+      def = D.UNIT_MAP[id];
+      page = pg;
+      flipped = false;
+      msg = null;
+      render();
+      const track = $('.inspect-stage', modal);
+      if (track && motionOK()) track.animate([{ transform: `translateX(${dir * 40}%)`, opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 320, easing: 'cubic-bezier(.2,.9,.3,1)' });
+      if (root.Sound) root.Sound.play('whoosh');
+    };
     const go = (p) => {
+      const i = pos();
+      if (cards.length > 1 && i >= 0) {
+        if (p > 3) return switchCard(cards[(i + 1) % cards.length], 0, 1);
+        if (p < 0) return switchCard(cards[(i - 1 + cards.length) % cards.length], 3, -1);
+      }
       page = Math.max(0, Math.min(3, p));
       render();
     };
@@ -1473,7 +1506,7 @@
         const from = App.current;
         const params = App.params;
         m.close();
-        return root.BattleUI.preview(id, () => { App.go(from, params, { keepScroll: true }); inspect(id, onChange); });
+        return root.BattleUI.preview(id, () => { App.go(from, params, { keepScroll: true }); inspect(id, onChange, list); });
       }
       if (e.target.closest('[data-prev]')) return go(page - 1);
       if (e.target.closest('[data-next]')) return go(page + 1);
@@ -1485,9 +1518,14 @@
         card.classList.toggle('flipped', flipped);
         return;
       }
-      if (e.target.closest('[data-level]') && Player.levelUp(id)) toast(`${def.name} reached level ${Player.unit(id).level}!`);
-      else if (e.target.closest('[data-star]') && Player.starUp(id)) toast(`${def.name} promoted to ${Player.unit(id).stars}★!`);
+      const say = (kind, text) => {
+        const now = performance.now();
+        msg = msg && msg.kind === kind && now - msg.at < 1800 ? { kind, text, n: msg.n + 1, at: now } : { kind, text, n: 1, at: now };
+      };
+      if (e.target.closest('[data-level]') && Player.levelUp(id)) say('level', `Level ${Player.unit(id).level}!`);
+      else if (e.target.closest('[data-star]') && Player.starUp(id)) say('star', `Promoted to ${Player.unit(id).stars}★!`);
       else return;
+      if (root.Sound) root.Sound.play('rankup');
       render();
       updateWallet();
     });
