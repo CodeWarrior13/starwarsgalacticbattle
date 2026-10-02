@@ -1728,6 +1728,8 @@
       <p class="muted small">Terrain: ${esc(D.SECRET_PLANET.terrain.name)}. ${esc(D.SECRET_PLANET.terrain.desc)} Hazard: ${esc(D.SECRET_PLANET.hazard.desc)}</p>
     </section>`);
     requestAnimationFrame(() => { const c = $('[data-secret-env]', v); if (c) new root.Env(c, 'mortis', 'ground'); });
+    celebrateFeat('secret_found');
+    celebrateFeat('secret_all');
     v.addEventListener('click', (e) => {
       if (e.target.closest('[data-leave]')) return App.go('market');
       const b = e.target.closest('[data-secret]');
@@ -2123,20 +2125,142 @@
     const owned = Object.keys(s.units).length;
     const worlds = D.PLANETS.filter((p) => Player.planetComplete(p.id)).length;
     const list = [
-      { icon: 'sabers', name: 'First Blood', desc: 'Win your first battle', have: st.battlesWon, need: 1 },
-      { icon: 'trooper', name: 'Veteran', desc: 'Win 100 battles', have: st.battlesWon, need: 100 },
-      { icon: 'planet', name: 'Liberator', desc: 'Liberate 5 worlds', have: worlds, need: 5 },
-      { icon: 'starbird', name: 'Hero of the Galaxy', desc: 'Liberate every world', have: worlds, need: D.PLANETS.length },
-      { icon: 'deathstar', name: 'Big Game', desc: 'Defeat 5 bosses', have: Object.keys(s.bosses).length, need: 5 },
-      { icon: 'holocron', name: 'Archivist', desc: 'Collect 50 cards', have: owned, need: 50 },
-      { icon: 'sabacc', name: 'Crate Cracker', desc: 'Open 25 crates', have: st.packsOpened, need: 25 },
-      { icon: 'kybercrown', name: 'Chosen One', desc: 'Pull a Mythic card', have: st.mythics || 0, need: 1 },
-      { icon: 'cubes', name: 'Never Tell Me the Odds', desc: 'Hit a 5× luck spin', have: st.bestSpin >= 5 ? 1 : 0, need: 1 },
-      { icon: 'spire', name: 'Climber', desc: 'Reach tower floor 20', have: s.tower.best || 0, need: 20 },
+      { icon: 'sabers', tier: 1, name: 'First Blood', desc: 'Win your first battle', have: st.battlesWon, need: 1 },
+      { icon: 'trooper', tier: 3, name: 'Veteran', desc: 'Win 100 battles', have: st.battlesWon, need: 100 },
+      { icon: 'planet', tier: 2, name: 'Liberator', desc: 'Liberate 5 worlds', have: worlds, need: 5 },
+      { icon: 'starbird', tier: 4, name: 'Hero of the Galaxy', desc: 'Liberate every world', have: worlds, need: D.PLANETS.length },
+      { icon: 'deathstar', tier: 3, name: 'Big Game', desc: 'Defeat 5 bosses', have: Object.keys(s.bosses).length, need: 5 },
+      { icon: 'holocron', tier: 3, name: 'Archivist', desc: 'Collect 50 cards', have: owned, need: 50 },
+      { icon: 'sabacc', tier: 2, name: 'Crate Cracker', desc: 'Open 25 crates', have: st.packsOpened, need: 25 },
+      { icon: 'kybercrown', tier: 4, name: 'Chosen One', desc: 'Pull a Mythic card', have: st.mythics || 0, need: 1 },
+      { icon: 'cubes', tier: 3, name: 'Never Tell Me the Odds', desc: 'Hit a 5× luck spin', have: st.bestSpin >= 5 ? 1 : 0, need: 1 },
+      { icon: 'spire', tier: 3, name: 'Climber', desc: 'Reach tower floor 20', have: s.tower.best || 0, need: 20 },
     ];
-    // Hidden until you have found it yourself.
-    if (s.secret.found) list.push({ icon: 'crescent', name: 'Beyond the Map', desc: 'Defeat all four trials of the Monolith', have: Object.keys(s.secret.beaten).length, need: D.SECRET_BOSSES.length });
+    // Secret feats stay off the list entirely until they are earned.
+    if (s.secret.found) list.push({ id: 'secret_found', secret: true, tier: 5, icon: 'crescent', name: 'Into the Unknown', desc: 'Found the hidden way to the Monolith', have: 1, need: 1 });
+    if (D.SECRET_BOSSES.every((b) => s.secret.beaten[b.id])) list.push({ id: 'secret_all', secret: true, tier: 6, icon: 'spark', name: 'Master of the Monolith', desc: 'Defeated all four trials beyond the map', have: 1, need: 1 });
     return list;
+  }
+
+  // ---------- Achievement showcases ----------
+  // Tapping an earned feat replays its badge moment. The harder it was to
+  // earn, the bigger the show; the two secret feats get a full cutscene.
+  const FEAT_TIER = [null, ['Bronze', '#d08a4a', '#5a2e10'], ['Silver', '#dfe6ee', '#5a6676'], ['Gold', '#ffd23f', '#7a5200'], ['Kyber', '#7cd0ff', '#123a6a'], ['Secret', '#ffffff', '#3a1060'], ['Secret', '#ffffff', '#3a1060']];
+  // Master of the Monolith gets a hand-built crest rather than a stock medal:
+  // wings of light and dark, crossed sabers, a split Monolith and one gem per trial.
+  let crestSeq = 0;
+  const monolithCrest = () => {
+    const u = `mc${++crestSeq}`;
+    const rays = Array.from({ length: 16 }, (_, k) => `<polygon points="0,${k % 2 ? -84 : -99} 4.5,0 -4.5,0" transform="rotate(${k * 22.5})"/>`).join('');
+    const wing = `<g class="mc-wing">${[-34, -14, 6, 26].map((a, k) => `<g transform="translate(-58,${k * 4 - 6}) rotate(${a})"><ellipse cx="-24" rx="${30 - k * 3}" ry="7.5"/></g>`).join('')}</g>`;
+    const gems = [['#4aa8ff', -135], ['#ff2a3a', -45], ['#c77dff', 45], ['#7cffb0', 135]].map(([c, a], k) => {
+      const r = (a * Math.PI) / 180;
+      return `<g transform="translate(${(Math.cos(r) * 74).toFixed(1)},${(Math.sin(r) * 74).toFixed(1)})"><path class="mc-gem" style="--d:${k * 0.35}s;color:${c}" d="M0,-10 L7.5,0 L0,10 L-7.5,0Z" fill="${c}" stroke="url(#${u}g)" stroke-width="2"/></g>`;
+    }).join('');
+    return `<svg class="mc" viewBox="-100 -100 200 200" aria-hidden="true">
+      <defs>
+        <linearGradient id="${u}g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6c8"/><stop offset=".35" stop-color="#ffd23f"/><stop offset=".7" stop-color="#a86f08"/><stop offset="1" stop-color="#ffe98a"/></linearGradient>
+        <linearGradient id="${u}o" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2e2650"/><stop offset="1" stop-color="#07060d"/></linearGradient>
+        <linearGradient id="${u}m" x1="0" x2="1"><stop offset="0" stop-color="#9ad4ff"/><stop offset=".5" stop-color="#1e5cc8"/><stop offset=".5" stop-color="#b01a26"/><stop offset="1" stop-color="#ff7a7a"/></linearGradient>
+        <linearGradient id="${u}b" x1="1" x2="0"><stop offset="0" stop-color="#bfe4ff"/><stop offset="1" stop-color="#2a6ad0"/></linearGradient>
+        <linearGradient id="${u}r" x1="1" x2="0"><stop offset="0" stop-color="#ffc4c4"/><stop offset="1" stop-color="#c8202a"/></linearGradient>
+        <linearGradient id="${u}s" x1="0" x2="1"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".55"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+        <radialGradient id="${u}n" cy=".42"><stop offset="0" stop-color="#4a2a8a"/><stop offset=".55" stop-color="#170f30"/><stop offset="1" stop-color="#05040a"/></radialGradient>
+        <radialGradient id="${u}h"><stop offset="0" stop-color="#fff" stop-opacity=".7"/><stop offset=".45" stop-color="#c8a8ff" stop-opacity=".35"/><stop offset="1" stop-color="#c8a8ff" stop-opacity="0"/></radialGradient>
+        <clipPath id="${u}c"><circle r="66"/></clipPath>
+      </defs>
+      <circle class="mc-halo" r="99" fill="url(#${u}h)"/>
+      <g class="mc-rays" fill="url(#${u}g)" opacity=".45">${rays}</g>
+      <g fill="url(#${u}b)" stroke="#0a1a3a" stroke-width=".8">${wing}</g>
+      <g transform="scale(-1,1)" fill="url(#${u}r)" stroke="#3a0a10" stroke-width=".8">${wing}</g>
+      <g class="mc-sabers" stroke-linecap="round">
+        <line class="mc-blade b" x1="-56" y1="56" x2="74" y2="-74" stroke="#eaf6ff" stroke-width="5"/>
+        <line class="mc-blade r" x1="56" y1="56" x2="-74" y2="-74" stroke="#fff0f0" stroke-width="5"/>
+        <line x1="-72" y1="72" x2="-56" y2="56" stroke="#9aa4b4" stroke-width="7"/><line x1="72" y1="72" x2="56" y2="56" stroke="#9aa4b4" stroke-width="7"/>
+      </g>
+      <circle r="74" fill="url(#${u}n)" stroke="url(#${u}g)" stroke-width="6"/>
+      <g fill="#fff">${Array.from({ length: 14 }, (_, k) => `<circle class="mc-dot" style="--d:${(k % 5) * 0.5}s" cx="${(Math.cos(k * 2.4) * (20 + (k * 17) % 40)).toFixed(1)}" cy="${(Math.sin(k * 2.4) * (20 + (k * 17) % 40)).toFixed(1)}" r="${k % 3 ? 0.8 : 1.4}"/>`).join('')}</g>
+      <circle class="mc-runes" r="69" fill="none" stroke="url(#${u}g)" stroke-width="3" stroke-dasharray="1.5 5.5" opacity=".85"/>
+      <circle r="63" fill="none" stroke="url(#${u}g)" stroke-width="1.2" opacity=".7"/>
+      <ellipse class="mc-beam" cy="-6" rx="22" ry="60" fill="url(#${u}h)"/>
+      <path d="M0,-63 L13,-47 L11,44 L-11,44 L-13,-47Z" fill="url(#${u}m)"/>
+      <path d="M0,-63 L0,44 L11,44 L13,-47Z" fill="#000" opacity=".22"/>
+      <path d="M0,-63 L13,-47 L-13,-47Z" fill="url(#${u}g)" stroke="#3a2400" stroke-width=".8"/>
+      <path d="M-13,-47 H13" stroke="#3a2400" stroke-width="1.2"/>
+      <path d="M0,-63 L13,-47 L11,44 L-11,44 L-13,-47Z" fill="none" stroke="url(#${u}g)" stroke-width="2" stroke-linejoin="round"/>
+      <line class="mc-core" x1="0" y1="-44" x2="0" y2="42" stroke="#fff" stroke-width="1.6"/>
+      <g class="mc-glyphs" stroke="#fff" stroke-width="1.6" stroke-linecap="round" fill="none">
+        <path d="M-6,-32 H6 M-4,-27 L4,-27"/><path d="M-5,-12 L0,-17 L5,-12"/><circle cy="4" r="4"/><path d="M-5,20 L5,26 M5,20 L-5,26"/>
+      </g>
+      <path d="M-18,44 H18 V50 H-18Z M-25,50 H25 V56 H-25Z" fill="url(#${u}g)" stroke="#3a2400" stroke-width=".8"/>
+      <g clip-path="url(#${u}c)"><g transform="skewX(-20)"><rect class="mc-shine" x="-150" y="-100" width="46" height="200" fill="url(#${u}s)"/></g></g>
+      ${gems}
+      <g transform="translate(0,-76)"><path class="mc-star" d="M0,-15 L3.5,-3.5 L15,0 L3.5,3.5 L0,15 L-3.5,3.5 L-15,0 L-3.5,-3.5Z" fill="#fff" stroke="url(#${u}g)" stroke-width="1.5"/></g>
+      <path d="M-50,77 H-72 L-63,86 L-72,95 H-50Z M50,77 H72 L63,86 L72,95 H50Z" fill="#7a5200" stroke="#3a2400" stroke-width="1"/>
+      <rect x="-52" y="72" width="104" height="20" rx="2" fill="url(#${u}g)" stroke="#3a2400" stroke-width="1.2"/>
+      <text y="86.5" text-anchor="middle" font-size="12" font-weight="800" letter-spacing="5" fill="#2a1a00" font-family="inherit">MASTER</text>
+    </svg>`;
+  };
+  const featBadge = (x, cls = '') => x.id === 'secret_all' ? `<div class="fs-badge master-crest ${cls}">${monolithCrest()}</div>` : `<div class="fs-badge ${cls} ${x.secret ? 'secret' : ''}" style="--m1:${FEAT_TIER[x.tier || 1][1]};--m2:${FEAT_TIER[x.tier || 1][2]}"><span class="fs-medal"><span class="fs-ico">${root.Icons.svg(x.icon)}</span></span></div>`;
+
+  function playFeat(x) {
+    if (x.secret) return featCutscene(x);
+    const tier = x.tier || 1;
+    if (root.Sound) { root.Sound.play(tier >= 4 ? 'reveal_legendary' : tier >= 3 ? 'reveal_epic' : 'reveal_rare'); if (tier >= 3) setTimeout(() => root.Sound.play('coins'), 350); }
+    const node = el(`<div class="feat-show t-${tier}" role="dialog" aria-label="${esc(x.name)}" style="--m1:${FEAT_TIER[tier][1]}">
+      ${tier >= 3 ? '<i class="fs-rays"></i>' : ''}
+      ${Array.from({ length: tier }, (_, k) => `<i class="fs-ring" style="--k:${k}"></i>`).join('')}
+      ${featBadge(x, 'pop')}
+      ${Array.from({ length: tier * 10 }, (_, k) => `<i class="fs-spark" style="--a:${(k * 137.5) % 360}deg;--d:${(k % 7) * 0.06}s;--r:${18 + (k % 5) * 6}vmin"></i>`).join('')}
+      <div class="fs-text"><span class="fs-kicker">${FEAT_TIER[tier][0]} achievement</span><b>${esc(x.name)}</b><span>${esc(x.desc)}</span></div>
+      <span class="pc-skip">Tap to close</span>
+    </div>`);
+    document.body.appendChild(node);
+    const close = () => { node.classList.add('out'); setTimeout(() => node.remove(), 400); };
+    setTimeout(() => node.addEventListener('click', close), 600);
+  }
+
+  function featCutscene(x) {
+    const master = x.id === 'secret_all';
+    const bosses = D.SECRET_BOSSES.map((b) => D.UNIT_MAP[b.id]);
+    const node = el(`<div class="feat-cine ${master ? 'master' : ''}" role="dialog" aria-label="${esc(x.name)}">
+      <canvas class="fc-env"></canvas>
+      <div class="fc-veil"></div>
+      <div class="fc-lines"><p style="--i:0">${master ? 'Four trials. Four guardians.' : 'Some paths appear on no star chart…'}</p><p style="--i:1">${master ? 'Light and dark, both bowed to you.' : '…and only the persistent find them.'}</p></div>
+      <i class="fc-saber blue"></i><i class="fc-saber red"></i>
+      ${master ? `<div class="fc-orbit">${bosses.map((b, k) => `<span class="fc-boss" style="--k:${k}">${portrait(b, { plate: false })}</span>`).join('')}</div>` : ''}
+      <div class="fc-halves"><span class="fc-half l">${root.Icons.svg('jedi')}</span><span class="fc-half r">${root.Icons.svg('sith')}</span></div>
+      <i class="fc-flash"></i>
+      ${featBadge(x, 'fc-badge')}
+      ${Array.from({ length: master ? 90 : 60 }, (_, k) => `<i class="fs-spark" style="--a:${(k * 137.5) % 360}deg;--d:${(k % 9) * 0.05}s;--r:${22 + (k % 6) * 7}vmin;--c:${k % 2 ? '#5ab4ff' : '#ff3a4a'}"></i>`).join('')}
+      <div class="fs-text fc-text"><span class="fs-kicker">Secret achievement</span><b data-text="${esc(x.name)}">${esc(x.name)}</b><span>${esc(x.desc)}</span></div>
+      <span class="pc-skip">Tap to skip</span>
+    </div>`);
+    document.body.appendChild(node);
+    let env = null;
+    if (motionOK()) { try { env = new root.Env($('.fc-env', node), 'mortis', 'ground'); } catch (e) { env = null; } }
+    const S = root.Sound;
+    const at = (ms, fn) => setTimeout(() => node.isConnected && fn(), ms);
+    const base = master ? 1800 : 0;
+    if (S) { S.play('glitch'); at(1600, () => S.play('ignite')); if (master) at(2200, () => S.play('ult')); at(3300 + base, () => { S.play('burst'); S.play('reveal_mythic'); }); }
+    node.classList.add('play');
+    let done = false;
+    const close = () => { if (done) return; done = true; node.classList.add('out'); if (env) env.stop(); setTimeout(() => node.remove(), 500); };
+    const reveal = (skip) => { node.classList.add('reveal'); if (skip) node.classList.add('skip'); node.querySelector('.pc-skip').textContent = 'Tap to close'; };
+    node.addEventListener('click', () => (node.classList.contains('reveal') ? close() : reveal(true)));
+    at(3300 + base, () => reveal(false));
+  }
+
+  // The first time a secret feat is earned it plays by itself.
+  function celebrateFeat(id) {
+    let seen = [];
+    try { seen = JSON.parse(localStorage.getItem('swcg-feats-seen') || '[]'); } catch (e) { seen = []; }
+    if (seen.includes(id)) return;
+    const x = achievements().find((a) => a.id === id);
+    if (!x) return;
+    seen.push(id);
+    try { localStorage.setItem('swcg-feats-seen', JSON.stringify(seen)); } catch (e) { /* storage unavailable */ }
+    setTimeout(() => playFeat(x), 700);
   }
 
   function badgeHtml(p, earned) {
@@ -2216,7 +2340,7 @@
       <div class="pf-pane" data-pane="feats">
         <div class="feat-list">${ach.map((x) => {
           const done = x.have >= x.need;
-          return `<div class="feat ${done ? 'done' : ''}"><span class="feat-ico">${root.Icons.svg(x.icon)}</span><div><b>${esc(x.name)}</b><span class="muted small">${esc(x.desc)}</span><i class="feat-bar"><i style="width:${Math.min(100, (x.have / x.need) * 100)}%"></i></i></div><em>${done ? '✓' : `${fmt(Math.min(x.have, x.need))}/${fmt(x.need)}`}</em></div>`;
+          return `<button type="button" class="feat ${done ? 'done' : ''} ${x.secret ? 'secret' : ''} t-${x.tier || 1}" data-feat="${ach.indexOf(x)}"><span class="feat-ico ${x.id === 'secret_all' ? 'crest' : ''}">${x.id === 'secret_all' ? monolithCrest() : root.Icons.svg(x.icon)}</span><div><b>${esc(x.name)}${x.secret ? ' <span class="feat-secret">Secret</span>' : ''}</b><span class="muted small">${esc(x.desc)}</span><i class="feat-bar"><i style="width:${Math.min(100, (x.have / x.need) * 100)}%"></i></i></div><em>${done ? '✓' : `${fmt(Math.min(x.have, x.need))}/${fmt(x.need)}`}</em></button>`;
         }).join('')}</div>
       </div>
       <div class="modal-actions"><button class="btn btn-primary" type="button" data-close>Close</button></div>`, { cls: 'profile-modal' });
@@ -2233,6 +2357,15 @@
     });
     m.root.addEventListener('click', (e) => {
       if (e.target.closest('[data-close]')) return m.close();
+      const fb = e.target.closest('[data-feat]');
+      if (fb) {
+        const x = ach[Number(fb.dataset.feat)];
+        if (x.have >= x.need) return playFeat(x);
+        fb.classList.remove('shake');
+        void fb.offsetWidth;
+        fb.classList.add('shake');
+        return toast(`${x.name}: ${fmt(Math.min(x.have, x.need))}/${fmt(x.need)}`);
+      }
       const t = e.target.closest('[data-pf]');
       if (t) {
         $$('[data-pf]', m.root).forEach((b) => b.classList.toggle('active', b === t));
@@ -2595,6 +2728,8 @@
         else deal();
       }
       if (e.target.closest('[data-done]')) m.close();
+      const rs = e.target.closest('.rs-card .ucard');
+      if (rs) inspect(rs.dataset.id);
     });
     m.root.addEventListener('keydown', (e) => {
       if ((e.key === 'Enter' || e.key === ' ') && e.target.classList.contains('flip')) {
@@ -2605,5 +2740,5 @@
     });
   }
 
-  root.UI = { walkout, settings, profile, soundSettings: settings, homeworldOf, $, $$, el, esc, fmt, cur, portrait, stars, unitCard, toast, openModal, confirmBox, updateWallet, inspect, synergyBanner, App, Screens };
+  root.UI = { walkout, settings, profile, playFeat, celebrateFeat, soundSettings: settings, homeworldOf, $, $$, el, esc, fmt, cur, portrait, stars, unitCard, toast, openModal, confirmBox, updateWallet, inspect, synergyBanner, App, Screens };
 })(window);

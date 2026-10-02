@@ -1978,7 +1978,7 @@
           </div>
           <div class="rewards" data-rewards hidden>
             <span class="reward">${cur('credits', rewards.credits)}</span>
-            ${rewards.crystals ? `<span class="reward first">${cur('crystals', rewards.crystals)} ${rewards.firstClear ? 'first clear' : ''}</span>` : ''}
+            ${rewards.crystals ? `<span class="reward first">${cur('crystals', rewards.crystals)}${rewards.firstClear ? '<small>first clear</small>' : ''}</span>` : ''}
             ${rewards.aurodium ? `<span class="reward gold">${cur('aurodium', rewards.aurodium)}</span>` : ''}
           </div>
           ${rewards.cards && rewards.cards.length ? `<div class="reward-cards" data-rewards hidden><p class="eyebrow">Exclusive cards unlocked</p><div>${rewards.cards.map((c) => root.UI.unitCard(D.UNIT_MAP[c.id], { tag: 'div', hideShards: true })).join('')}</div></div>`
@@ -1993,6 +1993,9 @@
       if (won) this.spinReel(m.root, rewards);
       if (rewards.levelUps && rewards.levelUps.length) setTimeout(() => this.rankUp(rewards.levelUps[rewards.levelUps.length - 1]), won ? 4400 : 900);
       m.root.addEventListener('click', (e) => {
+        // Reward cards open in the card viewer on top of the results.
+        const rc = e.target.closest('.reward-card .ucard, .reward-cards .ucard');
+        if (rc) return root.UI.inspect(rc.dataset.id);
         const r = e.target.closest('[data-r]');
         if (!r) return;
         m.close();
@@ -2046,6 +2049,8 @@
         <div class="modal-actions"><button class="btn btn-primary" type="button" data-r="secret">Return to the Monolith</button></div>`, { small: true, dismissable: false, cls: 'result-modal' });
       if (rewards.levelUps.length) setTimeout(() => this.rankUp(rewards.levelUps[rewards.levelUps.length - 1]), 600);
       m.root.addEventListener('click', (e) => {
+        const rc = e.target.closest('.reward-cards .ucard');
+        if (rc) return root.UI.inspect(rc.dataset.id);
         if (!e.target.closest('[data-r]')) return;
         m.close();
         App.go('secret');

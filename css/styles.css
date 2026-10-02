@@ -2819,3 +2819,118 @@ html { scrollbar-gutter: stable; }
 .sector-banner span { font-family: var(--font-display); font-size: 11px; letter-spacing: 0.35em; text-transform: uppercase; color: var(--pc); }
 .sector-banner b { font-family: var(--font-display); font-size: clamp(22px, 4vw, 38px); letter-spacing: 0.12em; color: #fff; text-shadow: 0 0 18px var(--pc); }
 @keyframes sector-in { 0% { opacity: 0; transform: translate(-50%, -50%) scaleX(0.4); } 12%, 80% { opacity: 1; transform: translate(-50%, -50%) scaleX(1); } 100% { opacity: 0; transform: translate(-50%, -50%) scaleX(1.05); } }
+
+/* Reward chips: icon, amount and tag on one centred line. */
+.reward { display: inline-flex; align-items: center; justify-content: center; gap: 8px; line-height: 1; }
+.reward small { font-size: 10px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: #c9a8ff; padding: 3px 7px; border-radius: 999px; background: rgba(183, 123, 255, 0.15); }
+/* Reward cards are tappable: they open the card viewer. */
+.reward-card .ucard, .reward-cards .ucard, .rs-card .ucard { cursor: pointer; }
+.modal-backdrop + .modal-backdrop { z-index: 210; }
+
+/* ---------- Feats: clickable badges ---------- */
+button.feat { width: 100%; font: inherit; color: inherit; text-align: left; cursor: pointer; transition: transform 0.15s, border-color 0.2s; }
+button.feat:hover { transform: translateY(-2px); border-color: rgba(255, 210, 63, 0.5); }
+button.feat.shake { animation: sb-shake 0.45s; }
+.feat .feat-ico { clip-path: polygon(50% 0, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%); border-radius: 0; }
+.feat.done.t-1 .feat-ico { background: linear-gradient(160deg, #d08a4a, #5a2e10); color: #fff3e0; }
+.feat.done.t-2 .feat-ico { background: linear-gradient(160deg, #eef2f6, #5a6676); color: #1a1f26; }
+.feat.done.t-3 .feat-ico { background: linear-gradient(160deg, #ffe08a, #7a5200); color: #2a1a00; }
+.feat.done.t-4 .feat-ico { background: linear-gradient(160deg, #a8e4ff, #123a6a); color: #fff; }
+.feat.secret { border-color: rgba(200, 168, 255, 0.55); background: linear-gradient(100deg, rgba(40, 110, 255, 0.14), rgba(16, 20, 34, 0.9) 40%, rgba(16, 20, 34, 0.9) 60%, rgba(255, 40, 70, 0.14)); }
+.feat.secret .feat-ico { background: linear-gradient(90deg, #2a6ad0 0 50%, #c8202a 50% 100%); color: #fff; box-shadow: none; animation: secret-ico 3s linear infinite; }
+@keyframes secret-ico { 50% { filter: brightness(1.35); } }
+.feat-secret { display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 999px; font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase; background: linear-gradient(90deg, #5ab4ff, #ff4a5a); color: #fff; vertical-align: middle; }
+
+/* ---------- Achievement showcase (scaled by difficulty) ---------- */
+.feat-show { position: fixed; inset: 0; z-index: 260; display: grid; place-items: center; align-content: center; gap: 18px; background: radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--m1) 18%, #05070d), #020308 70%); cursor: pointer; overflow: hidden; animation: fade-in 0.3s; }
+.feat-show.out { animation: syn-out 0.4s forwards; }
+.fs-badge { --m1: #ffd23f; --m2: #7a5200; position: relative; z-index: 3; width: min(42vmin, 220px); aspect-ratio: 1; display: grid; place-items: center; }
+.fs-medal { width: 100%; height: 100%; display: grid; place-items: center; clip-path: polygon(50% 0, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%); background: linear-gradient(160deg, var(--m1), var(--m2)); box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.5); position: relative; }
+.fs-medal::after { content: ''; position: absolute; inset: 0; background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.6) 48%, transparent 62%); background-size: 260% 100%; animation: deal-glint 2.4s 0.6s ease-in-out infinite; }
+.fs-ico { display: grid; place-items: center; width: 52%; height: 52%; color: #fff; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5)); }
+.fs-ico .swi { width: 100%; height: 100%; }
+.fs-badge.secret .fs-medal { background: linear-gradient(90deg, #2a6ad0 0 50%, #c8202a 50% 100%); }
+.fs-badge.pop { animation: fs-pop 0.8s cubic-bezier(.2,.9,.3,1.4) both; filter: drop-shadow(0 0 30px var(--m1)); }
+@keyframes fs-pop { 0% { transform: scale(0) rotate(-200deg); } 70% { transform: scale(1.12) rotate(8deg); } 100% { transform: none; } }
+.t-1 .fs-badge.pop { animation-duration: 0.55s; }
+.t-4 .fs-badge.pop { animation: fs-pop 1.1s cubic-bezier(.2,.9,.3,1.4) both, fs-float 3s 1.1s ease-in-out infinite; }
+@keyframes fs-float { 50% { transform: translateY(-8px); } }
+.fs-ring { position: absolute; left: 50%; top: 42%; width: 30vmin; height: 30vmin; border-radius: 50%; border: 2px solid var(--m1); transform: translate(-50%, -50%) scale(0.3); opacity: 0; animation: fs-ring 1.6s calc(0.3s + var(--k) * 0.18s) ease-out infinite; }
+@keyframes fs-ring { 0% { opacity: 0.9; transform: translate(-50%, -50%) scale(0.3); } 100% { opacity: 0; transform: translate(-50%, -50%) scale(3); } }
+.fs-rays { position: absolute; inset: -50%; background: repeating-conic-gradient(from 0deg at 50% 46%, color-mix(in srgb, var(--m1) 35%, transparent) 0 6deg, transparent 6deg 18deg); animation: spin 18s linear infinite; opacity: 0.6; }
+.t-4 .fs-rays { animation-duration: 10s; opacity: 0.85; }
+.fs-spark { position: absolute; left: 50%; top: 42%; width: 6px; height: 6px; border-radius: 50%; background: var(--c, var(--m1)); box-shadow: 0 0 10px var(--c, var(--m1)); opacity: 0; animation: fs-spark 1.4s calc(0.35s + var(--d)) cubic-bezier(.1,.8,.3,1) forwards; }
+@keyframes fs-spark { 0% { opacity: 1; transform: rotate(var(--a)) translateX(0); } 100% { opacity: 0; transform: rotate(var(--a)) translateX(var(--r)); } }
+.fs-text { position: relative; z-index: 3; display: grid; justify-items: center; gap: 4px; text-align: center; padding: 0 16px; animation: jp-sub 0.6s 0.5s both; }
+.fs-kicker { font-family: var(--font-display); font-size: 11px; letter-spacing: 0.35em; text-transform: uppercase; color: var(--m1, #ffd23f); }
+.fs-text b { font-family: var(--font-display); font-size: clamp(24px, 5vw, 44px); letter-spacing: 0.06em; color: #fff; text-shadow: 0 0 20px var(--m1, #ffd23f); }
+.fs-text > span:last-child { color: #c8d0e0; }
+
+/* ---------- Secret achievement cutscene ---------- */
+.feat-cine { position: fixed; inset: 0; z-index: 260; display: grid; place-items: center; align-content: center; gap: 18px; background: #000; overflow: hidden; cursor: pointer; animation: fade-in 0.4s; }
+.feat-cine.out { animation: syn-out 0.5s forwards; }
+.fc-env { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 1.2s; }
+.feat-cine.play .fc-env { opacity: 0.85; transition-delay: 1.4s; }
+.fc-veil { position: absolute; inset: 0; background: radial-gradient(circle at 50% 45%, transparent 20%, rgba(0, 0, 0, 0.8) 80%); }
+.fc-lines { position: absolute; top: 30%; left: 0; right: 0; z-index: 4; display: grid; gap: 10px; text-align: center; font-family: var(--font-display); letter-spacing: 0.2em; text-transform: uppercase; color: #e8ecff; font-size: clamp(13px, 2.4vw, 18px); }
+.fc-lines p { margin: 0; opacity: 0; animation: fc-line 3s calc(var(--i) * 0.9s) ease forwards; }
+@keyframes fc-line { 0% { opacity: 0; letter-spacing: 0.6em; } 25%, 70% { opacity: 1; letter-spacing: 0.2em; } 100% { opacity: 0; } }
+.master .fc-lines p { animation-duration: 4.2s; }
+.fc-saber { position: absolute; top: 46%; left: 50%; width: 130vmax; height: 6px; border-radius: 3px; opacity: 0; z-index: 2; }
+.fc-saber.blue { background: #eaf6ff; box-shadow: 0 0 12px #4aa8ff, 0 0 30px #4aa8ff, 0 0 60px #4aa8ff; animation: sv-saber-b 1s 1.6s cubic-bezier(.2,.9,.3,1) forwards; }
+.fc-saber.red { background: #fff0f0; box-shadow: 0 0 12px #ff2a3a, 0 0 30px #ff2a3a, 0 0 60px #ff2a3a; animation: sv-saber-r 1s 1.8s cubic-bezier(.2,.9,.3,1) forwards; }
+.fc-orbit { position: absolute; left: 50%; top: 44%; z-index: 3; width: 0; height: 0; }
+.fc-boss { position: absolute; width: 74px; height: 74px; margin: -37px; border-radius: 50%; overflow: hidden; border: 2px solid #fff; box-shadow: 0 0 20px rgba(255, 255, 255, 0.5); opacity: 0; animation: fc-orbit 2.6s calc(1.9s + var(--k) * 0.12s) cubic-bezier(.5,0,.6,1) forwards; }
+.fc-boss .portrait { width: 100%; height: 100%; }
+@keyframes fc-orbit { 0% { opacity: 0; transform: rotate(calc(var(--k) * 90deg)) translateX(40vmin) rotate(calc(var(--k) * -90deg)) scale(0.6); } 15% { opacity: 1; } 80% { opacity: 1; transform: rotate(calc(var(--k) * 90deg + 300deg)) translateX(16vmin) rotate(calc(var(--k) * -90deg - 300deg)) scale(1); } 100% { opacity: 0; transform: rotate(calc(var(--k) * 90deg + 360deg)) translateX(0) scale(0.2); } }
+.fc-halves { position: absolute; left: 50%; top: 44%; z-index: 3; width: 0; height: 0; }
+.fc-half { position: absolute; width: 90px; height: 90px; margin: -45px; display: grid; place-items: center; color: #fff; opacity: 0; }
+.fc-half .swi { width: 100%; height: 100%; }
+.fc-half.l { filter: drop-shadow(0 0 14px #4aa8ff); animation: fc-half-l 1.1s 2.3s cubic-bezier(.6,0,.4,1) forwards; }
+.fc-half.r { filter: drop-shadow(0 0 14px #ff2a3a); animation: fc-half-r 1.1s 2.3s cubic-bezier(.6,0,.4,1) forwards; }
+.master .fc-half.l, .master .fc-half.r { animation-delay: 4.1s; }
+@keyframes fc-half-l { 0% { opacity: 0; transform: translateX(-60vw); } 30% { opacity: 1; } 100% { opacity: 1; transform: translateX(0) scale(0.6); } }
+@keyframes fc-half-r { 0% { opacity: 0; transform: translateX(60vw); } 30% { opacity: 1; } 100% { opacity: 1; transform: translateX(0) scale(0.6); } }
+.fc-flash { position: absolute; inset: 0; z-index: 5; background: #fff; opacity: 0; pointer-events: none; }
+.fc-badge, .fc-text, .feat-cine .fs-spark { visibility: hidden; }
+.feat-cine.reveal .fc-flash { animation: ex-flash 0.7s ease-out; }
+.feat-cine.reveal .fc-halves, .feat-cine.reveal .fc-orbit, .feat-cine.reveal .fc-lines { display: none; }
+.feat-cine.reveal .fc-badge { visibility: visible; animation: fs-pop 1.1s cubic-bezier(.2,.9,.3,1.4) both, fs-float 3s 1.1s ease-in-out infinite; filter: drop-shadow(-10px 0 26px #4aa8ff) drop-shadow(10px 0 26px #ff2a3a); }
+.feat-cine.reveal .fc-text { visibility: visible; animation: jp-sub 0.7s 0.5s both; }
+.feat-cine.reveal .fs-spark { visibility: visible; }
+.feat-cine.reveal .fc-saber { opacity: 0.4; }
+.feat-cine.skip .fc-env { opacity: 0.85; transition-delay: 0s; }
+.fc-text .fs-kicker { background: linear-gradient(90deg, #7cc8ff, #fff, #ff6a7a); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.fc-text b { text-shadow: -4px 0 20px #4aa8ff, 4px 0 20px #ff2a3a; }
+/* Once the medal lands, the crossed sabers recede behind it so the title reads clean. */
+.feat-cine.reveal .fc-saber.blue { animation: none; opacity: 0.16; transform: translate(-50%, -50%) rotate(-28deg); transition: opacity 0.8s; }
+.feat-cine.reveal .fc-saber.red { animation: none; opacity: 0.16; transform: translate(-50%, -50%) rotate(28deg); transition: opacity 0.8s; }
+/* Master of the Monolith crest */
+.fs-badge.master-crest { width: min(62vmin, 300px); }
+.fs-badge.master-crest .mc { width: 100%; height: 100%; overflow: visible; }
+.mc-rays, .mc-runes, .mc-halo, .mc-gem, .mc-star, .mc-wing, .mc-beam { transform-box: fill-box; transform-origin: center; }
+.mc-rays { animation: mc-spin 40s linear infinite; }
+.mc-runes { animation: mc-spin 22s linear infinite reverse; }
+.mc-halo { animation: mc-breathe 3.2s ease-in-out infinite; }
+.mc-wing { transform-origin: 100% 50%; animation: mc-flap 3.2s ease-in-out infinite; }
+.mc-blade.b { filter: drop-shadow(0 0 3px #4aa8ff) drop-shadow(0 0 7px #4aa8ff); animation: mc-hum 0.14s steps(2) infinite alternate; }
+.mc-blade.r { filter: drop-shadow(0 0 3px #ff2a3a) drop-shadow(0 0 7px #ff2a3a); animation: mc-hum 0.17s steps(2) infinite alternate; }
+.mc-core { filter: drop-shadow(0 0 4px #fff); animation: mc-core 2.4s ease-in-out infinite; }
+.mc-gem { filter: drop-shadow(0 0 4px currentColor); animation: mc-gem 2.8s var(--d) ease-in-out infinite; }
+.mc-star { filter: drop-shadow(0 0 6px #fff); animation: mc-twinkle 2s ease-in-out infinite; }
+.mc-shine { animation: mc-shine 3.6s 0.8s ease-in-out infinite; }
+@keyframes mc-spin { to { transform: rotate(360deg); } }
+@keyframes mc-breathe { 50% { opacity: 0.55; transform: scale(0.94); } }
+@keyframes mc-flap { 50% { transform: rotate(-5deg); } }
+@keyframes mc-hum { to { opacity: 0.82; } }
+@keyframes mc-core { 50% { opacity: 0.45; } }
+@keyframes mc-gem { 0%, 70%, 100% { transform: scale(1); } 80% { transform: scale(1.3); filter: drop-shadow(0 0 10px currentColor) brightness(1.5); } }
+@keyframes mc-twinkle { 50% { transform: scale(0.75) rotate(45deg); } }
+@keyframes mc-shine { 0% { transform: translateX(0); } 55%, 100% { transform: translateX(300px); } }
+.feat .feat-ico.crest { width: 48px; height: 48px; clip-path: none; background: none !important; box-shadow: none; animation: none; overflow: visible; }
+.feat .feat-ico.crest .mc { width: 100%; height: 100%; overflow: visible; }
+.feat-cine.master.reveal .fc-badge { filter: drop-shadow(-12px 0 30px rgba(74, 168, 255, 0.7)) drop-shadow(12px 0 30px rgba(255, 42, 58, 0.7)); }
+.mc-dot { animation: mc-core 2.6s var(--d) ease-in-out infinite; }
+.mc-beam { animation: mc-breathe 2.4s ease-in-out infinite; }
+.mc-glyphs { filter: drop-shadow(0 0 3px #fff) drop-shadow(0 0 6px #c8a8ff); animation: mc-core 3s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .mc * { animation: none !important; } }

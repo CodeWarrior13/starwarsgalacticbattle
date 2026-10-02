@@ -1016,7 +1016,7 @@
     return {
       credits: 400 + enc.level * 60,
       aurodium: firstClear ? 5 : 1,
-      kyber: firstClear ? 60 : 0,
+      kyber: firstClear ? 3 : 0,
       card: firstClear ? 'epic+' : null,
     };
   }
@@ -1177,7 +1177,8 @@
   ];
   const MAX_ACCOUNT_LEVEL = 50;
   const xpToNext = (level) => Math.round(60 + level * 35 + level * level * 5);
-  const levelReward = (level) => ({ credits: 150 + level * 50, crystals: level % 5 === 0 ? 100 : 20 });
+  // Kyber is the premium currency: a trickle from play, a little more on milestones.
+  const levelReward = (level) => ({ credits: 150 + level * 50, crystals: level % 5 === 0 ? 10 : 2 });
   const XP = { stage: (lvl) => 50 + lvl * 8, boss: (lvl) => 150 + lvl * 10, loss: 15 };
   // Enemy squads grow with you: 3 on the first planet, 4 on the second, then 5.
   const planetSquadSize = (planetId) => ({ tatooine: 3, hoth: 4 }[planetId] || 5);
@@ -1541,14 +1542,15 @@
   const secretCost = (fails) => SECRET_COSTS[Math.min(fails || 0, SECRET_COSTS.length - 1)];
   // Enemies earn stars as you travel further across the galaxy.
   const enemyStars = (planetId) => 1 + Math.floor(PLANETS.indexOf(PLANET_MAP[planetId]) / 2);
-  const PLANET_CLEAR_KYBER = 150;
+  const PLANET_CLEAR_KYBER = 5;
 
   function stageRewards(planetId, index) {
     const planet = PLANET_MAP[planetId];
     const stage = planet.stages[index];
     return {
       credits: 120 + stage.level * 40,
-      firstClearCrystals: 30 + PLANETS.indexOf(planet) * 8 + index * 4,
+      // 1 Kyber for a first clear, 2 for a world's final stage.
+      firstClearCrystals: index === planet.stages.length - 1 ? 2 : 1,
     };
   }
 
@@ -1762,7 +1764,7 @@
     const boss = floor % TOWER.bossEvery === 0;
     return {
       credits: 220 + floor * 35 + (boss ? 600 : 0),
-      crystals: boss ? Math.min(60, 15 + floor) : floor % 5 === 0 ? Math.min(30, 4 + Math.floor(floor / 2)) : 0,
+      crystals: boss ? 2 : floor % 5 === 0 ? 1 : 0,
     };
   }
   const towerCheckpoint = (floor) => floor - ((floor - 1) % TOWER.checkpoint);
