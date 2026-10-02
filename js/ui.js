@@ -172,6 +172,7 @@
       const need = D.xpToNext(a.level);
       $('#acct-bar').style.width = a.level >= D.MAX_ACCOUNT_LEVEL ? '100%' : `${Math.min(100, (a.xp / need) * 100)}%`;
       lv.closest('.account').title = `Account level ${a.level} · ${a.xp}/${need} XP · ${Player.slots()} squad slots`;
+      if (a.level >= D.MAX_ACCOUNT_LEVEL && !document.body.classList.contains('in-battle')) celebrateFeat('grinder');
     }
     for (const key of ['credits', 'crystals', 'aurodium']) {
       const node = $('#' + key);
@@ -2139,13 +2140,14 @@
     // Secret feats stay off the list entirely until they are earned.
     if (s.secret.found) list.push({ id: 'secret_found', secret: true, tier: 5, icon: 'crescent', name: 'Into the Unknown', desc: 'Found the hidden way to the Monolith', have: 1, need: 1 });
     if (D.SECRET_BOSSES.every((b) => s.secret.beaten[b.id])) list.push({ id: 'secret_all', secret: true, tier: 6, icon: 'spark', name: 'Master of the Monolith', desc: 'Defeated all four trials beyond the map', have: 1, need: 1 });
+    if (s.account.level >= D.MAX_ACCOUNT_LEVEL) list.push({ id: 'grinder', secret: true, tier: 7, icon: 'spire', name: 'Galactic Grinder', desc: 'Coming soon', have: 1, need: 1 });
     return list;
   }
 
   // ---------- Achievement showcases ----------
   // Tapping an earned feat replays its badge moment. The harder it was to
   // earn, the bigger the show; the two secret feats get a full cutscene.
-  const FEAT_TIER = [null, ['Bronze', '#d08a4a', '#5a2e10'], ['Silver', '#dfe6ee', '#5a6676'], ['Gold', '#ffd23f', '#7a5200'], ['Kyber', '#7cd0ff', '#123a6a'], ['Secret', '#ffffff', '#3a1060'], ['Secret', '#ffffff', '#3a1060']];
+  const FEAT_TIER = [null, ['Bronze', '#d08a4a', '#5a2e10'], ['Silver', '#dfe6ee', '#5a6676'], ['Gold', '#ffd23f', '#7a5200'], ['Kyber', '#7cd0ff', '#123a6a'], ['Secret', '#ffffff', '#3a1060'], ['Secret', '#ffffff', '#3a1060'], ['Legendary', '#ffb347', '#6a2a00']];
   // Master of the Monolith gets a hand-built crest rather than a stock medal:
   // wings of light and dark, crossed sabers, a split Monolith and one gem per trial.
   let crestSeq = 0;
@@ -2201,7 +2203,50 @@
       <text y="86.5" text-anchor="middle" font-size="12" font-weight="800" letter-spacing="5" fill="#2a1a00" font-family="inherit">MASTER</text>
     </svg>`;
   };
-  const featBadge = (x, cls = '') => x.id === 'secret_all' ? `<div class="fs-badge master-crest ${cls}">${monolithCrest()}</div>` : `<div class="fs-badge ${cls} ${x.secret ? 'secret' : ''}" style="--m1:${FEAT_TIER[x.tier || 1][1]};--m2:${FEAT_TIER[x.tier || 1][2]}"><span class="fs-medal"><span class="fs-ico">${root.Icons.svg(x.icon)}</span></span></div>`;
+  // Galactic Grinder (account level 50): a turning beskar cog around a
+  // hyperspace core, the rank number, three chevrons and a Kyber shard on top.
+  const grinderCrest = () => {
+    const u = `gr${++crestSeq}`;
+    const teeth = 22;
+    const cog = Array.from({ length: teeth }, (_, k) => {
+      const a = (k / teeth) * Math.PI * 2;
+      const w = (Math.PI / teeth) * 0.55;
+      const pt = (r, t) => `${(Math.cos(t) * r).toFixed(1)},${(Math.sin(t) * r).toFixed(1)}`;
+      return `${k ? 'L' : 'M'}${pt(82, a - w * 1.6)} L${pt(94, a - w)} L${pt(94, a + w)} L${pt(82, a + w * 1.6)}`;
+    }).join(' ') + 'Z';
+    const rays = Array.from({ length: 24 }, (_, k) => `<polygon points="0,${k % 2 ? -88 : -100} 3.5,0 -3.5,0" transform="rotate(${k * 15})"/>`).join('');
+    const warp = Array.from({ length: 20 }, (_, k) => {
+      const a = (k / 20) * Math.PI * 2 + (k % 2) * 0.12;
+      return `<line style="--d:${((k * 7) % 10) * -0.12}s" x1="${(Math.cos(a) * 12).toFixed(1)}" y1="${(Math.sin(a) * 12).toFixed(1)}" x2="${(Math.cos(a) * 70).toFixed(1)}" y2="${(Math.sin(a) * 70).toFixed(1)}"/>`;
+    }).join('');
+    return `<svg class="mc gr" viewBox="-100 -100 200 200" aria-hidden="true">
+      <defs>
+        <linearGradient id="${u}g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6c8"/><stop offset=".35" stop-color="#ffd23f"/><stop offset=".7" stop-color="#b06a08"/><stop offset="1" stop-color="#ffe08a"/></linearGradient>
+        <linearGradient id="${u}t" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f4f7fb"/><stop offset=".5" stop-color="#8a96a8"/><stop offset="1" stop-color="#3a4252"/></linearGradient>
+        <radialGradient id="${u}c"><stop offset="0" stop-color="#5a2208"/><stop offset=".6" stop-color="#1e0a04"/><stop offset="1" stop-color="#060302"/></radialGradient>
+        <radialGradient id="${u}e"><stop offset="0" stop-color="#fff4d0" stop-opacity=".9"/><stop offset=".35" stop-color="#ff9a2a" stop-opacity=".7"/><stop offset=".8" stop-color="#a8200a" stop-opacity=".25"/><stop offset="1" stop-color="#a8200a" stop-opacity="0"/></radialGradient>
+        <radialGradient id="${u}h"><stop offset="0" stop-color="#ffcf7a" stop-opacity=".7"/><stop offset=".5" stop-color="#ff7a1a" stop-opacity=".3"/><stop offset="1" stop-color="#ff7a1a" stop-opacity="0"/></radialGradient>
+        <clipPath id="${u}k"><circle r="70"/></clipPath>
+      </defs>
+      <circle class="mc-halo" r="99" fill="url(#${u}h)"/>
+      <g class="gr-rays" fill="url(#${u}g)" opacity=".4">${rays}</g>
+      <path class="gr-cog" d="${cog}" fill="url(#${u}t)" stroke="url(#${u}g)" stroke-width="2" stroke-linejoin="round"/>
+      <circle class="gr-orbit" r="86" fill="none" stroke="#ffb347" stroke-width="3" stroke-linecap="round" stroke-dasharray="46 494"/>
+      <circle class="gr-orbit b" r="86" fill="none" stroke="#fff1c8" stroke-width="2" stroke-linecap="round" stroke-dasharray="22 518"/>
+      <circle r="76" fill="url(#${u}c)" stroke="url(#${u}g)" stroke-width="6"/>
+      <g clip-path="url(#${u}k)"><g class="gr-warp" stroke="#ffd9a0" stroke-width="1.6" stroke-linecap="round">${warp}</g></g>
+      <circle class="gr-ember" r="46" fill="url(#${u}e)"/>
+      <circle r="69" fill="none" stroke="url(#${u}g)" stroke-width="1.2" opacity=".7"/>
+      <text class="gr-num" y="16" text-anchor="middle" font-size="62" font-weight="900" fill="url(#${u}g)" stroke="#3a1a00" stroke-width="2" paint-order="stroke" font-family="inherit" letter-spacing="-2">50</text>
+      ${[0, 1, 2].map((k) => `<path class="gr-chev" style="--d:${k * 0.25}s" d="M-17,0 L0,8 L17,0" transform="translate(0,${30 + k * 8})" fill="none" stroke="url(#${u}g)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>`).join('')}
+      <g transform="translate(0,-82)"><path class="gr-kyber" d="M0,-15 L7,-5 L5,13 L-5,13 L-7,-5Z" fill="#7cd0ff" stroke="#eaf8ff" stroke-width="1.5" stroke-linejoin="round"/></g>
+      <path d="M-50,77 H-72 L-63,86 L-72,95 H-50Z M50,77 H72 L63,86 L72,95 H50Z" fill="#7a3a00" stroke="#3a1a00" stroke-width="1"/>
+      <rect x="-54" y="72" width="108" height="20" rx="2" fill="url(#${u}g)" stroke="#3a1a00" stroke-width="1.2"/>
+      <text y="86.5" text-anchor="middle" font-size="11" font-weight="800" letter-spacing="4" fill="#2a1200" font-family="inherit">GRINDER</text>
+    </svg>`;
+  };
+  const CRESTS = { secret_all: () => monolithCrest(), grinder: () => grinderCrest() };
+  const featBadge = (x, cls = '') => CRESTS[x.id] ? `<div class="fs-badge master-crest ${cls}">${CRESTS[x.id]()}</div>` : `<div class="fs-badge ${cls} ${x.secret ? 'secret' : ''}" style="--m1:${FEAT_TIER[x.tier || 1][1]};--m2:${FEAT_TIER[x.tier || 1][2]}"><span class="fs-medal"><span class="fs-ico">${root.Icons.svg(x.icon)}</span></span></div>`;
 
   function playFeat(x) {
     if (x.secret) return featCutscene(x);
@@ -2221,6 +2266,7 @@
   }
 
   function featCutscene(x) {
+    if (x.id === 'grinder') return grinderCutscene(x);
     const master = x.id === 'secret_all';
     const bosses = D.SECRET_BOSSES.map((b) => D.UNIT_MAP[b.id]);
     const node = el(`<div class="feat-cine ${master ? 'master' : ''}" role="dialog" aria-label="${esc(x.name)}">
@@ -2249,6 +2295,44 @@
     const reveal = (skip) => { node.classList.add('reveal'); if (skip) node.classList.add('skip'); node.querySelector('.pc-skip').textContent = 'Tap to close'; };
     node.addEventListener('click', () => (node.classList.contains('reveal') ? close() : reveal(true)));
     at(3300 + base, () => reveal(false));
+  }
+
+  // Galactic Grinder: a hyperspace jump while the rank counter races to 50.
+  function grinderCutscene(x) {
+    const top = D.MAX_ACCOUNT_LEVEL;
+    const node = el(`<div class="feat-cine grinder" role="dialog" aria-label="${esc(x.name)}">
+      <div class="fc-warp">${Array.from({ length: 64 }, (_, k) => `<i style="--a:${(k * 137.5) % 360}deg;--d:${((k * 13) % 20) * -0.05}s;--w:${1 + (k % 3)}px"></i>`).join('')}</div>
+      <div class="fc-veil"></div>
+      <div class="fc-lines"><p style="--i:0">Every battle. Every rank.</p><p style="--i:1">The grind becomes legend.</p></div>
+      <div class="fc-count"><b>1</b><span>Account level</span></div>
+      <i class="fc-flash"></i>
+      ${featBadge(x, 'fc-badge')}
+      ${Array.from({ length: 100 }, (_, k) => `<i class="fs-spark" style="--a:${(k * 137.5) % 360}deg;--d:${(k % 9) * 0.05}s;--r:${22 + (k % 6) * 7}vmin;--c:${k % 3 ? '#ffb347' : '#fff1c8'}"></i>`).join('')}
+      <div class="fs-text fc-text"><span class="fs-kicker">Legendary achievement</span><b data-text="${esc(x.name)}">${esc(x.name)}</b><span>${esc(x.desc)}</span></div>
+      <span class="pc-skip">Tap to skip</span>
+    </div>`);
+    document.body.appendChild(node);
+    const S = root.Sound;
+    const at = (ms, fn) => setTimeout(() => node.isConnected && fn(), ms);
+    const count = $('.fc-count b', node);
+    const REVEAL = 4600;
+    if (S) { S.play('ult'); at(900, () => S.play('whoosh')); }
+    // The counter eases in: slow first ranks, a blur through the middle, a heavy final hit.
+    for (let n = 2; n <= top; n++) {
+      const t = 1000 + 2600 * Math.pow((n - 1) / (top - 1), 0.7);
+      at(t, () => { count.textContent = n; if (n % 10 === 0 && S) S.play(n === top ? 'rankup' : 'click'); if (n === top) count.parentNode.classList.add('hit'); });
+    }
+    node.classList.add('play');
+    let done = false;
+    const close = () => { if (done) return; done = true; node.classList.add('out'); setTimeout(() => node.remove(), 500); };
+    const reveal = (skip) => {
+      if (node.classList.contains('reveal')) return;
+      node.classList.add('reveal'); if (skip) node.classList.add('skip');
+      node.querySelector('.pc-skip').textContent = 'Tap to close';
+      if (S) { S.play('burst'); S.play('reveal_legendary'); setTimeout(() => S.play('jackpot'), 400); }
+    };
+    node.addEventListener('click', () => (node.classList.contains('reveal') ? close() : reveal(true)));
+    at(REVEAL, () => reveal(false));
   }
 
   // The first time a secret feat is earned it plays by itself.
@@ -2340,7 +2424,7 @@
       <div class="pf-pane" data-pane="feats">
         <div class="feat-list">${ach.map((x) => {
           const done = x.have >= x.need;
-          return `<button type="button" class="feat ${done ? 'done' : ''} ${x.secret ? 'secret' : ''} t-${x.tier || 1}" data-feat="${ach.indexOf(x)}"><span class="feat-ico ${x.id === 'secret_all' ? 'crest' : ''}">${x.id === 'secret_all' ? monolithCrest() : root.Icons.svg(x.icon)}</span><div><b>${esc(x.name)}${x.secret ? ' <span class="feat-secret">Secret</span>' : ''}</b><span class="muted small">${esc(x.desc)}</span><i class="feat-bar"><i style="width:${Math.min(100, (x.have / x.need) * 100)}%"></i></i></div><em>${done ? '✓' : `${fmt(Math.min(x.have, x.need))}/${fmt(x.need)}`}</em></button>`;
+          return `<button type="button" class="feat ${done ? 'done' : ''} ${x.secret ? 'secret' : ''} t-${x.tier || 1}" data-feat="${ach.indexOf(x)}"><span class="feat-ico ${CRESTS[x.id] ? 'crest' : ''}">${CRESTS[x.id] ? CRESTS[x.id]() : root.Icons.svg(x.icon)}</span><div><b>${esc(x.name)}${x.secret ? ` <span class="feat-secret ${x.tier === 7 ? 'legend' : ''}">${x.tier === 7 ? 'Legendary' : 'Secret'}</span>` : ''}</b><span class="muted small">${esc(x.desc)}</span><i class="feat-bar"><i style="width:${Math.min(100, (x.have / x.need) * 100)}%"></i></i></div><em>${done ? '✓' : `${fmt(Math.min(x.have, x.need))}/${fmt(x.need)}`}</em></button>`;
         }).join('')}</div>
       </div>
       <div class="modal-actions"><button class="btn btn-primary" type="button" data-close>Close</button></div>`, { cls: 'profile-modal' });
