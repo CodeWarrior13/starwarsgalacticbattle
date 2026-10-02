@@ -2458,7 +2458,7 @@
   // Back for More?: the tape rewinds to Rex, who is not impressed.
   function againCutscene(x) {
     const rex = D.UNIT_MAP.captain_rex;
-    const takes = ((Player.state.tutorial && Player.state.tutorial.replays) || 1) + 1;
+    const takes = Math.min(10, ((Player.state.tutorial && Player.state.tutorial.replays) || 1) + 1);
     const node = el(`<div class="feat-cine again" role="dialog" aria-label="${esc(x.name)}">
       <div class="fa-vhs"></div>
       <span class="fa-tag fa-rew">◀◀ REWIND</span><span class="fa-tag fa-take">TAKE ${takes}</span>

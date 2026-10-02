@@ -558,6 +558,8 @@ test('beating a replayed tutorial earns the secret badge, skipping a replay does
   Player.replayTutorial();
   assert.ok(!Player.finishTutorial('skipped').again, 'skipping a replay is not a clear');
   assert.strictEqual(Player.state.tutorial.replays, 1);
+  for (let i = 0; i < 20; i++) { Player.replayTutorial(); Player.finishTutorial('completed'); }
+  assert.strictEqual(Player.state.tutorial.replays, 9, 'counter caps so the tape reads TAKE 10 at most');
 });
 
 test('the training battle cannot be lost', () => {

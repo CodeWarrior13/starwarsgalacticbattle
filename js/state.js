@@ -178,7 +178,8 @@
       const units = this.grantStarterUnits();
       // Beating it again on a replay earns the secret "Back for More?" badge.
       const again = how === 'completed' && !!t.badge;
-      if (again) t.replays = (t.replays || 0) + 1;
+      // The rewind counter tops out at TAKE 10.
+      if (again) t.replays = Math.min(9, (t.replays || 0) + 1);
       const out = { how, units, credits: 0, crystals: 0, again };
       if (t.fresh) {
         out.credits = D.STARTER.credits;
