@@ -2087,7 +2087,10 @@
           <div><dt>Cards collected</dt><dd>${Object.keys(Player.state.units).length}/${D.UNITS.length}</dd></div>
           <div><dt>Save data</dt><dd>Saved automatically in this browser</dd></div>
         </dl>
-        <button class="btn btn-danger" type="button" data-reset>Reset all progress</button>
+        <div class="settings-btns">
+          <button class="btn" type="button" data-replay-tut>Replay tutorial</button>
+          <button class="btn btn-danger" type="button" data-reset>Reset all progress</button>
+        </div>
       </section>
       <div class="modal-actions"><button class="btn btn-primary" type="button" data-close>Done</button></div>`, { small: true, cls: 'settings-modal' });
     m.root.addEventListener('change', async (e) => {
@@ -2106,13 +2109,19 @@
       if (e.target.closest('[data-test-sfx]')) { S.play('saber'); setTimeout(() => S.play('blaster'), 400); setTimeout(() => S.play('explosion'), 750); }
       const c = e.target.closest('[data-clear]');
       if (c) { await S.saveCustom(c.dataset.clear, null); $(`[data-status="${c.dataset.clear}"]`, m.root).textContent = 'Original theme'; c.disabled = true; }
+      if (e.target.closest('[data-replay-tut]')) {
+        if (App.battleActive) return toast('Finish or retreat from the battle first.');
+        m.close();
+        Player.replayTutorial();
+        root.Tutorial.start();
+      }
       if (e.target.closest('[data-reset]')) {
         m.close();
-        if (await confirmBox('Reset all progress?', 'Your roster, currencies and campaign progress will be wiped and you will start over with the starter squad.', 'Reset')) {
-          Player.reset();
-          toast('Progress reset. Welcome back, Commander.');
+        if (await confirmBox('Reset all progress?', 'Your roster, currencies and campaign progress will be wiped and you will start over from the tutorial.', 'Reset')) {
+          Player.startOver();
           App.battleActive = false;
           App.go('home');
+          root.Tutorial.start();
         }
       }
     });
@@ -2126,6 +2135,7 @@
     const owned = Object.keys(s.units).length;
     const worlds = D.PLANETS.filter((p) => Player.planetComplete(p.id)).length;
     const list = [
+      { id: 'tutorial', icon: 'badge', tier: 1, name: 'Tutorial Complete', desc: 'Welcome to the galaxy', have: s.tutorial && (s.tutorial.done || s.tutorial.badge) ? 1 : 0, need: 1 },
       { icon: 'sabers', tier: 1, name: 'First Blood', desc: 'Win your first battle', have: st.battlesWon, need: 1 },
       { icon: 'trooper', tier: 3, name: 'Veteran', desc: 'Win 100 battles', have: st.battlesWon, need: 100 },
       { icon: 'planet', tier: 2, name: 'Liberator', desc: 'Liberate 5 worlds', have: worlds, need: 5 },
@@ -2147,62 +2157,88 @@
   // ---------- Achievement showcases ----------
   // Tapping an earned feat replays its badge moment. The harder it was to
   // earn, the bigger the show; the two secret feats get a full cutscene.
-  const FEAT_TIER = [null, ['Bronze', '#d08a4a', '#5a2e10'], ['Silver', '#dfe6ee', '#5a6676'], ['Gold', '#ffd23f', '#7a5200'], ['Kyber', '#7cd0ff', '#123a6a'], ['Secret', '#ffffff', '#3a1060'], ['Secret', '#ffffff', '#3a1060'], ['Legendary', '#ffb347', '#6a2a00']];
-  // Master of the Monolith gets a hand-built crest rather than a stock medal:
-  // wings of light and dark, crossed sabers, a split Monolith and one gem per trial.
+  const FEAT_TIER = [null, ['Bronze', '#d08a4a', '#5a2e10'], ['Silver', '#dfe6ee', '#5a6676'], ['Credit', '#ffd23f', '#7a5200'], ['Kyber', '#7cd0ff', '#123a6a'], ['Secret', '#ffffff', '#3a1060'], ['Secret', '#ffffff', '#3a1060'], ['Legendary', '#ffb347', '#6a2a00']];
+  // Crests and medals are drawn as SVG and animated with SVG's own animation
+  // elements (not CSS transforms), so every browser, iPhone Safari included,
+  // spins and pulses each part around the right point.
   let crestSeq = 0;
+  const A = {
+    spin: (dur, rev) => (motionOK() ? `<animateTransform attributeName="transform" type="rotate" from="${rev ? 360 : 0} 0 0" to="${rev ? 0 : 360} 0 0" dur="${dur}s" repeatCount="indefinite"/>` : ''),
+    rock: (deg, cx, cy, dur) => (motionOK() ? `<animateTransform attributeName="transform" type="rotate" values="0 ${cx} ${cy};${deg} ${cx} ${cy};0 ${cx} ${cy}" dur="${dur}s" repeatCount="indefinite"/>` : ''),
+    fade: (values, dur, begin = 0) => (motionOK() ? `<animate attributeName="opacity" values="${values}" dur="${dur}s" begin="${begin}s" repeatCount="indefinite"/>` : ''),
+    pop: (dur, begin = 0, peak = 1.3) => (motionOK() ? `<animateTransform attributeName="transform" type="scale" values="1;1;${peak};1" keyTimes="0;.7;.8;1" dur="${dur}s" begin="${begin}s" repeatCount="indefinite"/>` : ''),
+    twist: (dur) => (motionOK() ? `<animateTransform attributeName="transform" type="rotate" values="0;45;0" dur="${dur}s" repeatCount="indefinite"/>` : ''),
+    shine: (from, to, dur, begin = 0.8) => (motionOK() ? `<animate attributeName="x" values="${from};${to};${to}" keyTimes="0;.55;1" dur="${dur}s" begin="${begin}s" repeatCount="indefinite"/>` : ''),
+    dash: (len, dur, begin) => (motionOK() ? `<animate attributeName="stroke-dashoffset" from="${len}" to="0" dur="${dur}s" begin="${begin}s" repeatCount="indefinite"/>` : ''),
+  };
+  // Shared glow (blur + original) and soft blur filters.
+  const glowDefs = (u) => `<filter id="${u}f" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="2.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter><filter id="${u}bl" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="3"/></filter>`;
+  const gold = (id) => `<linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6c8"/><stop offset=".35" stop-color="#ffd23f"/><stop offset=".7" stop-color="#a86f08"/><stop offset="1" stop-color="#ffe98a"/></linearGradient>`;
+  const ribbon = (u, word, dark = '#3a2400', tail = '#7a5200') => `<path d="M-50,77 H-72 L-63,86 L-72,95 H-50Z M50,77 H72 L63,86 L72,95 H50Z" fill="${tail}" stroke="${dark}" stroke-width="1"/>
+      <rect x="-54" y="72" width="108" height="20" rx="2" fill="url(#${u}g)" stroke="${dark}" stroke-width="1.2"/>
+      <text y="86.5" text-anchor="middle" font-size="11.5" font-weight="800" letter-spacing="4.5" fill="${dark}" font-family="inherit">${word}</text>`;
+  // Icon glyphs are drawn straight into the medal (a nested <svg> would pick up
+  // the .swi CSS size and shrink to 1em).
+  const iconIn = (name, size, color) => {
+    const inner = root.Icons.svg(name).replace(/^<svg[^>]*>/, '').replace(/<\/svg>\s*$/, '');
+    return `<g transform="translate(${-size / 2},${-size / 2}) scale(${size / 24})" fill="${color}" color="${color}">${inner}</g>`;
+  };
+
+  // Full-colour currency art (credit chip, Kyber crystal) for the Credit and Kyber medals.
+  const artIn = (key, size) => {
+    const inner = root.Art.ICONS[key].replace(/^<svg[^>]*>/, '').replace(/<\/svg>\s*$/, '');
+    return `<g transform="translate(${-size / 2},${-size / 2}) scale(${size / 24})">${inner}</g>`;
+  };
+
+  // Master of the Monolith: wings of light and dark, crossed sabers, a split
+  // Monolith and one gem per trial.
   const monolithCrest = () => {
     const u = `mc${++crestSeq}`;
     const rays = Array.from({ length: 16 }, (_, k) => `<polygon points="0,${k % 2 ? -84 : -99} 4.5,0 -4.5,0" transform="rotate(${k * 22.5})"/>`).join('');
-    const wing = `<g class="mc-wing">${[-34, -14, 6, 26].map((a, k) => `<g transform="translate(-58,${k * 4 - 6}) rotate(${a})"><ellipse cx="-24" rx="${30 - k * 3}" ry="7.5"/></g>`).join('')}</g>`;
+    const wing = `<g>${A.rock(-5, -58, 0, 3.2)}${[-34, -14, 6, 26].map((a, k) => `<g transform="translate(-58,${k * 4 - 6}) rotate(${a})"><ellipse cx="-24" rx="${30 - k * 3}" ry="7.5"/></g>`).join('')}</g>`;
     const gems = [['#4aa8ff', -135], ['#ff2a3a', -45], ['#c77dff', 45], ['#7cffb0', 135]].map(([c, a], k) => {
       const r = (a * Math.PI) / 180;
-      return `<g transform="translate(${(Math.cos(r) * 74).toFixed(1)},${(Math.sin(r) * 74).toFixed(1)})"><path class="mc-gem" style="--d:${k * 0.35}s;color:${c}" d="M0,-10 L7.5,0 L0,10 L-7.5,0Z" fill="${c}" stroke="url(#${u}g)" stroke-width="2"/></g>`;
+      return `<g transform="translate(${(Math.cos(r) * 74).toFixed(1)},${(Math.sin(r) * 74).toFixed(1)})"><path d="M0,-10 L7.5,0 L0,10 L-7.5,0Z" fill="${c}" stroke="url(#${u}g)" stroke-width="2" filter="url(#${u}f)">${A.pop(2.8, k * 0.35)}</path></g>`;
     }).join('');
+    const saber = (x1, color, hum) => `<line x1="${x1}" y1="56" x2="${-x1 * 74 / 56}" y2="-74" stroke="${color}" stroke-width="10" opacity=".7" filter="url(#${u}bl)"/><line x1="${x1}" y1="56" x2="${-x1 * 74 / 56}" y2="-74" stroke="#fff" stroke-width="4.5">${A.fade('1;.8;1', hum)}</line>`;
     return `<svg class="mc" viewBox="-100 -100 200 200" aria-hidden="true">
-      <defs>
-        <linearGradient id="${u}g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6c8"/><stop offset=".35" stop-color="#ffd23f"/><stop offset=".7" stop-color="#a86f08"/><stop offset="1" stop-color="#ffe98a"/></linearGradient>
-        <linearGradient id="${u}o" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2e2650"/><stop offset="1" stop-color="#07060d"/></linearGradient>
+      <defs>${gold(`${u}g`)}${glowDefs(u)}
+        <radialGradient id="${u}n" cy=".42"><stop offset="0" stop-color="#4a2a8a"/><stop offset=".55" stop-color="#170f30"/><stop offset="1" stop-color="#05040a"/></radialGradient>
         <linearGradient id="${u}m" x1="0" x2="1"><stop offset="0" stop-color="#9ad4ff"/><stop offset=".5" stop-color="#1e5cc8"/><stop offset=".5" stop-color="#b01a26"/><stop offset="1" stop-color="#ff7a7a"/></linearGradient>
         <linearGradient id="${u}b" x1="1" x2="0"><stop offset="0" stop-color="#bfe4ff"/><stop offset="1" stop-color="#2a6ad0"/></linearGradient>
         <linearGradient id="${u}r" x1="1" x2="0"><stop offset="0" stop-color="#ffc4c4"/><stop offset="1" stop-color="#c8202a"/></linearGradient>
         <linearGradient id="${u}s" x1="0" x2="1"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".55"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
-        <radialGradient id="${u}n" cy=".42"><stop offset="0" stop-color="#4a2a8a"/><stop offset=".55" stop-color="#170f30"/><stop offset="1" stop-color="#05040a"/></radialGradient>
         <radialGradient id="${u}h"><stop offset="0" stop-color="#fff" stop-opacity=".7"/><stop offset=".45" stop-color="#c8a8ff" stop-opacity=".35"/><stop offset="1" stop-color="#c8a8ff" stop-opacity="0"/></radialGradient>
         <clipPath id="${u}c"><circle r="66"/></clipPath>
       </defs>
-      <circle class="mc-halo" r="99" fill="url(#${u}h)"/>
-      <g class="mc-rays" fill="url(#${u}g)" opacity=".45">${rays}</g>
+      <circle r="99" fill="url(#${u}h)">${A.fade('1;.55;1', 3.2)}</circle>
+      <g fill="url(#${u}g)" opacity=".45">${A.spin(40)}${rays}</g>
       <g fill="url(#${u}b)" stroke="#0a1a3a" stroke-width=".8">${wing}</g>
-      <g transform="scale(-1,1)" fill="url(#${u}r)" stroke="#3a0a10" stroke-width=".8">${wing}</g>
-      <g class="mc-sabers" stroke-linecap="round">
-        <line class="mc-blade b" x1="-56" y1="56" x2="74" y2="-74" stroke="#eaf6ff" stroke-width="5"/>
-        <line class="mc-blade r" x1="56" y1="56" x2="-74" y2="-74" stroke="#fff0f0" stroke-width="5"/>
-        <line x1="-72" y1="72" x2="-56" y2="56" stroke="#9aa4b4" stroke-width="7"/><line x1="72" y1="72" x2="56" y2="56" stroke="#9aa4b4" stroke-width="7"/>
-      </g>
+      <g transform="scale(-1,1)"><g fill="url(#${u}r)" stroke="#3a0a10" stroke-width=".8">${wing}</g></g>
+      <g stroke-linecap="round">${saber(-56, '#4aa8ff', 0.14)}${saber(56, '#ff2a3a', 0.17)}
+        <line x1="-72" y1="72" x2="-56" y2="56" stroke="#9aa4b4" stroke-width="7"/><line x1="72" y1="72" x2="56" y2="56" stroke="#9aa4b4" stroke-width="7"/></g>
       <circle r="74" fill="url(#${u}n)" stroke="url(#${u}g)" stroke-width="6"/>
-      <g fill="#fff">${Array.from({ length: 14 }, (_, k) => `<circle class="mc-dot" style="--d:${(k % 5) * 0.5}s" cx="${(Math.cos(k * 2.4) * (20 + (k * 17) % 40)).toFixed(1)}" cy="${(Math.sin(k * 2.4) * (20 + (k * 17) % 40)).toFixed(1)}" r="${k % 3 ? 0.8 : 1.4}"/>`).join('')}</g>
-      <circle class="mc-runes" r="69" fill="none" stroke="url(#${u}g)" stroke-width="3" stroke-dasharray="1.5 5.5" opacity=".85"/>
+      <g fill="#fff">${Array.from({ length: 14 }, (_, k) => `<circle cx="${(Math.cos(k * 2.4) * (20 + (k * 17) % 40)).toFixed(1)}" cy="${(Math.sin(k * 2.4) * (20 + (k * 17) % 40)).toFixed(1)}" r="${k % 3 ? 0.8 : 1.4}">${A.fade('1;.3;1', 2.6, -(k % 5) * 0.5)}</circle>`).join('')}</g>
+      <circle r="69" fill="none" stroke="url(#${u}g)" stroke-width="3" stroke-dasharray="1.5 5.5" opacity=".85">${A.spin(22, true)}</circle>
       <circle r="63" fill="none" stroke="url(#${u}g)" stroke-width="1.2" opacity=".7"/>
-      <ellipse class="mc-beam" cy="-6" rx="22" ry="60" fill="url(#${u}h)"/>
+      <ellipse cy="-6" rx="22" ry="60" fill="url(#${u}h)">${A.fade('1;.5;1', 2.4)}</ellipse>
       <path d="M0,-63 L13,-47 L11,44 L-11,44 L-13,-47Z" fill="url(#${u}m)"/>
       <path d="M0,-63 L0,44 L11,44 L13,-47Z" fill="#000" opacity=".22"/>
       <path d="M0,-63 L13,-47 L-13,-47Z" fill="url(#${u}g)" stroke="#3a2400" stroke-width=".8"/>
       <path d="M-13,-47 H13" stroke="#3a2400" stroke-width="1.2"/>
       <path d="M0,-63 L13,-47 L11,44 L-11,44 L-13,-47Z" fill="none" stroke="url(#${u}g)" stroke-width="2" stroke-linejoin="round"/>
-      <line class="mc-core" x1="0" y1="-44" x2="0" y2="42" stroke="#fff" stroke-width="1.6"/>
-      <g class="mc-glyphs" stroke="#fff" stroke-width="1.6" stroke-linecap="round" fill="none">
+      <line x1="0" y1="-44" x2="0" y2="42" stroke="#fff" stroke-width="1.6" filter="url(#${u}f)">${A.fade('1;.45;1', 2.4)}</line>
+      <g stroke="#fff" stroke-width="1.6" stroke-linecap="round" fill="none" filter="url(#${u}f)">${A.fade('1;.45;1', 3)}
         <path d="M-6,-32 H6 M-4,-27 L4,-27"/><path d="M-5,-12 L0,-17 L5,-12"/><circle cy="4" r="4"/><path d="M-5,20 L5,26 M5,20 L-5,26"/>
       </g>
       <path d="M-18,44 H18 V50 H-18Z M-25,50 H25 V56 H-25Z" fill="url(#${u}g)" stroke="#3a2400" stroke-width=".8"/>
-      <g clip-path="url(#${u}c)"><g transform="skewX(-20)"><rect class="mc-shine" x="-150" y="-100" width="46" height="200" fill="url(#${u}s)"/></g></g>
+      <g clip-path="url(#${u}c)"><g transform="skewX(-20)"><rect x="-150" y="-100" width="46" height="200" fill="url(#${u}s)">${A.shine(-150, 150, 3.6)}</rect></g></g>
       ${gems}
-      <g transform="translate(0,-76)"><path class="mc-star" d="M0,-15 L3.5,-3.5 L15,0 L3.5,3.5 L0,15 L-3.5,3.5 L-15,0 L-3.5,-3.5Z" fill="#fff" stroke="url(#${u}g)" stroke-width="1.5"/></g>
-      <path d="M-50,77 H-72 L-63,86 L-72,95 H-50Z M50,77 H72 L63,86 L72,95 H50Z" fill="#7a5200" stroke="#3a2400" stroke-width="1"/>
-      <rect x="-52" y="72" width="104" height="20" rx="2" fill="url(#${u}g)" stroke="#3a2400" stroke-width="1.2"/>
-      <text y="86.5" text-anchor="middle" font-size="12" font-weight="800" letter-spacing="5" fill="#2a1a00" font-family="inherit">MASTER</text>
+      <g transform="translate(0,-76)"><path d="M0,-15 L3.5,-3.5 L15,0 L3.5,3.5 L0,15 L-3.5,3.5 L-15,0 L-3.5,-3.5Z" fill="#fff" stroke="url(#${u}g)" stroke-width="1.5" filter="url(#${u}f)">${A.twist(2)}</path></g>
+      ${ribbon(u, 'MASTER')}
     </svg>`;
   };
+
   // Galactic Grinder (account level 50): a turning beskar cog around a
   // hyperspace core, the rank number, three chevrons and a Kyber shard on top.
   const grinderCrest = () => {
@@ -2217,36 +2253,87 @@
     const rays = Array.from({ length: 24 }, (_, k) => `<polygon points="0,${k % 2 ? -88 : -100} 3.5,0 -3.5,0" transform="rotate(${k * 15})"/>`).join('');
     const warp = Array.from({ length: 20 }, (_, k) => {
       const a = (k / 20) * Math.PI * 2 + (k % 2) * 0.12;
-      return `<line style="--d:${((k * 7) % 10) * -0.12}s" x1="${(Math.cos(a) * 12).toFixed(1)}" y1="${(Math.sin(a) * 12).toFixed(1)}" x2="${(Math.cos(a) * 70).toFixed(1)}" y2="${(Math.sin(a) * 70).toFixed(1)}"/>`;
+      return `<line stroke-dasharray="10 70" x1="${(Math.cos(a) * 12).toFixed(1)}" y1="${(Math.sin(a) * 12).toFixed(1)}" x2="${(Math.cos(a) * 70).toFixed(1)}" y2="${(Math.sin(a) * 70).toFixed(1)}">${A.dash(80, 1.1, -((k * 7) % 10) * 0.12)}</line>`;
     }).join('');
     return `<svg class="mc gr" viewBox="-100 -100 200 200" aria-hidden="true">
-      <defs>
-        <linearGradient id="${u}g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6c8"/><stop offset=".35" stop-color="#ffd23f"/><stop offset=".7" stop-color="#b06a08"/><stop offset="1" stop-color="#ffe08a"/></linearGradient>
+      <defs>${gold(`${u}g`)}${glowDefs(u)}
         <linearGradient id="${u}t" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f4f7fb"/><stop offset=".5" stop-color="#8a96a8"/><stop offset="1" stop-color="#3a4252"/></linearGradient>
         <radialGradient id="${u}c"><stop offset="0" stop-color="#5a2208"/><stop offset=".6" stop-color="#1e0a04"/><stop offset="1" stop-color="#060302"/></radialGradient>
         <radialGradient id="${u}e"><stop offset="0" stop-color="#fff4d0" stop-opacity=".9"/><stop offset=".35" stop-color="#ff9a2a" stop-opacity=".7"/><stop offset=".8" stop-color="#a8200a" stop-opacity=".25"/><stop offset="1" stop-color="#a8200a" stop-opacity="0"/></radialGradient>
         <radialGradient id="${u}h"><stop offset="0" stop-color="#ffcf7a" stop-opacity=".7"/><stop offset=".5" stop-color="#ff7a1a" stop-opacity=".3"/><stop offset="1" stop-color="#ff7a1a" stop-opacity="0"/></radialGradient>
         <clipPath id="${u}k"><circle r="70"/></clipPath>
       </defs>
-      <circle class="mc-halo" r="99" fill="url(#${u}h)"/>
-      <g class="gr-rays" fill="url(#${u}g)" opacity=".4">${rays}</g>
-      <path class="gr-cog" d="${cog}" fill="url(#${u}t)" stroke="url(#${u}g)" stroke-width="2" stroke-linejoin="round"/>
-      <circle class="gr-orbit" r="86" fill="none" stroke="#ffb347" stroke-width="3" stroke-linecap="round" stroke-dasharray="46 494"/>
-      <circle class="gr-orbit b" r="86" fill="none" stroke="#fff1c8" stroke-width="2" stroke-linecap="round" stroke-dasharray="22 518"/>
+      <circle r="99" fill="url(#${u}h)">${A.fade('1;.55;1', 3)}</circle>
+      <g fill="url(#${u}g)" opacity=".4">${A.spin(50, true)}${rays}</g>
+      <path d="${cog}" fill="url(#${u}t)" stroke="url(#${u}g)" stroke-width="2" stroke-linejoin="round">${A.spin(30)}</path>
+      <g filter="url(#${u}f)" fill="none" stroke-linecap="round">
+        <circle r="86" stroke="#ffb347" stroke-width="3" stroke-dasharray="46 494">${A.spin(2.6)}</circle>
+        <circle r="86" stroke="#fff1c8" stroke-width="2" stroke-dasharray="22 518">${A.spin(3.9, true)}</circle>
+      </g>
       <circle r="76" fill="url(#${u}c)" stroke="url(#${u}g)" stroke-width="6"/>
-      <g clip-path="url(#${u}k)"><g class="gr-warp" stroke="#ffd9a0" stroke-width="1.6" stroke-linecap="round">${warp}</g></g>
-      <circle class="gr-ember" r="46" fill="url(#${u}e)"/>
+      <g clip-path="url(#${u}k)"><g stroke="#ffd9a0" stroke-width="1.6" stroke-linecap="round">${warp}</g></g>
+      <circle r="46" fill="url(#${u}e)">${A.fade('1;.55;1', 2)}</circle>
       <circle r="69" fill="none" stroke="url(#${u}g)" stroke-width="1.2" opacity=".7"/>
-      <text class="gr-num" y="16" text-anchor="middle" font-size="62" font-weight="900" fill="url(#${u}g)" stroke="#3a1a00" stroke-width="2" paint-order="stroke" font-family="inherit" letter-spacing="-2">50</text>
-      ${[0, 1, 2].map((k) => `<path class="gr-chev" style="--d:${k * 0.25}s" d="M-17,0 L0,8 L17,0" transform="translate(0,${30 + k * 8})" fill="none" stroke="url(#${u}g)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>`).join('')}
-      <g transform="translate(0,-82)"><path class="gr-kyber" d="M0,-15 L7,-5 L5,13 L-5,13 L-7,-5Z" fill="#7cd0ff" stroke="#eaf8ff" stroke-width="1.5" stroke-linejoin="round"/></g>
-      <path d="M-50,77 H-72 L-63,86 L-72,95 H-50Z M50,77 H72 L63,86 L72,95 H50Z" fill="#7a3a00" stroke="#3a1a00" stroke-width="1"/>
-      <rect x="-54" y="72" width="108" height="20" rx="2" fill="url(#${u}g)" stroke="#3a1a00" stroke-width="1.2"/>
-      <text y="86.5" text-anchor="middle" font-size="11" font-weight="800" letter-spacing="4" fill="#2a1200" font-family="inherit">GRINDER</text>
+      <text y="16" text-anchor="middle" font-size="62" font-weight="900" fill="url(#${u}g)" stroke="#3a1a00" stroke-width="2" paint-order="stroke" font-family="inherit" letter-spacing="-2" filter="url(#${u}f)">50</text>
+      ${[0, 1, 2].map((k) => `<path d="M-17,0 L0,8 L17,0" transform="translate(0,${30 + k * 8})" fill="none" stroke="url(#${u}g)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">${A.fade('.6;.6;1;.6', 2.2, k * 0.25)}</path>`).join('')}
+      <g transform="translate(0,-82)"><path d="M0,-15 L7,-5 L5,13 L-5,13 L-7,-5Z" fill="#7cd0ff" stroke="#eaf8ff" stroke-width="1.5" stroke-linejoin="round" filter="url(#${u}f)">${A.pop(2.6, 0, 1.2)}</path></g>
+      ${ribbon(u, 'GRINDER', '#2a1200', '#7a3a00')}
+    </svg>`;
+  };
+
+  // Standard medals (Bronze, Silver, Credit, Kyber): a bevelled hex on a ribbon,
+  // with more added the rarer it is: laurels from Silver; a credit chip,
+  // sunburst and sparkles at Credit; a Kyber crystal, orbiting shards and a
+  // crystal tip at Kyber.
+  const RIBBON = [null, ['#8a2a1a', '#d08a4a'], ['#22407a', '#dfe6ee'], ['#a01a24', '#ffd23f'], ['#0f2e6e', '#7cd0ff']];
+  const medalCrest = (x) => {
+    const t = Math.max(1, Math.min(4, x.tier || 1));
+    const [, m1, m2] = FEAT_TIER[t];
+    const u = `md${++crestSeq}`;
+    const hex = (r) => Array.from({ length: 6 }, (_, k) => { const a = ((k * 60 - 90) * Math.PI) / 180; return `${(Math.cos(a) * r).toFixed(1)},${(Math.sin(a) * r).toFixed(1)}`; }).join(' ');
+    const star = (cx, cy, r) => { const p = []; for (let k = 0; k < 10; k++) { const a = ((k * 36 - 90) * Math.PI) / 180; const rr = k % 2 ? r * 0.45 : r; p.push(`${(cx + Math.cos(a) * rr).toFixed(1)},${(cy + Math.sin(a) * rr).toFixed(1)}`); } return `<polygon points="${p.join(' ')}" fill="${m1}" stroke="#1a1208" stroke-width="1"/>`; };
+    const laurel = () => Array.from({ length: 7 }, (_, k) => {
+      const a = ((128 + k * 15) * Math.PI) / 180;
+      const x0 = Math.cos(a) * 74; const y0 = Math.sin(a) * 74;
+      return `<ellipse cx="${x0.toFixed(1)}" cy="${y0.toFixed(1)}" rx="11" ry="4.6" transform="rotate(${(128 + k * 15 + 70).toFixed(0)} ${x0.toFixed(1)} ${y0.toFixed(1)})"/>`;
+    }).join('');
+    const [rb, rs] = RIBBON[t];
+    const shards = t >= 4 ? Array.from({ length: 6 }, (_, k) => `<g transform="rotate(${k * 60}) translate(0,-90)"><path d="M0,-8 L4,-2 L3,7 L-3,7 L-4,-2Z" fill="#bfeaff" stroke="#fff" stroke-width=".8" filter="url(#${u}f)">${A.fade('1;.5;1', 1.8, -k * 0.3)}</path></g>`).join('') : '';
+    const sparks = t >= 3 ? [[-62, -58], [64, -50], [-70, 30], [68, 40]].map(([sx, sy], k) => `<g transform="translate(${sx},${sy})"><path d="M0,-7 L1.6,-1.6 L7,0 L1.6,1.6 L0,7 L-1.6,1.6 L-7,0 L-1.6,-1.6Z" fill="#fff" filter="url(#${u}f)" opacity="0">${A.fade('0;1;0', 2.4, -k * 0.6)}</path></g>`).join('') : '';
+    return `<svg class="mc md t${t}" viewBox="-100 -100 200 200" aria-hidden="true">
+      <defs>${glowDefs(u)}
+        <linearGradient id="${u}m" x1="0" y1="0" x2=".3" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".9"/><stop offset=".18" stop-color="${m1}"/><stop offset=".7" stop-color="${m2}"/><stop offset="1" stop-color="${m1}"/></linearGradient>
+        <radialGradient id="${u}i" cy=".35"><stop offset="0" stop-color="${m1}" stop-opacity=".55"/><stop offset=".7" stop-color="${m2}"/><stop offset="1" stop-color="#0a0806"/></radialGradient>
+        <radialGradient id="${u}h"><stop offset="0" stop-color="${m1}" stop-opacity=".55"/><stop offset="1" stop-color="${m1}" stop-opacity="0"/></radialGradient>
+        <linearGradient id="${u}s" x1="0" x2="1"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".6"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+        <clipPath id="${u}c"><polygon points="${hex(62)}"/></clipPath>
+      </defs>
+      ${t >= 2 ? `<circle r="96" fill="url(#${u}h)">${A.fade('1;.5;1', 2.8)}</circle>` : ''}
+      ${t >= 3 ? `<g fill="${m1}" opacity=".35">${A.spin(t >= 4 ? 24 : 36)}${Array.from({ length: 20 }, (_, k) => `<polygon points="0,${k % 2 ? -84 : -98} 4,0 -4,0" transform="rotate(${k * 18})"/>`).join('')}</g>` : ''}
+      ${t >= 4 ? `<g>${A.spin(10)}${shards}</g><circle r="80" fill="none" stroke="#bfeaff" stroke-width="1" stroke-dasharray="2 9" opacity=".7">${A.spin(16, true)}</circle>` : ''}
+      <g stroke="#1a1208" stroke-width="1">
+        <path d="M-24,36 L-40,96 L-30,90 L-22,99 L-8,40Z" fill="${rb}"/><path d="M24,36 L40,96 L30,90 L22,99 L8,40Z" fill="${rb}"/>
+        <path d="M-17,38 L-30,90 L-26,92 L-12,40Z" fill="${rs}" opacity=".8" stroke="none"/><path d="M17,38 L30,90 L26,92 L12,40Z" fill="${rs}" opacity=".8" stroke="none"/>
+      </g>
+      ${t >= 2 ? `<g fill="url(#${u}m)" stroke="#1a1208" stroke-width=".8">${laurel()}<g transform="scale(-1,1)">${laurel()}</g></g>` : ''}
+      <polygon points="${hex(66)}" fill="#1a1208" opacity=".5" transform="translate(0,4)"/>
+      <polygon points="${hex(64)}" fill="url(#${u}m)" stroke="#1a1208" stroke-width="2" stroke-linejoin="round"/>
+      <polygon points="${hex(53)}" fill="url(#${u}i)" stroke="${m1}" stroke-width="2" stroke-linejoin="round"/>
+      <polygon points="${hex(47)}" fill="none" stroke="#fff" stroke-opacity=".25" stroke-width="1"/>
+      ${t >= 3 ? `<circle r="33" fill="#0a0806" opacity=".55" stroke="${m1}" stroke-width="1.5" stroke-opacity=".8"/>` : ''}
+      <g filter="url(#${u}f)">${t === 3 ? artIn('credits', 60) : t === 4 ? artIn('crystals', 62) : iconIn(x.icon, 50, '#fff')}</g>
+      <g clip-path="url(#${u}c)"><g transform="skewX(-20)"><rect x="-140" y="-100" width="40" height="200" fill="url(#${u}s)">${A.shine(-140, 140, 3.2)}</rect></g></g>
+      ${t >= 4 ? `<g transform="translate(0,-66)"><path d="M0,-16 L8,-5 L6,13 L-6,13 L-8,-5Z" fill="#7cd0ff" stroke="#eaf8ff" stroke-width="1.5" stroke-linejoin="round" filter="url(#${u}f)">${A.pop(2.4, 0, 1.18)}</path></g>` : ''}
+      ${sparks}
+      <g>${Array.from({ length: t }, (_, k) => star((k - (t - 1) / 2) * 17, 74, 7)).join('')}</g>
     </svg>`;
   };
   const CRESTS = { secret_all: () => monolithCrest(), grinder: () => grinderCrest() };
-  const featBadge = (x, cls = '') => CRESTS[x.id] ? `<div class="fs-badge master-crest ${cls}">${CRESTS[x.id]()}</div>` : `<div class="fs-badge ${cls} ${x.secret ? 'secret' : ''}" style="--m1:${FEAT_TIER[x.tier || 1][1]};--m2:${FEAT_TIER[x.tier || 1][2]}"><span class="fs-medal"><span class="fs-ico">${root.Icons.svg(x.icon)}</span></span></div>`;
+  const featBadge = (x, cls = '') => {
+    if (CRESTS[x.id]) return `<div class="fs-badge master-crest ${cls}">${CRESTS[x.id]()}</div>`;
+    if (!x.secret) return `<div class="fs-badge medal-crest ${cls}" style="--m1:${FEAT_TIER[x.tier || 1][1]}">${medalCrest(x)}</div>`;
+    return `<div class="fs-badge ${cls} secret" style="--m1:${FEAT_TIER[x.tier || 1][1]};--m2:${FEAT_TIER[x.tier || 1][2]}"><span class="fs-medal"><span class="fs-ico">${root.Icons.svg(x.icon)}</span></span></div>`;
+  };
 
   function playFeat(x) {
     if (x.secret) return featCutscene(x);
@@ -2336,6 +2423,14 @@
   }
 
   // The first time a secret feat is earned it plays by itself.
+  function markFeatSeen(id) {
+    let seen = [];
+    try { seen = JSON.parse(localStorage.getItem('swcg-feats-seen') || '[]'); } catch (e) { seen = []; }
+    if (seen.includes(id)) return;
+    seen.push(id);
+    try { localStorage.setItem('swcg-feats-seen', JSON.stringify(seen)); } catch (e) { /* storage unavailable */ }
+  }
+
   function celebrateFeat(id) {
     let seen = [];
     try { seen = JSON.parse(localStorage.getItem('swcg-feats-seen') || '[]'); } catch (e) { seen = []; }
@@ -2824,5 +2919,5 @@
     });
   }
 
-  root.UI = { walkout, settings, profile, playFeat, celebrateFeat, soundSettings: settings, homeworldOf, $, $$, el, esc, fmt, cur, portrait, stars, unitCard, toast, openModal, confirmBox, updateWallet, inspect, synergyBanner, App, Screens };
+  root.UI = { walkout, settings, profile, playFeat, celebrateFeat, markFeatSeen, soundSettings: settings, homeworldOf, $, $$, el, esc, fmt, cur, portrait, stars, unitCard, toast, openModal, confirmBox, updateWallet, inspect, synergyBanner, App, Screens };
 })(window);

@@ -209,6 +209,8 @@
       App.go(nav.dataset.nav);
     });
     App.go('home');
+    // First open (or a save from before the tutorial existed): run it once.
+    if (root.Player.tutorialPending() && root.Tutorial) root.Tutorial.start();
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);

@@ -41,8 +41,9 @@
     },
 
     async start(params) {
-      const enc = Player.encounter(params);
-      const squad = Player.squadEntries(enc.kind);
+      const tut = params.type === 'tutorial';
+      const enc = tut ? root.Tutorial.encounter() : Player.encounter(params);
+      const squad = tut ? root.Tutorial.squad() : Player.squadEntries(enc.kind);
       if (!squad.length) return toast('Pick at least one unit for your squad.');
       if (params.type === 'secret' && !params.preview) {
         if (!Player.secretOpen(params.boss)) return toast(`Sealed: ${Player.secretReqs(params.boss).filter((r) => !r.ok).map((r) => r.label).join(' · ')}`);
@@ -60,21 +61,24 @@
         squad,
         enc.enemies.map((id) => ({ id, level: enc.level, stars: enc.stars || 1 })),
         null,
-        { planet: enc.planet, enemyScale: enc.enemyScale },
+        { planet: enc.planet, enemyScale: enc.enemyScale, tutorial: tut },
       );
+      // Training: the squad starts part-charged so an Ultimate comes up early.
+      if (tut) for (const u of this.battle.side('player')) u.ult = 55;
 
       App.battleActive = true;
       App.current = 'battle';
       document.body.classList.add('in-battle');
       document.documentElement.style.setProperty('--speed', this.speed);
       this.renderScreen();
+      if (tut) this.view.classList.add('tutorial');
       if (root.Sound) root.Sound.music('battle');
       await this.hyperspace();
       if (enc.boss) await this.bossIntro(D.UNIT_MAP[enc.boss]);
       this.log(`Battle begins: ${enc.name}!`, 'ult');
       const planet = D.PLANET_MAP[this.planetId];
       if (planet) this.log(`${planet.name}: ${planet.terrain.name}. ${planet.hazard.name} every ${planet.hazard.every} turns.`, 'hazard');
-      if (!this.prefs.seenKeys && window.matchMedia('(hover: hover)').matches) {
+      if (!tut && !this.prefs.seenKeys && window.matchMedia('(hover: hover)').matches) {
         this.prefs.seenKeys = true;
         savePrefs(this.prefs);
         toast('PC controls: 1–5 abilities, ←/→ target, Enter to attack, ? for help');
@@ -317,6 +321,11 @@
         <div class="hint">${hint}</div>
         <div class="est-line" data-est></div>
       </div>`;
+      if (this.isTutorial()) root.Tutorial.reglow();
+    },
+
+    isTutorial() {
+      return !!(this.params && this.params.type === 'tutorial' && root.Tutorial);
     },
 
     // Expected numbers for an ability, so you can do the maths in your head.
@@ -410,6 +419,7 @@
         this.selected = this.battle.isReady(actor, ult) ? ult : 0;
         this.renderActions(actor, 'input');
         this.highlightTargets(actor);
+        if (this.isTutorial()) root.Tutorial.onTurn(this, actor);
       });
     },
 
@@ -418,6 +428,7 @@
       const { resolve } = this.pending;
       this.pending = null;
       this.clearTargets();
+      if (action && this.isTutorial()) root.Tutorial.onAction();
       resolve(action);
     },
 
@@ -601,12 +612,13 @@
         if (skipped || b.winner()) continue;
 
         let action;
-        if (actor.side === 'player' && !this.prefs.auto) {
+        if (actor.side === 'player' && (!this.prefs.auto || this.isTutorial())) {
           action = await this.awaitPlayer(actor);
         } else {
           this.renderActions(actor);
           await this.wait(actor.side === 'enemy' ? 650 : 380);
           action = b.chooseAction(actor);
+          if (actor.side === 'enemy' && this.isTutorial()) root.Tutorial.onEnemy();
         }
         if (stale() || !action) return;
         this.renderActions(actor);
@@ -1947,6 +1959,11 @@
       // A real beat after the last hit, whatever the battle speed.
       await new Promise((r) => setTimeout(r, 1000));
       const won = winner === 'player';
+      if (this.isTutorial()) {
+        this.teardown();
+        if (root.Sound) root.Sound.music('menu');
+        return root.Tutorial.victory();
+      }
       if (root.Sound) { root.Sound.play(won ? 'victory' : 'defeat'); root.Sound.music('menu'); }
       const rewards = Player.completeEncounter(this.params, won);
       this.teardown();

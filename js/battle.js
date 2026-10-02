@@ -85,6 +85,8 @@
       }
       this.turnCount = 0;
       this.lastHazard = 0;
+      // Training battle: the player's squad cannot actually fall.
+      this.tutorial = !!opts.tutorial;
     }
 
     // Planet hazards fire every N turns. Returns events or null.
@@ -416,7 +418,11 @@
     }
 
     applyDamage(target, amount, crit, events, source) {
-      target.hp = Math.max(0, target.hp - amount);
+      // In training, hits on your squad are softened and never finish a unit off.
+      if (this.tutorial && target.side === 'player') {
+        amount = Math.max(1, Math.round(amount * 0.45));
+        target.hp = Math.max(Math.min(target.hp, Math.ceil(target.maxHp * 0.15)), target.hp - amount);
+      } else target.hp = Math.max(0, target.hp - amount);
       this.chargeUlt(target, (amount / target.maxHp) * ULT_PER_TAKEN);
       if (target.boss && !target.enraged && target.hp > 0 && target.hp <= target.maxHp / 2) {
         target.enraged = true;

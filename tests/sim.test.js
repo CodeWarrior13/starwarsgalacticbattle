@@ -513,4 +513,49 @@ test('secret cards have their own rarity and never come from crates, shops or bo
   for (const u of secret) assert.ok(!seen.has(u.id), `${u.id} never drops outside the Monolith`);
 });
 
+test('a new recruit starts empty and the tutorial hands out the starter squad once', () => {
+  globalThis.localStorage = { store: {}, getItem(k) { return this.store[k] || null; }, setItem(k, v) { this.store[k] = String(v); }, removeItem(k) { delete this.store[k]; } };
+  Player.load();
+  assert.ok(Player.tutorialPending(), 'tutorial pending on first open');
+  assert.strictEqual(Object.keys(Player.state.units).length, 0, 'no cards before the tutorial');
+  assert.strictEqual(Player.state.credits, 0);
+  const res = Player.finishTutorial('completed');
+  assert.strictEqual(res.units.length, D.STARTER.units.length, 'all ten starter cards unlock');
+  assert.strictEqual(Player.state.credits, D.STARTER.credits);
+  assert.strictEqual(Player.state.crystals, D.STARTER.crystals);
+  assert.ok(Player.state.squads.character.length > 0 && Player.state.squads.ship.length > 0, 'squads are filled');
+  assert.strictEqual(Player.finishTutorial('completed'), null, 'it only pays out once');
+  Player.load();
+  assert.ok(!Player.tutorialPending(), 'never shown again once done');
+  delete globalThis.localStorage;
+});
+
+test('existing players get the tutorial once but no second starter payout', () => {
+  globalThis.localStorage = { store: {}, getItem(k) { return this.store[k] || null; }, setItem(k, v) { this.store[k] = String(v); }, removeItem(k) { delete this.store[k]; } };
+  Player.reset();
+  delete Player.state.tutorial;
+  Player.state.credits = 1234;
+  Player.save();
+  Player.load();
+  assert.ok(Player.tutorialPending(), 'saves from before the tutorial get it');
+  assert.strictEqual(Object.keys(Player.state.units).length, D.STARTER.units.length, 'they keep their cards');
+  const res = Player.finishTutorial('skipped');
+  assert.strictEqual(res.credits, 0);
+  assert.strictEqual(Player.state.credits, 1234, 'no extra starter credits');
+  assert.strictEqual(Player.state.tutorial.how, 'skipped');
+  delete globalThis.localStorage;
+});
+
+test('the training battle cannot be lost', () => {
+  const squad = ['rebel_soldier', 'jawa'].map((id) => ({ id, level: 1, stars: 1 }));
+  const foes = ['darth_vader', 'darth_vader', 'darth_vader'].filter((id) => D.UNIT_MAP[id]).map((id) => ({ id, level: 40, stars: 7 }));
+  const b = new Battle(squad, foes.length ? foes : [{ id: 'stormtrooper', level: 60, stars: 7 }], seeded(3), { tutorial: true });
+  for (let i = 0; i < 400; i++) {
+    const actor = b.advance();
+    const { skipped } = b.beginTurn(actor);
+    if (!skipped && actor.side === 'enemy') { const a = b.chooseAction(actor); b.act(actor, a.abilityIndex, a.targetUid); }
+  }
+  assert.ok(b.side('player').every((u) => u.alive && u.hp > 0), 'nobody on the player side falls');
+});
+
 console.log(`\n${passed} tests passed`);

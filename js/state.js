@@ -27,7 +27,22 @@
       daily: { streak: 0, last: null, best: 0 },
       tower: { floor: 1, best: 0, runs: 0 },
       secret: { found: false, beaten: {}, fails: {} },
+      // done: finished or skipped. fresh: a brand-new save, so finishing also
+      // pays out the starter credits and Kyber.
+      tutorial: { done: false, how: null, fresh: false },
     };
+  }
+
+  // A first-time player starts with nothing: the tutorial hands out the
+  // starter squad and resources.
+  function recruitState() {
+    const s = freshState();
+    s.units = {};
+    s.squads = { character: [], ship: [] };
+    s.credits = 0;
+    s.crystals = 0;
+    s.tutorial.fresh = true;
+    return s;
   }
 
   function storage() {
@@ -75,8 +90,11 @@
           tower: { ...base.tower, ...loaded.tower },
           secret: { ...base.secret, ...loaded.secret, beaten: { ...(loaded.secret || {}).beaten }, fails: { ...(loaded.secret || {}).fails } },
           bosses: { ...loaded.bosses },
+          // Saves from before the tutorial existed have it pending, so current
+          // players get it once too (keeping everything they own).
+          tutorial: { ...base.tutorial, ...loaded.tutorial },
         }
-        : base;
+        : recruitState();
       delete this.state.dailyDeal;
       // Saves from before the Galaxy Map: carry cleared stages over, planet by planet.
       if (loaded && loaded.progress && !loaded.planets) {
@@ -94,14 +112,8 @@
         this.gainXp(pastXp, true);
       }
       // Squads grew to 5: hand out any missing starter units and fill the gaps.
-      for (const id of D.STARTER.units) if (!this.state.units[id]) this.state.units[id] = { level: 1, stars: 1, shards: 0 };
-      for (const kind of ['character', 'ship']) {
-        const squad = (this.state.squads[kind] || []).filter((id) => this.state.units[id]);
-        if (squad.length < D.SQUAD_SIZE[kind]) {
-          for (const id of this.autoSquad(kind)) if (squad.length < D.SQUAD_SIZE[kind] && !squad.includes(id)) squad.push(id);
-        }
-        this.state.squads[kind] = squad;
-      }
+      // A new recruit gets theirs from the tutorial instead.
+      if (!this.awaitingStarter()) this.grantStarterUnits();
       for (const id of Object.keys(this.state.units)) if (!D.UNIT_MAP[id] || D.UNIT_MAP[id].boss) delete this.state.units[id];
       return this.state;
     },
@@ -118,6 +130,65 @@
     reset() {
       this.state = freshState();
       this.save();
+    },
+
+    // Settings > Reset all progress: back to a brand-new recruit.
+    startOver() {
+      this.state = recruitState();
+      this.save();
+    },
+
+    // Settings > Replay tutorial: plays it again; it pays out nothing new and
+    // the badge stays earned.
+    replayTutorial() {
+      const t = this.state.tutorial;
+      this.state.tutorial = { done: false, how: null, fresh: false, badge: !!(t.badge || t.done) };
+      this.save();
+    },
+
+    // ---------- Tutorial ----------
+    tutorialPending() {
+      return !this.state.tutorial.done;
+    },
+
+    awaitingStarter() {
+      return this.state.tutorial.fresh && !this.state.tutorial.done;
+    },
+
+    grantStarterUnits() {
+      const granted = [];
+      for (const id of D.STARTER.units) {
+        if (!this.state.units[id]) { this.state.units[id] = { level: 1, stars: 1, shards: 0 }; granted.push(id); }
+      }
+      for (const kind of ['character', 'ship']) {
+        const squad = (this.state.squads[kind] || []).filter((id) => this.state.units[id]);
+        if (squad.length < D.SQUAD_SIZE[kind]) {
+          for (const id of this.autoSquad(kind)) if (squad.length < D.SQUAD_SIZE[kind] && !squad.includes(id)) squad.push(id);
+        }
+        this.state.squads[kind] = squad;
+      }
+      return granted;
+    },
+
+    // how: 'completed' or 'skipped'. Either way the starter squad unlocks; a
+    // brand-new save also gets the starting credits and Kyber. Runs once.
+    finishTutorial(how) {
+      const t = this.state.tutorial;
+      if (t.done) return null;
+      const units = this.grantStarterUnits();
+      const out = { how, units, credits: 0, crystals: 0 };
+      if (t.fresh) {
+        out.credits = D.STARTER.credits;
+        out.crystals = D.STARTER.crystals;
+        this.state.credits += out.credits;
+        this.state.crystals += out.crystals;
+      }
+      t.done = true;
+      t.how = how;
+      t.fresh = false;
+      t.badge = true;
+      this.save();
+      return out;
     },
 
     owns(id) {
