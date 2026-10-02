@@ -546,6 +546,20 @@ test('existing players get the tutorial once but no second starter payout', () =
   delete globalThis.localStorage;
 });
 
+test('beating a replayed tutorial earns the secret badge, skipping a replay does not', () => {
+  Player.reset();
+  assert.ok(!Player.finishTutorial('completed').again, 'the first clear is not a replay');
+  Player.replayTutorial();
+  assert.ok(Player.tutorialPending() && Player.state.tutorial.badge, 'replay keeps the badge');
+  const before = Player.state.credits;
+  const r = Player.finishTutorial('completed');
+  assert.ok(r.again && Player.state.tutorial.replays === 1, 'replay clear counts');
+  assert.strictEqual(Player.state.credits, before, 'replays pay nothing');
+  Player.replayTutorial();
+  assert.ok(!Player.finishTutorial('skipped').again, 'skipping a replay is not a clear');
+  assert.strictEqual(Player.state.tutorial.replays, 1);
+});
+
 test('the training battle cannot be lost', () => {
   const squad = ['rebel_soldier', 'jawa'].map((id) => ({ id, level: 1, stars: 1 }));
   const foes = ['darth_vader', 'darth_vader', 'darth_vader'].filter((id) => D.UNIT_MAP[id]).map((id) => ({ id, level: 40, stars: 7 }));

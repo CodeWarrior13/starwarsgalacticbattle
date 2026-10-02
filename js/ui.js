@@ -2150,6 +2150,7 @@
     // Secret feats stay off the list entirely until they are earned.
     if (s.secret.found) list.push({ id: 'secret_found', secret: true, tier: 5, icon: 'crescent', name: 'Into the Unknown', desc: 'Found the hidden way to the Monolith', have: 1, need: 1 });
     if (D.SECRET_BOSSES.every((b) => s.secret.beaten[b.id])) list.push({ id: 'secret_all', secret: true, tier: 6, icon: 'spark', name: 'Master of the Monolith', desc: 'Defeated all four trials beyond the map', have: 1, need: 1 });
+    if (s.tutorial && s.tutorial.replays) list.push({ id: 'tutorial_again', secret: true, tier: 5, icon: 'badge', name: 'Back for More?', desc: 'Oh, really? You just love the tutorial that much?', have: 1, need: 1 });
     if (s.account.level >= D.MAX_ACCOUNT_LEVEL) list.push({ id: 'grinder', secret: true, tier: 7, icon: 'spire', name: 'Galactic Grinder', desc: 'New features coming soon', have: 1, need: 1 });
     return list;
   }
@@ -2328,7 +2329,38 @@
       <g>${Array.from({ length: t }, (_, k) => star((k - (t - 1) / 2) * 17, 74, 7)).join('')}</g>
     </svg>`;
   };
-  const CRESTS = { secret_all: () => monolithCrest(), grinder: () => grinderCrest() };
+  // Back for More? (beating the tutorial twice): a training remote bobbing
+  // inside a rewind arrow that never stops turning backwards.
+  const againCrest = () => {
+    const u = `ag${++crestSeq}`;
+    const nubs = [-60, -20, 20, 60, 120, 160, 200, 240].map((a) => { const r = (a * Math.PI) / 180; return `<circle cx="${(Math.cos(r) * 36).toFixed(1)}" cy="${(Math.sin(r) * 36).toFixed(1)}" r="3.2" fill="#2a303c" stroke="#9aa4b4" stroke-width="1"/>`; }).join('');
+    const bob = motionOK() ? '<animateTransform attributeName="transform" type="translate" values="0 0;0 -5;0 0" dur="2.4s" repeatCount="indefinite"/>' : '';
+    return `<svg class="mc ag" viewBox="-100 -100 200 200" aria-hidden="true">
+      <defs>${gold(`${u}g`)}${glowDefs(u)}
+        <radialGradient id="${u}h"><stop offset="0" stop-color="#7cd0ff" stop-opacity=".6"/><stop offset="1" stop-color="#7cd0ff" stop-opacity="0"/></radialGradient>
+        <radialGradient id="${u}m" cx=".38" cy=".32"><stop offset="0" stop-color="#f4f7fb"/><stop offset=".45" stop-color="#9aa4b4"/><stop offset="1" stop-color="#2a303c"/></radialGradient>
+        <radialGradient id="${u}c"><stop offset="0" stop-color="#14304e"/><stop offset="1" stop-color="#05080f"/></radialGradient>
+      </defs>
+      <circle r="99" fill="url(#${u}h)">${A.fade('1;.5;1', 2.6)}</circle>
+      <circle r="74" fill="url(#${u}c)" stroke="url(#${u}g)" stroke-width="6"/>
+      <circle r="66" fill="none" stroke="#7cd0ff" stroke-width="1" stroke-dasharray="3 6" opacity=".6">${A.spin(14)}</circle>
+      <g filter="url(#${u}f)">${A.spin(5, true)}
+        <path d="M0,-86 A86,86 0 1,1 -74.5,-43" fill="none" stroke="#7cd0ff" stroke-width="5" stroke-linecap="round"/>
+        <path d="M-88,-50 L-74.5,-43 L-66,-58Z" fill="#7cd0ff" stroke="#7cd0ff" stroke-width="3" stroke-linejoin="round"/>
+      </g>
+      <g>${bob}
+        <line x1="-10" y1="-36" x2="-16" y2="-50" stroke="#9aa4b4" stroke-width="2.5" stroke-linecap="round"/><line x1="10" y1="-36" x2="16" y2="-50" stroke="#9aa4b4" stroke-width="2.5" stroke-linecap="round"/>
+        <circle r="38" fill="url(#${u}m)" stroke="#1a1f26" stroke-width="2"/>
+        <path d="M-38,0 A38,10 0 0,0 38,0" fill="none" stroke="#1a1f26" stroke-width="3"/>
+        <path d="M-38,0 A38,10 0 0,1 38,0" fill="none" stroke="#c8ced8" stroke-width="1" opacity=".6"/>
+        ${nubs}
+        <circle cx="0" cy="14" r="6" fill="#ff3a4a" filter="url(#${u}f)">${A.fade('1;.3;1', 1.2)}</circle>
+        <line x1="0" y1="20" x2="-26" y2="62" stroke="#ff3a4a" stroke-width="3" stroke-linecap="round" filter="url(#${u}f)" opacity="0">${A.fade('0;0;1;0', 2.4)}</line>
+      </g>
+      ${ribbon(u, 'AGAIN?', '#0a1a2a', '#123a6a')}
+    </svg>`;
+  };
+  const CRESTS = { secret_all: () => monolithCrest(), grinder: () => grinderCrest(), tutorial_again: () => againCrest() };
   const featBadge = (x, cls = '') => {
     if (CRESTS[x.id]) return `<div class="fs-badge master-crest ${cls}">${CRESTS[x.id]()}</div>`;
     if (!x.secret) return `<div class="fs-badge medal-crest ${cls}" style="--m1:${FEAT_TIER[x.tier || 1][1]}">${medalCrest(x)}</div>`;
@@ -2354,6 +2386,7 @@
 
   function featCutscene(x) {
     if (x.id === 'grinder') return grinderCutscene(x);
+    if (x.id === 'tutorial_again') return againCutscene(x);
     const master = x.id === 'secret_all';
     const bosses = D.SECRET_BOSSES.map((b) => D.UNIT_MAP[b.id]);
     const node = el(`<div class="feat-cine ${master ? 'master' : ''}" role="dialog" aria-label="${esc(x.name)}">
@@ -2417,6 +2450,39 @@
       node.classList.add('reveal'); if (skip) node.classList.add('skip');
       node.querySelector('.pc-skip').textContent = 'Tap to close';
       if (S) { S.play('burst'); S.play('reveal_legendary'); setTimeout(() => S.play('jackpot'), 400); }
+    };
+    node.addEventListener('click', () => (node.classList.contains('reveal') ? close() : reveal(true)));
+    at(REVEAL, () => reveal(false));
+  }
+
+  // Back for More?: the tape rewinds to Rex, who is not impressed.
+  function againCutscene(x) {
+    const rex = D.UNIT_MAP.captain_rex;
+    const takes = ((Player.state.tutorial && Player.state.tutorial.replays) || 1) + 1;
+    const node = el(`<div class="feat-cine again" role="dialog" aria-label="${esc(x.name)}">
+      <div class="fa-vhs"></div>
+      <span class="fa-tag fa-rew">◀◀ REWIND</span><span class="fa-tag fa-take">TAKE ${takes}</span>
+      <div class="fa-rex">${portrait(rex, { plate: false })}</div>
+      <div class="fa-lines"><p style="--i:0">Wait…</p><p style="--i:1">Commander, you've clearly done this before.</p><p style="--i:2">You just love the tutorial that much?</p></div>
+      <i class="fc-flash"></i>
+      ${featBadge(x, 'fc-badge')}
+      ${Array.from({ length: 70 }, (_, k) => `<i class="fs-spark" style="--a:${(k * 137.5) % 360}deg;--d:${(k % 9) * 0.05}s;--r:${22 + (k % 6) * 7}vmin;--c:${k % 2 ? '#7cd0ff' : '#ffffff'}"></i>`).join('')}
+      <div class="fs-text fc-text"><span class="fs-kicker">Secret achievement</span><b data-text="${esc(x.name)}">${esc(x.name)}</b><span>${esc(x.desc)}</span></div>
+      <span class="pc-skip">Tap to skip</span>
+    </div>`);
+    document.body.appendChild(node);
+    const S = root.Sound;
+    const at = (ms, fn) => setTimeout(() => node.isConnected && fn(), ms);
+    const REVEAL = 5200;
+    if (S) { S.play('glitch'); at(300, () => S.play('whoosh')); at(1800, () => S.play('click')); at(3100, () => S.play('click')); at(4400, () => S.play('click')); }
+    node.classList.add('play');
+    let done = false;
+    const close = () => { if (done) return; done = true; node.classList.add('out'); setTimeout(() => node.remove(), 500); };
+    const reveal = (skip) => {
+      if (node.classList.contains('reveal')) return;
+      node.classList.add('reveal'); if (skip) node.classList.add('skip');
+      node.querySelector('.pc-skip').textContent = 'Tap to close';
+      if (S) { S.play('burst'); S.play('reveal_epic'); setTimeout(() => S.play('rankup'), 350); }
     };
     node.addEventListener('click', () => (node.classList.contains('reveal') ? close() : reveal(true)));
     at(REVEAL, () => reveal(false));

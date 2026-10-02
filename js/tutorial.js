@@ -233,6 +233,12 @@
         node.classList.add('out');
         setTimeout(() => node.remove(), 350);
         ui().App.go('home');
+        // A replay skips the tour and goes straight to the Easter egg.
+        if (res.again) {
+          this.active = false;
+          ui().markFeatSeen('tutorial_again');
+          return setTimeout(() => ui().playFeat({ id: 'tutorial_again', secret: true, tier: 5, icon: 'badge', name: 'Back for More?', desc: 'Oh, really? You just love the tutorial that much?', have: 1, need: 1 }), 450);
+        }
         setTimeout(() => this.tour(), 450);
       });
     },

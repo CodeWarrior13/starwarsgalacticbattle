@@ -2989,3 +2989,20 @@ body.in-battle .tut-skip { bottom: auto; top: calc(10px + env(safe-area-inset-to
 .tut-welcome b { display: block; margin-top: 6px; font-size: 1.6em; color: var(--crawl); text-shadow: 0 0 30px rgba(255, 210, 63, 0.6); }
 @keyframes tw-in { from { opacity: 0; letter-spacing: 0.5em; filter: blur(6px); } }
 .settings-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+/* Back for More? cutscene */
+.feat-cine.again { background: radial-gradient(circle at 50% 40%, #0c1a2c, #020308 70%); }
+.fa-vhs { position: absolute; inset: 0; z-index: 5; pointer-events: none; background: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.05) 0 2px, transparent 2px 4px); animation: fa-jit 0.2s steps(2) infinite; }
+@keyframes fa-jit { 50% { transform: translateY(1px); } }
+.fa-tag { position: absolute; top: calc(18px + env(safe-area-inset-top, 0px)); z-index: 6; font-family: ui-monospace, Menlo, monospace; font-size: clamp(15px, 3vw, 22px); font-weight: 700; letter-spacing: 0.08em; color: #fff; text-shadow: 2px 0 #ff2a3a, -2px 0 #4aa8ff; }
+.fa-rew { left: 20px; animation: hint-fade 1s steps(2) infinite; }
+.fa-take { right: 20px; }
+.fa-rex { position: absolute; top: 16%; left: 50%; z-index: 3; width: clamp(110px, 26vmin, 170px); aspect-ratio: 3 / 4; margin-left: calc(clamp(110px, 26vmin, 170px) / -2); border-radius: 14px; overflow: hidden; border: 2px solid #4aa8ff; box-shadow: 0 0 30px rgba(74, 168, 255, 0.45); animation: ti-rise 0.6s both, fa-wobble 0.5s 0.6s steps(3) 2; }
+.fa-rex .portrait { width: 100%; height: 100%; }
+@keyframes fa-wobble { 50% { transform: translateX(3px) skewX(-3deg); filter: hue-rotate(40deg); } }
+.fa-lines { position: absolute; top: calc(16% + clamp(150px, 36vmin, 236px)); left: 0; right: 0; z-index: 4; display: grid; gap: 10px; padding: 0 16px; text-align: center; }
+.fa-lines p { margin: 0; opacity: 0; font-size: clamp(15px, 2.6vw, 20px); color: #e8ecff; animation: jp-sub 0.5s calc(0.6s + var(--i) * 1.3s) forwards; }
+.fa-lines p:last-child { color: var(--crawl); font-weight: 700; }
+.feat-cine.again.reveal .fa-rex, .feat-cine.again.reveal .fa-lines, .feat-cine.again.reveal .fa-rew { display: none; }
+.feat-cine.again.reveal .fc-badge { filter: drop-shadow(0 0 30px rgba(124, 208, 255, 0.8)); }
+.again .fc-text .fs-kicker { background: linear-gradient(90deg, #7cd0ff, #fff, #7cd0ff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.again .fc-text b { text-shadow: 0 0 22px #4aa8ff; }

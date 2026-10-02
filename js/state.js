@@ -142,7 +142,7 @@
     // the badge stays earned.
     replayTutorial() {
       const t = this.state.tutorial;
-      this.state.tutorial = { done: false, how: null, fresh: false, badge: !!(t.badge || t.done) };
+      this.state.tutorial = { done: false, how: null, fresh: false, badge: !!(t.badge || t.done), replays: t.replays || 0 };
       this.save();
     },
 
@@ -176,7 +176,10 @@
       const t = this.state.tutorial;
       if (t.done) return null;
       const units = this.grantStarterUnits();
-      const out = { how, units, credits: 0, crystals: 0 };
+      // Beating it again on a replay earns the secret "Back for More?" badge.
+      const again = how === 'completed' && !!t.badge;
+      if (again) t.replays = (t.replays || 0) + 1;
+      const out = { how, units, credits: 0, crystals: 0, again };
       if (t.fresh) {
         out.credits = D.STARTER.credits;
         out.crystals = D.STARTER.crystals;
