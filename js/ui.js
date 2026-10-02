@@ -2140,7 +2140,7 @@
     // Secret feats stay off the list entirely until they are earned.
     if (s.secret.found) list.push({ id: 'secret_found', secret: true, tier: 5, icon: 'crescent', name: 'Into the Unknown', desc: 'Found the hidden way to the Monolith', have: 1, need: 1 });
     if (D.SECRET_BOSSES.every((b) => s.secret.beaten[b.id])) list.push({ id: 'secret_all', secret: true, tier: 6, icon: 'spark', name: 'Master of the Monolith', desc: 'Defeated all four trials beyond the map', have: 1, need: 1 });
-    if (s.account.level >= D.MAX_ACCOUNT_LEVEL) list.push({ id: 'grinder', secret: true, tier: 7, icon: 'spire', name: 'Galactic Grinder', desc: 'Coming soon', have: 1, need: 1 });
+    if (s.account.level >= D.MAX_ACCOUNT_LEVEL) list.push({ id: 'grinder', secret: true, tier: 7, icon: 'spire', name: 'Galactic Grinder', desc: 'New features coming soon', have: 1, need: 1 });
     return list;
   }
 
