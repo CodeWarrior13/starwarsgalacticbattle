@@ -1827,7 +1827,7 @@
 
       <div class="section-head">
         <h2 class="section-title">Hot Stock</h2>
-        <span class="muted">Restocks in ${timeLeft(stock.refreshAt - Date.now())} <button class="btn btn-small" type="button" data-reroll ${s.crystals < 20 ? 'disabled' : ''}>Restock now · ${cur('crystals', 20)}</button></span>
+        <span class="muted">Restocks in ${timeLeft(stock.refreshAt - Date.now())} <button class="btn btn-small" type="button" data-reroll ${s.crystals < D.RESTOCK_KYBER ? 'disabled' : ''}>Restock now · ${cur('crystals', D.RESTOCK_KYBER)}</button></span>
       </div>
       <div class="stock-grid">
         ${stock.items.map((it, i) => {
@@ -1856,8 +1856,8 @@
           </div>`).join('')}
           <div class="charm">
             <span class="charm-icon">${Art.ICONS.crystals}</span>
-            <div><b>Kyber Exchange</b><p class="muted">Trade ${cur('crystals', 50)} for ${cur('credits', 1000)}.</p></div>
-            <button class="btn btn-small" type="button" data-exchange ${s.crystals < 50 ? 'disabled' : ''}>Trade</button>
+            <div><b>Kyber Exchange</b><p class="muted">Trade ${cur('crystals', D.EXCHANGE.crystals)} for ${cur('credits', D.EXCHANGE.credits)}.</p></div>
+            <button class="btn btn-small" type="button" data-exchange ${s.crystals < D.EXCHANGE.crystals ? 'disabled' : ''}>Trade</button>
           </div>
         </div>
         <div class="panel sabacc">

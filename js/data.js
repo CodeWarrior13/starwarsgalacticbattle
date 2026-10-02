@@ -1538,7 +1538,7 @@
   ];
   // The trials pay in cards only. The first attempt is free; every loss makes
   // the next entry cost more Kyber: 5, 10, 15, 20, 25, then 50 for good.
-  const SECRET_COSTS = [0, 5, 10, 15, 20, 25, 50];
+  const SECRET_COSTS = [0, 3, 5, 8, 10, 15, 25];
   const secretCost = (fails) => SECRET_COSTS[Math.min(fails || 0, SECRET_COSTS.length - 1)];
   // Enemies earn stars as you travel further across the galaxy.
   const enemyStars = (planetId) => 1 + Math.floor(PLANETS.indexOf(PLANET_MAP[planetId]) / 2);
@@ -1655,7 +1655,7 @@
       kind: 'ship', count: 3, odds: { common: 55, rare: 31, epic: 10.6, legendary: 3, mythic: 0.4 },
     },
     {
-      id: 'holocron', name: 'Jedi Holocron', desc: '3 cards, rare or better, kept by the Jedi Order', cost: { crystals: 80 },
+      id: 'holocron', name: 'Jedi Holocron', desc: '3 cards, rare or better, kept by the Jedi Order', cost: { crystals: 50 },
       kind: 'any', count: 3, odds: { common: 0, rare: 55, epic: 33.5, legendary: 10, mythic: 1.5 },
     },
     {
@@ -1699,7 +1699,7 @@
   };
 
   const CHARMS = [
-    { id: 'chance_cube', name: 'Chance Cubes', desc: 'Next 3 crates: 2.5× Legendary odds, 1.6× Epic odds and more Holo cards.', cost: { crystals: 40 }, grants: { charmCrates: 3 } },
+    { id: 'chance_cube', name: 'Chance Cubes', desc: 'Next 3 crates: 2.5× Legendary odds, 1.6× Epic odds and more Holo cards.', cost: { crystals: 25 }, grants: { charmCrates: 3 } },
     { id: 'loaded_dice', name: 'Loaded Dice', desc: 'Next 3 victory spins roll from a luckier table (up to 10×).', cost: { credits: 700 }, grants: { dice: 3 } },
   ];
 
@@ -1779,6 +1779,9 @@
     { day: 6, credits: 2500, charm: 1, label: 'Chance Cube' },
     { day: 7, crystals: 100, aurodium: 1, label: 'Hutt\'s Hoard', big: true },
   ];
+  // Kyber sinks in the Night Market, priced against 1-2 Kyber per win.
+  const RESTOCK_KYBER = 10;
+  const EXCHANGE = { crystals: 20, credits: 1000 };
   const SHELL_PAYOUT = 2.7;
   const SHELL_BETS = [50, 150, 400];
 
@@ -1791,7 +1794,7 @@
   root.GameData = {
     RARITIES, ROLE_BASE, ROLE_ICONS, STATUS_INFO, UNITS, UNIT_MAP, MAX_LEVEL, MAX_STARS, STAR_COSTS,
     DUPLICATE_SHARDS, SQUAD_SIZE, PACKS, STARTER, levelCost, unitStats, power, stageRewards,
-    ultimateFor, abilitiesFor, BOSSES, BOSS_ENCOUNTERS, bossRewards, CURRENCIES, LUCK, CHARMS, MARKET_REFRESH_MS, FLASH_MS, DAILY, SECRET_PLANET, SECRET_BOSSES, SECRET_COSTS, secretCost, TOWER, towerFloor, towerRewards, towerCheckpoint, SHELL_PAYOUT, SHELL_BETS, BIOS,
+    ultimateFor, abilitiesFor, BOSSES, BOSS_ENCOUNTERS, bossRewards, CURRENCIES, LUCK, CHARMS, MARKET_REFRESH_MS, FLASH_MS, DAILY, SECRET_PLANET, SECRET_BOSSES, SECRET_COSTS, secretCost, RESTOCK_KYBER, EXCHANGE, TOWER, towerFloor, towerRewards, towerCheckpoint, SHELL_PAYOUT, SHELL_BETS, BIOS,
     BASE_SLOTS, SLOT_UNLOCKS, MAX_ACCOUNT_LEVEL, xpToNext, levelReward, XP, planetSquadSize,
     TRAITS, TRAIT_INFO, ROLE_SYNERGIES, SYN_THEME, CLASS_INFO, classesOf, attackStyle, ULT_ANIM, SYNERGIES, PLANETS, PLANET_MAP, enemyStars, PLANET_CLEAR_KYBER, BASE_DOUBLE, traitsOf, squadBonuses,
   };

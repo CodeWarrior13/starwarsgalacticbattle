@@ -1983,7 +1983,7 @@
           </div>
           ${rewards.cards && rewards.cards.length ? `<div class="reward-cards" data-rewards hidden><p class="eyebrow">Exclusive cards unlocked</p><div>${rewards.cards.map((c) => root.UI.unitCard(D.UNIT_MAP[c.id], { tag: 'div', hideShards: true })).join('')}</div></div>`
             : rewards.card ? `<div class="reward-card" data-rewards hidden><p class="eyebrow">Boss trophy</p>${root.UI.unitCard(D.UNIT_MAP[rewards.card.id], { tag: 'div', hideShards: true })}<p class="muted">${rewards.card.isNew ? 'New recruit!' : `+${rewards.card.shards} shards`}</p></div>` : ''}`
-        : `<p class="muted">Train your units in the Collection, build a squad with matching traits for synergies, or grab crates in the Night Market, then try again.</p>${rewards.secret ? `<div class="liberated secret-cost"><p class="eyebrow">The Monolith's price</p><h3>Next attempt: ${cur('crystals', rewards.nextCost)}</h3><p class="muted">Each defeat raises the price of the trial, up to 50 Kyber. A victory resets it.</p></div>` : ''}`}
+        : `<p class="muted">Train your units in the Collection, build a squad with matching traits for synergies, or grab crates in the Night Market, then try again.</p>${rewards.secret ? `<div class="liberated secret-cost"><p class="eyebrow">The Monolith's price</p><h3>Next attempt: ${cur('crystals', rewards.nextCost)}</h3><p class="muted">Each defeat raises the price of the trial, up to ${D.SECRET_COSTS[D.SECRET_COSTS.length - 1]} Kyber. A victory resets it.</p></div>` : ''}`}
         ${xpHtml}
         <div class="modal-actions">
           ${isTower ? '' : '<button class="btn" type="button" data-r="retry">Retry</button>'}

@@ -276,7 +276,7 @@
         const discount = weighted([{ d: 0, weight: 40 }, { d: 10, weight: 25 }, { d: 20, weight: 18 }, { d: 30, weight: 10 }, { d: 50, weight: 7 }], random).d;
         const shards = def.rarity === 'legendary' ? 10 : 12;
         const kyber = i === 4;
-        const full = kyber ? Math.round((shards * perShard[def.rarity]) / 12) : shards * perShard[def.rarity];
+        const full = kyber ? Math.round((shards * perShard[def.rarity]) / 20) : shards * perShard[def.rarity];
         const price = Math.max(1, Math.round(full * (1 - discount / 100)));
         return { id: def.id, shards, discount, hot: discount >= 30, sold: false, cost: kyber ? { crystals: price } : { credits: price }, full };
       });
@@ -286,7 +286,7 @@
     },
 
     rerollMarket() {
-      if (!this.spend({ crystals: 20 })) return false;
+      if (!this.spend({ crystals: D.RESTOCK_KYBER })) return false;
       this.restock(Date.now());
       return true;
     },
@@ -403,8 +403,8 @@
     },
 
     exchangeCrystals() {
-      if (!this.spend({ crystals: 50 })) return false;
-      this.state.credits += 1000;
+      if (!this.spend({ crystals: D.EXCHANGE.crystals })) return false;
+      this.state.credits += D.EXCHANGE.credits;
       this.save();
       return true;
     },

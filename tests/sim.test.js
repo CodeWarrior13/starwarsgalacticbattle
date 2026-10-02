@@ -459,10 +459,10 @@ test('secret trials: entry cost climbs on defeat, wins pay cards only', () => {
     Player.completeSecret({ type: 'secret', boss: id }, false, seeded(i), 3);
     ladder.push(Player.secretCost(id));
   }
-  assert.deepStrictEqual(ladder, [5, 10, 15, 20, 25, 50, 50, 50]);
+  assert.deepStrictEqual(ladder, [3, 5, 8, 10, 15, 25, 25, 25]);
   Player.state.crystals = 10;
   assert.ok(!Player.paySecretEntry(id), 'cannot enter without enough Kyber');
-  Player.state.crystals = 60;
+  Player.state.crystals = 35;
   assert.ok(Player.paySecretEntry(id) && Player.state.crystals === 10, 'entry fee is charged');
   const before = { credits: Player.state.credits, crystals: Player.state.crystals, aurodium: Player.state.aurodium };
   const win = Player.completeSecret({ type: 'secret', boss: id }, true, seeded(1), 3);
