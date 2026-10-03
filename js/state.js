@@ -612,7 +612,8 @@
       const planet = D.PLANET_MAP[params.planet];
       const stg = planet.stages[params.stage];
       return {
-        ...stg, enemies: this.padSquad(stg.enemies, planet.reinforce[stg.kind], D.planetSquadSize(planet.id)),
+        // Enemy squads never outnumber yours: they grow as your squad slots do.
+        ...stg, enemies: this.padSquad(stg.enemies, planet.reinforce[stg.kind], Math.min(D.planetSquadSize(planet.id), this.slots())),
         type: 'stage', planet: planet.id, stage: params.stage, finale: params.stage === planet.stages.length - 1,
         stars: D.enemyStars(planet.id),
         enemyScale: planet.enemyScale || 1,

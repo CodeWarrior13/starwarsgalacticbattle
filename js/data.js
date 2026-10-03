@@ -1356,7 +1356,7 @@
   const st = (name, kind, level, enemies) => ({ name, kind, level, enemies });
   const PLANETS = [
     {
-      id: 'tatooine', name: 'Tatooine', region: 'Outer Rim', enemyScale: 0.8, env: 'desert', reinforce: { character: ['jawa'], ship: ['tie_fighter'] }, map: { x: 8, y: 64 }, color: '#e0a060',
+      id: 'tatooine', name: 'Tatooine', region: 'Outer Rim', enemyScale: 0.72, env: 'desert', reinforce: { character: ['jawa'], ship: ['tie_fighter'] }, map: { x: 8, y: 64 }, color: '#e0a060',
       blurb: 'A harsh desert world under twin suns, run by Hutts and haunted by Tusken Raiders.',
       terrain: { name: 'Twin Suns', desc: 'Natives, Scoundrels and Bounty Hunters gain +15% attack.', rules: [{ traits: ['native', 'scoundrel', 'bounty'], mods: { atk: 0.15 } }] },
       hazard: { id: 'sandstorm', name: 'Sandstorm', every: 9, desc: 'Every 9 turns a sandstorm drains 20% Turn Meter from everyone except Natives.', effect: { type: 'tm', amount: -20, except: ['native'] } },
@@ -1366,21 +1366,21 @@
         st('Mos Eisley Streets', G, 2, ['stormtrooper', 'battle_droid', 'jawa']),
         st('Docking Bay 94', F, 3, ['tie_fighter', 'tie_fighter', 'tie_bomber']),
         st('Dune Sea Ambush', G, 4, ['tusken_raider', 'stormtrooper', 'battle_droid']),
-        st('Jabba\'s Palace', G, 5, ['boba_fett', 'battle_droid', 'jawa']),
+        st('Jabba\'s Palace', G, 4, ['boba_fett', 'battle_droid', 'jawa']),
       ],
     },
     {
-      id: 'hoth', name: 'Hoth', region: 'Anoat Sector', enemyScale: 0.88, env: 'snow', reinforce: { character: ['stormtrooper'], ship: ['tie_fighter'] }, map: { x: 18, y: 30 }, color: '#cfe4f5',
+      id: 'hoth', name: 'Hoth', region: 'Anoat Sector', enemyScale: 0.8, env: 'snow', reinforce: { character: ['stormtrooper'], ship: ['tie_fighter'] }, map: { x: 18, y: 30 }, color: '#cfe4f5',
       blurb: 'A frozen wasteland hiding the Rebel Echo Base, where AT-ATs march through the snow.',
       terrain: { name: 'Frozen Wastes', desc: 'Everyone is 8% slower. Rebels gain +15% armor.', rules: [{ mods: { spd: -0.08 } }, { traits: ['rebel'], mods: { def: 0.15 } }] },
       hazard: { id: 'blizzard', name: 'Blizzard', every: 8, desc: 'Every 8 turns a blizzard deals 5% max HP to everyone except Rebels.', effect: { type: 'damage', pct: 0.05, except: ['rebel'] } },
       stages: [
-        st('Echo Base Perimeter', G, 4, ['stormtrooper', 'stormtrooper', 'stormtrooper']),
-        st('Ion Cannon Cover', F, 5, ['tie_fighter', 'tie_bomber', 'tie_fighter']),
-        st('Frozen Trenches', G, 5, ['death_trooper', 'stormtrooper', 'stormtrooper']),
-        st('Hangar Breach', G, 6, ['death_trooper', 'stormtrooper', 'tarkin']),
-        st('Asteroid Field', F, 7, ['tie_interceptor', 'tie_fighter', 'tie_fighter']),
-        st('Imperial Assault', G, 8, ['death_trooper', 'death_trooper', 'tarkin', 'stormtrooper']),
+        st('Echo Base Perimeter', G, 3, ['stormtrooper', 'stormtrooper', 'stormtrooper']),
+        st('Ion Cannon Cover', F, 4, ['tie_fighter', 'tie_bomber', 'tie_fighter']),
+        st('Frozen Trenches', G, 4, ['death_trooper', 'stormtrooper', 'stormtrooper']),
+        st('Hangar Breach', G, 5, ['death_trooper', 'stormtrooper', 'tarkin']),
+        st('Asteroid Field', F, 4, ['tie_interceptor', 'tie_fighter', 'tie_fighter']),
+        st('Imperial Assault', G, 6, ['death_trooper', 'stormtrooper', 'tarkin', 'stormtrooper']),
       ],
     },
     {

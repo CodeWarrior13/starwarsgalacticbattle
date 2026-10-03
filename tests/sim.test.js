@@ -52,7 +52,7 @@ test('every unit has valid abilities', () => {
   }
 });
 
-test('planet stages reference real units and pad to the planet squad size', () => {
+test('planet stages reference real units and pad to the planet squad size, capped by your slots', () => {
   let total = 0;
   for (const planet of D.PLANETS) {
     assert.ok(planet.terrain && planet.hazard && planet.reinforce, planet.id);
@@ -60,7 +60,7 @@ test('planet stages reference real units and pad to the planet squad size', () =
       total++;
       for (const id of stg.enemies) assert.strictEqual(D.UNIT_MAP[id].kind, stg.kind, `${planet.id} ${stg.name}: ${id}`);
       const enc = Player.encounter({ type: 'stage', planet: planet.id, stage: i });
-      assert.strictEqual(enc.enemies.length, D.planetSquadSize(planet.id), `${planet.id} ${stg.name} squad size`);
+      assert.strictEqual(enc.enemies.length, Math.min(D.planetSquadSize(planet.id), Player.slots()), `${planet.id} ${stg.name} squad size (never more than your slots)`);
       for (const id of enc.enemies) assert.strictEqual(D.UNIT_MAP[id].kind, stg.kind);
     });
   }
