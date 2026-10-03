@@ -23,7 +23,7 @@
   const DEVICES = {
     iphone: { label: 'iPhone', dpr: 1, particles: 0.5, fps: 60, glow: false, shake: true },
     ipad: { label: 'iPad', dpr: 1.25, particles: 0.7, fps: 60, glow: false, shake: true },
-    android: { label: 'Android', dpr: 1, particles: 0.6, fps: 60, glow: true, shake: true },
+    android: { label: 'Android', dpr: 1.35, particles: 0.8, fps: 60, glow: true, shake: true },
     pc: { label: 'PC', dpr: 1.5, particles: 1, fps: 60, glow: true, shake: true },
   };
   const LITE = { dpr: 0.85, particles: 0.25, fps: 30, glow: false, shake: false, simpleUlts: true };
