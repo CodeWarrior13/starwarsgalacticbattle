@@ -2,6 +2,8 @@
 
 The same notes appear in the game under **Settings → Update log**, and the newest one pops up once as "What's new" after an update. Updates never reset your save.
 
+> **Not seeing the latest fixes?** Reload the game page (refresh, or pull down on mobile). If the game was already open when an update came out, a reload picks it up. Your progress is kept.
+
 ## v1.6 · Smoother start (October 3, 2026)
 - Early worlds are easier: Tatooine and Hoth enemies hit softer, and Jabba's Palace is no longer a wall.
 - Enemy squads never outnumber yours: they grow only as your squad slots do.

@@ -48,6 +48,9 @@
     },
   ];
 
+  // Reminder that a page left open keeps running the old version.
+  const RELOAD_NOTE = `<div class="ul-reload"><div><b>Not seeing the latest fixes?</b><span>If the game was open when an update came out, reload to get it. Your progress is kept.</span></div><button class="btn btn-small" type="button" data-reload>Reload now</button></div>`;
+
   const Changelog = {
     UPDATES,
     latest: UPDATES[0].v,
@@ -75,8 +78,12 @@
       const UI = root.UI;
       const m = UI.openModal(`<div class="ul-head"><span class="ul-badge">Command Console</span><h2>Update log</h2><p class="ul-sub">Every update, newest first. Tap one to open it.</p></div>
         <div class="ul-list">${UPDATES.map((u, i) => this.entryHtml(u, i === 0)).join('')}</div>
+        ${RELOAD_NOTE}
         <div class="modal-actions"><button class="btn btn-primary" type="button" data-close>Done</button></div>`, { small: true, cls: 'update-modal' });
-      m.root.addEventListener('click', (e) => { if (e.target.closest('[data-close]')) m.close(); });
+      m.root.addEventListener('click', (e) => {
+        if (e.target.closest('[data-close]')) m.close();
+        if (e.target.closest('[data-reload]')) location.reload();
+      });
       this.markSeen();
     },
 
@@ -88,10 +95,12 @@
         <p class="ul-date-line">${UI.esc(u.date)}</p>
         ${this.itemsHtml(u.items)}
         <p class="ul-safe">Your progress is safe: updates never reset your save.</p>
+        ${RELOAD_NOTE}
         <div class="modal-actions"><button class="btn" type="button" data-all>Full update log</button><button class="btn btn-primary" type="button" data-close>Let's go</button></div>`, { small: true, cls: 'update-modal' });
       m.root.addEventListener('click', (e) => {
         if (e.target.closest('[data-close]')) m.close();
         if (e.target.closest('[data-all]')) { m.close(); this.showAll(); }
+        if (e.target.closest('[data-reload]')) location.reload();
       });
       this.markSeen();
     },

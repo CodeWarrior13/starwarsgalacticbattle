@@ -3095,3 +3095,13 @@ body.event-sith .topbar { border-bottom-color: rgba(255, 60, 70, 0.7); box-shado
 .modal.update-modal .ul-item, .modal.update-modal .ul-text, .modal.update-modal .ul-entry summary { text-align: left; }
 .modal.update-modal .ul-item { grid-template-columns: 90px 1fr; }
 .modal.update-modal .ul-tag { justify-self: start; }
+.ul-reload { display: flex; align-items: center; gap: 12px; margin-top: 12px; padding: 10px 12px; border-radius: 12px; background: rgba(124, 208, 255, 0.08); border: 1px solid rgba(124, 208, 255, 0.35); text-align: left; }
+.ul-reload div { display: grid; gap: 2px; flex: 1; }
+.ul-reload b { color: #9fd4ff; font-size: 14px; }
+.ul-reload span { color: #c8d8ec; font-size: 12.5px; line-height: 1.4; }
+.ul-reload .btn { flex: none; }
+.ul-list { max-height: min(46vh, 520px); }
+@media (max-width: 520px) {
+  .ul-reload { flex-direction: column; align-items: stretch; text-align: center; }
+  .ul-reload .btn { width: 100%; }
+}
