@@ -386,7 +386,7 @@
           });
         },
         () => this.coach('Nice! Duplicate cards turn into <b>shards</b>. Collect enough and you can add a <b>Star</b>: ranking up gives a big boost to every stat, and rarer cards can climb higher.', '[data-star]', { ...T, bottom: true, next: step }),
-        () => { const pg = document.querySelector('.inspect [data-page="3"]'); if (pg) pg.click(); go(() => this.coach('The <b>Ultimate</b> page shows a card\'s most powerful move. Tap the card any time to watch it in action.', '[data-watch]', { ...T, bottom: true, next: step })); },
+        () => { const pg = document.querySelector('.inspect [data-page="3"]'); if (pg) pg.click(); go(() => this.coach('The <b>Ultimate</b> page shows a card\'s most powerful move. Tap anywhere on this page to watch it in action.', '.ult-preview', { ...T, bottom: true, next: step })); },
         () => {
           const c = document.querySelector('.inspect-modal [data-close]'); if (c) c.click();
           App.go('market');

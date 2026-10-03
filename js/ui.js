@@ -1429,12 +1429,13 @@
 
     function ultPage() {
       const ult = D.abilitiesFor(def).find((ab) => ab.ultimate);
-      return `<div class="ipage-inner ult-page">
+      // The whole page is the play button: tap anywhere to watch it.
+      return `<div class="ipage-inner ult-page" data-watch role="button" tabindex="0" aria-label="Watch ${esc(ult ? ult.name : 'the ultimate')} in action">
         <p class="eyebrow">Ultimate</p>
         <h2>★ ${esc(ult ? ult.name : 'Ultimate')}</h2>
         ${ult ? `<p>${esc(ult.desc)}</p>${ult.quote ? `<q class="ult-quote">${esc(ult.quote)}</q>` : ''}` : ''}
-        <button class="ult-preview" type="button" data-watch aria-label="Watch ${esc(ult ? ult.name : 'the ultimate')} in action">${portrait(def)}<span class="ult-play">▶</span><span class="ult-tap">Tap to watch</span></button>
-        <p class="muted small">Tap the card to play its full cutscene and ultimate in a training simulation. Nothing is spent or earned.</p>
+        <div class="ult-preview">${portrait(def)}</div>
+        <p class="muted small">Tap anywhere to play its full cutscene and ultimate in a training simulation. Nothing is spent or earned.</p>
       </div>`;
     }
 
@@ -1566,6 +1567,10 @@
         e.preventDefault();
         flipped = !flipped;
         e.target.classList.toggle('flipped', flipped);
+      }
+      if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-watch]')) {
+        e.preventDefault();
+        e.target.click();
       }
     });
     bindSwipe();

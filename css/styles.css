@@ -2135,7 +2135,6 @@ kbd { font-family: var(--font-display); font-size: 11px; padding: 1px 6px; borde
 .ult-quote { font-style: italic; color: var(--crawl); }
 .ult-preview { position: relative; width: min(200px, 60%); border-radius: 14px; overflow: hidden; box-shadow: 0 0 30px rgba(255, 210, 63, 0.35); }
 .ult-preview .portrait { width: 100%; }
-.ult-play { position: absolute; inset: 0; display: grid; place-items: center; font-size: 46px; color: #fff; text-shadow: 0 0 20px #000; background: radial-gradient(circle, rgba(0, 0, 0, 0.35), transparent 70%); animation: pulse 1.6s infinite; }
 .battle.preview .battle-top h2::before { content: '◉ '; color: #ff4a4a; animation: pulse 1.2s infinite; }
 .battle.preview .actions, .battle.preview [data-auto], .battle.preview [data-speed] { opacity: 0.4; pointer-events: none; }
 .preview-panel { position: absolute; left: 50%; top: 50%; z-index: 30; transform: translate(-50%, -50%); display: grid; gap: 8px; justify-items: center; text-align: center; width: min(420px, calc(100% - 32px)); padding: 16px; border-radius: 14px; background: rgba(6, 9, 18, 0.94); border: 1px solid rgba(255, 210, 63, 0.5); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6); animation: pop 0.4s both; }
@@ -2615,9 +2614,12 @@ html, body { overflow-x: clip; }
 }
 
 /* Tap the portrait itself to watch the ultimate. */
-button.ult-preview { padding: 0; border: 2px solid rgba(255, 210, 63, 0.5); background: none; cursor: pointer; display: block; margin: 0 auto; transition: transform 0.2s, box-shadow 0.2s; }
-button.ult-preview:hover, button.ult-preview:focus-visible { transform: scale(1.04); box-shadow: 0 0 40px rgba(255, 210, 63, 0.6); outline: none; }
-.ult-tap { position: absolute; left: 0; right: 0; bottom: 0; padding: 6px 0; font-family: var(--font-display); font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: #fff; background: linear-gradient(transparent, rgba(0, 0, 0, 0.8)); }
+.ult-page[data-watch] { cursor: pointer; -webkit-tap-highlight-color: transparent; border-radius: 14px; }
+.ult-page[data-watch]:focus-visible { outline: 2px solid var(--crawl); outline-offset: 4px; }
+.ult-page .ult-preview { border: 2px solid rgba(255, 210, 63, 0.5); display: block; margin: 0 auto; transition: transform 0.2s, box-shadow 0.2s; animation: ult-breathe 2.4s ease-in-out infinite; }
+.ult-page:hover .ult-preview, .ult-page:focus-visible .ult-preview { transform: scale(1.04); box-shadow: 0 0 40px rgba(255, 210, 63, 0.6); }
+.ult-page:active .ult-preview { transform: scale(0.97); }
+@keyframes ult-breathe { 50% { box-shadow: 0 0 44px rgba(255, 210, 63, 0.55); } }
 
 /* ---------- Ability numbers ---------- */
 .abtn .astat { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; font-size: 11px; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; }
