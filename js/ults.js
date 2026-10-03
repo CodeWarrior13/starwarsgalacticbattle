@@ -242,7 +242,7 @@
       const layer = el(`<div class="storm-layer sig-layer" style="--c:${color}" aria-hidden="true"><div class="sig-tint ${tint || ''}"></div><canvas></canvas></div>`);
       document.body.appendChild(layer);
       const cv = layer.querySelector('canvas');
-      const dpr = Math.min(1.5, window.devicePixelRatio || 1);
+      const dpr = Math.min(root.Perf ? root.Perf.dpr : 1.5, window.devicePixelRatio || 1);
       cv.width = W * dpr;
       cv.height = H * dpr;
       const ctx = cv.getContext('2d');
@@ -1053,7 +1053,7 @@
   const baseSuper = B.superMove;
   B.superMove = async function (anim, actor, targets, ev) {
     const spec = SIG[actor.id] || actor.def.sig;
-    if (!spec || spec.legacy || reduced()) return baseSuper.call(this, spec && spec.legacy ? spec.legacy : anim, actor, targets, ev);
+    if (!spec || spec.legacy || reduced() || (root.Perf && root.Perf.simpleUlts)) return baseSuper.call(this, spec && spec.legacy ? spec.legacy : anim, actor, targets, ev);
     try {
       await this.sig(actor, targets, ev);
     } catch (err) {

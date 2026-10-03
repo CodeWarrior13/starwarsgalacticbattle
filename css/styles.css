@@ -3118,3 +3118,15 @@ body.event-sith .topbar { border-bottom-color: rgba(255, 60, 70, 0.7); box-shado
 /* Tutorial tour bubbles sit above dialogs; "bottom" ones leave the dialog's tabs visible. */
 .tut-coach.tour { z-index: 270; }
 .tut-coach.tour.bottom { top: auto; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }
+
+/* Settings > Performance */
+.perf-devs { display: flex; flex-wrap: wrap; gap: 6px; }
+.perf-dev { font: inherit; font-size: 12.5px; font-weight: 700; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.04); color: #cfe0ff; cursor: pointer; }
+.perf-dev em { font-style: normal; font-weight: 500; opacity: 0.7; margin-left: 2px; }
+.perf-dev.on { background: var(--crawl); border-color: var(--crawl); color: #10131c; }
+.perf-dev:focus-visible { outline: 2px solid var(--crawl); outline-offset: 2px; }
+
+/* Performance mode: no live blurs or the heaviest decorative layers. */
+body.perf-on *, body.perf-on *::before, body.perf-on *::after { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+body.perf-on .sig-godrays, body.perf-on .sig-cracks, body.perf-on .reveal-spark { display: none !important; }
+body.perf-on .sig-layer.sig-glitch canvas { filter: none; }

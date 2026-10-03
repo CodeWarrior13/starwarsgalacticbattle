@@ -760,6 +760,7 @@
     },
 
     shake() {
+      if (root.Perf && !root.Perf.shake) return;
       this.field.classList.remove('shake');
       void this.field.offsetWidth;
       this.field.classList.add('shake');

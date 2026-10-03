@@ -9,9 +9,9 @@
   const rand = (a, b) => a + Math.random() * (b - a);
   const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-  // Safari (and every iOS browser) renders canvas shadowBlur very slowly, so
-  // per-frame glows skip it there.
-  const LITE = /iP(hone|ad|od)/.test(navigator.userAgent) || (/Safari\//.test(navigator.userAgent) && !/Chrom(e|ium)|Android/.test(navigator.userAgent));
+  // Graphics settings (js/perf.js): glows, resolution, particles, frame cap.
+  const P = () => root.Perf || { glow: true, dpr: 1.5, fps: 60, count: (n) => n, particles: 1 };
+  const LITE_GLOW = () => !P().glow;
 
   // A soft halo plus a solid core: looks like a glow, costs two fills.
   function glowDot(ctx, x, y, r, alpha) {
@@ -752,7 +752,7 @@
         const baseY = h * (0.76 + k * 0.13);
         ctx.fillStyle = k ? '#ff7a1a' : '#e0480e';
         ctx.shadowColor = '#ff5a1a';
-        if (!LITE) ctx.shadowBlur = 20;
+        if (!LITE_GLOW()) ctx.shadowBlur = 20;
         ctx.beginPath();
         ctx.moveTo(-40, baseY);
         for (let x = -40; x <= w + 40; x += 20) ctx.lineTo(x, baseY + Math.sin(x * 0.02 + t * (1 + k) + k * 3) * 5);
@@ -877,7 +877,7 @@
         ctx.strokeStyle = `rgba(210,200,255,${1 - e.g.bolt.life / 0.35})`;
         ctx.lineWidth = 2.5;
         ctx.shadowColor = '#9a8aff';
-        if (!LITE) ctx.shadowBlur = 18;
+        if (!LITE_GLOW()) ctx.shadowBlur = 18;
         ctx.beginPath();
         e.g.bolt.pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
         ctx.stroke();
@@ -1539,7 +1539,7 @@
       const rect = this.canvas.getBoundingClientRect();
       this.w = Math.max(1, rect.width);
       this.h = Math.max(1, rect.height);
-      this.dpr = Math.min(1.5, window.devicePixelRatio || 1);
+      this.dpr = Math.min(P().dpr, window.devicePixelRatio || 1);
       this.canvas.width = Math.round(this.w * this.dpr);
       this.canvas.height = Math.round(this.h * this.dpr);
       this.skyGrad = null;
@@ -1549,7 +1549,7 @@
       const spec = this.mode === 'space'
         ? { count: 50, spawn: (e) => ({ x: rand(0, e.w), y: rand(0, e.h), vx: 0, vy: rand(160, 320), size: rand(0.5, 1.2), color: '#cfe0ff', alpha: rand(0.15, 0.4), kind: 'streak' }) }
         : this.theme.weather;
-      const n = extra || spec.count;
+      const n = P().count(extra || spec.count);
       for (let i = 0; i < n; i++) {
         const p = spec.spawn(this);
         if (p) {
@@ -1599,7 +1599,7 @@
     impact(x, y, opts = {}) {
       const power = opts.power || 1;
       const color = opts.color || '#ffb24a';
-      const n = Math.round(10 * power);
+      const n = P().count(Math.round(10 * power));
       const colors = this.mode === 'space' ? ['#ffb24a', '#ffd27a', '#ff7a3a'] : this.theme.dust;
       for (let i = 0; i < n; i++) {
         const a = rand(0, TAU);
@@ -1649,6 +1649,9 @@
     frame(now) {
       if (!this.running) return;
       if (!this.canvas.isConnected) return this.stop();
+      // Performance mode draws the scene at a lower frame rate.
+      const fps = P().fps;
+      if (fps < 60 && now - this.last < 1000 / fps - 4) return requestAnimationFrame(this.frame);
       this.dt = Math.min(0.05, (now - this.last) / 1000);
       this.last = now;
       this.t += this.reduced ? this.dt * 0.2 : this.dt;
@@ -1668,6 +1671,8 @@
       J.x += J.vx * dt;
       J.y += J.vy * dt;
       this.windBoost = Math.max(0, this.windBoost - dt * 1.5);
+      const cap = Math.round(500 * P().particles);
+      if (this.fx.length > cap) this.fx.splice(0, this.fx.length - cap);
       this.rush = Math.max(1, this.rush - dt * 1.8);
       this.warp = Math.max(1, this.warp - dt * 1.5);
       this.storm = Math.max(1, this.storm - dt * 0.8);
@@ -1896,7 +1901,7 @@
       ctx.fillStyle = done ? '#ffffff' : color;
       ctx.strokeStyle = next ? hexA(color, 0.95) : 'rgba(255,255,255,0.28)';
       ctx.lineWidth = 1;
-      if (!LITE && (lit || next)) { ctx.shadowColor = color; ctx.shadowBlur = lit ? 8 : 12; }
+      if (!LITE_GLOW() && (lit || next)) { ctx.shadowColor = color; ctx.shadowBlur = lit ? 8 : 12; }
       glyph(ctx, style, s, lit);
       ctx.restore();
     }
@@ -1995,7 +2000,7 @@
       const rect = this.canvas.getBoundingClientRect();
       this.w = Math.max(1, rect.width);
       this.h = Math.max(1, rect.height);
-      this.dpr = Math.min(1.5, window.devicePixelRatio || 1);
+      this.dpr = Math.min(P().dpr, window.devicePixelRatio || 1);
       this.canvas.width = Math.round(this.w * this.dpr);
       this.canvas.height = Math.round(this.h * this.dpr);
       // Narrow screens pull the planets in from the edges so labels fit.

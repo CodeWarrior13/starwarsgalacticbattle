@@ -884,7 +884,8 @@
 
   function bannerFx(canvas, type, color) {
     const ctx = canvas.getContext('2d');
-    const dpr = Math.min(1.5, window.devicePixelRatio || 1);
+    const Pf = root.Perf || { dpr: 1.5, glow: true, count: (n) => n };
+    const dpr = Math.min(Pf.dpr, window.devicePixelRatio || 1);
     const W = window.innerWidth;
     const H = window.innerHeight;
     canvas.width = W * dpr;
@@ -892,7 +893,7 @@
     ctx.scale(dpr, dpr);
     const cy = H / 2;
     const rnd = (a, b) => a + Math.random() * (b - a);
-    const parts = Array.from({ length: 70 }, () => ({ x: rnd(0, W), y: rnd(0, H), v: rnd(0.4, 1.4), r: rnd(1, 4), a: rnd(0, Math.PI * 2), t: rnd(0, 1) }));
+    const parts = Array.from({ length: Pf.count(70) }, () => ({ x: rnd(0, W), y: rnd(0, H), v: rnd(0.4, 1.4), r: rnd(1, 4), a: rnd(0, Math.PI * 2), t: rnd(0, 1) }));
     let bolts = [];
     const t0 = performance.now();
     const hex = (x, y, r) => {
@@ -911,7 +912,7 @@
       ctx.strokeStyle = color;
       ctx.fillStyle = color;
       ctx.shadowColor = color;
-      ctx.shadowBlur = 12;
+      ctx.shadowBlur = Pf.glow ? 12 : 0;
       if (type === 'lightning') {
         if (Math.random() < 0.18) {
           const pts = [];
@@ -2080,6 +2081,7 @@
         ${track('menu', 'Galaxy & menus')}
         ${track('battle', 'Battles')}
       </section>` : ''}
+      ${root.Perf ? root.Perf.settingsHtml() : ''}
       <section class="set-sec">
         <h3>${root.Icons.svg('holocron')} Account</h3>
         <dl class="set-info">
@@ -2106,6 +2108,7 @@
         $(`[data-clear="${key}"]`, m.root).disabled = false;
       }
     });
+    if (root.Perf) root.Perf.bind(m.root);
     m.root.addEventListener('input', (e) => { if (e.target.dataset.vol) S.set(e.target.dataset.vol, Number(e.target.value)); });
     m.root.addEventListener('click', async (e) => {
       if (e.target.closest('[data-close]')) return m.close();
@@ -2894,7 +2897,7 @@
               ctx.strokeStyle = blue ? 'rgba(110,190,255,0.9)' : 'rgba(255,60,100,0.9)';
               ctx.lineWidth = 2.5;
               ctx.shadowColor = blue ? '#4aa8ff' : '#ff2a5a';
-              ctx.shadowBlur = 18;
+              ctx.shadowBlur = !root.Perf || root.Perf.glow ? 18 : 0;
               ctx.stroke();
             }
             requestAnimationFrame(step);
