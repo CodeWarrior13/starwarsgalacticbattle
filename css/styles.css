@@ -3063,14 +3063,35 @@ body.event-sith .topbar { border-bottom-color: rgba(255, 60, 70, 0.7); box-shado
 .ce-msg { min-height: 1.4em; margin: 10px 0 4px; }
 
 /* Update log */
-.update-modal .ul-head h2 { margin: 2px 0 10px; }
-.ul-new { margin: 0 0 12px; padding-left: 18px; display: grid; gap: 8px; line-height: 1.45; }
-.ul-list { display: grid; gap: 8px; max-height: min(60vh, 520px); overflow-y: auto; }
-.ul-entry { border: 1px solid var(--line); border-radius: 12px; background: rgba(255, 255, 255, 0.03); padding: 10px 12px; }
-.ul-entry summary { display: flex; justify-content: space-between; gap: 10px; cursor: pointer; list-style: none; }
+.update-modal { text-align: left; }
+.update-modal .ul-head { display: grid; justify-items: center; gap: 6px; text-align: center; padding-bottom: 12px; margin-bottom: 12px; border-bottom: 1px solid rgba(255, 210, 63, 0.25); }
+.update-modal .ul-head h2 { margin: 0; font-size: clamp(22px, 6vw, 28px); }
+.ul-badge { padding: 3px 12px; border-radius: 999px; background: rgba(255, 210, 63, 0.12); border: 1px solid rgba(255, 210, 63, 0.45); color: var(--crawl); font-family: var(--font-display); font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; }
+.ul-ver { flex: none; padding: 2px 9px; border-radius: 8px; background: linear-gradient(180deg, #2a6ad0, #173c80); color: #fff; font-family: var(--font-display); font-size: 12px; font-weight: 800; letter-spacing: 0.06em; }
+.ul-ver.big { font-size: 15px; padding: 3px 12px; }
+.ul-sub, .ul-date-line { margin: 0; color: #9aa8bd; font-size: 13px; text-align: center; }
+.ul-date-line { margin: -4px 0 10px; }
+.ul-items { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.ul-item { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: start; padding: 10px 12px; border-radius: 12px; background: rgba(255, 255, 255, 0.04); border-left: 3px solid var(--tc); }
+.ul-tag { margin-top: 1px; padding: 2px 8px; border-radius: 6px; background: color-mix(in srgb, var(--tc) 22%, transparent); color: var(--tc); font-family: var(--font-display); font-size: 10.5px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; white-space: nowrap; }
+.ul-text { font-size: clamp(14px, 3.8vw, 15.5px); line-height: 1.5; color: #eef2f8; }
+.ul-item.t-new { --tc: #7cffb0; }
+.ul-item.t-improved { --tc: #7cd0ff; }
+.ul-item.t-balance { --tc: #ffd23f; }
+.ul-item.t-fixed { --tc: #ff9a7a; }
+.ul-safe { margin: 14px 0 4px; padding: 8px 12px; border-radius: 10px; background: rgba(124, 255, 176, 0.08); border: 1px solid rgba(124, 255, 176, 0.3); color: #c8f5da; font-size: 13px; text-align: center; }
+.ul-list { display: grid; gap: 10px; max-height: min(62vh, 560px); overflow-y: auto; padding-right: 2px; }
+.ul-entry { border: 1px solid var(--line); border-radius: 14px; background: rgba(255, 255, 255, 0.03); overflow: hidden; }
+.ul-entry[open] { border-color: rgba(255, 210, 63, 0.4); background: rgba(255, 210, 63, 0.04); }
+.ul-entry summary { display: flex; align-items: center; gap: 10px; padding: 12px; cursor: pointer; list-style: none; text-align: left; }
 .ul-entry summary::-webkit-details-marker { display: none; }
-.ul-entry summary span { color: var(--muted, #8a96a8); font-size: 12px; white-space: nowrap; }
+.ul-entry summary b { flex: 1; font-size: 15px; }
 .ul-entry[open] summary b { color: var(--crawl); }
-.ul-entry ul { margin: 8px 0 2px; padding-left: 18px; display: grid; gap: 6px; font-size: 14px; line-height: 1.4; }
-.ul-new, .ul-entry ul { text-align: left; }
-.ul-entry summary { text-align: left; }
+.ul-date { color: #8a96a8; font-size: 12px; white-space: nowrap; }
+.ul-chev { color: #8a96a8; transition: transform 0.2s; }
+.ul-entry[open] .ul-chev { transform: rotate(180deg); }
+.ul-entry .ul-items { padding: 0 12px 12px; }
+@media (max-width: 420px) { .ul-date { display: none; } }
+.modal.update-modal .ul-item, .modal.update-modal .ul-text, .modal.update-modal .ul-entry summary { text-align: left; }
+.modal.update-modal .ul-item { grid-template-columns: 90px 1fr; }
+.modal.update-modal .ul-tag { justify-self: start; }
