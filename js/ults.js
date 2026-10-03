@@ -168,6 +168,19 @@
   }
 
   // Catmull-Rom path follower in viewport space.
+  // Animation time that pauses through dropped frames instead of jumping
+  // ahead, so a stall (Safari can hitch when an effect layer first appears)
+  // never skips part of the move.
+  function clock() {
+    let last = null;
+    let t = 0;
+    return (now) => {
+      if (last !== null) t += Math.min(now - last, 50);
+      last = now;
+      return t;
+    };
+  }
+
   function follow(S, node, route, o = {}) {
     const cum = [0];
     for (let i = 1; i < route.length; i++) cum.push(cum[i - 1] + Math.hypot(route[i].x - route[i - 1].x, route[i].y - route[i - 1].y));
@@ -187,15 +200,17 @@
     };
     const reached = new Set();
     let prev = route[0];
-    const t0 = performance.now() + (o.delay || 0);
+    const delay = o.delay || 0;
+    const tick = clock();
     S.layer.appendChild(node);
-    node.style.opacity = o.delay ? '0' : '';
+    node.style.opacity = delay ? '0' : '';
     return new Promise((resolve) => {
       const step = (now) => {
         if (!node.isConnected) return resolve();
-        if (now < t0) return requestAnimationFrame(step);
+        const elapsed = tick(now) - delay;
+        if (elapsed < 0) return requestAnimationFrame(step);
         node.style.opacity = '';
-        const d = Math.min(total, (now - t0) * pxPerMs);
+        const d = Math.min(total, elapsed * pxPerMs);
         const p = at(d);
         const ang = (Math.atan2(p.y - prev.y, p.x - prev.x) * 180) / Math.PI;
         const rot = node.classList.contains('heading') && (p.x !== prev.x || p.y !== prev.y) ? ` rotate(${ang + 90}deg)` : '';
@@ -476,7 +491,7 @@
     // Rotating radial fire from the unit itself.
     async mv_turret(S, actor, from, T, spec, hit) {
       const dur = 1100 / S.speed;
-      const t0 = performance.now();
+      const tick = clock();
       if (spec.shield) {
         const dome = el(`<div class="sig-dome" style="left:${from.x}px;top:${from.y}px;--c:#ff8a5a"></div>`);
         S.layer.appendChild(dome);
@@ -486,7 +501,7 @@
       let fired = 0;
       await new Promise((resolve) => {
         const step = (now) => {
-          const k = (now - t0) / dur;
+          const k = tick(now) / dur;
           if (Math.random() < 0.9) {
             const a = k * TAU * 2 + rand(-0.2, 0.2);
             const end = { x: from.x + Math.cos(a) * S.W, y: from.y + Math.sin(a) * S.W };
@@ -727,14 +742,14 @@
       const cx = T.reduce((a, t) => a + t.x, 0) / Math.max(1, T.length);
       const cy = T.reduce((a, t) => a + t.y, 0) / Math.max(1, T.length);
       const dur = 1700 / S.speed;
-      const t0 = performance.now();
+      const tick = clock();
       const ship = el(`<div class="sp-prop sig-isd">${root.Art.shipOnly({ shape: 'isd' })}</div>`);
       S.layer.appendChild(ship);
       const size = S.W * 0.55;
       ship.style.width = ship.style.height = size + 'px';
       await new Promise((resolve) => {
         const step = (now) => {
-          const k = Math.min(1, (now - t0) / dur);
+          const k = Math.min(1, tick(now) / dur);
           // Lightning from his hands to the falling hull.
           const e = k * k * k;
           const sx = cx + (1 - e) * S.W * 0.25;
@@ -904,11 +919,11 @@
       const dy = b.y - a.y;
       const len = Math.hypot(dx, dy) || 1;
       const ext = { x: b.x + (dx / len) * 200, y: b.y + (dy / len) * 200 };
-      const t0 = performance.now();
+      const tick = clock();
       const dur = ms / S.speed;
       return new Promise((resolve) => {
         const step = (now) => {
-          const k = Math.min(1, (now - t0) / dur);
+          const k = Math.min(1, tick(now) / dur);
           const w = width * Math.sin(k * Math.PI);
           const ctx = S.ctx;
           ctx.globalCompositeOperation = 'lighter';

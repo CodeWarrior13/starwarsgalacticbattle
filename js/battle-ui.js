@@ -118,6 +118,10 @@
       $('[data-retreat]', this.view).textContent = 'Exit';
       this.log(`Training simulation: ${def.name}'s ultimate.`, 'ult');
       await this.wait(700);
+      // Let the new screen finish painting first; Safari can still be busy
+      // drawing the cards, which would eat the opening of the ultimate.
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+      await this.wait(250);
       if (this.ended) return;
       const actor = this.battle.units.find((u) => u.id === id && u.side === 'player');
       // Wound the squad first so healing ultimates have something to show.

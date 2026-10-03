@@ -9,6 +9,17 @@
   const rand = (a, b) => a + Math.random() * (b - a);
   const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  // Safari (and every iOS browser) renders canvas shadowBlur very slowly, so
+  // per-frame glows skip it there.
+  const LITE = /iP(hone|ad|od)/.test(navigator.userAgent) || (/Safari\//.test(navigator.userAgent) && !/Chrom(e|ium)|Android/.test(navigator.userAgent));
+
+  // A soft halo plus a solid core: looks like a glow, costs two fills.
+  function glowDot(ctx, x, y, r, alpha) {
+    ctx.globalAlpha = alpha * 0.3;
+    ctx.beginPath(); ctx.arc(x, y, r * 2.4, 0, TAU); ctx.fill();
+    ctx.globalAlpha = alpha;
+    ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill();
+  }
 
   function seeded(seed) {
     let s = seed >>> 0;
@@ -741,7 +752,7 @@
         const baseY = h * (0.76 + k * 0.13);
         ctx.fillStyle = k ? '#ff7a1a' : '#e0480e';
         ctx.shadowColor = '#ff5a1a';
-        ctx.shadowBlur = 20;
+        if (!LITE) ctx.shadowBlur = 20;
         ctx.beginPath();
         ctx.moveTo(-40, baseY);
         for (let x = -40; x <= w + 40; x += 20) ctx.lineTo(x, baseY + Math.sin(x * 0.02 + t * (1 + k) + k * 3) * 5);
@@ -866,7 +877,7 @@
         ctx.strokeStyle = `rgba(210,200,255,${1 - e.g.bolt.life / 0.35})`;
         ctx.lineWidth = 2.5;
         ctx.shadowColor = '#9a8aff';
-        ctx.shadowBlur = 18;
+        if (!LITE) ctx.shadowBlur = 18;
         ctx.beginPath();
         e.g.bolt.pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
         ctx.stroke();
@@ -1761,10 +1772,7 @@
           if (p.kind === 'streak' || p.kind === 'rain') ctx.fillRect(p.x, p.y, p.size, len);
           else ctx.fillRect(p.x, p.y, len, p.size);
         } else if (p.kind === 'firefly' || p.kind === 'ember' || p.kind === 'spore' || p.kind === 'sparkle') {
-          ctx.shadowColor = p.color;
-          ctx.shadowBlur = 6;
-          ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, TAU); ctx.fill();
-          ctx.shadowBlur = 0;
+          glowDot(ctx, p.x, p.y, p.size, a);
         } else {
           ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, TAU); ctx.fill();
         }
@@ -1786,9 +1794,8 @@
           ctx.fillRect(-p.size, -p.size * 0.4, p.size * 2, p.size * 0.8);
           ctx.restore();
         } else {
-          if (p.type === 'ember' || p.type === 'glowdot') { ctx.shadowColor = p.color; ctx.shadowBlur = 8; }
-          ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, TAU); ctx.fill();
-          ctx.shadowBlur = 0;
+          if (p.type === 'ember' || p.type === 'glowdot') glowDot(ctx, p.x, p.y, p.size, ctx.globalAlpha);
+          else { ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, TAU); ctx.fill(); }
         }
       }
       ctx.restore();
@@ -1889,7 +1896,7 @@
       ctx.fillStyle = done ? '#ffffff' : color;
       ctx.strokeStyle = next ? hexA(color, 0.95) : 'rgba(255,255,255,0.28)';
       ctx.lineWidth = 1;
-      if (lit || next) { ctx.shadowColor = color; ctx.shadowBlur = lit ? 8 : 12; }
+      if (!LITE && (lit || next)) { ctx.shadowColor = color; ctx.shadowBlur = lit ? 8 : 12; }
       glyph(ctx, style, s, lit);
       ctx.restore();
     }
