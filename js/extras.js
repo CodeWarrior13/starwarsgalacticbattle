@@ -54,10 +54,10 @@ const css = `
 .xq-bubble { position: absolute; top: 31%; left: calc(50% + clamp(60px, 16vmin, 96px)); z-index: 5; padding: 8px 14px; border-radius: 16px 16px 16px 4px; background: #fff; color: #2a1a08; font-family: var(--font-display); font-weight: 800; font-size: clamp(14px, 3.4vw, 20px); white-space: nowrap; opacity: 0; transform-origin: bottom left; animation: xq-pop 0.45s 3.1s cubic-bezier(.2,.9,.3,1.5) forwards, xq-wob 0.5s 3.6s ease-in-out 2; }
 @keyframes xq-pop { from { opacity: 0; transform: scale(0.2); } to { opacity: 1; transform: none; } }
 @keyframes xq-wob { 50% { transform: rotate(-5deg) scale(1.05); } }
-.xq-stats { position: absolute; top: calc(24% + clamp(130px, 34vmin, 200px) * 1.38); left: 50%; transform: translateX(-50%); display: grid; grid-template-columns: repeat(4, auto); gap: 8px; }
-.xq-stats span { display: grid; justify-items: center; gap: 1px; min-width: 58px; padding: 6px 8px; border-radius: 10px; background: rgba(10, 8, 4, 0.8); border: 1px solid rgba(255, 210, 63, 0.5); opacity: 0; animation: xq-pop 0.4s var(--t) cubic-bezier(.2,.9,.3,1.4) forwards; }
+.xq-stats { position: absolute; top: calc(24% + clamp(130px, 34vmin, 200px) * 1.38); left: 50%; transform: translateX(-50%); display: grid; grid-template-columns: repeat(4, auto); gap: 6px; }
+.xq-stats span { display: grid; justify-items: center; gap: 1px; width: clamp(64px, 19vw, 82px); padding: 6px 4px; box-sizing: border-box; border-radius: 10px; background: rgba(10, 8, 4, 0.8); border: 1px solid rgba(255, 210, 63, 0.5); opacity: 0; animation: xq-pop 0.4s var(--t) cubic-bezier(.2,.9,.3,1.4) forwards; }
 .xq-stats em { font-style: normal; font-size: 10px; letter-spacing: 0.16em; color: #ffd9a0; }
-.xq-stats b { font-family: var(--font-display); font-size: 18px; color: #fff; }
+.xq-stats b { font-family: var(--font-display); font-size: clamp(13px, 3.6vw, 18px); color: #fff; white-space: nowrap; }
 .xq-tag { position: absolute; top: calc(24% - 30px); left: 50%; transform: translateX(-50%); padding: 3px 12px; border-radius: 999px; background: linear-gradient(90deg, #5ab4ff, #ff4a5a); color: #fff; font-family: var(--font-display); font-size: 11px; letter-spacing: 0.24em; opacity: 0; animation: xq-pop 0.4s 3.3s forwards; }
 .xq-jj .fc-text .fs-kicker { background: linear-gradient(90deg, #ffb347, #fff1c8, #ffb347); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .xq-jj .fc-text b { text-shadow: 0 0 22px #ff9a2a; }
@@ -112,6 +112,34 @@ const css = `
 .feat-cine.reveal .xq-doors, .feat-cine.reveal .xq-go, .feat-cine.reveal .xq-hint, .feat-cine.reveal .xq-podium, .feat-cine.reveal .xq-title, .feat-cine.reveal .xq-chewie, .feat-cine.reveal .xq-roar, .feat-cine.reveal .xq-floor2 { display: none; }
 .xq-cer .fc-text .fs-kicker { color: #ffd23f; }
 .xq-cer .fc-text b { text-shadow: 0 0 22px rgba(255, 210, 63, 0.7); }
+.feat-cine.xq-m4 { background: radial-gradient(circle at 50% 42%, #0e2a5a, #030814 70%); }
+.feat-cine.xq-m5 { background: radial-gradient(circle at 50% 42%, #4a0a12, #0a0204 70%); }
+.feat-cine.xq-sv { background: radial-gradient(circle at 50% 45%, #2a0a0e, #050103 70%); }
+.xq-blade { position: absolute; top: 40%; left: calc(6% + 46px); right: 6%; height: 8px; border-radius: 4px; transform-origin: left center; transform: scaleX(0); animation: xq-ignite 0.9s 0.5s cubic-bezier(.2,.9,.3,1) forwards, xq-hum 0.12s 1.4s steps(2) infinite alternate; }
+.xq-m4 .xq-blade { background: #eaf6ff; box-shadow: 0 0 12px #4aa8ff, 0 0 34px #4aa8ff, 0 0 70px #4aa8ff; }
+.xq-m5 .xq-blade { background: #fff0f0; box-shadow: 0 0 12px #ff2a3a, 0 0 34px #ff2a3a, 0 0 70px #ff2a3a; }
+.xq-hilt { position: absolute; top: calc(40% - 5px); left: 6%; width: 46px; height: 18px; border-radius: 4px; background: linear-gradient(180deg, #d8dde3, #6a717b); }
+@keyframes xq-ignite { to { transform: scaleX(1); } }
+@keyframes xq-hum { to { opacity: 0.86; } }
+.xq-sym { position: absolute; top: 14%; left: 50%; width: clamp(80px, 22vmin, 130px); margin-left: calc(clamp(80px, 22vmin, 130px) / -2); opacity: 0; animation: jp-sub 0.8s 1.2s forwards; }
+.xq-sym svg { width: 100%; height: auto; }
+.xq-m4 .xq-sym { color: #9fd4ff; filter: drop-shadow(0 0 18px #4aa8ff); }
+.xq-m5 .xq-sym { color: #ff8a8a; filter: drop-shadow(0 0 18px #ff2a3a); }
+.xq-bolt { position: absolute; inset: 0; opacity: 0; pointer-events: none; animation: xq-bolt 2.2s var(--d) steps(1) infinite; }
+.xq-bolt svg { width: 100%; height: 100%; }
+@keyframes xq-bolt { 0%, 8%, 100% { opacity: 0; } 2%, 6% { opacity: 1; } }
+.xq-ekg { position: absolute; top: 34%; left: 0; right: 0; height: 30%; }
+.xq-ekg svg { width: 100%; height: 100%; }
+.xq-ekg path { stroke-dasharray: 1600; stroke-dashoffset: 1600; animation: xq-draw 3.2s 0.3s linear forwards; }
+@keyframes xq-draw { to { stroke-dashoffset: 0; } }
+.xq-pulse { position: absolute; inset: 0; background: radial-gradient(circle, transparent 40%, rgba(255, 30, 50, 0.35)); opacity: 0; animation: xq-pulse 0.9s 3.4s ease-out 3; }
+@keyframes xq-pulse { 0% { opacity: 0.9; } 100% { opacity: 0; } }
+.xq-m4 .fc-text .fs-kicker { color: #9fd4ff; }
+.xq-m4 .fc-text b { text-shadow: 0 0 22px #4aa8ff; }
+.xq-m5 .fc-text .fs-kicker { color: #ff8a8a; }
+.xq-m5 .fc-text b { text-shadow: 0 0 22px #ff2a3a; }
+.xq-sv .fc-text .fs-kicker { color: #ff9aa6; }
+.xq-sv .fc-text b { text-shadow: 0 0 22px #ff3a4a; }
 .xq-tile { position: relative; aspect-ratio: 3 / 4; border-radius: 10px; overflow: hidden; border: 2px solid #c8a060; background: #0a0806; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6); }
 .xq-tile.gold { border-color: #ffd23f; box-shadow: 0 0 30px rgba(255, 210, 63, 0.6); }
 .xq-tile .portrait { width: 100%; height: 100%; }
@@ -190,7 +218,11 @@ const FEATS = {
 };
 H.feats.push((s) => {
   const z = s.z || {};
-  const out = [{ id: 'xq_sv', tier: 3, icon: 'bacta', name: 'Survivor', desc: 'Win a battle with a unit on its last 1% of health', have: z.b ? 1 : 0, need: 1 }];
+  const out = [
+    { id: 'xq_sv', tier: 3, icon: 'bacta', name: 'Survivor', desc: 'Win a battle with a unit on its last 1% of health', have: z.b ? 1 : 0, need: 1 },
+    { id: 'xq_m4', tier: 4, icon: 'jedi', name: 'May the 4th Be With You', desc: 'Claim the May the 4th gift', have: z.m4 ? 1 : 0, need: 1 },
+    { id: 'xq_m5', tier: 4, icon: 'sith', name: 'Revenge of the Fifth', desc: 'Win a battle on May the 5th', have: z.m5 ? 1 : 0, need: 1 },
+  ];
   if (z.f) out.push(FEATS.dad);
   if (z.j) out.push(FEATS.jj);
   if (z.k) out.push(FEATS.kr);
@@ -256,7 +288,30 @@ const crestKR = () => {
     <circle r="84" fill="none" stroke="#7cd0ff" stroke-width="1.5" stroke-dasharray="2 8" opacity=".8">${anim.spin(12, true)}</circle>`;
   return frame(u, `${streaks}${ticks}${engines}${ship}`, 'KESSEL RUN', { glow: '#7cd0ff', core: '#0a1a30', tail: '#123a6a', back });
 };
-Object.assign(H.crests, { xq_dad: crestDad, xq_jj: crestJJ, xq_kr: crestKR });
+const glyph = (name, size, color) => {
+  const inner = root.Icons.svg(name).replace(/^<svg[^>]*>/, '').replace(/<\/svg>\s*$/, '');
+  return `<g transform="translate(${-size / 2},${-size / 2}) scale(${size / 24})" fill="${color}" color="${color}">${inner}</g>`;
+};
+const crestSide = (side) => {
+  const jedi = side === 'jedi';
+  const u = `xs${++seq}`;
+  const c = jedi ? '#4aa8ff' : '#ff2a3a';
+  const blade = `<line x1="-62" y1="40" x2="62" y2="-40" stroke="${c}" stroke-width="10" opacity=".7" filter="url(#${u}bl)"/><line x1="-62" y1="40" x2="62" y2="-40" stroke="#fff" stroke-width="4">${anim.fade('1;.8;1', 0.14)}</line>`;
+  const stars = Array.from({ length: 8 }, (_, k) => `<g transform="rotate(${k * 45}) translate(0,-54)"><circle r="2.2" fill="#fff" filter="url(#${u}f)">${anim.fade('1;.2;1', 1.6, -k * 0.2)}</circle></g>`).join('');
+  const bolts = jedi ? '' : [[-60, -30, -20, -10, -36, 10, 4, 30], [60, -36, 22, -14, 40, 6, -2, 34]].map((pts, k) => `<polyline points="${pts.join(',').replace(/(-?\d+),(-?\d+),?/g, '$1,$2 ')}" fill="none" stroke="#ffb0b8" stroke-width="2.2" filter="url(#${u}f)" opacity="0">${anim.fade('0;1;0;0;0', 1.2, -k * 0.5)}</polyline>`).join('');
+  const inner = `<g>${anim.spin(jedi ? 18 : 10, !jedi)}${stars}</g>${bolts}${blade}<g filter="url(#${u}f)">${glyph(jedi ? 'jedi' : 'sith', 64, jedi ? '#dff0ff' : '#ffd6da')}</g>`;
+  return frame(u, inner, jedi ? 'MAY THE 4TH' : 'REVENGE', { glow: c, core: jedi ? '#0a1a3a' : '#2a0508', tail: jedi ? '#123a6a' : '#5a0a10',
+    back: `<g fill="${c}" opacity=".3">${anim.spin(26)}${Array.from({ length: 20 }, (_, k) => `<polygon points="0,${k % 2 ? -86 : -100} 4,0 -4,0" transform="rotate(${k * 18})"/>`).join('')}</g>` });
+};
+const crestSV = () => {
+  const u = `xv${++seq}`;
+  const ekg = 'M-70,6 L-38,6 L-30,-4 L-24,6 L-14,6 L-8,-46 L0,40 L8,-14 L14,6 L30,6 L36,-2 L42,6 L70,6';
+  const inner = `<path d="${ekg}" fill="none" stroke="#3a0a10" stroke-width="5"/>
+    <path d="${ekg}" fill="none" stroke="#ff4a5a" stroke-width="3" stroke-linejoin="round" stroke-dasharray="70 300" filter="url(#${u}f)">${anim.dash(370, 1.8, 0)}</path>
+    <g transform="translate(0,-36) scale(.9)">${glyph('bacta', 26, '#ff9aa6')}</g>`;
+  return frame(u, inner, 'SURVIVOR', { glow: '#ff3a4a', core: '#1a0508', tail: '#5a0a10' });
+};
+Object.assign(H.crests, { xq_dad: crestDad, xq_jj: crestJJ, xq_kr: crestKR, xq_sv: crestSV, xq_sv_show: crestSV, xq_m4: () => crestSide('jedi'), xq_m5: () => crestSide('sith') });
 
 // Portrait tile with a name plate (works whether or not the card is owned).
 const tile = (def, cls = '') => `<div class="xq-tile ${cls}">${UI.portrait(def, { plate: false })}<b>${esc(def.name)}</b></div>`;
@@ -359,7 +414,25 @@ const sceneCer = (x) => {
   };
   return scene(hx, 'xq-cer', stage, null, null, (S, at) => { S.play('whoosh'); at(500, () => S.play('ignite')); at(1800, () => S.play('victory')); at(2100, () => S.play('coins')); at(5000, () => S.play('crit')); }, 'Hero of the Galaxy', setup);
 };
+const sceneSide = (x, side) => {
+  const jedi = side === 'jedi';
+  const bolts = jedi ? '' : [0, 0.7, 1.4].map((d, k) => `<div class="xq-bolt" style="--d:${d}s"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><polyline points="${k % 2 ? '100,10 70,26 78,34 50,48 58,56 30,70' : '0,8 26,24 18,32 46,44 38,52 66,66'}" fill="none" stroke="#ffd6da" stroke-width=".8"/></svg></div>`).join('');
+  const stage = `${bolts}<div class="xq-sym">${root.Icons.svg(jedi ? 'jedi' : 'sith')}</div><i class="xq-hilt"></i><i class="xq-blade"></i>
+    <p class="xq-line" style="top:52%;--t:1.6s">${jedi ? 'May the 4th be with you…' : 'Revenge of the Fifth.'}</p>
+    <p class="xq-line" style="top:59%;--t:2.8s;color:${jedi ? '#9fd4ff' : '#ff8a8a'}">${jedi ? '…always.' : 'The Sith will have their revenge.'}</p>`;
+  return scene(x, jedi ? 'xq-m4' : 'xq-m5', stage, 4600, null, (S, at) => { S.play('ignite'); at(500, () => S.play('saber')); if (!jedi) { at(700, () => S.play('lightning')); at(2100, () => S.play('lightning')); } else at(1600, () => S.play('heal')); }, 'Legendary achievement');
+};
+const sceneSV = (x) => {
+  const stage = `<div class="xq-pulse"></div><div class="xq-ekg"><svg viewBox="0 0 400 100" preserveAspectRatio="none"><path d="M0,50 L120,50 L130,40 L138,50 L250,50 L262,50 L268,10 L276,92 L284,36 L292,50 L400,50" fill="none" stroke="#ff4a5a" stroke-width="2.4" stroke-linejoin="round" style="filter:drop-shadow(0 0 6px #ff3a4a)"/></svg></div>
+    <p class="xq-line" style="top:68%;--t:2.2s;color:#ff9aa6">Flatlined…</p><p class="xq-line" style="top:75%;--t:3.4s">…still standing.</p>`;
+  return scene(x, 'xq-sv', stage, 4800, null, (S, at) => { [0, 700].forEach((t) => at(t, () => S.play('click'))); at(1500, () => S.play('hit')); at(3300, () => S.play('heal')); at(3500, () => S.play('crit')); }, 'Achievement');
+};
+
 Object.assign(H.scenes, {
+  xq_sv: (x) => sceneSV(x),
+  xq_sv_show: (x) => sceneSV(x),
+  xq_m4: (x) => sceneSide(x, 'jedi'),
+  xq_m5: (x) => sceneSide(x, 'sith'),
   xq_dad: (x) => sceneDad(x),
   xq_jj: (x) => sceneJJ(x),
   xq_kr: (x) => sceneKR(x, Z().km),
@@ -445,25 +518,41 @@ H.battleEnd.push((battle, params, won) => {
   if (won && !z.b && battle.side('player').some((u) => u.alive && u.hp <= Math.max(1, Math.floor(u.maxHp * 0.01)))) {
     z.b = 1;
     UI.markFeatSeen('xq_sv');
-    later(() => new Promise((res) => {
-      UI.playFeat({ id: 'xq_sv_show', tier: 3, icon: 'bacta', name: 'Survivor', desc: 'Won on the last 1% of health. A free Sith Holocron is yours.', have: 1, need: 1 });
-      const wait = () => (document.querySelector('.feat-show') ? setTimeout(wait, 300) : res());
-      setTimeout(wait, 800);
-    }).then(() => {
+    later(() => sceneSV({ id: 'xq_sv_show', tier: 3, icon: 'bacta', name: 'Survivor', desc: 'Won on the last 1% of health. A free Sith Holocron is yours.', have: 1, need: 1 }).then(() => {
       const results = Player.openPack('strongbox', null, { free: true });
       UI.updateWallet();
       if (results) return UI.packReveal(results, 'strongbox');
       return null;
     }));
   }
+  const ev = root.Events && root.Events.active();
+  if (won && ev && ev.id === 'may5' && !z.m5) {
+    z.m5 = 1;
+    UI.markFeatSeen('xq_m5');
+    later(() => sceneSide({ id: 'xq_m5', tier: 4, icon: 'sith', name: 'Revenge of the Fifth', desc: 'Won a battle on May the 5th', have: 1, need: 1 }, 'sith'));
+  }
   Player.save();
   if (won) setTimeout(ceremonyCheck, 50);
 });
+
+// Claiming the May the 4th gift earns its badge.
+if (root.Events) {
+  const claim = root.Events.claimGift.bind(root.Events);
+  root.Events.claimGift = function () {
+    const e = this.active();
+    const first = e && e.id === 'may4' && !Z().m4;
+    claim();
+    if (first) {
+      Z().m4 = 1; Player.save(); UI.markFeatSeen('xq_m4');
+      later(() => sceneSide({ id: 'xq_m4', tier: 4, icon: 'jedi', name: 'May the 4th Be With You', desc: 'Claimed the May the 4th gift', have: 1, need: 1 }, 'jedi'));
+    }
+  };
+}
 
 // Saves that already liberated everything get their ceremony once.
 setTimeout(ceremonyCheck, 2500);
 
 // Testing hook (tester panel only).
-root.__xq = { dad: () => sceneDad(FEATS.dad), jj: () => sceneJJ(FEATS.jj), kr: () => sceneKR(FEATS.kr, 11.4), cer: () => sceneCer({ id: 'hero', tier: 4, icon: 'starbird', name: 'Hero of the Galaxy', desc: '', have: 1, need: 1 }), sv: () => UI.playFeat({ id: 'xq_sv_show', tier: 3, icon: 'bacta', name: 'Survivor', desc: 'Won on the last 1% of health. A free Sith Holocron is yours.', have: 1, need: 1 }) };
+root.__xq = { dad: () => sceneDad(FEATS.dad), jj: () => sceneJJ(FEATS.jj), kr: () => sceneKR(FEATS.kr, 11.4), cer: () => sceneCer({ id: 'hero', tier: 4, icon: 'starbird', name: 'Hero of the Galaxy', desc: '', have: 1, need: 1 }), sv: () => sceneSV({ id: 'xq_sv_show', tier: 3, icon: 'bacta', name: 'Survivor', desc: 'Won on the last 1% of health. A free Sith Holocron is yours.', have: 1, need: 1 }), m4: () => sceneSide({ id: 'xq_m4', tier: 4, icon: 'jedi', name: 'May the 4th Be With You', desc: 'Claimed the May the 4th gift', have: 1, need: 1 }, 'jedi'), m5: () => sceneSide({ id: 'xq_m5', tier: 4, icon: 'sith', name: 'Revenge of the Fifth', desc: 'Won a battle on May the 5th', have: 1, need: 1 }, 'sith') };
 
 })(window);
