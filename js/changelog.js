@@ -16,6 +16,8 @@
         'IMPROVED|Tutorial tips are bigger, easier to read and tuck away so you can see the cards.',
         'IMPROVED|Your starter squad now arrives card by card, with your starting credits and Kyber counting up.',
         'NEW|This update log, in Settings.',
+        'IMPROVED|Opening a version in the update log gives it the whole panel; scroll for the others.',
+        'NEW|A reminder to reload if the game was open when an update came out.',
       ],
     },
     {
@@ -79,7 +81,15 @@
       const m = UI.openModal(`<div class="ul-head"><span class="ul-badge">Command Console</span><h2>Update log</h2><p class="ul-sub">Every update, newest first. Tap one to open it.</p></div>
         <div class="ul-list">${UPDATES.map((u, i) => this.entryHtml(u, i === 0)).join('')}</div>
         ${RELOAD_NOTE}
-        <div class="modal-actions"><button class="btn btn-primary" type="button" data-close>Done</button></div>`, { small: true, cls: 'update-modal' });
+        <div class="modal-actions"><button class="btn btn-primary" type="button" data-close>Done</button></div>`, { small: true, cls: 'update-modal full' });
+      // One version open at a time; the opened one scrolls to the top so it
+      // fills the panel, and the others are a scroll away.
+      const list = m.root.querySelector('.ul-list');
+      m.root.querySelectorAll('.ul-entry').forEach((d) => d.addEventListener('toggle', () => {
+        if (!d.open) return;
+        m.root.querySelectorAll('.ul-entry[open]').forEach((o) => { if (o !== d) o.open = false; });
+        requestAnimationFrame(() => list.scrollTo({ top: d.offsetTop - list.offsetTop, behavior: 'smooth' }));
+      }));
       m.root.addEventListener('click', (e) => {
         if (e.target.closest('[data-close]')) m.close();
         if (e.target.closest('[data-reload]')) location.reload();

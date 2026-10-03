@@ -11,6 +11,8 @@ The same notes appear in the game under **Settings → Update log**, and the new
 - Tutorial tips are bigger, easier to read and tuck away so you can see the cards.
 - Your starter squad now arrives card by card, with your starting credits and Kyber counting up.
 - New: this update log, in Settings.
+- Opening a version in the update log gives it the whole panel; scroll for the others.
+- A reminder to reload if the game was open when an update came out.
 
 ## v1.5 · Events and celebrations (October 3, 2026)
 - May the 4th: a Jedi-blue galaxy and a free Jedi Holocron plus 25 Kyber, once a year.
