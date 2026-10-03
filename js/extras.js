@@ -79,15 +79,27 @@ const css = `
 @keyframes xq-door-l { to { transform: translateX(-102%); } }
 @keyframes xq-door-r { to { transform: translateX(102%); } }
 .xq-shafts { position: absolute; inset: 0; overflow: hidden; }
+.xq-window { position: absolute; top: 3%; left: 50%; width: min(56vw, 300px); height: 30%; transform: translateX(-50%); border-radius: 999px 999px 0 0; overflow: hidden; border: 2px solid rgba(255, 210, 63, 0.35); box-shadow: 0 0 40px rgba(90, 140, 255, 0.25), inset 0 0 30px rgba(0, 0, 0, 0.6); background: radial-gradient(1.5px 1.5px at 20% 30%, #fff, transparent), radial-gradient(1px 1px at 70% 20%, #fff, transparent), radial-gradient(1.5px 1.5px at 45% 60%, #cfe2ff, transparent), radial-gradient(1px 1px at 85% 55%, #fff, transparent), radial-gradient(1px 1px at 30% 80%, #fff, transparent), radial-gradient(1.2px 1.2px at 60% 85%, #fff, transparent), radial-gradient(circle at 70% 35%, rgba(255, 140, 90, 0.5) 0 8%, transparent 9%), linear-gradient(180deg, #0a1638, #1a2a5a); }
+.xq-window::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent 32%, rgba(255, 210, 63, 0.25) 32% 33%, transparent 33% 66%, rgba(255, 210, 63, 0.25) 66% 67%, transparent 67%); }
+.xq-emblem { position: absolute; top: 14%; left: 50%; width: min(80vw, 420px); aspect-ratio: 1; transform: translateX(-50%); color: #ffd23f; opacity: 0.07; animation: xq-breathe 6s ease-in-out infinite; }
+.xq-emblem svg { width: 100%; height: 100%; }
+@keyframes xq-breathe { 50% { opacity: 0.13; } }
+.xq-banner { position: absolute; top: 0; width: clamp(34px, 9vw, 60px); height: 48%; background: linear-gradient(180deg, #13245a, #0a1638 85%); border: 1px solid rgba(255, 210, 63, 0.45); border-top: 0; clip-path: polygon(0 0, 100% 0, 100% 92%, 50% 100%, 0 92%); box-shadow: inset 0 -20px 30px rgba(0, 0, 0, 0.4); animation: xq-wave 5s ease-in-out infinite alternate; transform-origin: top center; }
+.xq-banner::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 6px; background: linear-gradient(90deg, #a86f08, #ffd23f, #a86f08); }
+.xq-banner i { position: absolute; left: 50%; top: 34%; width: 70%; aspect-ratio: 1; transform: translateX(-50%); color: #ffd23f; opacity: 0.85; }
+.xq-banner i svg { width: 100%; height: 100%; }
+@keyframes xq-wave { to { transform: skewX(1.5deg) scaleY(1.01); } }
+.xq-pillar { position: absolute; top: 0; bottom: 36%; width: clamp(14px, 4vw, 26px); background: linear-gradient(90deg, #0a1024, #1e2c56 45%, #0a1024); border-left: 1px solid rgba(255, 210, 63, 0.18); border-right: 1px solid rgba(255, 210, 63, 0.18); }
+.xq-grid { position: absolute; left: -30%; right: -30%; bottom: 0; height: 36%; background: repeating-linear-gradient(90deg, rgba(255, 210, 63, 0.10) 0 1px, transparent 1px 48px), repeating-linear-gradient(0deg, rgba(255, 210, 63, 0.08) 0 1px, transparent 1px 34px); transform: perspective(380px) rotateX(62deg); transform-origin: top center; -webkit-mask-image: linear-gradient(180deg, #000 10%, transparent 90%); mask-image: linear-gradient(180deg, #000 10%, transparent 90%); }
 .xq-shafts i { position: absolute; top: -10%; width: 18%; height: 90%; background: linear-gradient(180deg, rgba(200, 225, 255, 0.2), rgba(200, 225, 255, 0.04) 60%, transparent 85%); filter: blur(10px); transform-origin: top center; animation: xq-sway 7s ease-in-out infinite alternate; }
 @keyframes xq-sway { from { transform: rotate(var(--r)) translateX(-4%); } to { transform: rotate(calc(var(--r) * -0.6)) translateX(4%); } }
 .xq-dust { position: absolute; inset: 0; overflow: hidden; }
 .xq-dust i { position: absolute; bottom: -4%; width: 3px; height: 3px; border-radius: 50%; background: #ffe7a8; box-shadow: 0 0 6px #ffd23f; opacity: 0; animation: xq-rise var(--s) var(--d) linear infinite; }
 @keyframes xq-rise { 0% { opacity: 0; transform: translateY(0); } 15% { opacity: 0.9; } 100% { opacity: 0; transform: translate(var(--x), -100vh); } }
 .xq-floor2 { position: absolute; left: 0; right: 0; bottom: 0; height: 36%; background: radial-gradient(ellipse at 50% 0%, rgba(120, 160, 255, 0.18), transparent 60%), linear-gradient(180deg, #0c1430, #03050c); border-top: 1px solid rgba(255, 210, 63, 0.35); box-shadow: 0 -1px 24px rgba(255, 210, 63, 0.15); }
-.xq-title { position: absolute; top: 7%; left: 0; right: 0; z-index: 4; text-align: center; opacity: 0; animation: jp-sub 0.8s 1.7s forwards; }
-.xq-title b { display: block; font-family: var(--font-display); font-weight: 800; letter-spacing: 0.32em; font-size: clamp(18px, 4.6vw, 34px); background: linear-gradient(180deg, #fff6c8, #ffd23f 55%, #a86f08); -webkit-background-clip: text; background-clip: text; color: transparent; }
-.xq-title span { font-size: clamp(11px, 2.4vw, 14px); letter-spacing: 0.2em; text-transform: uppercase; color: #b8c8e8; }
+.xq-title { position: absolute; top: 7%; left: 12px; right: 12px; z-index: 4; text-align: center; opacity: 0; animation: jp-sub 0.8s 1.7s forwards; }
+.xq-title b { display: block; font-family: var(--font-display); font-weight: 800; letter-spacing: 0.22em; text-indent: 0.22em; font-size: clamp(17px, 4.6vw, 34px); white-space: nowrap; background: linear-gradient(180deg, #fff6c8, #ffd23f 55%, #a86f08); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.xq-title span { display: block; margin-top: 4px; font-size: clamp(10px, 2.4vw, 14px); letter-spacing: 0.14em; text-indent: 0.14em; text-transform: uppercase; color: #b8c8e8; }
 .xq-podium { position: absolute; top: 24%; left: 0; right: 0; z-index: 5; display: flex; justify-content: center; align-items: flex-end; gap: clamp(10px, 3.4vw, 26px); pointer-events: auto; perspective: 900px; }
 .xq-hero { position: relative; width: clamp(84px, 22vmin, 136px); display: grid; justify-items: center; gap: 0; opacity: 0; animation: xq-hero-in 0.8s var(--t) cubic-bezier(.2,.9,.3,1.2) forwards; }
 .xq-hero.c { width: clamp(98px, 26vmin, 160px); }
@@ -427,7 +439,11 @@ const sceneCer = (x) => {
   }).join('');
   const shafts = [[18, 14], [40, -6], [62, 8], [82, -14]].map(([l, r]) => `<i style="left:${l}%;--r:${r}deg"></i>`).join('');
   const dust = Array.from({ length: 40 }, (_, k) => `<i style="left:${(k * 37) % 100}%;--s:${6 + (k % 5)}s;--d:${-(k % 9) * 0.8}s;--x:${(k % 2 ? 1 : -1) * (10 + (k % 4) * 8)}px"></i>`).join('');
-  const stage = `<div class="xq-shafts">${shafts}</div><div class="xq-dust">${dust}</div><div class="xq-floor2"></div>
+  const emblem = root.Icons.svg('starbird');
+  const stage = `<div class="xq-window"></div><div class="xq-emblem">${emblem}</div>
+    <span class="xq-pillar" style="left:22%"></span><span class="xq-pillar" style="right:22%"></span>
+    <span class="xq-banner" style="left:4%"><i>${emblem}</i></span><span class="xq-banner" style="right:4%;animation-delay:-2.5s"><i>${emblem}</i></span>
+    <div class="xq-shafts">${shafts}</div><div class="xq-dust">${dust}</div><div class="xq-floor2"><div class="xq-grid"></div></div>
     <div class="xq-title"><b>HEROES OF THE GALAXY</b><span>For valor in the liberation of every world</span></div>
     <div class="xq-podium">${heroes}</div>
     <p class="xq-hint">Tap a hero to see their record</p>
