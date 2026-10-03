@@ -1234,7 +1234,7 @@
   // Support, and Fighter (melee) or Ranged only for damage dealers. Ships add
   // their hull type; Force users and droids get their own tag on top.
   function classesOf(def) {
-    const tr = TRAITS[def.id] || [];
+    const tr = TRAITS[def.id] || def.traits || [];
     const out = [];
     const role = { tank: 'tank', healer: 'healer', support: 'support' }[def.role];
     if (role) out.push(role);
@@ -1554,7 +1554,7 @@
     };
   }
 
-  const traitsOf = (id) => TRAITS[id] || [];
+  const traitsOf = (id) => TRAITS[id] || (UNIT_MAP[id] && UNIT_MAP[id].traits) || [];
 
   function addMods(into, mods) {
     for (const [k, v] of Object.entries(mods)) into[k] = (into[k] || 0) + v;

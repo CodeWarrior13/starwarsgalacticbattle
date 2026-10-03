@@ -2139,7 +2139,7 @@
       { icon: 'sabers', tier: 1, name: 'First Blood', desc: 'Win your first battle', have: st.battlesWon, need: 1 },
       { icon: 'trooper', tier: 3, name: 'Veteran', desc: 'Win 100 battles', have: st.battlesWon, need: 100 },
       { icon: 'planet', tier: 2, name: 'Liberator', desc: 'Liberate 5 worlds', have: worlds, need: 5 },
-      { icon: 'starbird', tier: 4, name: 'Hero of the Galaxy', desc: 'Liberate every world', have: worlds, need: D.PLANETS.length },
+      { id: 'hero', icon: 'starbird', tier: 4, name: 'Hero of the Galaxy', desc: 'Liberate every world', have: worlds, need: D.PLANETS.length },
       { icon: 'deathstar', tier: 3, name: 'Big Game', desc: 'Defeat 5 bosses', have: Object.keys(s.bosses).length, need: 5 },
       { icon: 'holocron', tier: 3, name: 'Archivist', desc: 'Collect 50 cards', have: owned, need: 50 },
       { icon: 'sabacc', tier: 2, name: 'Crate Cracker', desc: 'Open 25 crates', have: st.packsOpened, need: 25 },
@@ -2155,8 +2155,13 @@
       list.push({ id: 'tutorial_again', secret: true, tier: 5, icon: 'badge', level: lv, name: `Back for More? · ${lv >= 9 ? 'MAX' : `Take ${lv + 1}`}`, desc: 'Oh, really? You just love the tutorial that much?', have: 1, need: 1 });
     }
     if (s.account.level >= D.MAX_ACCOUNT_LEVEL) list.push({ id: 'grinder', secret: true, tier: 7, icon: 'spire', name: 'Galactic Grinder', desc: 'New features coming soon', have: 1, need: 1 });
+    for (const f of HOOKS.feats) list.push(...f(s));
     return list;
   }
+
+  // Extension points for content modules: extra feats, crests, showcase
+  // scenes, custom card reveals and end-of-battle checks.
+  const HOOKS = { feats: [], crests: {}, scenes: {}, reveal: null, battleEnd: [] };
 
   // ---------- Achievement showcases ----------
   // Tapping an earned feat replays its badge moment. The harder it was to
@@ -2391,12 +2396,14 @@
   };
   const CRESTS = { secret_all: () => monolithCrest(), grinder: () => grinderCrest(), tutorial_again: (x) => againCrest(x) };
   const featBadge = (x, cls = '') => {
+    if (HOOKS.crests[x.id]) return `<div class="fs-badge master-crest ${cls}">${HOOKS.crests[x.id](x)}</div>`;
     if (CRESTS[x.id]) return `<div class="fs-badge master-crest ${cls}">${CRESTS[x.id](x)}</div>`;
     if (!x.secret) return `<div class="fs-badge medal-crest ${cls}" style="--m1:${FEAT_TIER[x.tier || 1][1]}">${medalCrest(x)}</div>`;
     return `<div class="fs-badge ${cls} secret" style="--m1:${FEAT_TIER[x.tier || 1][1]};--m2:${FEAT_TIER[x.tier || 1][2]}"><span class="fs-medal"><span class="fs-ico">${root.Icons.svg(x.icon)}</span></span></div>`;
   };
 
   function playFeat(x) {
+    if (HOOKS.scenes[x.id]) return HOOKS.scenes[x.id](x);
     if (x.secret) return featCutscene(x);
     const tier = x.tier || 1;
     if (root.Sound) { root.Sound.play(tier >= 4 ? 'reveal_legendary' : tier >= 3 ? 'reveal_epic' : 'reveal_rare'); if (tier >= 3) setTimeout(() => root.Sound.play('coins'), 350); }
@@ -2619,7 +2626,7 @@
       <div class="pf-pane" data-pane="feats">
         <div class="feat-list">${ach.map((x) => {
           const done = x.have >= x.need;
-          return `<button type="button" class="feat ${done ? 'done' : ''} ${x.secret ? 'secret' : ''} t-${x.tier || 1}" data-feat="${ach.indexOf(x)}"><span class="feat-ico ${CRESTS[x.id] ? 'crest' : ''}">${CRESTS[x.id] ? CRESTS[x.id](x) : root.Icons.svg(x.icon)}</span><div><b>${esc(x.name)}${x.secret ? ` <span class="feat-secret ${x.tier === 7 ? 'legend' : ''}">${x.tier === 7 ? 'Legendary' : 'Secret'}</span>` : ''}</b><span class="muted small">${esc(x.desc)}</span><i class="feat-bar"><i style="width:${Math.min(100, (x.have / x.need) * 100)}%"></i></i></div><em>${done ? '✓' : `${fmt(Math.min(x.have, x.need))}/${fmt(x.need)}`}</em></button>`;
+          return `<button type="button" class="feat ${done ? 'done' : ''} ${x.secret ? 'secret' : ''} t-${x.tier || 1}" data-feat="${ach.indexOf(x)}"><span class="feat-ico ${CRESTS[x.id] || HOOKS.crests[x.id] ? 'crest' : ''}">${HOOKS.crests[x.id] ? HOOKS.crests[x.id](x) : CRESTS[x.id] ? CRESTS[x.id](x) : root.Icons.svg(x.icon)}</span><div><b>${esc(x.name)}${x.secret ? ` <span class="feat-secret ${x.tier === 7 ? 'legend' : ''}">${x.tier === 7 ? 'Legendary' : 'Secret'}</span>` : ''}</b><span class="muted small">${esc(x.desc)}</span><i class="feat-bar"><i style="width:${Math.min(100, (x.have / x.need) * 100)}%"></i></i></div><em>${done ? '✓' : `${fmt(Math.min(x.have, x.need))}/${fmt(x.need)}`}</em></button>`;
         }).join('')}</div>
       </div>
       <div class="modal-actions"><button class="btn btn-primary" type="button" data-close>Close</button></div>`, { cls: 'profile-modal' });
@@ -2726,7 +2733,8 @@
     talzin: 'mustafar', nightsister_acolyte: 'mustafar', grand_inquisitor: 'coruscant_siege', second_sister: 'coruscant_siege', fifth_brother: 'coruscant_siege', seventh_sister: 'coruscant_siege', eighth_brother: 'coruscant_siege',
   };
   function homeworldOf(def) {
-    if (HOMEWORLD[def.id] && D.PLANET_MAP[HOMEWORLD[def.id]]) return D.PLANET_MAP[HOMEWORLD[def.id]];
+    const hw = HOMEWORLD[def.id] || def.home;
+    if (hw && D.PLANET_MAP[hw]) return D.PLANET_MAP[hw];
     const found = D.PLANETS.find((p) => p.stages.some((s) => s.enemies.includes(def.id)));
     return found || D.PLANET_MAP[def.faction === 'light' ? 'hoth' : 'mustafar'];
   }
@@ -2975,7 +2983,8 @@
         }
         // Every card gets a walkout; rarer cards get a longer, louder one.
         await new Promise((res) => setTimeout(res, tier >= 2 ? 300 : 150));
-        await walkout(def, def.rarity, r.holo);
+        const custom = HOOKS.reveal && HOOKS.reveal(r, def);
+        await (custom || walkout(def, def.rarity, r.holo));
         if (r.holo) toast('HOLO card! Double value.');
         await new Promise((res) => setTimeout(res, 120));
         afterReveal(Number(f.dataset.i));
@@ -3019,5 +3028,5 @@
     });
   }
 
-  root.UI = { walkout, settings, profile, playFeat, celebrateFeat, markFeatSeen, soundSettings: settings, homeworldOf, $, $$, el, esc, fmt, cur, portrait, stars, unitCard, toast, openModal, confirmBox, updateWallet, inspect, synergyBanner, App, Screens };
+  root.UI = { hooks: HOOKS, achievements, featBadge, packReveal, motionOK, walkout, settings, profile, playFeat, celebrateFeat, markFeatSeen, soundSettings: settings, homeworldOf, $, $$, el, esc, fmt, cur, portrait, stars, unitCard, toast, openModal, confirmBox, updateWallet, inspect, synergyBanner, App, Screens };
 })(window);

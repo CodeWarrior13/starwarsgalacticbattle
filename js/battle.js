@@ -85,6 +85,14 @@
       }
       this.turnCount = 0;
       this.lastHazard = 0;
+      // Event boost: one faction on the player's side hits harder and lasts longer.
+      if (opts.boost) {
+        for (const u of this.side('player')) {
+          if (u.def.faction !== opts.boost.faction) continue;
+          u.maxHp = u.hp = Math.round(u.maxHp * (1 + opts.boost.pct));
+          u.atk = Math.round(u.atk * (1 + opts.boost.pct));
+        }
+      }
       // Training battle: the player's squad cannot actually fall.
       this.tutorial = !!opts.tutorial;
     }

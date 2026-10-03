@@ -61,7 +61,7 @@
         squad,
         enc.enemies.map((id) => ({ id, level: enc.level, stars: enc.stars || 1 })),
         null,
-        { planet: enc.planet, enemyScale: enc.enemyScale, tutorial: tut },
+        { planet: enc.planet, enemyScale: enc.enemyScale, tutorial: tut, boost: !tut && root.Events ? root.Events.boost() : null },
       );
       // Training: the squad starts part-charged so an Ultimate comes up early.
       if (tut) for (const u of this.battle.side('player')) u.ult = 55;
@@ -1959,6 +1959,7 @@
       // A real beat after the last hit, whatever the battle speed.
       await new Promise((r) => setTimeout(r, 1000));
       const won = winner === 'player';
+      for (const fn of root.UI.hooks.battleEnd) { try { fn(this.battle, this.params, won); } catch (e) { /* ignore */ } }
       if (this.isTutorial()) {
         this.teardown();
         if (root.Sound) root.Sound.music('menu');

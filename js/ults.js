@@ -266,7 +266,7 @@
     },
 
     async sig(actor, targets, ev) {
-      const spec = SIG[actor.id];
+      const spec = SIG[actor.id] || actor.def.sig;
       const ally = ev && ev.offensive === false;
       const move = ally && !['heal', 'aegis', 'rally', 'suns'].includes(spec.move) ? 'rally' : spec.move;
       const S = this.sigStage(spec.color, move);
@@ -1037,7 +1037,7 @@
   // Route ultimates through the signature engine; legacy cinematics stay for bosses.
   const baseSuper = B.superMove;
   B.superMove = async function (anim, actor, targets, ev) {
-    const spec = SIG[actor.id];
+    const spec = SIG[actor.id] || actor.def.sig;
     if (!spec || spec.legacy || reduced()) return baseSuper.call(this, spec && spec.legacy ? spec.legacy : anim, actor, targets, ev);
     try {
       await this.sig(actor, targets, ev);

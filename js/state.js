@@ -286,10 +286,11 @@
       return odds;
     },
 
-    openPack(packId, rng) {
+    // opts.free: a reward crate that costs nothing.
+    openPack(packId, rng, opts = {}) {
       const random = rng || Math.random;
       const pack = D.PACKS.find((p) => p.id === packId);
-      if (!pack || !this.spend(pack.cost)) return null;
+      if (!pack || (!opts.free && !this.spend(pack.cost))) return null;
       const luck = this.state.luck;
       const charmed = luck.charmCrates > 0;
       const odds = this.effectiveOdds(pack);

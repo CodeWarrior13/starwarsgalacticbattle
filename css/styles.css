@@ -3006,3 +3006,15 @@ body.in-battle .tut-skip { bottom: auto; top: calc(10px + env(safe-area-inset-to
 .feat-cine.again.reveal .fc-badge { filter: drop-shadow(0 0 30px rgba(124, 208, 255, 0.8)); }
 .again .fc-text .fs-kicker { background: linear-gradient(90deg, #7cd0ff, #fff, #7cd0ff); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .again .fc-text b { text-shadow: 0 0 22px #4aa8ff; }
+
+/* ---------- Calendar events ---------- */
+.event-banner { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-radius: 14px; animation: jp-sub 0.5s both; }
+.event-banner div { display: grid; gap: 2px; }
+.event-banner b { font-family: var(--font-display); letter-spacing: 0.12em; text-transform: uppercase; font-size: 15px; }
+.event-banner span { font-size: 13px; color: #cfd8e6; }
+.event-banner.event-jedi { background: linear-gradient(100deg, rgba(40, 110, 255, 0.28), rgba(10, 16, 30, 0.9)); border: 1px solid rgba(90, 180, 255, 0.6); box-shadow: 0 0 24px rgba(74, 168, 255, 0.25); }
+.event-banner.event-jedi b { color: #9fd4ff; }
+.event-banner.event-sith { background: linear-gradient(100deg, rgba(200, 20, 40, 0.3), rgba(20, 8, 10, 0.9)); border: 1px solid rgba(255, 60, 70, 0.6); box-shadow: 0 0 24px rgba(255, 42, 58, 0.25); }
+.event-banner.event-sith b { color: #ff8a8a; }
+body.event-jedi .topbar { border-bottom-color: rgba(90, 180, 255, 0.7); box-shadow: 0 2px 18px rgba(74, 168, 255, 0.25); }
+body.event-sith .topbar { border-bottom-color: rgba(255, 60, 70, 0.7); box-shadow: 0 2px 18px rgba(255, 42, 58, 0.25); }
