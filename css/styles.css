@@ -3018,3 +3018,46 @@ body.in-battle .tut-skip { bottom: auto; top: calc(10px + env(safe-area-inset-to
 .event-banner.event-sith b { color: #ff8a8a; }
 body.event-jedi .topbar { border-bottom-color: rgba(90, 180, 255, 0.7); box-shadow: 0 2px 18px rgba(74, 168, 255, 0.25); }
 body.event-sith .topbar { border-bottom-color: rgba(255, 60, 70, 0.7); box-shadow: 0 2px 18px rgba(255, 42, 58, 0.25); }
+
+/* Tutorial v2: readable coaching, a bar that tucks away, staged rewards */
+.tut-coach p { font-size: clamp(15px, 4vw, 17px); line-height: 1.5; color: #fff; }
+.tut-coach { background: rgba(6, 10, 22, 0.97); padding: 12px 14px; }
+.tut-coach .tc-face { width: 48px; height: 48px; }
+.battle .tut-coach { cursor: pointer; transition: max-height 0.35s, padding 0.35s; max-height: 260px; overflow: hidden; }
+.battle .tut-coach.mini { max-height: 40px; padding: 4px 10px; }
+.battle .tut-coach.mini .tc-face { width: 30px; height: 30px; }
+.battle .tut-coach.mini p { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13px; opacity: 0.75; }
+.battle.tutorial .hp-num { font-size: 12px; font-weight: 700; }
+.tut-inter .result-title { margin: 0; }
+.ti-mentor.small { width: clamp(100px, 24vmin, 140px); }
+
+.tut-victory.staged .tv-a { opacity: 0; animation: jp-sub 0.6s 0.2s forwards; }
+.tut-victory.staged .tv-b { opacity: 0; animation: jp-sub 0.6s 1s forwards; font-size: clamp(14px, 3.8vw, 17px); max-width: 520px; }
+.tut-victory.staged .tv-c { opacity: 0; animation: jp-sub 0.5s 2.1s forwards; }
+.tut-victory.staged .tv-card { opacity: 0; animation: tv-card 0.5s calc(2.2s + var(--k) * 0.06s) cubic-bezier(.2,.9,.3,1.3) forwards; perspective: 700px; }
+.tv-flip { position: relative; aspect-ratio: 3 / 4.4; transform-style: preserve-3d; transition: transform 0.55s cubic-bezier(.2,.9,.3,1.2); }
+.tv-card.flipped .tv-flip { transform: rotateY(180deg); }
+.tv-back, .tv-front { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 10px; overflow: hidden; }
+.tv-back { background: #0a1020; display: grid; place-items: center; box-shadow: 0 0 0 2px rgba(124, 208, 255, 0.35); }
+.tv-back svg { width: 100%; height: 100%; }
+.tv-front { transform: rotateY(180deg); }
+.tv-front .ucard { width: 100%; height: 100%; }
+.tut-victory.staged .tv-res { animation: none; }
+.tv-res > span { display: inline-block; transition: filter 0.3s, transform 0.3s; }
+.tv-res > span.lit { filter: drop-shadow(0 0 14px rgba(255, 210, 63, 0.6)); transform: scale(1.06); }
+.tv-stamp { opacity: 0; font-family: var(--font-display); font-weight: 800; letter-spacing: 0.3em; font-size: clamp(16px, 4.6vw, 24px); color: #7cffb0; text-shadow: 0 0 20px rgba(124, 255, 176, 0.6); border: 2px solid rgba(124, 255, 176, 0.6); padding: 4px 14px; border-radius: 8px; transform: scale(1.6) rotate(-6deg); }
+.tut-victory.staged .tv-go { opacity: 0; pointer-events: none; animation: none; }
+.tut-victory.done .tv-stamp { opacity: 1; transform: rotate(-6deg); transition: all 0.35s cubic-bezier(.2,.9,.3,1.4); }
+.tut-victory.done .tv-go { opacity: 1; pointer-events: auto; transition: opacity 0.4s 0.3s; }
+
+/* Settings > Enter a code */
+.code-entry { position: fixed; inset: 0; z-index: 240; display: grid; place-items: center; padding: 16px; background: rgba(2, 4, 10, 0.82); animation: fade-in 0.25s; }
+.code-entry.out { opacity: 0; transition: opacity 0.25s; }
+.ce-panel { width: min(520px, 100%); padding: 18px; border-radius: 16px; background: #0b1120; border: 1px solid rgba(255, 210, 63, 0.35); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6); text-align: center; }
+.ce-panel h3 { margin: 0 0 12px; }
+.ce-panel.shake { animation: ce-shake 0.4s; }
+@keyframes ce-shake { 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
+.ce-boxes { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 5px; }
+.ce-box { width: 100%; aspect-ratio: 1; box-sizing: border-box; border-radius: 8px; border: 1px solid rgba(124, 208, 255, 0.45); background: #050912; color: #fff; text-align: center; font-family: var(--font-display); font-size: clamp(14px, 4.4vw, 22px); text-transform: uppercase; padding: 0; }
+.ce-box:focus { outline: none; border-color: #ffd23f; box-shadow: 0 0 12px rgba(255, 210, 63, 0.5); }
+.ce-msg { min-height: 1.4em; margin: 10px 0 4px; }

@@ -154,6 +154,9 @@ const buff = (status, turns) => ({ type: 'status', status, turns, chance: 1 });
 const debuff = (status, turns, chance) => ({ type: 'status', status, turns, chance: chance == null ? 1 : chance });
 const tm = (amount) => ({ type: 'tm', amount });
 const ult = (name, target, effects, desc, quote) => ({ name, cd: 0, target, effects, desc, quote, ultimate: true });
+const revive = (pct) => ({ type: 'revive', pct });
+const cleanse = () => ({ type: 'cleanse' });
+const dispel = () => ({ type: 'dispel' });
 
 const CARDS = [
   {
@@ -176,6 +179,16 @@ const CARDS = [
       { name: 'Smuggler\'s Gambit', cd: 3, target: 'enemy', effects: [dmg(2.8), debuff('stun', 1, 0.6)], desc: 'Deal massive damage with a 60% chance to Stun.' },
     ],
     ultimate: ult('Twelve Parsecs', 'allEnemies', [dmg(2.2), debuff('stun', 1, 0.5), { ...tm(50), on: 'allies' }], 'Punch through the Maw: heavy damage to every enemy with a 50% Stun chance; all allies gain 50% Turn Meter.', 'It\'s the ship that made the Kessel Run in less than twelve parsecs.'),
+  },
+  {
+    id: 'holo_gatekeeper', name: 'The Gatekeeper', kind: 'character', faction: 'light', rarity: 'secret', role: 'support', exclusive: true, accent: '#7cd0ff', spd: 152,
+    traits: ['jedi', 'leader'], home: 'coruscant', sig: { move: 'shockwave', prop: 'force', impact: 'freeze', color: '#7cd0ff' }, anim: 'shield',
+    bio: 'The guardian hologram of an ancient Jedi holocron. It opens the archive only to seekers who prove themselves worthy.',
+    abilities: [
+      { name: 'Archive Beam', cd: 0, target: 'enemy', effects: [dmg(1.0), dispel()], desc: 'Damage one enemy and strip its buffs.' },
+      { name: 'Lore of the Ancients', cd: 3, target: 'allAllies', effects: [heal(0.2), cleanse(), buff('defUp', 2)], desc: 'All allies heal 20%, are cleansed and gain Defense Up.' },
+    ],
+    ultimate: ult('The Archive Opens', 'allAllies', [revive(0.35), cleanse(), buff('offUp', 2), buff('defUp', 2), tm(30)], 'The holocron unfolds: revive a fallen ally at 35% HP; all allies are cleansed, gain Offense Up, Defense Up and 30% Turn Meter.', 'Knowledge is the truest weapon, seeker.'),
   },
 ];
 for (const c of CARDS) {
@@ -204,6 +217,26 @@ root.Art.addArt('char', 'jar_jar', () => {
     + P('M50.3 65.5 C49.6 71 49.2 76 49.9 81', 'none', 'stroke="#b03a52" stroke-width=".7"')
     + E(49.6, 79.6, 1.4, 0.8, '#ff9aaa', 'opacity=".7"');
 });
+// The Gatekeeper: a hooded hologram elder inside a holocron's frame.
+root.Art.addArt('char', 'holo_gatekeeper', () => {
+  const H1 = '#7cd0ff';
+  const scan = Array.from({ length: 24 }, (_, i) => L(0, i * 4.2 + 1, 100, i * 4.2 + 1, '#9fe0ff', 0.35, 'opacity=".25"')).join('');
+  return R(0, 0, 100, 100, '#030812')
+    + C(50, 46, 40, '#0a2a4a', 'opacity=".7"') + C(50, 46, 26, '#1a4a7a', 'opacity=".5"')
+    // holocron cube frame behind the figure
+    + P('M50 8 L84 26 L84 66 L50 84 L16 66 L16 26Z', 'none', `stroke="${H1}" stroke-width="1" opacity=".55"`) + P('M50 8 L50 48 M16 26 L50 48 L84 26', 'none', `stroke="${H1}" stroke-width=".8" opacity=".4"`)
+    // robe and hood
+    + P('M24 100 C26 78 36 64 50 62 C64 64 74 78 76 100Z', H1, 'opacity=".5"') + P('M50 62 L44 100 M50 62 L56 100', 'none', 'stroke="#d8f2ff" stroke-width=".8" opacity=".6"')
+    + P('M34 50 C33 30 41 21 50 21 C59 21 67 30 66 50 C62 60 38 60 34 50Z', '#4aa8ff', 'opacity=".55"')
+    + E(50, 45, 10.5, 12.5, '#bfe8ff', 'opacity=".65"') + P('M40 56 C44 66 56 66 60 56 C56 60 44 60 40 56Z', '#e8f8ff', 'opacity=".7"')
+    + P('M43 42 L47.5 42.6 M52.5 42.6 L57 42', 'none', 'stroke="#ffffff" stroke-width="1.4" stroke-linecap="round"')
+    + P('M46 50 Q50 52 54 50', 'none', 'stroke="#ffffff" stroke-width=".8" opacity=".8"')
+    + P('M34 50 C33 30 41 21 50 21 C59 21 67 30 66 50', 'none', 'stroke="#e8f8ff" stroke-width="1" opacity=".8"')
+    // floating holocron in his hands
+    + P('M50 72 L58 76.5 L58 85.5 L50 90 L42 85.5 L42 76.5Z', '#bfe8ff', 'opacity=".85"') + P('M50 72 L50 81 M42 76.5 L50 81 L58 76.5', 'none', 'stroke="#2a6aa8" stroke-width=".8"')
+    + C(50, 81, 12, H1, 'opacity=".18"') + scan;
+});
+
 root.Art.addArt('ship', 'falcon_kessel', () => [[8, 20, 30], [4, 46, 26], [10, 70, 34], [70, 14, 26], [72, 84, 24], [6, 88, 20]].map(([x, y, w]) => L(x, y, x + w, y, '#9fdcff', 1, 'opacity=".55"')).join('')
   + SHIPS.falcon()
   + C(50, 56, 34, 'none', 'stroke="#ffd23f" stroke-width="1.6"') + C(50, 56, 11, 'none', 'stroke="#ffd23f" stroke-width="1.2"')
@@ -552,7 +585,113 @@ if (root.Events) {
 // Saves that already liberated everything get their ceremony once.
 setTimeout(ceremonyCheck, 2500);
 
+// ---------- the holocron puzzle ----------
+// Ten fragments hide around the game; each shows one letter and its place.
+// The word goes into Settings > Enter a code.
+const WORD = 'GATEKEEPER';
+const SPOTS = [
+  { at: () => document.querySelector('#screen .hub .home-galaxy'), pos: 'left:10px;bottom:56px' },
+  { at: () => UI.App.current === 'collection' && document.querySelector('#screen .view-head'), pos: 'right:4px;top:4px' },
+  { at: () => document.querySelector('.daily-panel'), pos: 'right:10px;bottom:8px' },
+  { at: () => document.querySelector('#screen .squad-layout'), pos: 'left:4px;top:4px' },
+  { at: () => document.querySelector('.profile-modal'), pos: 'right:14px;bottom:14px' },
+  { at: () => document.querySelector('.settings-modal'), pos: 'left:14px;bottom:14px' },
+  { at: () => document.querySelector('.inspect-modal'), pos: 'left:10px;top:10px' },
+  { at: () => document.querySelector('.result-modal'), pos: 'right:12px;top:12px' },
+  { at: () => document.querySelector('.tower-panel'), pos: 'right:10px;bottom:10px' },
+  { at: () => { const n = document.querySelector('.reveal-summary'); return n && !n.hidden && n; }, pos: 'right:0;bottom:-18px' },
+];
+const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
+const found = () => { const z = Z(); z.hf = z.hf || []; return z.hf; };
+document.head.appendChild(Object.assign(document.createElement('style'), { textContent: `
+.xq-frag { position: absolute; z-index: 30; width: 16px; height: 16px; padding: 0; border: 0; background: none; cursor: pointer; opacity: .32; animation: xq-frag 3.4s ease-in-out infinite; }
+.xq-frag svg { width: 100%; height: 100%; display: block; }
+@keyframes xq-frag { 50% { opacity: .75; filter: drop-shadow(0 0 4px #7cd0ff); } }
+.xq-fpop { position: fixed; inset: 0; z-index: 280; display: grid; place-items: center; align-content: center; gap: 8px; background: radial-gradient(circle at 50% 45%, #0a2040, #02040a 70%); text-align: center; animation: fade-in .3s; cursor: pointer; }
+.xq-fpop.out { opacity: 0; transition: opacity .3s; }
+.xq-fpop .xq-cube { width: 90px; height: 90px; animation: xq-unfold .9s cubic-bezier(.2,.9,.3,1.3) both; filter: drop-shadow(0 0 20px #4aa8ff); }
+@keyframes xq-unfold { from { transform: scale(.2) rotate(-90deg); opacity: 0; } to { transform: none; opacity: 1; } }
+.xq-fpop b { font-family: var(--font-display); font-size: clamp(60px, 20vmin, 120px); color: #e8f8ff; text-shadow: 0 0 30px #4aa8ff; line-height: 1; animation: jp-sub .6s .5s both; }
+.xq-fpop span { letter-spacing: .3em; text-transform: uppercase; font-size: 12px; color: #9fd4ff; animation: jp-sub .6s .8s both; }
+.xq-fpop em { font-style: normal; font-size: 12px; color: #6a8ab0; animation: jp-sub .6s 1.1s both; }
+.feat-cine.xq-hp { background: radial-gradient(circle at 50% 42%, #0a2448, #02040a 72%); }
+.xq-word { position: absolute; top: 18%; left: 0; right: 0; display: flex; justify-content: center; gap: clamp(2px, 1vw, 8px); }
+.xq-word i { font-style: normal; font-family: var(--font-display); font-weight: 800; font-size: clamp(20px, 6vw, 40px); color: #e8f8ff; text-shadow: 0 0 18px #4aa8ff; opacity: 0; animation: xq-fly .7s calc(.4s + var(--k) * .14s) cubic-bezier(.2,.9,.3,1.2) forwards; }
+@keyframes xq-fly { from { opacity: 0; transform: translate(var(--x), var(--y)) scale(2) rotate(var(--r)); } to { opacity: 1; transform: none; } }
+.xq-holo { position: absolute; top: 34%; left: 50%; width: clamp(110px, 30vmin, 170px); margin-left: calc(clamp(110px, 30vmin, 170px) / -2); opacity: 0; animation: xq-holo 1s 2.3s ease forwards; }
+@keyframes xq-holo { 0% { opacity: 0; transform: scaleY(.02); filter: brightness(3); } 40% { opacity: 1; transform: scaleY(1.05); } 100% { opacity: 1; transform: none; filter: none; } }
+.xq-holo .xq-tile { border-color: #7cd0ff; box-shadow: 0 0 34px rgba(124, 208, 255, .6); }
+.xq-beam { position: absolute; top: 34%; left: 50%; width: 46%; height: 50%; margin-left: -23%; background: linear-gradient(0deg, rgba(124, 208, 255, .35), transparent); clip-path: polygon(40% 100%, 60% 100%, 100% 0, 0 0); opacity: 0; animation: jp-sub .6s 2.1s forwards; }
+.xq-hp .fc-text .fs-kicker { background: linear-gradient(90deg, #7cd0ff, #fff, #7cd0ff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.xq-hp .fc-text b { text-shadow: 0 0 22px #4aa8ff; }
+` }));
+const cubeShapes = (glow = '#7cd0ff') => `<path d="M20 3 L35 11.5 L35 28.5 L20 37 L5 28.5 L5 11.5Z" fill="#0a2a4a" stroke="${glow}" stroke-width="1.6"/><path d="M20 3 L20 20 M5 11.5 L20 20 L35 11.5 M20 20 L20 37" stroke="${glow}" stroke-width="1" opacity=".7"/><circle cx="20" cy="20" r="3.4" fill="#e8f8ff"/>`;
+const cubeSvg = (glow) => `<svg viewBox="0 0 40 40" aria-hidden="true">${cubeShapes(glow)}</svg>`;
+
+function collectFrag(i) {
+  const f = found();
+  if (f.includes(i)) return;
+  f.push(i); Player.save();
+  if (root.Sound) { root.Sound.play('glitch'); setTimeout(() => root.Sound.play('reveal_rare'), 300); }
+  const pop = el(`<div class="xq-fpop" role="dialog"><div class="xq-cube">${cubeSvg()}</div><b>${WORD[i]}</b><span>Holocron fragment · ${ROMAN[i]}</span><em>${f.length} of ${WORD.length} found</em></div>`);
+  document.body.appendChild(pop);
+  pop.addEventListener('click', () => { pop.classList.add('out'); setTimeout(() => pop.remove(), 300); });
+}
+function placeFrags() {
+  const f = found();
+  SPOTS.forEach((sp, i) => {
+    if (f.includes(i)) return;
+    const host = sp.at();
+    if (!host || host.querySelector(`.xq-frag[data-f="${i}"]`)) return;
+    if (getComputedStyle(host).position === 'static') host.style.position = 'relative';
+    const b = el(`<button class="xq-frag" type="button" data-f="${i}" aria-label="?" style="${sp.pos}">${cubeSvg()}</button>`);
+    b.addEventListener('click', (e) => { e.stopPropagation(); e.preventDefault(); b.remove(); collectFrag(i); });
+    host.appendChild(b);
+  });
+}
+let fragTick = null;
+new MutationObserver(() => { clearTimeout(fragTick); fragTick = setTimeout(placeFrags, 250); }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden'] });
+
+FEATS.hp = { id: 'xq_hp', secret: true, tier: 6, icon: 'holocron', name: 'Holocron Puzzler', desc: 'Found the hidden fragments and opened the Gatekeeper\'s holocron', have: 1, need: 1 };
+H.feats.push((s) => ((s.z || {}).hp ? [FEATS.hp] : []));
+
+const crestHP = () => {
+  const u = `xh${++seq}`;
+  const letters = WORD.split('').map((ch, k) => `<g transform="rotate(${k * 36}) translate(0,-58)"><text text-anchor="middle" y="4" font-size="11" font-weight="800" fill="#e8f8ff" font-family="inherit" filter="url(#${u}f)">${ch}</text></g>`).join('');
+  const cube = `<g transform="scale(2.1) translate(-20,-20)" filter="url(#${u}f)">${cubeShapes('#bfe8ff')}</g>`;
+  const inner = `<g>${anim.spin(20, true)}${letters}</g><circle r="22" fill="#7cd0ff" opacity=".15">${anim.fade('1;.3;1', 2)}</circle>${cube}
+    <g stroke="#9fe0ff" stroke-width="1" opacity=".5">${Array.from({ length: 6 }, (_, k) => `<line x1="0" y1="0" x2="0" y2="-70" transform="rotate(${k * 60})">${anim.fade('.1;.8;.1', 2.4, -k * 0.4)}</line>`).join('')}</g>`;
+  return frame(u, inner, 'HOLOCRON', { glow: '#7cd0ff', core: '#0a1a30', tail: '#123a6a',
+    back: `<g fill="#7cd0ff" opacity=".3">${anim.spin(30)}${Array.from({ length: 20 }, (_, k) => `<polygon points="0,${k % 2 ? -86 : -100} 4,0 -4,0" transform="rotate(${k * 18})"/>`).join('')}</g>` });
+};
+H.crests.xq_hp = crestHP;
+
+const sceneHP = (x, onDone) => {
+  const word = WORD.split('').map((ch, k) => `<i style="--k:${k};--x:${(k % 2 ? 1 : -1) * (40 + k * 12)}vw;--y:${(k % 3 - 1) * 30}vh;--r:${(k % 2 ? 1 : -1) * 180}deg">${ch}</i>`).join('');
+  const stage = `<div class="xq-word">${word}</div><div class="xq-beam"></div><div class="xq-holo">${tile(D.UNIT_MAP.holo_gatekeeper)}</div>
+    <p class="xq-line" style="top:72%;--t:3.2s;color:#9fd4ff">"Seeker… you have found every piece."</p><p class="xq-line" style="top:78%;--t:4.4s">"The archive is yours."</p>`;
+  return scene(x, 'xq-hp', stage, 6400, onDone, (S, at) => { for (let k = 0; k < 10; k++) at(400 + k * 140, () => S.play('click')); at(2100, () => S.play('ult')); at(2300, () => S.play('heal')); });
+};
+H.scenes.xq_hp = (x) => sceneHP(x);
+
+H.redeem = (code) => {
+  if (code !== WORD) return false;
+  const z = Z();
+  if (z.hp) { UI.toast('The holocron is already open.'); return true; }
+  z.hp = 1;
+  const g = Player.grantCard('holo_gatekeeper', false);
+  Player.save();
+  UI.markFeatSeen('xq_hp');
+  later(() => sceneHP(FEATS.hp).then(() => {
+    const results = Player.openPack('holocron', null, { free: true });
+    UI.updateWallet();
+    return results ? UI.packReveal(results, 'holocron') : null;
+  }).then(() => new Promise((res) => { const wait = () => (document.querySelector('.reveal-modal, .walkout, .modal-backdrop') ? setTimeout(wait, 400) : res()); setTimeout(wait, 600); }))
+    .then(() => UI.walkout(D.UNIT_MAP.holo_gatekeeper, 'secret', false, { exclusive: true, isNew: g.isNew, shards: g.shards })));
+  return true;
+};
+
 // Testing hook (tester panel only).
-root.__xq = { dad: () => sceneDad(FEATS.dad), jj: () => sceneJJ(FEATS.jj), kr: () => sceneKR(FEATS.kr, 11.4), cer: () => sceneCer({ id: 'hero', tier: 4, icon: 'starbird', name: 'Hero of the Galaxy', desc: '', have: 1, need: 1 }), sv: () => sceneSV({ id: 'xq_sv_show', tier: 3, icon: 'bacta', name: 'Survivor', desc: 'Won on the last 1% of health. A free Sith Holocron is yours.', have: 1, need: 1 }), m4: () => sceneSide({ id: 'xq_m4', tier: 4, icon: 'jedi', name: 'May the 4th Be With You', desc: 'Claimed the May the 4th gift', have: 1, need: 1 }, 'jedi'), m5: () => sceneSide({ id: 'xq_m5', tier: 4, icon: 'sith', name: 'Revenge of the Fifth', desc: 'Won a battle on May the 5th', have: 1, need: 1 }, 'sith') };
+root.__xq = { dad: () => sceneDad(FEATS.dad), jj: () => sceneJJ(FEATS.jj), kr: () => sceneKR(FEATS.kr, 11.4), cer: () => sceneCer({ id: 'hero', tier: 4, icon: 'starbird', name: 'Hero of the Galaxy', desc: '', have: 1, need: 1 }), sv: () => sceneSV({ id: 'xq_sv_show', tier: 3, icon: 'bacta', name: 'Survivor', desc: 'Won on the last 1% of health. A free Sith Holocron is yours.', have: 1, need: 1 }), m4: () => sceneSide({ id: 'xq_m4', tier: 4, icon: 'jedi', name: 'May the 4th Be With You', desc: 'Claimed the May the 4th gift', have: 1, need: 1 }, 'jedi'), hp: () => sceneHP(FEATS.hp), frags: () => { Z().hf = []; Player.save(); placeFrags(); }, m5: () => sceneSide({ id: 'xq_m5', tier: 4, icon: 'sith', name: 'Revenge of the Fifth', desc: 'Won a battle on May the 5th', have: 1, need: 1 }, 'sith') };
 
 })(window);

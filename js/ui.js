@@ -2089,6 +2089,7 @@
         </dl>
         <div class="settings-btns">
           <button class="btn" type="button" data-replay-tut>Replay tutorial</button>
+          <button class="btn" type="button" data-code-entry>Enter a code</button>
           <button class="btn btn-danger" type="button" data-reset>Reset all progress</button>
         </div>
       </section>
@@ -2109,6 +2110,7 @@
       if (e.target.closest('[data-test-sfx]')) { S.play('saber'); setTimeout(() => S.play('blaster'), 400); setTimeout(() => S.play('explosion'), 750); }
       const c = e.target.closest('[data-clear]');
       if (c) { await S.saveCustom(c.dataset.clear, null); $(`[data-status="${c.dataset.clear}"]`, m.root).textContent = 'Original theme'; c.disabled = true; }
+      if (e.target.closest('[data-code-entry]')) { m.close(); return codeEntry(); }
       if (e.target.closest('[data-replay-tut]')) {
         if (App.battleActive) return toast('Finish or retreat from the battle first.');
         m.close();
@@ -2160,8 +2162,43 @@
   }
 
   // Extension points for content modules: extra feats, crests, showcase
-  // scenes, custom card reveals and end-of-battle checks.
-  const HOOKS = { feats: [], crests: {}, scenes: {}, reveal: null, battleEnd: [] };
+  // scenes, custom card reveals, end-of-battle checks and code redemption.
+  const HOOKS = { feats: [], crests: {}, scenes: {}, reveal: null, battleEnd: [], redeem: null, codeLength: 10 };
+
+  // Settings > Enter a code: a row of letter boxes that auto-advance.
+  function codeEntry() {
+    const n = HOOKS.codeLength;
+    const node = el(`<div class="code-entry" role="dialog" aria-label="Enter a code">
+      <div class="ce-panel">
+        <p class="eyebrow">Command Console</p><h3>Enter a code</h3>
+        <div class="ce-boxes">${Array.from({ length: n }, (_, i) => `<input class="ce-box" maxlength="1" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Letter ${i + 1}" data-i="${i}">`).join('')}</div>
+        <p class="ce-msg muted small" data-msg>&nbsp;</p>
+        <div class="modal-actions"><button class="btn" type="button" data-ce-close>Close</button><button class="btn btn-primary" type="button" data-ce-go>Submit</button></div>
+      </div>
+    </div>`);
+    document.body.appendChild(node);
+    const boxes = [...node.querySelectorAll('.ce-box')];
+    const close = () => { node.classList.add('out'); setTimeout(() => node.remove(), 250); };
+    const submit = () => {
+      const code = boxes.map((b) => b.value).join('').toUpperCase();
+      const ok = code.length === n && HOOKS.redeem && HOOKS.redeem(code);
+      if (ok) { close(); return; }
+      node.querySelector('.ce-panel').classList.remove('shake'); void node.offsetWidth; node.querySelector('.ce-panel').classList.add('shake');
+      node.querySelector('[data-msg]').textContent = code.length < n ? 'Fill every box.' : 'Nothing happens…';
+      if (root.Sound) root.Sound.play('defeat');
+    };
+    boxes.forEach((b, i) => {
+      b.addEventListener('input', () => { b.value = b.value.replace(/[^a-z0-9]/gi, '').slice(-1).toUpperCase(); if (b.value && boxes[i + 1]) boxes[i + 1].focus(); });
+      b.addEventListener('keydown', (e) => {
+        if (e.key === 'Backspace' && !b.value && boxes[i - 1]) boxes[i - 1].focus();
+        if (e.key === 'Enter') submit();
+      });
+    });
+    node.querySelector('[data-ce-close]').addEventListener('click', close);
+    node.querySelector('[data-ce-go]').addEventListener('click', submit);
+    node.addEventListener('click', (e) => { if (e.target === node) close(); });
+    setTimeout(() => boxes[0].focus(), 60);
+  }
 
   // ---------- Achievement showcases ----------
   // Tapping an earned feat replays its badge moment. The harder it was to

@@ -42,8 +42,8 @@
 
     async start(params) {
       const tut = params.type === 'tutorial';
-      const enc = tut ? root.Tutorial.encounter() : Player.encounter(params);
-      const squad = tut ? root.Tutorial.squad() : Player.squadEntries(enc.kind);
+      const enc = tut ? root.Tutorial.encounter(params.stage) : Player.encounter(params);
+      const squad = tut ? root.Tutorial.squad(params.stage) : Player.squadEntries(enc.kind);
       if (!squad.length) return toast('Pick at least one unit for your squad.');
       if (params.type === 'secret' && !params.preview) {
         if (!Player.secretOpen(params.boss)) return toast(`Sealed: ${Player.secretReqs(params.boss).filter((r) => !r.ok).map((r) => r.label).join(' · ')}`);

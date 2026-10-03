@@ -1,7 +1,8 @@
-// First-run tutorial: Captain Rex briefs a new commander, coaches them through
-// a training battle on Tatooine (which quietly cannot be lost), then hands
-// over the starter squad and resources and awards the Tutorial Complete badge.
-// It runs once per save; a hold-to-skip button is offered for the first 10 s.
+// First-run tutorial: Captain Rex briefs a new commander and coaches them
+// through two training battles (a ground fight on Tatooine, then a dogfight
+// above it), which quietly cannot be lost. Winning brings in the starter squad
+// and resources and awards the Tutorial Complete badge. It runs once per save;
+// a hold-to-skip button is offered for the first 10 s.
 (function (root) {
   'use strict';
 
@@ -16,21 +17,30 @@
 
   const Tutorial = {
     active: false,
+    stage: 1,
     turn: 0,
     shown: new Set(),
     glowSel: null,
 
     // ---------- Battle setup ----------
-    encounter() {
+    // Stage 1 is a ground fight on Tatooine, stage 2 a dogfight above it.
+    encounter(stage) {
+      if (stage === 2) {
+        return {
+          type: 'tutorial', name: 'Training · Skies over Tatooine', kind: 'ship', planet: 'tatooine',
+          enemies: ['tie_fighter', 'tie_bomber', 'tie_fighter'], level: 1, stars: 1, enemyScale: 0.6,
+        };
+      }
       return {
         type: 'tutorial', name: 'Training · Outpost Defense', kind: 'character', planet: 'tatooine',
         enemies: ['jawa', 'battle_droid', 'jawa'], level: 1, stars: 1, enemyScale: 0.6,
       };
     },
 
-    // A loaned squad: three of the starter units with Rex fighting alongside.
-    squad() {
-      return [MENTOR, 'rebel_soldier', 'clone_trooper', 'ewok_warrior'].map((id) => ({ id, level: 3, stars: 1 }));
+    // Three recruits from the starter squad (three starter ships for the dogfight).
+    squad(stage) {
+      const ids = stage === 2 ? ['a_wing', 'y_wing', 'z95'] : ['rebel_soldier', 'clone_trooper', 'ewok_warrior'];
+      return ids.map((id) => ({ id, level: 3, stars: 1 }));
     },
 
     feat() {
@@ -41,6 +51,7 @@
     start() {
       if (this.active) return;
       this.active = true;
+      this.stage = 1;
       this.turn = 0;
       this.shown = new Set();
       this.intro();
@@ -51,8 +62,8 @@
       const rex = D.UNIT_MAP[MENTOR];
       const lines = [
         'Commander! Captain Rex, 501st. Glad you made it.',
-        'Imperial scouts just hit our outpost on Tatooine. I\'ll lend you a squad and show you how we fight.',
-        'Win this one and that squad is yours to keep.',
+        'Imperial scouts just hit our outpost on Tatooine. I\'ve rounded up a few recruits for you.',
+        'They\'re green, and so are you. Get out there and prove yourselves. I\'ll talk you through it.',
       ];
       const node = el(`<div class="tut-intro" role="dialog" aria-label="Tutorial">
         <div class="ti-glow"></div>
@@ -75,7 +86,7 @@
         if (e.target.closest('[data-go]')) {
           node.classList.add('out');
           setTimeout(() => node.remove(), 350);
-          root.BattleUI.start({ type: 'tutorial' });
+          root.BattleUI.start({ type: 'tutorial', stage: 1 });
           return;
         }
         if (i < lines.length - 1) { i += 1; show(); if (root.Sound) root.Sound.play('click'); }
@@ -145,7 +156,13 @@
       if (top) top.after(node); else document.body.appendChild(node);
       this.glowSel = glow || null;
       this.reglow();
-      if (opts.next) node.querySelector('[data-tc-next]').addEventListener('click', () => opts.next());
+      if (opts.next) node.querySelector('[data-tc-next]').addEventListener('click', (e) => { e.stopPropagation(); opts.next(); });
+      // In battle, a lesson tucks itself into a slim bar after a few seconds so
+      // the cards (and their health) stay easy to see; tap the bar to reread it.
+      if (top && !opts.next && !opts.auto) {
+        setTimeout(() => node.isConnected && node.classList.add('mini'), opts.tip ? 5000 : 7000);
+        node.addEventListener('click', () => node.classList.toggle('mini'));
+      }
       if (opts.auto) setTimeout(() => { if (node.isConnected) { node.classList.add('out'); setTimeout(() => node.remove(), 300); if (this.glowSel === glow) this.clearGlow(); } }, opts.auto);
     },
 
@@ -169,34 +186,61 @@
     onTurn(B, actor) {
       this.turn += 1;
       const n = this.turn;
-      if (actor.ult >= 100 && this.once('ult')) {
+      if (actor.ult >= 100 && this.once(`ult${this.stage}`)) {
         return this.coach('<b>Ultimate ready!</b> The gold button is this unit\'s most powerful move. Unleash it.', '.abtn.ult');
       }
+      return this.stage === 2 ? this.shipLesson(n) : this.groundLesson(n);
+    },
+
+    groundLesson(n) {
+      const pl = D.PLANET_MAP.tatooine;
       if (n === 1) {
         return this.coach('This is your squad. The green bar is health: when it empties, that unit is out of the fight.', '.player-row .bcard', {
           next: () => this.coach('Your glowing unit is up. Pick an ability below, then tap a <b>glowing enemy</b> to attack.', '.ability-buttons .abtn:not([disabled]), .bcard.targetable'),
         });
       }
       if (n === 2 && this.once('abilities')) {
-        return this.coach('Each ability does something different; read the text on the buttons. A number on a button means it is cooling down for that many turns.', '.ability-buttons .abtn');
+        return this.coach('Each ability does something different, so read the text on the buttons. A number on a button means it is cooling down for that many turns.', '.ability-buttons .abtn');
       }
       if (n === 3 && this.once('bars')) {
         return this.coach('Under each card: blue is the <b>turn meter</b> (full means it acts) and gold is the <b>Ultimate charge</b>, which fills as you deal and take hits.', '.player-row .bar.tm, .player-row .bar.ult');
       }
-      if (n === 4 && this.once('synergy') && document.querySelector('.syn-row.player .syn-chip')) {
-        return this.coach('<b>Squad bonuses:</b> units that share a trait power each other up. Tap a bonus to see what it does, and build squads that match.', '.syn-row.player .syn-chip');
+      if (n === 4 && this.once('synergy')) {
+        return this.coach('These chips are <b>squad bonuses</b>. Field units that share a trait, like two Droids or two Troopers, and the whole squad gets stronger. Tap one to see what it gives. The enemy gets them too!', '.syn-row .syn-chip', {
+          next: () => this.coach('Build squads that match: the more units share a trait, the bigger the bonus. You can see every trait on a card in your Collection.', '.syn-row.player .syn-chip'),
+        });
       }
-      if (n === 5 && this.once('focus')) {
+      if (n === 5 && this.once('planet')) {
+        return this.coach(`Every planet fights differently. Tatooine's terrain is <b>${esc(pl.terrain.name)}</b>: ${esc(pl.terrain.desc)}`, '[data-log]', {
+          next: () => this.coach(`Planets also have a <b>hazard</b>. Here a <b>${esc(pl.hazard.name)}</b> rolls in every ${pl.hazard.every} turns and drains everyone's turn meter (Natives shrug it off). Watch the battle log for warnings.`, '[data-log]'),
+        });
+      }
+      if (n === 6 && this.once('focus')) {
         return this.coach('<b>Strategy:</b> focus your attacks. Finishing one enemy off means fewer hits coming back at you.', '.bcard.targetable', { tip: true });
       }
-      if (n === 6 && this.once('numbers')) {
+      if (n === 7 && this.once('numbers')) {
         return this.coach('<b>Tip:</b> the numbers on each ability show the damage or healing to expect, so you can plan your next move.', '.ability-buttons .astat', { tip: true });
       }
       return this.clearCoach();
     },
 
+    shipLesson(n) {
+      if (n === 1) {
+        return this.coach('Fleet battles work just like ground fights, with ships instead of troops. Same buttons, same rules.', '.player-row .bcard', {
+          next: () => this.coach('<b>Starfighters</b> strike fast, <b>bombers</b> hit hard and <b>gunships</b> soak up damage. A good fleet mixes them.', '.player-row .bcard'),
+        });
+      }
+      if (n === 2 && this.once('shipbonus')) {
+        return this.coach('Ships have <b>squad bonuses</b> too: fly matching types together and they power each other up.', '.syn-row .syn-chip');
+      }
+      if (n === 3 && this.once('shipfocus')) {
+        return this.coach('<b>Tip:</b> take out the bomber first. It hits the hardest.', '.bcard.targetable', { tip: true });
+      }
+      return this.clearCoach();
+    },
+
     onEnemy() {
-      if (this.once('enemy')) this.coach('Enemies take turns too. The strip at the top shows who moves next.', '[data-order]', { auto: 4200, tip: true });
+      if (this.once(`enemy${this.stage}`)) this.coach(this.stage === 2 ? 'TIE fighters are fast. Keep an eye on the turn order at the top.' : 'Enemies take turns too. The strip at the top shows who moves next.', '[data-order]', { auto: 4200, tip: true });
     },
 
     // The player committed an action: drop the pointer glow (the text stays a beat).
@@ -215,20 +259,65 @@
     victory() {
       this.clearCoach();
       this.dropSkip();
-      const res = Player.finishTutorial('completed') || { units: [], credits: 0, crystals: 0 };
-      ui().updateWallet();
-      const cards = D.STARTER.units.map((id, k) => `<div class="tv-card" style="--k:${k}">${ui().unitCard(D.UNIT_MAP[id], { tag: 'div', hideShards: true })}</div>`).join('');
-      const fresh = res.units.length > 0;
-      const node = el(`<div class="tut-victory" role="dialog" aria-label="Training complete">
-        <div class="result-title win">VICTORY</div>
-        <p class="tv-rex">"Outstanding, Commander. ${fresh ? 'That squad is yours now.' : 'You\'ve clearly done this before.'}"</p>
-        <p class="eyebrow">${fresh ? 'Starter squad unlocked' : 'Your starter squad'}</p>
-        <div class="tv-cards">${cards}</div>
-        ${res.credits || res.crystals ? `<div class="tv-res"><span>${ui().cur('credits', res.credits)}</span><span>${ui().cur('crystals', res.crystals)}</span></div>` : ''}
-        <button class="btn btn-primary" type="button" data-tv-go>Continue</button>
+      if (this.stage === 1) return this.interlude();
+      return this.finale();
+    },
+
+    // Between the two fights: the ground is held, fighters are inbound.
+    interlude() {
+      const rex = D.UNIT_MAP[MENTOR];
+      const node = el(`<div class="tut-intro tut-inter" role="dialog">
+        <div class="ti-glow"></div>
+        <div class="result-title win">GROUND SECURED</div>
+        <div class="ti-mentor small">${ui().portrait(rex, { plate: false })}</div>
+        <div class="ti-box"><b>${esc(rex.name)}</b><p class="in">Nice work, Commander. But it's not over: TIE fighters are inbound. Get to your ships!</p>
+        <button class="btn btn-primary ti-go" type="button" data-go>Scramble fighters</button></div>
       </div>`);
       document.body.appendChild(node);
-      if (root.Sound) { root.Sound.play('victory'); setTimeout(() => root.Sound.play('coins'), 900); }
+      if (root.Sound) root.Sound.play('victory');
+      node.querySelector('[data-go]').addEventListener('click', () => {
+        node.classList.add('out');
+        setTimeout(() => node.remove(), 350);
+        this.stage = 2;
+        this.turn = 0;
+        root.BattleUI.start({ type: 'tutorial', stage: 2 });
+      });
+    },
+
+    // The reward moment, drawn out: Rex's word, the squad arriving card by
+    // card, then the starting funds counting up.
+    finale() {
+      const res = Player.finishTutorial('completed') || { units: [], credits: 0, crystals: 0 };
+      ui().updateWallet();
+      const fresh = res.units.length > 0;
+      const back = root.Art.cardBack ? root.Art.cardBack('light') : '';
+      const cards = D.STARTER.units.map((id, k) => `<div class="tv-card" style="--k:${k}"><div class="tv-flip"><div class="tv-back">${back}</div><div class="tv-front">${ui().unitCard(D.UNIT_MAP[id], { tag: 'div', hideShards: true })}</div></div></div>`).join('');
+      const node = el(`<div class="tut-victory staged" role="dialog" aria-label="Training complete">
+        <div class="result-title win tv-a">TRAINING COMPLETE</div>
+        <p class="tv-rex tv-b">${fresh ? '"Not bad, recruit. These troops have seen what you can do, and they\'re ready to follow you. Don\'t let them down."' : '"Outstanding, Commander. You\'ve clearly done this before."'}</p>
+        <p class="eyebrow tv-c">${fresh ? 'Reinforcements arriving' : 'Your squad'}</p>
+        <div class="tv-cards">${cards}</div>
+        ${res.credits || res.crystals ? `<div class="tv-res"><span class="tv-coin">${ui().cur('credits', 0)}</span><span class="tv-kyber">${ui().cur('crystals', 0)}</span></div>` : ''}
+        <div class="tv-stamp">SQUAD READY</div>
+        <button class="btn btn-primary tv-go" type="button" data-tv-go>Continue</button>
+      </div>`);
+      document.body.appendChild(node);
+      const S = root.Sound;
+      const at = (ms, fn) => setTimeout(() => node.isConnected && fn(), ms);
+      if (S) S.play('victory');
+      const flips = node.querySelectorAll('.tv-card');
+      flips.forEach((c, k) => at(2600 + k * 340, () => { c.classList.add('flipped'); if (S) S.play(k === flips.length - 1 ? 'reveal_rare' : 'click'); }));
+      const countFrom = 2600 + flips.length * 340 + 300;
+      const count = (sel, key, target, start) => {
+        const box = node.querySelector(sel);
+        if (!box || !target) return;
+        const steps = 24;
+        for (let i = 1; i <= steps; i++) at(start + i * 45, () => { box.innerHTML = ui().cur(key, Math.round((target * i) / steps)); box.classList.add('lit'); });
+        at(start, () => S && S.play('coins'));
+      };
+      count('.tv-coin', 'credits', res.credits, countFrom);
+      count('.tv-kyber', 'crystals', res.crystals, countFrom + 1300);
+      at(countFrom + 2600, () => { node.classList.add('done'); if (S) S.play('rankup'); });
       node.querySelector('[data-tv-go]').addEventListener('click', () => {
         node.classList.add('out');
         setTimeout(() => node.remove(), 350);
