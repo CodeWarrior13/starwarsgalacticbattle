@@ -1,0 +1,469 @@
+(function (root) {
+  'use strict';
+
+const D = root.GameData;
+const UI = root.UI;
+const H = UI.hooks;
+const K = root.Art.kit;
+const { P, E, C, R, L, shade, SCENES, shoulders, SHIPS } = K;
+const el = (h) => UI.el(h);
+const esc = (t) => UI.esc(t);
+const motion = () => UI.motionOK();
+const Z = () => { const s = Player.state; s.z = s.z || {}; s.z.kt = s.z.kt || []; return s.z; };
+
+// ---------- styles (injected so the stylesheet stays clean) ----------
+const css = `
+.xq-stage { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
+.xq-line { position: absolute; left: 0; right: 0; z-index: 4; text-align: center; padding: 0 16px; margin: 0; opacity: 0; font-family: var(--font-display); letter-spacing: 0.08em; font-size: clamp(16px, 3vw, 24px); color: #e8ecff; animation: jp-sub 0.5s var(--t) forwards; }
+.feat-cine.reveal .xq-stage, .feat-cine.reveal .xq-line { display: none; }
+.xq-pair { position: absolute; top: 18%; left: 0; right: 0; display: flex; justify-content: center; gap: clamp(16px, 8vw, 80px); }
+.xq-who { width: clamp(100px, 24vmin, 160px); aspect-ratio: 3 / 4; border-radius: 12px; overflow: hidden; opacity: 0; }
+.xq-who .portrait { width: 100%; height: 100%; }
+.xq-who.v { border: 2px solid #ff2a3a; box-shadow: 0 0 30px rgba(255, 42, 58, 0.6); animation: xq-inl 0.8s 0.2s cubic-bezier(.2,.9,.3,1) forwards; }
+.xq-who.l { border: 2px solid #46c46a; box-shadow: 0 0 30px rgba(70, 196, 106, 0.6); animation: xq-inr 0.8s 0.2s cubic-bezier(.2,.9,.3,1) forwards, xq-shake 0.08s 3.4s linear 12; }
+@keyframes xq-inl { from { opacity: 0; transform: translateX(-60px); } to { opacity: 1; transform: none; } }
+@keyframes xq-inr { from { opacity: 0; transform: translateX(60px); } to { opacity: 1; transform: none; } }
+@keyframes xq-shake { 50% { transform: translate(3px, -2px); } }
+.xq-no { position: absolute; top: 56%; left: 0; right: 0; text-align: center; opacity: 0; font-family: var(--font-display); font-weight: 800; font-size: clamp(34px, 10vw, 80px); letter-spacing: 0.05em; color: #fff; text-shadow: 0 0 24px #46c46a; animation: xq-no 1.6s 3.3s forwards; }
+@keyframes xq-no { 0% { opacity: 0; transform: scale(0.6); } 20% { opacity: 1; transform: scale(1.15); } 100% { opacity: 1; transform: scale(1.4); letter-spacing: 0.3em; } }
+.feat-cine.xq-dad { background: radial-gradient(circle at 30% 40%, rgba(160, 10, 20, 0.45), transparent 55%), radial-gradient(circle at 70% 40%, rgba(20, 120, 50, 0.4), transparent 55%), #020308; }
+.xq-bars::before, .xq-bars::after { content: ''; position: absolute; left: 0; right: 0; height: 0; background: #000; z-index: 7; animation: xq-bar 0.7s forwards; }
+.xq-bars::before { top: 0; } .xq-bars::after { bottom: 0; }
+@keyframes xq-bar { to { height: 10vh; } }
+.feat-cine.reveal .xq-bars { display: none; }
+.xq-fog { position: absolute; left: -10%; right: -10%; bottom: 0; height: 40%; background: radial-gradient(ellipse at 30% 100%, rgba(255, 60, 70, 0.22), transparent 60%), radial-gradient(ellipse at 70% 100%, rgba(70, 200, 110, 0.2), transparent 60%); filter: blur(10px); animation: xq-fog 6s ease-in-out infinite alternate; }
+@keyframes xq-fog { to { transform: translateX(4%); } }
+.xq-clash { position: absolute; top: calc(18% + clamp(100px, 24vmin, 160px) * 0.66); left: 50%; width: 10px; height: 10px; margin: -5px; border-radius: 50%; background: #fff; box-shadow: 0 0 30px 14px rgba(255, 255, 255, 0.9), -20px 0 40px 10px rgba(255, 42, 58, 0.8), 20px 0 40px 10px rgba(70, 196, 106, 0.8); opacity: 0; z-index: 4; animation: xq-clash 0.18s 2.4s steps(2) 6 forwards; }
+@keyframes xq-clash { 50% { opacity: 1; transform: scale(1.6); } }
+.xq-dad.play .xq-pair { animation: xq-quake 0.07s 3.3s linear 14; }
+@keyframes xq-quake { 50% { transform: translate(4px, -3px); } }
+.xq-flick { position: absolute; inset: 0; z-index: 2; opacity: 0; background: linear-gradient(90deg, rgba(255, 42, 58, 0.35), rgba(70, 196, 106, 0.35)); animation: xq-flick 0.12s 3.3s steps(2) 10; }
+@keyframes xq-flick { 50% { opacity: 1; } }
+.xq-dad .fc-text .fs-kicker { background: linear-gradient(90deg, #ff4a5a, #fff, #5ae07a); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.xq-dad .fc-text b { text-shadow: -4px 0 20px #ff2a3a, 4px 0 20px #46c46a; }
+
+.feat-cine.xq-jj { background: radial-gradient(circle at 50% 40%, #4a3208, #120a02 55%, #020308 80%); }
+.xq-rays { position: absolute; left: 50%; top: 40%; width: 160vmax; height: 160vmax; margin: -80vmax; background: repeating-conic-gradient(rgba(255, 210, 63, 0.18) 0 6deg, transparent 6deg 18deg); opacity: 0; animation: xq-rays-in 0.6s forwards, xq-rays-spin 20s linear infinite; }
+@keyframes xq-rays-in { to { opacity: 1; } }
+@keyframes xq-rays-spin { to { transform: rotate(360deg); } }
+.xq-ban { position: absolute; top: 12%; left: 50%; transform: translateX(-50%); opacity: 0; font-family: var(--font-display); font-weight: 800; letter-spacing: 0.3em; font-size: clamp(24px, 7vw, 56px); color: #ffd23f; text-shadow: 0 0 30px rgba(255, 210, 63, 0.8); white-space: nowrap; animation: xq-ban 3s 0.15s forwards; }
+@keyframes xq-ban { 0% { opacity: 0; transform: translateX(-50%) scale(1.6); } 14% { opacity: 1; transform: translateX(-50%) scale(1); } 52% { transform: translateX(-50%); } 58% { transform: translateX(-50%) rotate(-10deg); } 66% { transform: translateX(-56%) translateY(14px) rotate(12deg); } 100% { opacity: 0; transform: translateX(-70%) translateY(70vh) rotate(48deg); } }
+.xq-jjcard { position: absolute; top: 24%; left: 50%; width: clamp(130px, 34vmin, 200px); margin-left: calc(clamp(130px, 34vmin, 200px) / -2); opacity: 0; animation: xq-tumble 2.2s 1s cubic-bezier(.3,.7,.4,1) forwards; }
+@keyframes xq-tumble { 0% { opacity: 1; transform: translate(-70vw, -30vh) rotate(-540deg) scale(.6); } 55% { transform: translate(0, 4vh) rotate(-20deg) scale(1); } 66% { transform: translate(0, 0) rotate(8deg) scaleY(.86) scaleX(1.08); } 78% { transform: translateY(-3vh) rotate(-3deg) scaleY(1.05) scaleX(.97); } 90% { transform: translateY(0) rotate(1deg); } 100% { opacity: 1; transform: none; } }
+.xq-jjcard .xq-tile { border-width: 3px; }
+.xq-bubble { position: absolute; top: 31%; left: calc(50% + clamp(60px, 16vmin, 96px)); z-index: 5; padding: 8px 14px; border-radius: 16px 16px 16px 4px; background: #fff; color: #2a1a08; font-family: var(--font-display); font-weight: 800; font-size: clamp(14px, 3.4vw, 20px); white-space: nowrap; opacity: 0; transform-origin: bottom left; animation: xq-pop 0.45s 3.1s cubic-bezier(.2,.9,.3,1.5) forwards, xq-wob 0.5s 3.6s ease-in-out 2; }
+@keyframes xq-pop { from { opacity: 0; transform: scale(0.2); } to { opacity: 1; transform: none; } }
+@keyframes xq-wob { 50% { transform: rotate(-5deg) scale(1.05); } }
+.xq-stats { position: absolute; top: calc(24% + clamp(130px, 34vmin, 200px) * 1.38); left: 50%; transform: translateX(-50%); display: grid; grid-template-columns: repeat(4, auto); gap: 8px; }
+.xq-stats span { display: grid; justify-items: center; gap: 1px; min-width: 58px; padding: 6px 8px; border-radius: 10px; background: rgba(10, 8, 4, 0.8); border: 1px solid rgba(255, 210, 63, 0.5); opacity: 0; animation: xq-pop 0.4s var(--t) cubic-bezier(.2,.9,.3,1.4) forwards; }
+.xq-stats em { font-style: normal; font-size: 10px; letter-spacing: 0.16em; color: #ffd9a0; }
+.xq-stats b { font-family: var(--font-display); font-size: 18px; color: #fff; }
+.xq-tag { position: absolute; top: calc(24% - 30px); left: 50%; transform: translateX(-50%); padding: 3px 12px; border-radius: 999px; background: linear-gradient(90deg, #5ab4ff, #ff4a5a); color: #fff; font-family: var(--font-display); font-size: 11px; letter-spacing: 0.24em; opacity: 0; animation: xq-pop 0.4s 3.3s forwards; }
+.xq-jj .fc-text .fs-kicker { background: linear-gradient(90deg, #ffb347, #fff1c8, #ffb347); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.xq-jj .fc-text b { text-shadow: 0 0 22px #ff9a2a; }
+
+.feat-cine.xq-kr { background: radial-gradient(circle at 50% 45%, #0a1a30, #000 70%); }
+.xq-warp { position: absolute; left: 50%; top: 45%; width: 0; height: 0; }
+.xq-warp i { position: absolute; left: 0; top: 0; width: 50vmax; height: 2px; transform-origin: 0 50%; background: linear-gradient(90deg, transparent, #bfe8ff 60%, #fff); opacity: 0; animation: gr-streak 0.7s var(--d) linear infinite; }
+.xq-time { position: absolute; top: 40%; left: 0; right: 0; text-align: center; font-family: var(--font-display); font-weight: 800; font-size: clamp(54px, 16vmin, 130px); color: #fff; text-shadow: 0 0 30px #4aa8ff; opacity: 0; animation: jp-sub 0.5s 0.6s forwards; font-variant-numeric: tabular-nums; }
+.xq-kr .fc-text .fs-kicker { background: linear-gradient(90deg, #7cd0ff, #ffd23f, #7cd0ff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.xq-kr .fc-text b { text-shadow: 0 0 22px #4aa8ff; }
+
+.feat-cine.xq-cer { background: radial-gradient(ellipse at 50% 0%, #1a2a50 0%, #0a1024 45%, #03050c 80%); cursor: default; }
+.feat-cine.xq-cer.reveal { cursor: pointer; background: radial-gradient(circle at 50% 42%, #2e3050 0%, #0a1024 45%, #03050c 80%); }
+.xq-doors { position: absolute; inset: 0; z-index: 8; display: flex; pointer-events: none; }
+.xq-doors i { flex: 1; background: linear-gradient(90deg, #14100a, #3a2c14 50%, #14100a); box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.8); }
+.xq-doors i::after { content: ''; display: block; margin: 40vh auto 0; width: 24%; aspect-ratio: 1; border-radius: 50%; border: 3px solid rgba(255, 210, 63, 0.7); box-shadow: 0 0 20px rgba(255, 210, 63, 0.4); }
+.xq-doors i:first-child { animation: xq-door-l 1.4s 0.5s cubic-bezier(.7,0,.3,1) forwards; }
+.xq-doors i:last-child { animation: xq-door-r 1.4s 0.5s cubic-bezier(.7,0,.3,1) forwards; }
+@keyframes xq-door-l { to { transform: translateX(-102%); } }
+@keyframes xq-door-r { to { transform: translateX(102%); } }
+.xq-shafts { position: absolute; inset: 0; overflow: hidden; }
+.xq-shafts i { position: absolute; top: -10%; width: 18%; height: 90%; background: linear-gradient(180deg, rgba(200, 225, 255, 0.2), rgba(200, 225, 255, 0.04) 60%, transparent 85%); filter: blur(10px); transform-origin: top center; animation: xq-sway 7s ease-in-out infinite alternate; }
+@keyframes xq-sway { from { transform: rotate(var(--r)) translateX(-4%); } to { transform: rotate(calc(var(--r) * -0.6)) translateX(4%); } }
+.xq-dust { position: absolute; inset: 0; overflow: hidden; }
+.xq-dust i { position: absolute; bottom: -4%; width: 3px; height: 3px; border-radius: 50%; background: #ffe7a8; box-shadow: 0 0 6px #ffd23f; opacity: 0; animation: xq-rise var(--s) var(--d) linear infinite; }
+@keyframes xq-rise { 0% { opacity: 0; transform: translateY(0); } 15% { opacity: 0.9; } 100% { opacity: 0; transform: translate(var(--x), -100vh); } }
+.xq-floor2 { position: absolute; left: 0; right: 0; bottom: 0; height: 36%; background: radial-gradient(ellipse at 50% 0%, rgba(120, 160, 255, 0.18), transparent 60%), linear-gradient(180deg, #0c1430, #03050c); border-top: 1px solid rgba(255, 210, 63, 0.35); box-shadow: 0 -1px 24px rgba(255, 210, 63, 0.15); }
+.xq-title { position: absolute; top: 7%; left: 0; right: 0; z-index: 4; text-align: center; opacity: 0; animation: jp-sub 0.8s 1.7s forwards; }
+.xq-title b { display: block; font-family: var(--font-display); font-weight: 800; letter-spacing: 0.32em; font-size: clamp(18px, 4.6vw, 34px); background: linear-gradient(180deg, #fff6c8, #ffd23f 55%, #a86f08); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.xq-title span { font-size: clamp(11px, 2.4vw, 14px); letter-spacing: 0.2em; text-transform: uppercase; color: #b8c8e8; }
+.xq-podium { position: absolute; top: 24%; left: 0; right: 0; z-index: 5; display: flex; justify-content: center; align-items: flex-end; gap: clamp(10px, 3.4vw, 26px); pointer-events: auto; perspective: 900px; }
+.xq-hero { position: relative; width: clamp(84px, 22vmin, 136px); display: grid; justify-items: center; gap: 0; opacity: 0; animation: xq-hero-in 0.8s var(--t) cubic-bezier(.2,.9,.3,1.2) forwards; }
+.xq-hero.c { width: clamp(98px, 26vmin, 160px); }
+@keyframes xq-hero-in { from { opacity: 0; transform: translateY(40px) scale(0.9); } to { opacity: 1; transform: none; } }
+.xq-flip { position: relative; width: 100%; aspect-ratio: 3 / 4; cursor: pointer; transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(.2,.9,.3,1); }
+.xq-hero.flipped .xq-flip { transform: rotateY(180deg); }
+.xq-flip > div { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.xq-flip .xq-back { transform: rotateY(180deg); border-radius: 10px; border: 2px solid #ffd23f; background: radial-gradient(circle at 50% 30%, #1a2a50, #05070d); display: grid; align-content: center; justify-items: center; gap: 4px; padding: 8px; text-align: center; }
+.xq-back b { font-family: var(--font-display); font-size: clamp(9px, 2vw, 12px); letter-spacing: 0.06em; text-transform: uppercase; color: #fff; }
+.xq-back em { font-style: normal; font-family: var(--font-display); font-size: clamp(16px, 4vw, 24px); color: #ffd23f; }
+.xq-back span { font-size: clamp(7.5px, 1.7vw, 10px); line-height: 1.3; color: #b8c8e8; letter-spacing: 0.1em; text-transform: uppercase; }
+.xq-tiltwrap { width: 100%; transition: transform 0.15s; transform: rotateX(var(--ry, 0deg)) rotateY(var(--rx, 0deg)); transform-style: preserve-3d; }
+.xq-step { width: 112%; margin-top: 10px; padding: 6px 0 calc(var(--h) * 1px); border-radius: 6px 6px 0 0; text-align: center; font-family: var(--font-display); font-weight: 800; letter-spacing: 0.2em; font-size: clamp(11px, 2.6vw, 15px); background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)); border: 1px solid var(--pc); border-bottom: 0; color: var(--pc); box-shadow: 0 -6px 20px color-mix(in srgb, var(--pc) 25%, transparent); }
+.xq-hero.c .xq-tile { border-color: #ffd23f; box-shadow: 0 0 34px rgba(255, 210, 63, 0.55); }
+.xq-hint { position: absolute; bottom: 15%; padding-left: 18%; left: 0; right: 0; z-index: 6; text-align: center; font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; color: #b8c8e8; opacity: 0; animation: jp-sub 0.6s 3.6s forwards; }
+.xq-cer .xq-go.btn { position: absolute; bottom: 7%; left: 50%; z-index: 6; transform: translateX(-50%); opacity: 0; pointer-events: auto; animation: xq-go-in 0.6s 3.9s forwards; }
+@keyframes xq-go-in { from { opacity: 0; transform: translate(-50%, 12px); } to { opacity: 1; transform: translate(-50%, 0); } }
+.xq-chewie { position: absolute; left: 3%; bottom: 16%; z-index: 5; width: clamp(50px, 12vmin, 76px); opacity: 0; animation: jp-sub 0.6s 4.4s forwards; text-align: center; }
+.xq-chewie small { display: block; margin-top: 3px; font-size: 9px; line-height: 1.2; color: #b8c8e8; font-style: italic; }
+.xq-roar { position: absolute; left: 2%; bottom: calc(16% + clamp(70px, 17vmin, 104px)); z-index: 5; font-family: var(--font-display); font-weight: 800; color: #fff; font-size: clamp(12px, 2.6vw, 16px); opacity: 0; animation: xq-roar 1.4s 5s forwards; }
+@keyframes xq-roar { 0% { opacity: 0; transform: scale(0.6); } 20% { opacity: 1; transform: scale(1.2) rotate(-6deg); } 100% { opacity: 1; transform: scale(1) rotate(-6deg); } }
+.feat-cine.reveal .xq-doors, .feat-cine.reveal .xq-go, .feat-cine.reveal .xq-hint, .feat-cine.reveal .xq-podium, .feat-cine.reveal .xq-title, .feat-cine.reveal .xq-chewie, .feat-cine.reveal .xq-roar, .feat-cine.reveal .xq-floor2 { display: none; }
+.xq-cer .fc-text .fs-kicker { color: #ffd23f; }
+.xq-cer .fc-text b { text-shadow: 0 0 22px rgba(255, 210, 63, 0.7); }
+.xq-tile { position: relative; aspect-ratio: 3 / 4; border-radius: 10px; overflow: hidden; border: 2px solid #c8a060; background: #0a0806; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6); }
+.xq-tile.gold { border-color: #ffd23f; box-shadow: 0 0 30px rgba(255, 210, 63, 0.6); }
+.xq-tile .portrait { width: 100%; height: 100%; }
+.xq-tile b { position: absolute; left: 0; right: 0; bottom: 0; padding: 4px 4px 5px; font-family: var(--font-display); font-size: clamp(8px, 1.8vw, 11px); letter-spacing: 0.06em; text-transform: uppercase; text-align: center; color: #fff; background: linear-gradient(transparent, rgba(0, 0, 0, 0.85)); }
+`;
+document.head.appendChild(Object.assign(document.createElement('style'), { textContent: css }));
+
+// ---------- cards ----------
+const dmg = (mult, hits) => ({ type: 'damage', mult, hits: hits || 1 });
+const heal = (pct) => ({ type: 'heal', pct });
+const buff = (status, turns) => ({ type: 'status', status, turns, chance: 1 });
+const debuff = (status, turns, chance) => ({ type: 'status', status, turns, chance: chance == null ? 1 : chance });
+const tm = (amount) => ({ type: 'tm', amount });
+const ult = (name, target, effects, desc, quote) => ({ name, cd: 0, target, effects, desc, quote, ultimate: true });
+
+const CARDS = [
+  {
+    id: 'jar_jar', name: 'Jar Jar Binks', kind: 'character', faction: 'light', rarity: 'secret', role: 'support', exclusive: true, accent: '#d9925a', spd: 148,
+    traits: ['scoundrel'], home: 'endor', sig: { move: 'whirl', impact: 'stamp', color: '#ffb347' }, anim: 'rally',
+    bio: 'A clumsy Gungan exile from Naboo whose accidents somehow keep winning battles.',
+    abilities: [
+      { name: 'Booma Toss', cd: 0, target: 'enemy', effects: [dmg(0.9), debuff('stun', 1, 0.25)], desc: 'Lob an energy ball at one enemy with a 25% chance to Stun.' },
+      { name: 'Bombad Luck', cd: 3, target: 'allAllies', effects: [buff('defUp', 2), tm(25)], desc: 'Somehow it works out: all allies gain Defense Up and 25% Turn Meter.' },
+    ],
+    ultimate: ult('Meesa Sorry!', 'allEnemies', [dmg(1.3), debuff('stun', 1, 0.6), debuff('offDown', 2)], 'A catastrophic trip that somehow flattens every enemy: heavy damage, 60% Stun chance and Offense Down.', 'Exsqueeze me!'),
+  },
+  {
+    id: 'falcon_kessel', name: 'Millennium Falcon · Kessel Run', kind: 'ship', faction: 'light', rarity: 'secret', role: 'attacker', exclusive: true, shape: 'falcon_kessel', spd: 172,
+    traits: ['gunship', 'scoundrel', 'rebel'], home: 'tatooine', sig: { move: 'flyby', prop: 'ship', impact: 'shatter', color: '#7cd0ff', roll: true, n: 3 }, anim: 'strafe',
+    bio: 'The Falcon as she was on her legendary run through the Maw: stripped down, overcharged and faster than anything in the galaxy.',
+    abilities: [
+      { name: 'Overcharged Quads', cd: 0, target: 'enemy', effects: [dmg(1.3, 2)], desc: 'Hit one enemy twice.' },
+      { name: 'Maw Shortcut', cd: 3, target: 'allAllies', effects: [heal(0.15), buff('offUp', 2), tm(35)], desc: 'All allies heal 15%, gain Offense Up and 35% Turn Meter.' },
+      { name: 'Smuggler\'s Gambit', cd: 3, target: 'enemy', effects: [dmg(2.8), debuff('stun', 1, 0.6)], desc: 'Deal massive damage with a 60% chance to Stun.' },
+    ],
+    ultimate: ult('Twelve Parsecs', 'allEnemies', [dmg(2.2), debuff('stun', 1, 0.5), { ...tm(50), on: 'allies' }], 'Punch through the Maw: heavy damage to every enemy with a 50% Stun chance; all allies gain 50% Turn Meter.', 'It\'s the ship that made the Kessel Run in less than twelve parsecs.'),
+  },
+];
+for (const c of CARDS) {
+  if (D.UNIT_MAP[c.id]) continue;
+  D.UNITS.push(c);
+  D.UNIT_MAP[c.id] = c;
+  if (D.BIOS) D.BIOS[c.id] = c.bio;
+  if (D.ULT_ANIM) D.ULT_ANIM[c.id] = c.anim;
+}
+
+root.Art.addArt('char', 'jar_jar', () => {
+  const SK = '#d9925a';
+  return SCENES.endor()
+    + shoulders('#7a5a3a', { top: 76 }) + P('M38 78 L50 92 L62 78 L58 76 L50 84 L42 76Z', '#c8b48a')
+    + P('M37 36 C25 46 23 68 29 84 C33 86 36 80 36 70 C36 57 39 47 43 40Z', '#c07a45') + P('M63 36 C75 46 77 68 71 84 C67 86 64 80 64 70 C64 57 61 47 57 40Z', '#c07a45')
+    + R(45, 62, 10, 14, SK)
+    + E(50, 42, 13.5, 15, SK) + shade('M50 27 C42 27 36.5 34 36.5 42 C36.5 51 42 57 50 57Z', 0.1)
+    + C(43.5, 29, 5.6, SK) + C(56.5, 29, 5.6, SK) + C(43.5, 28.4, 3.8, '#f4eed8') + C(56.5, 28.4, 3.8, '#f4eed8')
+    + C(44.2, 28.8, 1.9, '#d8a020') + C(55.8, 28.8, 1.9, '#d8a020') + C(44.2, 28.8, 1, '#120c06') + C(55.8, 28.8, 1, '#120c06')
+    + P('M38.2 27 C40 23.4 47 23.4 48.8 27 C46 25.8 41 25.8 38.2 27Z', '#b06a38') + P('M61.8 27 C60 23.4 53 23.4 51.2 27 C54 25.8 59 25.8 61.8 27Z', '#b06a38')
+    + P('M40 47 C40 63 45 70 50 70 C55 70 60 63 60 47 C56 50 44 50 40 47Z', '#e8b07a') + shade('M50 49 L50 70 C55 70 60 63 60 47 C56 50 52 49.6 50 49Z', 0.08)
+    + C(47.2, 52.5, 0.9, '#7a3a1a') + C(52.8, 52.5, 0.9, '#7a3a1a')
+    // open bill and the long tongue flopping out over the chin
+    + P('M42 60.5 Q50 69 58 60.5 Q50 64.5 42 60.5Z', '#3a1408')
+    + P('M48.4 63.6 C46.5 70 44.5 76 46.5 82 C47.8 85.5 51.8 85 52.3 81.4 C53 76.6 52.6 70.6 52.2 64Z', '#e8607a', 'stroke="#a8304a" stroke-width=".6"')
+    + P('M50.3 65.5 C49.6 71 49.2 76 49.9 81', 'none', 'stroke="#b03a52" stroke-width=".7"')
+    + E(49.6, 79.6, 1.4, 0.8, '#ff9aaa', 'opacity=".7"');
+});
+root.Art.addArt('ship', 'falcon_kessel', () => [[8, 20, 30], [4, 46, 26], [10, 70, 34], [70, 14, 26], [72, 84, 24], [6, 88, 20]].map(([x, y, w]) => L(x, y, x + w, y, '#9fdcff', 1, 'opacity=".55"')).join('')
+  + SHIPS.falcon()
+  + C(50, 56, 34, 'none', 'stroke="#ffd23f" stroke-width="1.6"') + C(50, 56, 11, 'none', 'stroke="#ffd23f" stroke-width="1.2"')
+  + P('M36 26 L36 6 L39 6 L39 28Z', '#ffd23f', 'opacity=".85"') + P('M64 26 L64 6 L61 6 L61 28Z', '#ffd23f', 'opacity=".85"')
+  + '<path class="eng" d="M22 82 A34 34 0 0 0 78 82" stroke="#ffffff" stroke-width="4.4" fill="none" style="--eng:#9fdcff"/>');
+
+// ---------- feats ----------
+const FEATS = {
+  dad: { id: 'xq_dad', secret: true, tier: 5, icon: 'sith', name: 'Bad Father\'s Day', desc: 'Pulled Darth Vader and Luke Skywalker from the same crate', have: 1, need: 1 },
+  jj: { id: 'xq_jj', secret: true, tier: 5, icon: 'spark', name: 'Meesa Sorry', desc: 'Something went very, very wrong in a crate', have: 1, need: 1 },
+  kr: { id: 'xq_kr', secret: true, tier: 6, icon: 'xwing', name: 'Less Than Twelve Parsecs', desc: 'Cleared 12 tower floors in a row in under 12 minutes', have: 1, need: 1 },
+};
+H.feats.push((s) => {
+  const z = s.z || {};
+  const out = [{ id: 'xq_sv', tier: 3, icon: 'bacta', name: 'Survivor', desc: 'Win a battle with a unit on its last 1% of health', have: z.b ? 1 : 0, need: 1 }];
+  if (z.f) out.push(FEATS.dad);
+  if (z.j) out.push(FEATS.jj);
+  if (z.k) out.push(FEATS.kr);
+  return out;
+});
+
+// ---------- crests ----------
+let seq = 0;
+const anim = {
+  spin: (dur, rev) => (motion() ? `<animateTransform attributeName="transform" type="rotate" from="${rev ? 360 : 0} 0 0" to="${rev ? 0 : 360} 0 0" dur="${dur}s" repeatCount="indefinite"/>` : ''),
+  fade: (v, dur, begin = 0) => (motion() ? `<animate attributeName="opacity" values="${v}" dur="${dur}s" begin="${begin}s" repeatCount="indefinite"/>` : ''),
+  rock: (deg, dur) => (motion() ? `<animateTransform attributeName="transform" type="rotate" values="${-deg};${deg};${-deg}" dur="${dur}s" repeatCount="indefinite"/>` : ''),
+  dash: (len, dur, begin) => (motion() ? `<animate attributeName="stroke-dashoffset" from="${len}" to="0" dur="${dur}s" begin="${begin}s" repeatCount="indefinite"/>` : ''),
+};
+const frame = (u, inner, word, opts = {}) => `<svg class="mc" viewBox="-100 -100 200 200" aria-hidden="true">
+  <defs>
+    <linearGradient id="${u}g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6c8"/><stop offset=".35" stop-color="#ffd23f"/><stop offset=".7" stop-color="#a86f08"/><stop offset="1" stop-color="#ffe98a"/></linearGradient>
+    <radialGradient id="${u}h"><stop offset="0" stop-color="${opts.glow || '#ffd23f'}" stop-opacity=".6"/><stop offset="1" stop-color="${opts.glow || '#ffd23f'}" stop-opacity="0"/></radialGradient>
+    <radialGradient id="${u}c"><stop offset="0" stop-color="${opts.core || '#1a2030'}"/><stop offset="1" stop-color="#05070d"/></radialGradient>
+    <filter id="${u}f" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="2.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="${u}bl" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="3"/></filter>
+    <clipPath id="${u}k"><circle r="70"/></clipPath>
+  </defs>
+  <circle r="99" fill="url(#${u}h)">${anim.fade('1;.5;1', 2.8)}</circle>
+  ${opts.back || ''}
+  <circle r="76" fill="url(#${u}c)" stroke="url(#${u}g)" stroke-width="6"/>
+  <circle r="69" fill="none" stroke="url(#${u}g)" stroke-width="1.2" opacity=".7"/>
+  <g clip-path="url(#${u}k)">${inner}</g>
+  <path d="M-50,77 H-72 L-63,86 L-72,95 H-50Z M50,77 H72 L63,86 L72,95 H50Z" fill="${opts.tail || '#7a5200'}" stroke="#2a1a00" stroke-width="1"/>
+  <rect x="-58" y="72" width="116" height="20" rx="2" fill="url(#${u}g)" stroke="#2a1a00" stroke-width="1.2"/>
+  <text y="86.5" text-anchor="middle" font-size="10.5" font-weight="800" letter-spacing="3" fill="#2a1a00" font-family="inherit">${word}</text>
+</svg>`;
+
+const crestDad = () => {
+  const u = `xd${++seq}`;
+  const saber = (x1, x2, color) => `<line x1="${x1}" y1="58" x2="${x2}" y2="-58" stroke="${color}" stroke-width="11" opacity=".75" filter="url(#${u}bl)"/><line x1="${x1}" y1="58" x2="${x2}" y2="-58" stroke="#fff" stroke-width="4.5">${anim.fade('1;.82;1', 0.15)}</line>`;
+  const inner = `<rect x="-80" y="-80" width="80" height="160" fill="#3a0a10"/><rect x="0" y="-80" width="80" height="160" fill="#0a2a14"/>
+    <g stroke-linecap="round">${saber(-44, 44, '#ff2a3a')}${saber(44, -44, '#46c46a')}</g>
+    <g transform="translate(-30,8)"><path d="M-16,-6 C-16,-22 16,-22 16,-6 L18,14 L8,10 L0,18 L-8,10 L-18,14Z" fill="#0a0a0c" stroke="#ff4a5a" stroke-width="1.2"/><path d="M-9,-2 L-3,-2 L-4,3 L-9,3Z M9,-2 L3,-2 L4,3 L9,3Z" fill="#ff4a5a"/></g>
+    <g transform="translate(30,8)"><circle r="14" fill="#e8b896"/><path d="M-14,-4 C-14,-18 14,-18 14,-4 C10,-12 -10,-12 -14,-4Z" fill="#c89a4a"/><circle cx="-5" cy="0" r="1.6" fill="#2a3a6a"/><circle cx="5" cy="0" r="1.6" fill="#2a3a6a"/><ellipse cx="0" cy="8" rx="4" ry="5" fill="#3a1010"/></g>`;
+  return frame(u, inner, 'NOOOOO!', { glow: '#ff6a6a', tail: '#5a0a10' });
+};
+const crestJJ = () => {
+  const u = `xj${++seq}`;
+  const stars = [0, 72, 144, 216, 288].map((a) => `<g transform="rotate(${a}) translate(0,-46)"><path d="M0,-6 L1.6,-1.6 L6,0 L1.6,1.6 L0,6 L-1.6,1.6 L-6,0 L-1.6,-1.6Z" fill="#ffd23f" filter="url(#${u}f)"/></g>`).join('');
+  const head = `<g>${anim.rock(10, 2.2)}
+    <path d="M-12,-8 C-26,0 -28,24 -22,38 C-18,40 -16,34 -16,26 C-16,14 -12,4 -8,-2Z" fill="#c07a45"/><path d="M12,-8 C26,0 28,24 22,38 C18,40 16,34 16,26 C16,14 12,4 8,-2Z" fill="#c07a45"/>
+    <ellipse cx="0" cy="-2" rx="14" ry="16" fill="#d9925a"/>
+    <circle cx="-7" cy="-16" r="6" fill="#d9925a"/><circle cx="7" cy="-16" r="6" fill="#d9925a"/><circle cx="-7" cy="-16.6" r="4" fill="#f4eed8"/><circle cx="7" cy="-16.6" r="4" fill="#f4eed8"/>
+    <circle cx="-5.8" cy="-15" r="1.5" fill="#120c06"/><circle cx="8.2" cy="-18" r="1.5" fill="#120c06"/>
+    <path d="M-10,4 C-10,20 -5,26 0,26 C5,26 10,20 10,4 C6,7 -6,7 -10,4Z" fill="#e8b07a"/><path d="M-6,18 Q0,23 6,18 Q0,21 -6,18Z" fill="#5a2210"/><path d="M2,20 C3,24 6,24 6,21Z" fill="#e86a7a"/></g>`;
+  return frame(u, `<g>${anim.spin(4)}${stars}</g>${head}`, 'MEESA SORRY', { glow: '#ffb347', core: '#2a1a08', tail: '#7a3a00' });
+};
+const crestKR = () => {
+  const u = `xk${++seq}`;
+  const streaks = Array.from({ length: 18 }, (_, k) => { const a = (k / 18) * Math.PI * 2; return `<line stroke-dasharray="12 70" x1="${(Math.cos(a) * 16).toFixed(1)}" y1="${(Math.sin(a) * 16).toFixed(1)}" x2="${(Math.cos(a) * 72).toFixed(1)}" y2="${(Math.sin(a) * 72).toFixed(1)}" stroke="#bfe8ff" stroke-width="1.6" stroke-linecap="round" opacity=".8">${anim.dash(82, 0.7, -k * 0.04)}</line>`; }).join('');
+  // twelve parsec markers that light up one after another
+  const ticks = Array.from({ length: 12 }, (_, k) => { const a = ((k * 30 - 90) * Math.PI) / 180; return `<circle cx="${(Math.cos(a) * 62).toFixed(1)}" cy="${(Math.sin(a) * 62).toFixed(1)}" r="2.6" fill="#ffd23f" filter="url(#${u}f)" opacity=".25">${motion() ? `<animate attributeName="opacity" values=".25;1;1;.25" keyTimes="0;.08;.9;1" dur="3.6s" begin="${(k * 0.25).toFixed(2)}s" repeatCount="indefinite"/>` : ''}</circle>`; }).join('');
+  const bank = motion() ? '<animateTransform attributeName="transform" type="rotate" values="-6;6;-6" dur="3s" repeatCount="indefinite" additive="sum"/>' : '';
+  const ship = `<g><g transform="translate(0,2)">${bank}<g transform="scale(.9) translate(-50,-56)">${SHIPS.falcon()}</g></g></g>`;
+  const engines = `<path d="M-30,24 A31,31 0 0 0 30,24" stroke="#ffffff" stroke-width="3" fill="none" filter="url(#${u}f)">${anim.fade('1;.45;1', 0.6)}</path>`;
+  const back = `<g fill="#7cd0ff" opacity=".28">${anim.spin(30)}${Array.from({ length: 20 }, (_, k) => `<polygon points="0,${k % 2 ? -86 : -100} 4,0 -4,0" transform="rotate(${k * 18})"/>`).join('')}</g>
+    <circle r="84" fill="none" stroke="#7cd0ff" stroke-width="1.5" stroke-dasharray="2 8" opacity=".8">${anim.spin(12, true)}</circle>`;
+  return frame(u, `${streaks}${ticks}${engines}${ship}`, 'KESSEL RUN', { glow: '#7cd0ff', core: '#0a1a30', tail: '#123a6a', back });
+};
+Object.assign(H.crests, { xq_dad: crestDad, xq_jj: crestJJ, xq_kr: crestKR });
+
+// Portrait tile with a name plate (works whether or not the card is owned).
+const tile = (def, cls = '') => `<div class="xq-tile ${cls}">${UI.portrait(def, { plate: false })}<b>${esc(def.name)}</b></div>`;
+
+// ---------- scene runner ----------
+function scene(x, cls, stage, ms, onDone, sounds, kicker, setup) {
+  const node = el(`<div class="feat-cine ${cls}" role="dialog" aria-label="${esc(x.name)}">
+    <div class="xq-stage">${stage}</div>
+    <i class="fc-flash"></i>
+    ${UI.featBadge(x, 'fc-badge')}
+    ${Array.from({ length: 70 }, (_, k) => `<i class="fs-spark" style="--a:${(k * 137.5) % 360}deg;--d:${(k % 9) * 0.05}s;--r:${22 + (k % 6) * 7}vmin;--c:${k % 2 ? '#ffd23f' : '#ffffff'}"></i>`).join('')}
+    <div class="fs-text fc-text"><span class="fs-kicker">${esc(kicker || 'Secret achievement')}</span><b>${esc(x.name)}</b><span>${esc(x.desc)}</span></div>
+    <span class="pc-skip">Tap to skip</span>
+  </div>`);
+  document.body.appendChild(node);
+  const S = root.Sound;
+  const timers = [];
+  const at = (t, fn) => timers.push(setTimeout(() => node.isConnected && fn(), t));
+  if (S && sounds) sounds(S, at);
+  node.classList.add('play');
+  const manual = ms == null;
+  return new Promise((resolve) => {
+    let done = false;
+    const reveal = (skip) => {
+      if (node.classList.contains('reveal')) return;
+      node.classList.add('reveal'); if (skip) node.classList.add('skip');
+      node.querySelector('.pc-skip').textContent = 'Tap to close';
+      if (S) { S.play('burst'); S.play('reveal_mythic'); }
+    };
+    if (setup) setup(node, () => reveal(false));
+    node.addEventListener('click', (e) => {
+      if (!node.classList.contains('reveal')) { if (manual) return; return reveal(true); }
+      if (done) return;
+      done = true;
+      timers.forEach(clearTimeout);
+      node.classList.add('out');
+      setTimeout(() => { node.remove(); Promise.resolve(onDone && onDone()).then(resolve); }, 450);
+    });
+    if (!manual) at(ms, () => reveal(false));
+  });
+}
+
+const sceneDad = (x) => {
+  const v = D.UNIT_MAP.vader; const l = D.UNIT_MAP.luke;
+  const stage = `<div class="xq-fog"></div><div class="xq-flick"></div><div class="xq-bars"></div>
+    <div class="xq-pair"><div class="xq-who v">${UI.portrait(v, { plate: false })}</div><div class="xq-who l">${UI.portrait(l, { plate: false })}</div></div><i class="xq-clash"></i>
+    <p class="xq-line" style="top:52%;--t:1.2s;color:#ff8a8a">"Luke… I am your father."</p><div class="xq-no">NOOOOO!</div>`;
+  return scene(x, 'xq-dad', stage, 5800, null, (S, at) => { S.play('ignite'); at(900, () => S.play('saber')); at(1200, () => S.play('ult')); at(2400, () => S.play('crit')); at(3300, () => S.play('glitch')); });
+};
+const sceneJJ = (x) => {
+  const def = D.UNIT_MAP.jar_jar;
+  const own = Player.unit('jar_jar') || { level: 1, stars: 1 };
+  const st = D.unitStats(def, own.level, own.stars);
+  const chips = [['HP', st.hp], ['ATK', st.atk], ['DEF', st.def], ['SPD', st.spd || def.spd]].map(([k, v], i) => `<span style="--t:${3.6 + i * 0.25}s"><em>${k}</em><b>${UI.fmt(v)}</b></span>`).join('');
+  const stage = `<div class="xq-rays"></div><div class="xq-ban">LEGENDARY</div>
+    <span class="xq-tag">SECRET</span><div class="xq-jjcard">${tile(def, 'gold')}</div><div class="xq-bubble">Meesa sorry!</div>
+    <div class="xq-stats">${chips}</div>`;
+  return scene(x, 'xq-jj', stage, 6600, null, (S, at) => { S.play('reveal_legendary'); at(1000, () => S.play('whoosh')); at(1900, () => S.play('crack')); at(2300, () => S.play('hit')); at(3100, () => S.play('ko')); [0, 1, 2, 3].forEach((i) => at(3600 + i * 250, () => S.play('click'))); });
+};
+const sceneKR = (x, mins) => {
+  const stage = `<div class="xq-warp">${Array.from({ length: 50 }, (_, k) => `<i style="--a:${(k * 137.5) % 360}deg;--d:${((k * 13) % 20) * -0.04}s"></i>`).join('')}</div>
+    <div class="xq-time">${mins ? mins.toFixed(1) : '11.9'}<small style="font-size:.35em"> min</small></div>
+    <p class="xq-line" style="top:66%;--t:1.6s">"It's the ship that made the Kessel Run…"</p><p class="xq-line" style="top:72%;--t:2.8s;color:#ffd23f">"…in less than twelve parsecs."</p>`;
+  return scene(x, 'xq-kr', stage, 5200, null, (S, at) => { S.play('whoosh'); at(600, () => S.play('ult')); });
+};
+const top3 = () => Object.keys(Player.state.units).filter((id) => D.UNIT_MAP[id] && id !== 'chewbacca')
+  .map((id) => ({ id, p: D.power(D.UNIT_MAP[id], Player.state.units[id].level, Player.state.units[id].stars) }))
+  .sort((a, b) => b.p - a.p).slice(0, 3);
+const sceneCer = (x) => {
+  const best = top3();
+  const PLACE = [['1ST', '#ffd23f', 46], ['2ND', '#dfe6ee', 26], ['3RD', '#d08a4a', 12]];
+  const slots = best.length === 3 ? [1, 0, 2] : best.map((_, i) => i);
+  const heroes = slots.map((rank, k) => {
+    const b = best[rank]; if (!b) return '';
+    const def = D.UNIT_MAP[b.id]; const u = Player.state.units[b.id];
+    const [label, pc, h] = PLACE[rank];
+    return `<div class="xq-hero ${rank === 0 ? 'c' : ''}" style="--t:${2 + k * 0.3}s" data-hero>
+      <div class="xq-tiltwrap"><div class="xq-flip"><div>${tile(def)}</div><div class="xq-back"><span>${label} place</span><b>${esc(def.name)}</b><em>${UI.fmt(b.p)}</em><span>Power</span><span>Lv ${u.level} · ${u.stars}★</span></div></div></div>
+      <div class="xq-step" style="--pc:${pc};--h:${h}">${label}</div></div>`;
+  }).join('');
+  const shafts = [[18, 14], [40, -6], [62, 8], [82, -14]].map(([l, r]) => `<i style="left:${l}%;--r:${r}deg"></i>`).join('');
+  const dust = Array.from({ length: 40 }, (_, k) => `<i style="left:${(k * 37) % 100}%;--s:${6 + (k % 5)}s;--d:${-(k % 9) * 0.8}s;--x:${(k % 2 ? 1 : -1) * (10 + (k % 4) * 8)}px"></i>`).join('');
+  const stage = `<div class="xq-shafts">${shafts}</div><div class="xq-dust">${dust}</div><div class="xq-floor2"></div>
+    <div class="xq-title"><b>HEROES OF THE GALAXY</b><span>For valor in the liberation of every world</span></div>
+    <div class="xq-podium">${heroes}</div>
+    <p class="xq-hint">Tap a hero to see their record</p>
+    <button class="btn btn-primary xq-go" type="button" data-xq-go>Continue</button>
+    <div class="xq-chewie">${tile(D.UNIT_MAP.chewbacca)}<small>(no medal, as is tradition)</small></div><div class="xq-roar">RRAARGH!</div>
+    <div class="xq-doors"><i></i><i></i></div>`;
+  const hx = { ...x, name: 'Heroes of the Rebellion', desc: 'Every world liberated. The galaxy salutes you.' };
+  const setup = (node, go) => {
+    node.querySelector('.xq-stage').style.pointerEvents = 'auto';
+    node.querySelectorAll('[data-hero]').forEach((h) => h.addEventListener('click', (e) => { e.stopPropagation(); h.classList.toggle('flipped'); if (root.Sound) root.Sound.play('whoosh'); }));
+    node.querySelector('[data-xq-go]').addEventListener('click', (e) => { e.stopPropagation(); go(); });
+    // Cards lean toward the pointer or finger.
+    node.addEventListener('pointermove', (e) => {
+      const rx = ((e.clientX / innerWidth) - 0.5) * 18; const ry = ((e.clientY / innerHeight) - 0.5) * -14;
+      node.querySelectorAll('.xq-tiltwrap').forEach((w) => { w.style.setProperty('--rx', `${rx}deg`); w.style.setProperty('--ry', `${ry}deg`); });
+    });
+  };
+  return scene(hx, 'xq-cer', stage, null, null, (S, at) => { S.play('whoosh'); at(500, () => S.play('ignite')); at(1800, () => S.play('victory')); at(2100, () => S.play('coins')); at(5000, () => S.play('crit')); }, 'Hero of the Galaxy', setup);
+};
+Object.assign(H.scenes, {
+  xq_dad: (x) => sceneDad(x),
+  xq_jj: (x) => sceneJJ(x),
+  xq_kr: (x) => sceneKR(x, Z().km),
+  hero: (x) => sceneCer(x),
+});
+
+// ---------- queue: run moments once the screen is free ----------
+const queue = [];
+let running = false;
+const busy = () => UI.App.battleActive || document.querySelector('.result-modal, .feat-show, .feat-cine, .walkout, .tut-intro, .tut-victory, .tut-welcome, .modal-backdrop');
+function pump() {
+  if (running || !queue.length) return;
+  if (busy()) { setTimeout(pump, 500); return; }
+  running = true;
+  const job = queue.shift();
+  Promise.resolve(job()).catch(() => {}).then(() => { running = false; setTimeout(pump, 400); });
+}
+const later = (job) => { queue.push(job); setTimeout(pump, 600); };
+
+const allWorlds = () => D.PLANETS.every((p) => Player.planetComplete(p.id));
+const ceremonyCheck = () => {
+  if (!allWorlds() || Z().c || Player.tutorialPending()) return;
+  Z().c = 1; Player.save();
+  later(() => sceneCer({ id: 'hero', tier: 4, icon: 'starbird', name: 'Hero of the Galaxy', desc: 'Liberate every world', have: 1, need: 1 }));
+};
+
+// ---------- crates: the father moment and the 1-in-3000 trip ----------
+let pair = null;
+const openPack = Player.openPack.bind(Player);
+Player.openPack = function (id, rng, opts) {
+  const out = openPack(id, rng, opts);
+  if (!out) return out;
+  const ids = out.map((r) => r.id);
+  pair = ids.includes('vader') && ids.includes('luke') && !Z().f ? { seen: 0 } : null;
+  const random = rng || Math.random;
+  if (Player.__nx || random() < 1 / 3000) {
+    Player.__nx = false;
+    const r = Player.grantCard('jar_jar', false);
+    r.jj = true;
+    out.push(r);
+    Player.save();
+  }
+  return out;
+};
+H.reveal = (r, def) => {
+  if (r.jj) {
+    Z().j = 1; Player.save(); UI.markFeatSeen('xq_jj');
+    return sceneJJ(FEATS.jj);
+  }
+  if (pair && (r.id === 'vader' || r.id === 'luke')) {
+    pair.seen += 1;
+    if (pair.seen === 2) {
+      pair = null;
+      Z().f = 1; Player.save(); UI.markFeatSeen('xq_dad');
+      return sceneDad(FEATS.dad);
+    }
+  }
+  return null;
+};
+
+// ---------- battles: tower streak, survivor, ceremony ----------
+const start = root.BattleUI.start.bind(root.BattleUI);
+root.BattleUI.start = function (params) {
+  if (params && params.type === 'tower') { Z().ts = Date.now(); }
+  return start(params);
+};
+H.battleEnd.push((battle, params, won) => {
+  if (!params || params.type === 'tutorial' || params.type === 'preview') return;
+  const z = Z();
+  if (params.type === 'tower') {
+    if (won) {
+      z.kt.push(z.ts || Date.now());
+      z.kt = z.kt.slice(-12);
+      const span = Date.now() - z.kt[0];
+      if (!z.k && z.kt.length >= 12 && span < 12 * 60000) {
+        z.k = 1; z.km = span / 60000;
+        const g = Player.grantCard('falcon_kessel', false);
+        UI.markFeatSeen('xq_kr');
+        later(() => sceneKR(FEATS.kr, z.km).then(() => UI.walkout(D.UNIT_MAP.falcon_kessel, 'secret', false, { exclusive: true, isNew: g.isNew, shards: g.shards })));
+      }
+    } else z.kt = [];
+  }
+  if (won && !z.b && battle.side('player').some((u) => u.alive && u.hp <= Math.max(1, Math.floor(u.maxHp * 0.01)))) {
+    z.b = 1;
+    UI.markFeatSeen('xq_sv');
+    later(() => new Promise((res) => {
+      UI.playFeat({ id: 'xq_sv_show', tier: 3, icon: 'bacta', name: 'Survivor', desc: 'Won on the last 1% of health. A free Sith Holocron is yours.', have: 1, need: 1 });
+      const wait = () => (document.querySelector('.feat-show') ? setTimeout(wait, 300) : res());
+      setTimeout(wait, 800);
+    }).then(() => {
+      const results = Player.openPack('strongbox', null, { free: true });
+      UI.updateWallet();
+      if (results) return UI.packReveal(results, 'strongbox');
+      return null;
+    }));
+  }
+  Player.save();
+  if (won) setTimeout(ceremonyCheck, 50);
+});
+
+// Saves that already liberated everything get their ceremony once.
+setTimeout(ceremonyCheck, 2500);
+
+// Testing hook (tester panel only).
+root.__xq = { dad: () => sceneDad(FEATS.dad), jj: () => sceneJJ(FEATS.jj), kr: () => sceneKR(FEATS.kr, 11.4), cer: () => sceneCer({ id: 'hero', tier: 4, icon: 'starbird', name: 'Hero of the Galaxy', desc: '', have: 1, need: 1 }), sv: () => UI.playFeat({ id: 'xq_sv_show', tier: 3, icon: 'bacta', name: 'Survivor', desc: 'Won on the last 1% of health. A free Sith Holocron is yours.', have: 1, need: 1 }) };
+
+})(window);
