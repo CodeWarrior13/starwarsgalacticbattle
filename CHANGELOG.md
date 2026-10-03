@@ -4,6 +4,13 @@ The same notes appear in the game under **Settings → Update log**, and the new
 
 > **Not seeing the latest fixes?** Reload the game page (refresh, or pull down on mobile). If the game was already open when an update came out, a reload picks it up. Your progress is kept.
 
+## v1.7 · Boot camp (October 3, 2026)
+- The tutorial dogfight is tougher: three TIEs, including an Interceptor, now fly against you.
+- The tutorial now teaches Auto battle and the speed settings once you've learned to fight by hand.
+- Deeper lessons on squad bonuses, traits and Ultimates.
+- A guided tour after training: your collection, a real card level-up, stars and shards, Ultimates and the Black Market.
+- New players get a one-time Recruit Crate with the rest of their starter squad. Skipping the tutorial still gives you those cards.
+
 ## v1.6 · Smoother start (October 3, 2026)
 - Early worlds are easier: Tatooine and Hoth enemies hit softer, and Jabba's Palace is no longer a wall.
 - Enemy squads never outnumber yours: they grow only as your squad slots do.

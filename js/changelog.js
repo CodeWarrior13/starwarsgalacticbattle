@@ -8,6 +8,16 @@
 
   const UPDATES = [
     {
+      v: '1.7', date: 'October 3, 2026', title: 'Boot camp',
+      items: [
+        'IMPROVED|The tutorial dogfight is tougher: three TIEs, including an Interceptor, now fly against you.',
+        'NEW|The tutorial now teaches Auto battle and the speed settings once you\'ve learned to fight by hand.',
+        'IMPROVED|Deeper lessons on squad bonuses, traits and Ultimates.',
+        'NEW|A guided tour after training: your collection, a real card level-up, stars and shards, Ultimates and the Black Market.',
+        'NEW|New players get a one-time Recruit Crate with the rest of their starter squad. Skipping the tutorial still gives you those cards.',
+      ],
+    },
+    {
       v: '1.6', date: 'October 3, 2026', title: 'Smoother start',
       items: [
         'BALANCE|Early worlds are easier: Tatooine and Hoth enemies hit softer, and Jabba\'s Palace is no longer a wall.',

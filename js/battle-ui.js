@@ -612,7 +612,7 @@
         if (skipped || b.winner()) continue;
 
         let action;
-        if (actor.side === 'player' && (!this.prefs.auto || this.isTutorial())) {
+        if (actor.side === 'player' && (!this.prefs.auto || (this.isTutorial() && !root.Tutorial.allowAuto))) {
           action = await this.awaitPlayer(actor);
         } else {
           this.renderActions(actor);

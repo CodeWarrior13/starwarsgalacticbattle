@@ -17,6 +17,7 @@
 
   const Tutorial = {
     active: false,
+    allowAuto: false,
     stage: 1,
     turn: 0,
     shown: new Set(),
@@ -28,7 +29,8 @@
       if (stage === 2) {
         return {
           type: 'tutorial', name: 'Training · Skies over Tatooine', kind: 'ship', planet: 'tatooine',
-          enemies: ['tie_fighter', 'tie_bomber', 'tie_fighter'], level: 1, stars: 1, enemyScale: 0.6,
+          // A real dogfight: tougher TIEs that take a few rounds to bring down.
+          enemies: ['tie_fighter', 'tie_bomber', 'tie_interceptor'], level: 3, stars: 1, enemyScale: 1.05,
         };
       }
       return {
@@ -51,6 +53,7 @@
     start() {
       if (this.active) return;
       this.active = true;
+      this.allowAuto = false;
       this.stage = 1;
       this.turn = 0;
       this.shown = new Set();
@@ -145,10 +148,10 @@
       document.querySelectorAll('.tut-coach').forEach((n) => n.remove());
       this.clearGlow();
       const rex = D.UNIT_MAP[MENTOR];
-      const node = el(`<div class="tut-coach ${opts.tip ? 'tip' : ''}" role="status">
+      const node = el(`<div class="tut-coach ${opts.tip ? 'tip' : ''} ${opts.tour ? 'tour' : ''} ${opts.bottom ? 'bottom' : ''}" role="status">
         <span class="tc-face">${ui().portrait(rex, { plate: false })}</span>
         <p>${text}</p>
-        ${opts.next ? '<button class="btn btn-small btn-primary" type="button" data-tc-next>Next</button>' : ''}
+        ${opts.next ? `<button class="btn btn-small btn-primary" type="button" data-tc-next>${opts.label || 'Next'}</button>` : ''}
       </div>`);
       // In battle the bubble sits in the layout under the top bar, so it never
       // covers the turn order or the field; elsewhere it floats.
@@ -206,8 +209,8 @@
         return this.coach('Under each card: blue is the <b>turn meter</b> (full means it acts) and gold is the <b>Ultimate charge</b>, which fills as you deal and take hits.', '.player-row .bar.tm, .player-row .bar.ult');
       }
       if (n === 4 && this.once('synergy')) {
-        return this.coach('These chips are <b>squad bonuses</b>. Field units that share a trait, like two Droids or two Troopers, and the whole squad gets stronger. Tap one to see what it gives. The enemy gets them too!', '.syn-row .syn-chip', {
-          next: () => this.coach('Build squads that match: the more units share a trait, the bigger the bonus. You can see every trait on a card in your Collection.', '.syn-row.player .syn-chip'),
+        return this.coach('These chips are <b>squad bonuses</b>. Every card has <b>traits</b> (Trooper, Rebel, Droid…). Field units that share a trait, like two Droids or two Troopers, and the whole squad gets stronger. The enemy gets them too!', '.syn-row .syn-chip', {
+          next: () => this.coach('The numbers show progress: <b>2/2</b> means two matching units are fielded and the bonus is active. Some bonuses have higher tiers, so the more units share a trait, the bigger the boost. Tap a chip to read exactly what it gives.', '.syn-row.player .syn-chip'),
         });
       }
       if (n === 5 && this.once('planet')) {
@@ -234,7 +237,15 @@
         return this.coach('Ships have <b>squad bonuses</b> too: fly matching types together and they power each other up.', '.syn-row .syn-chip');
       }
       if (n === 3 && this.once('shipfocus')) {
-        return this.coach('<b>Tip:</b> take out the bomber first. It hits the hardest.', '.bcard.targetable', { tip: true });
+        return this.coach('<b>Tip:</b> the Interceptor is fast and the bomber hits hard. Pick your targets.', '.bcard.targetable', { tip: true });
+      }
+      if (n === 4 && this.once('auto')) {
+        this.allowAuto = true;
+        const view = document.querySelector('.battle.tutorial');
+        if (view) view.classList.add('tut-auto');
+        return this.coach('Meet <b>Auto</b>: tap it and your squad picks its own moves, which is handy for battles you\'ve already mastered. Tap it again to take back control.', '[data-auto]', {
+          next: () => this.coach('The <b>speed</b> button (1×, 2×, 3×) plays the animations faster. Try Auto now if you like, or finish the fight yourself.', '[data-auto], [data-speed]'),
+        });
       }
       return this.clearCoach();
     },
@@ -288,10 +299,15 @@
     // card, then the starting funds counting up.
     finale() {
       const res = Player.finishTutorial('completed') || { units: [], credits: 0, crystals: 0 };
+      this.res = res;
+      this.allowAuto = false;
+      const B = root.BattleUI;
+      if (B.prefs && B.prefs.auto) { B.prefs.auto = false; try { localStorage.setItem('swcg-battle-prefs', JSON.stringify(B.prefs)); } catch (e) { /* ignore */ } }
       ui().updateWallet();
       const fresh = res.units.length > 0;
       const back = root.Art.cardBack ? root.Art.cardBack('light') : '';
-      const cards = D.STARTER.units.map((id, k) => `<div class="tv-card" style="--k:${k}"><div class="tv-flip"><div class="tv-back">${back}</div><div class="tv-front">${ui().unitCard(D.UNIT_MAP[id], { tag: 'div', hideShards: true })}</div></div></div>`).join('');
+      // The six who fought arrive now; the other four come in the Recruit Crate.
+      const cards = this.squadIds().map((id, k) => `<div class="tv-card" style="--k:${k}"><div class="tv-flip"><div class="tv-back">${back}</div><div class="tv-front">${ui().unitCard(D.UNIT_MAP[id], { tag: 'div', hideShards: true })}</div></div></div>`).join('');
       const node = el(`<div class="tut-victory staged" role="dialog" aria-label="Training complete">
         <div class="result-title win tv-a">TRAINING COMPLETE</div>
         <p class="tv-rex tv-b">${fresh ? '"Not bad, recruit. These troops have seen what you can do, and they\'re ready to follow you. Don\'t let them down."' : '"Outstanding, Commander. You\'ve clearly done this before."'}</p>
@@ -332,20 +348,63 @@
       });
     },
 
+    squadIds() {
+      return [...this.squad(1), ...this.squad(2)].map((u) => u.id);
+    },
+
+    crateIds() {
+      const used = this.squadIds();
+      return D.STARTER.units.filter((id) => !used.includes(id));
+    },
+
+    // After the battles: a guided tour of the galaxy, the collection (with a
+    // real level-up), the Black Market and a one-time Recruit Crate.
     tour() {
+      // First run only: replays never repeat the tour, the level-up or the crate.
+      if (this.res && this.res.again) return;
+      const App = ui().App;
+      const T = { tour: true };
+      const go = (fn, ms = 450) => setTimeout(fn, ms);
+      const demo = 'rebel_soldier';
       const steps = [
-        ['home', '<b>Galaxy:</b> liberate worlds, fight bosses and climb the Endless Tower.'],
-        ['collection', '<b>Collection:</b> upgrade your cards and build your squads.'],
-        ['market', '<b>Black Market:</b> crates, deals and your daily rewards.'],
+        () => this.coach('<b>Galaxy:</b> liberate worlds stage by stage, fight bosses and climb the Endless Tower. Every world has its own terrain and hazard.', '.main-nav [data-nav="home"]', { ...T, next: step }),
+        () => { App.go('collection'); go(() => this.coach('<b>Collection:</b> every card you own. The tags on a card are its <b>traits</b>: they decide which squad bonuses it helps unlock.', '.main-nav [data-nav="collection"]', { ...T, next: step })); },
+        () => { ui().inspect(demo); go(() => this.coach('Each card has four pages: <b>Stats</b>, <b>Card</b>, <b>Upgrades</b> and <b>Ultimate</b>. Tap the tabs or swipe.', '.inspect .pager', { ...T, bottom: true, next: step })); },
+        () => {
+          const pg = document.querySelector('.inspect [data-page="2"]'); if (pg) pg.click();
+          const u = Player.unit(demo);
+          const startLv = u ? u.level : 1;
+          Player.state.credits += D.levelCost(startLv);
+          ui().updateWallet();
+          go(() => {
+            this.coach('<b>Upgrades</b> make cards stronger. <b>Level Up</b> spends credits for more health, attack and defense. This first one\'s on me: tap <b>Level Up</b>!', '[data-level]', { ...T, bottom: true, next: step, label: 'Skip' });
+            const wait = setInterval(() => {
+              const now = Player.unit(demo);
+              if (!this.active || !document.querySelector('.inspect')) return clearInterval(wait);
+              if (now && now.level > startLv) { clearInterval(wait); setTimeout(step, 700); }
+            }, 300);
+          });
+        },
+        () => this.coach('Nice! Duplicate cards turn into <b>shards</b>. Collect enough and you can add a <b>Star</b>: ranking up gives a big boost to every stat, and rarer cards can climb higher.', '[data-star]', { ...T, bottom: true, next: step }),
+        () => { const pg = document.querySelector('.inspect [data-page="3"]'); if (pg) pg.click(); go(() => this.coach('The <b>Ultimate</b> page shows a card\'s most powerful move. Tap the card any time to watch it in action.', '[data-watch]', { ...T, bottom: true, next: step })); },
+        () => {
+          const c = document.querySelector('.inspect-modal [data-close]'); if (c) c.click();
+          App.go('market');
+          go(() => this.coach('<b>Black Market:</b> claim a <b>daily reward</b> every day. Keep the streak going and the rewards get better.', '.daily-panel', { ...T, next: step }));
+        },
+        () => this.coach('<b>Crates</b> hold new cards and shards. Pricier crates have better odds. Below them are <b>Hot Stock</b> deals, <b>Lucky Charms</b> that boost your luck, and a <b>Sabacc</b> table.', '[data-pack]', { ...T, next: step }),
+        () => this.coach('Recruitment Command sent you a <b>Recruit Crate</b>, just this once. Open it to meet the rest of your starter squad!', '', { ...T, next: step, label: 'Open crate' }),
+        () => { this.clearCoach(); this.openRecruitCrate(); },
       ];
       let i = 0;
-      const step = () => {
-        if (i >= steps.length) { this.clearCoach(); return this.welcome(); }
-        const [nav, text] = steps[i];
-        i += 1;
-        this.coach(text, `.main-nav [data-nav="${nav}"]`, { next: step });
-      };
+      const step = () => { if (i < steps.length) steps[i++](); };
       step();
+    },
+
+    openRecruitCrate() {
+      const results = this.crateIds().map((id) => ({ id, isNew: true, shards: 0, holo: false }));
+      // Wrap up once the crate is closed.
+      ui().packReveal(results, 'recruit', { onClose: () => setTimeout(() => this.welcome(), 400) });
     },
 
     welcome() {

@@ -2972,7 +2972,7 @@ body.in-battle .tut-skip { bottom: auto; top: calc(10px + env(safe-area-inset-to
 .tut-coach .btn { flex: none; }
 .tut-glow { position: relative; z-index: 5; outline: 2px solid #ffd23f; outline-offset: 3px; animation: tut-glow 1.2s ease-in-out infinite; }
 @keyframes tut-glow { 50% { outline-color: rgba(255, 210, 63, 0.25); box-shadow: 0 0 22px rgba(255, 210, 63, 0.55); } }
-.battle.tutorial [data-retreat], .battle.tutorial [data-auto] { display: none; }
+.battle.tutorial [data-retreat], .battle.tutorial:not(.tut-auto) [data-auto] { display: none; }
 
 .tut-victory { position: fixed; inset: 0; z-index: 300; overflow-y: auto; display: grid; justify-items: center; align-content: center; gap: 12px; padding: 24px 16px; background: radial-gradient(circle at 50% 30%, #2a2208, #020308 65%); animation: fade-in 0.4s; text-align: center; }
 .tv-rex { margin: 0; color: #cfe2ff; font-style: italic; }
@@ -3115,3 +3115,6 @@ body.event-sith .topbar { border-bottom-color: rgba(255, 60, 70, 0.7); box-shado
 .modal.update-modal.full .ul-reload { margin-top: 10px; padding: 8px 12px; }
 .modal.update-modal.full .ul-list { grid-auto-rows: max-content; align-content: start; }
 .modal.update-modal.full .ul-entry { flex-shrink: 0; }
+/* Tutorial tour bubbles sit above dialogs; "bottom" ones leave the dialog's tabs visible. */
+.tut-coach.tour { z-index: 270; }
+.tut-coach.tour.bottom { top: auto; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }

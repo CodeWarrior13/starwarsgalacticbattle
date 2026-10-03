@@ -2937,7 +2937,7 @@
     });
   }
 
-  async function packReveal(results, packId) {
+  async function packReveal(results, packId, opts = {}) {
     const best = results.reduce((b, r) => (R_ORDER[D.UNIT_MAP[r.id].rarity] > R_ORDER[b] ? D.UNIT_MAP[r.id].rarity : b), 'common');
     if (packId) await crateCinematic(packId, best);
     const cards = results.map((r, i) => {
@@ -2956,7 +2956,7 @@
       <div class="modal-actions" style="justify-content:center">
         <button class="btn btn-primary" type="button" data-next-card hidden>Next card</button>
         <button class="btn btn-primary" type="button" data-done hidden>Done</button>
-      </div>`, { onClose: () => App.refresh(), cls: `reveal-modal best-${best}` });
+      </div>`, { onClose: () => { App.refresh(); if (opts.onClose) opts.onClose(); }, cls: `reveal-modal best-${best}` });
     // One card at a time: the next one stays hidden under the deck until the
     // current reveal finishes and the player asks for it.
     let current = 0;
