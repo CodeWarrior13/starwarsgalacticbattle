@@ -3061,3 +3061,16 @@ body.event-sith .topbar { border-bottom-color: rgba(255, 60, 70, 0.7); box-shado
 .ce-box { width: 100%; aspect-ratio: 1; box-sizing: border-box; border-radius: 8px; border: 1px solid rgba(124, 208, 255, 0.45); background: #050912; color: #fff; text-align: center; font-family: var(--font-display); font-size: clamp(14px, 4.4vw, 22px); text-transform: uppercase; padding: 0; }
 .ce-box:focus { outline: none; border-color: #ffd23f; box-shadow: 0 0 12px rgba(255, 210, 63, 0.5); }
 .ce-msg { min-height: 1.4em; margin: 10px 0 4px; }
+
+/* Update log */
+.update-modal .ul-head h2 { margin: 2px 0 10px; }
+.ul-new { margin: 0 0 12px; padding-left: 18px; display: grid; gap: 8px; line-height: 1.45; }
+.ul-list { display: grid; gap: 8px; max-height: min(60vh, 520px); overflow-y: auto; }
+.ul-entry { border: 1px solid var(--line); border-radius: 12px; background: rgba(255, 255, 255, 0.03); padding: 10px 12px; }
+.ul-entry summary { display: flex; justify-content: space-between; gap: 10px; cursor: pointer; list-style: none; }
+.ul-entry summary::-webkit-details-marker { display: none; }
+.ul-entry summary span { color: var(--muted, #8a96a8); font-size: 12px; white-space: nowrap; }
+.ul-entry[open] summary b { color: var(--crawl); }
+.ul-entry ul { margin: 8px 0 2px; padding-left: 18px; display: grid; gap: 6px; font-size: 14px; line-height: 1.4; }
+.ul-new, .ul-entry ul { text-align: left; }
+.ul-entry summary { text-align: left; }

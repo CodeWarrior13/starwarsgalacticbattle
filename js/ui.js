@@ -2086,8 +2086,10 @@
           <div><dt>Commander level</dt><dd>${a.level}</dd></div>
           <div><dt>Cards collected</dt><dd>${Object.keys(Player.state.units).length}/${D.UNITS.length}</dd></div>
           <div><dt>Save data</dt><dd>Saved automatically in this browser</dd></div>
+          <div><dt>Game version</dt><dd>v${root.Changelog ? root.Changelog.latest : '?'}</dd></div>
         </dl>
         <div class="settings-btns">
+          <button class="btn" type="button" data-update-log>Update log</button>
           <button class="btn" type="button" data-replay-tut>Replay tutorial</button>
           <button class="btn" type="button" data-code-entry>Enter a code</button>
           <button class="btn btn-danger" type="button" data-reset>Reset all progress</button>
@@ -2111,6 +2113,7 @@
       const c = e.target.closest('[data-clear]');
       if (c) { await S.saveCustom(c.dataset.clear, null); $(`[data-status="${c.dataset.clear}"]`, m.root).textContent = 'Original theme'; c.disabled = true; }
       if (e.target.closest('[data-code-entry]')) { m.close(); return codeEntry(); }
+      if (e.target.closest('[data-update-log]')) { m.close(); return root.Changelog && root.Changelog.showAll(); }
       if (e.target.closest('[data-replay-tut]')) {
         if (App.battleActive) return toast('Finish or retreat from the battle first.');
         m.close();

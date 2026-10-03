@@ -211,6 +211,8 @@
     App.go('home');
     // First open (or a save from before the tutorial existed): run it once.
     if (root.Player.tutorialPending() && root.Tutorial) root.Tutorial.start();
+    // After an update, show what's new once.
+    if (root.Changelog) root.Changelog.check();
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
