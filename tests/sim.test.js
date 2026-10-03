@@ -53,6 +53,7 @@ test('every unit has valid abilities', () => {
 });
 
 test('planet stages reference real units and pad to the planet squad size, capped by your slots', () => {
+  Player.reset();
   let total = 0;
   for (const planet of D.PLANETS) {
     assert.ok(planet.terrain && planet.hazard && planet.reinforce, planet.id);
@@ -305,15 +306,17 @@ test('squad slots unlock with both account level and campaign progress', () => {
   Player.reset();
   assert.strictEqual(Player.slots(), 3);
   assert.strictEqual(Player.encounter({ type: 'stage', planet: 'tatooine', stage: 0 }).enemies.length, 3);
-  assert.strictEqual(Player.encounter({ type: 'stage', planet: 'hoth', stage: 0 }).enemies.length, 4);
-  assert.strictEqual(Player.encounter({ type: 'stage', planet: 'dagobah', stage: 0 }).enemies.length, 5);
+  assert.strictEqual(Player.encounter({ type: 'stage', planet: 'hoth', stage: 0 }).enemies.length, 3, 'enemies never outnumber a 3-slot squad');
+  assert.strictEqual(Player.encounter({ type: 'stage', planet: 'dagobah', stage: 0 }).enemies.length, 3);
   Player.gainXp(5000);
   assert.ok(Player.state.account.level >= 6);
   assert.strictEqual(Player.slots(), 3, 'level alone is not enough');
   Player.state.planets.tatooine = 6;
   assert.strictEqual(Player.slots(), 4);
+  assert.strictEqual(Player.encounter({ type: 'stage', planet: 'hoth', stage: 0 }).enemies.length, 4);
   Player.state.planets.hoth = 6;
   assert.strictEqual(Player.slots(), 5);
+  assert.strictEqual(Player.encounter({ type: 'stage', planet: 'dagobah', stage: 0 }).enemies.length, 5);
   Player.reset();
   Player.state.planets.tatooine = 6;
   Player.state.planets.hoth = 6;
