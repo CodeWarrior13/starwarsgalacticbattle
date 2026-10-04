@@ -3132,3 +3132,32 @@ body.event-sith .topbar { border-bottom-color: rgba(255, 60, 70, 0.7); box-shado
 body.perf-on *, body.perf-on *::before, body.perf-on *::after { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
 body.perf-on .sig-godrays, body.perf-on .sig-cracks, body.perf-on .reveal-spark { display: none !important; }
 body.perf-on .sig-layer.sig-glitch canvas { filter: none; }
+
+/* Tutorial tips sit in their own row under the top bar so the field keeps the
+   stretchy row (otherwise the tip takes it and the field collapses). */
+.battle:has(> .tut-coach) { grid-template-rows: auto auto minmax(0, 1fr) auto; }
+@media (max-height: 520px) and (orientation: landscape) and (pointer: coarse) {
+  body.in-battle .battle:has(> .tut-coach) { grid-template-rows: auto auto minmax(0, 1fr); }
+  body.in-battle .battle > .tut-coach { grid-column: 1 / -1; margin: 0; }
+}
+/* Short desktop windows (e.g. a laptop browser): a slimmer tip leaves the
+   cards room to breathe. */
+@media (min-width: 760px) and (max-height: 820px) {
+  body.in-battle .battle > .tut-coach { padding: 6px 12px; margin: 0; gap: 10px; }
+  body.in-battle .battle > .tut-coach .tc-face { width: 34px; height: 34px; }
+  body.in-battle .battle > .tut-coach p { font-size: 15px; line-height: 1.35; }
+  body.in-battle .battle > .tut-coach .btn { padding: 6px 12px; }
+  /* Tighter controls: keyboard hint off, ability text kept to one line. */
+  body.in-battle .actions .hint { display: none; }
+  body.in-battle .actions-main { gap: 4px; }
+  body.in-battle .abtn { padding-top: 6px; padding-bottom: 6px; }
+  body.in-battle .abtn .ad { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+  body.in-battle .battle-log { max-height: 84px; }
+}
+/* Narrow battle cards show just the current health so the numbers never run
+   together; the bar still shows how full it is. */
+.field .bcard { container-type: inline-size; }
+@container (max-width: 100px) {
+  .hp-num { justify-content: center; }
+  .hp-num span:last-child { display: none; }
+}
