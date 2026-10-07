@@ -13,7 +13,7 @@
     let h = 0;
 
     function resize() {
-      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      const dpr = Math.min(root.Perf ? Math.max(1, root.Perf.dpr) : 2, window.devicePixelRatio || 1);
       w = canvas.width = window.innerWidth * dpr;
       h = canvas.height = window.innerHeight * dpr;
       stars = Array.from({ length: Math.round((window.innerWidth * window.innerHeight) / 5000) }, () => ({
@@ -27,12 +27,20 @@
     }
 
     const still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    function draw() {
+    // The stars twinkle slowly, so a modest frame rate looks the same and
+    // leaves the GPU free; during battles (where only the edges show) slower.
+    let lastDraw = 0;
+    function draw(now) {
+      if (!still) requestAnimationFrame(draw);
+      const gap = document.body.classList.contains('in-battle') ? 80 : 33;
+      if (now && now - lastDraw < gap) return;
+      const steps = lastDraw && now ? Math.min(4, (now - lastDraw) / 16.7) : 1;
+      lastDraw = now || 0;
       ctx.clearRect(0, 0, w, h);
       for (const s of stars) {
-        s.p += s.s;
+        s.p += s.s * steps;
         if (!still) {
-          s.x -= s.drift;
+          s.x -= s.drift * steps;
           if (s.x < 0) s.x = w;
         }
         ctx.globalAlpha = 0.35 + Math.sin(s.p) * 0.3 + 0.3;
@@ -41,7 +49,6 @@
         ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
         ctx.fill();
       }
-      if (!still) requestAnimationFrame(draw);
     }
 
     resize();

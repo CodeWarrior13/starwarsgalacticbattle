@@ -8,6 +8,20 @@
 
   const UPDATES = [
     {
+      v: '1.8', date: 'October 7, 2026', title: 'Smooth running',
+      items: [
+        'NEW|Performance settings: choose Auto, iPhone, iPad, Android or PC in Settings to tune the graphics for your device.',
+        'NEW|Performance mode: fewer effects, simpler ultimates and no screen shake for older devices or laggy battles.',
+        'IMPROVED|Tap anywhere on a card\'s Ultimate page to watch it in action.',
+        'IMPROVED|Smoother ultimates: Qui-Gon Jinn\'s Force wave and the big finishing rings are much lighter, and the background stars use less power.',
+        'IMPROVED|Smoother battles on Safari and iPhone: lighter weather effects and card backgrounds.',
+        'FIXED|Ultimates no longer skip their first targets when the game hitches (Anakin\'s saber throw could miss the first card on Safari).',
+        'FIXED|Ultimate previews from the card inspector wait for the screen to load before playing.',
+        'FIXED|The tutorial battlefield no longer gets squashed into a thin strip on computer screens.',
+        'FIXED|Health numbers on small battle cards no longer run together.',
+      ],
+    },
+    {
       v: '1.7', date: 'October 3, 2026', title: 'Boot camp',
       items: [
         'IMPROVED|The tutorial dogfight is tougher: three TIEs, including an Interceptor, now fly against you.',

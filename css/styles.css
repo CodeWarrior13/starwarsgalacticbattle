@@ -648,7 +648,7 @@ body.in-battle .main-nav, body.in-battle .brand { pointer-events: none; opacity:
 .bar.tm { height: 3px; } .bar.tm i { background: var(--light); }
 .bar.ult { height: 4px; } .bar.ult i { background: linear-gradient(90deg, var(--crawl-deep), var(--crawl)); }
 .bar.ult.full i { animation: ult-full 0.8s ease-in-out infinite; }
-@keyframes ult-full { 50% { filter: brightness(1.8); } }
+@keyframes ult-full { 50% { opacity: 0.55; } }
 .hp-num { font-size: 10px; color: var(--muted); font-variant-numeric: tabular-nums; display: flex; justify-content: space-between; }
 .statuses { position: absolute; top: 4px; right: 4px; display: flex; flex-direction: column; gap: 2px; z-index: 4; }
 .statuses span {
@@ -2246,7 +2246,8 @@ button.account:hover { border-color: var(--crawl); box-shadow: 0 0 14px rgba(255
 .settings-btn .swi { width: 22px; height: 22px; transition: transform 0.6s cubic-bezier(.2,.9,.3,1.2); }
 .settings-btn:hover .swi { transform: rotate(120deg); }
 .main-nav button.has-dot { position: relative; }
-.main-nav button.has-dot::after { content: ''; position: absolute; top: 4px; right: 6px; width: 8px; height: 8px; border-radius: 50%; background: #ff4a5a; box-shadow: 0 0 8px #ff4a5a; animation: pulse 1.4s infinite; }
+.main-nav button.has-dot::after { content: ''; position: absolute; top: 4px; right: 6px; width: 8px; height: 8px; border-radius: 50%; background: #ff4a5a; box-shadow: 0 0 8px #ff4a5a; animation: dot-pulse 1.4s ease-in-out infinite; will-change: transform, opacity; }
+@keyframes dot-pulse { 50% { opacity: 0.45; transform: scale(0.8); } }
 
 /* ---------- Settings ---------- */
 .set-head { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
@@ -3161,3 +3162,4 @@ body.perf-on .sig-layer.sig-glitch canvas { filter: none; }
   .hp-num { justify-content: center; }
   .hp-num span:last-child { display: none; }
 }
+.sig-ring.grow { will-change: transform, opacity; }

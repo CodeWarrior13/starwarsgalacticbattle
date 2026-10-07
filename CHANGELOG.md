@@ -4,6 +4,17 @@ The same notes appear in the game under **Settings → Update log**, and the new
 
 > **Not seeing the latest fixes?** Reload the game page (refresh, or pull down on mobile). If the game was already open when an update came out, a reload picks it up. Your progress is kept.
 
+## v1.8 · Smooth running (October 7, 2026)
+- Performance settings: choose Auto, iPhone, iPad, Android or PC in Settings to tune the graphics for your device.
+- Performance mode: fewer effects, simpler ultimates and no screen shake for older devices or laggy battles.
+- Tap anywhere on a card's Ultimate page to watch it in action.
+- Smoother ultimates: Qui-Gon Jinn's Force wave and the big finishing rings are much lighter, and the background stars use less power.
+- Smoother battles on Safari and iPhone: lighter weather effects and card backgrounds.
+- Ultimates no longer skip their first targets when the game hitches (Anakin's saber throw could miss the first card on Safari).
+- Ultimate previews from the card inspector wait for the screen to load before playing.
+- The tutorial battlefield no longer gets squashed into a thin strip on computer screens.
+- Health numbers on small battle cards no longer run together.
+
 ## v1.7 · Boot camp (October 3, 2026)
 - The tutorial dogfight is tougher: three TIEs, including an Interceptor, now fly against you.
 - The tutorial now teaches Auto battle and the speed settings once you've learned to fight by hand.

@@ -12,7 +12,7 @@ Works on PC (mouse and keyboard: 1–5 abilities, ←/→ targets, Enter attacks
 
 ### Testers
 
-This is an early build. Things worth trying: the galaxy campaign, ground and fleet battles, opening relics in the Black Market, upgrading cards in the Collection, the Endless Tower and boss fights. If something looks wrong, a screenshot plus what you tapped right before it helps a lot. Settings (gear icon, top right) has sound options and a progress reset.
+This is an early build. Things worth trying: the galaxy campaign, ground and fleet battles, opening relics in the Black Market, upgrading cards in the Collection, the Endless Tower and boss fights. If something looks wrong, a screenshot plus what you tapped right before it helps a lot. Settings (gear icon, top right) has sound options, performance options and a progress reset. If battles lag on your device, pick your device under Performance or turn on Performance mode.
 
 To produce a single self-contained HTML file (handy for sharing):
 
@@ -30,6 +30,7 @@ npm run build   # writes dist/galactic-card-battles.html
 - **Living battlefields.** Every planet has an animated backdrop on the surface and in orbit that reacts to the fight: blasts scatter snow and sand, lasers light up the scene, explosions jolt the parallax layers and leave scorch marks and smoke, and ultimates darken the sky.
 - **Terrain and hazards.** Each planet favors certain traits (for both sides) and fires a hazard every few turns: sandstorms, blizzards, eruptions, orbital strikes, Sith lightning and more.
 - **Tutorial.** On a device's first open, Captain Rex coaches you through two training battles: a ground fight on Tatooine (health, abilities and cooldowns, turn order, Ultimates, squad bonuses, planet terrain and hazards, focus fire) and then a tougher dogfight above it (ship roles, fleet bonuses, and only then Auto battle and the speed settings). Lessons tuck into a slim bar so the cards stay readable. Win both and the six cards who fought arrive card by card along with 600 credits and 100 Kyber. A guided tour follows: the collection, traits, a real level-up, stars and shards, Ultimates and the Black Market. It ends with a one-time Recruit Crate holding the other four starter cards, then the Tutorial Complete badge. Players who already know the game can hold the skip button during the first 10 seconds; the whole starter squad still unlocks, without the crate. The tour and crate happen only the first time. It runs once per save; replay it any time from Settings, which pays out nothing extra. Saves from before the tutorial get it once and keep everything they own.
+- **Performance settings.** Settings → Performance tunes the graphics for your device (Auto-detected, or pick iPhone, iPad, Android or PC): canvas resolution, particle counts and glows. Performance mode cuts effects further (fewer particles, 30 fps backgrounds, simpler ultimates, no screen shake) and turns itself on for very low-memory devices.
 - **Update log.** After an update, the game shows what's new once the next time you open it; every past update is listed under Settings → Update log (and in [CHANGELOG.md](CHANGELOG.md)). Updates never reset your save.
 - **Calendar events.** On May the 4th the galaxy turns Jedi blue and offers a free Jedi Holocron plus 25 Kyber (once a year). On Revenge of the Fifth (May 5th) it turns Sith red and your Dark side cards fight with 20% more attack and health. Each event has its own legendary badge with a cutscene. Events follow your device's date.
 - **Commander profile.** Tap the level chip in the top bar for your profile: a Clash Royale-style rank road of every level reward, a badge for each liberated world, battle records, luck stats and feats to chase. Feats earn Bronze, Silver, Credit or Kyber medals; tap an earned one to replay its moment, which gets bigger the harder the feat was.
@@ -72,6 +73,7 @@ Drop images named after unit ids (for example `luke.png` or `slave_one.jpg`) int
 | `js/state.js` | Save data, currencies, crates, luck, Black Market, auto-build, rewards |
 | `js/events.js` | Calendar events (May the 4th, Revenge of the Fifth): theme, gift and battle boost |
 | `js/tutorial.js` | First-run tutorial: Rex's briefing, coached training battle, hold-to-skip, starter unlock, guided tour, Recruit Crate and badge |
+| `js/perf.js` | Graphics profiles per device and Performance mode (Settings → Performance) |
 | `js/ui.js` | Screens: Galaxy hub (modes, planet cinematic, stage datapad, tower), squad select, collection, card inspector, Black Market, daily streak, profile and settings |
 | `js/icons.js` | Star Wars SVG icon set; swaps glyphs in page text for icons automatically |
 | `js/battle-ui.js` | Battle screen, animations, ultimate cutscenes, hyperspace intro |

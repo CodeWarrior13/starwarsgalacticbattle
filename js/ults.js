@@ -181,6 +181,22 @@
     };
   }
 
+  // An expanding ring. It is drawn once at a moderate size and scaled with a
+  // transform, so the glow is not repainted every frame (resizing a
+  // screen-sized glowing circle was the main source of ultimate lag).
+  function growRing(S, cls, x, y, color, toPx, o = {}) {
+    const base = Math.min(900, Math.max(160, toPx / 2.5));
+    const ring = el(`<div class="sig-ring grow ${cls || ''}" style="left:${x}px;top:${y}px;width:${base}px;height:${base}px;--c:${color}"></div>`);
+    S.layer.appendChild(ring);
+    const end = toPx / base;
+    const a = ring.animate([
+      { transform: 'translate(-50%, -50%) scale(0.01)', opacity: 1 },
+      { transform: `translate(-50%, -50%) scale(${end})`, opacity: 0 },
+    ], { duration: o.duration || 800, delay: o.delay || 0, easing: o.easing || 'cubic-bezier(.2,.7,.4,1)', fill: 'both' });
+    a.onfinish = () => ring.remove();
+    return a;
+  }
+
   function follow(S, node, route, o = {}) {
     const cum = [0];
     for (let i = 1; i < route.length; i++) cum.push(cum[i - 1] + Math.hypot(route[i].x - route[i - 1].x, route[i].y - route[i - 1].y));
@@ -248,11 +264,20 @@
       const ctx = cv.getContext('2d');
       ctx.scale(dpr, dpr);
       let alive = true;
-      const fade = () => {
+      // Only fade while there is ink on the canvas: an untouched canvas is
+      // left alone instead of being cleared (and re-uploaded) every frame.
+      let inkAt = -1e9;
+      for (const fn of ['stroke', 'fill', 'drawImage', 'fillText']) {
+        const base = ctx[fn].bind(ctx);
+        ctx[fn] = (...a) => { inkAt = performance.now(); return base(...a); };
+      }
+      const fade = (now) => {
         if (!alive) return;
-        ctx.globalCompositeOperation = 'destination-out';
-        ctx.fillStyle = 'rgba(0,0,0,0.14)';
-        ctx.fillRect(0, 0, W, H);
+        if ((now || performance.now()) - inkAt < 1500) {
+          ctx.globalCompositeOperation = 'destination-out';
+          ctx.fillStyle = 'rgba(0,0,0,0.14)';
+          ctx.fillRect(0, 0, W, H);
+        }
         requestAnimationFrame(fade);
       };
       fade();
@@ -343,10 +368,8 @@
         m.animate([{ transform: `translate(calc(-50% + ${Math.cos(a) * d}px), calc(-50% + ${Math.sin(a) * d}px)) scale(1.4)`, opacity: 0 }, { opacity: 1, offset: 0.3 }, { transform: 'translate(-50%, -50%) scale(.3)', opacity: 0.9 }], { duration: (300 + tier * 120) / S.speed, delay: rand(0, 150), easing: 'cubic-bezier(.5,0,.9,.6)', fill: 'forwards' }).onfinish = () => m.remove();
       }
       if (tier >= 2) { this.shake(); this.env.flash(color, 0.15 + tier * 0.05); }
-      const ring = el(`<div class="sig-ring force" style="left:${from.x}px;top:${from.y}px;--c:${color}"></div>`);
-      S.layer.appendChild(ring);
       await this.wait([0, 380, 560, 820, 1050][tier]);
-      ring.animate([{ width: '0px', height: '0px', opacity: 1 }, { width: '320px', height: '320px', opacity: 0 }], { duration: 450 }).onfinish = () => ring.remove();
+      growRing(S, 'force', from.x, from.y, color, 320, { duration: 450, easing: 'linear' });
     },
 
     async sigFinale(S, actor, T, spec) {
@@ -355,9 +378,7 @@
       const color = tier >= 4 ? '#ff2a5a' : tier >= 3 ? '#ffd23f' : spec.color;
       const c = T.length ? { x: T.reduce((a, t) => a + t.x, 0) / T.length, y: T.reduce((a, t) => a + t.y, 0) / T.length } : { x: S.W / 2, y: S.H / 2 };
       const maxR = Math.hypot(S.W, S.H);
-      const ring = el(`<div class="sig-ring" style="left:${c.x}px;top:${c.y}px;--c:${color}"></div>`);
-      S.layer.appendChild(ring);
-      ring.animate([{ width: '0px', height: '0px', opacity: 1 }, { width: `${maxR * 2}px`, height: `${maxR * 2}px`, opacity: 0 }], { duration: 800, easing: 'cubic-bezier(.2,.7,.4,1)' }).onfinish = () => ring.remove();
+      growRing(S, '', c.x, c.y, color, maxR * 2, { duration: 800 });
       this.shake();
       if (tier >= 3) {
         this.field.classList.add('slowmo');
@@ -611,9 +632,7 @@
       const maxR = Math.hypot(S.W, S.H);
       const dur = 900 / S.speed;
       for (let k = 0; k < (spec.prop === 'roar' ? 3 : 2); k++) {
-        const ring = el(`<div class="sig-ring ${spec.prop}" style="left:${from.x}px;top:${from.y}px;--c:${spec.color}"></div>`);
-        S.layer.appendChild(ring);
-        ring.animate([{ width: '0px', height: '0px', opacity: 1 }, { width: `${maxR * 2}px`, height: `${maxR * 2}px`, opacity: 0 }], { duration: dur, delay: k * 140, easing: 'cubic-bezier(.2,.7,.4,1)', fill: 'both' }).onfinish = () => ring.remove();
+        growRing(S, spec.prop, from.x, from.y, spec.color, maxR * 2, { duration: dur, delay: k * 140 });
       }
       this.env.push(this.toField(from).x, this.toField(from).y, 6);
       T.forEach((t) => {
@@ -947,9 +966,9 @@
     },
 
     sigSeismic(S, t, color) {
-      const ring = el(`<div class="sig-ring seismic" style="left:${t.x}px;top:${t.y}px;--c:${color}"></div>`);
+      const ring = el(`<div class="sig-ring seismic grow" style="left:${t.x}px;top:${t.y}px;width:${S.W * 0.45}px;height:20px;--c:${color}"></div>`);
       S.layer.appendChild(ring);
-      ring.animate([{ width: '0px', height: '6px', opacity: 1 }, { width: `${S.W * 0.9}px`, height: '40px', opacity: 0 }], { duration: 700, easing: 'cubic-bezier(.1,.7,.3,1)' }).onfinish = () => ring.remove();
+      ring.animate([{ transform: 'translate(-50%, -50%) scale(0.01, 0.3)', opacity: 1 }, { transform: 'translate(-50%, -50%) scale(2, 2)', opacity: 0 }], { duration: 700, easing: 'cubic-bezier(.1,.7,.3,1)', fill: 'both' }).onfinish = () => ring.remove();
       this.shake();
     },
 
