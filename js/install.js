@@ -158,7 +158,7 @@
     const tipTimer = setInterval(() => {
       tip.classList.add('swap');
       setTimeout(() => { tip.textContent = TIPS[Math.floor(Math.random() * TIPS.length)]; tip.classList.remove('swap'); }, 300);
-    }, 3400);
+    }, 3000);
     // The bar eases toward the real progress instead of jumping.
     const tick = () => {
       if (done) return;
@@ -231,13 +231,13 @@
         try { await job(); } catch (e) { /* a warm-up step must never block the game */ }
         target = end;
       }
-      // Long enough to read a tip or two.
-      const minMs = 4200;
+      // Long enough to read two tips.
+      const minMs = 6200;
       const left = minMs - (performance.now() - t0);
       setTimeout(hide, Math.max(250, left));
     };
     if (document.readyState === 'complete') run(); else window.addEventListener('load', run);
-    setTimeout(hide, 10000);
+    setTimeout(hide, 12000);
   }
 
   // Phones and tablets get the banner even if Chrome never fires its prompt.
