@@ -7,6 +7,11 @@
   const DISMISS_KEY = 'swcg-install-dismissed';
   const ua = navigator.userAgent;
   const isIOS = /iPad|iPhone|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  const isAndroid = /Android/.test(ua);
+  const mobile = isIOS || isAndroid || (navigator.maxTouchPoints > 1 && Math.min(screen.width, screen.height) < 900);
+  // Which browser, for the right step-by-step help.
+  const browser = /CriOS/.test(ua) ? 'chrome-ios' : /FxiOS/.test(ua) ? 'firefox-ios' : /EdgiOS/.test(ua) ? 'edge-ios'
+    : isIOS ? 'safari' : /SamsungBrowser/.test(ua) ? 'samsung' : /Firefox/.test(ua) ? 'firefox' : /EdgA?\//.test(ua) ? 'edge' : 'chrome';
   const standalone = () => (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
 
   let deferred = null;
@@ -17,9 +22,11 @@
   const Install = {
     installed: standalone(),
 
-    // True when this browser can install the game (or show how to).
+    // True when this browser can install the game (or show how to). Phones
+    // and tablets always get the offer: Chrome only fires its own prompt
+    // when it decides to, so the help steps cover the rest.
     available() {
-      return !standalone() && (!!deferred || isIOS);
+      return !standalone() && (!!deferred || mobile);
     },
 
     async prompt() {
@@ -38,16 +45,27 @@
     // Step-by-step help: Apple devices, or browsers without an install prompt.
     help() {
       const UI = root.UI;
-      const steps = isIOS
-        ? `<ol class="inst-steps">
-            <li><span class="inst-ico">${SHARE_ICON}</span><div><b>Tap the Share button</b><span>At the bottom of Safari on iPhone, or at the top on iPad.</span></div></li>
-            <li><span class="inst-ico">${ADD_ICON}</span><div><b>Tap "Add to Home Screen"</b><span>Scroll down the list if you don't see it, then tap Add.</span></div></li>
-          </ol>
-          <p class="muted small">The app opens full screen from your home screen. On iPhone and iPad it keeps its own save, separate from the one in Safari.</p>`
-        : `<ol class="inst-steps">
-            <li><span class="inst-ico">${ADD_ICON}</span><div><b>Use Chrome or Edge</b><span>Look for the install icon at the right end of the address bar, or open the browser menu and choose "Install app".</span></div></li>
-          </ol>
-          <p class="muted small">If it isn't offered, your browser doesn't support installing web apps yet. The game still works right here in the browser.</p>`;
+      const step = (icon, title, text) => `<li><span class="inst-ico">${icon}</span><div><b>${title}</b><span>${text}</span></div></li>`;
+      const MENU = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><circle cx="12" cy="5" r="2" fill="currentColor"/><circle cx="12" cy="12" r="2" fill="currentColor"/><circle cx="12" cy="19" r="2" fill="currentColor"/></svg>';
+      const BURGER = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+      const HELP = {
+        safari: [step(SHARE_ICON, 'Tap the Share button', 'At the bottom of Safari on iPhone, or at the top on iPad.'), step(ADD_ICON, 'Tap "Add to Home Screen"', 'Scroll down the list if you don\'t see it, then tap Add.')],
+        'chrome-ios': [step(SHARE_ICON, 'Tap the Share button', 'In Chrome it\'s at the right end of the address bar (on iPad, at the top right).'), step(ADD_ICON, 'Tap "Add to Home Screen"', 'Scroll down if you don\'t see it, then tap Add. Needs iOS 16.4 or newer; on older iPhones use Safari instead.')],
+        'edge-ios': [step(SHARE_ICON, 'Tap the Share button', 'Open the menu at the bottom of Edge and tap Share.'), step(ADD_ICON, 'Tap "Add to Home Screen"', 'Then tap Add. On older iPhones use Safari instead.')],
+        'firefox-ios': [step(BURGER, 'Open the menu', 'Tap the menu button, then Share.'), step(ADD_ICON, 'Tap "Add to Home Screen"', 'Then tap Add. On older iPhones use Safari instead.')],
+        chrome: isAndroid
+          ? [step(MENU, 'Tap the ⋮ menu', 'At the top right of Chrome.'), step(ADD_ICON, 'Tap "Install app" or "Add to Home screen"', 'Then tap Install. The icon appears on your home screen.')]
+          : [step(ADD_ICON, 'Click the install icon', 'At the right end of the address bar. Or open the ⋮ menu and choose "Cast, save and share" → "Install page as app".')],
+        edge: isAndroid
+          ? [step(BURGER, 'Tap the menu', 'At the bottom of Edge.'), step(ADD_ICON, 'Tap "Add to phone"', 'Then tap Install.')]
+          : [step(ADD_ICON, 'Click the install icon', 'At the right end of the address bar, or open the … menu → Apps → "Install this site as an app".')],
+        samsung: [step(BURGER, 'Tap the ≡ menu', 'At the bottom of Samsung Internet.'), step(ADD_ICON, 'Tap "Add page to" → "Home screen"', 'Then tap Add.')],
+        firefox: isAndroid
+          ? [step(MENU, 'Tap the ⋮ menu', 'In Firefox.'), step(ADD_ICON, 'Tap "Add to Home screen"', 'Then tap Add.')]
+          : [step(ADD_ICON, 'Use Chrome or Edge', 'Firefox on computers can\'t install web apps. Open the game in Chrome or Edge and click the install icon in the address bar.')],
+      };
+      const steps = `<ol class="inst-steps">${(HELP[browser] || HELP.chrome).join('')}</ol>
+        <p class="muted small">${isIOS ? 'The app opens full screen from your home screen. On iPhone and iPad it keeps its own save, separate from the one in the browser.' : 'The app opens full screen with its own icon and keeps your progress.'}</p>`;
       const m = UI.openModal(`<div class="inst-head"><img src="icons/icon-192.png" alt="" class="inst-logo"><div><p class="eyebrow">Get the app</p><h2>Install Galactic Card Battles</h2></div></div>
         ${steps}
         <div class="modal-actions"><button class="btn btn-primary" type="button" data-close>Got it</button></div>`, { small: true, cls: 'install-modal' });
@@ -126,7 +144,8 @@
     if (document.readyState === 'complete') ready(); else window.addEventListener('load', ready);
   }
 
-  if (isIOS) setTimeout(() => Install.maybeBanner(), 6000);
+  // Phones and tablets get the banner even if Chrome never fires its prompt.
+  if (mobile) setTimeout(() => Install.maybeBanner(), 6000);
 
   root.Install = Install;
 })(window);
