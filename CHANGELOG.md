@@ -5,6 +5,8 @@ The same notes appear in the game under **Settings → Update log**, and the new
 > **Not seeing the latest fixes?** Reload the game page (refresh, or pull down on mobile). If the game was already open when an update came out, a reload picks it up. Your progress is kept.
 
 ## v1.8 · Smooth running (October 7, 2026)
+- Install the game as an app on your phone, tablet or computer: its own home-screen icon, full screen, and it works offline. Tap Install on the banner or in Settings → App.
+- A fresh logo and launch screen: crossed lightsabers in hyperspace.
 - Performance settings: choose Auto, iPhone, iPad, Android or PC in Settings to tune the graphics for your device.
 - Performance mode: fewer effects, simpler ultimates and no screen shake for older devices or laggy battles.
 - Tap anywhere on a card's Ultimate page to watch it in action.

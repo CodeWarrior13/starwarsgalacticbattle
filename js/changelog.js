@@ -8,8 +8,12 @@
 
   const UPDATES = [
     {
-      v: '1.8', date: 'October 7, 2026', title: 'Smooth running',
+      // rev: bump when items are added to an update that already went out, so
+      // "What's new" shows again for players who saw the earlier list.
+      v: '1.8', rev: 2, date: 'October 7, 2026', title: 'Smooth running',
       items: [
+        'NEW|Install the game as an app on your phone, tablet or computer: its own home-screen icon, full screen, and it works offline. Tap Install on the banner or in Settings → App.',
+        'NEW|A fresh logo and launch screen: crossed lightsabers in hyperspace.',
         'NEW|Performance settings: choose Auto, iPhone, iPad, Android or PC in Settings to tune the graphics for your device.',
         'NEW|Performance mode: fewer effects, simpler ultimates and no screen shake for older devices or laggy battles.',
         'IMPROVED|Tap anywhere on a card\'s Ultimate page to watch it in action.',
@@ -79,7 +83,7 @@
 
   const Changelog = {
     UPDATES,
-    latest: UPDATES[0].v,
+    latest: UPDATES[0].v + (UPDATES[0].rev ? `.r${UPDATES[0].rev}` : ''),
 
     // Each line is "TAG|text"; the tag becomes a coloured label.
     itemsHtml(items) {
