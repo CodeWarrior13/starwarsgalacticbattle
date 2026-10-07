@@ -1,5 +1,5 @@
-// Installable app: registers the offline helper (sw.js), shows the logo splash
-// on launch, and offers "Install app" (Chrome/Edge/Android prompt, or step-by-
+// Installable app: registers the offline helper (sw.js), shows the loading
+// screen on launch, and offers "Install app" (Chrome/Edge/Android prompt, or step-by-
 // step help on iPhone and iPad, where Apple only allows Share > Add to Home Screen).
 (function (root) {
   'use strict';
@@ -131,17 +131,90 @@
     window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
   }
 
-  // The logo splash fades once the game is ready; tap to skip it sooner.
+  // Loading screen: warms fonts, card art and the galaxy map behind a
+  // progress bar with tips, so the first taps afterwards are smooth.
+  const TIPS = [
+    'Tip: tap a squad bonus chip in battle to see exactly what it does.',
+    'Tip: matching traits unlock squad bonuses. Two Jedi, two Rebels, three Droids…',
+    'Tip: every world has its own terrain and hazard. Check the datapad before you fight.',
+    'Tip: duplicate cards become shards. Collect enough to add a Star.',
+    'Tip: the gold bar under a card is its Ultimate. It fills as you deal and take hits.',
+    'Tip: claim the daily reward in the Black Market. The streak keeps getting better.',
+    'Tip: tap any card in your collection, then its Ultimate page, to watch the move.',
+    'Tip: the Endless Tower gets harder every floor, and pays more too.',
+    'Tip: speed decides who moves first. Watch the turn order strip at the top.',
+  ];
   const splash = document.querySelector('.app-splash');
   if (splash) {
-    const hide = () => {
-      if (!splash.isConnected || splash.classList.contains('out')) return;
-      splash.classList.add('out');
-      setTimeout(() => splash.remove(), 500);
+    const fill = splash.querySelector('[data-ls-fill]');
+    const pct = splash.querySelector('[data-ls-pct]');
+    const what = splash.querySelector('[data-ls-what]');
+    const tip = splash.querySelector('[data-ls-tip]');
+    let shown = 0;
+    let target = 0;
+    let done = false;
+    const t0 = performance.now();
+    tip.textContent = TIPS[Math.floor(Math.random() * TIPS.length)];
+    const tipTimer = setInterval(() => {
+      tip.classList.add('swap');
+      setTimeout(() => { tip.textContent = TIPS[Math.floor(Math.random() * TIPS.length)]; tip.classList.remove('swap'); }, 300);
+    }, 2600);
+    // The bar eases toward the real progress instead of jumping.
+    const tick = () => {
+      if (done) return;
+      shown += (target - shown) * 0.18 + 0.2;
+      shown = Math.min(shown, target);
+      fill.style.width = `${shown}%`;
+      pct.textContent = `${Math.round(shown)}%`;
+      requestAnimationFrame(tick);
     };
-    splash.addEventListener('click', hide);
-    const ready = () => setTimeout(hide, standalone() ? 1100 : 700);
-    if (document.readyState === 'complete') ready(); else window.addEventListener('load', ready);
+    requestAnimationFrame(tick);
+    const hide = () => {
+      if (done) return;
+      done = true;
+      clearInterval(tipTimer);
+      fill.style.width = '100%';
+      pct.textContent = '100%';
+      setTimeout(() => {
+        splash.classList.add('out');
+        setTimeout(() => splash.remove(), 500);
+      }, 180);
+    };
+    splash.addEventListener('click', () => { if (performance.now() - t0 > 600) hide(); });
+    const frame = () => new Promise((r) => requestAnimationFrame(() => r()));
+    const timeout = (ms) => new Promise((r) => setTimeout(r, ms));
+    const steps = [
+      ['Charging hyperdrive…', 20, () => Promise.race([
+        Promise.all([document.fonts.load('800 20px Oxanium'), document.fonts.load('600 16px "Chakra Petch"')]).catch(() => {}),
+        timeout(2500),
+      ])],
+      ['Assembling your squads…', 60, async () => {
+        const D = root.GameData;
+        const Art = root.Art;
+        if (!D || !Art) return;
+        const list = D.UNITS;
+        for (let i = 0; i < list.length; i += 10) {
+          for (const def of list.slice(i, i + 10)) Art.unitArt(def);
+          target = 20 + Math.round((40 * Math.min(list.length, i + 10)) / list.length);
+          await frame();
+        }
+      }],
+      ['Plotting hyperspace routes…', 85, async () => { await frame(); await frame(); }],
+      ['Opening comms…', 100, () => Promise.all([...document.images].filter((im) => im.decode && !im.complete).map((im) => im.decode().catch(() => {})))],
+    ];
+    const run = async () => {
+      for (const [label, end, job] of steps) {
+        what.textContent = label;
+        try { await job(); } catch (e) { /* a warm-up step must never block the game */ }
+        target = end;
+      }
+      // Long enough to read a tip, short enough not to be a wait.
+      const minMs = standalone() ? 1600 : 1200;
+      const left = minMs - (performance.now() - t0);
+      setTimeout(hide, Math.max(250, left));
+    };
+    if (document.readyState === 'complete') run(); else window.addEventListener('load', run);
+    setTimeout(hide, 7000);
   }
 
   // Phones and tablets get the banner even if Chrome never fires its prompt.

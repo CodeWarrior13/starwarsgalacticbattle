@@ -18,7 +18,15 @@
   <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
-  <div class="app-splash" aria-hidden="true"><img src="icons/icon-512.png" alt="" /></div>
+  <div class="app-splash" role="status" aria-label="Loading">
+    <div class="ls-hyper" aria-hidden="true"></div>
+    <img class="ls-logo" src="icons/icon-512.png" alt="Galactic Card Battles" />
+    <div class="ls-foot">
+      <p class="ls-tip" data-ls-tip>Tip: tap a squad bonus chip in battle to see exactly what it does.</p>
+      <div class="ls-bar"><i data-ls-fill></i><b data-ls-pct>0%</b></div>
+      <span class="ls-what" data-ls-what>Charging hyperdrive…</span>
+    </div>
+  </div>
   <div class="starfield" aria-hidden="true"></div>
 
   <header class="topbar">

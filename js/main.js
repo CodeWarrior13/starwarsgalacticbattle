@@ -123,6 +123,35 @@
     });
   }
 
+  // ---------- Tab slide (tapping a tab) ----------
+  // The old screen glides out toward the side you came from and the new one
+  // flows in from the other, matching the swipe gesture.
+  let sliding = false;
+  function slideTo(target) {
+    const screen = document.getElementById('screen');
+    const from = TABS.indexOf(['campaign', 'squad', 'secret'].includes(App.current) ? 'home' : App.current);
+    const to = TABS.indexOf(target);
+    const motion = !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    if (sliding || !motion || from < 0 || to < 0 || from === to) return App.go(target);
+    sliding = true;
+    const dir = to > from ? 1 : -1;
+    screen.style.willChange = 'transform, opacity';
+    screen.style.transition = 'transform .14s cubic-bezier(.4,0,1,1), opacity .14s';
+    screen.style.transform = `translateX(${-dir * 48}px)`;
+    screen.style.opacity = '0';
+    setTimeout(() => {
+      screen.style.transition = 'none';
+      App.go(target);
+      screen.style.transform = `translateX(${dir * 56}px)`;
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        screen.style.transition = 'transform .32s cubic-bezier(.2,.85,.25,1), opacity .26s ease-out';
+        screen.style.transform = '';
+        screen.style.opacity = '';
+        setTimeout(() => { screen.style.transition = ''; screen.style.willChange = ''; sliding = false; }, 340);
+      }));
+    }, 140);
+  }
+
   // ---------- Swipe between tabs (phones) ----------
   // Drag the page sideways to slide to the next tab, like Clash Royale.
   const TABS = ['home', 'collection', 'market'];
@@ -213,7 +242,7 @@
         root.UI.toast('Finish or retreat from the battle first.');
         return;
       }
-      App.go(nav.dataset.nav);
+      slideTo(nav.dataset.nav);
     });
     App.go('home');
     // First open (or a save from before the tutorial existed): run it once.

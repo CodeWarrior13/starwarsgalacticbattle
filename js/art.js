@@ -1290,7 +1290,17 @@
     return `${bg}<g class="ship-body">${(SHIPS[def.shape] || SHIPS.xwing)()}</g>`;
   }
 
+  // Card art is deterministic, so each unit is drawn once and reused: the
+  // collection and squad lists render far faster. addArt() clears it.
+  const ART_CACHE = new Map();
   function unitArt(def) {
+    const key = `${def.id}|${def.kind}|${def.shape || ''}`;
+    let svg = ART_CACHE.get(key);
+    if (svg === undefined) { svg = drawUnitArt(def); ART_CACHE.set(key, svg); }
+    return svg;
+  }
+
+  function drawUnitArt(def) {
     // Player-supplied art in art/ (see art/README.md) wins over the drawings.
     const img = root.ART_IMAGES && root.ART_IMAGES[def.id];
     if (img) return `<svg class="art custom-art" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><rect width="100" height="100" fill="#05070d"/><image href="${img}" width="100" height="100" preserveAspectRatio="xMidYMid slice"/></svg>`;
@@ -1537,5 +1547,5 @@
     return `<svg class="ship-only" viewBox="0 0 100 100" aria-hidden="true">${(SHIPS[def.shape] || SHIPS.xwing)()}</svg>`;
   }
 
-  root.Art = { kit: { P, E, C, R, L, shade, SCENES, shoulders, SHIPS }, addArt: (kind, key, fn) => { (kind === 'ship' ? SHIPS : CHAR)[key] = fn; }, unitArt, shipOnly, cardBack, ICONS, crateArt, setCrateStyle: (v) => { CRATE_STYLE = ['holo', 'faction'].includes(v) ? v : 'relic'; }, get crateStyle() { return CRATE_STYLE; }, merchantArt, SHIP_SHAPES: Object.keys(SHIPS), CHARACTER_IDS: Object.keys(CHAR) };
+  root.Art = { kit: { P, E, C, R, L, shade, SCENES, shoulders, SHIPS }, addArt: (kind, key, fn) => { (kind === 'ship' ? SHIPS : CHAR)[key] = fn; ART_CACHE.clear(); }, unitArt, shipOnly, cardBack, ICONS, crateArt, setCrateStyle: (v) => { CRATE_STYLE = ['holo', 'faction'].includes(v) ? v : 'relic'; }, get crateStyle() { return CRATE_STYLE; }, merchantArt, SHIP_SHAPES: Object.keys(SHIPS), CHARACTER_IDS: Object.keys(CHAR) };
 })(typeof window !== 'undefined' ? window : globalThis);
