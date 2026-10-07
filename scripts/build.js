@@ -13,6 +13,7 @@ const title = html.match(/<title>.*<\/title>/)[0];
 const fonts = html.match(/<link rel="stylesheet" href="https:\/\/fonts[^>]*>/)[0];
 const body = html.match(/<body>([\s\S]*)<\/body>/)[1]
   .replace(/\s*<script src="[^"]+"><\/script>/g, '')
+  .replace(/src="(icons\/[^"]+\.png)"/g, (m, file) => `src="data:image/png;base64,${fs.readFileSync(path.join(rootDir, file)).toString('base64')}"`)
   .trim();
 const scripts = [...html.matchAll(/<script src="([^"]+)"><\/script>/g)].map((m) => m[1]);
 

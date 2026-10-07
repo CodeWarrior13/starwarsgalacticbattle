@@ -2087,6 +2087,7 @@
         ${track('battle', 'Battles')}
       </section>` : ''}
       ${root.Perf ? root.Perf.settingsHtml() : ''}
+      ${root.Install ? root.Install.settingsHtml() : ''}
       <section class="set-sec">
         <h3>${root.Icons.svg('holocron')} Account</h3>
         <dl class="set-info">
