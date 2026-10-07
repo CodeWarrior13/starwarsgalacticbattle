@@ -199,7 +199,30 @@
           await frame();
         }
       }],
-      ['Plotting hyperspace routes…', 85, async () => { await frame(); await frame(); }],
+      ['Plotting hyperspace routes…', 70, async () => { await frame(); await frame(); }],
+      // Build the other tabs once behind the loading screen so their layout,
+      // fonts and card art are warm: the first visit to each is instant.
+      ['Stocking the Black Market…', 88, async () => {
+        const UI = root.UI;
+        if (!UI || !UI.Screens) return;
+        const box = document.createElement('div');
+        box.setAttribute('aria-hidden', 'true');
+        box.style.cssText = 'position:fixed;inset:0;z-index:9990;opacity:0.01;pointer-events:none;overflow:hidden';
+        document.body.appendChild(box);
+        for (const name of ['collection', 'market']) {
+          try {
+            const view = UI.Screens[name]({});
+            const holder = document.createElement('div');
+            holder.className = 'screen';
+            holder.appendChild(view);
+            box.appendChild(holder);
+            await frame();
+            await frame();
+            holder.remove();
+          } catch (e) { /* warming is best-effort */ }
+        }
+        box.remove();
+      }],
       ['Opening comms…', 100, () => Promise.all([...document.images].filter((im) => im.decode && !im.complete).map((im) => im.decode().catch(() => {})))],
     ];
     const run = async () => {
