@@ -710,4 +710,248 @@ H.redeem = (code) => {
 // Testing hook (tester panel only).
 root.__xq = { dad: () => sceneDad(FEATS.dad), jj: () => sceneJJ(FEATS.jj), kr: () => sceneKR(FEATS.kr, 11.4), cer: () => sceneCer({ id: 'hero', tier: 4, icon: 'starbird', name: 'Hero of the Galaxy', desc: '', have: 1, need: 1 }), sv: () => sceneSV({ id: 'xq_sv_show', tier: 3, icon: 'bacta', name: 'Survivor', desc: 'Won on the last 1% of health. A free Sith Holocron is yours.', have: 1, need: 1 }), m4: () => sceneSide({ id: 'xq_m4', tier: 4, icon: 'jedi', name: 'May the 4th Be With You', desc: 'Claimed the May the 4th gift', have: 1, need: 1 }, 'jedi'), hp: () => sceneHP(FEATS.hp), frags: () => { Z().hf = []; Player.save(); placeFrags(); }, m5: () => sceneSide({ id: 'xq_m5', tier: 4, icon: 'sith', name: 'Revenge of the Fifth', desc: 'Won a battle on May the 5th', have: 1, need: 1 }, 'sith') };
 
+// ---------- snapshot: screenshot a secret the moment it is unlocked ----------
+// Reflect: every hit taken goes back at the attacker instead.
+D.STATUS_INFO.reflect = { label: 'Reflect', icon: '⟲', kind: 'buff', desc: 'All damage taken is sent back at the attacker.' };
+
+const SNAP_CARD = {
+  id: 'mace_shatter', name: 'Mace Windu · Shatterpoint', kind: 'character', faction: 'light', rarity: 'secret', role: 'tank', exclusive: true, accent: '#b45aff', spd: 146,
+  traits: ['jedi', 'republic', 'leader'], home: 'coruscant', xqReflect: true,
+  sig: { move: 'shatter', prop: 'saber', impact: 'xslash', color: '#b45aff' }, anim: 'shield',
+  bio: 'Mace in the instant he sees every shatterpoint at once. Vaapad Guard: every other turn he reflects all damage he takes back at the attacker until his next turn.',
+  abilities: [
+    { name: 'Vaapad Strike', cd: 0, target: 'enemy', effects: [dmg(1.2), debuff('defDown', 2, 0.35)], desc: 'Strike one enemy with a 35% chance to inflict Defense Down.' },
+    { name: 'Fault Lines', cd: 4, target: 'self', effects: [buff('reflect', 2), buff('taunt', 2)], desc: 'Draw every attack: gain Taunt and Reflect for 2 turns.' },
+  ],
+  ultimate: ult('Shatterpoint', 'allEnemies', [dmg(2.0), debuff('stun', 1, 0.5), { ...buff('reflect', 2), on: 'self' }], 'Freeze the moment and break it: heavy damage to every enemy with a 50% Stun chance, then gain Reflect for 2 turns.', 'This party\'s over.'),
+};
+if (!D.UNIT_MAP[SNAP_CARD.id]) {
+  D.UNITS.push(SNAP_CARD);
+  D.UNIT_MAP[SNAP_CARD.id] = SNAP_CARD;
+  if (D.BIOS) D.BIOS[SNAP_CARD.id] = SNAP_CARD.bio;
+  if (D.ULT_ANIM) D.ULT_ANIM[SNAP_CARD.id] = SNAP_CARD.anim;
+}
+
+// Art: Mace framed in a camera viewfinder, the frame cracked along its fault lines.
+root.Art.addArt('char', 'mace_shatter', () => {
+  const base = root.Art.unitArt({ id: 'mace_windu', kind: 'character' }).replace(/^<svg[^>]*>/, '').replace(/<\/svg>$/, '');
+  const V = '#d9a8ff';
+  const corner = (x, y, dx, dy) => P(`M${x} ${y + dy * 9} L${x} ${y} L${x + dx * 9} ${y}`, 'none', `stroke="${V}" stroke-width="1.6" stroke-linecap="round"`);
+  return base
+    + R(0, 0, 100, 100, '#3a0a6a', 'opacity=".22"')
+    + P('M58 0 L54 22 L63 34 L52 52 L60 70 L55 100', 'none', 'stroke="#f2e2ff" stroke-width=".9" opacity=".85"')
+    + P('M54 22 L36 18 M63 34 L86 28 M52 52 L30 58 M60 70 L82 78', 'none', 'stroke="#c88aff" stroke-width=".7" opacity=".8"')
+    + C(54, 22, 1.6, '#ffffff') + C(63, 34, 1.4, '#ffffff') + C(52, 52, 1.8, '#ffffff') + C(60, 70, 1.3, '#ffffff')
+    + corner(6, 6, 1, 1) + corner(94, 6, -1, 1) + corner(6, 94, 1, -1) + corner(94, 94, -1, -1)
+    + C(12, 13, 1.8, '#ff3a4a') + P('M17 11.5 L17 14.5', 'none', `stroke="${V}" stroke-width="0"`);
+});
+
+// Engine: Vaapad Guard and Reflect, added from here so the core stays generic.
+const BP = root.Battle && root.Battle.prototype;
+if (BP && !BP.__xqr) {
+  BP.__xqr = true;
+  const baseBegin = BP.beginTurn;
+  BP.beginTurn = function (unit) {
+    const out = baseBegin.call(this, unit);
+    if (unit.def && unit.def.xqReflect && unit.alive) {
+      unit.__xt = (unit.__xt || 0) + 1;
+      if (unit.__xt % 2 === 0) {
+        unit.statuses.reflect = Math.max(unit.statuses.reflect || 0, 1);
+        out.events.push({ type: 'status', uid: unit.uid, status: 'reflect' });
+        out.events.push({ type: 'log', text: `${unit.def.name} enters Vaapad Guard: attacks will be reflected.`, side: unit.side === 'player' ? '' : 'enemy' });
+      }
+    }
+    return out;
+  };
+  const baseEffect = BP.applyEffect;
+  BP.applyEffect = function (source, target, eff, events) {
+    if (eff.type === 'damage' && source && target && target.alive && target.statuses.reflect && source.side !== target.side) {
+      this.__rf = { from: target, to: source };
+      try { return baseEffect.call(this, source, target, eff, events); } finally { this.__rf = null; }
+    }
+    return baseEffect.call(this, source, target, eff, events);
+  };
+  const baseDamage = BP.applyDamage;
+  BP.applyDamage = function (target, amount, crit, events, source) {
+    const rf = this.__rf;
+    if (rf && target === rf.from && source !== 'reflect' && rf.to.alive) {
+      events.push({ type: 'log', text: `${target.def.name} reflects the attack back at ${rf.to.def.name}!`, side: target.side === 'player' ? '' : 'enemy' });
+      baseDamage.call(this, rf.to, amount, crit, events, 'reflect');
+      const last = events.filter((e) => e.type === 'damage').pop();
+      if (last) last.from = target.uid;
+      return;
+    }
+    return baseDamage.call(this, target, amount, crit, events, source);
+  };
+}
+
+const B = root.BattleUI;
+if (B && !B.__xqr) {
+  B.__xqr = true;
+  const baseHit = B.hit;
+  B.hit = function (u, ev) {
+    if (ev && ev.source === 'reflect') {
+      if (ev.from && this.cards[ev.from]) this.wave(this.center(ev.from), '#b45aff', 2.2);
+      this.slash(this.center(u.uid), '#d9a8ff', -30);
+      this.float(u, 'Reflected!', 'bad', 22);
+    }
+    return baseHit.call(this, u, ev);
+  };
+  // The Shatterpoint ultimate: a camera shutter freezes the frame, fault lines
+  // race across each enemy, then the frozen moment breaks.
+  B.mv_shatter = async function (S, actor, from, T, spec, hit) {
+    const Snd = root.Sound;
+    const vf = el('<div class="xq-vf"><b></b><b></b><b></b><b></b><span>● REC</span><em>1/8000</em></div>');
+    const shut = el('<div class="xq-shut"><i></i><i></i></div>');
+    S.layer.appendChild(vf);
+    S.layer.appendChild(shut);
+    if (Snd) Snd.play('glitch');
+    await this.wait(420);
+    this.field.classList.add('xq-frozen');
+    for (const t of T) {
+      const pts = [];
+      for (let k = 0; k < 5; k++) {
+        const a = (k / 5) * Math.PI * 2 + Math.random() * 0.6;
+        let p = { x: t.x, y: t.y };
+        for (let j = 0; j < 4; j++) {
+          const n = { x: p.x + Math.cos(a + (Math.random() - 0.5) * 0.9) * 22, y: p.y + Math.sin(a + (Math.random() - 0.5) * 0.9) * 22 };
+          pts.push([p, n]);
+          p = n;
+        }
+      }
+      pts.forEach(([a, b], i) => setTimeout(() => S.trail(a, b, spec.color, 0.5), i * 12));
+      const g = el(`<i class="xq-glint" style="left:${t.x}px;top:${t.y}px"></i>`);
+      S.layer.appendChild(g);
+      if (Snd) Snd.play('click');
+      await this.wait(170);
+    }
+    await this.wait(380);
+    shut.classList.add('snap');
+    if (Snd) Snd.play('saber');
+    for (const t of T) {
+      this.shatterCard(t.uid, S.layer, spec.color);
+      hit(t);
+      await this.wait(120);
+    }
+    this.field.classList.remove('xq-frozen');
+    await this.wait(500);
+    vf.classList.add('out');
+    setTimeout(() => { vf.remove(); shut.remove(); }, 400);
+  };
+}
+
+const FEAT_SS = { id: 'xq_ss', secret: true, tier: 6, icon: 'cracked', name: 'Picture Perfect', desc: 'Captured a secret the instant it happened', have: 1, need: 1 };
+H.feats.push((s) => ((s.z || {}).ss ? [FEAT_SS] : []));
+
+// Crest: a camera aperture with spinning blades around a lens flare.
+H.crests.xq_ss = () => {
+  const u = `xs${++seq}`;
+  const blades = Array.from({ length: 6 }, (_, k) => `<path d="M0 -60 L34 -40 L10 -6 Z" fill="#2a1240" stroke="#d9a8ff" stroke-width="1.4" transform="rotate(${k * 60})"/>`).join('');
+  const inner = `<g>${anim.spin(14)}${blades}</g><circle r="14" fill="#b45aff" opacity=".35">${anim.fade('1;.2;1', 1.6)}</circle><circle r="6" fill="#ffffff"/>
+    <g stroke="#ffffff" stroke-width="1.2" opacity=".8">${[[-46, -46, -30, -46, -46, -30], [46, -46, 30, -46, 46, -30], [-46, 46, -30, 46, -46, 30], [46, 46, 30, 46, 46, 30]].map(([x, y, x2, y2, x3, y3]) => `<polyline fill="none" points="${x2},${y2} ${x},${y} ${x3},${y3}"/>`).join('')}</g>`;
+  return frame(u, inner, 'SNAPSHOT', { glow: '#b45aff', core: '#140820', tail: '#3a1a5a',
+    back: `<g fill="#d9a8ff" opacity=".25">${anim.spin(40, true)}${Array.from({ length: 16 }, (_, k) => `<rect x="-2" y="-100" width="4" height="22" transform="rotate(${k * 22.5})"/>`).join('')}</g>` });
+};
+
+const sceneSS = (x, onDone) => {
+  const stage = `<div class="xq-vf big"><b></b><b></b><b></b><b></b><span>● REC</span><em>1/8000</em></div><div class="xq-shut big"><i></i><i></i></div>
+    <div class="xq-polaroid">${tile(D.UNIT_MAP.mace_shatter)}<span>the moment it broke</span></div>
+    <p class="xq-line" style="top:74%;--t:3.4s;color:#d9a8ff">"Most people miss the moment."</p><p class="xq-line" style="top:80%;--t:4.6s">"You captured it."</p>`;
+  return scene(x, 'xq-ss', stage, 6600, onDone, (S, at) => { at(300, () => S.play('click')); at(900, () => S.play('glitch')); at(1500, () => S.play('saber')); at(2200, () => S.play('reveal_epic')); });
+};
+H.scenes.xq_ss = (x) => sceneSS(x);
+
+// Detection. Only a live secret unlock counts (never a replay from the
+// Profile), and it is a one-time reward.
+const SECRET_LABELS = ['Into the Unknown', 'Master of the Monolith', 'Galactic Grinder', 'Back for More?', FEATS.dad.name, FEATS.jj.name, FEATS.kr.name, FEATS.hp.name];
+let liveCine = null;
+let snapped = false;
+const isSecretLabel = (label) => {
+  const name = String(label || '').split(' · ')[0];
+  if (SECRET_LABELS.includes(name)) return true;
+  try { return UI.achievements().some((a) => a.secret && a.id !== 'xq_ss' && a.name.split(' · ')[0] === name); } catch (e) { return false; }
+};
+new MutationObserver((muts) => {
+  for (const m of muts) {
+    for (const n of m.addedNodes) {
+      if (n.nodeType !== 1 || !n.classList.contains('feat-cine') || n.classList.contains('xq-ss')) continue;
+      if (document.querySelector('.profile-modal')) continue;
+      if (isSecretLabel(n.getAttribute('aria-label'))) liveCine = n;
+    }
+    for (const n of m.removedNodes) if (n === liveCine) { liveCine = null; if (snapped) awardSnap(); }
+  }
+}).observe(document.body, { childList: true });
+
+const shutterFlash = () => {
+  const f = el('<div class="xq-camflash"></div>');
+  document.body.appendChild(f);
+  setTimeout(() => f.remove(), 700);
+  if (root.Sound) root.Sound.play('click');
+};
+const caught = () => {
+  if (!liveCine || !liveCine.isConnected || snapped || Z().ss) return;
+  snapped = true;
+  Z().ss = 1;
+  Player.save();
+  shutterFlash();
+};
+function awardSnap() {
+  snapped = false;
+  const g = Player.grantCard('mace_shatter', false);
+  Player.save();
+  UI.markFeatSeen('xq_ss');
+  later(() => sceneSS(FEAT_SS).then(() => UI.walkout(D.UNIT_MAP.mace_shatter, 'secret', false, { exclusive: true, isNew: g.isNew, shards: g.shards })));
+}
+// Screenshot keys: Print Screen, Mac Cmd+Shift(+3/4/5), Windows Win+Shift(+S),
+// ChromeOS Ctrl(+Shift)+Show windows. The OS often keeps the last key for
+// itself, so holding the modifier pair during the scene is enough.
+const held = new Set();
+document.addEventListener('keydown', (e) => {
+  held.add(e.key);
+  if (!liveCine) return;
+  const k = e.key;
+  if (k === 'PrintScreen' || e.keyCode === 44) return caught();
+  if ((k === 'LaunchApplication1' || k === 'ShowAllWindows' || e.keyCode === 182) && (e.ctrlKey || held.has('Control'))) return caught();
+  if ((held.has('Meta') || e.metaKey) && (held.has('Shift') || e.shiftKey)) return caught();
+  if ((held.has('Control') || e.ctrlKey) && (held.has('Shift') || e.shiftKey) && (held.size <= 3)) return caught();
+}, true);
+document.addEventListener('keyup', (e) => {
+  held.delete(e.key);
+  if (liveCine && (e.key === 'PrintScreen' || e.keyCode === 44)) caught();
+}, true);
+window.addEventListener('blur', () => held.clear());
+
+const cssSS = `
+.xq-vf { position: absolute; inset: 7%; z-index: 5; pointer-events: none; animation: fade-in .25s; }
+.xq-vf b { position: absolute; width: 34px; height: 34px; border: 3px solid #e8d2ff; filter: drop-shadow(0 0 6px #b45aff); }
+.xq-vf b:nth-child(1) { left: 0; top: 0; border-right: 0; border-bottom: 0; } .xq-vf b:nth-child(2) { right: 0; top: 0; border-left: 0; border-bottom: 0; }
+.xq-vf b:nth-child(3) { left: 0; bottom: 0; border-right: 0; border-top: 0; } .xq-vf b:nth-child(4) { right: 0; bottom: 0; border-left: 0; border-top: 0; }
+.xq-vf span { position: absolute; left: 44px; top: 6px; font: 700 13px/1 var(--font-display); letter-spacing: .14em; color: #ff4a5a; animation: xq-rec 1s steps(2) infinite; }
+.xq-vf em { position: absolute; right: 44px; bottom: 6px; font: 700 12px/1 var(--font-display); font-style: normal; letter-spacing: .12em; color: #e8d2ff; }
+.xq-vf.out { opacity: 0; transition: opacity .35s; }
+.xq-vf.big { inset: 5%; }
+@keyframes xq-rec { 50% { opacity: .2; } }
+.xq-shut { position: absolute; inset: 0; z-index: 6; pointer-events: none; }
+.xq-shut i { position: absolute; left: 0; right: 0; height: 50%; background: #05020a; transform: scaleY(0); }
+.xq-shut i:first-child { top: 0; transform-origin: top; } .xq-shut i:last-child { bottom: 0; transform-origin: bottom; }
+.xq-shut i { animation: xq-shut .32s ease-in-out; }
+.xq-shut.snap i { animation: xq-shut .28s ease-in-out; }
+.xq-shut.big i { animation: xq-shut .4s ease-in-out .8s both; }
+@keyframes xq-shut { 0%, 100% { transform: scaleY(0); } 45%, 55% { transform: scaleY(1); } }
+.xq-glint { position: absolute; width: 16px; height: 16px; margin: -8px 0 0 -8px; border-radius: 50%; background: #fff; box-shadow: 0 0 18px 6px #b45aff; z-index: 4; animation: xq-glint .9s ease-out forwards; }
+@keyframes xq-glint { 0% { transform: scale(0); } 30% { transform: scale(1.4); } 100% { transform: scale(.4); opacity: 0; } }
+.field.xq-frozen .bcard { filter: grayscale(.85) contrast(1.15); transition: filter .2s; }
+.xq-camflash { position: fixed; inset: 0; z-index: 9999; background: #fff; pointer-events: none; animation: xq-camflash .6s ease-out forwards; }
+@keyframes xq-camflash { from { opacity: .9; } to { opacity: 0; } }
+.xq-ss { background: radial-gradient(ellipse at center, #1a0a2a, #05020a 70%); }
+.xq-polaroid { position: absolute; left: 50%; top: 40%; width: min(220px, 46vw); padding: 10px 10px 30px; background: #f4f0ea; border-radius: 4px; box-shadow: 0 20px 60px rgba(0,0,0,.6), 0 0 40px rgba(180,90,255,.4); transform: translate(-50%, -50%) rotate(-4deg); opacity: 0; animation: xq-pol 1s cubic-bezier(.2,.9,.3,1.2) 1.4s forwards; }
+.xq-polaroid .xq-tile { width: 100%; aspect-ratio: 1; }
+.xq-polaroid .monogram, .xq-polaroid .xq-tile b { display: none; }
+.xq-polaroid span { position: absolute; left: 0; right: 0; bottom: 8px; text-align: center; font: italic 600 13px/1 Georgia, serif; color: #3a2a4a; }
+@keyframes xq-pol { from { opacity: 0; transform: translate(-50%, -30%) rotate(8deg) scale(.6); } to { opacity: 1; transform: translate(-50%, -50%) rotate(-4deg); } }
+`;
+document.head.appendChild(Object.assign(document.createElement('style'), { textContent: cssSS }));
+
+Object.assign(root.__xq, { ss: () => sceneSS(FEAT_SS), ssReset: () => { delete Z().ss; snapped = false; Player.save(); }, ssLive: () => !!liveCine });
+
 })(window);
