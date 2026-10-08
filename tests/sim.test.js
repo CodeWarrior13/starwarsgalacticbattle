@@ -444,6 +444,14 @@ test('every unit has a full-screen signature ultimate', () => {
   }
 });
 
+test('overtime ends a stalemate between healers', () => {
+  const side = [{ id: 'barriss', level: 20, stars: 5 }, { id: 'master_luke', level: 20, stars: 5 }, { id: 'chopper', level: 20, stars: 5 }];
+  const b = new Battle(side, side.map((u) => ({ ...u })), seeded(7), { planet: 'tatooine' });
+  const { winner, turns } = runAuto(b, 2000);
+  assert.ok(winner, 'battle finished');
+  assert.ok(turns < 600, `finished in ${turns} turns`);
+});
+
 test('every unit and boss has cover art and a bio', () => {
   require('../js/art.js');
   require('../js/ships3d.js');

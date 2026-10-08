@@ -60,6 +60,9 @@
     u.tm = Math.min(99, u.tm + (m.tmStart || 0));
   }
 
+  // Turns (across every unit) before Overtime starts; real fights rarely pass ~110.
+  const OVERTIME = 200;
+
   class Battle {
     // opts.planet: planet id for terrain bonuses and hazards.
     constructor(playerSquad, enemySquad, rng, opts = {}) {
@@ -216,8 +219,18 @@
         const amount = Math.max(1, Math.round(unit.maxHp * 0.08));
         this.applyDamage(unit, amount, false, events, 'burn');
       }
+      // Overtime: a fight that drags on (two sides out-healing each other)
+      // wears everyone down a little more each turn so it always ends.
+      if (unit.alive && this.turnCount >= OVERTIME) {
+        if (!this.overtime) {
+          this.overtime = true;
+          events.push({ type: 'log', text: 'Overtime! Healing is halved and every fighter starts to wear down.' });
+        }
+        const pct = 0.03 * (1 + (this.turnCount - OVERTIME) / 25);
+        this.applyDamage(unit, Math.max(1, Math.round(unit.maxHp * pct)), false, events, 'hazard');
+      }
       if (unit.alive && unit.mods.regen > 0 && unit.hp < unit.maxHp) {
-        const amount = Math.min(unit.maxHp - unit.hp, Math.round(unit.maxHp * unit.mods.regen));
+        const amount = Math.min(unit.maxHp - unit.hp, Math.round(unit.maxHp * unit.mods.regen * (this.overtime ? 0.5 : 1)));
         unit.hp += amount;
         events.push({ type: 'heal', uid: unit.uid, amount, hp: unit.hp, source: 'regen' });
       }
@@ -363,7 +376,7 @@
           }
           break;
         case 'heal': {
-          const amount = Math.min(target.maxHp - target.hp, Math.round(target.maxHp * eff.pct));
+          const amount = Math.min(target.maxHp - target.hp, Math.round(target.maxHp * eff.pct * (this.overtime ? 0.5 : 1)));
           target.hp += amount;
           events.push({ type: 'heal', uid: target.uid, amount, hp: target.hp });
           break;
