@@ -648,7 +648,9 @@ function collectFrag(i) {
   if (root.Sound) { root.Sound.play('glitch'); setTimeout(() => root.Sound.play('reveal_rare'), 300); }
   const pop = el(`<div class="xq-fpop" role="dialog"><div class="xq-cube">${cubeSvg()}</div><b>${WORD[i]}</b><span>Holocron fragment · ${ROMAN[i]}</span><em>${f.length} of ${WORD.length} found</em></div>`);
   document.body.appendChild(pop);
-  pop.addEventListener('click', () => { pop.classList.add('out'); setTimeout(() => pop.remove(), 300); });
+  const close = () => { if (!pop.isConnected || pop.classList.contains('out')) return; pop.classList.add('out'); setTimeout(() => pop.remove(), 300); };
+  pop.addEventListener('click', close);
+  setTimeout(close, 4500);
 }
 function placeFrags() {
   const f = found();

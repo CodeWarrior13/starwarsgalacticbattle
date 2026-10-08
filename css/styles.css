@@ -360,7 +360,8 @@ body.in-battle .main-nav, body.in-battle .brand { pointer-events: none; opacity:
   border: 1px solid color-mix(in srgb, var(--fc) 70%, transparent);
   font-size: 0.85em;
 }
-.eng { filter: drop-shadow(0 0 2px var(--eng)) drop-shadow(0 0 5px var(--eng)); animation: eng 0.22s ease-in-out infinite alternate; }
+/* Engine glow as a soft stroke halo: a filter here repainted every ship card several times a second. */
+.eng { stroke: var(--eng); stroke-opacity: 0.4; stroke-width: 3.5; paint-order: stroke; animation: eng 0.5s ease-in-out infinite alternate; }
 @keyframes eng { to { opacity: 0.7; } }
 .art-saber { animation: hum 1.6s ease-in-out infinite; }
 @keyframes hum { 50% { opacity: 0.86; } }
@@ -1349,8 +1350,11 @@ kbd { font-family: var(--font-display); font-size: 11px; padding: 1px 6px; borde
 .thrown-saber { position: absolute; width: 80px; height: 5px; margin: -2.5px 0 0 -40px; border-radius: 4px; background: #fff; box-shadow: 0 0 8px 3px var(--glow), 0 0 22px 8px var(--glow); z-index: 5; }
 .force-wave { position: absolute; width: 90px; height: 90px; border-radius: 50%; background: radial-gradient(circle, transparent 40%, rgba(160, 220, 255, 0.55) 60%, transparent 72%); z-index: 5; pointer-events: none; }
 .bolt-svg { position: absolute; inset: 0; }
-.bolt-svg .glow { fill: none; stroke: #9a6bff; stroke-width: 7; opacity: 0.55; filter: blur(3px); }
-.bolt-svg .core { fill: none; stroke: #f2eaff; stroke-width: 2; }
+.bolt-svg { --bolt: #9a6bff; }
+.bolt-svg path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.bolt-svg .glow { stroke: var(--bolt); stroke-width: 12; opacity: 0.18; }
+.bolt-svg .mid { stroke: var(--bolt); stroke-width: 5; opacity: 0.55; }
+.bolt-svg .core { stroke: #f6f2ff; stroke-width: 2; }
 .claw { position: absolute; left: -5%; right: -5%; height: 14px; border-radius: 50%; background: linear-gradient(90deg, transparent, #fff 20%, #ff5a3a 60%, transparent); box-shadow: 0 0 20px #ff5a3a; transform: rotate(-14deg); }
 .whirl { position: absolute; width: 110px; height: 110px; z-index: 5; pointer-events: none; }
 .whirl i { position: absolute; left: 50%; top: 50%; width: 55px; height: 4px; margin-top: -2px; transform-origin: 0 50%; background: #fff; border-radius: 3px; box-shadow: 0 0 6px 2px var(--glow), 0 0 14px 5px var(--glow); }
@@ -1848,8 +1852,14 @@ kbd { font-family: var(--font-display); font-size: 11px; padding: 1px 6px; borde
 .sp-bomb svg, .sp-seismic svg, .sp-det svg, .sp-gold svg, .sp-probe svg { filter: drop-shadow(0 0 6px var(--c)); }
 .sp-orb, .sp-torp { border-radius: 50%; background: radial-gradient(circle, #fff 20%, var(--c) 55%, transparent 72%); box-shadow: 0 0 18px 6px var(--c); }
 .sp-mote { width: 22px; height: 22px; display: grid; place-items: center; font-size: 18px; font-weight: 800; color: #fff; text-shadow: 0 0 8px var(--c), 0 0 16px var(--c); }
-.sp-ship svg { filter: drop-shadow(0 0 14px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 6px var(--c)); }
-.sp-ship.roll svg { animation: sig-roll 1.4s ease-in-out infinite; }
+.sp-ship img, .sp-ship svg { display: block; width: 100%; height: 100%; }
+.sp-ship.roll > * { animation: sig-roll 1.4s ease-in-out infinite; }
+.sig-mytho { position: absolute; left: 50%; top: 40%; width: min(54vmin, 400px); aspect-ratio: 1; transform: translate(-50%, -50%); opacity: 0; pointer-events: none; }
+.sig-mytho svg { width: 100%; height: 100%; overflow: visible; }
+.sig-mytho path { fill: none; stroke: var(--c); stroke-linecap: round; stroke-linejoin: round; }
+.sig-mytho .gl path { stroke-width: 6; stroke-opacity: .18; }
+.sig-mytho .co path { stroke-width: 1.3; }
+.sig-mytho::before { content: ''; position: absolute; inset: 12%; border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--c) 30%, transparent), transparent 70%); }
 @keyframes sig-roll { 50% { transform: scaleX(-1); } }
 .sp-card { z-index: 3; box-shadow: 0 0 30px var(--c), 0 20px 40px rgba(0, 0, 0, 0.6); border-radius: 14px; }
 .sp-carrier { position: absolute; left: 0; top: 0; width: 0; height: 0; z-index: 3; }
@@ -1945,7 +1955,6 @@ kbd { font-family: var(--font-display); font-size: 11px; padding: 1px 6px; borde
 .sig-title.mythic b::before { color: #0ff; transform: translateX(-3px); clip-path: inset(0 0 55% 0); opacity: 0.7; }
 .sig-title.mythic b::after { color: #ffd23f; transform: translateX(3px); clip-path: inset(55% 0 0 0); opacity: 0.7; }
 @keyframes sig-title { 0% { opacity: 0; transform: translateX(-40vw) skewX(20deg); } 25% { opacity: 1; transform: none; } 80% { opacity: 1; } 100% { opacity: 0; transform: translateX(10vw); } }
-.sig-layer.sig-glitch canvas { filter: drop-shadow(-3px 0 0 rgba(0, 255, 255, 0.5)) drop-shadow(3px 0 0 rgba(255, 0, 80, 0.6)); }
 .sig-layer.sig-glitch .sig-tint { animation: cc-glitch 0.25s steps(2) infinite; }
 .sig-cracks { z-index: 2; opacity: 0.8; }
 .sig-tear i { position: absolute; left: 0; right: 0; height: 50%; background: rgba(255, 42, 90, 0.18); border: 1px solid rgba(255, 120, 150, 0.6); z-index: 6; animation: sig-tear 0.45s ease-in forwards; }

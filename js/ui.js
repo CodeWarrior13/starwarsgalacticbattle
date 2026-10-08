@@ -3046,12 +3046,14 @@
       const tapNext = f && f.classList.contains('tap-next');
       if (f && !tapNext) flip(f);
       if (tapNext || e.target.closest('[data-next-card]')) {
+        // A fast double tap (or a tap after the last card) has nothing to deal.
+        const old = $(`.flip[data-i="${current}"]`, m.root);
+        const nf = $(`.flip[data-i="${current + 1}"]`, m.root);
+        if (!old || !nf) return;
         if (tapNext) f.classList.remove('tap-next');
         $('[data-reveal-hint]', m.root).hidden = true;
         nextBtn.hidden = true;
-        const old = $(`.flip[data-i="${current}"]`, m.root);
         current += 1;
-        const nf = $(`.flip[data-i="${current}"]`, m.root);
         title.textContent = 'Opening…';
         const deal = () => {
           old.classList.add('stack-hidden');

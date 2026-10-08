@@ -2012,18 +2012,19 @@
         window.removeEventListener('resize', this.onResize);
         return;
       }
+      // Everything on the map drifts slowly, so 40 frames a second looks the
+      // same as 60 and leaves a third of the work undone.
+      const fps = Math.min(40, P().fps);
+      if (now - this.last < 1000 / fps - 3) return requestAnimationFrame(this.frame);
       const dt = Math.min(0.05, (now - this.last) / 1000);
       this.last = now;
       this.t += dt;
-      this.draw();
+      if (!document.hidden) this.draw();
       requestAnimationFrame(this.frame);
     }
 
     draw() {
       const { ctx, w, h, t } = this;
-      ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
-      ctx.fillStyle = '#04060d';
-      ctx.fillRect(0, 0, w, h);
       const cx = w * 0.5;
       const cy = h * 0.5;
       const R = Math.max(w, h) * 0.62;
@@ -2033,8 +2034,32 @@
         this.themeId = st0.frontier;
         this.nebulae.forEach((n, i) => { n.c = theme.neb[i % theme.neb.length]; });
       }
-      glow(ctx, cx, cy, R * 0.45, theme.glow[0], 0.16);
-      glow(ctx, cx, cy, R * 0.9, theme.glow[1], 0.12);
+      // The backdrop glows and nebulae barely move, so they are painted into a
+      // cached layer a few times a second instead of every frame: big soft
+      // gradient fills are the most expensive thing on this screen.
+      const key = `${st0.frontier}|${this.canvas.width}x${this.canvas.height}`;
+      if (!this.bg || this.bgKey !== key || t - this.bgAt > 0.35) {
+        if (!this.bg) { this.bg = document.createElement('canvas'); this.bgCtx = this.bg.getContext('2d'); }
+        if (this.bg.width !== this.canvas.width || this.bg.height !== this.canvas.height) { this.bg.width = this.canvas.width; this.bg.height = this.canvas.height; }
+        const b = this.bgCtx;
+        b.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+        b.globalCompositeOperation = 'source-over';
+        b.fillStyle = '#04060d';
+        b.fillRect(0, 0, w, h);
+        glow(b, cx, cy, R * 0.45, theme.glow[0], 0.16);
+        glow(b, cx, cy, R * 0.9, theme.glow[1], 0.12);
+        b.globalCompositeOperation = 'lighter';
+        for (const n of this.nebulae) {
+          const nx = ((n.x + t * n.sp) % 1 + 1) % 1;
+          glow(b, nx * w, n.y * h, n.rad * Math.max(w, h), n.c, 0.07 + Math.sin(t * 0.4 + n.ph) * 0.025);
+        }
+        b.globalCompositeOperation = 'source-over';
+        this.bgKey = key;
+        this.bgAt = t;
+      }
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.drawImage(this.bg, 0, 0);
+      ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
       this.drawFeature(ctx, theme, w, h, t);
       // Parallax stars drift past at three speeds.
       for (const d of this.drift) {
@@ -2044,13 +2069,6 @@
         ctx.fillRect(x, d.y * h, d.z * 1.6, d.z * 1.6);
       }
       ctx.globalAlpha = 1;
-      ctx.save();
-      ctx.globalCompositeOperation = 'lighter';
-      for (const n of this.nebulae) {
-        const nx = ((n.x + t * n.sp) % 1 + 1) % 1;
-        glow(ctx, nx * w, n.y * h, n.rad * Math.max(w, h), n.c, 0.07 + Math.sin(t * 0.4 + n.ph) * 0.025);
-      }
-      ctx.restore();
       if (Math.random() < 0.004) this.comets.push({ x: Math.random() * w, y: -10, vx: (Math.random() - 0.5) * 220, vy: 120 + Math.random() * 120, life: 0 });
       this.comets = this.comets.filter((c) => (c.life += 0.016) < 3 && c.y < h + 40);
       for (const c of this.comets) {

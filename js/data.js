@@ -892,7 +892,7 @@
     savage_opress: U('Unstoppable Brother', 'allEnemies', [dmg(1.5), debuff('stun', 1, 0.4), { ...buff('taunt', 2), on: 'self' }, { ...buff('defUp', 2), on: 'self' }], 'A brutal charge through every enemy with a 40% Stun chance; gain Taunt and Defense Up.', 'I will crush you.'),
     u_wing: U('Door Gunner', 'allEnemies', [dmg(0.5, 4), { ...tm(20), on: 'allies' }], 'The bay door slides open and the door gunner rakes every enemy with four bursts of heavy fire; all allies gain 20% Turn Meter.', 'Bay door\'s open, light \'em up!'),
     cassian_haulcraft: U('Wings Out', 'allEnemies', [dmg(1.6), debuff('offDown', 2)], 'The wings swing open and the engines flare: a blistering pass over every enemy, inflicting Offense Down.', 'Climb! Climb!'),
-    mando_n1: U('Peli\'s Special', 'allEnemies', [dmg(2.0), debuff('stun', 1, 0.35)], 'Every engine at full burn: a supersonic strafing run that tears through each enemy ship, with a chance to Stun.', 'That\'s my ship!'),
+    mando_n1: U('Whistling Birds', 'allEnemies', [dmg(2.0), debuff('stun', 1, 0.35)], 'Din Djarin screams past under the Mythosaur sigil and lets loose a flock of whistling birds: every enemy is hit, with a chance to Stun.', 'This is the Way.'),
     upsilon_shuttle: U('Supreme Escort', 'self', [buff('taunt', 3), buff('defUp', 3), heal(0.3), { ...buff('defUp', 2), on: 'allies' }], 'Wings unfold into a shield: Taunt, Defense Up and 30% repair; all allies gain Defense Up.', 'Prepare my shuttle.'),
     hounds_tooth: U('Bossk\'s Bounty', 'allEnemies', [execute(1.5, 0.35, 2), debuff('burn', 2)], 'A missile barrage on every enemy, doubled under 35% HP, and Burn.', 'The hunt is on.'),
     darth_revan: U('Mandalorian Wars', 'allEnemies', [dmg(2.3), debuff('defDown', 2), debuff('stun', 1, 0.5)], 'Twin blades carve every enemy: heavy damage, Defense Down and a 50% chance to Stun.', 'I am Revan. I have conquered death itself.'),
@@ -1250,7 +1250,7 @@
     ranged: { label: 'Ranged', icon: '➹' }, support: { label: 'Support', icon: '✦' }, force: { label: 'Force User', icon: '✧' },
     droid: { label: 'Droid', icon: '⚙' }, starfighter: { label: 'Starfighter', icon: '➶' }, bomber: { label: 'Bomber', icon: '✹' }, gunship: { label: 'Gunship', icon: '⛭' },
   };
-  const MELEE = ['cal_kestis', 'bo_katan', 'savage_opress', 'ewok_warrior', 'tusken_raider', 'obi_wan', 'luke', 'yoda', 'rey', 'darth_maul', 'kylo_ren', 'count_dooku', 'vader', 'ahsoka', 'grievous', 'mace_windu', 'magnaguard', 'k2so', 'hunter', 'grand_inquisitor', 'second_sister', 'fifth_brother', 'seventh_sister', 'eighth_brother', 'darth_revan', 'starkiller', 'master_luke', 'the_daughter', 'temple_guardian', 'the_son', 'darth_bane', 'boss_daughter', 'boss_guardian', 'boss_son', 'boss_bane', 'anakin', 'qui_gon', 'asajj_ventress', 'moff_gideon', 'rancor', 'krayt_dragon', 'lord_vader'];
+  const MELEE = ['barriss', 'cal_kestis', 'bo_katan', 'savage_opress', 'ewok_warrior', 'tusken_raider', 'obi_wan', 'luke', 'yoda', 'rey', 'darth_maul', 'kylo_ren', 'count_dooku', 'vader', 'ahsoka', 'grievous', 'mace_windu', 'magnaguard', 'k2so', 'hunter', 'grand_inquisitor', 'second_sister', 'fifth_brother', 'seventh_sister', 'eighth_brother', 'darth_revan', 'starkiller', 'master_luke', 'the_daughter', 'temple_guardian', 'the_son', 'darth_bane', 'boss_daughter', 'boss_guardian', 'boss_son', 'boss_bane', 'anakin', 'qui_gon', 'asajj_ventress', 'moff_gideon', 'rancor', 'krayt_dragon', 'lord_vader'];
 
   // Classes lead with what the card actually does in a squad: Tank, Healer or
   // Support, and Fighter (melee) or Ranged only for damage dealers. Ships add
@@ -1277,6 +1277,16 @@
     return MELEE.includes(def.id) ? 'fighter' : 'ranged';
   }
 
+  // What a unit's basic attack looks like when it isn't a plain red blaster
+  // bolt (sabers come from MELEE): Force lightning, Nightsister magick,
+  // droid zappers, a Force push, or a differently coloured bolt.
+  const WEAPON = {
+    palpatine: 'lightning', talzin: 'magick', nightsister_acolyte: 'magick', grogu: 'force',
+    r2d2: 'zap', chopper: 'zap', bb8: 'zap', c3po: 'zap', two_onebee: 'zap',
+    clone_trooper: '#4aa8ff', captain_rex: '#4aa8ff', echo: '#4aa8ff', wrecker: '#4aa8ff', tech: '#4aa8ff', crosshair: '#4aa8ff',
+    jawa: '#6ac8ff', chewbacca: '#5aff9a',
+  };
+
   // Signature animation for each unit's ultimate (see battle-ui superMove).
   const ULT_ANIM = {
     rebel_soldier: 'barrage', stormtrooper: 'barrage', battle_droid: 'barrage', tusken_raider: 'barrage', death_trooper: 'barrage', clone_trooper: 'bulwark',
@@ -1286,7 +1296,7 @@
     a_wing: 'strafe', x_wing: 'torpedo', z95: 'strafe', tie_fighter: 'strafe', tie_interceptor: 'strafe', tie_advanced: 'strafe', falcon: 'strafe',
     y_wing: 'shield', lambda_shuttle: 'shield', b_wing: 'broadside', razor_crest: 'broadside', tie_bomber: 'bombrun', slave_one: 'bombrun',
     c3po: 'rally', bb8: 'dash', k2so: 'leap', chopper: 'heal', ig88: 'rockets', droideka: 'bulwark', b2_droid: 'barrage', magnaguard: 'dash', ig11: 'barrage', vulture_droid: 'strafe',
-    rebel_medic: 'heal', two_onebee: 'heal', nightsister_acolyte: 'heal', barriss: 'heal', talzin: 'lightning', hunter: 'dash', wrecker: 'rockets', tech: 'rally', crosshair: 'snipe', echo: 'lightning',
+    rebel_medic: 'heal', two_onebee: 'heal', nightsister_acolyte: 'heal', barriss: 'heal', talzin: 'lightning', hunter: 'dash', wrecker: 'rockets', tech: 'rally', crosshair: 'snipe', echo: 'barrage',
     grand_inquisitor: 'saberstorm', second_sister: 'spinsaber', fifth_brother: 'leap', seventh_sister: 'rockets', eighth_brother: 'spinsaber',
     cal_kestis: 'spinsaber', bo_katan: 'dash', sabine: 'rockets', captain_rex: 'bulwark', hondo: 'rally', savage_opress: 'whirl', u_wing: 'rally', upsilon_shuttle: 'shield', hounds_tooth: 'torpedo',
     arc_170: 'strafe', delta7: 'shield', tie_defender: 'strafe', tie_silencer: 'strafe', the_daughter: 'heal', temple_guardian: 'bulwark', the_son: 'lightning', darth_bane: 'lightning', ebon_hawk: 'shield', sith_fury: 'strafe', boss_daughter: 'heal', boss_guardian: 'bulwark', boss_son: 'lightning', boss_bane: 'lightning',
@@ -1490,7 +1500,7 @@
       ],
     },
     {
-      id: 'mustafar', name: 'Mustafar', region: 'Outer Rim', env: 'lava', reinforce: { character: ['battle_droid', 'death_trooper'], ship: ['tie_interceptor', 'tie_fighter'] }, map: { x: 90, y: 70 }, color: '#e04a2a',
+      id: 'mustafar', name: 'Mustafar', region: 'Outer Rim', env: 'lava', reinforce: { character: ['battle_droid', 'death_trooper'], ship: ['tie_interceptor', 'tie_fighter'] }, map: { x: 91, y: 63 }, color: '#e04a2a',
       blurb: 'A volcanic hellscape of lava rivers and ash, where the dark side is at its strongest.',
       terrain: { name: 'Lava Fields', desc: 'Sith gain +25% attack. Everyone else loses 8% health.', rules: [{ traits: ['sith'], mods: { atk: 0.25 } }, { notTraits: ['sith'], mods: { hp: -0.08 } }] },
       hazard: { id: 'eruption', name: 'Eruption', every: 8, desc: 'Every 8 turns a volcano erupts: 6% max HP to all non-Sith units, with a 30% chance to Burn.', effect: { type: 'damage', pct: 0.06, except: ['sith'], burn: 0.3 } },
@@ -1818,6 +1828,6 @@
     DUPLICATE_SHARDS, SQUAD_SIZE, PACKS, STARTER, levelCost, unitStats, power, stageRewards,
     ultimateFor, abilitiesFor, BOSSES, BOSS_ENCOUNTERS, bossRewards, CURRENCIES, LUCK, CHARMS, MARKET_REFRESH_MS, FLASH_MS, DAILY, SECRET_PLANET, SECRET_BOSSES, SECRET_COSTS, secretCost, RESTOCK_KYBER, EXCHANGE, TOWER, towerFloor, towerRewards, towerCheckpoint, SHELL_PAYOUT, SHELL_BETS, BIOS,
     BASE_SLOTS, SLOT_UNLOCKS, MAX_ACCOUNT_LEVEL, xpToNext, levelReward, XP, planetSquadSize,
-    TRAITS, TRAIT_INFO, ROLE_SYNERGIES, SYN_THEME, CLASS_INFO, classesOf, attackStyle, ULT_ANIM, SYNERGIES, PLANETS, PLANET_MAP, enemyStars, PLANET_CLEAR_KYBER, BASE_DOUBLE, traitsOf, squadBonuses,
+    TRAITS, TRAIT_INFO, ROLE_SYNERGIES, SYN_THEME, CLASS_INFO, classesOf, attackStyle, WEAPON, ULT_ANIM, SYNERGIES, PLANETS, PLANET_MAP, enemyStars, PLANET_CLEAR_KYBER, BASE_DOUBLE, traitsOf, squadBonuses,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

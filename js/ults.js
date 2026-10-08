@@ -94,7 +94,7 @@
     savage_opress: { move: 'shockwave', prop: 'staff', impact: 'crush', color: '#ff2a2a', quake: true },
     u_wing: { move: 'turret', prop: 'bolt', impact: 'burn', color: '#ff5a3a', n: 8 },
     cassian_haulcraft: { move: 'loop', prop: 'ship', impact: 'scorch', color: '#ffb46a', big: true },
-    mando_n1: { move: 'homing', prop: 'ship', impact: 'shock', color: '#9ad8ff', n: 3, big: true },
+    mando_n1: { move: 'mando', prop: 'dart', impact: 'shock', color: '#ffc06a', big: true },
     upsilon_shuttle: { move: 'aegis', color: '#ff3a3a', prop: 'upsilon' },
     hounds_tooth: { move: 'homing', prop: 'rocket', impact: 'scorch', color: '#ff9a3a', n: 4 },
     // Secret cards earned in the hidden zone
@@ -162,11 +162,25 @@
         return n;
       }
       case 'ship': {
+        // The ship is drawn once into an image (glow baked in) so flying it
+        // around is a cheap move of a picture, not a redraw of a detailed SVG
+        // with filters every frame.
         const size = Math.min(window.innerWidth, window.innerHeight) * 0.3;
-        return el(`<div class="sp-prop sp-ship heading" style="--c:${c};width:${size}px;height:${size}px">${root.Art.shipOnly(actor.def)}</div>`);
+        return el(`<div class="sp-prop sp-ship heading" style="--c:${c};width:${size}px;height:${size}px"><img alt="" src="${shipImage(actor.def, c)}"></div>`);
       }
       default: return make('sp-orb', 26, '');
     }
+  }
+
+  const SHIP_IMG = new Map();
+  function shipImage(def, c) {
+    const key = def.shape + c;
+    if (!SHIP_IMG.has(key)) {
+      const inner = root.Art.shipOnly(def).replace(/^<svg[^>]*>/, '').replace(/<\/svg>\s*$/, '');
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-12 -12 124 124"><defs><filter id="g" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="0" stdDeviation="2.4" flood-color="${c}" flood-opacity=".8"/></filter></defs><g filter="url(#g)">${inner}</g></svg>`;
+      SHIP_IMG.set(key, 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg));
+    }
+    return SHIP_IMG.get(key);
   }
 
   // Catmull-Rom path follower in viewport space.
@@ -703,6 +717,37 @@
         await Promise.all(ships);
       }
       await this.wait(260);
+    },
+
+    // Mando's N-1: the Mythosaur sigil burns over the field, the N-1 screams
+    // across once and a flock of whistling birds peels off it into every target.
+    async mv_mando(S, actor, from, T, spec, hit) {
+      const skull = '<path d="M50 30 C40 30 32 34 30 42 C29 50 33 56 38 60 L44 78 C46 84 54 84 56 78 L62 60 C67 56 71 50 70 42 C68 34 60 30 50 30Z"/><path d="M34 35 C26 30 20 22 20 10 C26 18 32 24 40 31 M66 35 C74 30 80 22 80 10 C74 18 68 24 60 31"/><path d="M38 61 C30 66 26 72 26 82 C32 74 36 70 42 68 M62 61 C70 66 74 72 74 82 C68 74 64 70 58 68"/><path d="M37 45 L46 48 L44 51 L37 48Z M63 45 L54 48 L56 51 L63 48Z M50 54 L50 74"/>';
+      const sigil = el(`<div class="sig-mytho" style="--c:${spec.color}"><svg viewBox="0 0 100 100"><g class="gl">${skull}</g><g class="co">${skull}</g></svg></div>`);
+      S.layer.appendChild(sigil);
+      sigil.animate([{ opacity: 0, transform: 'translate(-50%,-50%) scale(.82)' }, { opacity: 0.55, transform: 'translate(-50%,-50%) scale(1)' }], { duration: 520 / S.speed, easing: 'cubic-bezier(.2,.8,.3,1)', fill: 'forwards' });
+      if (root.Sound) root.Sound.play('whoosh');
+      await this.wait(420);
+      const ltr = actor.side === 'player';
+      const yPass = S.H * 0.2;
+      const route = [{ x: ltr ? -S.W * 0.2 : S.W * 1.2, y: yPass + S.H * 0.12 }, { x: S.W / 2, y: yPass }, { x: ltr ? S.W * 1.25 : -S.W * 0.25, y: yPass - S.H * 0.08 }];
+      const pass = follow(S, propEl('ship', '#9ad8ff', actor), route, { speed: 2.6, trail: '#bfe8ff', trailWidth: 0.6 });
+      await this.wait(340);
+      if (root.Sound) root.Sound.play('laser');
+      const launch = { x: S.W / 2, y: yPass };
+      const birds = [];
+      T.forEach((t, ti) => {
+        for (let k = 0; k < 2; k++) {
+          const apex = { x: launch.x + rand(-S.W * 0.3, S.W * 0.3), y: launch.y + rand(-40, 60) };
+          birds.push(follow(S, propEl('dart', spec.color, actor), [launch, apex, { ...t, x: t.x + rand(-12, 12) }], {
+            speed: 1.8, delay: ti * 80 + k * 55, trail: '#ffd8a0', trailWidth: 0.35,
+            onNode: (r) => { if (r.uid) { if (k === 0) hit(r); else this.sigScorch(r, spec.color); } },
+          }));
+        }
+      });
+      await Promise.all([pass, ...birds]);
+      sigil.animate([{ opacity: 0.55 }, { opacity: 0 }], { duration: 400, fill: 'forwards' });
+      await this.wait(200);
     },
 
     // Bomber crosses overhead dropping a string of bombs.

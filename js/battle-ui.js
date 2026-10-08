@@ -25,6 +25,9 @@
 
   const reducedMotion = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const BOLT = { light: '#ff3b3b', dark: '#3bff6a' };
+  // Hand-held blasters fire red unless the unit has its own colour (clone
+  // rifles are blue); green stays with TIE and droid-fighter cannons.
+  const blasterColor = (actor) => { const w = root.GameData.WEAPON[actor.id]; return typeof w === 'string' && w[0] === '#' ? w : '#ff3b3b'; };
   const SABER = { light: '#5ab4ff', dark: '#ff2a2a' };
   const rand = (a, b) => a + Math.random() * (b - a);
 
@@ -812,6 +815,10 @@
       if (actor.def.kind === 'ship') return this.shipAttack(actor, ab, ev, targets, motion);
 
       const from = this.center(actor.uid);
+      const weapon = D.WEAPON[actor.id];
+      if (weapon === 'lightning' || weapon === 'magick') return this.lightning(actor, targets, 520, weapon === 'magick' ? '#5aff8a' : null);
+      if (weapon === 'zap') return this.lightning(actor, targets, 300, '#7ad8ff', true);
+      if (weapon === 'force') return this.forcePush(actor, targets);
       if (ev.aoe) {
         if (motion) card.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.15)' }, { transform: 'scale(1)' }], { duration: 420 / this.speed });
         this.wave(from, actor.def.faction === 'light' ? '#5ab4ff' : '#ff4b4b', actor.boss ? 10 : 7);
@@ -823,7 +830,7 @@
       const ranged = D.attackStyle(actor.def) === 'ranged';
       if (ranged) {
         if (motion) card.animate([{ transform: 'translateY(0)' }, { transform: `translateY(${actor.side === 'player' ? 5 : -5}px)` }, { transform: 'translateY(0)' }], { duration: 220 / this.speed });
-        const color = BOLT[actor.def.faction];
+        const color = blasterColor(actor);
         this.flashAt(from, color);
         this.laser(from, to, color, 0);
         if (ev.abilityIndex > 0) this.laser(from, to, color, 90);
@@ -848,7 +855,9 @@
       const from = this.center(actor.uid);
       for (const t of targets) {
         const to = this.center(t.uid);
-        if (actor.def.kind === 'ship' || D.attackStyle(actor.def) === 'ranged') this.laser(from, to, BOLT[actor.def.faction], 0);
+        const weapon = D.WEAPON[actor.id];
+        if (actor.def.kind !== 'ship' && ['lightning', 'magick', 'zap', 'force'].includes(weapon)) { this.wave(to, weapon === 'magick' ? '#5aff8a' : weapon === 'lightning' ? '#b58cff' : '#9ad8ff', 2); this.sparks(to, '#e8f0ff', 4); } else if (actor.def.kind === 'ship') this.laser(from, to, BOLT[actor.def.faction], 0);
+        else if (D.attackStyle(actor.def) === 'ranged') this.laser(from, to, blasterColor(actor), 0);
         else this.slash(to, actor.def.accent || '#fff');
       }
       await this.wait(220);
@@ -1560,49 +1569,66 @@
     },
 
     // Jagged Force lightning arcs to every target.
-    async lightning(actor, targets, ms) {
+    async lightning(actor, targets, ms, color, small) {
       const layer = this.cineLayer();
       const svgNS = 'http://www.w3.org/2000/svg';
       const svg = document.createElementNS(svgNS, 'svg');
       svg.setAttribute('class', 'bolt-svg');
       svg.setAttribute('width', window.innerWidth);
       svg.setAttribute('height', window.innerHeight);
+      if (color) svg.style.setProperty('--bolt', color);
       layer.appendChild(svg);
       const from = this.vp(actor.uid);
       const end = performance.now() + ms / Math.min(this.speed, 2);
+      const jag = small ? 14 : 26;
+      const tint = color || '#b58cff';
+      let last = 0;
       await new Promise((resolve) => {
-        const draw = () => {
-          svg.innerHTML = '';
-          for (const t of targets) {
-            if (!this.cards[t.uid]) continue;
-            const to = this.vp(t.uid);
-            for (let k = 0; k < 2; k++) {
-              let d = `M${from.x} ${from.y}`;
-              const n = 9;
-              for (let i = 1; i < n; i++) {
-                const x = from.x + ((to.x - from.x) * i) / n + rand(-26, 26);
-                const y = from.y + ((to.y - from.y) * i) / n + rand(-26, 26);
-                d += ` L${x} ${y}`;
+        const draw = (now) => {
+          // A new fork every ~45 ms reads as crackling and costs a fraction of
+          // redrawing every frame.
+          if (!now || now - last > 45) {
+            last = now || performance.now();
+            let d = '';
+            for (const t of targets) {
+              if (!this.cards[t.uid]) continue;
+              const to = this.vp(t.uid);
+              for (let k = 0; k < (small ? 1 : 2); k++) {
+                d += `M${from.x} ${from.y}`;
+                const n = small ? 6 : 9;
+                for (let i = 1; i < n; i++) d += ` L${from.x + ((to.x - from.x) * i) / n + rand(-jag, jag)} ${from.y + ((to.y - from.y) * i) / n + rand(-jag, jag)}`;
+                d += ` L${to.x} ${to.y}`;
               }
-              d += ` L${to.x} ${to.y}`;
-              const path = document.createElementNS(svgNS, 'path');
-              path.setAttribute('d', d);
-              path.setAttribute('class', k ? 'core' : 'glow');
-              svg.appendChild(path);
+              if (Math.random() < 0.3) {
+                const c = this.center(t.uid);
+                this.env.light(c.x, c.y, tint, 120, 0.2);
+                this.sparks(c, '#eef2ff', 3);
+              }
             }
-            if (Math.random() < 0.3) {
-              const c = this.center(t.uid);
-              this.env.light(c.x, c.y, '#b58cff', 120, 0.2);
-              this.sparks(c, '#d8c8ff', 3);
-            }
+            svg.innerHTML = `<path class="glow" d="${d}"/><path class="mid" d="${d}"/><path class="core" d="${d}"/>`;
           }
           if (performance.now() < end) requestAnimationFrame(draw);
           else resolve();
         };
         draw();
       });
-      this.env.flash('#b58cff', 0.35);
+      if (!small) this.env.flash(tint, 0.35);
       layer.remove();
+    },
+
+    // Grogu's basic attack: a ripple of the Force that shoves the target.
+    async forcePush(actor, targets) {
+      const from = this.center(actor.uid);
+      this.wave(from, '#9ad8ff', 2);
+      await this.wait(140);
+      for (const t of targets) {
+        const to = this.center(t.uid);
+        this.wave(to, '#9ad8ff', 3.4);
+        const card = this.cards[t.uid];
+        if (card && !reducedMotion()) card.animate([{ transform: 'translateY(0)' }, { transform: `translateY(${actor.side === 'player' ? -16 : 16}px) rotate(3deg)`, offset: 0.35 }, { transform: 'translateY(0)' }], { duration: 420 / this.speed, easing: 'ease-out' });
+        this.env.impact(to.x, to.y, { power: 0.5, color: '#9ad8ff' });
+      }
+      await this.wait(300);
     },
 
     sm_lightning(actor, targets) {
