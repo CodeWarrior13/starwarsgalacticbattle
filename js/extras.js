@@ -250,10 +250,7 @@ root.Art.addArt('char', 'holo_gatekeeper', () => {
 });
 
 root.Art.addArt('ship', 'falcon_kessel', () => [[8, 20, 30], [4, 46, 26], [10, 70, 34], [70, 14, 26], [72, 84, 24], [6, 88, 20]].map(([x, y, w]) => L(x, y, x + w, y, '#9fdcff', 1, 'opacity=".55"')).join('')
-  + SHIPS.falcon()
-  + C(50, 56, 34, 'none', 'stroke="#ffd23f" stroke-width="1.6"') + C(50, 56, 11, 'none', 'stroke="#ffd23f" stroke-width="1.2"')
-  + P('M36 26 L36 6 L39 6 L39 28Z', '#ffd23f', 'opacity=".85"') + P('M64 26 L64 6 L61 6 L61 28Z', '#ffd23f', 'opacity=".85"')
-  + '<path class="eng" d="M22 82 A34 34 0 0 0 78 82" stroke="#ffffff" stroke-width="4.4" fill="none" style="--eng:#9fdcff"/>');
+  + root.Ships3.falcon({ trim: '#ffd23f', engine: '#ffffff' }));
 
 // ---------- feats ----------
 const FEATS = {

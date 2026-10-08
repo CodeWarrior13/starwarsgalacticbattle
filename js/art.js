@@ -1040,13 +1040,6 @@
       + R(10, 72, 12, 3, '#6d7582') + R(78, 72, 12, 3, '#6d7582') + C(50, 14, 9, HULL) + C(50, 14, 5, '#152235') + P('M47 12 A4 4 0 0 1 52 10Z', '#7fb2e6', 'opacity=".6"')
       + R(46, 34, 8, 4, '#c43b2e') + R(20, 56, 10, 2.4, '#c43b2e') + R(70, 56, 10, 2.4, '#c43b2e')
       + eng(46, 95, 2.6) + eng(50, 96, 2.6) + eng(54, 95, 2.6) + `<path d="M46 44 H54 M46 76 H54 M30 60 H70" ${LINE}/>`,
-    falcon: () => P('M36 26 L36 6 L46 6 L46 30Z', HULL) + P('M64 26 L64 6 L54 6 L54 30Z', HULL) + R(38, 8, 6, 3, HULL_D) + R(56, 8, 6, 3, HULL_D)
-      + C(50, 56, 34, HULL) + shade('M50 22 A34 34 0 0 0 50 90Z', 0.1) + C(50, 56, 34, 'none', 'stroke="#8a929e" stroke-width="1"')
-      + P('M46 22 L54 22 L54 36 L46 36Z', '#070a12') + C(50, 56, 11, '#aeb6c2') + C(50, 56, 6, '#8a929e') + C(50, 56, 3, '#4a525e')
-      + `<path d="M50 34 L50 45 M50 67 L50 88 M28 56 L39 56 M61 56 L84 56 M34 40 L42 48 M66 40 L58 48 M34 72 L42 64 M66 72 L58 64" ${LINE}/>`
-      + P('M80 36 L96 34 L97 42 L82 46Z', HULL) + C(94, 38, 4, '#152235') + P('M76 42 L84 38 L84 46Z', HULL_D)
-      + E(33, 44, 5, 3, HULL_D) + E(33, 44, 3, 1.8, '#5d6674')
-      + `<path class="eng" d="M24 80 A34 34 0 0 0 76 80" stroke="#9fdcff" stroke-width="3.4" fill="none" style="--eng:#6fc8ff"/>`,
     razorcrest: () => P('M44 8 L56 8 L60 30 L60 78 L40 78 L40 30Z', '#b8bec6') + shade('M44 8 L40 30 L40 78 L50 78 L50 8Z', 0.12)
       + R(22, 48, 16, 34, '#a3aab3', 'rx="4"') + R(62, 48, 16, 34, '#a3aab3', 'rx="4"') + R(26, 58, 8, 18, '#6d7582', 'rx="2"') + R(66, 58, 8, 18, '#6d7582', 'rx="2"')
       + R(38, 56, 24, 6, '#8a929e') + eng(30, 84, 5.2, '#9fdcff') + eng(70, 84, 5.2, '#9fdcff')
@@ -1149,18 +1142,6 @@
         + P(hull, 'none', 'stroke="#1e2618" stroke-width="1"') + `<path d="M41 11 C44 8 50 7.4 55 8" stroke="#eef4dc" stroke-width=".7" fill="none" opacity=".7"/>`
         + eng(32, 90, 2.6, '#ffb070') + eng(68, 90, 2.6, '#ffb070') + eng(50, 94, 3, '#ffb070');
     },
-    n1: () => {
-      // Naboo N-1: chrome-and-gold needle with long trailing engine spikes.
-      const [ch, chd] = LG([[0, '#f4f6f8'], [0.5, '#b8c0c8'], [1, '#6a727e']], 0, 0, 1, 0);
-      const [gd, gdd] = LG([[0, '#fff2a8'], [0.5, '#e8b830'], [1, '#a87810']], 0, 0, 1, 0);
-      return chd + gdd
-        + P('M24 44 L36 40 L36 96 L30 98 L26 92Z', ch) + P('M76 44 L64 40 L64 96 L70 98 L74 92Z', ch)
-        + P('M36 46 L18 54 L18 60 L36 58Z', gd) + P('M64 46 L82 54 L82 60 L64 58Z', gd)
-        + P('M50 4 C56 10 58 22 58 36 L58 70 L42 70 L42 36 C42 22 44 10 50 4Z', gd)
-        + P('M42 52 L58 52 L60 72 L40 72Z', ch) + E(50, 30, 4.5, 7, '#12263a') + E(48.8, 28, 1.6, 2.4, '#9fd8ff', 'opacity=".6"')
-        + C(50, 46, 3, '#c83a2a') + L(50, 6, 50, 26, '#fff8d0', 0.8, 'opacity=".7"')
-        + eng(30, 98, 2.4, '#9fdcff') + eng(70, 98, 2.4, '#9fdcff');
-    },
     scimitar: () => {
       // Sith Infiltrator: ball cockpit up front, wide down-swept wings.
       const [hl, hld] = LG([[0, '#5a5f6a'], [0.5, '#2a2d33'], [1, '#0e0f12']], 0, 0, 1, 0.4);
@@ -1205,17 +1186,6 @@
         + E(50, 34, 4, 7, '#2a0a0a') + `<g style="filter:drop-shadow(0 0 2px #ff2a2a)">${E(50, 34, 2.4, 4.4, '#ff3a3a', 'opacity=".7"')}</g>`
         + eng(46, 88, 2.4, '#ff6a4a') + eng(54, 88, 2.4, '#ff6a4a');
     },
-    uwing: () => {
-      const [h, hd] = LG([[0, '#dcd8cc'], [1, '#8a8678']], 0, 0, 1, 0.3);
-      return hd
-        + P('M42 52 L8 34 L6 40 L40 62Z', h) + P('M58 52 L92 34 L94 40 L60 62Z', h) + shade('M42 52 L8 34 L6 40 L40 62Z', 0.12)
-        + R(4, 32, 6, 14, '#a8a498', 'rx="2"') + R(90, 32, 6, 14, '#a8a498', 'rx="2"') + eng(7, 48, 2.6, '#9fdcff') + eng(93, 48, 2.6, '#9fdcff')
-        + R(10, 37, 20, 2.4, '#8a6a3a', 'transform="rotate(28 10 37)"') + R(70, 46, 20, 2.4, '#8a6a3a', 'transform="rotate(-28 90 37)"')
-        + P('M40 26 L60 26 L64 80 L36 80Z', h) + shade('M40 26 L50 26 L50 80 L36 80Z', 0.12)
-        + P('M42 10 C42 6 58 6 58 10 L60 28 L40 28Z', h) + P('M44 12 L56 12 L57 22 L43 22Z', '#2a3a4a')
-        + R(38, 40, 24, 22, '#b8b4a8', 'rx="2"') + L(50, 40, 50, 62, '#6a665a', 1) + R(40, 44, 8, 4, '#8a6a3a') + R(52, 44, 8, 4, '#8a6a3a')
-        + eng(42, 82, 3.2, '#9fdcff') + eng(58, 82, 3.2, '#9fdcff');
-    },
     upsilon: () => {
       const [w, wd] = LG([[0, '#2a2a30'], [1, '#08080a']], 0, 0, 1, 0);
       return wd
@@ -1225,17 +1195,6 @@
         + P('M44 14 C44 8 56 8 56 14 L58 84 L42 84Z', '#1e1e24') + shade('M44 14 C44 8 50 8 50 8 L50 84 L42 84Z', 0.2)
         + P('M46 16 L54 16 L54 30 L46 30Z', '#5a1218') + R(46.5, 18, 7, 3, '#ff3a3a', 'opacity=".7"')
         + L(50, 34, 50, 80, '#3a3a42', 1) + eng(46, 86, 3, '#ff8a6a') + eng(54, 86, 3, '#ff8a6a');
-    },
-    houndstooth: () => {
-      const [h, hd] = LG([[0, '#c8c0a8'], [1, '#5a5444']], 0, 0, 1, 0.4);
-      return hd
-        + P('M50 14 C72 14 88 30 88 50 C88 70 72 84 50 84 C28 84 12 70 12 50 C12 30 28 14 50 14Z', h)
-        + shade('M50 14 C28 14 12 30 12 50 C12 70 28 84 50 84Z', 0.15)
-        + P('M30 18 L24 4 L34 6 L40 16Z', '#9a9480') + P('M70 18 L76 4 L66 6 L60 16Z', '#9a9480')
-        + C(50, 50, 14, '#8a8470') + C(50, 50, 9, '#5a5444') + C(50, 50, 4, '#ff8a3a', 'style="filter:drop-shadow(0 0 3px #ff8a3a)"')
-        + E(76, 34, 8, 6, '#6a6452') + E(77, 33, 5, 3.4, '#1a2a2a') + R(18, 46, 12, 3, '#8a3a2a') + R(70, 58, 12, 3, '#8a3a2a')
-        + P('M14 52 L4 56 L6 60 L16 58Z', '#6a6452') + P('M86 52 L96 56 L94 60 L84 58Z', '#6a6452')
-        + eng(36, 84, 3.2, '#ffb07a') + eng(50, 86, 3.4, '#ffb07a') + eng(64, 84, 3.2, '#ffb07a');
     },
     ebonhawk: () => {
       const [h, hd] = LG([[0, '#d8ccb4'], [1, '#7a6e58']], 0, 0, 1, 0.4);
@@ -1547,5 +1506,5 @@
     return `<svg class="ship-only" viewBox="0 0 100 100" aria-hidden="true">${(SHIPS[def.shape] || SHIPS.xwing)()}</svg>`;
   }
 
-  root.Art = { kit: { P, E, C, R, L, shade, SCENES, shoulders, SHIPS }, addArt: (kind, key, fn) => { (kind === 'ship' ? SHIPS : CHAR)[key] = fn; ART_CACHE.clear(); }, unitArt, shipOnly, cardBack, ICONS, crateArt, setCrateStyle: (v) => { CRATE_STYLE = ['holo', 'faction'].includes(v) ? v : 'relic'; }, get crateStyle() { return CRATE_STYLE; }, merchantArt, SHIP_SHAPES: Object.keys(SHIPS), CHARACTER_IDS: Object.keys(CHAR) };
+  root.Art = { kit: { P, E, C, R, L, shade, SCENES, shoulders, SHIPS }, addArt: (kind, key, fn) => { (kind === 'ship' ? SHIPS : CHAR)[key] = fn; ART_CACHE.clear(); }, unitArt, shipOnly, cardBack, ICONS, crateArt, setCrateStyle: (v) => { CRATE_STYLE = ['holo', 'faction'].includes(v) ? v : 'relic'; }, get crateStyle() { return CRATE_STYLE; }, merchantArt, get SHIP_SHAPES() { return Object.keys(SHIPS); }, CHARACTER_IDS: Object.keys(CHAR) };
 })(typeof window !== 'undefined' ? window : globalThis);

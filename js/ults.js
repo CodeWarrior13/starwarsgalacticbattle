@@ -92,7 +92,9 @@
     captain_rex: { move: 'aegis', color: '#3d6fd6', prop: 'rex' },
     hondo: { move: 'rally', color: '#ffd23f', prop: 'credits' },
     savage_opress: { move: 'shockwave', prop: 'staff', impact: 'crush', color: '#ff2a2a', quake: true },
-    u_wing: { move: 'rally', color: '#9ab4d0', prop: 'commando' },
+    u_wing: { move: 'turret', prop: 'bolt', impact: 'burn', color: '#ff5a3a', n: 8 },
+    cassian_haulcraft: { move: 'loop', prop: 'ship', impact: 'scorch', color: '#ffb46a', big: true },
+    mando_n1: { move: 'homing', prop: 'ship', impact: 'shock', color: '#9ad8ff', n: 3, big: true },
     upsilon_shuttle: { move: 'aegis', color: '#ff3a3a', prop: 'upsilon' },
     hounds_tooth: { move: 'homing', prop: 'rocket', impact: 'scorch', color: '#ff9a3a', n: 4 },
     // Secret cards earned in the hidden zone

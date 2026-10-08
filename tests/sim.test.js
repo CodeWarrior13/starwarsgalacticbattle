@@ -446,6 +446,7 @@ test('every unit has a full-screen signature ultimate', () => {
 
 test('every unit and boss has cover art and a bio', () => {
   require('../js/art.js');
+  require('../js/ships3d.js');
   for (const u of [...D.UNITS, ...D.BOSSES]) {
     assert.ok(D.BIOS[u.id], `${u.id} bio`);
     if (u.kind === 'character') assert.ok(globalThis.Art.CHARACTER_IDS.includes(u.id), `${u.id} art`);

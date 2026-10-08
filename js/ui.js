@@ -2779,6 +2779,7 @@
     cal_kestis: 'endor', bo_katan: 'coruscant_siege', sabine: 'tatooine', captain_rex: 'geonosis', hondo: 'bespin', savage_opress: 'mustafar', u_wing: 'scarif', upsilon_shuttle: 'exegol', hounds_tooth: 'tatooine',
     the_daughter: 'mortis', temple_guardian: 'mortis', the_son: 'mortis', darth_bane: 'mortis', ebon_hawk: 'mortis', sith_fury: 'mortis', arc_170: 'coruscant', delta7: 'coruscant', tie_defender: 'scarif', tie_silencer: 'exegol',
     anakin: 'mustafar', qui_gon: 'tatooine', padme: 'geonosis', lando: 'bespin', jango_fett: 'geonosis', asajj_ventress: 'mustafar', cad_bane: 'tatooine', moff_gideon: 'tatooine', n1_starfighter: 'coruscant', sith_infiltrator: 'tatooine',
+    cassian_haulcraft: 'coruscant', mando_n1: 'tatooine',
     talzin: 'mustafar', nightsister_acolyte: 'mustafar', grand_inquisitor: 'coruscant_siege', second_sister: 'coruscant_siege', fifth_brother: 'coruscant_siege', seventh_sister: 'coruscant_siege', eighth_brother: 'coruscant_siege',
   };
   function homeworldOf(def) {

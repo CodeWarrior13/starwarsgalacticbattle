@@ -232,7 +232,7 @@
       ],
     },
     {
-      id: 'falcon', name: 'Millennium Falcon', kind: 'ship', faction: 'light', rarity: 'legendary', role: 'support', shape: 'falcon', spd: 155,
+      id: 'falcon', name: 'Millennium Falcon', kind: 'ship', faction: 'light', rarity: 'mythic', role: 'support', shape: 'falcon', spd: 155,
       abilities: [
         { name: 'Quad Lasers', cd: 0, target: 'enemy', effects: [dmg(1.1, 2)], desc: 'Hit one enemy twice.' },
         { name: 'Evasive Maneuvers', cd: 4, target: 'allAllies', effects: [heal(0.15), buff('defUp', 2), tm(20)], desc: 'All allies heal 15%, gain Defense Up and 20% Turn Meter.' },
@@ -270,10 +270,11 @@
       ],
     },
     {
-      id: 'slave_one', name: 'Slave I', kind: 'ship', faction: 'dark', rarity: 'epic', role: 'support', shape: 'slave',
+      id: 'slave_one', name: 'Slave I', kind: 'ship', faction: 'dark', rarity: 'legendary', role: 'support', shape: 'slave',
       abilities: [
         { name: 'Blaster Cannons', cd: 0, target: 'enemy', effects: [dmg(1.05)], desc: 'Deal damage to one enemy.' },
         { name: 'Seismic Charge', cd: 4, target: 'allEnemies', effects: [dmg(0.8), debuff('stun', 1, 0.35)], desc: 'Damage all enemies with a 35% chance to Stun.' },
+        { name: 'Tracking Fob', cd: 3, target: 'enemy', effects: [dmg(1.5), debuff('defDown', 2)], desc: 'Lock on and fire: heavy damage and Defense Down.' },
       ],
     },
     {
@@ -345,10 +346,11 @@
       ],
     },
     {
-      id: 'razor_crest', name: 'Razor Crest', kind: 'ship', faction: 'light', rarity: 'rare', role: 'tank', shape: 'razorcrest',
+      id: 'razor_crest', name: 'Razor Crest', kind: 'ship', faction: 'light', rarity: 'legendary', role: 'tank', shape: 'razorcrest',
       abilities: [
         { name: 'Blaster Cannons', cd: 0, target: 'enemy', effects: [dmg(0.95)], desc: 'Deal damage to one enemy.' },
         { name: 'Carbonite Hold', cd: 3, target: 'enemy', effects: [dmg(1.2), debuff('stun', 1), { ...buff('taunt', 2), on: 'self' }], desc: 'Damage and Stun one enemy, then gain Taunt.' },
+        { name: 'Bounty Hunter\'s Code', cd: 4, target: 'allAllies', effects: [heal(0.15), buff('defUp', 2)], desc: 'All allies heal 15% and gain Defense Up.' },
       ],
     },
     {
@@ -608,10 +610,11 @@
       ],
     },
     {
-      id: 'sith_infiltrator', name: 'Sith Infiltrator', kind: 'ship', faction: 'dark', rarity: 'epic', role: 'attacker', shape: 'scimitar', spd: 152,
+      id: 'sith_infiltrator', name: 'Sith Infiltrator', kind: 'ship', faction: 'dark', rarity: 'mythic', role: 'attacker', shape: 'scimitar', spd: 152,
       abilities: [
         { name: 'Laser Cannons', cd: 0, target: 'enemy', effects: [dmg(1.15)], desc: 'Deal damage to one enemy.' },
         { name: 'Cloaked Strike', cd: 3, target: 'allEnemies', effects: [dmg(0.85), debuff('offDown', 2, 0.4)], desc: 'Damage all enemies with a 40% chance of Offense Down.' },
+        { name: 'Seeker Swarm', cd: 4, target: 'allEnemies', effects: [dmg(0.7, 2), debuff('defDown', 2, 0.6)], desc: 'Release the seeker droids: hit every enemy twice with a 60% chance of Defense Down.' },
       ],
     },
 
@@ -689,7 +692,7 @@
       ],
     },
     {
-      id: 'u_wing', name: 'U-Wing', kind: 'ship', faction: 'light', rarity: 'rare', role: 'support', shape: 'uwing', spd: 140,
+      id: 'u_wing', name: 'U-Wing', kind: 'ship', faction: 'light', rarity: 'epic', role: 'support', shape: 'uwing', spd: 140,
       abilities: [
         { name: 'Ion Cannons', cd: 0, target: 'enemy', effects: [dmg(1.0), debuff('offDown', 2, 0.3)], desc: 'Deal damage with a 30% chance of Offense Down.' },
         { name: 'Drop Commandos', cd: 3, target: 'allAllies', effects: [buff('offUp', 2), tm(15)], desc: 'All allies gain Offense Up and 15% Turn Meter.' },
@@ -707,6 +710,20 @@
       abilities: [
         { name: 'Concussion Missile', cd: 0, target: 'enemy', effects: [dmg(1.15), debuff('burn', 2, 0.3)], desc: 'Deal damage with a 30% chance to Burn.' },
         { name: 'Trandoshan Hunt', cd: 3, target: 'enemy', effects: [execute(1.3, 0.4, 2)], desc: 'Deal damage; double damage against targets under 40% HP.' },
+      ],
+    },
+    {
+      id: 'cassian_haulcraft', name: 'Cassian\'s Haulcraft', kind: 'ship', faction: 'light', rarity: 'epic', role: 'support', shape: 'cassian_haulcraft', spd: 152,
+      abilities: [
+        { name: 'Scavenged Cannons', cd: 0, target: 'enemy', effects: [dmg(1.0)], desc: 'Damage one enemy ship.' },
+        { name: 'Low-Profile Run', cd: 3, target: 'allAllies', effects: [buff('defUp', 1), tm(20)], desc: 'All allies gain Defense Up and 20% Turn Meter.' },
+      ],
+    },
+    {
+      id: 'mando_n1', name: 'Mando\'s N-1', kind: 'ship', faction: 'light', rarity: 'legendary', role: 'attacker', shape: 'mando_n1', spd: 168,
+      abilities: [
+        { name: 'Twin Blasters', cd: 0, target: 'enemy', effects: [dmg(0.6, 2)], desc: 'Hit one enemy twice.' },
+        { name: 'Booster Kick', cd: 3, target: 'self', effects: [tm(45), buff('defUp', 1)], desc: 'Light the boosters: gain 45% Turn Meter and Defense Up.' },
       ],
     },
 
@@ -873,7 +890,9 @@
     captain_rex: U('501st, With Me', 'allAllies', [heal(0.25), buff('defUp', 3), tm(25), { ...buff('taunt', 3), on: 'self' }], 'All allies heal 25%, gain Defense Up and 25% Turn Meter; Rex gains Taunt.', 'Experience outranks everything.'),
     hondo: U('Ohnaka Gang', 'allEnemies', [dmg(1.1), dispel(), { ...tm(35), on: 'allies' }], 'The pirates raid every enemy and strip their buffs; all allies gain 35% Turn Meter.', 'Business is business, my friend.'),
     savage_opress: U('Unstoppable Brother', 'allEnemies', [dmg(1.5), debuff('stun', 1, 0.4), { ...buff('taunt', 2), on: 'self' }, { ...buff('defUp', 2), on: 'self' }], 'A brutal charge through every enemy with a 40% Stun chance; gain Taunt and Defense Up.', 'I will crush you.'),
-    u_wing: U('Rogue Insertion', 'allAllies', [buff('offUp', 3), buff('defUp', 2), tm(45)], 'Commandos hit the ground: all allies gain Offense Up, Defense Up and 45% Turn Meter.', 'Rebellions are built on hope.'),
+    u_wing: U('Door Gunner', 'allEnemies', [dmg(0.5, 4), { ...tm(20), on: 'allies' }], 'The bay door slides open and the door gunner rakes every enemy with four bursts of heavy fire; all allies gain 20% Turn Meter.', 'Bay door\'s open, light \'em up!'),
+    cassian_haulcraft: U('Wings Out', 'allEnemies', [dmg(1.6), debuff('offDown', 2)], 'The wings swing open and the engines flare: a blistering pass over every enemy, inflicting Offense Down.', 'Climb! Climb!'),
+    mando_n1: U('Peli\'s Special', 'allEnemies', [dmg(2.0), debuff('stun', 1, 0.35)], 'Every engine at full burn: a supersonic strafing run that tears through each enemy ship, with a chance to Stun.', 'That\'s my ship!'),
     upsilon_shuttle: U('Supreme Escort', 'self', [buff('taunt', 3), buff('defUp', 3), heal(0.3), { ...buff('defUp', 2), on: 'allies' }], 'Wings unfold into a shield: Taunt, Defense Up and 30% repair; all allies gain Defense Up.', 'Prepare my shuttle.'),
     hounds_tooth: U('Bossk\'s Bounty', 'allEnemies', [execute(1.5, 0.35, 2), debuff('burn', 2)], 'A missile barrage on every enemy, doubled under 35% HP, and Burn.', 'The hunt is on.'),
     darth_revan: U('Mandalorian Wars', 'allEnemies', [dmg(2.3), debuff('defDown', 2), debuff('stun', 1, 0.5)], 'Twin blades carve every enemy: heavy damage, Defense Down and a 50% chance to Stun.', 'I am Revan. I have conquered death itself.'),
@@ -1065,6 +1084,8 @@
     darth_revan: 'A Jedi hero turned Sith conqueror from the Old Republic era, masked and wielding twin blades. A legend most players never see.',
     starkiller: 'Vader\'s secret apprentice, raw Force power unleashed. He once pulled a Star Destroyer out of orbit.',
     master_luke: 'The last Jedi Master, years after the war: a weathered legend whose Force projection held off an entire army.',
+    cassian_haulcraft: 'A Fondor haulcraft Cassian Andor flew with Luthen Rael, plain on the outside and full of surprises, its wings swung wide for speed.',
+    mando_n1: 'A Naboo N-1 Peli Motto rebuilt for Din Djarin: stripped to bare chrome, re-engined, and with a bubble socket for Grogu where the astromech used to ride.',
     ghost: 'A modified freighter that hides a smaller shuttle, the Phantom. Home of a small rebel cell called the Spectres.',
     rebel_medic: 'A combat medic of the Rebel Alliance who runs toward the blaster fire so others can walk away from it.',
     two_onebee: 'A surgical droid who has patched up everyone from Luke Skywalker to half the Rebel fleet.',
@@ -1207,6 +1228,7 @@
     arc_170: ['fighter', 'republic'], delta7: ['fighter', 'jedi', 'republic'], tie_defender: ['fighter', 'empire'], tie_silencer: ['fighter', 'sith'],
     the_daughter: ['jedi', 'leader'], temple_guardian: ['jedi', 'republic'], the_son: ['sith'], darth_bane: ['sith', 'leader'], ebon_hawk: ['gunship', 'jedi', 'scoundrel'], sith_fury: ['fighter', 'sith'],
     darth_revan: ['sith', 'leader'], starkiller: ['sith'], master_luke: ['jedi', 'rebel', 'leader'], ghost: ['rebel', 'fighter'],
+    cassian_haulcraft: ['scoundrel', 'rebel'], mando_n1: ['fighter', 'mandalorian'],
     c3po: ['droid', 'rebel'], rebel_medic: ['rebel', 'trooper'], two_onebee: ['droid', 'rebel'], nightsister_acolyte: ['nightsister'], barriss: ['jedi', 'republic'], talzin: ['nightsister', 'leader'],
     hunter: ['badbatch', 'trooper', 'leader'], wrecker: ['badbatch', 'trooper'], tech: ['badbatch', 'trooper'], crosshair: ['badbatch', 'trooper'], echo: ['badbatch', 'trooper', 'droid'], bb8: ['droid', 'rebel'], k2so: ['droid', 'rebel'], chopper: ['droid', 'rebel', 'scoundrel'],
     ig88: ['droid', 'bounty'], droideka: ['droid', 'separatist'], b2_droid: ['droid', 'separatist'], magnaguard: ['droid', 'separatist'], ig11: ['droid', 'bounty'], tie_advanced: ['fighter', 'empire', 'sith'],
@@ -1269,7 +1291,7 @@
     cal_kestis: 'spinsaber', bo_katan: 'dash', sabine: 'rockets', captain_rex: 'bulwark', hondo: 'rally', savage_opress: 'whirl', u_wing: 'rally', upsilon_shuttle: 'shield', hounds_tooth: 'torpedo',
     arc_170: 'strafe', delta7: 'shield', tie_defender: 'strafe', tie_silencer: 'strafe', the_daughter: 'heal', temple_guardian: 'bulwark', the_son: 'lightning', darth_bane: 'lightning', ebon_hawk: 'shield', sith_fury: 'strafe', boss_daughter: 'heal', boss_guardian: 'bulwark', boss_son: 'lightning', boss_bane: 'lightning',
     anakin: 'leap', qui_gon: 'forcepush', padme: 'snipe', lando: 'rally', jango_fett: 'rockets', asajj_ventress: 'dash', cad_bane: 'snipe', moff_gideon: 'orbital', n1_starfighter: 'strafe', sith_infiltrator: 'bombrun',
-    darth_revan: 'dash', starkiller: 'lightning', master_luke: 'heal', ghost: 'strafe',
+    darth_revan: 'dash', starkiller: 'lightning', master_luke: 'heal', ghost: 'strafe', cassian_haulcraft: 'strafe', mando_n1: 'strafe',
     rancor: 'claws', krayt_dragon: 'claws', star_destroyer: 'turbolaser', death_star: 'superlaser',
   };
 
