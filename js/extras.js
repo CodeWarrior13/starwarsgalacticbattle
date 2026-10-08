@@ -953,4 +953,131 @@ document.head.appendChild(Object.assign(document.createElement('style'), { textC
 
 Object.assign(root.__xq, { ss: () => sceneSS(FEAT_SS), ssReset: () => { delete Z().ss; snapped = false; Player.save(); }, ssLive: () => !!liveCine });
 
+// ---------- credit chips ----------
+// A one-time code: the chips pay out, then the fence turns up for his cut.
+const CHIP = 'CREDITCHIP';
+const FEAT_CC = { id: 'xq_cc', secret: true, tier: 5, icon: 'sabacc', name: 'Cost of Doing Business', desc: 'Cashed in a stack of hot credit chips, and paid the fence his cut', have: 1, need: 1 };
+H.feats.push((s) => ((s.z || {}).cc ? [FEAT_CC] : []));
+const chipShape = (u) => `<rect x="2" y="4" width="56" height="28" rx="7" fill="url(#${u}cg)" stroke="#5a3a04" stroke-width="1.4"/><rect x="7" y="9" width="46" height="18" rx="4" fill="none" stroke="#fff3b8" stroke-width="1" opacity=".55"/>
+  <rect x="11" y="13" width="12" height="10" rx="2" fill="#7a5206" opacity=".8"/><path d="M13 16 H21 M13 20 H21 M17 13 V23" stroke="#e8c14a" stroke-width=".8"/>
+  <path d="M28 14 H48 M28 18 H42 M28 22 H46" stroke="#7a5206" stroke-width="1.6" stroke-linecap="round" opacity=".75"/><path d="M8 6 L22 6" stroke="#fff" stroke-width="1.6" opacity=".6" stroke-linecap="round"/>`;
+const chipSvg = () => { const u = `cc${++seq}`; return `<svg viewBox="0 0 60 36" aria-hidden="true"><defs><linearGradient id="${u}cg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff2a8"/><stop offset=".45" stop-color="#e8b830"/><stop offset="1" stop-color="#8a5c08"/></linearGradient></defs>${chipShape(u)}</svg>`; };
+const vekkoSvg = () => `<svg viewBox="0 0 200 260" aria-hidden="true"><defs>
+    <linearGradient id="vkC" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#3a2650"/><stop offset=".45" stop-color="#1c1428"/><stop offset="1" stop-color="#0a0710"/></linearGradient>
+    <radialGradient id="vkE"><stop offset="0" stop-color="#fff0e0"/><stop offset=".35" stop-color="#ff5a3a"/><stop offset="1" stop-color="#ff2a1a" stop-opacity="0"/></radialGradient>
+    <linearGradient id="vkG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a3040"/><stop offset="1" stop-color="#14101a"/></linearGradient></defs>
+  <path d="M30 260 L44 140 C46 96 70 62 104 60 C138 62 160 96 164 140 L182 260Z" fill="url(#vkC)"/>
+  <path d="M104 60 C80 62 62 82 56 112 C66 96 84 88 104 88 C124 88 142 96 152 112 C146 82 128 62 104 60Z" fill="#2a1e3a"/>
+  <path d="M70 120 C72 96 86 84 104 84 C122 84 136 96 138 120 C136 140 122 152 104 152 C86 152 72 140 70 120Z" fill="#050308"/>
+  <circle cx="90" cy="120" r="12" fill="url(#vkE)"/><circle cx="118" cy="120" r="12" fill="url(#vkE)"/><circle cx="90" cy="120" r="2.4" fill="#fff"/><circle cx="118" cy="120" r="2.4" fill="#fff"/>
+  <path d="M60 170 C70 200 76 230 74 260 M146 170 C136 200 130 230 132 260 M104 160 L104 260" stroke="#0a0710" stroke-width="2" fill="none" opacity=".7"/>
+  <path d="M44 140 C46 96 70 62 104 60" fill="none" stroke="#ff2e88" stroke-width="2" opacity=".85"/><path d="M164 140 C160 96 138 62 104 60" fill="none" stroke="#2ee6ff" stroke-width="1.6" opacity=".6"/>
+  <rect x="62" y="196" width="84" height="10" rx="2" fill="#2a1e14"/><rect x="96" y="194" width="16" height="14" rx="2" fill="#c9a24a"/><path d="M140 200 L152 236 L160 234 L150 200Z" fill="#2a2a30"/>
+  <g class="cc-hand"><path d="M54 182 C34 176 18 170 8 166 C4 164 4 158 9 157 L30 160 C42 162 52 166 60 170Z" fill="url(#vkG)"/><path d="M8 157 C4 150 10 146 14 150 L22 158 M14 150 C12 142 18 140 21 145 L26 158" fill="url(#vkG)" stroke="#0a0710" stroke-width=".8"/></g>
+</svg>`;
+const alleySvg = () => `<svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs>
+    <linearGradient id="alS" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0a0614"/><stop offset=".7" stop-color="#1e0e2a"/><stop offset="1" stop-color="#2a1030"/></linearGradient>
+    <linearGradient id="alW" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1a0e22"/><stop offset="1" stop-color="#05030a"/></linearGradient></defs>
+  <rect width="400" height="300" fill="url(#alS)"/>
+  ${[[20, 40, 60], [90, 20, 44], [150, 60, 70], [230, 10, 50], [290, 50, 66], [350, 30, 60]].map(([x, y, w], k) => `<rect x="${x}" y="${y}" width="${w}" height="${300 - y}" fill="${k % 2 ? '#120a1c' : '#0e0816'}"/>${Array.from({ length: 18 }, (_, i) => `<rect x="${x + 4 + (i % 4) * (w / 4.4)}" y="${y + 10 + Math.floor(i / 4) * 16}" width="4" height="3" fill="${(i * 7 + k) % 5 ? '#ffb84a' : '#2ee6ff'}" opacity="${0.25 + ((i * 3 + k) % 4) * 0.12}"/>`).join('')}`).join('')}
+  <path d="M0 300 L0 120 L60 110 L70 300Z" fill="url(#alW)"/><path d="M400 300 L400 110 L332 104 L322 300Z" fill="url(#alW)"/>
+  <g class="cc-neon a"><rect x="12" y="132" width="44" height="16" rx="3" fill="none" stroke="#ff2e88" stroke-width="2.4"/><path d="M18 140 H24 M28 136 V144 M32 140 H40 M44 136 L48 144" stroke="#ff2e88" stroke-width="2"/></g>
+  <g class="cc-neon b"><rect x="348" y="124" width="14" height="60" rx="3" fill="none" stroke="#2ee6ff" stroke-width="2.4"/><path d="M355 132 V140 M352 148 H358 M355 156 V166 M352 174 H358" stroke="#2ee6ff" stroke-width="2"/></g>
+  <rect x="0" y="236" width="400" height="64" fill="#07040c"/>
+  <rect x="10" y="244" width="60" height="6" fill="#ff2e88" opacity=".25"/><rect x="330" y="246" width="40" height="5" fill="#2ee6ff" opacity=".22"/>
+  ${Array.from({ length: 4 }, (_, k) => `<ellipse class="cc-steam" cx="${90 + k * 70}" cy="240" rx="30" ry="12" fill="#c8b8d8" opacity=".12" style="animation-delay:-${k * 1.3}s"/>`).join('')}
+</svg>`;
+document.head.appendChild(Object.assign(document.createElement('style'), { textContent: `
+.feat-cine.xq-cc { background: #05030a; }
+.cc-alley { position: absolute; inset: 0; opacity: 0; animation: cc-in 1.2s 2.9s ease-out forwards; }
+.cc-alley svg { width: 100%; height: 100%; display: block; }
+.cc-rain { position: absolute; inset: -10% 0 0; background: repeating-linear-gradient(100deg, rgba(180,170,255,.0) 0 14px, rgba(180,170,255,.16) 14px 15px); opacity: 0; will-change: transform; animation: cc-in 1s 3.2s forwards, cc-rain .5s linear infinite; }
+@keyframes cc-rain { to { transform: translate(-8px, 40px); } }
+@keyframes cc-in { to { opacity: 1; } }
+.cc-neon { animation: cc-flick 3.4s steps(1) infinite; } .cc-neon.b { animation-delay: -1.7s; }
+@keyframes cc-flick { 0%, 100% { opacity: 1; } 8% { opacity: .2; } 10% { opacity: 1; } 52% { opacity: .5; } 54% { opacity: 1; } }
+.cc-steam { animation: cc-steam 5s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: center; } @keyframes cc-steam { to { transform: translateY(-14px) scale(1.4); opacity: .04; } }
+.cc-kick { position: absolute; top: 9%; left: 0; right: 0; text-align: center; font-family: var(--font-display); letter-spacing: .4em; font-size: clamp(11px, 2vw, 14px); color: #ffd23f; opacity: 0; animation: jp-sub .5s .3s forwards; }
+.cc-count { position: absolute; top: 14%; left: 0; right: 0; text-align: center; z-index: 3; font-family: var(--font-display); font-weight: 800; font-size: clamp(42px, 11vmin, 88px); color: #ffe27a; text-shadow: 0 0 24px rgba(255,200,60,.6), 0 3px 0 #7a5206; transition: color .3s; }
+.cc-count.minus { color: #ff6a5a; text-shadow: 0 0 24px rgba(255,80,60,.6), 0 3px 0 #5a1206; }
+.cc-cut { position: absolute; top: 27%; left: 0; right: 0; text-align: center; font-family: var(--font-display); letter-spacing: .14em; font-size: clamp(13px, 2.6vw, 18px); color: #ff8a7a; opacity: 0; }
+.cc-cut.on { animation: jp-sub .4s forwards; }
+.xq-cc:not(.reveal) .pc-skip { visibility: hidden; }
+.cc-stack { position: absolute; left: 50%; top: 37%; width: clamp(110px, 26vmin, 170px); height: 0; transform: translateX(-50%); z-index: 3; }
+.cc-chip { position: absolute; left: 0; width: 100%; opacity: 0; filter: drop-shadow(0 4px 6px rgba(0,0,0,.6)); animation: cc-drop .5s cubic-bezier(.3,1.4,.5,1) forwards; animation-delay: var(--t); }
+.cc-chip svg { width: 100%; display: block; }
+@keyframes cc-drop { from { opacity: 0; transform: translateY(-60vh) rotate(var(--r)); } to { opacity: 1; transform: translateY(var(--y)) rotate(calc(var(--r) / 6)); } }
+.cc-chip.take { animation: cc-take .7s cubic-bezier(.5,0,.6,1) forwards; animation-delay: var(--t2); }
+@keyframes cc-take { from { opacity: 1; transform: translateY(var(--y)); } to { opacity: 0; transform: translate(34vw, calc(var(--y) + 10vh)) rotate(30deg) scale(.5); } }
+.cc-vekko { position: absolute; right: -4%; bottom: 0; width: clamp(200px, 48vmin, 380px); z-index: 2; opacity: 0; transform: translateX(40%); animation: cc-vk 1.4s 3.4s cubic-bezier(.2,.8,.3,1) forwards; }
+.cc-vekko svg { width: 100%; display: block; filter: drop-shadow(0 0 30px rgba(255,46,136,.25)); }
+@keyframes cc-vk { to { opacity: 1; transform: none; } }
+.cc-vekko.leave { animation: cc-vkout 1.2s ease-in forwards; } @keyframes cc-vkout { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateX(30%); } }
+.cc-hand { transform-box: fill-box; transform-origin: 100% 50%; animation: cc-reach 1.2s 7.2s ease-in-out both; }
+@keyframes cc-reach { 0% { transform: none; } 40% { transform: translateX(-26px) rotate(-6deg); } 100% { transform: none; } }
+.cc-bub { position: absolute; left: 6%; right: 38%; z-index: 4; padding: 10px 14px; border-radius: 14px 14px 4px 14px; background: rgba(10,6,18,.88); border: 1px solid rgba(255,46,136,.5); color: #f2e8ff; font-family: var(--font-display); font-size: clamp(14px, 2.8vw, 19px); letter-spacing: .03em; opacity: 0; transform: translateY(6px); animation: cc-bub 4.6s var(--t) forwards; }
+@keyframes cc-bub { 0% { opacity: 0; transform: translateY(6px); } 8%, 30% { opacity: 1; transform: none; } 36%, 100% { opacity: 0; } }
+.cc-bub.last { animation-name: cc-bubl; } @keyframes cc-bubl { 0% { opacity: 0; transform: translateY(6px); } 10%, 100% { opacity: 1; transform: none; } }
+.cc-bub small { display: block; margin-bottom: 2px; font-size: .6em; letter-spacing: .3em; color: #ff8ac0; }
+` }));
+const crestCC = () => {
+  const u = `xc${++seq}`;
+  const ring = Array.from({ length: 8 }, (_, k) => `<g transform="rotate(${k * 45}) translate(0,-52) scale(.42) translate(-30,-18)"><rect x="2" y="4" width="56" height="28" rx="7" fill="url(#${u}g)" stroke="#5a3a04" stroke-width="1.4"/><path d="M28 14 H48 M28 18 H42 M28 22 H46" stroke="#7a5206" stroke-width="1.6"/></g>`).join('');
+  const inner = `<g>${anim.spin(24)}${ring}</g>
+    <path d="M-22 26 C-20 0 -12 -16 0 -18 C12 -16 20 0 22 26Z" fill="#1c1428" stroke="#ff2e88" stroke-width="1.2"/>
+    <ellipse cx="0" cy="2" rx="11" ry="10" fill="#050308"/><circle cx="-4.6" cy="2" r="2.6" fill="#ff5a3a" filter="url(#${u}f)">${anim.fade('1;.4;1', 2.2)}</circle><circle cx="4.6" cy="2" r="2.6" fill="#ff5a3a" filter="url(#${u}f)">${anim.fade('1;.4;1', 2.2)}</circle>`;
+  return frame(u, inner, 'HOT CHIPS', { glow: '#ff2e88', core: '#1a0a24', tail: '#5a1040' });
+};
+H.crests.xq_cc = crestCC;
+const sceneCC = (x) => {
+  const chips = Array.from({ length: 10 }, (_, k) => `<div class="cc-chip" style="--t:${(0.5 + k * 0.17).toFixed(2)}s;--t2:${(7.5 + (9 - k) * 0.09).toFixed(2)}s;--y:${-k * 9}px;--r:${(k % 2 ? 1 : -1) * (20 + k * 6)}deg;z-index:${k}">${chipSvg()}</div>`).join('');
+  const stage = `<div class="cc-alley">${alleySvg()}</div><div class="cc-rain"></div>
+    <div class="cc-kick">CREDIT CHIPS ACCEPTED</div><div class="cc-count">+0</div><div class="cc-cut">−5,000 · Vekko’s cut</div>
+    <div class="cc-stack">${chips}</div>
+    <div class="cc-vekko">${vekkoSvg()}</div>
+    <p class="cc-bub" style="bottom:31%;--t:4.2s"><small>VEKKO THE FENCE</small>Nice haul, friend. Real nice.</p>
+    <p class="cc-bub" style="bottom:31%;--t:5.7s"><small>VEKKO THE FENCE</small>Those are Hutt Cartel chips. Hot as a Mustafar summer.</p>
+    <p class="cc-bub" style="bottom:31%;--t:7.2s"><small>VEKKO THE FENCE</small>Five thousand, and I never saw you.</p>
+    <p class="cc-bub last" style="bottom:31%;--t:9.1s;border-color:rgba(46,230,255,.5)"><small>VEKKO THE FENCE</small>Pleasure doing business.</p>`;
+  const setup = (node, go) => {
+    const count = node.querySelector('.cc-count');
+    const run = (from, to, ms, delay) => setTimeout(() => {
+      const t0 = performance.now();
+      const step = (now) => { if (!node.isConnected) return; const k = Math.min(1, (now - t0) / ms); const v = Math.round(from + (to - from) * (1 - Math.pow(1 - k, 3))); count.textContent = `+${v.toLocaleString('en-US')}`; if (k < 1) requestAnimationFrame(step); };
+      requestAnimationFrame(step);
+    }, delay);
+    run(0, 10000, 1900, 500);
+    setTimeout(() => { node.querySelectorAll('.cc-chip').forEach((c, k) => { if (k >= 5) c.classList.add('take'); }); }, 7400);
+    setTimeout(() => { count.classList.add('minus'); node.querySelector('.cc-cut').classList.add('on'); run(10000, 5000, 1000, 0); }, 7900);
+    setTimeout(() => { const v = node.querySelector('.cc-vekko'); if (v) v.classList.add('leave'); }, 10200);
+    // No skipping: the whole hustle plays before the badge.
+    setTimeout(go, 11600);
+  };
+  return scene(x, 'xq-cc', stage, null, null, (S, at) => {
+    at(500, () => S.play('coins'));
+    for (let k = 0; k < 10; k++) at(700 + k * 170, () => S.play('click'));
+    at(2500, () => S.play('jackpot'));
+    at(2950, () => S.play('glitch'));
+    at(3400, () => S.play('whoosh'));
+    at(7400, () => S.play('whoosh'));
+    at(7900, () => S.play('defeat'));
+    at(8000, () => S.play('coins'));
+  }, 'Secret achievement', setup);
+};
+H.scenes.xq_cc = (x) => sceneCC(x);
+const redeemBefore = H.redeem;
+H.redeem = (code) => {
+  if (code !== CHIP) return redeemBefore ? redeemBefore(code) : false;
+  const z = Z();
+  if (z.cc) { UI.toast('Those chips are already cashed. Vekko remembers your face.'); return true; }
+  z.cc = 1;
+  Player.state.credits += 5000;
+  Player.save();
+  UI.markFeatSeen('xq_cc');
+  later(() => sceneCC(FEAT_CC).then(() => UI.updateWallet()));
+  return true;
+};
+root.__xq.cc = () => sceneCC(FEAT_CC);
+root.__xq.ccReset = () => { delete Z().cc; Player.save(); };
+
 })(window);
