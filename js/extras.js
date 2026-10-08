@@ -1013,10 +1013,10 @@ document.head.appendChild(Object.assign(document.createElement('style'), { textC
 .cc-vekko svg { width: 100%; display: block; filter: drop-shadow(0 0 30px rgba(255,46,136,.25)); }
 @keyframes cc-vk { to { opacity: 1; transform: none; } }
 .cc-vekko.leave { animation: cc-vkout 1.2s ease-in forwards; } @keyframes cc-vkout { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateX(30%); } }
-.cc-hand { transform-box: fill-box; transform-origin: 100% 50%; animation: cc-reach 1.2s 7.2s ease-in-out both; }
+.cc-hand { transform-box: fill-box; transform-origin: 100% 50%; animation: cc-reach 1.2s 13.4s ease-in-out both; }
 @keyframes cc-reach { 0% { transform: none; } 40% { transform: translateX(-26px) rotate(-6deg); } 100% { transform: none; } }
-.cc-bub { position: absolute; left: 6%; right: 38%; z-index: 4; padding: 10px 14px; border-radius: 14px 14px 4px 14px; background: rgba(10,6,18,.88); border: 1px solid rgba(255,46,136,.5); color: #f2e8ff; font-family: var(--font-display); font-size: clamp(14px, 2.8vw, 19px); letter-spacing: .03em; opacity: 0; transform: translateY(6px); animation: cc-bub 4.6s var(--t) forwards; }
-@keyframes cc-bub { 0% { opacity: 0; transform: translateY(6px); } 8%, 30% { opacity: 1; transform: none; } 36%, 100% { opacity: 0; } }
+.cc-bub { position: absolute; left: 6%; right: 38%; z-index: 4; padding: 10px 14px; border-radius: 14px 14px 4px 14px; background: rgba(10,6,18,.88); border: 1px solid rgba(255,46,136,.5); color: #f2e8ff; font-family: var(--font-display); font-size: clamp(14px, 2.8vw, 19px); letter-spacing: .03em; opacity: 0; transform: translateY(6px); animation: cc-bub 3.6s var(--t) forwards; }
+@keyframes cc-bub { 0% { opacity: 0; transform: translateY(6px); } 7%, 90% { opacity: 1; transform: none; } 100% { opacity: 0; } }
 .cc-bub.last { animation-name: cc-bubl; } @keyframes cc-bubl { 0% { opacity: 0; transform: translateY(6px); } 10%, 100% { opacity: 1; transform: none; } }
 .cc-bub small { display: block; margin-bottom: 2px; font-size: .6em; letter-spacing: .3em; color: #ff8ac0; }
 ` }));
@@ -1030,15 +1030,15 @@ const crestCC = () => {
 };
 H.crests.xq_cc = crestCC;
 const sceneCC = (x) => {
-  const chips = Array.from({ length: 10 }, (_, k) => `<div class="cc-chip" style="--t:${(0.5 + k * 0.17).toFixed(2)}s;--t2:${(7.5 + (9 - k) * 0.09).toFixed(2)}s;--y:${-k * 9}px;--r:${(k % 2 ? 1 : -1) * (20 + k * 6)}deg;z-index:${k}">${chipSvg()}</div>`).join('');
+  const chips = Array.from({ length: 10 }, (_, k) => `<div class="cc-chip" style="--t:${(0.5 + k * 0.17).toFixed(2)}s;--t2:${((9 - k) * 0.09).toFixed(2)}s;--y:${-k * 9}px;--r:${(k % 2 ? 1 : -1) * (20 + k * 6)}deg;z-index:${k}">${chipSvg()}</div>`).join('');
   const stage = `<div class="cc-alley">${alleySvg()}</div><div class="cc-rain"></div>
     <div class="cc-kick">CREDIT CHIPS ACCEPTED</div><div class="cc-count">+0</div><div class="cc-cut">−5,000 · Vekko’s cut</div>
     <div class="cc-stack">${chips}</div>
     <div class="cc-vekko">${vekkoSvg()}</div>
-    <p class="cc-bub" style="bottom:31%;--t:4.2s"><small>VEKKO THE FENCE</small>Nice haul, friend. Real nice.</p>
-    <p class="cc-bub" style="bottom:31%;--t:5.7s"><small>VEKKO THE FENCE</small>Those are Hutt Cartel chips. Hot as a Mustafar summer.</p>
-    <p class="cc-bub" style="bottom:31%;--t:7.2s"><small>VEKKO THE FENCE</small>Five thousand, and I never saw you.</p>
-    <p class="cc-bub last" style="bottom:31%;--t:9.1s;border-color:rgba(46,230,255,.5)"><small>VEKKO THE FENCE</small>Pleasure doing business.</p>`;
+    <p class="cc-bub" style="bottom:31%;--t:4.6s"><small>VEKKO THE FENCE</small>Nice haul, friend. Real nice.</p>
+    <p class="cc-bub" style="bottom:31%;--t:8.4s"><small>VEKKO THE FENCE</small>Those are Hutt Cartel chips. Hot as a Mustafar summer.</p>
+    <p class="cc-bub" style="bottom:31%;--t:12.2s"><small>VEKKO THE FENCE</small>Five thousand, and I never saw you.</p>
+    <p class="cc-bub last" style="bottom:31%;--t:16.2s;border-color:rgba(46,230,255,.5)"><small>VEKKO THE FENCE</small>Pleasure doing business.</p>`;
   const setup = (node, go) => {
     const count = node.querySelector('.cc-count');
     const run = (from, to, ms, delay) => setTimeout(() => {
@@ -1047,11 +1047,11 @@ const sceneCC = (x) => {
       requestAnimationFrame(step);
     }, delay);
     run(0, 10000, 1900, 500);
-    setTimeout(() => { node.querySelectorAll('.cc-chip').forEach((c, k) => { if (k >= 5) c.classList.add('take'); }); }, 7400);
-    setTimeout(() => { count.classList.add('minus'); node.querySelector('.cc-cut').classList.add('on'); run(10000, 5000, 1000, 0); }, 7900);
-    setTimeout(() => { const v = node.querySelector('.cc-vekko'); if (v) v.classList.add('leave'); }, 10200);
+    setTimeout(() => { node.querySelectorAll('.cc-chip').forEach((c, k) => { if (k >= 5) c.classList.add('take'); }); }, 13600);
+    setTimeout(() => { count.classList.add('minus'); node.querySelector('.cc-cut').classList.add('on'); run(10000, 5000, 1000, 0); }, 14100);
+    setTimeout(() => { const v = node.querySelector('.cc-vekko'); if (v) v.classList.add('leave'); }, 18800);
     // No skipping: the whole hustle plays before the badge.
-    setTimeout(go, 11600);
+    setTimeout(go, 20200);
   };
   return scene(x, 'xq-cc', stage, null, null, (S, at) => {
     at(500, () => S.play('coins'));
@@ -1059,9 +1059,9 @@ const sceneCC = (x) => {
     at(2500, () => S.play('jackpot'));
     at(2950, () => S.play('glitch'));
     at(3400, () => S.play('whoosh'));
-    at(7400, () => S.play('whoosh'));
-    at(7900, () => S.play('defeat'));
-    at(8000, () => S.play('coins'));
+    at(13600, () => S.play('whoosh'));
+    at(14100, () => S.play('defeat'));
+    at(14200, () => S.play('coins'));
   }, 'Secret achievement', setup);
 };
 H.scenes.xq_cc = (x) => sceneCC(x);
