@@ -3210,3 +3210,13 @@ body.perf-on .sig-layer.sig-glitch canvas { filter: none; }
 /* Big card lists only lay out and paint the cards near the screen; the rest
    are skipped until you scroll to them, so Collection opens much faster. */
 .card-grid > .ucard, .card-grid > .scard, .card-grid > * { content-visibility: auto; contain-intrinsic-size: auto 230px; }
+
+/* Narrow phones (360px and below): tighten the top bar so the settings gear never clips. */
+@media (max-width: 380px) and (orientation: portrait) {
+  .topbar { gap: 4px; padding: 8px 6px; }
+  .account { padding: 4px 6px; }
+  .acct-bar { width: 22px; }
+  .wallet { gap: 3px; }
+  .wallet .currency { padding: 3px 5px 3px 3px; font-size: 11.5px; }
+  .settings-btn { width: 30px; height: 30px; }
+}
