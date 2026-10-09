@@ -853,9 +853,15 @@ H.crests.xq_ss = () => {
     back: `<g fill="#d9a8ff" opacity=".25">${anim.spin(40, true)}${Array.from({ length: 16 }, (_, k) => `<rect x="-2" y="-100" width="4" height="22" transform="rotate(${k * 22.5})"/>`).join('')}</g>` });
 };
 
+const polaroid = () => {
+  const ph = Z().ssPhoto;
+  if (!ph || !ph.name) return `<div class="xq-polaroid">${tile(D.UNIT_MAP.mace_shatter)}<span>the moment it broke</span></div>`;
+  const d = new Date(ph.at || Date.now());
+  return `<div class="xq-polaroid shot"><div class="xq-shotbg">${UI.featBadge(ph)}</div><span>${esc(ph.name.split(' · ')[0])}<small>${d.toLocaleDateString()}</small></span></div>`;
+};
 const sceneSS = (x, onDone) => {
   const stage = `<div class="xq-vf big"><b></b><b></b><b></b><b></b><span>● REC</span><em>1/8000</em></div><div class="xq-shut big"><i></i><i></i></div>
-    <div class="xq-polaroid">${tile(D.UNIT_MAP.mace_shatter)}<span>the moment it broke</span></div>
+    ${polaroid()}
     <p class="xq-line" style="top:74%;--t:3.4s;color:#d9a8ff">"Most people miss the moment."</p><p class="xq-line" style="top:80%;--t:4.6s">"You captured it."</p>`;
   return scene(x, 'xq-ss', stage, 6600, onDone, (S, at) => { at(300, () => S.play('click')); at(900, () => S.play('glitch')); at(1500, () => S.play('saber')); at(2200, () => S.play('reveal_epic')); });
 };
@@ -876,7 +882,7 @@ new MutationObserver((muts) => {
     for (const n of m.addedNodes) {
       if (n.nodeType !== 1 || !n.classList.contains('feat-cine') || n.classList.contains('xq-ss')) continue;
       if (document.querySelector('.profile-modal')) continue;
-      if (isSecretLabel(n.getAttribute('aria-label'))) liveCine = n;
+      if (isSecretLabel(n.getAttribute('aria-label'))) { liveCine = n; if (!Z().ss) addSnapBtn(n); }
     }
     for (const n of m.removedNodes) if (n === liveCine) { liveCine = null; if (snapped) awardSnap(); }
   }
@@ -888,13 +894,33 @@ const shutterFlash = () => {
   setTimeout(() => f.remove(), 700);
   if (root.Sound) root.Sound.play('click');
 };
+// The photo kept in the game: the badge that was on screen and when.
+const photoOf = (node) => {
+  const name = String(node.getAttribute('aria-label') || '').split(' · ')[0];
+  let f = null;
+  try { f = UI.achievements().find((a) => a.name.split(' · ')[0] === name); } catch (e) { f = null; }
+  return { id: (f && f.id) || '', name: (f && f.name) || name, tier: (f && f.tier) || 5, icon: (f && f.icon) || 'spark', secret: true, level: f && f.level, at: Date.now() };
+};
 const caught = () => {
   if (!liveCine || !liveCine.isConnected || snapped || Z().ss) return;
   snapped = true;
   Z().ss = 1;
+  Z().ssPhoto = photoOf(liveCine);
   Player.save();
   shutterFlash();
+  const b = liveCine.querySelector('.xq-snapbtn');
+  if (b) { b.classList.add('took'); setTimeout(() => b.remove(), 600); }
 };
+// A tiny camera tucked in the corner of a live secret unlock.
+function addSnapBtn(node) {
+  if (node.querySelector('.xq-snapbtn')) return;
+  const b = el('<button type="button" class="xq-snapbtn" aria-label="Snap"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-2.5h6L17 8h3v11H4z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>');
+  const stop = (e) => { e.stopPropagation(); };
+  b.addEventListener('pointerdown', stop);
+  b.addEventListener('touchstart', stop, { passive: true });
+  b.addEventListener('click', (e) => { e.stopPropagation(); e.preventDefault(); caught(); });
+  node.appendChild(b);
+}
 function awardSnap() {
   snapped = false;
   const g = Player.grantCard('mace_shatter', false);
@@ -951,6 +977,15 @@ const cssSS = `
 .xq-polaroid { position: absolute; left: 50%; top: 40%; width: min(220px, 46vw); padding: 10px 10px 30px; background: #f4f0ea; border-radius: 4px; box-shadow: 0 20px 60px rgba(0,0,0,.6), 0 0 40px rgba(180,90,255,.4); transform: translate(-50%, -50%) rotate(-4deg); opacity: 0; animation: xq-pol 1s cubic-bezier(.2,.9,.3,1.2) 1.4s forwards; }
 .xq-polaroid .xq-tile { width: 100%; aspect-ratio: 1; }
 .xq-polaroid .monogram, .xq-polaroid .xq-tile b { display: none; }
+.xq-snapbtn { position: absolute; z-index: 40; right: calc(12px + env(safe-area-inset-right, 0px)); bottom: calc(48px + env(safe-area-inset-bottom, 0px)); width: 30px; height: 30px; padding: 5px; border-radius: 50%; border: 1px solid rgba(217,168,255,.35); background: rgba(20,8,32,.55); color: #d9a8ff; opacity: .55; cursor: pointer; }
+.xq-snapbtn svg { width: 100%; height: 100%; display: block; }
+.xq-snapbtn.took { animation: xq-took .6s ease-out forwards; }
+@keyframes xq-took { 30% { transform: scale(1.5); opacity: 1; } 100% { transform: scale(.4); opacity: 0; } }
+.xq-polaroid.shot { padding-bottom: 42px; }
+.xq-shotbg { width: 100%; aspect-ratio: 1; display: grid; place-items: center; background: radial-gradient(circle, #3a1a5a, #0a0612 75%); overflow: hidden; }
+.xq-shotbg .fs-badge { position: static; width: 78%; height: 78%; margin: 0; transform: none; animation: none; }
+.xq-shotbg .fs-badge svg { width: 100%; height: 100%; }
+.xq-polaroid span small { display: block; margin-top: 4px; font: 500 10px/1 system-ui, sans-serif; color: #6a5a7a; font-style: normal; }
 .xq-polaroid span { position: absolute; left: 0; right: 0; bottom: 8px; text-align: center; font: italic 600 13px/1 Georgia, serif; color: #3a2a4a; }
 @keyframes xq-pol { from { opacity: 0; transform: translate(-50%, -30%) rotate(8deg) scale(.6); } to { opacity: 1; transform: translate(-50%, -50%) rotate(-4deg); } }
 `;
@@ -1084,5 +1119,24 @@ H.redeem = (code) => {
 };
 root.__xq.cc = () => sceneCC(FEAT_CC);
 root.__xq.ccReset = () => { delete Z().cc; Player.save(); };
+// One-time reset: anyone who already cashed the chips hands back what's left
+// of the 5,000 and loses the badge, so the code (and its moment) can be had again.
+const ccReset = () => {
+  const z = Z();
+  if ((z.ccV || 0) >= 2) return;
+  if (z.cc) {
+    Player.state.credits -= Math.min(Math.max(0, Player.state.credits), 5000);
+    delete z.cc;
+    try { localStorage.setItem('swcg-feats-seen', JSON.stringify(JSON.parse(localStorage.getItem('swcg-feats-seen') || '[]').filter((id) => id !== 'xq_cc'))); } catch (e) { /* storage unavailable */ }
+  }
+  z.ccV = 2;
+  Player.save();
+};
+// Runs right after the save is loaded (and straight away if it already is).
+{
+  const baseLoad = Player.load;
+  Player.load = function () { const r = baseLoad.apply(this, arguments); try { ccReset(); } catch (e) { /* never block loading */ } return r; };
+  if (Player.state) ccReset();
+}
 
 })(window);
