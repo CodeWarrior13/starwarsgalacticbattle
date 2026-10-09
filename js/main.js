@@ -234,7 +234,7 @@
     starfield();
     premiumFx();
     document.querySelector('.topbar').addEventListener('click', (e) => {
-      if (e.target.closest('[data-settings]')) return root.UI.settings();
+      if (e.target.closest('[data-settings]')) { e.target.closest('[data-settings]').blur(); return root.UI.settings(); }
       if (e.target.closest('[data-profile]')) return root.UI.profile();
       const nav = e.target.closest('[data-nav]');
       if (!nav) return;

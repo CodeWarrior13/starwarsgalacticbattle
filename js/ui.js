@@ -2131,11 +2131,15 @@
       }
       if (e.target.closest('[data-reset]')) {
         m.close();
-        if (await confirmBox('Reset all progress?', 'Your roster, currencies and campaign progress will be wiped and you will start over from the tutorial.', 'Reset')) {
+        if (await confirmBox('Reset all progress?', 'All your cards, upgrades, currencies, badges and campaign progress will be wiped, and the game starts over from the tutorial.', 'Reset')) {
+          // Wipe the save and everything kept beside it (badges already shown,
+          // map position), then boot fresh: a new save always opens the tutorial.
           Player.startOver();
+          try {
+            for (const k of Object.keys(localStorage)) if (k.startsWith('swcg-') && k !== 'swcg-save-v1' && k !== 'swcg-battle-prefs') localStorage.removeItem(k);
+          } catch (err) { /* storage blocked: the save itself is already reset */ }
           App.battleActive = false;
-          App.go('home');
-          root.Tutorial.start();
+          location.reload();
         }
       }
     });

@@ -3220,3 +3220,23 @@ body.perf-on .sig-layer.sig-glitch canvas { filter: none; }
   .wallet .currency { padding: 3px 5px 3px 3px; font-size: 11.5px; }
   .settings-btn { width: 30px; height: 30px; }
 }
+
+/* Tablets (iPad portrait and smaller landscape): the brand, level, wallet and
+   settings share the first row and the tabs get their own, so nothing is
+   pushed off the right edge. */
+@media (min-width: 761px) and (max-width: 1120px) and (min-height: 521px) {
+  .topbar { row-gap: 8px; }
+  .account { order: 1; margin-left: auto; }
+  .wallet { order: 2; margin-left: 0; }
+  .settings-btn { order: 3; }
+  .main-nav { order: 4; width: 100%; margin-left: 0; justify-content: center; }
+}
+/* Touch screens keep a tapped button in its hover state: no stuck spin. */
+@media (hover: none) {
+  .icon-btn:hover { transform: none; }
+  .settings-btn:hover .swi { transform: none; }
+}
+/* Newer iPads draw a thick blue focus ring around a tapped button and keep it
+   after a dialog closes. Taps show no ring; keyboard focus keeps the gold one. */
+button:focus:not(:focus-visible) { outline: none; }
+.icon-btn { -webkit-tap-highlight-color: transparent; -webkit-appearance: none; appearance: none; padding: 0; aspect-ratio: 1; }
