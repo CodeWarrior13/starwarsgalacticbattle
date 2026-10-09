@@ -920,6 +920,10 @@ document.addEventListener('keyup', (e) => {
   if (liveCine && (e.key === 'PrintScreen' || e.keyCode === 44)) caught();
 }, true);
 window.addEventListener('blur', () => held.clear());
+// Phones and tablets never tell a page about a screenshot, so on a touch
+// screen the snap is two fingers on the scene (or the three-finger swipe some
+// phones use to take a screenshot).
+document.addEventListener('touchstart', (e) => { if (liveCine && e.touches.length >= 2) caught(); }, { capture: true, passive: true });
 
 const cssSS = `
 .xq-vf { position: absolute; inset: 7%; z-index: 5; pointer-events: none; animation: fade-in .25s; }
