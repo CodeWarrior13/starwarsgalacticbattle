@@ -9,6 +9,7 @@
 
   const PREF_KEY = 'swcg-battle-prefs';
   const AUTO_NEXT_LEVEL = 15;
+  const AUTO_REPEAT_LEVEL = 20;
   function loadPrefs() {
     try {
       return JSON.parse(localStorage.getItem(PREF_KEY)) || {};
@@ -2023,6 +2024,7 @@
           <span class="muted small">Account Lv ${acct.level}</span>
         </div>
         ${rewards.levelUps.map((u) => `<div class="level-up"><b>LEVEL UP!</b> Account level ${u.level} · ${cur('credits', u.reward.credits)} ${cur('crystals', u.reward.crystals)}</div>`).join('')}
+        ${rewards.levelUps.some((u) => u.level === AUTO_REPEAT_LEVEL) ? '<div class="level-up slot-up"><b>AUTO-REPEAT UNLOCKED!</b> Auto-continue can now replay the same battle again and again.</div>' : ''}
         ${rewards.levelUps.some((u) => u.level === AUTO_NEXT_LEVEL) ? '<div class="level-up slot-up"><b>AUTO-CONTINUE UNLOCKED!</b> Jump straight into your next battle with your saved squad.</div>' : ''}
         ${rewards.newSlot ? `<div class="level-up slot-up"><b>NEW SQUAD SLOT!</b> You can now field ${Player.slots()} units in ground and fleet battles.</div>` : ''}` : '';
       // Auto-continue (account level 15+): jump straight into the next fight
@@ -2030,9 +2032,14 @@
       const nextParams = !won ? null : isTower ? { type: 'tower', floor: rewards.towerFloor }
         : nextInPlanet ? { ...p, stage: p.stage + 1 } : nextPlanet ? { type: 'stage', planet: nextPlanet.id, stage: 0 } : null;
       const canAuto = acct.level >= AUTO_NEXT_LEVEL;
-      const autoOn = canAuto && !!Player.state.autoNext;
-      const autoHtml = !nextParams ? '' : canAuto
-        ? `<div class="auto-next"><button type="button" class="auto-toggle ${autoOn ? 'on' : ''}" data-auto-next aria-pressed="${autoOn}"><span class="at-dot"></span>Auto-continue <b>${autoOn ? 'ON' : 'OFF'}</b></button><span class="auto-count" data-auto-count></span></div>`
+      // Level 20: Repeat replays this same battle after every win (farming).
+      const canRepeat = acct.level >= AUTO_REPEAT_LEVEL && won && ['stage', 'boss'].includes(p.type);
+      const mode = !canAuto ? 'off' : Player.state.autoNext === 'repeat' ? (canRepeat ? 'repeat' : 'off') : Player.state.autoNext ? 'next' : 'off';
+      const autoOn = mode !== 'off';
+      const targetOf = (md) => (md === 'repeat' ? { ...p } : nextParams);
+      const seg = (md, label, on) => `<button type="button" class="${mode === md ? 'on' : ''}" data-auto-mode="${md}" ${on ? '' : 'disabled'}>${label}</button>`;
+      const autoHtml = !(nextParams || canRepeat) ? '' : canAuto
+        ? `<div class="auto-next"><span class="auto-lbl"><span class="at-dot ${autoOn ? 'on' : ''}"></span>Auto-continue</span><div class="auto-seg" role="group" aria-label="Auto-continue">${seg('off', 'Off', true)}${seg('next', 'Next', !!nextParams)}${acct.level >= AUTO_REPEAT_LEVEL ? seg('repeat', 'Repeat', canRepeat) : ''}</div><span class="auto-count" data-auto-count></span></div>${acct.level < AUTO_REPEAT_LEVEL ? `<p class="auto-locked muted small">Repeat (farm this battle) unlocks at level ${AUTO_REPEAT_LEVEL}</p>` : ''}`
         : `<p class="auto-locked muted small">Auto-continue unlocks at account level ${AUTO_NEXT_LEVEL}</p>`;
       const m = openModal(`
         <div class="result-title ${won ? 'win' : 'lose'}">${won ? 'VICTORY' : 'DEFEAT'}</div>
@@ -2062,28 +2069,33 @@
         </div>`, { small: true, dismissable: false, cls: 'result-modal' });
       if (won) this.spinReel(m.root, rewards);
       if (rewards.levelUps && rewards.levelUps.length) setTimeout(() => this.rankUp(rewards.levelUps[rewards.levelUps.length - 1]), won ? 4400 : 900);
+      const curMode = () => (m.root.querySelector('[data-auto-mode].on') || {}).dataset ? m.root.querySelector('[data-auto-mode].on').dataset.autoMode : 'off';
       let countdown = null;
       const stopCount = () => { if (countdown) { clearInterval(countdown); countdown = null; } const c = m.root.querySelector('[data-auto-count]'); if (c) c.textContent = ''; };
       const go = (next) => { stopCount(); m.close(); this.quickStart(next); };
       const startCount = () => {
-        if (!nextParams || !canAuto || !Player.state.autoNext || countdown || !m.root.isConnected) return;
+        const md = curMode();
+        const target = targetOf(md);
+        if (md === 'off' || !target || countdown || !m.root.isConnected) return;
         let n = 3;
         const c = m.root.querySelector('[data-auto-count]');
-        const tick = () => { if (!m.root.isConnected) return stopCount(); if (document.querySelector('.rank-up, .walkout, .feat-show, .feat-cine')) return; if (n <= 0) return go(nextParams); if (c) c.textContent = `Next battle in ${n}…`; n -= 1; };
+        const tick = () => { if (!m.root.isConnected) return stopCount(); if (document.querySelector('.rank-up, .walkout, .feat-show, .feat-cine')) return; if (n <= 0) return go(target); if (c) c.textContent = `${md === 'repeat' ? 'Again' : 'Next battle'} in ${n}…`; n -= 1; };
         tick();
         countdown = setInterval(tick, 1000);
       };
       // Wait for the luck spin (and any level-up flourish) before counting down.
       if (autoOn) setTimeout(startCount, won ? 4700 : 600);
       m.root.addEventListener('click', (e) => {
-        const at = e.target.closest('[data-auto-next]');
-        if (at) {
-          Player.state.autoNext = !Player.state.autoNext;
+        const am = e.target.closest('[data-auto-mode]');
+        if (am && !am.disabled) {
+          const md = am.dataset.autoMode;
+          Player.state.autoNext = md === 'off' ? false : md === 'repeat' ? 'repeat' : true;
           Player.save();
-          at.classList.toggle('on', Player.state.autoNext);
-          at.setAttribute('aria-pressed', Player.state.autoNext);
-          at.querySelector('b').textContent = Player.state.autoNext ? 'ON' : 'OFF';
-          if (Player.state.autoNext) startCount(); else stopCount();
+          m.root.querySelectorAll('[data-auto-mode]').forEach((b) => b.classList.toggle('on', b === am));
+          const dot = m.root.querySelector('.auto-next .at-dot');
+          if (dot) dot.classList.toggle('on', md !== 'off');
+          stopCount();
+          if (md !== 'off') startCount();
           return;
         }
         // Reward cards open in the card viewer on top of the results.
