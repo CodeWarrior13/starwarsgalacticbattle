@@ -3319,3 +3319,15 @@ body.perf-on .cc-rays { mask-image: none; -webkit-mask-image: none; opacity: 0.5
    second instead of 60 looks the same and spares the detailed card art. */
 .card-back .cb-rays { animation-timing-function: steps(180); }
 body.perf-on .card-back .cb-rays { animation: none; }
+
+/* Results: auto-continue into the next battle (account level 15+). */
+.auto-next { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; margin-top: 4px; }
+.auto-toggle { display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px; border-radius: 999px; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.04); color: #cfe0ff; font: 700 12.5px var(--font-body, system-ui); letter-spacing: 0.06em; cursor: pointer; }
+.auto-toggle b { font-family: var(--font-display); letter-spacing: 0.1em; color: var(--muted); }
+.auto-toggle .at-dot { width: 9px; height: 9px; border-radius: 50%; background: #4a5568; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2); }
+.auto-toggle.on { border-color: var(--crawl); background: rgba(255, 210, 63, 0.12); color: #fff3c4; }
+.auto-toggle.on b { color: var(--crawl); }
+.auto-toggle.on .at-dot { background: var(--crawl); box-shadow: 0 0 8px var(--crawl); animation: pulse-dot 1.2s ease-in-out infinite; }
+.auto-count { font-family: var(--font-display); font-size: 13px; letter-spacing: 0.08em; color: var(--crawl); min-width: 8ch; }
+.auto-count:empty { display: none; }
+.auto-locked { text-align: center; margin: 2px 0 0; }

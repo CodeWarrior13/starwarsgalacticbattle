@@ -8,6 +8,7 @@
   const { $, $$, el, esc, fmt, cur, portrait, toast, openModal, confirmBox, updateWallet, App } = root.UI;
 
   const PREF_KEY = 'swcg-battle-prefs';
+  const AUTO_NEXT_LEVEL = 15;
   function loadPrefs() {
     try {
       return JSON.parse(localStorage.getItem(PREF_KEY)) || {};
@@ -1984,6 +1985,14 @@
       this.setActive(null);
     },
 
+    // Straight into a battle with the saved squad; back to the squad screen
+    // when there isn't one for this kind of fight.
+    quickStart(params) {
+      const enc = Player.encounter(params);
+      if (!Player.squadEntries(enc.kind).length) return App.go('squad', params);
+      return this.start(params);
+    },
+
     async finish(winner) {
       this.ended = true;
       this.setActive(null);
@@ -2014,7 +2023,17 @@
           <span class="muted small">Account Lv ${acct.level}</span>
         </div>
         ${rewards.levelUps.map((u) => `<div class="level-up"><b>LEVEL UP!</b> Account level ${u.level} · ${cur('credits', u.reward.credits)} ${cur('crystals', u.reward.crystals)}</div>`).join('')}
+        ${rewards.levelUps.some((u) => u.level === AUTO_NEXT_LEVEL) ? '<div class="level-up slot-up"><b>AUTO-CONTINUE UNLOCKED!</b> Jump straight into your next battle with your saved squad.</div>' : ''}
         ${rewards.newSlot ? `<div class="level-up slot-up"><b>NEW SQUAD SLOT!</b> You can now field ${Player.slots()} units in ground and fleet battles.</div>` : ''}` : '';
+      // Auto-continue (account level 15+): jump straight into the next fight
+      // with the saved squad, and optionally keep going on a short countdown.
+      const nextParams = !won ? null : isTower ? { type: 'tower', floor: rewards.towerFloor }
+        : nextInPlanet ? { ...p, stage: p.stage + 1 } : nextPlanet ? { type: 'stage', planet: nextPlanet.id, stage: 0 } : null;
+      const canAuto = acct.level >= AUTO_NEXT_LEVEL;
+      const autoOn = canAuto && !!Player.state.autoNext;
+      const autoHtml = !nextParams ? '' : canAuto
+        ? `<div class="auto-next"><button type="button" class="auto-toggle ${autoOn ? 'on' : ''}" data-auto-next aria-pressed="${autoOn}"><span class="at-dot"></span>Auto-continue <b>${autoOn ? 'ON' : 'OFF'}</b></button><span class="auto-count" data-auto-count></span></div>`
+        : `<p class="auto-locked muted small">Auto-continue unlocks at account level ${AUTO_NEXT_LEVEL}</p>`;
       const m = openModal(`
         <div class="result-title ${won ? 'win' : 'lose'}">${won ? 'VICTORY' : 'DEFEAT'}</div>
         ${isTower ? `<div class="liberated tower-result"><p class="eyebrow">Endless Tower</p><h3>${won ? `Floor ${p.floor || rewards.towerFloor - 1} cleared${rewards.newBest ? ' · New best!' : ''}` : rewards.fell ? `Fell back to floor ${rewards.towerFloor}` : `Checkpoint holds at floor ${rewards.towerFloor}`}</h3><p class="muted">${won ? 'Deeper floors hit harder and pay more.' : 'Checkpoints every 10 floors. The floors above have been re-rolled.'}</p></div>` : ''}
@@ -2034,20 +2053,48 @@
             : rewards.card ? `<div class="reward-card" data-rewards hidden><p class="eyebrow">Boss trophy</p>${root.UI.unitCard(D.UNIT_MAP[rewards.card.id], { tag: 'div', hideShards: true })}<p class="muted">${rewards.card.isNew ? 'New recruit!' : `+${rewards.card.shards} shards`}</p></div>` : ''}`
         : `<p class="muted">Train your units in the Collection, build a squad with matching traits for synergies, or grab crates in the Night Market, then try again.</p>${rewards.secret ? `<div class="liberated secret-cost"><p class="eyebrow">The Monolith's price</p><h3>Next attempt: ${cur('crystals', rewards.nextCost)}</h3><p class="muted">Each defeat raises the price of the trial, up to ${D.SECRET_COSTS[D.SECRET_COSTS.length - 1]} Kyber. A victory resets it.</p></div>` : ''}`}
         ${xpHtml}
+        ${autoHtml}
         <div class="modal-actions">
           ${isTower ? '' : '<button class="btn" type="button" data-r="retry">Retry</button>'}
+          ${nextParams && canAuto ? '<button class="btn" type="button" data-r="edit-next">Edit squad</button>' : ''}
           ${won ? '' : '<button class="btn" type="button" data-r="collection">Collection</button>'}
           ${p.type === 'secret' ? '<button class="btn btn-primary" type="button" data-r="secret">Return to the Monolith</button>' : isTower ? `<button class="btn" type="button" data-r="tower-exit">Leave tower</button><button class="btn btn-primary" type="button" data-r="tower">${won ? `Climb to floor ${rewards.towerFloor}` : `Restart from floor ${rewards.towerFloor}`}</button>` : nextInPlanet ? '<button class="btn btn-primary" type="button" data-r="next">Next stage</button>' : nextPlanet ? `<button class="btn btn-primary" type="button" data-r="planet">Travel to ${esc(nextPlanet.name)}</button>` : '<button class="btn btn-primary" type="button" data-r="campaign">Continue</button>'}
         </div>`, { small: true, dismissable: false, cls: 'result-modal' });
       if (won) this.spinReel(m.root, rewards);
       if (rewards.levelUps && rewards.levelUps.length) setTimeout(() => this.rankUp(rewards.levelUps[rewards.levelUps.length - 1]), won ? 4400 : 900);
+      let countdown = null;
+      const stopCount = () => { if (countdown) { clearInterval(countdown); countdown = null; } const c = m.root.querySelector('[data-auto-count]'); if (c) c.textContent = ''; };
+      const go = (next) => { stopCount(); m.close(); this.quickStart(next); };
+      const startCount = () => {
+        if (!nextParams || !canAuto || !Player.state.autoNext || countdown || !m.root.isConnected) return;
+        let n = 3;
+        const c = m.root.querySelector('[data-auto-count]');
+        const tick = () => { if (!m.root.isConnected) return stopCount(); if (document.querySelector('.rank-up, .walkout, .feat-show, .feat-cine')) return; if (n <= 0) return go(nextParams); if (c) c.textContent = `Next battle in ${n}…`; n -= 1; };
+        tick();
+        countdown = setInterval(tick, 1000);
+      };
+      // Wait for the luck spin (and any level-up flourish) before counting down.
+      if (autoOn) setTimeout(startCount, won ? 4700 : 600);
       m.root.addEventListener('click', (e) => {
+        const at = e.target.closest('[data-auto-next]');
+        if (at) {
+          Player.state.autoNext = !Player.state.autoNext;
+          Player.save();
+          at.classList.toggle('on', Player.state.autoNext);
+          at.setAttribute('aria-pressed', Player.state.autoNext);
+          at.querySelector('b').textContent = Player.state.autoNext ? 'ON' : 'OFF';
+          if (Player.state.autoNext) startCount(); else stopCount();
+          return;
+        }
         // Reward cards open in the card viewer on top of the results.
         const rc = e.target.closest('.reward-card .ucard, .reward-cards .ucard');
         if (rc) return root.UI.inspect(rc.dataset.id);
         const r = e.target.closest('[data-r]');
         if (!r) return;
+        stopCount();
         m.close();
+        if (canAuto && nextParams && ['tower', 'next', 'planet'].includes(r.dataset.r)) return this.quickStart(nextParams);
+        if (r.dataset.r === 'edit-next') return App.go('squad', nextParams);
         if (r.dataset.r === 'tower') App.go('squad', { type: 'tower', floor: rewards.towerFloor });
         else if (r.dataset.r === 'tower-exit') { App.ui.hubMode = 'tower'; App.go('home'); }
         else if (r.dataset.r === 'retry') App.go('squad', p);
