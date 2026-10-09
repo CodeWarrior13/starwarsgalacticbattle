@@ -55,7 +55,15 @@ h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; le
     radial-gradient(900px 500px at -10% 110%, rgba(255, 75, 75, 0.10), transparent 60%),
     var(--void);
 }
-.starfield canvas { width: 100%; height: 100%; display: block; }
+.starfield { overflow: hidden; }
+.starfield .sf-layer { position: absolute; top: 0; left: 0; height: 100%; width: 200%; display: flex; will-change: transform, opacity;
+  animation: sf-drift var(--sf-drift) linear infinite, sf-twinkle var(--sf-tw) ease-in-out var(--sf-delay) infinite alternate; }
+.starfield .sf-layer canvas { width: 50%; height: 100%; display: block; flex: none; }
+@keyframes sf-drift { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes sf-twinkle { from { opacity: 1; } to { opacity: 0.45; } }
+.starfield.sf-still .sf-layer { animation: none; }
+body.perf-on .starfield .sf-layer { animation: sf-drift var(--sf-drift) linear infinite; }
+body.in-battle .starfield .sf-layer { animation-play-state: paused; }
 
 /* ---------- Top bar ---------- */
 .topbar {
@@ -3240,3 +3248,74 @@ body.perf-on .sig-layer.sig-glitch canvas { filter: none; }
    after a dialog closes. Taps show no ring; keyboard focus keeps the gold one. */
 button:focus:not(:focus-visible) { outline: none; }
 .icon-btn { -webkit-tap-highlight-color: transparent; -webkit-appearance: none; appearance: none; padding: 0; aspect-ratio: 1; }
+
+/* ---------- Smooth on every device: the idle shines and glows ----------
+   These sweeps used to slide a background image, which repaints the whole
+   card every frame. Now the shine band slides as one finished layer (the
+   browser just moves it), so they look the same and cost almost nothing. */
+@keyframes shine-x { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+@keyframes shine-x-ease { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+.ucard.rarity-legendary::after, .bigcard.rarity-legendary .bigface.front::after, .flash-card::after, .flip-back::after,
+.ucard.rarity-secret::after, .bigcard.rarity-secret .bigface.front::after {
+  background-size: 100% 100%; animation-name: shine-x;
+}
+.daily-card.tier-5 .dc-front::after, .daily-card.tier-6 .dc-front::after { background-size: 100% 100%; animation-name: shine-x-ease; }
+/* Primary buttons: the shimmer is a sliding layer and the glow fades in and
+   out on its own layer, instead of repainting the button. */
+.btn-primary:not(:disabled) { background-image: none; animation: none; position: relative; overflow: hidden; isolation: isolate; }
+.btn-primary:not(:disabled)::before {
+  content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: linear-gradient(105deg, transparent 38%, rgba(255, 255, 255, 0.55) 50%, transparent 62%);
+  transform: translateX(-100%); animation: btn-sweep 3.6s ease-in-out infinite;
+}
+@keyframes btn-sweep { 0%, 55% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+/* Anything scrolled off screen stops animating until it comes back. */
+.anim-off, .anim-off *, .anim-off::before, .anim-off::after, .anim-off *::before, .anim-off *::after { animation-play-state: paused !important; }
+
+/* ---------- Performance mode: the shop keeps its look, minus the busywork ----------
+   Crates still bob and glow and the shines still sweep; the drifting sparks,
+   pulsing interior lights, spinning rays and stacked glows are held still. */
+body.perf-on .pack-mote, body.perf-on .dc-rays { animation: none !important; }
+body.perf-on .pack-mote { display: none; }
+body.perf-on .crate-art .crate-glow, body.perf-on .crate-art .crate-core, body.perf-on .crate-art .crate-scan,
+body.perf-on .holocron .crate-art .crate-scan, body.perf-on .crate-holocron .crate-scan { animation: none !important; }
+body.perf-on .crate-art [style*="drop-shadow"] { filter: none !important; }
+body.perf-on .btn-primary:not(:disabled)::before { animation-duration: 7s; }
+body.perf-on .pack-ring { animation: none !important; }
+body.perf-on .ucard, body.perf-on .daily-card, body.perf-on .flash-card { box-shadow: none !important; }
+body.perf-on .market .pack, body.perf-on .market section { contain: layout paint; }
+/* The daily card's bob moves it as one finished layer (scaling a 3D flip card
+   used to redraw it every frame); the badge dot and neon sign fade on their own layers. */
+.daily-card.today:not(.done) { will-change: translate; }
+@keyframes dc-pulse { 50% { translate: 0 -5px; } }
+.neon { will-change: opacity; }
+.main-nav button.has-dot::after { will-change: transform, opacity; }
+body.perf-on .daily-card .dc-front::after, body.perf-on .daily-card .dc-emblem, body.perf-on .neon,
+body.perf-on .main-nav button.has-dot::after { animation: none !important; }
+/* Behind a full-screen scene the page holds still. */
+body.overlay-on #screen *, body.overlay-on #screen *::before, body.overlay-on #screen *::after,
+body.overlay-on .topbar *, body.overlay-on .topbar *::after, body.overlay-on .starfield .sf-layer { animation-play-state: paused !important; }
+
+/* ---------- Crate opening: same scene, drawn once ----------
+   The crate's glow was a live drop-shadow filter recomputed every frame while
+   its lights pulse; it's now a soft light painted behind it. The rays, glow
+   and flash each sit on their own layer, so spinning and fading them is free. */
+.cc-crate { filter: none; }
+.cc-crate::before { content: ''; position: absolute; inset: -18%; z-index: -1; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle, color-mix(in srgb, var(--rc) 55%, transparent) 0%, color-mix(in srgb, var(--rc) 22%, transparent) 42%, transparent 68%); }
+.cc-rays, .cc-glow, .cc-flash, .cc-ring { will-change: transform, opacity; }
+.crate-cine.glitch .cc-crate { filter: drop-shadow(-6px 0 0 rgba(0, 255, 255, 0.6)) drop-shadow(6px 0 0 rgba(255, 0, 80, 0.7)); }
+/* Performance mode: the crate's interior lights hold still during the scene,
+   and the burst and glitch skip their blur and colour filters. */
+@keyframes cc-burst-lite { to { transform: scale(2.4); opacity: 0; } }
+body.perf-on .crate-cine.burst .cc-crate { animation-name: cc-burst-lite; }
+body.perf-on .crate-cine.glitch { animation: none; }
+body.perf-on .crate-cine.glitch .cc-crate, body.perf-on .cc-shatter path { filter: none; }
+body.perf-on .cc-rays { mask-image: none; -webkit-mask-image: none; opacity: 0.55; }
+/* Card backs breathe by fading a finished glow instead of regrowing a shadow. */
+.flip .flip-back::before { box-shadow: inset 0 0 36px color-mix(in srgb, var(--fc) 80%, transparent); animation: side-breathe-o 2.4s ease-in-out infinite; will-change: opacity; }
+@keyframes side-breathe-o { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
+/* The card back's rays turn once every 30 seconds; redrawing them 6 times a
+   second instead of 60 looks the same and spares the detailed card art. */
+.card-back .cb-rays { animation-timing-function: steps(180); }
+body.perf-on .card-back .cb-rays { animation: none; }

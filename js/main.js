@@ -3,60 +3,48 @@
 (function (root) {
   const { $, App } = root.UI;
 
+  // The ambient starfield: three depths of stars drawn once into still
+  // pictures, then drifted and twinkled by the browser's compositor. Nothing
+  // is redrawn per frame, so it costs almost nothing even on old tablets.
   function starfield() {
     const host = $('.starfield');
-    const canvas = document.createElement('canvas');
-    host.appendChild(canvas);
-    const ctx = canvas.getContext('2d');
-    let stars = [];
-    let w = 0;
-    let h = 0;
-
-    function resize() {
-      const dpr = Math.min(root.Perf ? Math.max(1, root.Perf.dpr) : 2, window.devicePixelRatio || 1);
-      w = canvas.width = window.innerWidth * dpr;
-      h = canvas.height = window.innerHeight * dpr;
-      stars = Array.from({ length: Math.round((window.innerWidth * window.innerHeight) / 5000) }, () => ({
-        x: Math.random() * w,
-        y: Math.random() * h,
-        r: (Math.random() * 1.2 + 0.3) * dpr,
-        p: Math.random() * Math.PI * 2,
-        s: Math.random() * 0.02 + 0.005,
-        drift: Math.random() * 0.08 * dpr,
-      }));
-    }
-
     const still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    // The stars twinkle slowly, so a modest frame rate looks the same and
-    // leaves the GPU free; during battles (where only the edges show) slower.
-    let lastDraw = 0;
-    function draw(now) {
-      if (!still) requestAnimationFrame(draw);
-      const gap = document.body.classList.contains('in-battle') ? 80 : 33;
-      if (now && now - lastDraw < gap) return;
-      const steps = lastDraw && now ? Math.min(4, (now - lastDraw) / 16.7) : 1;
-      lastDraw = now || 0;
-      ctx.clearRect(0, 0, w, h);
-      for (const s of stars) {
-        s.p += s.s * steps;
-        if (!still) {
-          s.x -= s.drift * steps;
-          if (s.x < 0) s.x = w;
-        }
-        ctx.globalAlpha = 0.35 + Math.sin(s.p) * 0.3 + 0.3;
+    const DEPTHS = [
+      { n: 0.45, r: [0.3, 0.7], a: 0.55, drift: 420, tw: 5.2 },
+      { n: 0.35, r: [0.5, 1.0], a: 0.75, drift: 300, tw: 3.8 },
+      { n: 0.2, r: [0.8, 1.5], a: 0.95, drift: 200, tw: 6.4 },
+    ];
+    function build() {
+      host.innerHTML = '';
+      const w = Math.ceil(window.innerWidth);
+      const h = Math.ceil(window.innerHeight);
+      const total = Math.round((w * h) / 5000);
+      DEPTHS.forEach((d, i) => {
+        const tile = document.createElement('canvas');
+        tile.width = w; tile.height = h;
+        const ctx = tile.getContext('2d');
         ctx.fillStyle = '#dfe8ff';
-        ctx.beginPath();
-        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-        ctx.fill();
-      }
+        for (let k = 0; k < Math.round(total * d.n); k++) {
+          ctx.globalAlpha = d.a * (0.55 + Math.random() * 0.45);
+          ctx.beginPath();
+          ctx.arc(Math.random() * w, Math.random() * h, d.r[0] + Math.random() * (d.r[1] - d.r[0]), 0, Math.PI * 2);
+          ctx.fill();
+        }
+        // Two copies side by side so the drift loops without a seam.
+        const layer = document.createElement('div');
+        layer.className = 'sf-layer';
+        layer.style.cssText = `--sf-drift:${d.drift}s;--sf-tw:${d.tw}s;--sf-delay:-${(i * 1.7).toFixed(1)}s`;
+        const twin = document.createElement('canvas');
+        twin.width = w; twin.height = h;
+        twin.getContext('2d').drawImage(tile, 0, 0);
+        layer.append(tile, twin);
+        host.appendChild(layer);
+      });
+      host.classList.toggle('sf-still', !!still);
     }
-
-    resize();
-    window.addEventListener('resize', () => {
-      resize();
-      if (still) draw();
-    });
-    draw();
+    build();
+    let t = 0;
+    window.addEventListener('resize', () => { clearTimeout(t); t = setTimeout(build, 250); });
   }
 
   // Premium micro-interactions: every button and tappable card gets a hover

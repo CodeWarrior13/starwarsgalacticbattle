@@ -104,7 +104,49 @@
     },
   };
 
+  // Looping effects (crate lights, card shines, button sweeps) only run while
+  // they're on screen; scrolled away, they pause until they come back.
+  const LOOPING = '.pack, .daily-card, .flash-card, .ucard.rarity-legendary, .ucard.rarity-secret, .btn-primary, .crate-art';
+  function watchOffscreen() {
+    const screen = document.getElementById('screen');
+    if (!screen || !('IntersectionObserver' in root)) return;
+    const io = new IntersectionObserver((list) => { for (const e of list) e.target.classList.toggle('anim-off', !e.isIntersecting); }, { rootMargin: '120px 0px' });
+    let queued = false;
+    const scan = () => {
+      queued = false;
+      io.disconnect();
+      screen.querySelectorAll(LOOPING).forEach((n) => io.observe(n));
+    };
+    new MutationObserver(() => { if (!queued) { queued = true; requestAnimationFrame(scan); } }).observe(screen, { childList: true, subtree: true });
+    scan();
+  }
+  // A full-screen scene (crate opening, card walkout, badge cutscene) hides
+  // the screen behind it, so that screen's looping effects pause meanwhile.
+  function watchOverlays() {
+    const KEEP = new Set(['screen', 'app-splash', 'starfield', 'topbar']);
+    let queued = false;
+    const check = () => {
+      queued = false;
+      const vw = innerWidth, vh = innerHeight;
+      let covered = false;
+      if (!document.body.classList.contains('in-battle')) {
+        for (const n of document.body.children) {
+          if (n.id === 'screen' || [...n.classList].some((c) => KEEP.has(c)) || n.tagName === 'SCRIPT' || n.tagName === 'STYLE') continue;
+          const r = n.getBoundingClientRect();
+          if (r.width >= vw * 0.9 && r.height >= vh * 0.9 && getComputedStyle(n).position === 'fixed') { covered = true; break; }
+        }
+      }
+      if (!covered && !document.body.classList.contains('in-battle') && document.querySelector('#modal-root .modal-backdrop')) covered = true;
+      document.body.classList.toggle('overlay-on', covered);
+    };
+    const mo = new MutationObserver(() => { if (!queued) { queued = true; requestAnimationFrame(check); } });
+    mo.observe(document.body, { childList: true });
+    const mr = document.getElementById('modal-root');
+    if (mr) mo.observe(mr, { childList: true });
+  }
   Perf.apply();
+  const boot = () => { watchOffscreen(); watchOverlays(); };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
   if (!document.body) document.addEventListener('DOMContentLoaded', () => Perf.apply());
   root.Perf = Perf;
 })(window);

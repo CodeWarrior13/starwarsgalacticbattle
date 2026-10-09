@@ -618,8 +618,9 @@ const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
 const found = () => { const z = Z(); z.hf = z.hf || []; return z.hf; };
 document.head.appendChild(Object.assign(document.createElement('style'), { textContent: `
 .xq-frag { position: absolute; z-index: 30; width: 16px; height: 16px; padding: 0; border: 0; background: none; cursor: pointer; opacity: .32; animation: xq-frag 3.4s ease-in-out infinite; }
-.xq-frag svg { width: 100%; height: 100%; display: block; }
-@keyframes xq-frag { 50% { opacity: .75; filter: drop-shadow(0 0 4px #7cd0ff); } }
+.xq-frag { will-change: opacity; }
+.xq-frag svg { width: 100%; height: 100%; display: block; filter: drop-shadow(0 0 4px #7cd0ff); }
+@keyframes xq-frag { 50% { opacity: .75; } }
 .xq-fpop { position: fixed; inset: 0; z-index: 280; display: grid; place-items: center; align-content: center; gap: 8px; background: radial-gradient(circle at 50% 45%, #0a2040, #02040a 70%); text-align: center; animation: fade-in .3s; cursor: pointer; }
 .xq-fpop.out { opacity: 0; transition: opacity .3s; }
 .xq-fpop .xq-cube { width: 90px; height: 90px; animation: xq-unfold .9s cubic-bezier(.2,.9,.3,1.3) both; filter: drop-shadow(0 0 20px #4aa8ff); }
