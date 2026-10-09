@@ -797,16 +797,28 @@ if (B && !B.__xqr) {
     }
     return baseHit.call(this, u, ev);
   };
+  // A camera iris (the classic spy-film gun-barrel shutter): eight blades
+  // that spiral shut to a point and open again.
+  const iris = (cls = '') => {
+    const u = `xi${++seq}`;
+    const blades = Array.from({ length: 8 }, (_, k) => `<g transform="rotate(${k * 45})"><g class="ib"><rect x="-700" y="-700" width="1400" height="700" fill="url(#${u})" stroke="#7a4aa8" stroke-width="1.4"/><line x1="-700" y1="-1" x2="700" y2="-1" stroke="#d9a8ff" stroke-width=".8" opacity=".55"/></g></g>`).join('');
+    return el(`<svg class="xq-iris ${cls}" viewBox="-100 -100 200 200" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs><linearGradient id="${u}" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#1a0c26"/><stop offset=".12" stop-color="#0a0510"/><stop offset="1" stop-color="#030106"/></linearGradient></defs>${blades}</svg>`);
+  };
   // The Shatterpoint ultimate: a camera shutter freezes the frame, fault lines
   // race across each enemy, then the frozen moment breaks.
   B.mv_shatter = async function (S, actor, from, T, spec, hit) {
     const Snd = root.Sound;
     const vf = el('<div class="xq-vf"><b></b><b></b><b></b><b></b><span>● REC</span><em>1/8000</em></div>');
-    const shut = el('<div class="xq-shut"><i></i><i></i></div>');
+    const shut = iris('opening');
+    const dot = el('<i class="xq-dot"></i>');
     S.layer.appendChild(vf);
     S.layer.appendChild(shut);
+    S.layer.appendChild(dot);
+    if (Snd) Snd.play('click');
+    await this.wait(380);
+    dot.remove();
     if (Snd) Snd.play('glitch');
-    await this.wait(420);
+    await this.wait(520);
     this.field.classList.add('xq-frozen');
     for (const t of T) {
       const pts = [];
@@ -826,7 +838,11 @@ if (B && !B.__xqr) {
       await this.wait(170);
     }
     await this.wait(380);
+    shut.classList.remove('opening');
+    void shut.getBoundingClientRect();
     shut.classList.add('snap');
+    if (Snd) Snd.play('click');
+    await this.wait(170);
     if (Snd) Snd.play('saber');
     for (const t of T) {
       this.shatterCard(t.uid, S.layer, spec.color);
@@ -860,10 +876,12 @@ const polaroid = () => {
   return `<div class="xq-polaroid shot"><div class="xq-shotbg">${UI.featBadge(ph)}</div><span>${esc(ph.name.split(' · ')[0])}<small>${d.toLocaleDateString()}</small></span></div>`;
 };
 const sceneSS = (x, onDone) => {
-  const stage = `<div class="xq-vf big"><b></b><b></b><b></b><b></b><span>● REC</span><em>1/8000</em></div><div class="xq-shut big"><i></i><i></i></div>
+  const stage = `<div class="xq-vf big"><b></b><b></b><b></b><b></b><span>● REC</span><em>1/8000</em></div><div class="xq-irisslot"></div>
     ${polaroid()}
     <p class="xq-line" style="top:74%;--t:3.4s;color:#d9a8ff">"Most people miss the moment."</p><p class="xq-line" style="top:80%;--t:4.6s">"You captured it."</p>`;
-  return scene(x, 'xq-ss', stage, 6600, onDone, (S, at) => { at(300, () => S.play('click')); at(900, () => S.play('glitch')); at(1500, () => S.play('saber')); at(2200, () => S.play('reveal_epic')); });
+  const p = scene(x, 'xq-ss', stage, 6600, onDone, (S, at) => { at(300, () => S.play('click')); at(900, () => S.play('glitch')); at(1500, () => S.play('saber')); at(2200, () => S.play('reveal_epic')); });
+  setTimeout(() => { const slot = document.querySelector('.feat-cine.xq-ss .xq-irisslot'); if (slot) slot.replaceWith(iris('big')); }, 0);
+  return p;
 };
 H.scenes.xq_ss = (x) => sceneSS(x);
 
@@ -962,6 +980,15 @@ const cssSS = `
 .xq-vf.big { inset: 5%; }
 @keyframes xq-rec { 50% { opacity: .2; } }
 .xq-shut { position: absolute; inset: 0; z-index: 6; pointer-events: none; }
+.xq-iris { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 6; pointer-events: none; overflow: hidden; }
+.xq-iris .ib { transform-box: view-box; transform-origin: 0 0; transform: rotate(0deg) translateY(-300px); }
+.xq-iris.opening .ib { animation: xq-iris-open .55s cubic-bezier(.6,0,.2,1) .35s both; }
+.xq-iris.snap .ib { animation: xq-iris-snap .42s cubic-bezier(.7,0,.3,1) both; }
+.xq-iris.big .ib { animation: xq-iris-snap .5s cubic-bezier(.7,0,.3,1) .8s both; }
+@keyframes xq-iris-open { from { transform: rotate(-40deg) translateY(0); } to { transform: rotate(0deg) translateY(-300px); } }
+@keyframes xq-iris-snap { 0% { transform: rotate(0deg) translateY(-300px); } 40%, 58% { transform: rotate(-40deg) translateY(0); } 100% { transform: rotate(0deg) translateY(-300px); } }
+.xq-dot { position: absolute; z-index: 7; top: 50%; left: -20px; width: 16px; height: 16px; margin-top: -8px; border-radius: 50%; background: #fff; box-shadow: 0 0 14px #e8d2ff; animation: xq-dot .36s linear forwards; }
+@keyframes xq-dot { to { transform: translateX(calc(50vw + 12px)); } }
 .xq-shut i { position: absolute; left: 0; right: 0; height: 50%; background: #05020a; transform: scaleY(0); }
 .xq-shut i:first-child { top: 0; transform-origin: top; } .xq-shut i:last-child { bottom: 0; transform-origin: bottom; }
 .xq-shut i { animation: xq-shut .32s ease-in-out; }
