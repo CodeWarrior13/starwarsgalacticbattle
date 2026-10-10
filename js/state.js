@@ -253,6 +253,16 @@
       return true;
     },
 
+    // Promote with Aurodium Ingots instead of shards.
+    starUpAurodium(id) {
+      const u = this.unit(id);
+      if (!u || u.stars >= D.MAX_STARS) return false;
+      if (!this.spend({ aurodium: D.STAR_AURODIUM[u.stars - 1] })) return false;
+      u.stars += 1;
+      this.save();
+      return true;
+    },
+
     // Grant a unit card: unlocks it, or converts a duplicate into shards.
     // Holo cards start at 2★ when new, or give double shards as duplicates.
     grantCard(id, holo) {
@@ -777,7 +787,8 @@
           const pick = pool[Math.floor((rng || Math.random)() * pool.length)];
           card = this.grantCard(pick.id, false);
         }
-        out = { base: r.credits, crystals: r.kyber, aurodium: r.aurodium, firstClear, card };
+        const aurodium = r.aurodium + Math.floor((rng || Math.random)() * (r.aurodiumMax - r.aurodium + 1));
+        out = { base: r.credits, crystals: r.kyber, aurodium, firstClear, card };
       } else {
         const planet = D.PLANET_MAP[params.planet];
         kind = planet.stages[params.stage].kind;

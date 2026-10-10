@@ -508,7 +508,7 @@
           <span class="boss-thumb">${Art.unitArt(def)}</span>
           <span class="pd-stage-body">
             <b><span class="kind-badge boss">☠ Boss</span> ${esc(enc.name)}</b>
-            <span class="stage-info"><span>${esc(def.name)} · Lv ${enc.level}</span>${cur('credits', r.credits)}${cur('aurodium', r.aurodium)}${r.kyber ? cur('crystals', r.kyber) : ''}<span>${unlocked ? (wins ? `Defeated ${wins}×` : 'Not yet defeated') : `🔒 Liberate ${esc(p.name)}`}</span></span>
+            <span class="stage-info"><span>${esc(def.name)} · Lv ${enc.level}</span>${cur('credits', r.credits)}${r.aurodiumMax > r.aurodium ? `<span class="cur cur-aurodium" title="${D.CURRENCIES.aurodium.name}">${Art.ICONS.aurodium}<b>${r.aurodium}–${r.aurodiumMax}</b></span>` : cur('aurodium', r.aurodium)}${r.kyber ? cur('crystals', r.kyber) : ''}<span>${unlocked ? (wins ? `Defeated ${wins}×` : 'Not yet defeated') : `🔒 Liberate ${esc(p.name)}`}</span></span>
           </span>
         </button>`;
       }) : [];
@@ -1408,6 +1408,7 @@
       const maxStars = u.stars >= D.MAX_STARS;
       const lvlCost = D.levelCost(u.level);
       const starNeed = maxStars ? 0 : D.STAR_COSTS[u.stars - 1];
+      const starAur = maxStars ? 0 : D.STAR_AURODIUM[u.stars - 1];
       const next = D.unitStats(def, Math.min(D.MAX_LEVEL, u.level + 1), u.stars);
       const nowS = D.unitStats(def, u.level, u.stars);
       return `<div class="ipage-inner">
@@ -1423,6 +1424,8 @@
           <span class="muted">${maxStars ? 'Max stars reached.' : `Shards ${u.shards}/${starNeed}. Duplicates and Hot Stock give shards.`}</span>
           ${maxStars ? '' : `<div class="shardbar ${u.shards >= starNeed ? 'ready' : ''}"><i style="width:${Math.min(100, (u.shards / starNeed) * 100)}%"></i></div>`}
           <button class="btn" type="button" data-star ${maxStars || u.shards < starNeed ? 'disabled' : ''}>${maxStars ? 'Maxed' : `Promote to ${u.stars + 1}★`}</button>
+          ${maxStars ? '' : `<button class="btn btn-gold" type="button" data-star-aur ${Player.state.aurodium < starAur ? 'disabled' : ''}>Promote with ingots · ${cur('aurodium', starAur)}</button>
+          <span class="muted small">No shards needed. Ingots come from bosses, new tower boss floors and the daily streak.</span>`}
         </div>
       </div>`;
     }
@@ -1557,6 +1560,7 @@
       };
       if (e.target.closest('[data-level]') && Player.levelUp(id)) say('level', `Level ${Player.unit(id).level}!`);
       else if (e.target.closest('[data-star]') && Player.starUp(id)) say('star', `Promoted to ${Player.unit(id).stars}★!`);
+      else if (e.target.closest('[data-star-aur]') && Player.starUpAurodium(id)) say('star', `Promoted to ${Player.unit(id).stars}★!`);
       else return;
       if (root.Sound) root.Sound.play('rankup');
       render();

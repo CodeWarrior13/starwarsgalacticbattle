@@ -507,6 +507,9 @@ body.in-battle .main-nav, body.in-battle .brand { pointer-events: none; opacity:
   gap: 8px;
 }
 .upgrade .muted { font-size: 13px; }
+.btn.btn-gold { border-color: rgba(242,182,50,.55); color: #ffd97a; background: linear-gradient(180deg, rgba(242,182,50,.16), rgba(138,90,10,.12)); }
+.btn.btn-gold:not(:disabled):hover { border-color: #f2b632; background: linear-gradient(180deg, rgba(242,182,50,.26), rgba(138,90,10,.18)); }
+.btn.btn-gold .cur { margin-left: 4px; }
 
 /* ---------- Shop ---------- */
 .shop-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }

@@ -1035,6 +1035,7 @@
     return {
       credits: 400 + enc.level * 60,
       aurodium: firstClear ? 8 : 2,
+      aurodiumMax: firstClear ? 8 : 3,
       kyber: firstClear ? 3 : 0,
       card: firstClear ? 'epic+' : null,
     };
@@ -1162,6 +1163,8 @@
   const MAX_STARS = 7;
   // Shards needed to go from star N to N+1 (index 0 = 1★ -> 2★).
   const STAR_COSTS = [10, 25, 50, 80, 120, 170];
+  // Aurodium Ingots that buy the same promotion without shards. Climbs steeply near the top.
+  const STAR_AURODIUM = [2, 3, 4, 5, 6, 12];
   const DUPLICATE_SHARDS = { common: 5, rare: 8, epic: 12, legendary: 20, mythic: 30, secret: 40 };
 
   function levelCost(level) {
@@ -1807,12 +1810,12 @@
   // Daily login: a 7-day cycle that escalates, then repeats while the streak holds.
   const DAILY = [
     { day: 1, credits: 600, label: 'Credit stash' },
-    { day: 2, credits: 1000, label: 'Smuggler\'s cut' },
+    { day: 2, credits: 1000, aurodium: 1, label: 'Smuggler\'s cut' },
     { day: 3, crystals: 20, label: 'Kyber shard' },
     { day: 4, credits: 1800, aurodium: 1, label: 'Spice run' },
-    { day: 5, crystals: 30, dice: 1, label: 'Loaded Dice' },
+    { day: 5, crystals: 30, dice: 1, aurodium: 1, label: 'Loaded Dice' },
     { day: 6, credits: 2500, charm: 1, label: 'Chance Cube' },
-    { day: 7, crystals: 80, aurodium: 3, label: 'Hutt\'s Hoard', big: true },
+    { day: 7, crystals: 80, aurodium: 4, label: 'Hutt\'s Hoard', big: true },
   ];
   // Kyber sinks in the Night Market, priced against 1-2 Kyber per win.
   const RESTOCK_KYBER = 10;
@@ -1827,7 +1830,7 @@
   };
 
   root.GameData = {
-    RARITIES, ROLE_BASE, ROLE_ICONS, STATUS_INFO, UNITS, UNIT_MAP, MAX_LEVEL, MAX_STARS, STAR_COSTS,
+    RARITIES, ROLE_BASE, ROLE_ICONS, STATUS_INFO, UNITS, UNIT_MAP, MAX_LEVEL, MAX_STARS, STAR_COSTS, STAR_AURODIUM,
     DUPLICATE_SHARDS, SQUAD_SIZE, PACKS, STARTER, levelCost, unitStats, power, stageRewards,
     ultimateFor, abilitiesFor, BOSSES, BOSS_ENCOUNTERS, bossRewards, CURRENCIES, LUCK, CHARMS, MARKET_REFRESH_MS, FLASH_MS, DAILY, SECRET_PLANET, SECRET_BOSSES, SECRET_COSTS, secretCost, RESTOCK_KYBER, EXCHANGE, TOWER, towerFloor, towerRewards, towerCheckpoint, SHELL_PAYOUT, SHELL_BETS, BIOS,
     BASE_SLOTS, SLOT_UNLOCKS, MAX_ACCOUNT_LEVEL, xpToNext, levelReward, XP, planetSquadSize,

@@ -279,6 +279,25 @@ test('luck: pity guarantees a legendary, strongbox always has one, charms boost 
   assert.ok(Player.effectiveOdds(pack).legendary > base);
 });
 
+test('aurodium promotes cards without shards, with rising costs', () => {
+  Player.reset();
+  const id = Object.keys(Player.state.units)[0];
+  const u = Player.unit(id);
+  u.stars = 5; u.shards = 0;
+  Player.state.aurodium = 5;
+  assert.ok(!Player.starUpAurodium(id), 'not enough ingots');
+  Player.state.aurodium = 18;
+  assert.ok(Player.starUpAurodium(id));
+  assert.strictEqual(u.stars, 6);
+  assert.strictEqual(Player.state.aurodium, 12);
+  assert.ok(Player.starUpAurodium(id));
+  assert.strictEqual(u.stars, D.MAX_STARS);
+  assert.strictEqual(Player.state.aurodium, 0);
+  assert.ok(!Player.starUpAurodium(id), 'already maxed');
+  const total = D.STAR_AURODIUM.reduce((a, b) => a + b, 0);
+  assert.ok(total >= 25 && total <= 40, 'a full promotion is a real grind');
+});
+
 test('sabacc pays the picked card and market stock can be bought', () => {
   Player.reset();
   Player.state.credits = 5000;
