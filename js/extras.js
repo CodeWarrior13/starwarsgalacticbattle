@@ -799,11 +799,9 @@ if (B && !B.__xqr) {
   };
   // A camera iris (the classic spy-film gun-barrel shutter): eight blades
   // that spiral shut to a point and open again.
-  const iris = (cls = '') => {
-    const u = `xi${++seq}`;
-    const blades = Array.from({ length: 8 }, (_, k) => `<g transform="rotate(${k * 45})"><g class="ib"><rect x="-700" y="-700" width="1400" height="700" fill="url(#${u})" stroke="#7a4aa8" stroke-width="1.4"/><line x1="-700" y1="-1" x2="700" y2="-1" stroke="#d9a8ff" stroke-width=".8" opacity=".55"/></g></g>`).join('');
-    return el(`<svg class="xq-iris ${cls}" viewBox="-100 -100 200 200" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs><linearGradient id="${u}" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#1a0c26"/><stop offset=".12" stop-color="#0a0510"/><stop offset="1" stop-color="#030106"/></linearGradient></defs>${blades}</svg>`);
-  };
+  const irisSet = (cls) => Array.from({ length: 8 }, (_, k) => `<div class="iw" style="transform:rotate(${k * 45}deg)"><div class="ib${cls}"></div></div>`).join('');
+  const iris = (cls = '') => el(`<div class="xq-iris ${cls}" aria-hidden="true"><div class="ic">${irisSet('')}${irisSet(' sm')}</div></div>`);
+
   // The Shatterpoint ultimate: a camera shutter freezes the frame, fault lines
   // race across each enemy, then the frozen moment breaks.
   B.mv_shatter = async function (S, actor, from, T, spec, hit) {
@@ -980,13 +978,18 @@ const cssSS = `
 .xq-vf.big { inset: 5%; }
 @keyframes xq-rec { 50% { opacity: .2; } }
 .xq-shut { position: absolute; inset: 0; z-index: 6; pointer-events: none; }
-.xq-iris { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 6; pointer-events: none; overflow: hidden; }
-.xq-iris .ib { transform-box: view-box; transform-origin: 0 0; transform: rotate(0deg) translateY(-300px); }
+.xq-iris { position: absolute; inset: 0; z-index: 6; pointer-events: none; overflow: hidden; }
+.xq-iris .ic { position: absolute; left: 50%; top: 50%; width: 0; height: 0; }
+.xq-iris .iw { position: absolute; left: 0; top: 0; width: 0; height: 0; }
+.xq-iris .ib { position: absolute; left: 0; top: -300vmax; width: 300vmax; height: 300vmax; transform-origin: 0% 100%;
+  background: linear-gradient(0deg, #1a0c26, #0a0510 6%, #030106 60%); border-bottom: 1.5px solid rgba(217,168,255,.6); box-shadow: inset 0 -1px 0 rgba(122,74,168,.9);
+  transform: rotate(0deg) translateY(-80vmax); will-change: transform; }
+.xq-iris .ib.sm { background: none; box-shadow: none; }
 .xq-iris.opening .ib { animation: xq-iris-open .55s cubic-bezier(.6,0,.2,1) .35s both; }
 .xq-iris.snap .ib { animation: xq-iris-snap .42s cubic-bezier(.7,0,.3,1) both; }
 .xq-iris.big .ib { animation: xq-iris-snap .5s cubic-bezier(.7,0,.3,1) .8s both; }
-@keyframes xq-iris-open { from { transform: rotate(-40deg) translateY(0); } to { transform: rotate(0deg) translateY(-300px); } }
-@keyframes xq-iris-snap { 0% { transform: rotate(0deg) translateY(-300px); } 40%, 58% { transform: rotate(-40deg) translateY(0); } 100% { transform: rotate(0deg) translateY(-300px); } }
+@keyframes xq-iris-open { from { transform: rotate(-40deg) translateY(0); } to { transform: rotate(0deg) translateY(-80vmax); } }
+@keyframes xq-iris-snap { 0% { transform: rotate(0deg) translateY(-80vmax); } 40%, 58% { transform: rotate(-40deg) translateY(0); } 100% { transform: rotate(0deg) translateY(-80vmax); } }
 .xq-dot { position: absolute; z-index: 7; top: 50%; left: -20px; width: 16px; height: 16px; margin-top: -8px; border-radius: 50%; background: #fff; box-shadow: 0 0 14px #e8d2ff; animation: xq-dot .36s linear forwards; }
 @keyframes xq-dot { to { transform: translateX(calc(50vw + 12px)); } }
 .xq-shut i { position: absolute; left: 0; right: 0; height: 50%; background: #05020a; transform: scaleY(0); }
