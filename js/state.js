@@ -253,11 +253,24 @@
       return true;
     },
 
-    // Promote with Aurodium Ingots instead of shards.
+    // Ingots needed to finish the next promotion: the shards you have count
+    // toward it and ingots cover only the missing share. 0 = shards are enough.
+    starTopUpCost(id) {
+      const u = this.unit(id);
+      if (!u || u.stars >= D.MAX_STARS) return 0;
+      const need = D.STAR_COSTS[u.stars - 1];
+      if (u.shards >= need) return 0;
+      return Math.max(1, Math.ceil((D.STAR_AURODIUM[u.stars - 1] * (need - u.shards)) / need));
+    },
+
+    // Promote using every shard you have plus Aurodium Ingots for the rest.
     starUpAurodium(id) {
       const u = this.unit(id);
       if (!u || u.stars >= D.MAX_STARS) return false;
-      if (!this.spend({ aurodium: D.STAR_AURODIUM[u.stars - 1] })) return false;
+      const cost = this.starTopUpCost(id);
+      if (!cost) return this.starUp(id);
+      if (!this.spend({ aurodium: cost })) return false;
+      u.shards = 0;
       u.stars += 1;
       this.save();
       return true;

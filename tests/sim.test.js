@@ -294,6 +294,15 @@ test('aurodium promotes cards without shards, with rising costs', () => {
   assert.strictEqual(u.stars, D.MAX_STARS);
   assert.strictEqual(Player.state.aurodium, 0);
   assert.ok(!Player.starUpAurodium(id), 'already maxed');
+  // Shards you already have cut the ingot price, and are used up.
+  u.stars = 3; u.shards = 40; Player.state.aurodium = 10;
+  assert.strictEqual(Player.starTopUpCost(id), 1, '40 of 50 shards leaves one ingot to pay');
+  assert.ok(Player.starUpAurodium(id));
+  assert.strictEqual(u.stars, 4);
+  assert.strictEqual(u.shards, 0);
+  assert.strictEqual(Player.state.aurodium, 9);
+  u.shards = 200;
+  assert.strictEqual(Player.starTopUpCost(id), 0, 'enough shards needs no ingots');
   const total = D.STAR_AURODIUM.reduce((a, b) => a + b, 0);
   assert.ok(total >= 25 && total <= 40, 'a full promotion is a real grind');
 });

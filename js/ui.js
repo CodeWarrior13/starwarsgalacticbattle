@@ -1408,7 +1408,7 @@
       const maxStars = u.stars >= D.MAX_STARS;
       const lvlCost = D.levelCost(u.level);
       const starNeed = maxStars ? 0 : D.STAR_COSTS[u.stars - 1];
-      const starAur = maxStars ? 0 : D.STAR_AURODIUM[u.stars - 1];
+      const starAur = Player.starTopUpCost(id);
       const next = D.unitStats(def, Math.min(D.MAX_LEVEL, u.level + 1), u.stars);
       const nowS = D.unitStats(def, u.level, u.stars);
       return `<div class="ipage-inner">
@@ -1423,9 +1423,9 @@
           <b>${stars(u.stars)}</b>
           <span class="muted">${maxStars ? 'Max stars reached.' : `Shards ${u.shards}/${starNeed}. Duplicates and Hot Stock give shards.`}</span>
           ${maxStars ? '' : `<div class="shardbar ${u.shards >= starNeed ? 'ready' : ''}"><i style="width:${Math.min(100, (u.shards / starNeed) * 100)}%"></i></div>`}
-          <button class="btn" type="button" data-star ${maxStars || u.shards < starNeed ? 'disabled' : ''}>${maxStars ? 'Maxed' : `Promote to ${u.stars + 1}★`}</button>
-          ${maxStars ? '' : `<button class="btn btn-gold" type="button" data-star-aur ${Player.state.aurodium < starAur ? 'disabled' : ''}>Promote with ingots · ${cur('aurodium', starAur)}</button>
-          <span class="muted small">No shards needed. Ingots come from bosses, new tower boss floors and the daily streak.</span>`}
+          ${maxStars || !starAur ? `<button class="btn" type="button" data-star ${maxStars ? 'disabled' : ''}>${maxStars ? 'Maxed' : `Promote to ${u.stars + 1}★`}</button>`
+            : `<button class="btn btn-gold" type="button" data-star-aur ${Player.state.aurodium < starAur ? 'disabled' : ''}>Promote to ${u.stars + 1}★ · ${cur('aurodium', starAur)}</button>
+          <span class="muted small">${u.shards ? `Uses your ${u.shards} shards; ingots cover the missing ${starNeed - u.shards}.` : 'No shards yet: ingots cover the whole promotion.'} Ingots come from bosses, new tower boss floors and the daily streak.</span>`}
         </div>
       </div>`;
     }
