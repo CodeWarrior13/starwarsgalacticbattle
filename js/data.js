@@ -1034,7 +1034,7 @@
   function bossRewards(enc, firstClear) {
     return {
       credits: 400 + enc.level * 60,
-      aurodium: firstClear ? 5 : 1,
+      aurodium: firstClear ? 8 : 2,
       kyber: firstClear ? 3 : 0,
       card: firstClear ? 'epic+' : null,
     };
@@ -1575,6 +1575,7 @@
   // Enemies earn stars as you travel further across the galaxy.
   const enemyStars = (planetId) => 1 + Math.floor(PLANETS.indexOf(PLANET_MAP[planetId]) / 2);
   const PLANET_CLEAR_KYBER = 5;
+  const PLANET_CLEAR_AURODIUM = 2;
 
   function stageRewards(planetId, index) {
     const planet = PLANET_MAP[planetId];
@@ -1691,7 +1692,7 @@
       kind: 'any', count: 3, odds: { common: 0, rare: 55, epic: 33.5, legendary: 10, mythic: 1.5 },
     },
     {
-      id: 'strongbox', name: 'Sith Holocron', desc: '1 guaranteed Legendary and 2 Epic-or-better cards', cost: { aurodium: 12 },
+      id: 'strongbox', name: 'Sith Holocron', desc: '1 guaranteed Legendary and 2 Epic-or-better cards', cost: { aurodium: 8 },
       kind: 'any', count: 3, odds: { common: 0, rare: 0, epic: 67, legendary: 30, mythic: 3 }, guarantee: 'legendary',
     },
   ];
@@ -1797,6 +1798,8 @@
     return {
       credits: 220 + floor * 35 + (boss ? 600 : 0),
       crystals: boss ? 2 : floor % 5 === 0 ? 1 : 0,
+      // Paid once per boss floor: only the first time you clear it.
+      aurodium: boss ? 2 : 0,
     };
   }
   const towerCheckpoint = (floor) => floor - ((floor - 1) % TOWER.checkpoint);
@@ -1806,10 +1809,10 @@
     { day: 1, credits: 600, label: 'Credit stash' },
     { day: 2, credits: 1000, label: 'Smuggler\'s cut' },
     { day: 3, crystals: 20, label: 'Kyber shard' },
-    { day: 4, credits: 1800, label: 'Spice run' },
+    { day: 4, credits: 1800, aurodium: 1, label: 'Spice run' },
     { day: 5, crystals: 30, dice: 1, label: 'Loaded Dice' },
     { day: 6, credits: 2500, charm: 1, label: 'Chance Cube' },
-    { day: 7, crystals: 80, aurodium: 1, label: 'Hutt\'s Hoard', big: true },
+    { day: 7, crystals: 80, aurodium: 3, label: 'Hutt\'s Hoard', big: true },
   ];
   // Kyber sinks in the Night Market, priced against 1-2 Kyber per win.
   const RESTOCK_KYBER = 10;
@@ -1828,6 +1831,6 @@
     DUPLICATE_SHARDS, SQUAD_SIZE, PACKS, STARTER, levelCost, unitStats, power, stageRewards,
     ultimateFor, abilitiesFor, BOSSES, BOSS_ENCOUNTERS, bossRewards, CURRENCIES, LUCK, CHARMS, MARKET_REFRESH_MS, FLASH_MS, DAILY, SECRET_PLANET, SECRET_BOSSES, SECRET_COSTS, secretCost, RESTOCK_KYBER, EXCHANGE, TOWER, towerFloor, towerRewards, towerCheckpoint, SHELL_PAYOUT, SHELL_BETS, BIOS,
     BASE_SLOTS, SLOT_UNLOCKS, MAX_ACCOUNT_LEVEL, xpToNext, levelReward, XP, planetSquadSize,
-    TRAITS, TRAIT_INFO, ROLE_SYNERGIES, SYN_THEME, CLASS_INFO, classesOf, attackStyle, WEAPON, ULT_ANIM, SYNERGIES, PLANETS, PLANET_MAP, enemyStars, PLANET_CLEAR_KYBER, BASE_DOUBLE, traitsOf, squadBonuses,
+    TRAITS, TRAIT_INFO, ROLE_SYNERGIES, SYN_THEME, CLASS_INFO, classesOf, attackStyle, WEAPON, ULT_ANIM, SYNERGIES, PLANETS, PLANET_MAP, enemyStars, PLANET_CLEAR_KYBER, PLANET_CLEAR_AURODIUM, BASE_DOUBLE, traitsOf, squadBonuses,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

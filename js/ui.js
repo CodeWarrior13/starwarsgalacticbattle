@@ -289,7 +289,7 @@
           <p class="tower-name">${esc(enc.name)} · ${enc.kind === 'ship' ? '✈ Fleet' : '⚔ Ground'} · ${esc(D.PLANET_MAP[enc.planet].name)}</p>
           <div class="mini-row">${enc.enemies.map((id) => miniPortrait(D.UNIT_MAP[id])).join('')}</div>
           <p class="muted small">Enemy Lv ${enc.level} · ${enc.stars}★ · Best floor ${t.best || 0}</p>
-          <div class="tower-rewards">${cur('credits', r.credits)}${r.crystals ? cur('crystals', r.crystals) : ''}<span class="muted small">+ luck spin & XP</span></div>
+          <div class="tower-rewards">${cur('credits', r.credits)}${r.crystals ? cur('crystals', r.crystals) : ''}${r.aurodium && enc.floor > (t.best || 0) ? cur('aurodium', r.aurodium) : ''}<span class="muted small">+ luck spin & XP</span></div>
           <button class="btn btn-primary" type="button" data-tower-go>Enter floor ${enc.floor}</button>
           <p class="muted small">Random worlds, random squads, a boss every ${D.TOWER.bossEvery} floors. Lose and you drop back to the last checkpoint.</p>
         </div>
@@ -494,7 +494,7 @@
           <span class="stage-num">${state === 'cleared' ? '✓' : finale ? '☠' : i + 1}</span>
           <span class="pd-stage-body">
             <b><span class="kind-badge ${stg.kind}">${stg.kind === 'ship' ? '✈ Fleet' : '⚔ Ground'}</span> ${esc(stg.name)}${finale ? ' <span class="tag">Finale boss</span>' : ''}</b>
-            <span class="stage-info"><span>Lv ${stg.level} · ${enc.stars}★</span><span>⚡ ${fmt(enemyPower)}</span>${cur('credits', r.credits)}${state !== 'cleared' ? `<span class="first-clear">${cur('crystals', r.firstClearCrystals + (finale ? D.PLANET_CLEAR_KYBER : 0))}</span>` : ''}</span>
+            <span class="stage-info"><span>Lv ${stg.level} · ${enc.stars}★</span><span>⚡ ${fmt(enemyPower)}</span>${cur('credits', r.credits)}${state !== 'cleared' ? `<span class="first-clear">${cur('crystals', r.firstClearCrystals + (finale ? D.PLANET_CLEAR_KYBER : 0))}${finale ? cur('aurodium', D.PLANET_CLEAR_AURODIUM) : ''}</span>` : ''}</span>
           </span>
           <span class="mini-row">${enc.enemies.map((id) => miniPortrait(D.UNIT_MAP[id])).join('')}</span>
         </button>`;

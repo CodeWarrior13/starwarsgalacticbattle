@@ -737,13 +737,14 @@
       const newBest = floor > (t.best || 0);
       if (floor === t.floor) t.floor = floor + 1;
       t.best = Math.max(t.best || 0, floor);
-      const out = { base: r.credits, crystals: r.crystals, aurodium: 0, firstClear: newBest, card: null, mult: spin.mult, table: spin.table, loaded: spin.loaded, towerFloor: t.floor, newBest };
+      const out = { base: r.credits, crystals: r.crystals, aurodium: newBest ? r.aurodium : 0, firstClear: newBest, card: null, mult: spin.mult, table: spin.table, loaded: spin.loaded, towerFloor: t.floor, newBest };
       out.credits = Math.round(out.base * spin.mult);
       out.xp = enc.boss ? D.XP.boss(enc.level) : D.XP.stage(enc.level);
       out.levelUps = this.gainXp(out.xp);
       out.newSlot = this.slots() > slotsBefore;
       this.state.credits += out.credits;
       this.state.crystals += out.crystals;
+      this.state.aurodium += out.aurodium;
       this.save();
       return out;
     },
@@ -787,7 +788,7 @@
           this.state.planets[planet.id] = params.stage + 1;
           if (this.planetComplete(planet.id)) planetBonus = D.PLANET_CLEAR_KYBER;
         }
-        out = { base: r.credits, crystals: (firstClear ? r.firstClearCrystals : 0) + planetBonus, aurodium: 0, firstClear, card: null, planetComplete: planetBonus > 0 };
+        out = { base: r.credits, crystals: (firstClear ? r.firstClearCrystals : 0) + planetBonus, aurodium: planetBonus > 0 ? D.PLANET_CLEAR_AURODIUM : 0, firstClear, card: null, planetComplete: planetBonus > 0 };
       }
       // Bounty Hunters synergy pays out extra credits.
       const squad = this.state.squads[kind].filter((id) => this.owns(id));
