@@ -1650,7 +1650,7 @@
       if (!this.running) return;
       if (!this.canvas.isConnected) return this.stop();
       // Performance mode draws the scene at a lower frame rate.
-      const fps = P().fps;
+      const fps = root.sigOpen > 0 ? Math.min(30, P().fps) : P().fps;
       if (fps < 60 && now - this.last < 1000 / fps - 4) return requestAnimationFrame(this.frame);
       this.dt = Math.min(0.05, (now - this.last) / 1000);
       this.last = now;

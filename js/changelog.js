@@ -8,6 +8,28 @@
 
   const UPDATES = [
     {
+      v: '1.9', date: 'October 10, 2026', title: 'Starships',
+      items: [
+        'NEW|Cassian\'s Haulcraft (Epic ship): a Fondor hauler whose wings swing out for its Wings Out ultimate.',
+        'NEW|Mando\'s N-1 (Legendary ship): Din Djarin\'s chrome-stripped Naboo starfighter, with Grogu riding in the droid socket.',
+        'IMPROVED|U-wing rework: now Epic, with the new Door Gunner ultimate (the bay slides open and the gunner rakes every enemy).',
+        'IMPROVED|Brand-new, far more detailed art for the Millennium Falcon, the Naboo N-1, the U-wing and the Hound\'s Tooth.',
+        'NEW|Mythic ships: the Millennium Falcon and Darth Maul\'s Sith Infiltrator join the Ghost at Mythic rarity.',
+        'NEW|The Sith Infiltrator gains a third ability, Seeker Swarm.',
+        'IMPROVED|The Razor Crest and Slave I are now Legendary, each with a new third ability (Bounty Hunter\'s Code / Tracking Fob).',
+        'NEW|Auto-continue (account level 15): jump straight into the next battle with your saved squad, or let it roll on automatically after each win.',
+        'NEW|Auto-repeat (account level 20): Auto-continue can replay the same stage or boss after every win, for farming.',
+        'NEW|Promote with Aurodium: any card can be promoted with Aurodium Ingots instead of shards (2, 3, 4, 5, 6, then 12 ingots per star).',
+        'IMPROVED|The Sith Holocron now costs 8 Aurodium (was 12).',
+        'IMPROVED|More Aurodium: bosses pay 8 on the first win and 2–3 on every repeat, finishing a planet pays 2, each new Endless Tower boss floor pays 2, and the daily streak pays Aurodium on days 2, 4, 5 and 7.',
+        'NEW|A new loading screen with tips while the game gets ready.',
+        'IMPROVED|The game opens instantly and loads everything during the loading screen, with more time to read each tip.',
+        'IMPROVED|Smooth slide when switching between Galaxy, Collection and Black Market.',
+        'IMPROVED|Collection opens about 10x faster, and the loading screen gets Collection and the Black Market ready so they open instantly.',
+        'IMPROVED|Big Mythic ultimates run smoother, especially on older iPads.',
+      ],
+    },
+    {
       // rev: bump when items are added to an update that already went out, so
       // "What's new" shows again for players who saw the earlier list.
       v: '1.8', rev: 2, date: 'October 7, 2026', title: 'Smooth running',

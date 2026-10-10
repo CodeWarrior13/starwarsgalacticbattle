@@ -273,8 +273,11 @@
       const H = window.innerHeight;
       const layer = el(`<div class="storm-layer sig-layer" style="--c:${color}" aria-hidden="true"><div class="sig-tint ${tint || ''}"></div><canvas></canvas></div>`);
       document.body.appendChild(layer);
+      // While a full-screen ultimate plays, the battlefield scene behind it draws at half rate.
+      root.sigOpen = (root.sigOpen || 0) + 1;
       const cv = layer.querySelector('canvas');
-      const dpr = Math.min(root.Perf ? root.Perf.dpr : 1.5, window.devicePixelRatio || 1);
+      // The trail canvas is soft glow, so it never needs more than 1x resolution.
+      const dpr = Math.min(1, root.Perf ? root.Perf.dpr : 1, window.devicePixelRatio || 1);
       cv.width = W * dpr;
       cv.height = H * dpr;
       const ctx = cv.getContext('2d');
@@ -309,6 +312,7 @@
           }
         },
         end: () => new Promise((r) => {
+          if (alive) root.sigOpen = Math.max(0, (root.sigOpen || 0) - 1);
           alive = false;
           layer.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 380, fill: 'forwards' }).onfinish = () => { layer.remove(); r(); };
         }),
@@ -1082,18 +1086,20 @@
     },
 
     // Card bursts into shards that hang in the air, then snap back together.
-    shatterCard(uid, layer, color) {
+    // lite: six shards instead of eight, for moves that break many cards at once.
+    shatterCard(uid, layer, color, lite) {
       const card = this.cards[uid];
       if (!card || !card.isConnected) return;
       const r = card.getBoundingClientRect();
       const cx = rand(35, 65);
       const cy = rand(35, 65);
-      const ring = [[0, 0], [50, 0], [100, 0], [100, 50], [100, 100], [50, 100], [0, 100], [0, 50]];
+      const ring = lite ? [[0, 0], [100, 0], [100, 50], [100, 100], [0, 100], [0, 50]] : [[0, 0], [50, 0], [100, 0], [100, 50], [100, 100], [50, 100], [0, 100], [0, 50]];
       card.style.visibility = 'hidden';
       for (let i = 0; i < ring.length; i++) {
         const [ax, ay] = ring[i];
         const [bx, by] = ring[(i + 1) % ring.length];
         const c = card.cloneNode(true);
+        c.classList.add('shard-clone');
         c.style.cssText = `position:fixed;left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px;margin:0;visibility:visible;z-index:1;clip-path:polygon(${cx}% ${cy}%, ${ax}% ${ay}%, ${bx}% ${by}%)`;
         layer.insertBefore(c, layer.querySelector('canvas'));
         const mx = ((ax + bx) / 2 - cx) * 0.9;

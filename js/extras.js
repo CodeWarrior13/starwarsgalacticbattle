@@ -817,7 +817,10 @@ if (B && !B.__xqr) {
     dot.remove();
     if (Snd) Snd.play('glitch');
     await this.wait(520);
-    this.field.classList.add('xq-frozen');
+    const freeze = el('<div class="xq-freeze"></div>');
+    S.layer.insertBefore(freeze, S.layer.firstChild);
+    void freeze.offsetWidth;
+    freeze.classList.add('on');
     for (const t of T) {
       const pts = [];
       for (let k = 0; k < 5; k++) {
@@ -843,14 +846,14 @@ if (B && !B.__xqr) {
     await this.wait(170);
     if (Snd) Snd.play('saber');
     for (const t of T) {
-      this.shatterCard(t.uid, S.layer, spec.color);
+      this.shatterCard(t.uid, S.layer, spec.color, T.length > 2);
       hit(t);
       await this.wait(120);
     }
-    this.field.classList.remove('xq-frozen');
+    freeze.classList.remove('on');
     await this.wait(500);
     vf.classList.add('out');
-    setTimeout(() => { vf.remove(); shut.remove(); }, 400);
+    setTimeout(() => { vf.remove(); shut.remove(); freeze.remove(); }, 400);
   };
 }
 
@@ -981,10 +984,10 @@ const cssSS = `
 .xq-iris { position: absolute; inset: 0; z-index: 6; pointer-events: none; overflow: hidden; }
 .xq-iris .ic { position: absolute; left: 50%; top: 50%; width: 0; height: 0; }
 .xq-iris .iw { position: absolute; left: 0; top: 0; width: 0; height: 0; }
-.xq-iris .ib { position: absolute; left: 0; top: -300vmax; width: 300vmax; height: 300vmax; transform-origin: 0% 100%;
+.xq-iris .ib { position: absolute; left: 0; top: -110vmax; width: 110vmax; height: 110vmax; transform-origin: 0% 100%;
   background: linear-gradient(0deg, #1a0c26, #0a0510 6%, #030106 60%); border-bottom: 1.5px solid rgba(217,168,255,.6); box-shadow: inset 0 -1px 0 rgba(122,74,168,.9);
   transform: rotate(0deg) translateY(-80vmax); will-change: transform; }
-.xq-iris .ib.sm { background: none; box-shadow: none; }
+.xq-iris .ib.sm { background: none; box-shadow: none; will-change: auto; }
 .xq-iris.opening .ib { animation: xq-iris-open .55s cubic-bezier(.6,0,.2,1) .35s both; }
 .xq-iris.snap .ib { animation: xq-iris-snap .42s cubic-bezier(.7,0,.3,1) both; }
 .xq-iris.big .ib { animation: xq-iris-snap .5s cubic-bezier(.7,0,.3,1) .8s both; }
@@ -1000,7 +1003,8 @@ const cssSS = `
 @keyframes xq-shut { 0%, 100% { transform: scaleY(0); } 45%, 55% { transform: scaleY(1); } }
 .xq-glint { position: absolute; width: 16px; height: 16px; margin: -8px 0 0 -8px; border-radius: 50%; background: #fff; box-shadow: 0 0 18px 6px #b45aff; z-index: 4; animation: xq-glint .9s ease-out forwards; }
 @keyframes xq-glint { 0% { transform: scale(0); } 30% { transform: scale(1.4); } 100% { transform: scale(.4); opacity: 0; } }
-.field.xq-frozen .bcard { filter: grayscale(.85) contrast(1.15); transition: filter .2s; }
+.xq-freeze { position: absolute; inset: 0; z-index: 0; pointer-events: none; background: radial-gradient(ellipse at center, rgba(40,30,60,.35), rgba(8,4,14,.6)); opacity: 0; transition: opacity .2s; }
+.xq-freeze.on { opacity: 1; }
 .xq-camflash { position: fixed; inset: 0; z-index: 9999; background: #fff; pointer-events: none; animation: xq-camflash .6s ease-out forwards; }
 @keyframes xq-camflash { from { opacity: .9; } to { opacity: 0; } }
 .xq-ss { background: radial-gradient(ellipse at center, #1a0a2a, #05020a 70%); }

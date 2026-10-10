@@ -4,6 +4,25 @@ The same notes appear in the game under **Settings → Update log**, and the new
 
 > **Not seeing the latest fixes?** Reload the game page (refresh, or pull down on mobile). If the game was already open when an update came out, a reload picks it up. Your progress is kept.
 
+## v1.9 · Starships (October 10, 2026)
+- Cassian's Haulcraft (Epic ship): a Fondor hauler whose wings swing out for its Wings Out ultimate.
+- Mando's N-1 (Legendary ship): Din Djarin's chrome-stripped Naboo starfighter, with Grogu riding in the droid socket.
+- U-wing rework: now Epic, with the new Door Gunner ultimate (the bay slides open and the gunner rakes every enemy).
+- Brand-new, far more detailed art for the Millennium Falcon, the Naboo N-1, the U-wing and the Hound's Tooth.
+- Mythic ships: the Millennium Falcon and Darth Maul's Sith Infiltrator join the Ghost at Mythic rarity.
+- The Sith Infiltrator gains a third ability, Seeker Swarm.
+- The Razor Crest and Slave I are now Legendary, each with a new third ability (Bounty Hunter's Code / Tracking Fob).
+- Auto-continue (account level 15): jump straight into the next battle with your saved squad, or let it roll on automatically after each win.
+- Auto-repeat (account level 20): Auto-continue can replay the same stage or boss after every win, for farming.
+- Promote with Aurodium: any card can be promoted with Aurodium Ingots instead of shards (2, 3, 4, 5, 6, then 12 ingots per star).
+- The Sith Holocron now costs 8 Aurodium (was 12).
+- More Aurodium: bosses pay 8 on the first win and 2–3 on every repeat, finishing a planet pays 2, each new Endless Tower boss floor pays 2, and the daily streak pays Aurodium on days 2, 4, 5 and 7.
+- A new loading screen with tips while the game gets ready.
+- The game opens instantly and loads everything during the loading screen, with more time to read each tip.
+- Smooth slide when switching between Galaxy, Collection and Black Market.
+- Collection opens about 10x faster, and the loading screen gets Collection and the Black Market ready so they open instantly.
+- Big Mythic ultimates run smoother, especially on older iPads.
+
 ## v1.8 · Smooth running (October 7, 2026)
 - Install the game as an app on your phone, tablet or computer: its own home-screen icon, full screen, and it works offline. Tap Install on the banner or in Settings → App.
 - A fresh logo and launch screen: crossed lightsabers in hyperspace.

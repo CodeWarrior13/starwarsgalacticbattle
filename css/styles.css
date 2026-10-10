@@ -1305,8 +1305,8 @@ button.syn-chip:hover, button.syn-chip[aria-expanded="true"] { transform: transl
 @keyframes bounce-y { 50% { transform: translate(-50%, 4px); } }
 .bcard.force-glow { box-shadow: 0 0 30px rgba(255, 40, 40, 0.8); border-color: #ff3b3b; }
 .bcard.choked { box-shadow: 0 0 24px rgba(255, 40, 40, 0.8); filter: saturate(1.4) hue-rotate(-10deg); }
-.field.slowmo { filter: saturate(0.5) contrast(1.15); }
-.field.slowmo .env-canvas { filter: brightness(0.6); }
+.field::after { content: ''; position: absolute; inset: 0; z-index: 8; pointer-events: none; background: radial-gradient(ellipse at center, rgba(20, 16, 28, 0.25), rgba(6, 4, 10, 0.55)); opacity: 0; transition: opacity 0.15s; }
+.field.slowmo::after { opacity: 1; }
 .float.double { color: #7affd0; font-size: clamp(14px, 2vw, 20px); letter-spacing: 0.06em; }
 .hazard-banner {
   position: absolute; left: 50%; top: 50%; z-index: 9; transform: translate(-50%, -50%);
@@ -1907,6 +1907,9 @@ kbd { font-family: var(--font-display); font-size: 11px; padding: 1px 6px; borde
 .imp-scorch i { position: absolute; width: 16px; height: 16px; margin: -8px; border-radius: 50%; transform: scale(var(--s)); background: radial-gradient(circle, #1a0a04 35%, #ff7a2a 55%, transparent 70%); box-shadow: 0 0 10px var(--c); animation: imp-scorch 1.4s ease-out forwards; }
 @keyframes imp-scorch { 0% { opacity: 0; transform: scale(0.2); } 15% { opacity: 1; transform: scale(var(--s)); } 70% { opacity: 1; } 100% { opacity: 0; } }
 .imp-flash { background: radial-gradient(circle, #fff, color-mix(in srgb, var(--c) 60%, transparent) 50%, transparent 75%); animation: imp-burn 0.6s ease-out forwards; }
+/* Card shards: frozen copies, so they skip the card's own looping effects and glows. */
+.shard-clone, .shard-clone * { animation: none !important; transition: none !important; }
+.shard-clone { box-shadow: none !important; filter: none !important; }
 
 .sig-mask { position: absolute; left: 50%; top: 45%; width: min(80vw, 80vh); filter: drop-shadow(0 0 40px #c23bff); pointer-events: none; }
 .sig-mask svg { width: 100%; display: block; }
@@ -1966,7 +1969,8 @@ kbd { font-family: var(--font-display); font-size: 11px; padding: 1px 6px; borde
 .sig-title.mythic b::before { color: #0ff; transform: translateX(-3px); clip-path: inset(0 0 55% 0); opacity: 0.7; }
 .sig-title.mythic b::after { color: #ffd23f; transform: translateX(3px); clip-path: inset(55% 0 0 0); opacity: 0.7; }
 @keyframes sig-title { 0% { opacity: 0; transform: translateX(-40vw) skewX(20deg); } 25% { opacity: 1; transform: none; } 80% { opacity: 1; } 100% { opacity: 0; transform: translateX(10vw); } }
-.sig-layer.sig-glitch .sig-tint { animation: cc-glitch 0.25s steps(2) infinite; }
+.sig-layer.sig-glitch .sig-tint { animation: fade-in 0.3s, sig-jolt 0.25s steps(2) 0.1s 3; }
+@keyframes sig-jolt { 0% { transform: none; opacity: 1; } 25% { transform: translate(3px, -2px); opacity: 0.55; } 50% { transform: translate(-4px, 1px); opacity: 1; } 75% { transform: translate(2px, 3px); opacity: 0.7; } }
 .sig-cracks { z-index: 2; opacity: 0.8; }
 .sig-tear i { position: absolute; left: 0; right: 0; height: 50%; background: rgba(255, 42, 90, 0.18); border: 1px solid rgba(255, 120, 150, 0.6); z-index: 6; animation: sig-tear 0.45s ease-in forwards; }
 .sig-tear i:first-child { top: 0; } .sig-tear i:last-child { bottom: 0; animation-name: sig-tear2; }
