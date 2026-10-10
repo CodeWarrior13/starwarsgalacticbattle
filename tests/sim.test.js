@@ -303,6 +303,10 @@ test('aurodium promotes cards without shards, with rising costs', () => {
   assert.strictEqual(Player.state.aurodium, 9);
   u.shards = 200;
   assert.strictEqual(Player.starTopUpCost(id), 0, 'enough shards needs no ingots');
+  // Rarer cards cost more.
+  const full = (r) => [1, 2, 3, 4, 5, 6].reduce((a, s) => a + D.starAurodium(r, s), 0);
+  assert.strictEqual(full('epic'), full('common'));
+  assert.ok(full('legendary') > full('epic') && full('mythic') > full('legendary') && full('secret') > full('mythic'));
   const total = D.STAR_AURODIUM.reduce((a, b) => a + b, 0);
   assert.ok(total >= 25 && total <= 40, 'a full promotion is a real grind');
 });

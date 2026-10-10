@@ -14,7 +14,7 @@ The same notes appear in the game under **Settings → Update log**, and the new
 - The Razor Crest and Slave I are now Legendary, each with a new third ability (Bounty Hunter's Code / Tracking Fob).
 - Auto-continue (account level 15): jump straight into the next battle with your saved squad, or let it roll on automatically after each win.
 - Auto-repeat (account level 20): Auto-continue can replay the same stage or boss after every win, for farming.
-- Promote with Aurodium: any card can be promoted with Aurodium Ingots instead of shards (2, 3, 4, 5, 6, then 12 ingots per star).
+- Promote with Aurodium: any card can be promoted with Aurodium Ingots instead of shards. Commons, rares and epics cost 2, 3, 4, 5, 6, then 12 ingots per star; Legendary, Mythic and secret cards cost more.
 - The Sith Holocron now costs 8 Aurodium (was 12).
 - More Aurodium: bosses pay 8 on the first win and 2–3 on every repeat, finishing a planet pays 2, each new Endless Tower boss floor pays 2, and the daily streak pays Aurodium on days 2, 4, 5 and 7.
 - A new loading screen with tips while the game gets ready.

@@ -260,7 +260,7 @@
       if (!u || u.stars >= D.MAX_STARS) return 0;
       const need = D.STAR_COSTS[u.stars - 1];
       if (u.shards >= need) return 0;
-      return Math.max(1, Math.ceil((D.STAR_AURODIUM[u.stars - 1] * (need - u.shards)) / need));
+      return Math.max(1, Math.ceil((D.starAurodium(D.UNIT_MAP[id].rarity, u.stars) * (need - u.shards)) / need));
     },
 
     // Promote using every shard you have plus Aurodium Ingots for the rest.

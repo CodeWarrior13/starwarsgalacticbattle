@@ -1165,6 +1165,9 @@
   const STAR_COSTS = [10, 25, 50, 80, 120, 170];
   // Aurodium Ingots that buy the same promotion without shards. Climbs steeply near the top.
   const STAR_AURODIUM = [2, 3, 4, 5, 6, 12];
+  // Better cards cost more ingots to promote; commons, rares and epics pay the base price.
+  const STAR_AURODIUM_MULT = { common: 1, rare: 1, epic: 1, legendary: 1.5, mythic: 2.5, secret: 4 };
+  const starAurodium = (rarity, stars) => Math.ceil(STAR_AURODIUM[stars - 1] * (STAR_AURODIUM_MULT[rarity] || 1));
   const DUPLICATE_SHARDS = { common: 5, rare: 8, epic: 12, legendary: 20, mythic: 30, secret: 40 };
 
   function levelCost(level) {
@@ -1830,7 +1833,7 @@
   };
 
   root.GameData = {
-    RARITIES, ROLE_BASE, ROLE_ICONS, STATUS_INFO, UNITS, UNIT_MAP, MAX_LEVEL, MAX_STARS, STAR_COSTS, STAR_AURODIUM,
+    RARITIES, ROLE_BASE, ROLE_ICONS, STATUS_INFO, UNITS, UNIT_MAP, MAX_LEVEL, MAX_STARS, STAR_COSTS, STAR_AURODIUM, STAR_AURODIUM_MULT, starAurodium,
     DUPLICATE_SHARDS, SQUAD_SIZE, PACKS, STARTER, levelCost, unitStats, power, stageRewards,
     ultimateFor, abilitiesFor, BOSSES, BOSS_ENCOUNTERS, bossRewards, CURRENCIES, LUCK, CHARMS, MARKET_REFRESH_MS, FLASH_MS, DAILY, SECRET_PLANET, SECRET_BOSSES, SECRET_COSTS, secretCost, RESTOCK_KYBER, EXCHANGE, TOWER, towerFloor, towerRewards, towerCheckpoint, SHELL_PAYOUT, SHELL_BETS, BIOS,
     BASE_SLOTS, SLOT_UNLOCKS, MAX_ACCOUNT_LEVEL, xpToNext, levelReward, XP, planetSquadSize,
