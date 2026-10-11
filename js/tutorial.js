@@ -2,13 +2,12 @@
 // through two training battles (a ground fight on Tatooine, then a dogfight
 // above it), which quietly cannot be lost. Winning brings in the starter squad
 // and resources and awards the Tutorial Complete badge. It runs once per save;
-// a hold-to-skip button is offered for the first 10 s.
+// a hold-to-skip button stays up until the player skips or starts the first battle.
 (function (root) {
   'use strict';
 
   const D = root.GameData;
   const MENTOR = 'captain_rex';
-  const SKIP_WINDOW_MS = 10000;
   const HOLD_MS = 1200;
 
   const ui = () => root.UI;
@@ -87,6 +86,7 @@
       show();
       node.addEventListener('click', (e) => {
         if (e.target.closest('[data-go]')) {
+          this.dropSkip();
           node.classList.add('out');
           setTimeout(() => node.remove(), 350);
           root.BattleUI.start({ type: 'tutorial', stage: 1 });
@@ -112,8 +112,8 @@
       btn.addEventListener('pointerdown', begin);
       ['pointerup', 'pointerleave', 'pointercancel'].forEach((ev) => btn.addEventListener(ev, cancel));
       btn.addEventListener('contextmenu', (e) => e.preventDefault());
+      // It stays until they skip or tap "To battle!" (a slow load never hides it).
       this.skipBtn = btn;
-      setTimeout(() => this.dropSkip(), SKIP_WINDOW_MS);
     },
 
     dropSkip() {
