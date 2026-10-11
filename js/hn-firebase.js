@@ -58,6 +58,7 @@
     onSnapshot: (next, err) => q.onSnapshot((s) => next(wrapSnap(s)), err || (() => {})),
   });
   const db = {
+    firestore: true,
     collection: (path) => ({ ...query(fs.collection(P(path))), path, doc: (id) => db.doc(`${path}/${id}`) }),
     doc: (path) => ({
       set: (data) => fs.doc(P(path)).set(plain(data)),

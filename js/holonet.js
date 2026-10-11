@@ -763,11 +763,11 @@
       ids.forEach((id) => { this.names[id] = this.names[id] || ''; });
       try {
         const ps = await this.user.profiles(ids);
-        for (const id of ids) this.names[id] = (ps[id] && ps[id].name) || '';
+        for (const id of ids) this.names[id] = (ps[id] && ps[id].name) || this.names[id] || '';
         this.emit();
       } catch (e) { /* names are optional */ }
     },
-    name(uid) { return uid === this.me ? 'You' : (this.names[uid] || 'Player'); },
+    name(uid) { return uid === this.me ? 'You' : (this.names[uid] || (uid ? `Pilot ${String(uid).replace(/[^A-Za-z0-9]/g, '').slice(-4).toUpperCase()}` : 'Player')); },
     busy: false, again: false,
     // Write my defense squads and rating: one write at a time, only when it changed.
     async publish() {
@@ -2603,13 +2603,23 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     invites() { return !!this.invite; },
     myPeer() { const me = this.room && this.room.peers().find((p) => p.sameTab); return me ? me.peer : null; },
     lobby() { return this.peers.filter((p) => !p.isMe && p.kind === 'viewer' && p.presence && p.presence.hn); },
-    name(p) { const id = p && p.by; if (!id) return 'Player'; if (!(id in this.names)) this.lookup(id); return this.names[id] || 'Player'; },
+    // Their callsign: sent with every challenge, answer and lobby presence;
+    // else whatever the leaderboard knows about them.
+    name(p) {
+      const id = p && p.by;
+      const peer = id && this.peers.find((x) => x.by === id && x.presence && x.presence.nm);
+      const sent = cleanNm((p && p.data && p.data.nm) || (p && p.presence && p.presence.nm) || (p && p.nm) || (peer && peer.presence.nm));
+      if (sent) return sent;
+      if (!id) return 'Player';
+      return HN.Net.name(id);
+    },
     async lookup(id) {
       this.names[id] = '';
       try { const u = HN.Net.user || (root.claude && await root.claude.use('user')); if (!u || !u.profiles) return; const ps = await u.profiles([id]); this.names[id] = (ps[id] && ps[id].name) || ''; refresh(); } catch (e) { /* names are optional */ }
     },
   };
   HN.Duel = Duel;
+  Duel.setPresence = () => setPresence();
 
   const refresh = () => { const n = document.querySelector('.view.hn'); if (n && n.__live && App.current === 'holonet' && ['duels', 'hub', undefined].includes((App.params || {}).view) && !document.querySelector('.modal-backdrop')) n.__live(); };
 
@@ -2624,7 +2634,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       if (!room) return refresh();
       Duel.room = room;
       room.onConnection((c) => { Duel.online = c; refresh(); }, () => {});
-      room.onPeers((ch) => { Duel.peers = ch.peers.slice(); refresh(); if (Duel.match) watchGone(ch); }, () => {});
+      room.onPeers((ch) => { Duel.peers = ch.peers.slice(); Duel.peers.forEach((p) => learn(p.by, p.presence && p.presence.nm)); refresh(); if (Duel.match) watchGone(ch); }, () => {});
       room.on('challenge', onChallenge, () => {});
       room.on('answer', onAnswer, () => {});
       setPresence();
@@ -2634,28 +2644,110 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   function setPresence() {
     if (!Duel.room) return;
     const h = HN.S();
-    Duel.room.presence({ hn: 1, rating: h.rating, g: HN.squadPower(HN.squadEntries('character')), f: HN.squadPower(HN.squadEntries('ship')), busy: Duel.match ? 1 : 0 }).catch(() => {});
+    Duel.room.presence({ hn: 1, nm: myNm(), rating: h.rating, g: HN.squadPower(HN.squadEntries('character')), f: HN.squadPower(HN.squadEntries('ship')), busy: Duel.match ? 1 : 0 }).catch(() => {});
   }
+  // My callsign as other players should see it ('' when I haven't picked one).
+  const myNm = () => { const n = String(HN.Net.name(HN.Net.me) || ''); return n === 'You' ? '' : n.replace(/ \(you\)$/, ''); };
+  function cleanNm(s) { const t = String(s || '').replace(/[^A-Za-z0-9_ .-]/g, '').trim().slice(0, 16); return t && (!HN.safe || HN.safe.ok(t)) ? t : ''; }
+  // Callsigns heard in the lobby go into the shared name book, so name chips
+  // show them too (not just players already on the leaderboard).
+  function learn(id, nm) { const t = cleanNm(nm); if (id && t && HN.Net.names) HN.Net.names[id] = t; }
   const rid = () => Math.random().toString(36).slice(2, 10);
 
   // ---------- lobby: challenge and answer ----------
   function challenge(peer, kind) {
-    const squad = HN.squadEntries(kind);
-    if (!squad.length) return toast('Pick a squad first.');
-    const id = rid();
-    const seed = 1 + Math.floor(Math.random() * 2e9);
-    Duel.pending = { id, peer: peer.peer, by: peer.by, kind, seed, squad };
-    Duel.room.emit('challenge', { to: peer.peer, id, kind, seed, squad, rating: HN.S().rating }).catch(() => toast('Could not reach them.'));
-    const m = openModal(`<div class="hn-result"><div class="result-title" style="color:#8fe8ff">CHALLENGE SENT</div><p style="text-align:center">Waiting for <b>${esc(Duel.name(peer))}</b> to accept a ${kind === 'ship' ? 'Fleet' : 'Ground'} duel…</p><div class="modal-actions"><button type="button" class="btn" data-x="cancel">Cancel</button></div></div>`, { small: true, dismissable: false });
-    Duel.pending.modal = m;
-    const t = setTimeout(() => { if (Duel.pending && Duel.pending.id === id) { Duel.pending = null; m.close(); toast('No answer. Try again later.'); } }, 30000);
-    m.root.addEventListener('click', (e) => { if (e.target.closest('[data-x]')) { clearTimeout(t); Duel.pending = null; m.close(); } });
+    if (!HN.pool(kind).length) return toast(kind === 'ship' ? 'You need a ship to fly a Fleet duel.' : 'You need a character for a Ground duel.');
+    buildSquad(kind, { who: Duel.name(peer), role: 'challenge' }, (squad) => {
+      if (!squad) return;
+      if (!Duel.room) return toast('Lost the HoloNet connection.');
+      const id = rid();
+      const seed = 1 + Math.floor(Math.random() * 2e9);
+      Duel.pending = { id, peer: peer.peer, by: peer.by, kind, seed, squad };
+      Duel.room.emit('challenge', { to: peer.peer, id, kind, seed, squad, rating: HN.S().rating, nm: myNm() }).catch(() => toast('Could not reach them.'));
+      const m = openModal(`<div class="hn-result"><div class="result-title" style="color:#8fe8ff">CHALLENGE SENT</div><p style="text-align:center" data-wmsg>Waiting for <b>${esc(Duel.name(peer))}</b> to accept a ${kind === 'ship' ? 'Fleet' : 'Ground'} duel…</p><div class="modal-actions"><button type="button" class="btn" data-x="cancel">Cancel</button></div></div>`, { small: true, dismissable: false });
+      Duel.pending.modal = m;
+      const expire = (ms, msg) => { clearTimeout(Duel.pending && Duel.pending.timer); if (Duel.pending) Duel.pending.timer = setTimeout(() => { if (Duel.pending && Duel.pending.id === id) { Duel.pending = null; m.close(); toast(msg); } }, ms); };
+      Duel.pending.expire = expire;
+      expire(30000, 'No answer. Try again later.');
+      m.root.addEventListener('click', (e) => {
+        if (!e.target.closest('[data-x]')) return;
+        const p = Duel.pending;
+        if (p && p.id === id) { clearTimeout(p.timer); Duel.room.emit('answer', { to: p.peer, id, ok: false, cancel: true }).catch(() => {}); Duel.pending = null; }
+        m.close();
+      });
+    });
   }
+
+  // ---------- duel squads ----------
+  // Before every duel you build the squad you'll take in, and every card
+  // fights at the same level and stars, so the better team wins, not the
+  // bigger collection.
+  const DUEL_LEVEL = 20;
+  const DUEL_STARS = 3;
+  const BUILD_MS = 60000;
+  const atDuelLevel = (e) => ({ id: e.id, level: DUEL_LEVEL, stars: DUEL_STARS });
+  Duel.LEVEL = DUEL_LEVEL; Duel.STARS = DUEL_STARS;
+  const duelPow = (id) => D.power(D.UNIT_MAP[id], DUEL_LEVEL, DUEL_STARS);
+  function buildSquad(kind, opt, done) {
+    const h = HN.S();
+    h.duelSquads = h.duelSquads || {};
+    const list = HN.pool(kind).slice().sort((x, y) => duelPow(y.id) - duelPow(x.id) || x.name.localeCompare(y.name));
+    const need = Math.min(5, list.length);
+    const have = (id) => list.some((u) => u.id === id);
+    let sel = (h.duelSquads[kind] || HN.squad(kind)).filter(have).slice(0, 5);
+    const label = kind === 'ship' ? 'Fleet' : 'Ground';
+    let left = Math.round(BUILD_MS / 1000);
+    let finished = false;
+    const slot = (id) => id ? `<button type="button" class="db-slot on" data-rm="${id}" aria-label="Remove ${esc(D.UNIT_MAP[id].name)}">${HN.ui.mini(id)}<small>${esc(D.UNIT_MAP[id].name)}</small></button>` : '<span class="db-slot"><i></i><small>Empty</small></span>';
+    const slots = () => Array.from({ length: 5 }, (_, i) => slot(sel[i])).join('');
+    const card = (u) => UI.unitCard(u, { tag: 'div', hideShards: true, owned: true, level: DUEL_LEVEL, stars: DUEL_STARS, selected: sel.includes(u.id) }).replace('class="ucard', `data-pick="${u.id}" class="ucard`);
+    const m = openModal(`<div class="db">
+      <div class="db-head"><div><p class="eyebrow">${opt.role === 'accept' ? 'Duel accepted' : 'Live duel'} · vs ${esc(opt.who || 'Player')}</p><h2>Build your ${label} squad</h2></div><span class="db-time" data-time>${left}s</span></div>
+      <p class="db-note">Every card fights at <b>Level ${DUEL_LEVEL} ★${DUEL_STARS}</b> in duels, so pick your best team, not just your highest levels.</p>
+      <div class="db-slots" data-slots>${slots()}</div>
+      <div class="hn-pick db-pick" data-noswipe data-grid>${list.map(card).join('')}</div>
+      <div class="db-foot"><button type="button" class="btn" data-x="cancel">${opt.role === 'accept' ? 'Back out' : 'Cancel'}</button><button type="button" class="btn" data-x="best">Best ${need}</button><button type="button" class="btn btn-primary" data-x="go">Confirm squad <span data-n>${sel.length}/${need}</span></button></div></div>`, { dismissable: false });
+    m.root.querySelector('.modal')?.classList.add('db-modal');
+    const $ = (q) => m.root.querySelector(q);
+    const sync = () => {
+      $('[data-slots]').innerHTML = slots();
+      m.root.querySelectorAll('[data-pick]').forEach((n) => n.classList.toggle('selected', sel.includes(n.dataset.pick)));
+      $('[data-n]').textContent = `${sel.length}/${need}`;
+      $('[data-x="go"]').disabled = sel.length < need;
+    };
+    sync();
+    const finish = (out) => {
+      if (finished) return;
+      finished = true; clearInterval(tick); m.close();
+      if (out) { h.duelSquads[kind] = out.slice(); HN.save(); }
+      done(out ? out.map((id) => ({ id, level: DUEL_LEVEL, stars: DUEL_STARS })) : null);
+    };
+    // Time's up: fill the empty spots with your best cards and go.
+    const fill = () => { for (const u of list) { if (sel.length >= need) break; if (!sel.includes(u.id)) sel.push(u.id); } };
+    const tick = setInterval(() => {
+      left -= 1;
+      const t = $('[data-time]'); if (t) { t.textContent = `${Math.max(0, left)}s`; t.classList.toggle('low', left <= 10); }
+      if (left <= 0) { fill(); finish(sel.slice()); }
+    }, 1000);
+    m.root.addEventListener('click', (e) => {
+      const r = e.target.closest('[data-rm]'); if (r) { sel = sel.filter((x) => x !== r.dataset.rm); return sync(); }
+      const c = e.target.closest('[data-pick]');
+      if (c) { const id = c.dataset.pick; if (sel.includes(id)) sel = sel.filter((x) => x !== id); else if (sel.length < 5) sel = [...sel, id]; else toast('Your squad is full. Tap a card in it to swap it out.'); return sync(); }
+      const x = e.target.closest('[data-x]');
+      if (!x) return;
+      if (x.dataset.x === 'best') { sel = list.slice(0, need).map((u) => u.id); return sync(); }
+      if (x.dataset.x === 'cancel') return finish(null);
+      if (x.dataset.x === 'go' && sel.length >= need) finish(sel.slice());
+    });
+    return { close: () => finish(null) };
+  }
+
   function onChallenge(msg) {
     const d = msg.data || {};
     if (msg.isMe || d.to !== Duel.myPeer() || !Array.isArray(d.squad) || !d.squad.every((e) => D.UNIT_MAP[e && e.id])) return;
     if (Duel.match || App.battleActive) { Duel.room.emit('answer', { to: msg.peer, id: d.id, ok: false, busy: true }).catch(() => {}); return; }
     Duel.invite = { ...d, peer: msg.peer, by: msg.by };
+    learn(msg.by, d.nm);
     refresh();
     if (root.Sound) root.Sound.play('reveal_rare');
     const who = Duel.name(msg);
@@ -2675,24 +2767,47 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       // accepting drops any challenge we were still waiting on
       if (x.dataset.x === 'yes' && Duel.pending) { if (Duel.pending.modal) Duel.pending.modal.close(); Duel.pending = null; }
       if (x.dataset.x === 'no') { Duel.room.emit('answer', { to: inv.peer, id: inv.id, ok: false }).catch(() => {}); return refresh(); }
-      const mine = HN.squadEntries(inv.kind);
-      if (!mine.length) { toast('Pick a squad first.'); Duel.room.emit('answer', { to: inv.peer, id: inv.id, ok: false }).catch(() => {}); return; }
-      Duel.room.emit('answer', { to: inv.peer, id: inv.id, ok: true, squad: mine, rating: HN.S().rating }).catch(() => {});
-      start({ id: inv.id, host: false, kind: inv.kind, seed: inv.seed, mine, theirs: inv.squad, peer: inv.peer, by: inv.by, name: who, oppRating: +inv.rating || 800 });
+      if (!HN.pool(inv.kind).length) { toast(inv.kind === 'ship' ? 'You need a ship for a Fleet duel.' : 'You need a character for a Ground duel.'); Duel.room.emit('answer', { to: inv.peer, id: inv.id, ok: false }).catch(() => {}); return; }
+      // Let them know we're picking our squad, then build it.
+      Duel.room.emit('answer', { to: inv.peer, id: inv.id, wait: true, nm: myNm() }).catch(() => {});
+      Duel.building = { id: inv.id };
+      Duel.building.ui = buildSquad(inv.kind, { who, role: 'accept' }, (mine) => {
+        const cancelled = !Duel.building || Duel.building.id !== inv.id || Duel.building.off;
+        Duel.building = null;
+        if (cancelled) return;
+        if (!mine) { Duel.room.emit('answer', { to: inv.peer, id: inv.id, ok: false }).catch(() => {}); return refresh(); }
+        Duel.room.emit('answer', { to: inv.peer, id: inv.id, ok: true, squad: mine, rating: HN.S().rating, nm: myNm() }).catch(() => {});
+        start({ id: inv.id, host: false, kind: inv.kind, seed: inv.seed, mine, theirs: inv.squad, peer: inv.peer, by: inv.by, name: who, oppRating: +inv.rating || 800 });
+      });
     });
   }
   function onAnswer(msg) {
     const d = msg.data || {};
+    // The challenger backed out while we were still building our squad.
+    if (!msg.isMe && d.cancel && d.to === Duel.myPeer()) {
+      if (Duel.building && Duel.building.id === d.id) { Duel.building.off = true; if (Duel.building.ui) Duel.building.ui.close(); Duel.building = null; toast(`${Duel.name(msg)} cancelled the duel.`); }
+      if (Duel.invite && Duel.invite.id === d.id) { Duel.invite = null; document.querySelectorAll('.modal-backdrop').forEach((n) => { if (n.querySelector('.hn-result [data-x="yes"]')) n.remove(); }); refresh(); }
+      return;
+    }
     const p = Duel.pending;
     if (msg.isMe || d.to !== Duel.myPeer() || !p || d.id !== p.id) return;
+    if (d.wait) {
+      learn(msg.by, d.nm);
+      const w = p.modal && p.modal.root.querySelector('[data-wmsg]');
+      if (w) w.innerHTML = `<b>${esc(Duel.name(msg))}</b> accepted! They're building their squad…`;
+      if (p.expire) p.expire(BUILD_MS + 15000, 'They took too long to build a squad.');
+      return;
+    }
     if (d.ok && (Duel.match || App.battleActive)) {
       // they accepted too late: tell their duel room we're out so they get the win instead of waiting
-      Duel.pending = null; if (p.modal) p.modal.close();
+      Duel.pending = null; clearTimeout(p.timer); if (p.modal) p.modal.close();
       Duel.room.join(`duel-${p.id}`).then((r) => { r.emit('bye', {}).catch(() => {}); setTimeout(() => r.leave().catch(() => {}), 2500); }).catch(() => {});
       return;
     }
     Duel.pending = null;
+    clearTimeout(p.timer);
     if (p.modal) p.modal.close();
+    learn(msg.by, d.nm);
     if (!d.ok) return toast(d.busy ? 'They are busy in another fight.' : 'Challenge declined.');
     if (!Array.isArray(d.squad) || !d.squad.every((e) => D.UNIT_MAP[e && e.id])) return toast('Their squad could not be loaded.');
     start({ id: p.id, host: true, kind: p.kind, seed: p.seed, mine: p.squad, theirs: d.squad, peer: msg.peer, by: msg.by, name: Duel.name(msg), oppRating: +d.rating || 800 });
@@ -2727,9 +2842,9 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     // listed first, so turn order and every roll match.
     const rng = HN.rng(cfg.seed);
     HN.B.back = { view: 'duels' };
-    HN.hnStart({ type: 'hn', hn: 'duel', kind: cfg.kind }, cfg.mine.map((e) => ({ ...e })), cfg.theirs.map((e) => ({ ...e })), {
+    HN.hnStart({ type: 'hn', hn: 'duel', kind: cfg.kind }, cfg.mine.map(atDuelLevel), cfg.theirs.map(atDuelLevel), {
       name: `Live Duel · vs ${cfg.name}`, kind: cfg.kind, planet: cfg.kind === 'ship' ? 'coruscant' : 'geonosis', rng,
-      intro: 'Live: you play your squad, they play theirs. 45 seconds per move.',
+      intro: `Live: every card fights at Level ${DUEL_LEVEL} ★${DUEL_STARS}. You play your squad, they play theirs. 45 seconds per move.`,
       setup(b) {
         b.duel = M;
         for (const u of b.units) {
@@ -2882,6 +2997,9 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     cleanup(M);
   };
 
+  const baseAuto = BUI.toggleAuto;
+  BUI.toggleAuto = function () { if (this.battle && this.battle.duel) return toast('Auto is off in live duels.'); return baseAuto.call(this); };
+
   // A live turn loop in place of the usual one.
   const baseLoop = BUI.loop;
   BUI.loop = async function () {
@@ -2893,6 +3011,8 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     this.field.appendChild(waitBox);
     const say = (t) => { waitBox.textContent = t; waitBox.hidden = !t; };
     say('');
+    // No Auto in live duels: you play every move yourself.
+    const ab = this.view && this.view.querySelector('[data-auto]'); if (ab) ab.remove();
     while (!stale()) {
       const w = b.winner();
       if (w) { say(''); return this.finish(w); }
@@ -2917,7 +3037,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
           say(`Your move · ${left}s`);
           if (left === 0) { clearInterval(tick); if (this.pending) this.resolvePending(b.chooseAction(actor)); }
         }, 1000);
-        if (this.prefs.auto) { this.renderActions(actor); await this.wait(380); action = b.chooseAction(actor); } else action = await this.awaitPlayer(actor);
+        action = await this.awaitPlayer(actor);
         clearInterval(tick);
         say('');
         if (stale() || !action) return;
@@ -2984,11 +3104,11 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const body = off ? '<div class="hn-free"><span class="grow"><b>You\'re offline.</b> Live Duels need an internet connection. Everything else in the HoloNet still works.</span></div>'
       : !Duel.room ? `<div class="hn-free"><span class="grow">${Duel.ready ? '<b>Live Duels can\'t connect.</b> Check your internet connection.' : 'Connecting…'}</span></div>`
         : list.length ? `<div class="hn-opps">${list.map((p) => { const pr = p.presence || {}; const d = HN.divOf(pr.rating || 800); return `<div class="hn-opp"><div>${root.HNArt.badge(d.league, d.div)}</div>
-          <div class="who">${HN.chip && p.by ? HN.chip(p.by) : `<b>${esc(Duel.name(p))}</b>`}${pr.busy ? '<span class="tag" style="background:#7a4a1a">IN A DUEL</span>' : '<span class="tag" style="background:#1a7a4a">ONLINE</span>'}<small>${esc(d.name)} · ${fmt(pr.rating || 0)} · ⚔ ${fmt(pr.g || 0)} · ✈ ${fmt(pr.f || 0)}</small></div>
+          <div class="who">${HN.chip && p.by ? HN.chip(p.by) : `<b>${esc(Duel.name(p))}</b>`}${pr.busy ? '<span class="tag" style="background:#7a4a1a">IN A DUEL</span>' : '<span class="tag" style="background:#1a7a4a">ONLINE</span>'}<small>${esc(d.name)} · ${fmt(pr.rating || 0)}</small></div>
           <div class="go"><button type="button" class="hn-btn" data-hn="duelgo" data-peer="${esc(p.peer)}" data-kind="character" ${pr.busy ? 'disabled' : ''}>Ground</button><button type="button" class="hn-btn" data-hn="duelgo" data-peer="${esc(p.peer)}" data-kind="ship" ${pr.busy ? 'disabled' : ''}>Fleet</button></div></div>`; }).join('')}</div>`
           : '<div class="hn-free"><span class="grow"><b>Nobody else is in the HoloNet right now.</b> When another player opens it, they\'ll show up here live.</span></div>';
     return `${HN.ui.head('LIVE DUELS', `Ranked · real players, real time · record ${rec.w} W · ${rec.l} L`, true)}
-      <p class="muted" style="margin:0">Challenge a player who's online now. You each play your own squad, one move at a time, and you see their moves as they make them. Duels are ranked: win or lose rating just like the arena. 45 seconds per move and 12 minutes per match (then the most damage dealt wins); leaving counts as a loss.</p>
+      <p class="muted" style="margin:0">Challenge a player who's online now. You both build a squad for the duel first, and every card fights at Level ${DUEL_LEVEL} ★${DUEL_STARS}, so it's skill and team-building, not who has the highest levels. You play every move yourself (no Auto). Duels are ranked: win or lose rating just like the arena. 45 seconds per move and 12 minutes per match (then the most damage dealt wins); leaving counts as a loss.</p>
       ${body}`;
   };
   HN.clicks.duelgo = (b) => {
@@ -3031,7 +3151,27 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
 .hn-link small { opacity: .8; font-size: 11px; }
 @keyframes hn-link-rot { to { transform: rotate(360deg); } }
 .hn-clock { position: absolute; right: 10px; top: 8px; z-index: 6; padding: 4px 10px; border-radius: 999px; background: rgba(6, 18, 30, 0.85); border: 1px solid rgba(95, 216, 255, 0.5); color: #dff8ff; font: 700 13px var(--font-display, system-ui); letter-spacing: .08em; pointer-events: none; font-variant-numeric: tabular-nums; }
-.hn-clock.low { border-color: #ff7a5a; color: #ffd0c0; }`;
+.hn-clock.low { border-color: #ff7a5a; color: #ffd0c0; }
+.modal.db-modal { width: min(820px, 100%); padding-bottom: 0; }
+.db { display: grid; gap: 10px; min-width: 0; }
+.db-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.db-head h2 { margin: 0; } .db-head .eyebrow { margin: 0 0 2px; }
+.db-time { flex: none; min-width: 52px; padding: 6px 10px; border-radius: 999px; text-align: center; font: 700 14px/1 var(--font-display, inherit); background: rgba(95, 216, 255, 0.14); border: 1px solid rgba(95, 216, 255, 0.4); color: #bfefff; }
+.db-time.low { background: rgba(255, 90, 58, 0.18); border-color: #ff7a5a; color: #ffb8a0; }
+.db-note { margin: 0; font-size: 13px; color: #b8d4e2; }
+.db-slots { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.db-slot { display: grid; justify-items: center; gap: 3px; padding: 6px 2px; border-radius: 12px; border: 1px dashed rgba(95, 216, 255, 0.3); background: rgba(6, 18, 30, 0.7); color: #9fc4d8; font: inherit; min-width: 0; }
+.db-slot.on { border: 1px solid #5fd8ff; cursor: pointer; color: #e6f6ff; }
+.db-slot .mini { width: 48px; height: 48px; display: block; border-radius: 10px; overflow: hidden; }
+.db-slot .mini .portrait { width: 100%; height: 100%; }
+.db-slot i { width: 48px; height: 48px; border-radius: 10px; background: rgba(95, 216, 255, 0.06); display: block; }
+.db-slot small { font-size: 10px; line-height: 1.1; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.db-pick { max-height: none; overflow: visible; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); }
+.db-foot { position: sticky; bottom: 0; z-index: 2; display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; margin: 0 -22px; padding: 12px 22px calc(12px + env(safe-area-inset-bottom, 0px)); background: var(--panel, #0b1622); border-top: 1px solid rgba(95, 216, 255, 0.18); }
+.db-foot [data-x="go"] { min-width: 170px; }
+.db-pick > * { min-width: 0; } .db-pick .ucard { min-width: 0; overflow: hidden; }
+@media (max-width: 520px) { .db-head h2 { font-size: 20px; } .db-note { font-size: 12px; } .db-pick { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; } .db-pick .ucard { font-size: 9px; } .db-pick .ucard .ucard-meta span:last-child { display: none; } .db-foot .btn { flex: 1; } .db-foot [data-x="go"] { flex-basis: 100%; } .db-slot .mini, .db-slot i { width: 40px; height: 40px; } }
+`;
   document.head.appendChild(css);
 
   Duel.start = init;
@@ -4287,8 +4427,25 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   Net.name = function (uid) {
     if (uid === this.me || uid === 'me') { const t = cleanTag(S().prof && S().prof.tag); return t ? `${t} (you)` : 'You'; }
     const a = this.arena.find((x) => x.uid === uid);
-    return (a && cleanTag(a.tag)) || baseName(uid);
+    const t = a && cleanTag(a.tag);
+    if (t) return t;
+    // Someone we haven't loaded (not on the boards we fetched): look up
+    // their row once so everyone sees their callsign, not a placeholder.
+    if (uid && !a && this.ready && this.db) askName(uid);
+    return baseName(uid);
   };
+  const asked = new Map();
+  let nameRedraw = 0;
+  async function askName(uid) {
+    const last = asked.get(uid) || 0;
+    if (Date.now() - last < 120000) return;
+    asked.set(uid, Date.now());
+    try {
+      const d = await Net.db.doc(`arena/${uid}`).get();
+      const t = d && d.exists && cleanTag((d.data() || {}).tag);
+      if (t && Net.names[uid] !== t) { Net.names[uid] = t; clearTimeout(nameRedraw); nameRedraw = setTimeout(() => { if (!document.querySelector('.modal-backdrop')) rerender(); }, 400); }
+    } catch (e) { /* names are optional */ }
+  }
   const avatar = (p, size = 'sm') => {
     const g = p.guild && guildOf(p.guild);
     return `<span class="pf-av ${size}"><span class="pic">${root.Art.unitArt(D.UNIT_MAP[p.av] || D.UNIT_MAP.luke)}</span>${frameSvg(p.frame, g && g.color)}</span>`;
@@ -4343,6 +4500,53 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   }
   HN.openProfile = openProfile;
 
+  // Callsigns are unique: each one is claimed in names/<key> (lowercase
+  // letters and digits only, so "Kessel Runner" and "kesselrunner" are the
+  // same name). Claiming fails if someone else holds it; changing your
+  // callsign frees the old one, so everyone holds at most one.
+  const nameKey = (t) => String(t || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  const fsNames = () => !!(Net.ready && Net.db && Net.db.firestore);
+  async function nameFree(key) {
+    if (!fsNames()) return true;
+    try { const d = await Net.db.doc(`names/${key}`).get(); return !d.exists || d.data().uid === Net.me; } catch (e) { return null; }
+  }
+  async function claimName(key) {
+    if (!fsNames()) return 'ok';
+    const ref = Net.db.doc(`names/${key}`);
+    try { await ref.set({ uid: Net.me, t: Date.now() }); return 'ok'; } catch (e) {
+      try { const d = await ref.get(); return d.exists && d.data().uid === Net.me ? 'ok' : d.exists ? 'taken' : 'error'; } catch (e2) { return 'error'; }
+    }
+  }
+  const releaseName = (key) => { if (key && fsNames()) Net.db.doc(`names/${key}`).delete().catch(() => {}); };
+  // A callsign saved before names were unique gets claimed on connect; if
+  // someone else already holds it, the player picks a new one.
+  let claimChecked = false;
+  Net.on(async () => {
+    if (claimChecked || !fsNames()) return;
+    claimChecked = true;
+    const h = P2(); const t = cleanTag(h.prof.tag); const key = nameKey(t);
+    if (!t || h.prof.key === key) return;
+    const r = key.length >= 3 ? await claimName(key) : 'taken';
+    if (r === 'ok') h.prof.key = key;
+    else if (r === 'taken') { h.prof.tag = ''; h.prof.key = ''; toast(`Another player already uses the callsign "${t}". Tap your profile to pick a new one.`); }
+    else { claimChecked = false; return; }
+    HN.save(); Net.lastKey = null; Net.publish(); rerender();
+  });
+  const tagCheck = (typed) => {
+    const key = nameKey(typed);
+    if (!typed) return { ok: true, msg: 'No callsign: other players see your account name.' };
+    if (key.length < 3) return { ok: false, msg: 'Use at least 3 letters or numbers.' };
+    if (!SAFE.ok(typed)) return { ok: false, msg: 'Keep it friendly: pick a different callsign.' };
+    if (/^pilot[a-z0-9]{4}$/.test(key)) return { ok: false, msg: 'That one is reserved. Pick another.' };
+    return { ok: true, key };
+  };
+
+  // The profile editor: a live preview on top, then one section at a time
+  // (Picture, Frame, Badges) so each gets the whole window, and Save always
+  // in reach at the bottom. Tapping a choice only updates what changed.
+  let peTab = 'pic';
+  let peCat = 'light';
+  let peChose = false;
   function editProfile() {
     const h = P2();
     const frames = ownedFrames();
@@ -4351,27 +4555,92 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     let av = h.prof.av || defaultAv();
     let frame = frames.includes(h.prof.frame) ? h.prof.frame : 'recruit';
     let feat = (h.prof.feat || []).slice(0, 6);
+    let saving = false;
     const cards = [...new Set([...PICS, ...HN.HN_IDS.filter(HN.owns)])].filter((id) => D.UNIT_MAP[id] && D.UNIT_MAP[id].rarity !== 'secret');
-    const body = () => `<div class="pf-edit"><h2 style="margin:0">Edit profile</h2>
-      <label class="pf-lbl">Callsign <small>shown to other players, up to 16 letters</small><input class="pf-in" data-tag maxlength="16" value="${esc(tag)}" placeholder="${esc(baseName(Net.me || 'me') === 'You' ? 'e.g. KesselRunner' : baseName(Net.me))}"></label>
-      <h3 class="pf-h">Frame</h3><div class="pf-frames">${Object.entries(FRAMES).map(([id, f]) => { const own = frames.includes(id); return `<button type="button" class="pf-fr ${id === frame ? 'on' : ''} ${own ? '' : 'locked'}" data-fr="${id}" ${own ? '' : 'disabled'}>${avatar({ av, frame: id, guild: h.guild }, 'md')}<b>${esc(f.name)}</b><small>${own ? 'Unlocked' : esc(f.how)}</small></button>`; }).join('')}</div>
-      <h3 class="pf-h">Picture</h3><div class="pf-avs">${cards.map((id) => `<button type="button" class="pf-avb ${id === av ? 'on' : ''}" data-av="${id}" title="${esc(D.UNIT_MAP[id].name)}">${root.Art.unitArt(D.UNIT_MAP[id])}</button>`).join('')}</div>
-      <h3 class="pf-h">Badges to show <small>pick up to 6 · ${feat.length}/6</small></h3><div class="pf-bdgs pick">${b.all.map((x) => { const k = x.id || x.name; return `<button type="button" class="pf-bdg ${feat.includes(k) ? 'on' : ''}" data-ft="${esc(k)}">${still(UI.featBadge(x))}<span>${esc(x.name)}</span></button>`; }).join('') || '<p class="muted small">Earn badges around the game and show them off here.</p>'}</div>
-      <div class="modal-actions"><button type="button" class="btn" data-x="cancel">Cancel</button><button type="button" class="btn btn-primary" data-x="save">Save</button></div></div>`;
-    const m = openModal(`<div data-body>${body()}</div>`, {});
-    const redraw = () => { const sc = m.root.querySelector('.modal') || m.root; const y = sc.scrollTop; m.root.querySelector('[data-body]').innerHTML = body(); sc.scrollTop = y; };
-    m.root.addEventListener('input', (e) => { if (e.target.matches('[data-tag]')) tag = e.target.value; });
-    m.root.addEventListener('click', (e) => {
-      const f = e.target.closest('[data-fr]'); if (f && !f.disabled) { frame = f.dataset.fr; return redraw(); }
-      const a = e.target.closest('[data-av]'); if (a) { av = a.dataset.av; return redraw(); }
+    const CATS = [
+      ['light', 'Light side', (u) => u.kind !== 'ship' && u.faction === 'light' && !/^hn_/.test(u.id)],
+      ['dark', 'Dark side', (u) => u.kind !== 'ship' && u.faction !== 'light' && !/^hn_/.test(u.id)],
+      ['ship', 'Ships', (u) => u.kind === 'ship' && !/^hn_/.test(u.id)],
+      ['hn', 'HoloNet', (u) => /^hn_/.test(u.id)],
+    ].filter(([, , f]) => cards.some((id) => f(D.UNIT_MAP[id])));
+    if (!CATS.some(([k]) => k === peCat)) peCat = CATS[0][0];
+    if (D.UNIT_MAP[av]) { const c = CATS.find(([, , f]) => f(D.UNIT_MAP[av])); if (c && !peChose) peCat = c[0]; }
+    const nm = (id) => esc(D.UNIT_MAP[id] ? D.UNIT_MAP[id].name : '');
+    const preview = () => `${avatar({ av, frame, guild: h.guild }, 'lg')}`;
+    const summary = () => `${nm(av)} · ${esc(FRAMES[frame].name)} frame · ${feat.length} badge${feat.length === 1 ? '' : 's'}`;
+    const pane = () => {
+      if (peTab === 'frame') return `<div class="pf-frames pe-frames">${Object.entries(FRAMES).sort(([a], [c]) => frames.includes(c) - frames.includes(a)).map(([id, f]) => { const own = frames.includes(id); return `<button type="button" class="pf-fr ${id === frame ? 'on' : ''} ${own ? '' : 'locked'}" data-fr="${id}" ${own ? '' : 'disabled'}>${avatar({ av, frame: id, guild: h.guild }, 'md')}<b>${esc(f.name)}</b><small>${own ? 'Unlocked' : esc(f.how)}</small></button>`; }).join('')}</div>`;
+      if (peTab === 'badge') return `<p class="muted small pe-note">Pick up to 6 to show on your profile · <b data-featn>${feat.length}/6</b></p><div class="pf-bdgs pick">${b.all.map((x) => { const k = x.id || x.name; return `<button type="button" class="pf-bdg ${feat.includes(k) ? 'on' : ''}" data-ft="${esc(k)}">${still(UI.featBadge(x))}<span>${esc(x.name)}</span></button>`; }).join('') || '<p class="muted small">Earn badges around the game and show them off here.</p>'}</div>`;
+      const f = (CATS.find(([k]) => k === peCat) || CATS[0])[2];
+      return `<div class="pe-cats" data-noswipe>${CATS.map(([k, n, ff]) => `<button type="button" class="${k === peCat ? 'on' : ''}" data-pcat="${k}">${n} <small>${cards.filter((id) => ff(D.UNIT_MAP[id])).length}</small></button>`).join('')}</div>
+        <div class="pe-avs">${cards.filter((id) => f(D.UNIT_MAP[id])).map((id) => `<button type="button" class="pe-av ${id === av ? 'on' : ''}" data-av="${id}" aria-label="${nm(id)}"><span class="pic">${root.Art.unitArt(D.UNIT_MAP[id])}</span><small>${nm(id)}</small></button>`).join('')}</div>`;
+    };
+    const tabs = () => [['pic', 'Picture'], ['frame', 'Frame'], ['badge', `Badges <small data-featn2>${feat.length}/6</small>`]].map(([k, n]) => `<button type="button" class="${k === peTab ? 'on' : ''}" data-ptab="${k}">${n}</button>`).join('');
+    const m = openModal(`<div class="pf-edit pe">
+      <div class="pe-head"><div class="pe-prev" data-prev>${preview()}</div>
+        <div class="pe-id"><h2>Edit profile</h2>
+          <label class="pf-lbl">Callsign <small>3 to 16 letters or numbers · nobody else can have the same one</small>
+          <input class="pf-in" data-tag maxlength="16" autocomplete="off" autocapitalize="off" spellcheck="false" value="${esc(tag)}" placeholder="e.g. KesselRunner"></label>
+          <p class="pe-st" data-st></p></div></div>
+      <p class="pe-sum muted small" data-sum>${summary()}</p>
+      <div class="pe-tabs" data-noswipe>${tabs()}</div>
+      <div class="pe-pane" data-pane>${pane()}</div>
+      <div class="pe-foot"><button type="button" class="btn" data-x="cancel">Cancel</button><button type="button" class="btn btn-primary" data-x="save">Save</button></div></div>`, {});
+    m.root.querySelector('.modal')?.classList.add('pe-modal');
+    const $ = (q) => m.root.querySelector(q);
+    const refreshTop = () => { $('[data-prev]').innerHTML = preview(); $('[data-sum]').innerHTML = summary(); };
+    const showPane = () => { $('[data-pane]').innerHTML = pane(); $('.pe-tabs').innerHTML = tabs(); };
+    // Callsign status as you type: friendly, long enough, and free.
+    let checkSeq = 0; let timer = 0;
+    const status = (msg, cls) => { const n = $('[data-st]'); n.textContent = msg || ''; n.className = `pe-st ${cls || ''}`; };
+    const check = () => {
+      clearTimeout(timer);
+      const typed = cleanTag(tag) || String(tag || '').trim();
+      const c = tagCheck(String(tag || '').replace(/[^A-Za-z0-9_ .-]/g, '').trim());
+      if (!c.ok) return status(c.msg, 'bad');
+      if (!c.key || c.key === h.prof.key) return status(c.key ? 'This is your callsign.' : c.msg, c.key ? 'good' : '');
+      if (!fsNames()) return status(Net.ready ? '' : 'Connect to the HoloNet to change your callsign.', Net.ready ? '' : 'bad');
+      status('Checking…');
+      const seq = ++checkSeq;
+      timer = setTimeout(async () => { const free = await nameFree(c.key); if (seq !== checkSeq) return; status(free === null ? '' : free ? `"${typed}" is available.` : `"${typed}" is already taken.`, free ? 'good' : free === false ? 'bad' : ''); }, 450);
+    };
+    check();
+    m.root.addEventListener('input', (e) => { if (e.target.matches('[data-tag]')) { tag = e.target.value; check(); } });
+    m.root.addEventListener('click', async (e) => {
+      const tb = e.target.closest('[data-ptab]'); if (tb) { peTab = tb.dataset.ptab; showPane(); $('.pe-tabs').scrollIntoView({ block: 'nearest' }); return; }
+      const pc = e.target.closest('[data-pcat]'); if (pc) { peCat = pc.dataset.pcat; peChose = true; return showPane(); }
+      const f = e.target.closest('[data-fr]'); if (f && !f.disabled) { frame = f.dataset.fr; m.root.querySelectorAll('[data-fr]').forEach((n) => n.classList.toggle('on', n === f)); return refreshTop(); }
+      const a = e.target.closest('[data-av]'); if (a) { av = a.dataset.av; m.root.querySelectorAll('[data-av]').forEach((n) => n.classList.toggle('on', n === a)); return refreshTop(); }
       const t = e.target.closest('[data-ft]');
-      if (t) { const k = t.dataset.ft; feat = feat.includes(k) ? feat.filter((x) => x !== k) : feat.length < 6 ? [...feat, k] : feat; return redraw(); }
+      if (t) {
+        const k = t.dataset.ft;
+        if (!feat.includes(k) && feat.length >= 6) return toast('You can show up to 6 badges. Tap one to remove it first.');
+        feat = feat.includes(k) ? feat.filter((x) => x !== k) : [...feat, k];
+        t.classList.toggle('on', feat.includes(k));
+        m.root.querySelectorAll('[data-featn],[data-featn2]').forEach((n) => { n.textContent = `${feat.length}/6`; });
+        return refreshTop();
+      }
       const x = e.target.closest('[data-x]');
-      if (!x) return;
+      if (!x || saving) return;
       if (x.dataset.x === 'save') {
         const typed = String(tag || '').replace(/[^A-Za-z0-9_ .-]/g, '').trim().slice(0, 16);
-        if (typed && !SAFE.ok(typed)) return toast('Keep it friendly: pick a different callsign.');
-        h.prof = { tag: typed, av, frame, feat }; HN.save(); Net.publish(); toast('Profile saved.');
+        const c = tagCheck(typed);
+        if (!c.ok) { status(c.msg, 'bad'); return toast(c.msg); }
+        const key = c.key || '';
+        const old = h.prof.key || '';
+        if (key && key !== old) {
+          if (!fsNames()) return toast('Connect to the HoloNet to change your callsign.');
+          saving = true; x.disabled = true; x.textContent = 'Checking…';
+          const r = await claimName(key);
+          saving = false; x.disabled = false; x.textContent = 'Save';
+          if (r === 'taken') { status(`"${typed}" is already taken.`, 'bad'); return toast(`"${typed}" is already taken. Try another callsign.`); }
+          if (r !== 'ok') return toast("Couldn't check that callsign right now. Try again.");
+        }
+        h.prof = { tag: key ? typed : '', key, av, frame, feat };
+        HN.save(); await Net.publish();
+        if (old && old !== key) releaseName(old);
+        if (HN.Duel && HN.Duel.setPresence) HN.Duel.setPresence();
+        toast('Profile saved.');
       }
       m.close();
       rerender();
@@ -4388,7 +4657,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const p = myProfile();
     const body = {
       rating: h.rating, ground: HN.squadEntries('character'), fleet: HN.squadEntries('ship'), level: Player.state.account.level,
-      tag: p.tag, av: p.av, frame: p.frame, badges: p.badges, nb: p.nb, st: p.st, dw: p.st.dw || 0,
+      tag: !this.db.firestore || (h.prof.key && h.prof.key === nameKey(p.tag)) ? p.tag : '', av: p.av, frame: p.frame, badges: p.badges, nb: p.nb, st: p.st, dw: p.st.dw || 0,
       ss: seasonNo() * 1e5 + Math.max(h.soc.sBest || 0, h.rating),
       guild: h.guild || null, apply: (!h.guild && h.apply) || null, gp: h.soc.gp, gpw: h.soc.gpw, gpl: h.soc.gpl, don: h.soc.don && h.soc.don.g ? { g: h.soc.don.g, a: h.soc.don.a | 0 } : null, gr: { w: h.soc.gr.w, b: h.soc.gr.b, d: h.soc.gr.d, f: h.soc.gr.f },
     };
@@ -5338,7 +5607,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
 
   // Ranked duels report into guild points and the season.
   HN.social = { addGP, trackSeasonBest, guildOf, myGuildId, GRAIDS, graidNow, graidTotals, FRAMES, ownedFrames, frameSvg,
-    prof, avatar, chip, emblem, GUILD_PICS, PICS, pickerHtml, setPickCat, canAnnounce, announcements, sayLine, ago, roleOf, ROLE_NAME, canManage, MAX_ELDERS, PERK_NEEDS, GLVL, cleanText, PERKS, PERK_COST, PIC_COST, perkLevel, maxMembers, donors, bankOf, pushGuildStats, membersOf, guildLevel, guildWeekPoints, loadGuilds, G, gmap, setGuilds, rerender, SAFE, isMuted, editProfile, P2, seasonNo, seasonEnds, SEASON_REWARD, weekPoints, MAX_MEMBERS, COLORS, EMBLEMS, createGuild, joinGuild, watchMyGuild, GP, MODES, modeOf, approved, canReview, leaderOf, writeGuild, watchMembers, loadInvites, inviteTo, answerApp, applyGuild, cancelApply, unread, marks, markSeen, MKS, MEGA, setGtab: (t) => { gtab = t; }, gtabNow, sizeOf, chatLines, offlineGuild };
+    prof, avatar, chip, nameKey, emblem, GUILD_PICS, PICS, pickerHtml, setPickCat, canAnnounce, announcements, sayLine, ago, roleOf, ROLE_NAME, canManage, MAX_ELDERS, PERK_NEEDS, GLVL, cleanText, PERKS, PERK_COST, PIC_COST, perkLevel, maxMembers, donors, bankOf, pushGuildStats, membersOf, guildLevel, guildWeekPoints, loadGuilds, G, gmap, setGuilds, rerender, SAFE, isMuted, editProfile, P2, seasonNo, seasonEnds, SEASON_REWARD, weekPoints, MAX_MEMBERS, COLORS, EMBLEMS, createGuild, joinGuild, watchMyGuild, GP, MODES, modeOf, approved, canReview, leaderOf, writeGuild, watchMembers, loadInvites, inviteTo, answerApp, applyGuild, cancelApply, unread, marks, markSeen, MKS, MEGA, setGtab: (t) => { gtab = t; }, gtabNow, sizeOf, chatLines, offlineGuild };
 
   // ---------- tester hooks ----------
   Object.assign(HN.dev, {
@@ -5393,6 +5662,39 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
 .pf-fr { display: grid; justify-items: center; gap: 6px; padding: 12px 6px 8px; border-radius: 12px; border: 1px solid rgba(95, 216, 255, 0.2); background: rgba(8, 20, 32, 0.8); color: #dff8ff; font: inherit; text-align: center; }
 button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow: 0 0 0 1px #ffd23f inset; }
 .pf-fr b { font-size: 12px; } .pf-fr small { color: #9fc4d8; font-size: 10px; } .pf-fr.locked { opacity: .45; }
+.modal.pe-modal { width: min(720px, 100%); padding-bottom: 0; }
+.pe { gap: 10px; }
+.pe-head { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 14px; align-items: center; }
+.pe-prev .pf-av.lg { width: 92px; height: 92px; }
+.pe-id { display: grid; gap: 6px; min-width: 0; } .pe-id h2 { margin: 0; }
+.pe-st { margin: 0; min-height: 1.2em; font-size: 12px; color: #9fc4d8; } .pe-st.good { color: #4ade80; } .pe-st.bad { color: #ff7a5a; }
+.pe-sum { margin: 0; }
+.pe-tabs, .pe-cats { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.pe-tabs::-webkit-scrollbar, .pe-cats::-webkit-scrollbar { display: none; }
+.pe-tabs button, .pe-cats button { flex: 1 0 auto; padding: 10px 14px; min-height: 42px; border-radius: 10px; border: 1px solid rgba(95, 216, 255, 0.25); background: rgba(8, 20, 32, 0.85); color: #dff8ff; font: 700 13px/1 var(--font-display, inherit); letter-spacing: .04em; cursor: pointer; white-space: nowrap; }
+.pe-tabs button.on { background: linear-gradient(180deg, #ffd23f, #e0a820); color: #1a1206; border-color: #ffd23f; }
+.pe-cats button { flex: 0 0 auto; min-height: 36px; padding: 8px 12px; font-size: 12px; } .pe-cats button.on { border-color: #5fd8ff; background: rgba(95, 216, 255, 0.18); }
+.pe-cats button small, .pe-tabs button small { opacity: .7; font-weight: 400; }
+.pe-pane { display: grid; gap: 10px; min-height: 240px; align-content: start; }
+.pe-avs { display: grid; grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); gap: 10px 6px; }
+.pe-av { display: grid; justify-items: center; gap: 4px; padding: 6px 2px; border: 0; border-radius: 12px; background: none; color: #cfe6f2; font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.pe-av .pic { width: 64px; height: 64px; border-radius: 50%; overflow: hidden; display: block; background: #06121e; border: 3px solid rgba(95, 216, 255, 0.18); transition: transform .12s, border-color .12s; }
+.pe-av .pic svg { width: 100%; height: 100%; display: block; }
+.pe-av small { font-size: 10.5px; line-height: 1.15; text-align: center; max-width: 76px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.pe-av.on .pic { border-color: #ffd23f; box-shadow: 0 0 0 2px rgba(255, 210, 63, 0.35), 0 0 14px rgba(255, 210, 63, 0.4); }
+.pe-av.on small { color: #ffd23f; font-weight: 700; }
+@media (hover: hover) { .pe-av:hover .pic { transform: scale(1.06); border-color: rgba(95, 216, 255, 0.6); } }
+.pe-frames { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); }
+.pe-note { margin: 0; }
+.pe-foot { position: sticky; bottom: 0; z-index: 2; display: flex; gap: 10px; justify-content: flex-end; margin: 0 -22px; padding: 12px 22px calc(12px + env(safe-area-inset-bottom, 0px)); background: var(--panel, #0b1622); border-top: 1px solid rgba(95, 216, 255, 0.18); }
+.pe-foot .btn { min-width: 110px; }
+@media (max-width: 520px) {
+  .pe-head { grid-template-columns: 72px minmax(0, 1fr); gap: 10px; }
+  .pe-prev .pf-av.lg { width: 72px; height: 72px; }
+  .pe-avs { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .pe-av .pic { width: 58px; height: 58px; }
+  .pe-foot .btn { flex: 1; }
+}
 .pf-avs { display: grid; grid-template-columns: repeat(auto-fill, minmax(52px, 1fr)); gap: 6px; max-height: 190px; overflow: auto; }
 .pf-avb { aspect-ratio: 1; padding: 0; border-radius: 50%; overflow: hidden; border: 2px solid transparent; background: #06121e; cursor: pointer; }
 .pf-avb svg { width: 100%; height: 100%; display: block; } .pf-avb.on { border-color: #ffd23f; }
