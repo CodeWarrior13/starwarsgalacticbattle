@@ -8,7 +8,7 @@
 
   const UPDATES = [
     {
-      v: '1.9', rev: 2, date: 'October 10, 2026', title: 'Starships',
+      v: '1.9', date: 'October 10, 2026', title: 'Starships',
       items: [
         'NEW|Cassian\'s Haulcraft (Epic ship): a Fondor hauler whose wings swing out for its Wings Out ultimate.',
         'NEW|Mando\'s N-1 (Legendary ship): Din Djarin\'s chrome-stripped Naboo starfighter, with Grogu riding in the droid socket.',
@@ -27,7 +27,6 @@
         'IMPROVED|Smooth slide when switching between Galaxy, Collection and Black Market.',
         'IMPROVED|Collection opens about 10x faster, and the loading screen gets Collection and the Black Market ready so they open instantly.',
         'IMPROVED|Big Mythic ultimates run smoother, especially on older iPads.',
-        'FIXED|Reset all progress can no longer be tapped by accident: you now type RESET to confirm before anything is wiped.',
       ],
     },
     {

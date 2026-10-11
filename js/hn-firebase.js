@@ -38,10 +38,28 @@
 
   // Signed in silently with a guest account the first time; the same account
   // comes back on this device. (Google sign-in can be added to keep it across devices.)
-  const signedIn = new Promise((resolve) => {
-    auth.onAuthStateChanged((u) => { if (u) resolve(u); });
-    auth.signInAnonymously().catch(() => resolve(null));
-    setTimeout(() => resolve(auth.currentUser), 10000);
+  // If signing in fails (no connection when the page opened) or the guest
+  // account gets signed out, the next attempt (Try again) signs in afresh.
+  let pending = null;
+  let wasIn = false;
+  const signedIn = () => {
+    if (auth.currentUser) return Promise.resolve(auth.currentUser);
+    if (pending) return pending;
+    pending = new Promise((resolve) => {
+      const off = auth.onAuthStateChanged((u) => { if (u) { off(); resolve(u); } });
+      auth.signInAnonymously().catch(() => { off(); resolve(auth.currentUser); });
+      setTimeout(() => { off(); resolve(auth.currentUser); }, 10000);
+    }).then((u) => { pending = null; return u; });
+    return pending;
+  };
+  signedIn();
+  auth.onAuthStateChanged((u) => {
+    if (u) { wasIn = true; return; }
+    if (!wasIn) return;
+    // Signed out while playing: show the HoloNet as offline until we're back.
+    const Net = root.HN && root.HN.Net;
+    if (Net && Net.ready) { Net.ready = false; Net.started = false; Net.status = 'offline'; Net.failAt = 0; try { Net.emit(); } catch (e) { /* ignore */ } }
+    signedIn().then((nu) => { if (nu && Net) Net.retry(); });
   });
 
   // The same small API the tester page provides: collections with
@@ -69,7 +87,7 @@
     }),
   };
   const user = {
-    id: async () => { const u = await signedIn; return u ? u.uid : null; },
+    id: async () => { const u = await signedIn(); return u ? u.uid : null; },
     // Other players show their HoloNet callsign; there are no real names online.
     profiles: async (ids) => Object.fromEntries(ids.map((id) => [id, { name: '' }])),
   };
@@ -235,9 +253,9 @@
   const prev = root.claude && root.claude.use;
   root.claude = {
     use: async (name) => {
-      if (name === 'db') return (await signedIn) ? db : null;
-      if (name === 'user') return (await signedIn) ? user : null;
-      if (name === 'room') { const u = await signedIn; if (!u) return null; roomP = roomP || makeRoom(u.uid); return roomP; }
+      if (name === 'db') return (await signedIn()) ? db : null;
+      if (name === 'user') return (await signedIn()) ? user : null;
+      if (name === 'room') { const u = await signedIn(); if (!u) return null; roomP = roomP || makeRoom(u.uid); return roomP; }
       return prev ? prev(name) : null;
     },
   };
