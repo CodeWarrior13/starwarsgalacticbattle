@@ -1506,5 +1506,7 @@
     return `<svg class="ship-only" viewBox="0 0 100 100" aria-hidden="true">${(SHIPS[def.shape] || SHIPS.xwing)()}</svg>`;
   }
 
+  // The full drawing kit, for content drawn outside this file (the HoloNet's cards).
+  root.ArtX = { P, E, C, R, L, shade, LG, RG, shoulders, neck, head, eyes, brows, nose, mouth, saber, blaster, glowEyes, stars, SCENES, SHIPS };
   root.Art = { kit: { P, E, C, R, L, shade, SCENES, shoulders, SHIPS }, addArt: (kind, key, fn) => { (kind === 'ship' ? SHIPS : CHAR)[key] = fn; ART_CACHE.clear(); }, unitArt, shipOnly, cardBack, ICONS, crateArt, setCrateStyle: (v) => { CRATE_STYLE = ['holo', 'faction'].includes(v) ? v : 'relic'; }, get crateStyle() { return CRATE_STYLE; }, merchantArt, get SHIP_SHAPES() { return Object.keys(SHIPS); }, CHARACTER_IDS: Object.keys(CHAR) };
 })(typeof window !== 'undefined' ? window : globalThis);
