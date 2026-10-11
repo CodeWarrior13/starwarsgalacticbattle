@@ -22,6 +22,7 @@ The same notes appear in the game under **Settings → Update log**, and the new
 - Smooth slide when switching between Galaxy, Collection and Black Market.
 - Collection opens about 10x faster, and the loading screen gets Collection and the Black Market ready so they open instantly.
 - Big Mythic ultimates run smoother, especially on older iPads.
+- Reset all progress can no longer be tapped by accident: you now type RESET to confirm before anything is wiped.
 
 ## v1.8 · Smooth running (October 7, 2026)
 - Install the game as an app on your phone, tablet or computer: its own home-screen icon, full screen, and it works offline. Tap Install on the banner or in Settings → App.

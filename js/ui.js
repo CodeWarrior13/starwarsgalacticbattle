@@ -124,6 +124,31 @@
   }
 
   // In-page confirm: the artifact viewer blocks window.confirm.
+  // Wiping a save can't be undone, so it takes more than one tap: type RESET,
+  // and the button stays locked until you do.
+  function confirmReset() {
+    return new Promise((resolve) => {
+      let answered = false;
+      const m = openModal(`
+        <h2>Reset all progress?</h2>
+        <p class="muted">All your cards, upgrades, currencies, badges and campaign progress will be wiped for good, and the game starts over from the tutorial. <b>This can't be undone.</b></p>
+        <label class="reset-lbl"><span>Type <b>RESET</b> to confirm</span><input class="reset-in" data-reset-in autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="5"></label>
+        <div class="modal-actions">
+          <button class="btn btn-primary" type="button" data-a="no">Keep my progress</button>
+          <button class="btn btn-danger" type="button" data-a="yes" disabled>Wipe everything</button>
+        </div>`, { small: true, onClose: () => { if (!answered) resolve(false); } });
+      const yes = m.root.querySelector('[data-a="yes"]');
+      m.root.addEventListener('input', (e) => { if (e.target.matches('[data-reset-in]')) yes.disabled = e.target.value.trim().toUpperCase() !== 'RESET'; });
+      m.root.addEventListener('click', (e) => {
+        const a = e.target.closest('[data-a]');
+        if (!a || a.disabled) return;
+        answered = true;
+        m.close();
+        resolve(a.dataset.a === 'yes');
+      });
+    });
+  }
+
   function confirmBox(title, body, okLabel) {
     return new Promise((resolve) => {
       let answered = false;
@@ -2135,7 +2160,7 @@
       }
       if (e.target.closest('[data-reset]')) {
         m.close();
-        if (await confirmBox('Reset all progress?', 'All your cards, upgrades, currencies, badges and campaign progress will be wiped, and the game starts over from the tutorial.', 'Reset')) {
+        if (await confirmReset()) {
           // Wipe the save and everything kept beside it (badges already shown,
           // map position), then boot fresh: a new save always opens the tutorial.
           Player.startOver();
