@@ -2089,6 +2089,8 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const a = b.dataset.hn;
     const h = S();
     if (a === 'hub') return go('hub');
+    // No callsign yet: pick one before doing anything else here.
+    if (a !== 'tour' && HN.gate && HN.gate()) return;
     if (HN.clicks[a]) return HN.clicks[a](b, render);
     if (['vault', 'leagues', 'captured', 'leaders', 'forge', 'raid', 'duels'].includes(a)) return go(a);
     if (a === 'arena') return go('arena', { kind: b.dataset.kind });
@@ -2602,7 +2604,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     },
     invites() { return !!this.invite; },
     myPeer() { const me = this.room && this.room.peers().find((p) => p.sameTab); return me ? me.peer : null; },
-    lobby() { return this.peers.filter((p) => !p.isMe && p.kind === 'viewer' && p.presence && p.presence.hn); },
+    lobby() { const named = HN.Net.db && HN.Net.db.firestore; return this.peers.filter((p) => !p.isMe && p.kind === 'viewer' && p.presence && p.presence.hn && (!named || p.presence.nm)); },
     // Their callsign: sent with every challenge, answer and lobby presence;
     // else whatever the leaderboard knows about them.
     name(p) {
@@ -4431,12 +4433,12 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     if (t) return t;
     // Someone we haven't loaded (not on the boards we fetched): look up
     // their row once so everyone sees their callsign, not a placeholder.
-    if (uid && !a && this.ready && this.db) askName(uid);
+    if (uid && !a && this.ready && this.db) lookupName(uid);
     return baseName(uid);
   };
   const asked = new Map();
   let nameRedraw = 0;
-  async function askName(uid) {
+  async function lookupName(uid) {
     const last = asked.get(uid) || 0;
     if (Date.now() - last < 120000) return;
     asked.set(uid, Date.now());
@@ -4540,6 +4542,79 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     if (/^pilot[a-z0-9]{4}$/.test(key)) return { ok: false, msg: 'That one is reserved. Pick another.' };
     return { ok: true, key };
   };
+
+  // Every HoloNet pilot needs a callsign. Once the tour is over (finished or
+  // skipped), anything you tap in the HoloNet asks for one first; the tour's
+  // last step opens the same window.
+  const hasName = () => { const h = P2(); const t = cleanTag(h.prof.tag); return !!t && (!fsNames() || h.prof.key === nameKey(t)); };
+  const needName = () => HN.ui.unlocked() && !!(S().tour && S().tour.done) && Net.ready && !hasName();
+  let askOpen = null;
+  function askName(after) {
+    if (askOpen) return askOpen;
+    const h = P2();
+    let tag = '';
+    let busy = false;
+    const m = openModal(`<div class="nm-req">
+      <div class="nm-top"><div class="nm-who">${HN.ui.ACKBAR}</div><div><p class="eyebrow">Admiral Ackbar · last step</p><h2>Choose your callsign</h2>
+        <p class="muted small">This is the name every player sees: on leaderboards, in guilds and chat, and when you duel. It's yours alone, so nobody else can use it.</p></div></div>
+      <label class="pf-lbl">Callsign <small>3 to 16 letters or numbers</small>
+        <input class="pf-in nm-in" data-tag maxlength="16" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="e.g. KesselRunner"></label>
+      <p class="pe-st" data-st>You can change it later from your profile.</p>
+      <div class="modal-actions"><button type="button" class="btn" data-x="leave">Not now</button><button type="button" class="btn btn-primary" data-x="ok" disabled>Confirm callsign</button></div></div>`, { small: true, dismissable: false });
+    askOpen = m;
+    const $ = (q) => m.root.querySelector(q);
+    const okBtn = $('[data-x="ok"]');
+    const status = (msg, cls) => { const n = $('[data-st]'); n.textContent = msg; n.className = `pe-st ${cls || ''}`; };
+    let seq = 0; let timer = 0;
+    const check = () => {
+      clearTimeout(timer);
+      const typed = String(tag || '').replace(/[^A-Za-z0-9_ .-]/g, '').trim().slice(0, 16);
+      const c = tagCheck(typed);
+      okBtn.disabled = true;
+      if (!typed) return status('You can change it later from your profile.');
+      if (!c.ok) return status(c.msg, 'bad');
+      if (!fsNames()) { okBtn.disabled = !Net.ready; return status(Net.ready ? '' : 'Connecting to the HoloNet…'); }
+      status('Checking…');
+      const my = ++seq;
+      timer = setTimeout(async () => { const free = await nameFree(c.key); if (my !== seq) return; if (free) { okBtn.disabled = false; status(`"${typed}" is available.`, 'good'); } else status(free === false ? `"${typed}" is already taken. Try another.` : "Couldn't check that one. Try again.", 'bad'); }, 400);
+    };
+    setTimeout(() => { const i = $('[data-tag]'); if (i) i.focus(); }, 300);
+    m.root.addEventListener('input', (e) => { if (e.target.matches('[data-tag]')) { tag = e.target.value; check(); } });
+    m.root.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !okBtn.disabled) okBtn.click(); });
+    const close = () => { askOpen = null; m.close(); };
+    m.root.addEventListener('click', async (e) => {
+      const x = e.target.closest('[data-x]');
+      if (!x || busy) return;
+      if (x.dataset.x === 'leave') { close(); return App.go('home'); }
+      const typed = String(tag || '').replace(/[^A-Za-z0-9_ .-]/g, '').trim().slice(0, 16);
+      const c = tagCheck(typed);
+      if (!c.ok || !c.key) return status(c.msg || 'Pick a callsign first.', 'bad');
+      busy = true; okBtn.disabled = true; okBtn.textContent = 'Saving…';
+      const r = await claimName(c.key);
+      busy = false; okBtn.textContent = 'Confirm callsign';
+      if (r === 'taken') return status(`"${typed}" was just taken. Try another.`, 'bad');
+      if (r !== 'ok') { okBtn.disabled = false; return status("Couldn't save it right now. Try again.", 'bad'); }
+      const old = h.prof.key || '';
+      h.prof = { ...h.prof, tag: typed, key: c.key };
+      HN.save(); await Net.publish();
+      if (old && old !== c.key) releaseName(old);
+      if (HN.Duel && HN.Duel.setPresence) HN.Duel.setPresence();
+      close();
+      toast(`Welcome to the HoloNet, ${typed}!`);
+      rerender();
+      if (after) after();
+    });
+    return m;
+  }
+  HN.needName = needName;
+  HN.askName = askName;
+  HN.gate = () => { if (!needName()) return false; askName(); return true; };
+  // Arriving in the HoloNet without a callsign asks for one straight away
+  // (and again if the connection comes up after you arrive).
+  const nudge = () => setTimeout(() => { if (App.current === 'holonet' && !App.battleActive && needName() && !document.querySelector('.modal-backdrop, .hc, .feat-show')) askName(); }, 900);
+  const goBase = App.go;
+  App.go = function (screen) { const r = goBase.apply(this, arguments); if (screen === 'holonet') nudge(); return r; };
+  Net.on(() => { if (Net.ready) nudge(); });
 
   // The profile editor: a live preview on top, then one section at a time
   // (Picture, Frame, Badges) so each gets the whole window, and Save always
@@ -5662,6 +5737,13 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
 .pf-fr { display: grid; justify-items: center; gap: 6px; padding: 12px 6px 8px; border-radius: 12px; border: 1px solid rgba(95, 216, 255, 0.2); background: rgba(8, 20, 32, 0.8); color: #dff8ff; font: inherit; text-align: center; }
 button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow: 0 0 0 1px #ffd23f inset; }
 .pf-fr b { font-size: 12px; } .pf-fr small { color: #9fc4d8; font-size: 10px; } .pf-fr.locked { opacity: .45; }
+.nm-req { display: grid; gap: 10px; text-align: left; }
+.nm-top { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 12px; align-items: start; }
+.nm-top h2 { margin: 2px 0 4px; } .nm-top .eyebrow { margin: 0; } .nm-top p { margin: 0; }
+.nm-who { width: 64px; height: 72px; border-radius: 12px; overflow: hidden; border: 1px solid rgba(95, 216, 255, 0.35); background: #071420; }
+.nm-who svg { width: 100%; height: 100%; display: block; }
+.nm-in { font-size: 18px; padding: 12px 14px; }
+.nm-req .modal-actions { justify-content: flex-end; }
 .modal.pe-modal { width: min(720px, 100%); padding-bottom: 0; }
 .pe { gap: 10px; }
 .pe-head { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 14px; align-items: center; }
@@ -6601,7 +6683,7 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
     { view: 'forge', at: '.hn-forge-top', host: 'varka', say: 'Varka here. Spend your Beskar at my <b>Forge</b>: bounty pucks capture new cards, and shard caches power up the ones you have. New bounties every day. Here\'s a free puck to start you off.', gift: true },
     { view: 'leaders', at: '.hv-rw', say: 'The <b>leaderboards</b> rank the season ladder, duel wins, raid damage and guilds. Finish a season in the top 25 and you earn rewards, with special frames for the top 3.' },
     { view: 'databank', at: '.hn-seg', say: 'The <b>Databank</b> keeps every HoloNet-only card and every bounty you\'ve captured. Finish a row of bounties for bonus Beskar.' },
-    { view: 'hub', say: 'That\'s the HoloNet, Commander. Here\'s 500 Beskar to get you started. May the Force be with you!', end: true },
+    { view: 'hub', say: 'That\'s the HoloNet, Commander. Here\'s 500 Beskar to get you started. <b>One last step:</b> every pilot needs a callsign, the name other players will know you by.', next: 'Choose my callsign', end: true },
   ];
 
   let box = null;
@@ -6681,6 +6763,8 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
     HN.save();
     hide();
     go('hub');
+    // The last step: pick a callsign (also asked after skipping the tour).
+    if (HN.needName && HN.needName()) setTimeout(() => HN.askName(), 400);
   }
 
   // A fight during the tour moves it on once the battle is over.
