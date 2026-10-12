@@ -1,9 +1,16 @@
-// HoloNet loader for the live site. The HoloNet isn't released yet: nothing
-// here loads unless this browser tab has tester access, and then Firebase and
-// the HoloNet are fetched on demand. Players without it download nothing extra.
+// HoloNet loader for the live site.
+// Before launch: nothing loads unless this browser tab has tester access, and
+// then Firebase and the HoloNet are fetched on demand.
+// From launch (7:00 a.m. Central, Wednesday October 14, 2026): the HoloNet is
+// live for every player at account level 25+, on the real online area; tester
+// access and tester data are gone. Players below 25 download nothing extra
+// until they reach it.
 (function (root) {
   'use strict';
   const KEY = 'hn-tester';
+  const LAUNCH = root.__hnLaunchTest != null ? root.__hnLaunchTest : Date.UTC(2026, 9, 14, 12, 0, 0);
+  const launched = () => Date.now() >= LAUNCH;
+  const UNLOCK_LEVEL = 25;
   const FB = 'https://www.gstatic.com/firebasejs/10.12.2/';
   const code = () => String.fromCharCode(72, 79, 76, 79, 84, 69, 83, 84, 69, 82);
   let loading = null;
@@ -71,9 +78,36 @@
     }
     return lent.size;
   }
+  // Launched: the real HoloNet for level 25+ players.
+  function startLive() {
+    if (loading) return loading;
+    root.__hnBeta = false;
+    root.__hnEnv = 'live';
+    loading = (async () => {
+      try { await loadFb(); } catch (e) { /* no connection: the HoloNet shows its offline screen */ }
+      try { await load('js/holonet.js'); } catch (e) { if (root.UI && root.UI.toast) root.UI.toast('Couldn\'t load the HoloNet. Check your connection and reload.'); loading = null; }
+    })();
+    return loading;
+  }
+  function initLive() {
+    const P = root.Player;
+    // Tester leftovers: the tester flag and the tester save slot.
+    try { sessionStorage.removeItem(KEY); } catch (e) { /* ignore */ }
+    if (P && P.state && P.state.hnBeta) { delete P.state.hnBeta; P.save(); }
+    if (!P || !P.state) return;
+    const level = () => (P.state.account && P.state.account.level) || 1;
+    if (level() >= UNLOCK_LEVEL) { startLive(); return; }
+    // Reaching level 25 loads it right then (Ackbar's welcome follows).
+    const gain = P.gainXp;
+    P.gainXp = function () { const r = gain.apply(this, arguments); if (!loading && level() >= UNLOCK_LEVEL) startLive(); return r; };
+  }
   function init() {
     // The private tester build carries its own copy of the HoloNet.
     if (root.HNBoot || typeof root.__hnBoot === 'function') return;
+    if (launched()) return initLive();
+    // A page left open over the launch: tell them to reload.
+    const wait = LAUNCH - Date.now();
+    if (wait < 4 * 86400000) setTimeout(() => { if (root.UI && root.UI.toast) root.UI.toast('Update 2.0 is live: the HoloNet is here! Reload the game to get it.'); }, wait + 2000);
     const H = root.UI && root.UI.hooks;
     if (H) {
       const before = H.redeem;

@@ -6,7 +6,45 @@
 
   const SEEN_KEY = 'swcg-seen-update';
 
-  const UPDATES = [
+  // Update 2.0 goes live at 7:00 a.m. Central on October 14, 2026; until then
+  // its entry stays hidden.
+  const LAUNCH_2 = root.__hnLaunchTest != null ? root.__hnLaunchTest : Date.UTC(2026, 9, 14, 12, 0, 0);
+  const ALL_UPDATES = [
+    {
+      v: '2.0', date: 'October 14, 2026', title: 'The HoloNet', from: LAUNCH_2,
+      items: [
+        'NEW|The HoloNet unlocks at account level 25: battle real players from across the galaxy. Admiral Ackbar welcomes you with a guided tour, a free bounty puck and 500 Beskar.',
+        'NEW|Beskar, the HoloNet\'s own currency, earned from every HoloNet battle.',
+        'NEW|Ground Arena and Fleet Arena: attack other players\' defense squads and climb from Bronze to Legend. Every new division pays a one-time Beskar bonus, and win streaks pay extra.',
+        'NEW|Leagues and seasons: finish a season in the top 25 for rewards, with special profile frames for the top 3. Season 1 reward: Darth Vader · The Hallway (Mythic).',
+        'NEW|Leaderboards for the season ladder, duel wins, raid damage and guilds.',
+        'NEW|Community raid: everyone in the HoloNet attacks the same giant boss each week, and everyone who hits it shares the rewards.',
+        'NEW|Varka\'s Forge: spend Beskar on bounty pucks that capture new HoloNet-only cards, and shard caches that power up the cards you have. New bounties every day.',
+        'NEW|The Databank keeps every HoloNet-only card and every bounty you\'ve captured. Finish a row of bounties for bonus Beskar.',
+        'NEW|Live Duels: ranked, real-time battles against players who are online right now. Wins and losses change your rating just like the arena.',
+        'NEW|Duel ban phase: after a duel is accepted, each player bans one card that neither of you can use that duel.',
+        'NEW|Both players build a squad for the duel before it starts.',
+        'NEW|Every card fights at Level 20 ★3 in duels, so the better team wins, not the bigger collection.',
+        'NEW|In duels you play every move yourself (no Auto), with 45 seconds per move.',
+        'NEW|12-minute duels: if nobody has won when time runs out, whoever dealt more damage wins, and equal damage is a draw.',
+        'NEW|Lose your connection in a duel and you get 45 seconds to get back in. Leaving a duel counts as a loss.',
+        'BALANCE|Duel balance tweaks for a few effects that were too strong against real players.',
+        'NEW|Guilds: found or join one, with its own chat, a pinned announcement board, a two-front guild raid, weekly guild points with rewards, and guild levels up to 10.',
+        'NEW|Guild ranks: Leader, Co-leader and up to 4 Elders. Leaders can hand over leadership, and if a leader is away for 7 days the co-leader takes over.',
+        'NEW|Join modes: open to all, request to join (leaders see the applicant\'s record and cards before accepting) or invite only. Invite anyone from their profile.',
+        'NEW|The Beskar Vault: members donate Beskar, and leaders spend it on guild upgrades (Beskar Haul, Lucky Pucks, XP Boost, Guild XP Boost and Barracks for more member slots).',
+        'NEW|Pick your guild\'s look from 100 pictures, plus a colour and a motto.',
+        'NEW|Markers for new guild chat, announcements, join requests and invites, so you never miss anything.',
+        'NEW|Are-you-sure prompts for removing a member (with an Undo), leaving, disbanding, handing over leadership and spending from the Vault.',
+        'NEW|Your HoloNet profile: picture, frame, best badges, rating, record and guild. Tap anyone\'s name to see theirs.',
+        'NEW|Unique callsigns: pick the name every player sees. Nobody else can have the same one.',
+        'NEW|Profile frames earned from leagues, seasons and guilds.',
+        'NEW|Derogatory word filter for chat, callsigns and guild names, and mute any player from their profile.',
+        'NEW|If the HoloNet can\'t connect, you get an offline screen, and the rest of the game keeps working.',
+        'FIXED|Reset all progress can no longer be tapped by accident: you now type RESET to confirm before anything is wiped.',
+        'IMPROVED|Removing tester code.',
+      ],
+    },
     {
       v: '1.9', date: 'October 10, 2026', title: 'Starships',
       items: [
@@ -99,6 +137,7 @@
       ],
     },
   ];
+  const UPDATES = ALL_UPDATES.filter((u) => !u.from || Date.now() >= u.from);
 
   // Reminder that a page left open keeps running the old version.
   const RELOAD_NOTE = `<div class="ul-reload"><div><b>Not seeing the latest fixes?</b><span>If the game was open when an update came out, reload to get it. Your progress is kept.</span></div><button class="btn btn-small" type="button" data-reload>Reload now</button></div>`;
