@@ -2747,11 +2747,20 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   }
 
   // ---------- duel setup: bans, then squads ----------
+  // What can be banned: every regular card of this kind (owned by either of
+  // you or not), but secret cards only when one of you actually has them;
+  // otherwise they don't show up at all.
+  const isSecret = (u) => !!(u && (u.exclusive || u.rarity === 'secret'));
+  function banList(kind, mine, theirs) {
+    const owned = new Set([...mine, ...theirs]);
+    const all = [...D.UNITS, ...HN.HN_IDS.map((id) => D.UNIT_MAP[id])].filter((u) => u && u.kind === kind && !u.boss && !u.enemyOnly);
+    return [...new Set(all.filter((u) => !isSecret(u) || owned.has(u.id)).map((u) => u.id).concat([...owned].filter((id) => D.UNIT_MAP[id] && D.UNIT_MAP[id].kind === kind)))];
+  }
   function prep(cfg) {
     const mine = poolIds(cfg.kind);
     const P = Duel.prep = { ...cfg, bans: [], mine: null, theirs: null, ui: null, wait: null, timer: 0, done: false,
       myCards: new Set(mine), theirCards: new Set(cfg.theirPool),
-      list: [...new Set([...mine, ...cfg.theirPool])].filter((id) => D.UNIT_MAP[id] && D.UNIT_MAP[id].kind === cfg.kind) };
+      list: banList(cfg.kind, mine, cfg.theirPool) };
     setPresence();
     refresh();
     // The challenger bans first.
@@ -2834,22 +2843,56 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   // The ban: one card neither player can use this duel. The list is every
   // card either of you could bring.
   function banPick(P, done) {
-    const list = P.list.slice().sort((a, b) => duelPow(b) - duelPow(a) || unitName(a).localeCompare(unitName(b)));
+    // Sort and filter, so the card you're after is easy to find.
+    const stat = (id) => D.unitStats(D.UNIT_MAP[id], DUEL_LEVEL, DUEL_STARS);
+    const rarW = (id) => (D.RARITIES[D.UNIT_MAP[id].rarity] || {}).weight || 0;
+    const SORTS = {
+      power: ['Strongest', (a, b) => duelPow(b) - duelPow(a)],
+      rarity: ['Rarity', (a, b) => rarW(b) - rarW(a) || duelPow(b) - duelPow(a)],
+      atk: ['Damage', (a, b) => stat(b).atk - stat(a).atk],
+      hp: ['Health', (a, b) => stat(b).hp - stat(a).hp],
+      def: ['Defense', (a, b) => stat(b).def - stat(a).def],
+      spd: ['Speed', (a, b) => stat(b).spd - stat(a).spd],
+      name: ['Name', (a, b) => unitName(a).localeCompare(unitName(b))],
+    };
+    const ROLES = ['attacker', 'tank', 'support', 'healer'].filter((r) => P.list.some((id) => D.UNIT_MAP[id].role === r));
+    const ROLE_NAME = { attacker: 'Attackers', tank: 'Tanks', support: 'Support', healer: 'Healers' };
+    const OWNERS = [['all', 'Everyone'], ['you', 'Yours'], ['them', 'Theirs']];
+    let sortBy = banPick.sortBy || 'power';
+    let role = 'all';
+    let owner = 'all';
+    const shown = () => P.list
+      .filter((id) => role === 'all' || D.UNIT_MAP[id].role === role)
+      .filter((id) => owner === 'all' || (owner === 'you' ? P.myCards.has(id) : P.theirCards.has(id)))
+      .sort((a, b) => SORTS[sortBy][1](a, b) || unitName(a).localeCompare(unitName(b)));
+    const short = (n) => (n >= 10000 ? `${Math.round(n / 1000)}k` : n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n));
+    const statLine = (id) => {
+      const st = stat(id);
+      const bit = (k, icon, v) => `<i class="${sortBy === k ? 'hot' : ''}" title="${SORTS[k][0]}">${icon}${short(v)}</i>`;
+      return `<span class="dp-st">${bit('atk', '⚔', st.atk)}${bit('hp', '♥', st.hp)}${bit('def', '⛨', st.def)}${bit('spd', '»', st.spd)}</span>`;
+    };
     const first = P.bans.length === 0;
     const taken = P.bans.filter(Boolean);
     let sel = null;
     let left = Math.round(BAN_MS / 1000);
     let finished = false;
-    const whose = (id) => (P.myCards.has(id) && P.theirCards.has(id) ? 'Both' : P.myCards.has(id) ? 'You' : 'Them');
+    const whose = (id) => (P.myCards.has(id) && P.theirCards.has(id) ? 'Both' : P.myCards.has(id) ? 'You' : P.theirCards.has(id) ? 'Them' : 'Neither');
     const card = (id) => {
       const out = taken.includes(id);
-      return UI.unitCard(D.UNIT_MAP[id], { tag: 'div', hideShards: true, owned: true, level: DUEL_LEVEL, stars: DUEL_STARS, badge: out ? 'BANNED' : whose(id) })
-        .replace('class="ucard', `data-ban="${id}" class="ucard ${out ? 'is-banned' : ''} ${sel === id ? 'ban-sel' : ''}`);
+      return `<div class="dp-cell">${UI.unitCard(D.UNIT_MAP[id], { tag: 'div', hideShards: true, owned: true, level: DUEL_LEVEL, stars: DUEL_STARS, badge: out ? 'BANNED' : whose(id) })
+        .replace('class="ucard', `data-ban="${id}" class="ucard ${out ? 'is-banned' : ''} ${sel === id ? 'ban-sel' : ''} ${whose(id) === 'Neither' ? 'nobody' : ''}`)}${statLine(id)}</div>`;
     };
+    const tools = () => `<div class="dp-tools" data-noswipe>
+        <label class="dp-sort">Sort <select data-sort>${Object.entries(SORTS).map(([k, [n]]) => `<option value="${k}" ${k === sortBy ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
+        <div class="dp-chips">${[['all', 'All classes'], ...ROLES.map((r) => [r, `${D.ROLE_ICONS[r] || ''} ${ROLE_NAME[r]}`])].map(([k, n]) => `<button type="button" class="${k === role ? 'on' : ''}" data-role="${k}">${n}</button>`).join('')}</div>
+        <div class="dp-chips">${OWNERS.map(([k, n]) => `<button type="button" class="${k === owner ? 'on' : ''}" data-owner="${k}">${n}</button>`).join('')}</div>
+      </div>`;
+    const grid = () => { const ids = shown(); return ids.length ? ids.map(card).join('') : '<p class="muted small">No cards match these filters.</p>'; };
     const m = openModal(`<div class="db dp-ban">
       <div class="db-head"><div><p class="eyebrow">Live duel · vs ${esc(P.who)}</p><h2>Ban a card</h2></div><span class="db-time" data-time>${left}s</span></div>
-      <p class="db-note">${first ? `You ban first, then <b>${esc(P.who)}</b> bans a different card.` : `<b>${esc(P.who)}</b> banned <b>${esc(unitName(taken[0]) || 'nothing')}</b>. Now pick yours.`} Banned cards can't be used by either of you this duel. The tags show who owns each card.</p>
-      <div class="hn-pick db-pick" data-noswipe>${list.map(card).join('')}</div>
+      <p class="db-note">${first ? `You ban first, then <b>${esc(P.who)}</b> bans a different card.` : `<b>${esc(P.who)}</b> banned <b>${esc(unitName(taken[0]) || 'nothing')}</b>. Now pick yours.`} Banned cards can't be used by either of you this duel. Tags show who owns each card; stats are at duel level.</p>
+      ${tools()}
+      <div class="hn-pick db-pick dp-grid" data-noswipe data-grid>${grid()}</div>
       <div class="db-foot"><button type="button" class="btn" data-x="leave">Leave duel</button><button type="button" class="btn btn-primary dp-go" data-x="ban" disabled>Pick a card to ban</button></div></div>`, { dismissable: false });
     m.root.querySelector('.modal')?.classList.add('db-modal');
     const $ = (q) => m.root.querySelector(q);
@@ -2860,7 +2903,11 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       // Out of time: whatever you'd picked is banned (or nothing).
       if (left <= 0) finish(sel);
     }, 1000);
+    const regrid = () => { m.root.querySelector('[data-grid]').innerHTML = grid(); m.root.querySelector('.dp-tools').outerHTML = tools(); };
+    m.root.addEventListener('change', (e) => { if (e.target.matches('[data-sort]')) { sortBy = banPick.sortBy = e.target.value; regrid(); } });
     m.root.addEventListener('click', (e) => {
+      const rb = e.target.closest('[data-role]'); if (rb) { role = rb.dataset.role; return regrid(); }
+      const ob = e.target.closest('[data-owner]'); if (ob) { owner = ob.dataset.owner; return regrid(); }
       const c = e.target.closest('[data-ban]');
       if (c) {
         const id = c.dataset.ban;
@@ -3348,6 +3395,18 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
 .dp-ban .ucard.is-banned .sel-badge { background: #ff5a3a; color: #fff; }
 .dp-go { min-width: 190px; }
 .dp-wait p { margin: 6px 0; }
+
+.dp-tools { display: grid; gap: 6px; }
+.dp-sort { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: #b8d4e2; }
+.dp-sort select { padding: 7px 10px; border-radius: 10px; border: 1px solid rgba(95, 216, 255, 0.35); background: #06121e; color: #e8f6ff; font: inherit; }
+.dp-chips { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+.dp-chips::-webkit-scrollbar { display: none; }
+.dp-chips button { flex: 0 0 auto; padding: 7px 12px; min-height: 34px; border-radius: 999px; border: 1px solid rgba(95, 216, 255, 0.25); background: rgba(8, 20, 32, 0.85); color: #dff8ff; font: 600 12px/1 inherit; cursor: pointer; white-space: nowrap; }
+.dp-chips button.on { border-color: #5fd8ff; background: rgba(95, 216, 255, 0.2); }
+.dp-cell { display: grid; gap: 4px; min-width: 0; }
+.dp-st { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 6px; font-size: 10px; color: #9fc4d8; }
+.dp-st i { font-style: normal; white-space: nowrap; } .dp-st i.hot { color: #ffd23f; font-weight: 700; }
+.dp-ban .ucard.nobody .sel-badge { background: #44525e; color: #dfe8ee; }
 `;
   document.head.appendChild(css);
 
