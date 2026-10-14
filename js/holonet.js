@@ -4980,6 +4980,51 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       if (opts.after) opts.after(x.dataset.x === 'save');
     });
   }
+  // Find a pilot (2.1): look anyone up by their callsign and open their profile.
+  function findPilot() {
+    const m = openModal(`<div class="fp">
+      <h2>Find a pilot</h2>
+      <p class="muted small">Type a callsign to see that pilot's profile: picture, frame, badges, rating, record and guild.</p>
+      <div class="fp-row"><input class="pf-in" data-q maxlength="16" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Callsign"><button type="button" class="btn btn-primary" data-x="go">Search</button></div>
+      <p class="pe-st" data-st></p>
+      <div class="modal-actions"><button type="button" class="btn" data-x="close">Close</button></div></div>`, { small: true });
+    const $ = (q) => m.root.querySelector(q);
+    const st = (msg, cls) => { $('[data-st]').textContent = msg || ''; $('[data-st]').className = `pe-st ${cls || ''}`; };
+    setTimeout(() => { const i = $('[data-q]'); if (i) i.focus(); }, 250);
+    let busy = false;
+    const search = async () => {
+      if (busy) return;
+      const q = String($('[data-q]').value || '').trim();
+      const key = nameKey(q);
+      if (key.length < 3) return st('Callsigns have at least 3 letters or numbers.', 'bad');
+      if (!Net.ready) { Net.init(); return st('Connecting to the HoloNet… try again in a moment.', 'bad'); }
+      busy = true; st('Searching…');
+      try {
+        let uid = null;
+        if (fsNames()) { const d = await Net.db.doc(`names/${key}`).get(); uid = d.exists ? d.data().uid : null; }
+        else { const r = Net.arena.find((x) => nameKey(x.tag) === key); uid = r ? r.uid : null; }
+        if (!uid) return st(`No pilot is called "${q}". Check the spelling.`, 'bad');
+        if (uid === Net.me) { m.close(); return openProfile('me'); }
+        const a = await Net.db.doc(`arena/${uid}`).get();
+        if (!a.exists || !a.data()) return st(`${q} hasn't entered the HoloNet yet.`, 'bad');
+        Net.rows.set(uid, { ...(Net.rows.get(uid) || {}), ...a.data(), uid });
+        Net.sync();
+        m.close();
+        openProfile(uid);
+      } catch (e) { st("Couldn't search right now. Try again.", 'bad'); } finally { busy = false; }
+    };
+    m.root.addEventListener('keydown', (e) => { if (e.key === 'Enter') search(); });
+    m.root.addEventListener('click', (e) => {
+      const x = e.target.closest('[data-x]');
+      if (!x) return;
+      if (x.dataset.x === 'close') return m.close();
+      search();
+    });
+  }
+  HN.findPilot = findPilot;
+  HN.clicks = HN.clicks || {};
+  HN.clicks.findpilot = () => findPilot();
+
   // Saved accounts (js/account.js) set up the callsign and picture early, at any level.
   HN.setupProfile = async (after, edit) => {
     await Net.init();
@@ -6020,6 +6065,9 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
 .pe-prev .pf-av.lg { width: 92px; height: 92px; }
 .pe-id { display: grid; gap: 6px; min-width: 0; } .pe-id h2 { margin: 0; }
 .pe-st { margin: 0; min-height: 1.2em; font-size: 12px; color: #9fc4d8; } .pe-st.good { color: #4ade80; } .pe-st.bad { color: #ff7a5a; }
+.fp { display: grid; gap: 10px; text-align: left; } .fp h2 { margin: 0; }
+.fp-row { display: flex; gap: 8px; } .fp-row .pf-in { flex: 1; min-width: 0; }
+.hv-find { justify-self: start; margin: 4px 0 8px; }
 .pe-sum { margin: 0; }
 .pe-tabs, .pe-cats { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
 .pe-tabs::-webkit-scrollbar, .pe-cats::-webkit-scrollbar { display: none; }
@@ -6442,6 +6490,7 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
       <div class="hn-mini-tiles">
         <button type="button" class="hn-mini ${free ? 'dot' : ''}" data-hn="forge"><b>Varka's Forge</b><small>${free ? `${free} bounty puck${free > 1 ? 's' : ''} waiting` : 'Bounty pucks and shards'}</small></button>
         <button type="button" class="hn-mini" data-hn="leaders"><b>Leaderboards</b><small>Season ladder, duels, raid and guilds</small></button>
+        ${root.Update21 && root.Update21.on() ? '<button type="button" class="hn-mini" data-hn="findpilot"><b>Find a pilot</b><small>Look up anyone by callsign</small></button>' : ''}
         <button type="button" class="hn-mini" data-hn="databank"><b>Databank</b><small>${HN.HN_IDS.filter(HN.owns).length}/${HN.HN_IDS.length} cards · ${Object.keys(h.captured).length} bounties</small></button>
         <button type="button" class="hn-mini" data-hn="leagues"><b>Leagues &amp; Season</b><small>Season ${SO.seasonNo() % 100} · ${Math.max(0, Math.ceil(SO.seasonEnds() / 86400000))} days left</small></button>
       </div>`;
@@ -6483,6 +6532,7 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
       body = `<p class="muted small" style="margin:0">Guilds by guild XP.</p>${list.length ? `<div class="g-list">${list.slice(0, 25).map((g, i) => `<div class="g-row ${g.id === SO.myGuildId() ? 'me' : ''}"><span class="rk">${i + 1}</span>${SO.emblem(g, 36)}<span class="nm"><b style="color:${g.color}">[${esc(g.tag)}] ${esc(g.name)}</b><small>${fmt(g.n || 1)} member${(g.n || 1) === 1 ? '' : 's'}</small></span><span class="r"><b>${fmt(g.xp || 0)}</b><small>XP</small></span></div>`).join('')}</div>` : '<div class="hn-free"><span class="grow">No guilds yet. Found the first one!</span></div>'}`;
     }
     return `${head('LEADERBOARDS', 'Tap a name to see their profile.', true)}
+      ${root.Update21 && root.Update21.on() ? '<button type="button" class="hn-btn ghost hv-find" data-hn="findpilot">Find a pilot by callsign ›</button>' : ''}
       <div class="hn-seg hv-tabs" role="tablist">${tabs.map(([k, n]) => `<button type="button" class="${lbTab === k ? 'on' : ''}" data-hn="lbtab" data-k="${k}">${n}</button>`).join('')}</div>
       ${body}`;
   };
