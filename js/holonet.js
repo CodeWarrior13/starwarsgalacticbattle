@@ -4981,11 +4981,14 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     });
   }
   // Saved accounts (js/account.js) set up the callsign and picture early, at any level.
-  HN.setupProfile = async (after) => {
+  HN.setupProfile = async (after, edit) => {
     await Net.init();
     if (!Net.ready) { toast("Couldn't reach the HoloNet. Set up your profile later from Settings."); if (after) after(false); return; }
-    editProfile({ setup: true, after });
+    editProfile({ setup: !edit, after });
   };
+  // For the main game's Commander profile: your picture in its frame.
+  HN.avatarHtml = (p, size) => avatar({ av: p.av || defaultAv(), frame: FRAMES[p.frame] ? p.frame : 'recruit', guild: P2().guild }, size || 'md');
+  HN.frameName = (id) => (FRAMES[id] || FRAMES.recruit).name;
   HN.hasProfile = () => hasName();
 
   // =====================================================================

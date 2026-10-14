@@ -468,12 +468,73 @@
       else award();
     });
   }
-  async function profile(then) {
+  async function profile(then, edit) {
     try {
       if (!root.HN && root.__hnStartLive) await root.__hnStartLive();
       if (!root.HN || !root.HN.setupProfile) { toast("Couldn't load the profile editor. Try again from Settings."); if (then) then(); return; }
-      root.HN.setupProfile((saved) => { if (saved) upload(); if (then) then(); });
+      const pr = myProf();
+      root.HN.setupProfile((saved) => { if (saved) upload(); paintChip(); if (then) then(); }, edit && pr && pr.tag);
     } catch (e) { toast(errMsg(e)); if (then) then(); }
+  }
+
+  // ---------- Commander profile card + top chip (2.1) ----------
+  // Guests see "Guest" and a way to save; signed-in players see their callsign,
+  // picture, frame and badges, and tap the picture to change them.
+  const myProf = () => (root.Player && root.Player.state && root.Player.state.hn && root.Player.state.hn.prof) || null;
+  const GUEST_PIC = '<svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="23" fill="#121a2b" stroke="#3a4a66" stroke-width="2"/><circle cx="24" cy="19" r="8" fill="#3a4a66"/><path d="M9 40c3-8 9-11 15-11s12 3 15 11" fill="#3a4a66"/></svg>';
+  const picOf = (pr) => { const D = root.GameData; const u = D && (D.UNIT_MAP[pr.av] || D.UNIT_MAP.luke); return u && root.Art ? root.Art.unitArt(u) : ''; };
+  function cardInner() {
+    const m = meta();
+    const pr = myProf();
+    const lv = root.Player.state.account.level;
+    if (!m) {
+      return `<button type="button" class="cid-pic guest" data-cid="signin" aria-label="Save your game">${GUEST_PIC}</button>
+        <div class="cid-txt"><b>Guest</b><span>Save your game to claim your callsign, picture and frame, and play on any device.</span></div>
+        <button type="button" class="btn btn-small btn-primary cid-btn" data-cid="signin">Save your game</button>`;
+    }
+    if (!pr || !pr.tag) {
+      return `<button type="button" class="cid-pic guest" data-cid="edit" aria-label="Set up your profile">${GUEST_PIC}</button>
+        <div class="cid-txt"><b>Pilot</b><span>Signed in as ${esc(m.email)}. Pick your callsign and picture.</span></div>
+        <button type="button" class="btn btn-small btn-primary cid-btn" data-cid="edit">Set up profile</button>`;
+    }
+    const HN = root.HN;
+    const pic = HN && HN.avatarHtml ? HN.avatarHtml(pr, 'lg') : `<span class="cid-fallback"><span>${picOf(pr)}</span></span>`;
+    let feats = [];
+    try { const all = UI().achievements().filter((x) => x.have >= x.need); feats = (pr.feat || []).map((id) => all.find((x) => (x.id || x.name) === id)).filter(Boolean).slice(0, 6); } catch (e) { feats = []; }
+    const badges = feats.length ? feats.map((x) => `<span class="cid-bdg" title="${esc(x.name)}">${UI().featBadge(x)}</span>`).join('') : '<span class="muted small">No badges shown yet</span>';
+    return `<button type="button" class="cid-pic" data-cid="edit" aria-label="Edit your picture, frame and badges">${pic}<i class="cid-pen">${root.Icons ? root.Icons.svg('settings') : ''}</i></button>
+      <div class="cid-txt"><b>${esc(pr.tag)}</b><span>Level ${lv} · ${esc(HN && HN.frameName ? HN.frameName(pr.frame) : 'Recruit')} frame</span><div class="cid-bdgs">${badges}</div></div>`;
+  }
+  function profileHtml() {
+    if (!enabled()) return '';
+    return `<div class="cid" data-cid-card>${cardInner()}</div>`;
+  }
+  let cardHost = null;
+  function paintCard() { if (cardHost && cardHost.isConnected) cardHost.innerHTML = cardInner(); paintChip(); }
+  function bindProfile(rootEl, modal) {
+    cardHost = rootEl.querySelector('[data-cid-card]');
+    if (!cardHost) return;
+    // Signed in: fetch the HoloNet drawing so the frame shows too.
+    const pr = myProf();
+    if (meta() && pr && pr.tag && !(root.HN && root.HN.avatarHtml) && root.__hnStartLive) root.__hnStartLive().then(() => paintCard()).catch(() => {});
+    cardHost.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-cid]');
+      if (!b) return;
+      if (b.dataset.cid === 'signin') { if (modal) modal.close(); return offer(true); }
+      if (modal) modal.close();
+      return profile(null, true);
+    });
+  }
+  // The level chip at the top: "Guest" until signed in, then your callsign.
+  function paintChip() {
+    const el = document.getElementById('acct-who');
+    if (!el) return;
+    if (!enabled()) { el.hidden = true; return; }
+    const pr = myProf();
+    const m = meta();
+    el.hidden = false;
+    el.innerHTML = m && pr && pr.tag ? `<i class="aw-pic">${picOf(pr)}</i><span>${esc(pr.tag)}</span>` : '<span>Guest</span>';
+    el.classList.toggle('guest', !(m && pr && pr.tag));
   }
 
   // ---------- Settings ----------
@@ -567,6 +628,7 @@
         const on = ls(TEST) !== '1';
         ls(TEST, on ? '1' : null);
         toast(on ? 'Saved accounts test: ON for this device. Open Settings to try it.' : 'Saved accounts test: OFF for this device.');
+        paintChip();
         if (on) maybeOffer();
         return true;
       };
@@ -578,12 +640,15 @@
     }
     // Every save also goes to the cloud a few seconds later.
     const base = P.save;
+    let chipT = 0;
     P.save = function () {
       if (applying) return undefined;
       const r = base.apply(this, arguments);
       changed();
+      clearTimeout(chipT); chipT = setTimeout(paintChip, 300);
       return r;
     };
+    paintChip();
     // Leaving the page uploads; coming back (or back online) checks for a newer save.
     let seen = Date.now();
     document.addEventListener('visibilitychange', () => {
@@ -609,7 +674,7 @@
     if (meta()) { markLinked(); check(); awardLater(); }
     maybeOffer();
   }
-  root.Account = { settingsHtml, bind, enabled, offer, upload, check, profile, meta: () => meta() };
+  root.Account = { settingsHtml, bind, enabled, offer, upload, check, profile, profileHtml, bindProfile, paintChip, meta: () => meta() };
   // Everything that ships with update 2.1 checks this.
   root.Update21 = { on: enabled };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => setTimeout(init, 0));

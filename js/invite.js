@@ -14,6 +14,12 @@
   const GIFT = { credits: 1000, crystals: 25 };
   const COUNT_LEVEL = 5;
   const KYBER_EACH = 2;
+  // Extra rewards on the way from 10 to 50 friends (Kyber, or Aurodium ingots).
+  const STEPS = [
+    { n: 15, crystals: 15 }, { n: 20, aurodium: 3 }, { n: 25, crystals: 25 }, { n: 30, aurodium: 5 },
+    { n: 35, crystals: 35 }, { n: 40, aurodium: 8 }, { n: 45, crystals: 50 },
+  ];
+  const stepText = (x) => (x.crystals ? `${x.crystals} Kyber` : `${x.aurodium} Aurodium`);
   const PENDING = 'swcg-invite';
   const CHECKED = 'swcg-invite-checked';
   const code = () => String.fromCharCode(83, 81, 85, 65, 68, 82, 79, 78, 53, 48);
@@ -229,6 +235,13 @@
       const won = [];
       if (added) { iv.paid = n; st().crystals += added * KYBER_EACH; won.push(`${added} friend${added === 1 ? '' : 's'} reached level ${COUNT_LEVEL}: +${added * KYBER_EACH} Kyber`); }
       if (n >= 10 && !iv.squad) { iv.squad = true; won.push('Squadron Leader frame and badge unlocked!'); }
+      for (const x of STEPS) {
+        if (n < x.n || (iv.step || 0) >= x.n) continue;
+        iv.step = x.n;
+        st().crystals += x.crystals || 0;
+        st().aurodium = (st().aurodium || 0) + (x.aurodium || 0);
+        won.push(`${x.n} friends: +${stepText(x)}`);
+      }
       if (n >= 50 && !iv.recruiter && recruiterOpen()) { iv.recruiter = true; won.push('Recruiter Legend frame unlocked!'); }
       if (added || won.length) { P().save(); if (UI().updateWallet) UI().updateWallet(); }
       if (won.length) { toast(won.join(' · ')); if (iv.squad && UI().celebrateFeat) setTimeout(() => UI().celebrateFeat('squadron'), 1500); }
@@ -276,6 +289,7 @@
         <p class="eyebrow">Friends who reached level ${COUNT_LEVEL}: <b data-n>${iv.n || 0}</b></p>
         <div class="inv-goal"><b>Every friend</b><span>+${KYBER_EACH} Kyber</span></div>
         <div class="inv-goal ${iv.squad ? 'done' : ''}"><b>10 friends</b><span>Squadron Leader frame + badge${iv.squad ? ' ✓' : ''}</span>${bar(iv.n || 0, 10)}</div>
+        ${STEPS.map((x) => `<div class="inv-goal small ${(iv.step || 0) >= x.n ? 'done' : ''}"><b>${x.n} friends</b><span>+${stepText(x)}${(iv.step || 0) >= x.n ? ' ✓' : ''}</span></div>`).join('')}
         <div class="inv-goal ${iv.recruiter ? 'done' : ''}"><b>50 friends</b><span>Recruiter Legend frame${iv.recruiter ? ' ✓' : recruiterOpen() ? ` · limited time${RECRUITER_UNTIL ? ` (until ${new Date(RECRUITER_UNTIL).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })})` : ''}` : ' · no longer available'}</span>${bar(iv.n || 0, 50)}</div>
       </div>
       <div class="modal-actions"><button type="button" class="btn" data-i="close">Close</button></div></div>`, { small: true, cls: 'inv-modal' });

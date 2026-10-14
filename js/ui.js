@@ -2680,6 +2680,7 @@
           <p class="muted small">${a.level >= D.MAX_ACCOUNT_LEVEL ? 'Maximum rank reached.' : `${fmt(a.xp)} / ${fmt(need)} XP to level ${a.level + 1}`}</p>
         </div>
       </div>
+      ${root.Account && root.Account.profileHtml ? root.Account.profileHtml() : ''}
       <div class="pf-tabs seg" role="tablist">
         <button type="button" class="active" data-pf="road">${root.Icons.svg('rank')} Rank road</button>
         <button type="button" data-pf="worlds">${root.Icons.svg('planet')} Worlds</button>
@@ -2721,6 +2722,7 @@
         }).join('')}</div>
       </div>
       <div class="modal-actions"><button class="btn btn-primary" type="button" data-close>Close</button></div>`, { cls: 'profile-modal' });
+    if (root.Account && root.Account.bindProfile) root.Account.bindProfile(m.root, m);
     const roadEl = $('[data-road]', m.root);
     requestAnimationFrame(() => {
       const now = $('.rr-node.now', roadEl);
