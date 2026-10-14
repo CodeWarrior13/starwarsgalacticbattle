@@ -772,6 +772,15 @@
       return out;
     },
 
+    // Update 2.1: battles replayed by Auto-repeat earn less XP from level 15,
+    // dropping as you climb (60% at 15, 2% less each level, never below 25%).
+    // Playing yourself, and first clears, always earn the full amount.
+    farmXp(xp, params, firstClear) {
+      const lv = this.state.account.level;
+      if (!params || !params.farm || firstClear || lv < 15 || !(root.Update21 && root.Update21.on())) return xp;
+      return Math.max(1, Math.round(xp * Math.max(0.25, 0.6 - (lv - 15) * 0.02)));
+    },
+
     // Record a finished battle and grant rewards (with the luck spin applied).
     completeEncounter(params, won, rng) {
       const slotsBefore = this.slots();
@@ -779,9 +788,10 @@
       if (params.type === 'secret') return this.completeSecret(params, won, rng, slotsBefore);
       if (!won) {
         this.state.stats.battlesLost += 1;
-        const levelUps = this.gainXp(D.XP.loss);
+        const xp = this.farmXp(D.XP.loss, params, false);
+        const levelUps = this.gainXp(xp);
         this.save();
-        return { lost: true, xp: D.XP.loss, levelUps, newSlot: this.slots() > slotsBefore };
+        return { lost: true, xp, farmed: xp < D.XP.loss, levelUps, newSlot: this.slots() > slotsBefore };
       }
       const spin = this.rollSpin(rng);
       this.state.stats.bestSpin = Math.max(this.state.stats.bestSpin, spin.mult);
@@ -822,7 +832,9 @@
       out.loaded = spin.loaded;
       out.credits = Math.round(out.base * spin.mult * (out.bounty ? 1.2 : 1));
       const enc = this.encounter(params);
-      out.xp = params.type === 'boss' ? D.XP.boss(enc.level) : D.XP.stage(enc.level);
+      const fullXp = params.type === 'boss' ? D.XP.boss(enc.level) : D.XP.stage(enc.level);
+      out.xp = this.farmXp(fullXp, params, out.firstClear);
+      out.farmed = out.xp < fullXp;
       out.levelUps = this.gainXp(out.xp);
       out.newSlot = this.slots() > slotsBefore;
       this.state.credits += out.credits;

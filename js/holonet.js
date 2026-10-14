@@ -4591,6 +4591,8 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     podium: { name: 'Podium', how: 'Finish a season in the top 3 of the leaderboard' },
     champion: { name: 'Champion', how: 'Finish a season 1st on the leaderboard' },
     linked: { name: 'Holo Link', how: 'Save your game to an account (Settings)' },
+    squadron: { name: 'Squadron Leader', how: 'Invite 10 friends who reach level 5' },
+    recruiter: { name: 'Recruiter Legend', how: 'Invite 50 friends who reach level 5 (limited time)' },
   };
   let fseq = 0;
   function frameSvg(id, color) {
@@ -4610,6 +4612,10 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     else if (id === 'podium') body = `<defs>${grad('#f2f6ff', '#9ab0d8', '#3a4a6a')}</defs>${ring(`url(#${u})`, 7)}${[-1, 0, 1].map((k) => `<path d="M${k * 16 - 6} ${k ? 54 : 50} L${k * 16 + 6} ${k ? 54 : 50} L${k * 16 + 6} 64 L${k * 16 - 6} 64Z" fill="${k ? '#9ab0d8' : '#ffd23f'}" stroke="#1a2236" stroke-width="1"/>`).join('')}${Array.from({ length: 3 }, (_, k) => `<path d="M${(k - 1) * 16} -60 l2.4 5 5.4 .6 -4 3.6 1.2 5.4 -5 -2.8 -5 2.8 1.2 -5.4 -4 -3.6 5.4 -.6Z" fill="#ffe27a"/>`).join('')}`;
     // Saved accounts: a holo ring held together by four-colour chain links.
     else if (id === 'linked') body = `<defs>${grad('#e8faff', '#4a8cff', '#123a8a')}</defs>${ring('#5fd8ff', 11, 'opacity=".22"')}${ring(`url(#${u})`, 5)}${['#ea4335', '#fbbc05', '#34a853', '#4285f4'].map((c, k) => `<g transform="rotate(${k * 90 + 45})"><rect x="-9" y="-49" width="11" height="7" rx="3.5" fill="none" stroke="${c}" stroke-width="2.6"/><rect x="-2" y="-49" width="11" height="7" rx="3.5" fill="none" stroke="${c}" stroke-width="2.6"/></g>`).join('')}<g transform="translate(0 52)"><circle r="9" fill="#0b1a33" stroke="#8fd3ff" stroke-width="1.6"/><path d="M-4.2 1.6 L-1.6 -1 M1.6 1 L4.2 -1.6" stroke="#e8faff" stroke-width="1.8" stroke-linecap="round"/><rect x="-6" y="-1" width="6" height="4.4" rx="2.2" transform="rotate(-45 -3 1.2)" fill="none" stroke="#e8faff" stroke-width="1.5"/><rect x="0" y="-3.4" width="6" height="4.4" rx="2.2" transform="rotate(-45 3 -1.2)" fill="none" stroke="#e8faff" stroke-width="1.5"/></g>`;
+    // Invites: four starfighters flying escort (10 friends)…
+    else if (id === 'squadron') body = `<defs>${grad('#ffffff', '#ff7a5a', '#8a1a0a')}</defs>${ring(`url(#${u})`, 6)}${ring('#ffd9cc', 1.2, 'r="39"')}${[0, 90, 180, 270].map((a) => `<g transform="rotate(${a + 45}) translate(0 -52)"><path d="M0 -8 L2.2 -1 L9 2 L9 4.5 L2.2 3 L1.6 7 L4 9 L-4 9 L-1.6 7 L-2.2 3 L-9 4.5 L-9 2 L-2.2 -1Z" fill="#f2f4f8" stroke="#8a1a0a" stroke-width="1"/><circle cy="-2" r="1.3" fill="#ff5a3a"/></g>`).join('')}<g transform="translate(0 50)"><path d="M-18 -6 L18 -6 L14 0 L18 6 L-18 6 L-14 0Z" fill="#c8301a" stroke="#ffd9cc" stroke-width="1.2"/><path d="M-6 -2 L0 2.5 L6 -2" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></g>`;
+    // …and a gold-and-violet crown of rays for 50 (limited time).
+    else if (id === 'recruiter') body = `<defs>${grad('#fff6c8', '#ffb938', '#7a3a08')}<linearGradient id="${u}v" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e8c8ff"/><stop offset="1" stop-color="#5a1aa8"/></linearGradient></defs>${Array.from({ length: 20 }, (_, k) => `<path d="M0 -${k % 2 ? 58 : 66} L3 -47 L-3 -47Z" fill="${k % 2 ? '#c890ff' : '#ffd86a'}" opacity=".9" transform="rotate(${k * 18})"/>`).join('')}${ring(`url(#${u}v)`, 10, 'opacity=".55"')}${ring(`url(#${u})`, 6)}<circle r="50" fill="none" stroke="#fff2b0" stroke-width="1" stroke-dasharray="2 4"/>${[-1, 1].map((sx) => `<path d="M${sx * 30} 40 Q${sx * 44} 52 ${sx * 50} 62 L${sx * 40} 60 L${sx * 36} 68 Q${sx * 30} 54 ${sx * 20} 46Z" fill="url(#${u}v)" stroke="#2a0a4a" stroke-width="1"/>`).join('')}<g transform="translate(0 -56)"><path d="M-12 6 L-12 -4 L-6 1 L0 -9 L6 1 L12 -4 L12 6Z" fill="url(#${u})" stroke="#7a3a08" stroke-width="1.2"/><circle cy="-9" r="2" fill="#e8c8ff"/></g><g transform="translate(0 50)"><circle r="8" fill="#2a0a4a" stroke="#ffd86a" stroke-width="1.6"/><text y="3.4" text-anchor="middle" font-size="9" font-weight="800" fill="#ffd86a" font-family="Oxanium, sans-serif">50</text></g>`;
     else body = ring('#5a6a7e', 4);
     return still(`<svg class="pf-frame" viewBox="-70 -70 140 140" aria-hidden="true">${body}</svg>`);
   }
@@ -4621,10 +4627,21 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     if ((h.divs || []).includes('bronze2')) out.add('bronze');
     for (const l of ['silver', 'gold', 'kyber', 'legend']) if ((h.leagues || []).includes(l)) out.add(l);
     if (Player.state.linked) out.add('linked');
+    const iv = Player.state.invites || {};
+    if (iv.squad) out.add('squadron');
+    if (iv.recruiter) out.add('recruiter');
     return [...out];
   }
   // The saved-account frame stays out of the list until saved accounts are out (or you have it).
-  const shownFrames = () => Object.entries(FRAMES).filter(([id]) => id !== 'linked' || !!Player.state.linked || !!(root.Account && root.Account.enabled()));
+  const v21 = () => !!(root.Update21 && root.Update21.on());
+  const shownFrames = () => {
+    const own = ownedFrames();
+    return Object.entries(FRAMES).filter(([id]) => {
+      if (own.includes(id) || !['linked', 'squadron', 'recruiter'].includes(id)) return true;
+      if (id === 'recruiter') return v21() && !!(root.Invite && root.Invite.recruiterOpen());
+      return v21();
+    });
+  };
 
   // =====================================================================
   // Profiles: what other players see when they tap your name

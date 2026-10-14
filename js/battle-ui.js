@@ -2010,6 +2010,7 @@
       const rewards = Player.completeEncounter(this.params, won);
       this.teardown();
       const p = this.params;
+      delete p.farm;
       if (p.type === 'secret' && won) return this.secretVictory(p, rewards);
       const isTower = p.type === 'tower';
       const isStage = p.type === 'stage';
@@ -2019,7 +2020,7 @@
       const reel = won ? rewards.table.map((t) => `<span class="reel-item" data-mult="${t.mult}">${t.mult}×</span>`).join('') : '';
       const acct = Player.state.account;
       const xpHtml = rewards ? `<div class="xp-box">
-          <span class="xp-gain">+${rewards.xp} XP</span>
+          <span class="xp-gain">+${rewards.xp} XP${rewards.farmed ? '<small class="xp-farm">auto-repeat rate</small>' : ''}</span>
           <span class="xp-bar"><i style="width:${acct.level >= D.MAX_ACCOUNT_LEVEL ? 100 : Math.min(100, (acct.xp / D.xpToNext(acct.level)) * 100)}%"></i></span>
           <span class="muted small">Account Lv ${acct.level}</span>
         </div>
@@ -2071,14 +2072,15 @@
       const curMode = () => (m.root.querySelector('[data-auto-mode].on') || {}).dataset ? m.root.querySelector('[data-auto-mode].on').dataset.autoMode : 'off';
       let countdown = null;
       const stopCount = () => { if (countdown) { clearInterval(countdown); countdown = null; } const c = m.root.querySelector('[data-auto-count]'); if (c) c.textContent = ''; };
-      const go = (next) => { stopCount(); m.close(); this.quickStart(next); };
+      // Battles replayed by Auto-repeat are marked so they earn the farming XP rate.
+      const go = (next, farm) => { stopCount(); m.close(); this.quickStart(farm ? { ...next, farm: true } : next); };
       const startCount = () => {
         const md = curMode();
         const target = targetOf(md);
         if (md === 'off' || !target || countdown || !m.root.isConnected) return;
         let n = 3;
         const c = m.root.querySelector('[data-auto-count]');
-        const tick = () => { if (!m.root.isConnected) return stopCount(); if (document.querySelector('.rank-up, .walkout, .feat-show, .feat-cine')) return; if (n <= 0) return go(target); if (c) c.textContent = `${md === 'repeat' ? 'Again' : 'Next battle'} in ${n}…`; n -= 1; };
+        const tick = () => { if (!m.root.isConnected) return stopCount(); if (document.querySelector('.rank-up, .walkout, .feat-show, .feat-cine')) return; if (n <= 0) return go(target, md === 'repeat'); if (c) c.textContent = `${md === 'repeat' ? 'Again' : 'Next battle'} in ${n}…`; n -= 1; };
         tick();
         countdown = setInterval(tick, 1000);
       };

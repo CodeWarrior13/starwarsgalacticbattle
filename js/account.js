@@ -499,6 +499,7 @@
         <div><dt>HoloNet callsign</dt><dd>${prof && prof.tag ? esc(prof.tag) : '<span class="muted">Not set yet</span>'}</dd></div>
       </dl>
       <div class="settings-btns">
+        ${root.Invite ? '<button class="btn btn-primary" type="button" data-acct="invite">Invite friends</button>' : ''}
         <button class="btn" type="button" data-acct="sync">Save now</button>
         <button class="btn" type="button" data-acct="profile">${prof && prof.tag ? 'Edit profile' : 'Set up profile'}</button>
         <button class="btn" type="button" data-acct="out">Sign out</button>
@@ -520,6 +521,7 @@
       if (a === 'email') { if (modal) modal.close(); return emailForm('create'); }
       if (a === 'sync') { const ok = await upload(); toast(ok ? 'Game saved to your account.' : state === 'offline' ? "Couldn't reach the server. It saves as soon as you're back online." : 'Already up to date.'); return; }
       if (a === 'profile') { if (modal) modal.close(); return profile(); }
+      if (a === 'invite') { if (modal) modal.close(); return root.Invite.open(); }
       if (a === 'out') { if (modal) modal.close(); return signOut(); }
       if (a === 'delete') { if (modal) modal.close(); return del(); }
     });
@@ -607,7 +609,9 @@
     if (meta()) { markLinked(); check(); awardLater(); }
     maybeOffer();
   }
-  root.Account = { settingsHtml, bind, enabled, offer, upload, check, meta: () => meta() };
+  root.Account = { settingsHtml, bind, enabled, offer, upload, check, profile, meta: () => meta() };
+  // Everything that ships with update 2.1 checks this.
+  root.Update21 = { on: enabled };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => setTimeout(init, 0));
   else setTimeout(init, 0);
 })(window);
