@@ -37,13 +37,20 @@
   fs.enablePersistence({ synchronizeTabs: true }).catch(() => {});
 
   // Signed in silently with a guest account the first time; the same account
-  // comes back on this device. (Google sign-in can be added to keep it across devices.)
+  // comes back on this device. A saved account (Google or email, js/account.js)
+  // comes back the same way, so wait for the stored sign-in to be restored
+  // before deciding a guest account is needed.
   // If signing in fails (no connection when the page opened) or the guest
   // account gets signed out, the next attempt (Try again) signs in afresh.
   let pending = null;
   let wasIn = false;
-  const signedIn = () => {
-    if (auth.currentUser) return Promise.resolve(auth.currentUser);
+  const restored = new Promise((resolve) => {
+    const off = auth.onAuthStateChanged((u) => { off(); resolve(u); });
+    setTimeout(resolve, 5000);
+  });
+  const signedIn = async () => {
+    await restored;
+    if (auth.currentUser) return auth.currentUser;
     if (pending) return pending;
     pending = new Promise((resolve) => {
       const off = auth.onAuthStateChanged((u) => { if (u) { off(); resolve(u); } });
@@ -53,6 +60,8 @@
     return pending;
   };
   signedIn();
+  // For js/account.js: saved accounts and their cloud save (accounts/{uid}).
+  root.__hnFb = { firebase: root.firebase, auth, fs, signedIn };
   auth.onAuthStateChanged((u) => {
     if (u) { wasIn = true; return; }
     if (!wasIn) return;

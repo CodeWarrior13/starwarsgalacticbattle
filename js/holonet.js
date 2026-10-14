@@ -771,7 +771,8 @@
     busy: false, again: false,
     // Write my defense squads and rating: one write at a time, only when it changed.
     async publish() {
-      if (!this.ready) return;
+      // Below level 25 (a saved account setting up its profile early) nothing goes on the board.
+      if (!this.ready || (HN.ui && !HN.ui.unlocked())) return;
       if (this.busy) { this.again = true; return; }
       const h = S();
       const body = { rating: h.rating, ground: squadEntries('character'), fleet: squadEntries('ship'), level: Player.state.account.level, updated: Date.now() };
@@ -4856,7 +4857,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   let peTab = 'pic';
   let peCat = 'light';
   let peChose = false;
-  function editProfile() {
+  function editProfile(opts = {}) {
     const h = P2();
     const frames = ownedFrames();
     const b = myBadges();
@@ -4887,14 +4888,14 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const tabs = () => [['pic', 'Picture'], ['frame', 'Frame'], ['badge', `Badges <small data-featn2>${feat.length}/6</small>`]].map(([k, n]) => `<button type="button" class="${k === peTab ? 'on' : ''}" data-ptab="${k}">${n}</button>`).join('');
     const m = openModal(`<div class="pf-edit pe">
       <div class="pe-head"><div class="pe-prev" data-prev>${preview()}</div>
-        <div class="pe-id"><h2>Edit profile</h2>
+        <div class="pe-id"><h2>${opts.setup ? 'Your pilot profile' : 'Edit profile'}</h2>${opts.setup ? '<p class="muted small pe-setup">Your name and picture for the HoloNet. Everything is saved with your account, ready for when you unlock it at level 25.</p>' : ''}
           <label class="pf-lbl">Callsign <small>3 to 16 letters or numbers · nobody else can have the same one</small>
           <input class="pf-in" data-tag maxlength="16" autocomplete="off" autocapitalize="off" spellcheck="false" value="${esc(tag)}" placeholder="e.g. KesselRunner"></label>
           <p class="pe-st" data-st></p></div></div>
       <p class="pe-sum muted small" data-sum>${summary()}</p>
       <div class="pe-tabs" data-noswipe>${tabs()}</div>
       <div class="pe-pane" data-pane>${pane()}</div>
-      <div class="pe-foot"><button type="button" class="btn" data-x="cancel">Cancel</button><button type="button" class="btn btn-primary" data-x="save">Save</button></div></div>`, {});
+      <div class="pe-foot"><button type="button" class="btn" data-x="cancel">${opts.setup ? 'Later' : 'Cancel'}</button><button type="button" class="btn btn-primary" data-x="save">Save</button></div></div>`, opts.setup ? { dismissable: false } : {});
     m.root.querySelector('.modal')?.classList.add('pe-modal');
     const $ = (q) => m.root.querySelector(q);
     const refreshTop = () => { $('[data-prev]').innerHTML = preview(); $('[data-sum]').innerHTML = summary(); };
@@ -4953,14 +4954,22 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       }
       m.close();
       rerender();
+      if (opts.after) opts.after(x.dataset.x === 'save');
     });
   }
+  // Saved accounts (js/account.js) set up the callsign and picture early, at any level.
+  HN.setupProfile = async (after) => {
+    await Net.init();
+    if (!Net.ready) { toast("Couldn't reach the HoloNet. Set up your profile later from Settings."); if (after) after(false); return; }
+    editProfile({ setup: true, after });
+  };
+  HN.hasProfile = () => hasName();
 
   // =====================================================================
   // Publishing: my arena doc carries the profile, guild and points
   // =====================================================================
   Net.publish = async function () {
-    if (!this.ready) return;
+    if (!this.ready || !HN.ui.unlocked()) return;
     if (this.busy) { this.again = true; return; }
     const h = P2();
     const p = myProfile();

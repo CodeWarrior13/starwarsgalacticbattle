@@ -89,6 +89,9 @@
     })();
     return loading;
   }
+  // Saved accounts (js/account.js) load it early, at any level, to set up the
+  // callsign and picture; nothing goes online until level 25 all the same.
+  root.__hnStartLive = () => (launched() ? startLive() : Promise.resolve());
   function initLive() {
     const P = root.Player;
     // Tester leftovers: the tester flag and the tester save slot.

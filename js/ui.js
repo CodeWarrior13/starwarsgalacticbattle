@@ -2117,12 +2117,13 @@
       </section>` : ''}
       ${root.Perf ? root.Perf.settingsHtml() : ''}
       ${root.Install ? root.Install.settingsHtml() : ''}
+      ${root.Account ? root.Account.settingsHtml() : ''}
       <section class="set-sec">
         <h3>${root.Icons.svg('holocron')} Account</h3>
         <dl class="set-info">
           <div><dt>Commander level</dt><dd>${a.level}</dd></div>
           <div><dt>Cards collected</dt><dd>${Object.keys(Player.state.units).length}/${D.UNITS.length}</dd></div>
-          <div><dt>Save data</dt><dd>Saved automatically in this browser</dd></div>
+          <div><dt>Save data</dt><dd>${root.Account && root.Account.meta() ? 'Saved in this browser and to your account' : 'Saved automatically in this browser'}</dd></div>
           <div><dt>Game version</dt><dd>v${root.Changelog ? root.Changelog.UPDATES[0].v : '?'}</dd></div>
         </dl>
         <div class="settings-btns">
@@ -2144,6 +2145,7 @@
       }
     });
     if (root.Perf) root.Perf.bind(m.root);
+    if (root.Account) root.Account.bind(m.root, m);
     m.root.addEventListener('input', (e) => { if (e.target.dataset.vol) S.set(e.target.dataset.vol, Number(e.target.value)); });
     m.root.addEventListener('click', async (e) => {
       if (e.target.closest('[data-close]')) return m.close();
