@@ -2118,13 +2118,14 @@
       ${root.Perf ? root.Perf.settingsHtml() : ''}
       ${root.Install ? root.Install.settingsHtml() : ''}
       ${root.Account ? root.Account.settingsHtml() : ''}
+      ${root.Suggest ? root.Suggest.settingsHtml() : ''}
       <section class="set-sec">
         <h3>${root.Icons.svg('holocron')} Account</h3>
         <dl class="set-info">
           <div><dt>Commander level</dt><dd>${a.level}</dd></div>
           <div><dt>Cards collected</dt><dd>${Object.keys(Player.state.units).length}/${D.UNITS.length}</dd></div>
           <div><dt>Save data</dt><dd>${root.Account && root.Account.meta() ? 'Saved in this browser and to your account' : 'Saved automatically in this browser'}</dd></div>
-          <div><dt>Game version</dt><dd>v${root.Changelog ? root.Changelog.UPDATES[0].v : '?'}</dd></div>
+          <div><dt>Game version</dt><dd data-ver>v${root.Changelog ? root.Changelog.UPDATES[0].v : '?'}</dd></div>
         </dl>
         <div class="settings-btns">
           <button class="btn" type="button" data-update-log>Update log</button>

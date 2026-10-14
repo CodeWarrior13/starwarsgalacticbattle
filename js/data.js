@@ -1159,7 +1159,9 @@
 
   const UNIT_MAP = Object.fromEntries([...UNITS, ...BOSSES].map((u) => [u.id, u]));
 
-  const MAX_LEVEL = 30;
+  // Update 2.1 raises the card level cap to 40 with a cheaper level-up curve.
+  const v21 = () => !!(root.Update21 && root.Update21.on());
+  const maxLevel = () => (v21() ? 40 : 30);
   const MAX_STARS = 7;
   // Shards needed to go from star N to N+1 (index 0 = 1★ -> 2★).
   const STAR_COSTS = [10, 25, 50, 80, 120, 170];
@@ -1171,18 +1173,20 @@
   const DUPLICATE_SHARDS = { common: 5, rare: 8, epic: 12, legendary: 20, mythic: 30, secret: 40 };
 
   function levelCost(level) {
-    return 100 * level + 20 * level * level;
+    return v21() ? 60 * level + 8 * level * level : 100 * level + 20 * level * level;
   }
+  // Stats grow 8% a level up to 30, then 4% a level (defense half as fast).
+  const lvlGrow = (level, a, b) => (level <= 30 ? a * (level - 1) : a * 29 + b * (level - 30));
 
   function unitStats(def, level, stars) {
     const base = ROLE_BASE[def.role];
     const rar = RARITIES[def.rarity].mult;
-    const grow = (1 + 0.08 * (level - 1)) * (1 + 0.1 * (stars - 1));
+    const grow = (1 + lvlGrow(level, 0.08, 0.04)) * (1 + 0.1 * (stars - 1));
     const b = def.boss || { hp: 1, atk: 1, def: 1 };
     return {
       hp: Math.round(base.hp * rar * grow * b.hp),
       atk: Math.round(base.atk * rar * grow * b.atk),
-      def: Math.round(base.def * rar * (1 + 0.04 * (level - 1)) * (1 + 0.05 * (stars - 1)) * b.def),
+      def: Math.round(base.def * rar * (1 + lvlGrow(level, 0.04, 0.02)) * (1 + 0.05 * (stars - 1)) * b.def),
       spd: (def.spd || base.spd) + Math.floor((stars - 1) * 2),
     };
   }
@@ -1774,7 +1778,7 @@
   function towerFloor(floor, seed, size) {
     const r = seededRng((seed || 1) * 7919 + floor * 104729);
     const pickOf = (list) => list[Math.floor(r() * list.length)];
-    const level = Math.min(MAX_LEVEL, 2 + floor);
+    const level = Math.min(maxLevel(), 2 + floor);
     const stars = Math.min(MAX_STARS, 1 + Math.floor(floor / 5));
     const enemyScale = +(0.82 + floor * 0.012 + Math.max(0, floor - 28) * 0.03).toFixed(3);
     const n = Math.max(3, Math.min(5, size || 5));
@@ -1833,7 +1837,7 @@
   };
 
   root.GameData = {
-    RARITIES, ROLE_BASE, ROLE_ICONS, STATUS_INFO, UNITS, UNIT_MAP, MAX_LEVEL, MAX_STARS, STAR_COSTS, STAR_AURODIUM, STAR_AURODIUM_MULT, starAurodium,
+    RARITIES, ROLE_BASE, ROLE_ICONS, STATUS_INFO, UNITS, UNIT_MAP, get MAX_LEVEL() { return maxLevel(); }, MAX_STARS, STAR_COSTS, STAR_AURODIUM, STAR_AURODIUM_MULT, starAurodium,
     DUPLICATE_SHARDS, SQUAD_SIZE, PACKS, STARTER, levelCost, unitStats, power, stageRewards,
     ultimateFor, abilitiesFor, BOSSES, BOSS_ENCOUNTERS, bossRewards, CURRENCIES, LUCK, CHARMS, MARKET_REFRESH_MS, FLASH_MS, DAILY, SECRET_PLANET, SECRET_BOSSES, SECRET_COSTS, secretCost, RESTOCK_KYBER, EXCHANGE, TOWER, towerFloor, towerRewards, towerCheckpoint, SHELL_PAYOUT, SHELL_BETS, BIOS,
     BASE_SLOTS, SLOT_UNLOCKS, MAX_ACCOUNT_LEVEL, xpToNext, levelReward, XP, planetSquadSize,
