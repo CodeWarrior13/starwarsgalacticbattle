@@ -9,8 +9,10 @@
 // for a newer save from another device when the game opens.
 (function (root) {
   'use strict';
-  // Update 2.1 switches this on for everyone; until then only tester devices see it.
-  const RELEASE = null;
+  // Update 2.1 goes live for everyone at 7:05 a.m. Central on Wednesday,
+  // October 28, 2026; until then only tester devices see it.
+  const RELEASE = root.__v21Test != null ? root.__v21Test : Date.UTC(2026, 9, 28, 12, 5, 0);
+  const released = () => Date.now() >= RELEASE;
   const SAVE_KEY = 'swcg-save-v1';
   const META = 'swcg-acct';
   const DIRTY = 'swcg-acct-dirty';
@@ -28,7 +30,7 @@
     } catch (e) { /* storage blocked */ }
     return null;
   };
-  const enabled = () => (RELEASE != null && Date.now() >= RELEASE) || ls(TEST) === '1';
+  const enabled = () => released() || ls(TEST) === '1';
   const meta = () => { try { return JSON.parse(ls(META) || 'null'); } catch (e) { return null; } };
   const setMeta = (m) => ls(META, m ? JSON.stringify(m) : null);
   const devId = () => {
@@ -624,7 +626,8 @@
     if (H) {
       const before = H.redeem;
       H.redeem = (c) => {
-        if (c !== code()) return before ? before(c) : false;
+        // The tester code stops working at launch.
+        if (c !== code() || released()) return before ? before(c) : false;
         const on = ls(TEST) !== '1';
         ls(TEST, on ? '1' : null);
         toast(on ? 'Saved accounts test: ON for this device. Open Settings to try it.' : 'Saved accounts test: OFF for this device.');
@@ -667,6 +670,9 @@
     }
     // A battle ended while a newer save was waiting: pick it up now.
     if (H && H.battleEnd) H.battleEnd.push(() => { if (recheck) { recheck = false; setTimeout(check, 6000); } });
+    // Launch: the tester switch is no longer needed; a page left open over the launch gets a reload nudge.
+    if (released()) ls(TEST, null);
+    else if (RELEASE - Date.now() < 4 * 86400000) setTimeout(() => toast('Update 2.1 is live! Reload the game to get it.'), RELEASE - Date.now() + 2000);
     if (!enabled()) return;
     const msg = ls('swcg-acct-msg');
     if (msg) { ls('swcg-acct-msg', null); setTimeout(() => toast(msg), 1200); }

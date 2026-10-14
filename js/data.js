@@ -1173,7 +1173,7 @@
   const DUPLICATE_SHARDS = { common: 5, rare: 8, epic: 12, legendary: 20, mythic: 30, secret: 40 };
 
   function levelCost(level) {
-    return v21() ? Math.round(54 * level + 5.5 * level * level) : 100 * level + 20 * level * level;
+    return v21() ? Math.round(70 * level + 7.2 * level * level) : 100 * level + 20 * level * level;
   }
   // Stats grow 8% a level up to 30, then 4% a level (defense half as fast).
   const lvlGrow = (level, a, b) => (level <= 30 ? a * (level - 1) : a * 29 + b * (level - 30));

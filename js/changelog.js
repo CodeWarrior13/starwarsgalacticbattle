@@ -9,7 +9,30 @@
   // Update 2.0 goes live at 7:00 a.m. Central on October 14, 2026; until then
   // its entry stays hidden.
   const LAUNCH_2 = root.__hnLaunchTest != null ? root.__hnLaunchTest : Date.UTC(2026, 9, 14, 12, 0, 0);
+  // Update 2.1 goes live at 7:05 a.m. Central on October 28, 2026.
+  const LAUNCH_21 = root.__v21Test != null ? root.__v21Test : Date.UTC(2026, 9, 28, 12, 5, 0);
   const ALL_UPDATES = [
+    {
+      v: '2.1', date: 'October 28, 2026', title: 'Squadrons', from: LAUNCH_21,
+      items: [
+        'NEW|Save your game: sign in with Google or an email to keep your progress safe and play on any device. Find it in Settings.',
+        'NEW|Save your game to earn the Holo Link profile frame and the Never Lost badge.',
+        'NEW|Invite friends: share your link or QR code. Friends get a welcome gift of 1,000 credits and 25 Kyber, and you earn 2 Kyber for every friend who reaches level 5.',
+        'NEW|Invite 10 friends for the Squadron Leader frame and badge, and 50 for the limited-time Recruiter Legend frame.',
+        'NEW|Extra Kyber and Aurodium at 15, 20, 25, 30, 35, 40 and 45 friends.',
+        'NEW|Your profile now lives in the Commander profile: tap your level to see your callsign, picture, frame and badges, and tap your picture to change them.',
+        'NEW|Card level cap raised to 40, and levelling up costs far less: taking a card all the way to level 40 costs less than reaching level 30 used to. Live Duels stay at Level 20 ★3.',
+        'NEW|Suggestion box in Settings: send your ideas for cards, ships, events and features straight to the team.',
+        'NEW|Find a pilot: look up anyone in the HoloNet by their callsign to see their profile.',
+        'NEW|The level-up pop-up and results screen now tell you what each level unlocks.',
+        'NEW|The Rank road shows what each level unlocks, and what\'s coming up next.',
+        'NEW|Duel bans: every card can be banned, even ones neither player owns. Sort by strongest, rarity, damage, health, defense, speed or name, and filter by class and by owner. Each card shows its duel stats.',
+        'BALANCE|Auto-repeat now unlocks at level 15, and Auto-continue at level 20.',
+        'BALANCE|Auto-repeat earns less XP from level 15, and less the higher you go. Playing battles yourself still earns the full amount.',
+        'FIXED|Your profile picture sat off-centre in its frame in the profile editor on phones.',
+        'IMPROVED|Removing tester code.',
+      ],
+    },
     {
       v: '2.0', date: 'October 14, 2026', title: 'The HoloNet', from: LAUNCH_2,
       items: [
