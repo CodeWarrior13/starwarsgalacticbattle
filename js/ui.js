@@ -2648,15 +2648,21 @@
     const pct = a.level >= D.MAX_ACCOUNT_LEVEL ? 100 : Math.round((a.xp / need) * 100);
     const slotAt = {};
     D.SLOT_UNLOCKS.forEach((r) => { slotAt[r.level] = r; });
+    // Features each level unlocks (Auto-repeat, Auto-continue, the HoloNet…), from the battle screen's list.
+    const unlockAt = {};
+    for (const t of (root.BattleUI && root.BattleUI.levelUnlocks ? root.BattleUI.levelUnlocks() : [])) if (!/^Squad slot/.test(t.name)) (unlockAt[t.level] = unlockAt[t.level] || []).push(t);
+    const upcoming = Object.keys(unlockAt).map(Number).filter((lv) => lv > a.level).sort((x, y) => x - y).slice(0, 3);
     const road = Array.from({ length: D.MAX_ACCOUNT_LEVEL }, (_, i) => i + 1).map((lv) => {
       const r = D.levelReward(lv);
       const big = lv % 5 === 0;
       const slot = slotAt[lv];
       const state = lv < a.level ? 'done' : lv === a.level ? 'now' : 'todo';
-      return `<div class="rr-node ${state} ${big ? 'big' : ''} ${slot ? 'slot' : ''}">
+      const unl = unlockAt[lv];
+      return `<div class="rr-node ${state} ${big ? 'big' : ''} ${slot ? 'slot' : ''} ${unl ? 'unl' : ''}">
         <span class="rr-lv">${lv}</span>
-        <span class="rr-gem">${root.Icons.svg(slot ? 'sabers' : big ? 'kybercrown' : 'kyber')}</span>
+        <span class="rr-gem">${root.Icons.svg(slot ? 'sabers' : unl ? 'bolt' : big ? 'kybercrown' : 'kyber')}</span>
         <span class="rr-rew">${lv === 1 ? 'Start' : slot ? `Squad slot ${slot.slot}` : `${fmt(r.credits)}¢${r.crystals ? ` · ${r.crystals} Kyber` : ''}`}</span>
+        ${unl ? `<span class="rr-unl">${unl.map((t) => `<b>${lv <= a.level ? 'Unlocked' : 'Unlocks'}</b> ${esc(t.name)}`).join('<br>')}</span>` : ''}
       </div>`;
     }).join('');
     const ach = achievements();
@@ -2682,6 +2688,7 @@
       </div>
       <div class="pf-pane active" data-pane="road">
         <p class="muted small">Every level pays out credits and Kyber. Every fifth level is a milestone.</p>
+        ${upcoming.length ? `<div class="rr-next"><span class="eyebrow">Coming up</span>${upcoming.map((lv) => unlockAt[lv].map((t) => `<div class="rr-next-i"><b>Level ${lv}</b><span><em>${esc(t.name)}</em> ${esc(t.desc)}</span></div>`).join('')).join('')}</div>` : ''}
         <div class="rank-road" data-road>${road}</div>
       </div>
       <div class="pf-pane" data-pane="worlds">
