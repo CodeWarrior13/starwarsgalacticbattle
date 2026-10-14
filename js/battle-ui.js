@@ -8,8 +8,8 @@
   const { $, $$, el, esc, fmt, cur, portrait, toast, openModal, confirmBox, updateWallet, App } = root.UI;
 
   const PREF_KEY = 'swcg-battle-prefs';
-  const AUTO_NEXT_LEVEL = 15;
-  const AUTO_REPEAT_LEVEL = 20;
+  const AUTO_REPEAT_LEVEL = 15;
+  const AUTO_NEXT_LEVEL = 20;
   function loadPrefs() {
     try {
       return JSON.parse(localStorage.getItem(PREF_KEY)) || {};
@@ -2024,23 +2024,22 @@
           <span class="muted small">Account Lv ${acct.level}</span>
         </div>
         ${rewards.levelUps.map((u) => `<div class="level-up"><b>LEVEL UP!</b> Account level ${u.level} · ${cur('credits', u.reward.credits)} ${cur('crystals', u.reward.crystals)}</div>`).join('')}
-        ${rewards.levelUps.some((u) => u.level === AUTO_REPEAT_LEVEL) ? '<div class="level-up slot-up"><b>AUTO-REPEAT UNLOCKED!</b> Auto-continue can now replay the same battle again and again.</div>' : ''}
-        ${rewards.levelUps.some((u) => u.level === AUTO_NEXT_LEVEL) ? '<div class="level-up slot-up"><b>AUTO-CONTINUE UNLOCKED!</b> Jump straight into your next battle with your saved squad.</div>' : ''}
+        ${rewards.levelUps.flatMap((u) => this.unlocksAt(u.level)).map((t) => `<div class="level-up slot-up"><b>${esc(t.name.toUpperCase())} UNLOCKED!</b> ${esc(t.desc)}</div>`).join('')}
         ${rewards.newSlot ? `<div class="level-up slot-up"><b>NEW SQUAD SLOT!</b> You can now field ${Player.slots()} units in ground and fleet battles.</div>` : ''}` : '';
-      // Auto-continue (account level 15+): jump straight into the next fight
-      // with the saved squad, and optionally keep going on a short countdown.
+      // Auto-continue: Repeat (level 15) replays this battle after every win;
+      // Next (level 20) jumps straight into the next fight with the saved squad.
       const nextParams = !won ? null : isTower ? { type: 'tower', floor: rewards.towerFloor }
         : nextInPlanet ? { ...p, stage: p.stage + 1 } : nextPlanet ? { type: 'stage', planet: nextPlanet.id, stage: 0 } : null;
-      const canAuto = acct.level >= AUTO_NEXT_LEVEL;
-      // Level 20: Repeat replays this same battle after every win (farming).
-      const canRepeat = acct.level >= AUTO_REPEAT_LEVEL && won && ['stage', 'boss'].includes(p.type);
-      const mode = !canAuto ? 'off' : Player.state.autoNext === 'repeat' ? (canRepeat ? 'repeat' : 'off') : Player.state.autoNext ? 'next' : 'off';
+      const canAuto = acct.level >= AUTO_REPEAT_LEVEL;
+      const hasNext = acct.level >= AUTO_NEXT_LEVEL;
+      const canRepeat = canAuto && won && ['stage', 'boss'].includes(p.type);
+      const mode = !canAuto ? 'off' : Player.state.autoNext === 'repeat' ? (canRepeat ? 'repeat' : 'off') : Player.state.autoNext && hasNext ? 'next' : 'off';
       const autoOn = mode !== 'off';
       const targetOf = (md) => (md === 'repeat' ? { ...p } : nextParams);
       const seg = (md, label, on) => `<button type="button" class="${mode === md ? 'on' : ''}" data-auto-mode="${md}" ${on ? '' : 'disabled'}>${label}</button>`;
       const autoHtml = !(nextParams || canRepeat) ? '' : canAuto
-        ? `<div class="auto-next"><span class="auto-lbl"><span class="at-dot ${autoOn ? 'on' : ''}"></span>Auto-continue</span><div class="auto-seg" role="group" aria-label="Auto-continue">${seg('off', 'Off', true)}${seg('next', 'Next', !!nextParams)}${acct.level >= AUTO_REPEAT_LEVEL ? seg('repeat', 'Repeat', canRepeat) : ''}</div><span class="auto-count" data-auto-count></span></div>${acct.level < AUTO_REPEAT_LEVEL ? `<p class="auto-locked muted small">Repeat (farm this battle) unlocks at level ${AUTO_REPEAT_LEVEL}</p>` : ''}`
-        : `<p class="auto-locked muted small">Auto-continue unlocks at account level ${AUTO_NEXT_LEVEL}</p>`;
+        ? `<div class="auto-next"><span class="auto-lbl"><span class="at-dot ${autoOn ? 'on' : ''}"></span>Auto-continue</span><div class="auto-seg" role="group" aria-label="Auto-continue">${seg('off', 'Off', true)}${seg('repeat', 'Repeat', canRepeat)}${hasNext ? seg('next', 'Next', !!nextParams) : ''}</div><span class="auto-count" data-auto-count></span></div>${!hasNext ? `<p class="auto-locked muted small">Next (jump straight to the next battle) unlocks at level ${AUTO_NEXT_LEVEL}</p>` : ''}`
+        : `<p class="auto-locked muted small">Auto-repeat (farm this battle) unlocks at account level ${AUTO_REPEAT_LEVEL}</p>`;
       const m = openModal(`
         <div class="result-title ${won ? 'win' : 'lose'}">${won ? 'VICTORY' : 'DEFEAT'}</div>
         ${isTower ? `<div class="liberated tower-result"><p class="eyebrow">Endless Tower</p><h3>${won ? `Floor ${p.floor || rewards.towerFloor - 1} cleared${rewards.newBest ? ' · New best!' : ''}` : rewards.fell ? `Fell back to floor ${rewards.towerFloor}` : `Checkpoint holds at floor ${rewards.towerFloor}`}</h3><p class="muted">${won ? 'Deeper floors hit harder and pay more.' : 'Checkpoints every 10 floors. The floors above have been re-rolled.'}</p></div>` : ''}
@@ -2063,7 +2062,7 @@
         ${autoHtml}
         <div class="modal-actions">
           ${isTower ? '' : '<button class="btn" type="button" data-r="retry">Retry</button>'}
-          ${nextParams && canAuto ? '<button class="btn" type="button" data-r="edit-next">Edit squad</button>' : ''}
+          ${nextParams && hasNext ? '<button class="btn" type="button" data-r="edit-next">Edit squad</button>' : ''}
           ${won ? '' : '<button class="btn" type="button" data-r="collection">Collection</button>'}
           ${p.type === 'secret' ? '<button class="btn btn-primary" type="button" data-r="secret">Return to the Monolith</button>' : isTower ? `<button class="btn" type="button" data-r="tower-exit">Leave tower</button><button class="btn btn-primary" type="button" data-r="tower">${won ? `Climb to floor ${rewards.towerFloor}` : `Restart from floor ${rewards.towerFloor}`}</button>` : nextInPlanet ? '<button class="btn btn-primary" type="button" data-r="next">Next stage</button>' : nextPlanet ? `<button class="btn btn-primary" type="button" data-r="planet">Travel to ${esc(nextPlanet.name)}</button>` : '<button class="btn btn-primary" type="button" data-r="campaign">Continue</button>'}
         </div>`, { small: true, dismissable: false, cls: 'result-modal' });
@@ -2105,7 +2104,7 @@
         if (!r) return;
         stopCount();
         m.close();
-        if (canAuto && nextParams && ['tower', 'next', 'planet'].includes(r.dataset.r)) return this.quickStart(nextParams);
+        if (hasNext && nextParams && ['tower', 'next', 'planet'].includes(r.dataset.r)) return this.quickStart(nextParams);
         if (r.dataset.r === 'edit-next') return App.go('squad', nextParams);
         if (r.dataset.r === 'tower') App.go('squad', { type: 'tower', floor: rewards.towerFloor });
         else if (r.dataset.r === 'tower-exit') { App.ui.hubMode = 'tower'; App.go('home'); }
@@ -2166,9 +2165,28 @@
     },
 
     // Account level-up: a short full-screen rank-up moment.
+    // Everything an account level unlocks, for the level-up popup and results.
+    levelUnlocks() {
+      const list = D.SLOT_UNLOCKS.map((r) => ({ level: r.level, name: `Squad slot ${r.slot}`, desc: Player.planetComplete(r.planet) ? `Field ${r.slot} units in ground and fleet battles.` : `Liberate ${D.PLANET_MAP[r.planet].name} to field ${r.slot} units.` }));
+      list.push({ level: AUTO_REPEAT_LEVEL, name: 'Auto-repeat', desc: 'Replay the same stage or boss again and again after every win.' });
+      list.push({ level: AUTO_NEXT_LEVEL, name: 'Auto-continue', desc: 'Jump straight into your next battle with your saved squad.' });
+      list.push({ level: 25, name: 'The HoloNet', desc: 'Battle real players: arenas, live duels, guilds and more.' });
+      return list.sort((a, b) => a.level - b.level);
+    },
+
+    unlocksAt(level) {
+      return this.levelUnlocks().filter((t) => t.level === level);
+    },
+
+    nextUnlock(level) {
+      return this.levelUnlocks().find((t) => t.level > level) || null;
+    },
+
     rankUp(up) {
       if (reducedMotion() || !up) return;
       const big = up.level % 5 === 0;
+      const unl = this.unlocksAt(up.level);
+      const nxt = this.nextUnlock(up.level);
       if (root.Sound) root.Sound.play('rankup');
       const node = el(`<div class="jackpot rank-up" role="status" aria-live="polite">
         <div class="jp-rays"></div>
@@ -2177,12 +2195,14 @@
           <b class="jp-line">Level ${up.level}</b>
           <span class="jp-sub">${big ? 'The Rebellion takes notice.' : 'Your legend grows across the galaxy.'}</span>
           <span class="jp-amount">${cur('credits', up.reward.credits)} ${cur('crystals', up.reward.crystals)}</span>
+          ${unl.length ? `<span class="jp-unlocks">${unl.map((t) => `<span class="jp-unlock"><b>Unlocked:</b> ${esc(t.name)}<small>${esc(t.desc)}</small></span>`).join('')}</span>` : ''}
+          ${!unl.length && nxt ? `<span class="jp-next">Next unlock: ${esc(nxt.name)} at level ${nxt.level}</span>` : ''}
         </div>
       </div>`);
       document.body.appendChild(node);
       const close = () => { if (!node.isConnected) return; node.classList.add('out'); setTimeout(() => node.remove(), 450); };
       node.addEventListener('click', close);
-      setTimeout(close, 2600);
+      setTimeout(close, unl.length ? 5200 : 3000);
     },
 
     // Hitting the top multiplier gets a full-screen Star Wars pun instead of a toast.
