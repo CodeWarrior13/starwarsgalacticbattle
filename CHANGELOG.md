@@ -4,6 +4,38 @@ The same notes appear in the game under **Settings → Update log**, and the new
 
 > **Not seeing the latest fixes?** Reload the game page (refresh, or pull down on mobile). If the game was already open when an update came out, a reload picks it up. Your progress is kept.
 
+## v2.0 · The HoloNet (October 14, 2026)
+- The HoloNet unlocks at account level 25: battle real players from across the galaxy. Admiral Ackbar welcomes you with a guided tour, a free bounty puck and 500 Beskar.
+- Beskar, the HoloNet's own currency, earned from every HoloNet battle.
+- Ground Arena and Fleet Arena: attack other players' defense squads and climb from Bronze to Legend. Every new division pays a one-time Beskar bonus, and win streaks pay extra.
+- Leagues and seasons: finish a season in the top 25 for rewards, with special profile frames for the top 3. Season 1 reward: Darth Vader · The Hallway (Mythic).
+- Leaderboards for the season ladder, duel wins, raid damage and guilds.
+- Community raid: everyone in the HoloNet attacks the same giant boss each week, and everyone who hits it shares the rewards.
+- Varka's Forge: spend Beskar on bounty pucks that capture new HoloNet-only cards, and shard caches that power up the cards you have. New bounties every day.
+- The Databank keeps every HoloNet-only card and every bounty you've captured. Finish a row of bounties for bonus Beskar.
+- Live Duels: ranked, real-time battles against players who are online right now. Wins and losses change your rating just like the arena.
+- Duel ban phase: after a duel is accepted, each player bans one card that neither of you can use that duel.
+- Both players build a squad for the duel before it starts.
+- Every card fights at Level 20 ★3 in duels, so the better team wins, not the bigger collection.
+- In duels you play every move yourself (no Auto), with 45 seconds per move.
+- 12-minute duels: if nobody has won when time runs out, whoever dealt more damage wins, and equal damage is a draw.
+- Lose your connection in a duel and you get 45 seconds to get back in. Leaving a duel counts as a loss.
+- Duel balance tweaks for a few effects that were too strong against real players.
+- Guilds: found or join one, with its own chat, a pinned announcement board, a two-front guild raid, weekly guild points with rewards, and guild levels up to 10.
+- Guild ranks: Leader, Co-leader and up to 4 Elders. Leaders can hand over leadership, and if a leader is away for 7 days the co-leader takes over.
+- Join modes: open to all, request to join (leaders see the applicant's record and cards before accepting) or invite only. Invite anyone from their profile.
+- The Beskar Vault: members donate Beskar, and leaders spend it on guild upgrades (Beskar Haul, Lucky Pucks, XP Boost, Guild XP Boost and Barracks for more member slots).
+- Pick your guild's look from 100 pictures, plus a colour and a motto.
+- Markers for new guild chat, announcements, join requests and invites, so you never miss anything.
+- Are-you-sure prompts for removing a member (with an Undo), leaving, disbanding, handing over leadership and spending from the Vault.
+- Your HoloNet profile: picture, frame, best badges, rating, record and guild. Tap anyone's name to see theirs.
+- Unique callsigns: pick the name every player sees. Nobody else can have the same one.
+- Profile frames earned from leagues, seasons and guilds.
+- Derogatory word filter for chat, callsigns and guild names, and mute any player from their profile.
+- If the HoloNet can't connect, you get an offline screen, and the rest of the game keeps working.
+- Reset all progress can no longer be tapped by accident: you now type RESET to confirm before anything is wiped.
+- Removing tester code.
+
 ## v1.9 · Starships (October 10, 2026)
 - Cassian's Haulcraft (Epic ship): a Fondor hauler whose wings swing out for its Wings Out ultimate.
 - Mando's N-1 (Legendary ship): Din Djarin's chrome-stripped Naboo starfighter, with Grogu riding in the droid socket.
