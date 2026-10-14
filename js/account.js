@@ -153,6 +153,7 @@
     try { const d = await ref(F, user.uid).get(); cloud = d.exists ? d.data() : null; } catch (e) { cloud = null; }
     if (!cloud) {
       setMeta(m);
+      markLinked();
       await upload(true);
       celebrate(m, how === 'linked');
       return 'ok';
@@ -165,6 +166,7 @@
     m.rev = cloud.rev;
     setMeta(m);
     if (pick === 'cloud') { applyCloud(cloud, `Welcome back! Loading your saved game (level ${there.lvl}).`); return 'ok'; }
+    markLinked();
     await upload(true);
     celebrate(m, false);
     return 'ok';
@@ -193,6 +195,20 @@
       });
     });
   }
+
+  // Saving to an account earns the Holo Link frame and the Never Lost badge.
+  function markLinked() {
+    const P = root.Player;
+    if (!P || !P.state || P.state.linked) return;
+    P.state.linked = { at: Date.now() };
+    P.save();
+  }
+  const CREST = () => `<svg viewBox="0 0 100 100" aria-hidden="true"><defs><radialGradient id="nlg" cx=".5" cy=".38" r=".7"><stop offset="0" stop-color="#1d3f7a"/><stop offset="1" stop-color="#081633"/></radialGradient></defs>
+    <circle cx="50" cy="50" r="44" fill="url(#nlg)" stroke="#8fd3ff" stroke-width="4"/>
+    <g fill="none" stroke-width="7" stroke-linecap="round" transform="rotate(-45 50 50)">
+      <rect x="22" y="40" width="34" height="20" rx="10" stroke="#ea4335"/><rect x="44" y="40" width="34" height="20" rx="10" stroke="#4285f4"/>
+      <path d="M44 40 h12" stroke="#fbbc05"/><path d="M44 60 h12" stroke="#34a853"/>
+    </g></svg>`;
 
   // ---------- syncing ----------
   let applying = false;
@@ -443,19 +459,21 @@
       <p class="muted">Signed in as <b>${esc(m.email)}</b>. Sign in with ${m.prov === 'google' ? 'this Google account' : 'this email and password'} on any device to pick up where you left off. Progress saves automatically.</p>
       ${hasProfile ? '' : '<p class="muted small">One more thing: pick your callsign and picture now, so they\'re ready and waiting when you reach the HoloNet.</p>'}
       <div class="modal-actions">${hasProfile ? '<button type="button" class="btn btn-primary" data-d="ok">Done</button>' : '<button type="button" class="btn" data-d="ok">Later</button><button type="button" class="btn btn-primary" data-d="prof">Set up my profile</button>'}</div></div>`, { small: true, cls: 'acct-modal' });
+    const award = () => UI().celebrateFeat && UI().celebrateFeat('linked');
     node.root.addEventListener('click', (e) => {
       const b = e.target.closest('[data-d]');
       if (!b) return;
       node.close();
-      if (b.dataset.d === 'prof') profile();
+      if (b.dataset.d === 'prof') profile(award);
+      else award();
     });
   }
-  async function profile() {
+  async function profile(then) {
     try {
       if (!root.HN && root.__hnStartLive) await root.__hnStartLive();
-      if (!root.HN || !root.HN.setupProfile) return toast("Couldn't load the profile editor. Try again from Settings.");
-      root.HN.setupProfile((saved) => { if (saved) upload(); });
-    } catch (e) { toast(errMsg(e)); }
+      if (!root.HN || !root.HN.setupProfile) { toast("Couldn't load the profile editor. Try again from Settings."); if (then) then(); return; }
+      root.HN.setupProfile((saved) => { if (saved) upload(); if (then) then(); });
+    } catch (e) { toast(errMsg(e)); if (then) then(); }
   }
 
   // ---------- Settings ----------
@@ -517,6 +535,14 @@
   }
   // Waits for the loading screen and anything else on screen to finish first.
   const busyScreen = () => !!document.querySelector('.app-splash, .modal-backdrop, .tut-intro, .tut-coach, .walkout, .feat-show, .feat-cine, .rank-up, .hc, .code-entry, .inst-help');
+  // Accounts saved before the badge existed get it the next time the game opens.
+  function awardLater(tries = 0) {
+    setTimeout(() => {
+      const App = UI() && UI().App;
+      if (busyScreen() || !App || App.battleActive) { if (tries < 40) awardLater(tries + 1); return; }
+      if (UI().celebrateFeat) UI().celebrateFeat('linked');
+    }, 3000);
+  }
   let offerT = 0;
   function maybeOffer(tries = 0) {
     clearTimeout(offerT);
@@ -542,6 +568,11 @@
         if (on) maybeOffer();
         return true;
       };
+    }
+    // The Never Lost badge: listed once saved accounts are out (or earned).
+    if (H) {
+      H.feats.push((s) => (s.linked || enabled() ? [{ id: 'linked', icon: 'shield', tier: 2, name: 'Never Lost', desc: 'Save your game to an account', have: s.linked ? 1 : 0, need: 1 }] : []));
+      H.crests.linked = CREST;
     }
     // Every save also goes to the cloud a few seconds later.
     const base = P.save;
@@ -573,7 +604,7 @@
     const msg = ls('swcg-acct-msg');
     if (msg) { ls('swcg-acct-msg', null); setTimeout(() => toast(msg), 1200); }
     if (ls('swcg-acct-redirect') === '1') afterRedirect();
-    if (meta()) check();
+    if (meta()) { markLinked(); check(); awardLater(); }
     maybeOffer();
   }
   root.Account = { settingsHtml, bind, enabled, offer, upload, check, meta: () => meta() };

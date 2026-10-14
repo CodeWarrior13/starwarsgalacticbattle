@@ -4590,6 +4590,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     victor: { name: 'Season Victor', how: 'Finish a season in Kyber or Legend' },
     podium: { name: 'Podium', how: 'Finish a season in the top 3 of the leaderboard' },
     champion: { name: 'Champion', how: 'Finish a season 1st on the leaderboard' },
+    linked: { name: 'Holo Link', how: 'Save your game to an account (Settings)' },
   };
   let fseq = 0;
   function frameSvg(id, color) {
@@ -4607,6 +4608,8 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     // Season leaderboard frames: Champion (1st) and Podium (top 3).
     else if (id === 'champion') body = `<defs>${grad('#ffffff', '#ffd23f', '#a86a08')}</defs>${Array.from({ length: 24 }, (_, k) => `<path d="M0 -${k % 2 ? 56 : 64} L2.6 -47 L-2.6 -47Z" fill="#ffe27a" transform="rotate(${k * 15})"/>`).join('')}${ring(`url(#${u})`, 8)}<path d="M-20 -58 L-12 -46 L0 -60 L12 -46 L20 -58 L18 -42 L-18 -42Z" fill="#ffd23f" stroke="#7a4a08" stroke-width="1.4"/><circle cy="-52" r="2.6" fill="#ff3a5a"/>${ring('#3a2408', 1.2, 'r="40"')}`;
     else if (id === 'podium') body = `<defs>${grad('#f2f6ff', '#9ab0d8', '#3a4a6a')}</defs>${ring(`url(#${u})`, 7)}${[-1, 0, 1].map((k) => `<path d="M${k * 16 - 6} ${k ? 54 : 50} L${k * 16 + 6} ${k ? 54 : 50} L${k * 16 + 6} 64 L${k * 16 - 6} 64Z" fill="${k ? '#9ab0d8' : '#ffd23f'}" stroke="#1a2236" stroke-width="1"/>`).join('')}${Array.from({ length: 3 }, (_, k) => `<path d="M${(k - 1) * 16} -60 l2.4 5 5.4 .6 -4 3.6 1.2 5.4 -5 -2.8 -5 2.8 1.2 -5.4 -4 -3.6 5.4 -.6Z" fill="#ffe27a"/>`).join('')}`;
+    // Saved accounts: a holo ring held together by four-colour chain links.
+    else if (id === 'linked') body = `<defs>${grad('#e8faff', '#4a8cff', '#123a8a')}</defs>${ring('#5fd8ff', 11, 'opacity=".22"')}${ring(`url(#${u})`, 5)}${['#ea4335', '#fbbc05', '#34a853', '#4285f4'].map((c, k) => `<g transform="rotate(${k * 90 + 45})"><rect x="-9" y="-49" width="11" height="7" rx="3.5" fill="none" stroke="${c}" stroke-width="2.6"/><rect x="-2" y="-49" width="11" height="7" rx="3.5" fill="none" stroke="${c}" stroke-width="2.6"/></g>`).join('')}<g transform="translate(0 52)"><circle r="9" fill="#0b1a33" stroke="#8fd3ff" stroke-width="1.6"/><path d="M-4.2 1.6 L-1.6 -1 M1.6 1 L4.2 -1.6" stroke="#e8faff" stroke-width="1.8" stroke-linecap="round"/><rect x="-6" y="-1" width="6" height="4.4" rx="2.2" transform="rotate(-45 -3 1.2)" fill="none" stroke="#e8faff" stroke-width="1.5"/><rect x="0" y="-3.4" width="6" height="4.4" rx="2.2" transform="rotate(-45 3 -1.2)" fill="none" stroke="#e8faff" stroke-width="1.5"/></g>`;
     else body = ring('#5a6a7e', 4);
     return still(`<svg class="pf-frame" viewBox="-70 -70 140 140" aria-hidden="true">${body}</svg>`);
   }
@@ -4617,8 +4620,11 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     out.add('recruit');
     if ((h.divs || []).includes('bronze2')) out.add('bronze');
     for (const l of ['silver', 'gold', 'kyber', 'legend']) if ((h.leagues || []).includes(l)) out.add(l);
+    if (Player.state.linked) out.add('linked');
     return [...out];
   }
+  // The saved-account frame stays out of the list until saved accounts are out (or you have it).
+  const shownFrames = () => Object.entries(FRAMES).filter(([id]) => id !== 'linked' || !!Player.state.linked || !!(root.Account && root.Account.enabled()));
 
   // =====================================================================
   // Profiles: what other players see when they tap your name
@@ -4879,7 +4885,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const preview = () => `${avatar({ av, frame, guild: h.guild }, 'lg')}`;
     const summary = () => `${nm(av)} · ${esc(FRAMES[frame].name)} frame · ${feat.length} badge${feat.length === 1 ? '' : 's'}`;
     const pane = () => {
-      if (peTab === 'frame') return `<div class="pf-frames pe-frames">${Object.entries(FRAMES).sort(([a], [c]) => frames.includes(c) - frames.includes(a)).map(([id, f]) => { const own = frames.includes(id); return `<button type="button" class="pf-fr ${id === frame ? 'on' : ''} ${own ? '' : 'locked'}" data-fr="${id}" ${own ? '' : 'disabled'}>${avatar({ av, frame: id, guild: h.guild }, 'md')}<b>${esc(f.name)}</b><small>${own ? 'Unlocked' : esc(f.how)}</small></button>`; }).join('')}</div>`;
+      if (peTab === 'frame') return `<div class="pf-frames pe-frames">${shownFrames().sort(([a], [c]) => frames.includes(c) - frames.includes(a)).map(([id, f]) => { const own = frames.includes(id); return `<button type="button" class="pf-fr ${id === frame ? 'on' : ''} ${own ? '' : 'locked'}" data-fr="${id}" ${own ? '' : 'disabled'}>${avatar({ av, frame: id, guild: h.guild }, 'md')}<b>${esc(f.name)}</b><small>${own ? 'Unlocked' : esc(f.how)}</small></button>`; }).join('')}</div>`;
       if (peTab === 'badge') return `<p class="muted small pe-note">Pick up to 6 to show on your profile · <b data-featn>${feat.length}/6</b></p><div class="pf-bdgs pick">${b.all.map((x) => { const k = x.id || x.name; return `<button type="button" class="pf-bdg ${feat.includes(k) ? 'on' : ''}" data-ft="${esc(k)}">${still(UI.featBadge(x))}<span>${esc(x.name)}</span></button>`; }).join('') || '<p class="muted small">Earn badges around the game and show them off here.</p>'}</div>`;
       const f = (CATS.find(([k]) => k === peCat) || CATS[0])[2];
       return `<div class="pe-cats" data-noswipe>${CATS.map(([k, n, ff]) => `<button type="button" class="${k === peCat ? 'on' : ''}" data-pcat="${k}">${n} <small>${cards.filter((id) => ff(D.UNIT_MAP[id])).length}</small></button>`).join('')}</div>
@@ -5822,7 +5828,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       <div class="hn-sec"><h3>Season ${seasonNo() % 100} · ends in ${days} day${days === 1 ? '' : 's'}</h3>
         <p class="muted small" style="margin:0">Seasons last four weeks. When one ends you're paid for the best division you reached that season, then ratings above 800 settle halfway back. Best this season: <b>${esc(HN.divOf(h.soc.sBest || h.rating).name)}</b>.</p>
         <div class="g-ms">${Object.entries(SEASON_REWARD).map(([lg, rw]) => `<div class="g-m ${HN.divOf(h.soc.sBest || h.rating).league === lg ? 'ok' : ''}"><div style="width:48px">${A.badge(lg, lg === 'legend' ? 1 : 3)}</div><b>${lg[0].toUpperCase() + lg.slice(1)}</b><small>${fmt(rw.beskar)} Beskar${rw.puck ? ` · ${A.TIER[rw.puck].label} puck` : ''}${rw.card ? ` · ${esc(D.UNIT_MAP[rw.card].name)}` : ''}${rw.frame ? ` · ${esc(FRAMES[rw.frame].name)} frame` : ''}</small></div>`).join('')}</div></div>
-      <div class="hn-sec"><h3>Profile frames</h3><div class="pf-frames">${Object.entries(FRAMES).map(([id, f]) => `<div class="pf-fr ${frames.includes(id) ? '' : 'locked'}">${avatar({ ...me, frame: id }, 'md')}<b>${esc(f.name)}</b><small>${frames.includes(id) ? 'Unlocked' : esc(f.how)}</small></div>`).join('')}</div>
+      <div class="hn-sec"><h3>Profile frames</h3><div class="pf-frames">${shownFrames().map(([id, f]) => `<div class="pf-fr ${frames.includes(id) ? '' : 'locked'}">${avatar({ ...me, frame: id }, 'md')}<b>${esc(f.name)}</b><small>${frames.includes(id) ? 'Unlocked' : esc(f.how)}</small></div>`).join('')}</div>
         <button type="button" class="hn-btn ghost" data-hn="prof" data-uid="me" style="justify-self:start">Your profile ›</button></div>`;
   };
 
@@ -5938,13 +5944,14 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   // ---------- styles ----------
   const css = document.createElement('style');
   css.textContent = `
-.pf-av { position: relative; display: inline-grid; place-items: center; flex: none; }
-.pf-av .pic { display: block; border-radius: 50%; overflow: hidden; background: #06121e; }
+.pf-av { position: relative; display: inline-grid; grid-template: 100% / 100%; place-items: center; flex: none; }
+/* The picture is sized from the frame box, so a smaller box (the editor preview on phones) keeps both centred together. */
+.pf-av .pic { display: block; width: 87.5%; height: 87.5%; border-radius: 50%; overflow: hidden; background: #06121e; }
 .pf-av .pic svg { width: 100%; height: 100%; display: block; transform: scale(1.45) translateY(5%); }
 .pf-av .pf-frame { position: absolute; inset: -22%; width: 144%; height: 144%; pointer-events: none; overflow: visible; }
-.pf-av.sm { width: 30px; height: 30px; } .pf-av.sm .pic { width: 26px; height: 26px; }
-.pf-av.md { width: 56px; height: 56px; } .pf-av.md .pic { width: 48px; height: 48px; }
-.pf-av.lg { width: 96px; height: 96px; } .pf-av.lg .pic { width: 84px; height: 84px; }
+.pf-av.sm { width: 30px; height: 30px; }
+.pf-av.md { width: 56px; height: 56px; }
+.pf-av.lg { width: 96px; height: 96px; }
 .pf-chip { display: inline-flex; align-items: center; gap: 9px; min-width: 0; padding: 2px 8px 2px 4px; border: 0; border-radius: 999px; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
 .pf-chip:hover, .pf-chip:focus-visible { background: rgba(95, 216, 255, 0.1); }
 .pf-chip .nm { display: grid; min-width: 0; line-height: 1.15; }
