@@ -2168,12 +2168,76 @@
           for (let i = -3; i <= 3; i++) ctx.fillRect(x + i * w * 0.011, y - h * (0.015 + (3 - Math.abs(i)) * 0.008), 3, h * (0.015 + (3 - Math.abs(i)) * 0.008));
         }
       } else if (f === 'deathstar') {
-        const x = w * 0.84; const y = h * 0.22; const r = h * 0.11;
-        glow(ctx, x, y, r * 2, '#9fd0ff', 0.12);
-        ctx.fillStyle = 'rgba(120,130,150,0.55)'; ctx.beginPath(); ctx.arc(x, y, r, Math.PI * 0.25, Math.PI * 1.55); ctx.fill();
-        ctx.strokeStyle = 'rgba(160,170,190,0.5)'; ctx.lineWidth = 1;
-        for (let k = 0; k < 5; k++) { ctx.beginPath(); ctx.arc(x, y, r, Math.PI * (1.55 + k * 0.08), Math.PI * (1.58 + k * 0.08)); ctx.stroke(); }
-        ctx.fillStyle = 'rgba(40,50,60,0.7)'; ctx.beginPath(); ctx.arc(x - r * 0.35, y - r * 0.25, r * 0.22, 0, TAU); ctx.fill();
+        // The second Death Star, half built over Endor: a finished, shaded hull
+        // (superlaser dish and equator trench) on the upper left, and the bare
+        // lattice frame showing through where the plating stops.
+        // It orbits Endor, so it hangs just above and to the right of the
+        // Endor planet, small and dim so it stays behind the map.
+        const r0 = Math.min(w, h) * 0.055;
+        const en = (this.planets || []).find((p) => p.id === 'endor');
+        const ex = en ? (this.inset + (en.map.x / 100) * (1 - 2 * this.inset)) * w : w * 0.8;
+        const ey = en ? (en.map.y / 100) * h : h * 0.5;
+        const r = r0 * 0.95;
+        // Pick the emptiest spot around Endor: furthest from every planet and its name label.
+        const fkey = `${w}x${h}`;
+        if (this.dsKey !== fkey) {
+          const pts = (this.planets || []).flatMap((p) => { const px = (this.inset + (p.map.x / 100) * (1 - 2 * this.inset)) * w; const py = (p.map.y / 100) * h; return [[px, py], [px, py + r0 * 2.1], [px - r0 * 1.2, py + r0 * 2.1], [px + r0 * 1.2, py + r0 * 2.1]]; });
+          let best = null;
+          for (const d of [2.6, 3.3, 4.2]) for (let k = 0; k < 16; k++) {
+            const a2 = (k / 16) * TAU; const cx2 = ex + Math.cos(a2) * r0 * d; const cy2 = ey + Math.sin(a2) * r0 * d;
+            if (cx2 < r * 1.3 || cx2 > w - r * 1.3 || cy2 < Math.max(r * 1.3, h * 0.14) || cy2 > h - r * 1.6) continue;
+            const room = Math.min(...pts.map(([qx, qy]) => Math.hypot(qx - cx2, qy - cy2))) - d * r0 * 0.05;
+            if (!best || room > best.room) best = { room, x: cx2, y: cy2 };
+          }
+          this.dsPos = best || { x: Math.min(w - r * 1.2, ex + r0 * 2.5), y: Math.max(r * 1.3, ey - r0 * 2.6) };
+          this.dsKey = fkey;
+        }
+        const x = this.dsPos.x; const y = this.dsPos.y;
+        ctx.globalAlpha = 0.62;
+        glow(ctx, x, y, r * 2.2, '#9fd0ff', 0.08);
+        ctx.save();
+        ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.clip();
+        // Interior and frame: rings of latitude and longitude.
+        ctx.fillStyle = 'rgba(10,14,24,0.55)'; ctx.fillRect(x - r, y - r, r * 2, r * 2);
+        ctx.strokeStyle = 'rgba(150,168,196,0.42)'; ctx.lineWidth = Math.max(0.6, r * 0.012);
+        for (let k = -5; k <= 5; k++) { const dy = (k / 6) * r; const hw = Math.sqrt(r * r - dy * dy); ctx.beginPath(); ctx.moveTo(x - hw, y + dy); ctx.lineTo(x + hw, y + dy); ctx.stroke(); }
+        for (let k = 1; k <= 5; k++) { ctx.beginPath(); ctx.ellipse(x, y, r * Math.cos((k / 6) * Math.PI / 2), r, 0, 0, TAU); ctx.stroke(); }
+        ctx.beginPath(); ctx.moveTo(x, y - r); ctx.lineTo(x, y + r); ctx.stroke();
+        // The finished hull: everything above a ragged construction edge.
+        const ax = x + r * 1.15; const ay = y - r * 0.55; const bx = x - r * 0.55; const by = y + r * 1.15;
+        const hull = new Path2D();
+        hull.moveTo(x - r * 2, y - r * 2); hull.lineTo(x + r * 2, y - r * 2); hull.lineTo(ax, ay);
+        for (let k = 1; k < 12; k++) {
+          const s = k / 12; const off = (k % 2 ? 0.12 : -0.05) * r * (k % 3 === 0 ? 1.6 : 1);
+          hull.lineTo(ax + (bx - ax) * s - off * 0.7, ay + (by - ay) * s - off * 0.7);
+        }
+        hull.lineTo(bx, by); hull.lineTo(x - r * 2, y + r * 2); hull.closePath();
+        const g = ctx.createRadialGradient(x - r * 0.45, y - r * 0.5, r * 0.1, x, y, r * 1.1);
+        g.addColorStop(0, 'rgba(196,204,216,0.92)'); g.addColorStop(0.55, 'rgba(128,138,154,0.9)'); g.addColorStop(1, 'rgba(58,66,80,0.9)');
+        ctx.fillStyle = g; ctx.fill(hull);
+        ctx.save(); ctx.clip(hull);
+        // Panel bands, the equator trench and the superlaser dish.
+        ctx.strokeStyle = 'rgba(40,48,62,0.35)'; ctx.lineWidth = Math.max(0.5, r * 0.01);
+        for (let k = -4; k <= 4; k++) { if (!k) continue; const dy = (k / 5) * r; const hw = Math.sqrt(r * r - dy * dy); ctx.beginPath(); ctx.moveTo(x - hw, y + dy); ctx.lineTo(x + hw, y + dy); ctx.stroke(); }
+        ctx.strokeStyle = 'rgba(24,30,42,0.75)'; ctx.lineWidth = Math.max(1, r * 0.035);
+        ctx.beginPath(); ctx.moveTo(x - r, y + r * 0.06); ctx.lineTo(x + r, y + r * 0.06); ctx.stroke();
+        const dx = x - r * 0.34; const dyy = y - r * 0.4; const dr = r * 0.25;
+        const dg = ctx.createRadialGradient(dx + dr * 0.25, dyy + dr * 0.25, dr * 0.1, dx, dyy, dr);
+        dg.addColorStop(0, 'rgba(70,80,96,0.95)'); dg.addColorStop(1, 'rgba(26,32,44,0.95)');
+        ctx.fillStyle = dg; ctx.beginPath(); ctx.arc(dx, dyy, dr, 0, TAU); ctx.fill();
+        ctx.strokeStyle = 'rgba(210,218,230,0.5)'; ctx.lineWidth = Math.max(0.6, r * 0.015); ctx.beginPath(); ctx.arc(dx, dyy, dr, Math.PI * 0.15, Math.PI * 1.1); ctx.stroke();
+        ctx.fillStyle = 'rgba(150,255,170,0.55)'; ctx.beginPath(); ctx.arc(dx, dyy, dr * 0.12, 0, TAU); ctx.fill();
+        ctx.restore();
+        // Rim light, and work lights blinking along the edge of the plating.
+        ctx.restore();
+        ctx.strokeStyle = 'rgba(200,215,240,0.28)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(x, y, r, Math.PI * 0.8, Math.PI * 1.75); ctx.stroke();
+        ctx.globalCompositeOperation = 'lighter';
+        for (let k = 1; k < 8; k++) {
+          const s = k / 8; const lx = ax + (bx - ax) * s; const ly = ay + (by - ay) * s;
+          if (Math.hypot(lx - x, ly - y) > r * 0.96) continue;
+          const a = 0.35 + 0.35 * Math.sin(t * 2.2 + k * 1.7);
+          ctx.fillStyle = `rgba(255,214,140,${a.toFixed(2)})`; ctx.beginPath(); ctx.arc(lx, ly, Math.max(1, r * 0.022), 0, TAU); ctx.fill();
+        }
       } else if (f === 'shieldgate') {
         ctx.strokeStyle = `rgba(120,255,255,${0.08 + Math.sin(t) * 0.03})`; ctx.lineWidth = 1;
         const step = 34;
