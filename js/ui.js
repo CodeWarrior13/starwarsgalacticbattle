@@ -3004,7 +3004,7 @@
       </div>`;
     }).join('');
     const m = openModal(`
-      <div style="text-align:center"><p class="eyebrow">${packId ? 'Relic unsealed' : 'Delivery from Vekko'}</p><h2 data-reveal-title>Tap to reveal</h2></div>
+      <div style="text-align:center"><p class="eyebrow">${opts.eyebrow ? esc(opts.eyebrow) : packId ? 'Relic unsealed' : 'Delivery from Vekko'}</p><h2 data-reveal-title>Tap to reveal</h2></div>
       <div class="reveal-stack" data-stack>${cards}</div>
       <p class="reveal-hint" data-reveal-hint hidden>Tap the card for the next one</p>
       <div class="reveal-summary" data-summary hidden></div>
@@ -3035,7 +3035,7 @@
         $('[data-stack]', m.root).hidden = true;
         sum.hidden = false;
         doneBtn.hidden = false;
-        title.textContent = 'Crate complete';
+        title.textContent = opts.doneTitle || 'Crate complete';
         doneBtn.focus();
       } else {
         doneBtn.hidden = false;

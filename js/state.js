@@ -772,13 +772,20 @@
       return out;
     },
 
-    // Update 2.1: battles replayed by Auto-repeat earn less XP from level 15,
-    // dropping as you climb (60% at 15, 2% less each level, never below 25%).
-    // Playing yourself, and first clears, always earn the full amount.
+    // Update 2.1: battles replayed by Auto-repeat earn far less XP from level
+    // 15. The rate drops as you climb (30% at 15, 2% less each level, 5% from
+    // level 28), and keeps dropping the more you repeat in a day: the Nth
+    // repeat today earns 1 / (1 + N/50) of that. Leaving it running all night
+    // adds up to about a level or two, not a dozen. Playing yourself, and first
+    // clears, always earn the full amount.
     farmXp(xp, params, firstClear) {
       const lv = this.state.account.level;
       if (!params || !params.farm || firstClear || lv < 15 || !(root.Update21 && root.Update21.on())) return xp;
-      return Math.max(1, Math.round(xp * Math.max(0.25, 0.6 - (lv - 15) * 0.02)));
+      const day = Math.floor(Date.now() / 86400000);
+      const f = this.state.farm && this.state.farm.day === day ? this.state.farm : (this.state.farm = { day, n: 0 });
+      const rate = Math.max(0.05, 0.3 - (lv - 15) * 0.02) / (1 + f.n / 50);
+      f.n += 1;
+      return Math.max(1, Math.round(xp * rate));
     },
 
     // Record a finished battle and grant rewards (with the luck spin applied).

@@ -9,10 +9,14 @@
 
   const PREF_KEY = 'swcg-battle-prefs';
   const AUTO_REPEAT_LEVEL = 15;
-  // Auto-repeat can stop after a set number of battles (update 2.1). Battles
-  // still to go in the current run; null = keep going.
+  // Auto-repeat can stop after a set number of battles (update 2.1). The
+  // battles still to go are kept in the save (Player.state.repeatLeft), so a
+  // reload never restarts the count; null = keep going.
   const REPEAT_MAX = 100000;
-  let repeatLeft = null;
+  const rep = {
+    get left() { const v = Player.state.repeatLeft; return v == null ? null : v; },
+    set left(v) { Player.state.repeatLeft = v == null ? null : Math.max(0, v); },
+  };
   const v21 = () => !!(root.Update21 && root.Update21.on());
   const AUTO_NEXT_LEVEL = 20;
   function loadPrefs() {
@@ -2045,7 +2049,6 @@
       const seg = (md, label, on) => `<button type="button" class="${mode === md ? 'on' : ''}" data-auto-mode="${md}" ${on ? '' : 'disabled'}>${label}</button>`;
       const timesOn = canRepeat && v21();
       const repeatN = Player.state.repeatN || 0;
-      if (timesOn && mode === 'repeat' && repeatLeft == null && repeatN) repeatLeft = repeatN;
       const timesHtml = timesOn ? `<div class="auto-times" data-auto-times><span class="muted small">Repeat</span><input type="text" inputmode="numeric" maxlength="7" autocomplete="off" class="auto-times-in" data-times-in value="${repeatN ? fmt(repeatN) : ''}" placeholder="#" aria-label="How many battles to repeat (up to ${fmt(REPEAT_MAX)})"><span class="muted small">times</span><button type="button" class="${repeatN ? '' : 'on'}" data-times="0" aria-label="Keep repeating">∞</button></div>` : '';
       const autoHtml = !(nextParams || canRepeat) ? '' : canAuto
         ? `<div class="auto-next"><span class="auto-lbl"><span class="at-dot ${autoOn ? 'on' : ''}"></span>Auto-continue</span><div class="auto-seg" role="group" aria-label="Auto-continue">${seg('off', 'Off', true)}${seg('repeat', 'Repeat', canRepeat)}${hasNext ? seg('next', 'Next', !!nextParams) : ''}</div><span class="auto-count" data-auto-count></span></div>${timesHtml}${!hasNext ? `<p class="auto-locked muted small">Next (jump straight to the next battle) unlocks at level ${AUTO_NEXT_LEVEL}</p>` : ''}`
@@ -2083,7 +2086,7 @@
       const stopCount = () => { if (countdown) { clearInterval(countdown); countdown = null; } const c = m.root.querySelector('[data-auto-count]'); if (c) c.textContent = ''; };
       // Battles replayed by Auto-repeat are marked so they earn the farming XP rate.
       const go = (next, farm) => {
-        if (farm && repeatLeft != null) repeatLeft -= 1;
+        if (farm && rep.left != null) { rep.left -= 1; Player.save(); }
         stopCount(); m.close(); this.quickStart(farm ? { ...next, farm: true } : next);
       };
       const startCount = () => {
@@ -2092,14 +2095,20 @@
         if (md === 'off' || !target || countdown || !m.root.isConnected) return;
         const c = m.root.querySelector('[data-auto-count]');
         // The chosen number of repeats is done: stop here.
-        if (md === 'repeat' && repeatLeft != null && repeatLeft <= 0) {
+        if (md === 'repeat' && rep.left != null && rep.left <= 0) {
+          // Done: Auto-repeat switches itself off and stays off until picked again.
           if (c) c.textContent = `Auto-repeat done: ${fmt(Player.state.repeatN || 0)} battles`;
-          repeatLeft = null;
+          rep.left = null;
+          Player.state.autoNext = false;
+          Player.save();
+          m.root.querySelectorAll('[data-auto-mode]').forEach((b) => b.classList.toggle('on', b.dataset.autoMode === 'off'));
+          const dot = m.root.querySelector('.auto-next .at-dot');
+          if (dot) dot.classList.remove('on');
           toast(`Auto-repeat finished after ${fmt(Player.state.repeatN || 0)} battles.`);
           return;
         }
         let n = 3;
-        const left = md === 'repeat' && repeatLeft != null ? ` (${fmt(repeatLeft)} left)` : '';
+        const left = md === 'repeat' && rep.left != null ? ` (${fmt(rep.left)} left)` : '';
         const tick = () => { if (!m.root.isConnected) return stopCount(); if (document.querySelector('.rank-up, .walkout, .feat-show, .feat-cine')) return; if (n <= 0) return go(target, md === 'repeat'); if (c) c.textContent = `${md === 'repeat' ? 'Again' : 'Next battle'} in ${n}…${left}`; n -= 1; };
         tick();
         countdown = setInterval(tick, 1000);
@@ -2110,7 +2119,7 @@
       const setTimes = (n) => {
         Player.state.repeatN = n;
         Player.save();
-        repeatLeft = n || null;
+        rep.left = n || null;
         const inf = m.root.querySelector('[data-times]');
         if (inf) inf.classList.toggle('on', !n);
         stopCount();
@@ -2138,7 +2147,7 @@
         const am = e.target.closest('[data-auto-mode]');
         if (am && !am.disabled) {
           const md = am.dataset.autoMode;
-          if (md === 'repeat') repeatLeft = Player.state.repeatN || null;
+          if (md === 'repeat') rep.left = Player.state.repeatN || null;
           Player.state.autoNext = md === 'off' ? false : md === 'repeat' ? 'repeat' : true;
           Player.save();
           m.root.querySelectorAll('[data-auto-mode]').forEach((b) => b.classList.toggle('on', b === am));

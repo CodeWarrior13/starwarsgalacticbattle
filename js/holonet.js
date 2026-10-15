@@ -1485,17 +1485,29 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
 .hn-capture .stage { position: relative; width: min(80vmin, 420px); aspect-ratio: 1; }
 .hn-capture .stage > * { position: absolute; inset: 0; }
 .hn-capture .pk svg { width: 100%; height: 100%; }
-.hn-capture .acq { top: auto; bottom: -50px; text-align: center; font: 800 clamp(14px, 3.4vw, 20px) var(--font-display); letter-spacing: .2em; color: #8fe8ff; opacity: 0; animation: hn-title 3.4s .9s ease forwards; }
+.hn-capture .acq { top: auto; bottom: -50px; text-align: center; font: 800 clamp(14px, 3.4vw, 20px) var(--font-display); letter-spacing: .2em; color: #8fe8ff; opacity: 0; animation: hn-title 3.6s 1.4s ease forwards; }
 .hn-capture .acq small { display: block; font-size: .7em; color: #ffcf8a; letter-spacing: .14em; }
-.hn-capture .zap { background: #dff8ff; opacity: 0; mix-blend-mode: screen; animation: hn-flash .5s 2.1s forwards; border-radius: 50%; }
-.hn-capture .slab { inset: 8% 24%; border-radius: 8px; background: linear-gradient(135deg, #6a7480, #3a424c 50%, #20262e); box-shadow: inset 0 0 20px #000, 0 0 30px rgba(140, 180, 220, 0.4); opacity: 0; transform: scale(.6); animation: hn-slab .5s cubic-bezier(.2,.9,.3,1.2) 2.25s forwards, hn-burst .45s ease-in 3.5s forwards; display: grid; place-items: center; overflow: hidden; }
+.hn-capture .zap { background: #dff8ff; opacity: 0; mix-blend-mode: screen; animation: hn-flash .5s 2.9s forwards; border-radius: 50%; }
+.hn-capture .slab { inset: 8% 24%; border-radius: 8px; background: linear-gradient(135deg, #6a7480, #3a424c 50%, #20262e); box-shadow: inset 0 0 20px #000, 0 0 30px rgba(140, 180, 220, 0.4); opacity: 0; transform: scale(.6); animation: hn-slab .5s cubic-bezier(.2,.9,.3,1.2) 3.05s forwards, hn-burst .45s ease-in 4.3s forwards; display: grid; place-items: center; overflow: hidden; }
 .hn-capture .slab svg { width: 86%; height: auto; opacity: .55; filter: grayscale(1) contrast(1.4); }
 .hn-capture .slab .crack { position: absolute; inset: 0; }
-.hn-capture .slab .crack path { fill: none; stroke: #ffe8b0; stroke-width: 1.4; stroke-dasharray: 200; stroke-dashoffset: 200; animation: hn-crack .6s ease-out 2.9s forwards; filter: drop-shadow(0 0 4px #ffcf7a); }
+.hn-capture .slab .crack path { fill: none; stroke: #ffe8b0; stroke-width: 1.4; stroke-dasharray: 200; stroke-dashoffset: 200; animation: hn-crack .6s ease-out 3.7s forwards; filter: drop-shadow(0 0 4px #ffcf7a); }
 @keyframes hn-slab { to { opacity: 1; transform: none; } }
 @keyframes hn-burst { to { opacity: 0; transform: scale(1.4); filter: brightness(3); } }
 @keyframes hn-crack { to { stroke-dashoffset: 0; } }
-.hn-capture .pk { animation: hn-out .2s 2.2s forwards; }
+.hn-capture .pk { animation: hn-pkin .9s cubic-bezier(.2,.9,.3,1.15) both, hn-pkdown .6s ease-in-out 1s forwards, hn-out .2s 3s forwards; }
+.hn-capture .pk svg { animation: hn-hover 1.6s ease-in-out .9s infinite; }
+@keyframes hn-hover { 50% { transform: translateY(-3%); } }
+/* The target's hologram rises out of the puck before it's frozen in carbonite. */
+.hn-capture .beam { inset: 30% 30% 22%; background: linear-gradient(0deg, color-mix(in srgb, var(--tc) 55%, transparent), transparent 85%); clip-path: polygon(44% 100%, 56% 100%, 100% 0, 0 0); opacity: 0; filter: blur(2px); animation: hn-beamup .5s ease-out 1.3s forwards, hn-out .2s 3s forwards; }
+.hn-capture .holo { inset: 4% 26% 34%; display: grid; place-items: center; opacity: 0; animation: hn-holo .6s ease-out 1.5s forwards, hn-out .2s 3s forwards; }
+.hn-capture .holo svg { width: 100%; height: auto; filter: drop-shadow(0 0 6px var(--tc)) drop-shadow(0 0 16px var(--tc)); animation: hn-flick 1.6s 1.5s infinite, hn-turn 2.4s 1.5s ease-in-out infinite; }
+.hn-capture .holo::after { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.12) 0 1px, transparent 1px 4px); mix-blend-mode: overlay; animation: hn-scan 1.2s linear infinite; }
+@keyframes hn-pkin { from { opacity: 0; transform: translateY(-40%) scale(.5) rotate(-40deg); } to { opacity: 1; transform: none; } }
+@keyframes hn-pkdown { to { transform: translateY(30%) scale(.42); } }
+@keyframes hn-beamup { from { opacity: 0; transform: scaleY(.1); transform-origin: 50% 100%; } to { opacity: .9; transform: none; } }
+@keyframes hn-holo { from { opacity: 0; transform: translateY(18%) scaleY(.2); } to { opacity: .95; transform: none; } }
+@keyframes hn-scan { to { background-position: 0 8px; } }
 .hn-capture .tap { position: absolute; bottom: 16px; right: 16px; font-size: 12px; color: #9fc4d8; }
 .hn-reveal { display: grid; gap: 12px; }
 .hn-reveal .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(30%, 120px), 1fr)); gap: 10px; }
@@ -2451,36 +2463,36 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       const out = rollPuck(tier, target, norm);
       UI.updateWallet();
       const crack = '<svg class="crack" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M50 0 L46 22 L58 38 L44 56 L56 74 L48 100"/><path d="M46 22 L20 30 M58 38 L84 30 M44 56 L14 64 M56 74 L88 80"/></svg>';
-      const node = el(`<div class="hn-capture" role="dialog" aria-label="Bounty capture"><div class="stage">
+      const tc = { guild: '#5fd8ff', elite: '#c08aff', high: '#ffd23f', legend: '#ff8a4a' }[tier] || '#5fd8ff';
+      const node = el(`<div class="hn-capture" role="dialog" aria-label="Bounty capture" style="--tc:${tc}"><div class="stage">
         <div class="pk"><svg viewBox="0 0 100 100">${A.puck(tier, target, { bare: true })}</svg></div>
+        <div class="beam"></div>
+        <div class="holo"><svg viewBox="30 6 40 48">${A.figure(target, tc)}</svg></div>
         <div class="zap"></div>
         <div class="slab"><svg viewBox="30 6 40 48">${A.figure(target, '#c8d0da')}</svg>${crack}</div>
         <div class="acq">TARGET ACQUIRED<small>${esc(t.name)} · ${fmt(t.bounty)} cr</small></div>
       </div><span class="tap">Tap to skip</span></div>`);
       document.body.appendChild(node);
       sound('zap');
-      setTimeout(() => sound('ignite'), 2100);
-      setTimeout(() => sound('explosion'), 3500);
+      setTimeout(() => sound('ignite'), 1400);
+      setTimeout(() => sound('zap'), 2900);
+      setTimeout(() => sound('explosion'), 4300);
       let done = false;
       const end = () => { if (done) return; done = true; node.remove(); reveal(out, t).then(resolve); };
       node.addEventListener('click', end);
-      setTimeout(end, motion() ? 4000 : 50);
+      setTimeout(end, motion() ? 4800 : 50);
     });
   }
+  // The cards come out one at a time, like a crate, centred on any screen.
   function reveal(out, t) {
     return new Promise((resolve) => {
-      const res = out.results;
-      const m = openModal(`<div class="hn-reveal"><p class="eyebrow" style="text-align:center">${esc(t.name)} · bounty collected${out.first ? ' · NEW CAPTURE' : ''}</p>
-        <div class="grid">${res.map((r, i) => { const def = D.UNIT_MAP[r.id]; const big = RARS.indexOf(r.rarity) >= 3 || r.hn; return `<div class="rc ${big ? 'big' : ''}" style="--t:${0.15 + i * 0.22}s"><span class="tag ${r.isNew ? 'new' : ''}">${r.isNew ? 'NEW' : `+${r.shards}`}${r.hn ? ' · HOLONET' : ''}</span>${r.hn ? hnCard(def) : UI.unitCard(def, { tag: 'div', hideShards: true, holo: r.holo })}</div>`; }).join('')}</div>
-        ${out.rowPaid ? `<div class="hn-free"><span class="grow">Row complete in the Captured log!</span>${bes(out.rowPaid)}</div>` : ''}
-        <div class="modal-actions"><button type="button" class="btn btn-primary" data-x="ok">Done</button></div></div>`, { small: false, dismissable: false });
-      res.forEach((r, i) => { if (RARS.indexOf(r.rarity) >= 3 || r.hn) setTimeout(() => sound('reveal_legendary'), 200 + i * 220); });
-      m.root.addEventListener('click', async (e) => {
-        if (!e.target.closest('[data-x]')) return;
-        m.close();
-        for (const r of res) if (r.isNew && (r.hn || r.rarity === 'mythic')) await UI.walkout(D.UNIT_MAP[r.id], D.UNIT_MAP[r.id].rarity, !!r.holo, { exclusive: r.hn, isNew: true, shards: 0 });
+      const res = out.results.map((r) => ({ id: r.id, isNew: r.isNew, shards: r.shards || 0, holo: !!r.holo }));
+      const after = async () => {
+        if (out.rowPaid) toast(`Row complete in the Captured log! +${fmt(out.rowPaid)} Beskar`);
+        for (const r of out.results) if (r.isNew && (r.hn || r.rarity === 'mythic')) await UI.walkout(D.UNIT_MAP[r.id], D.UNIT_MAP[r.id].rarity, !!r.holo, { exclusive: r.hn, isNew: true, shards: 0 });
         resolve();
-      });
+      };
+      UI.packReveal(res, null, { eyebrow: `${t.name} · bounty collected${out.first ? ' · new capture' : ''}`, doneTitle: 'Bounty collected', onClose: after });
     });
   }
   const pay = (cur, n) => {
