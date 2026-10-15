@@ -1337,6 +1337,89 @@
     e.g.skirmish = [];
   }
 
+  // The second Death Star, half built: a finished, shaded hull (superlaser
+  // dish and equator trench) on the upper left, and the bare lattice frame
+  // showing through where the plating stops. Used over Endor in fleet battles
+  // and on the galaxy map.
+  // The second Death Star, half built: a finished, shaded hull (superlaser
+  // dish and equator trench) on the upper left, and the bare lattice frame
+  // showing through where the plating stops. It drifts gently, the frame
+  // slowly turns and work lights blink along the edge. The hull (the costly
+  // part, with its gradients) is painted once into a small cached canvas, so
+  // each frame only adds a few lines. Used over Endor in fleet battles and on
+  // the galaxy map.
+  const DS2_CACHE = {};
+  const ds2Edge = (x, y, r) => [x + r * 1.15, y - r * 0.55, x - r * 0.55, y + r * 1.15];
+  function ds2Hull(r, scale) {
+    const key = `${Math.round(r)}|${scale}`;
+    if (DS2_CACHE[key]) return DS2_CACHE[key];
+    const size = Math.ceil(r * 2 + 4);
+    const cv = document.createElement('canvas');
+    cv.width = Math.ceil(size * scale); cv.height = Math.ceil(size * scale);
+    const c = cv.getContext('2d');
+    c.scale(scale, scale);
+    const x = size / 2; const y = size / 2;
+    c.beginPath(); c.arc(x, y, r, 0, TAU); c.clip();
+    const [ax, ay, bx, by] = ds2Edge(x, y, r);
+    const hull = new Path2D();
+    hull.moveTo(x - r * 2, y - r * 2); hull.lineTo(x + r * 2, y - r * 2); hull.lineTo(ax, ay);
+    for (let k = 1; k < 12; k++) {
+      const s = k / 12; const off = (k % 2 ? 0.12 : -0.05) * r * (k % 3 === 0 ? 1.6 : 1);
+      hull.lineTo(ax + (bx - ax) * s - off * 0.7, ay + (by - ay) * s - off * 0.7);
+    }
+    hull.lineTo(bx, by); hull.lineTo(x - r * 2, y + r * 2); hull.closePath();
+    const g = c.createRadialGradient(x - r * 0.45, y - r * 0.5, r * 0.1, x, y, r * 1.1);
+    g.addColorStop(0, 'rgba(196,204,216,0.95)'); g.addColorStop(0.55, 'rgba(128,138,154,0.94)'); g.addColorStop(1, 'rgba(58,66,80,0.94)');
+    c.fillStyle = g; c.fill(hull);
+    c.clip(hull);
+    c.strokeStyle = 'rgba(40,48,62,0.35)'; c.lineWidth = Math.max(0.5, r * 0.01);
+    for (let k = -4; k <= 4; k++) { if (!k) continue; const dy = (k / 5) * r; const hw = Math.sqrt(r * r - dy * dy); c.beginPath(); c.moveTo(x - hw, y + dy); c.lineTo(x + hw, y + dy); c.stroke(); }
+    c.strokeStyle = 'rgba(24,30,42,0.75)'; c.lineWidth = Math.max(1, r * 0.035);
+    c.beginPath(); c.moveTo(x - r, y + r * 0.06); c.lineTo(x + r, y + r * 0.06); c.stroke();
+    const dx = x - r * 0.34; const dyy = y - r * 0.4; const dr = r * 0.25;
+    const dg = c.createRadialGradient(dx + dr * 0.25, dyy + dr * 0.25, dr * 0.1, dx, dyy, dr);
+    dg.addColorStop(0, 'rgba(70,80,96,0.95)'); dg.addColorStop(1, 'rgba(26,32,44,0.95)');
+    c.fillStyle = dg; c.beginPath(); c.arc(dx, dyy, dr, 0, TAU); c.fill();
+    c.strokeStyle = 'rgba(210,218,230,0.5)'; c.lineWidth = Math.max(0.6, r * 0.015); c.beginPath(); c.arc(dx, dyy, dr, Math.PI * 0.15, Math.PI * 1.1); c.stroke();
+    c.fillStyle = 'rgba(150,255,170,0.55)'; c.beginPath(); c.arc(dx, dyy, dr * 0.12, 0, TAU); c.fill();
+    const out = { cv, size };
+    DS2_CACHE[key] = out;
+    return out;
+  }
+  function deathStar2(ctx, x0, y0, r, t) {
+    const x = x0; const y = y0 + Math.sin(t * 0.35) * r * 0.03;
+    const scale = Math.min(3, (ctx.getTransform ? ctx.getTransform().a : 1) || 1);
+    ctx.save();
+    glow(ctx, x, y, r * 2.2, '#9fd0ff', 0.08);
+    // The bare frame underneath: rings of latitude, and longitudes turning slowly.
+    ctx.save();
+    ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.clip();
+    ctx.fillStyle = 'rgba(10,14,24,0.55)'; ctx.fillRect(x - r, y - r, r * 2, r * 2);
+    ctx.strokeStyle = 'rgba(150,168,196,0.42)'; ctx.lineWidth = Math.max(0.6, r * 0.012);
+    ctx.beginPath();
+    for (let k = -5; k <= 5; k++) { const dy = (k / 6) * r; const hw = Math.sqrt(r * r - dy * dy); ctx.moveTo(x - hw, y + dy); ctx.lineTo(x + hw, y + dy); }
+    ctx.stroke();
+    const spin = (t * 0.05) % (Math.PI / 6);
+    ctx.beginPath();
+    for (let k = 0; k < 6; k++) { const rx = Math.abs(r * Math.sin(k * (Math.PI / 6) + spin)); ctx.moveTo(x + rx, y); ctx.ellipse(x, y, Math.max(0.5, rx), r, 0, 0, TAU); }
+    ctx.stroke();
+    ctx.restore();
+    // The finished hull, from the cache.
+    const hull = ds2Hull(r, scale);
+    ctx.drawImage(hull.cv, x - hull.size / 2, y - hull.size / 2, hull.size, hull.size);
+    // Rim light, and work lights blinking along the edge of the plating.
+    ctx.strokeStyle = 'rgba(200,215,240,0.28)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(x, y, r, Math.PI * 0.8, Math.PI * 1.75); ctx.stroke();
+    ctx.globalCompositeOperation = 'lighter';
+    const [ax, ay, bx, by] = ds2Edge(x, y, r);
+    for (let k = 1; k < 8; k++) {
+      const s = k / 8; const lx = ax + (bx - ax) * s; const ly = ay + (by - ay) * s;
+      if (Math.hypot(lx - x, ly - y) > r * 0.96) continue;
+      const a = 0.35 + 0.35 * Math.sin(t * 2.2 + k * 1.7);
+      ctx.fillStyle = `rgba(255,214,140,${a.toFixed(2)})`; ctx.fillRect(lx - 1, ly - 1, Math.max(2, r * 0.035), Math.max(2, r * 0.035));
+    }
+    ctx.restore();
+  }
+
   function spaceDraw(e, ctx, w, h, t, J) {
     const neb = SPACE_NEBULA[e.planet] || SPACE_NEBULA.tatooine;
     ctx.save();
@@ -1374,19 +1457,7 @@
       ctx.fillStyle = 'rgba(120,130,150,0.9)';
       ctx.beginPath(); ctx.arc(w * 0.12 + pr * 0.95, h * 1.18 - pr * 0.68, 5, 0, TAU); ctx.fill();
     }
-    if (special === 'endor') {
-      const dx = w * 0.82;
-      const dy = h * 0.28;
-      const dr = h * 0.14;
-      ctx.fillStyle = 'rgba(150,158,170,0.9)';
-      ctx.beginPath(); ctx.arc(dx, dy, dr, Math.PI * 0.15, Math.PI * 1.35); ctx.fill();
-      ctx.strokeStyle = 'rgba(150,158,170,0.6)';
-      ctx.lineWidth = 1;
-      for (let i = 1; i < 5; i++) { ctx.beginPath(); ctx.arc(dx, dy, dr * (i / 5), Math.PI * 1.35, Math.PI * 2.15); ctx.stroke(); }
-      for (let a = 1.35; a < 2.15; a += 0.12) { ctx.beginPath(); ctx.moveTo(dx, dy); ctx.lineTo(dx + Math.cos(a * Math.PI) * dr, dy + Math.sin(a * Math.PI) * dr); ctx.stroke(); }
-      ctx.fillStyle = 'rgba(80,200,120,0.9)';
-      ctx.beginPath(); ctx.arc(dx - dr * 0.35, dy - dr * 0.3, dr * 0.14, 0, TAU); ctx.fill();
-    }
+    if (special === 'endor') deathStar2(ctx, w * 0.8, h * 0.27, h * 0.15, t);
     ctx.restore();
     if (special === 'coruscant_siege') {
       // The whole Republic and Separatist fleets locked in orbit.
@@ -2194,50 +2265,7 @@
         }
         const x = this.dsPos.x; const y = this.dsPos.y;
         ctx.globalAlpha = 0.62;
-        glow(ctx, x, y, r * 2.2, '#9fd0ff', 0.08);
-        ctx.save();
-        ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.clip();
-        // Interior and frame: rings of latitude and longitude.
-        ctx.fillStyle = 'rgba(10,14,24,0.55)'; ctx.fillRect(x - r, y - r, r * 2, r * 2);
-        ctx.strokeStyle = 'rgba(150,168,196,0.42)'; ctx.lineWidth = Math.max(0.6, r * 0.012);
-        for (let k = -5; k <= 5; k++) { const dy = (k / 6) * r; const hw = Math.sqrt(r * r - dy * dy); ctx.beginPath(); ctx.moveTo(x - hw, y + dy); ctx.lineTo(x + hw, y + dy); ctx.stroke(); }
-        for (let k = 1; k <= 5; k++) { ctx.beginPath(); ctx.ellipse(x, y, r * Math.cos((k / 6) * Math.PI / 2), r, 0, 0, TAU); ctx.stroke(); }
-        ctx.beginPath(); ctx.moveTo(x, y - r); ctx.lineTo(x, y + r); ctx.stroke();
-        // The finished hull: everything above a ragged construction edge.
-        const ax = x + r * 1.15; const ay = y - r * 0.55; const bx = x - r * 0.55; const by = y + r * 1.15;
-        const hull = new Path2D();
-        hull.moveTo(x - r * 2, y - r * 2); hull.lineTo(x + r * 2, y - r * 2); hull.lineTo(ax, ay);
-        for (let k = 1; k < 12; k++) {
-          const s = k / 12; const off = (k % 2 ? 0.12 : -0.05) * r * (k % 3 === 0 ? 1.6 : 1);
-          hull.lineTo(ax + (bx - ax) * s - off * 0.7, ay + (by - ay) * s - off * 0.7);
-        }
-        hull.lineTo(bx, by); hull.lineTo(x - r * 2, y + r * 2); hull.closePath();
-        const g = ctx.createRadialGradient(x - r * 0.45, y - r * 0.5, r * 0.1, x, y, r * 1.1);
-        g.addColorStop(0, 'rgba(196,204,216,0.92)'); g.addColorStop(0.55, 'rgba(128,138,154,0.9)'); g.addColorStop(1, 'rgba(58,66,80,0.9)');
-        ctx.fillStyle = g; ctx.fill(hull);
-        ctx.save(); ctx.clip(hull);
-        // Panel bands, the equator trench and the superlaser dish.
-        ctx.strokeStyle = 'rgba(40,48,62,0.35)'; ctx.lineWidth = Math.max(0.5, r * 0.01);
-        for (let k = -4; k <= 4; k++) { if (!k) continue; const dy = (k / 5) * r; const hw = Math.sqrt(r * r - dy * dy); ctx.beginPath(); ctx.moveTo(x - hw, y + dy); ctx.lineTo(x + hw, y + dy); ctx.stroke(); }
-        ctx.strokeStyle = 'rgba(24,30,42,0.75)'; ctx.lineWidth = Math.max(1, r * 0.035);
-        ctx.beginPath(); ctx.moveTo(x - r, y + r * 0.06); ctx.lineTo(x + r, y + r * 0.06); ctx.stroke();
-        const dx = x - r * 0.34; const dyy = y - r * 0.4; const dr = r * 0.25;
-        const dg = ctx.createRadialGradient(dx + dr * 0.25, dyy + dr * 0.25, dr * 0.1, dx, dyy, dr);
-        dg.addColorStop(0, 'rgba(70,80,96,0.95)'); dg.addColorStop(1, 'rgba(26,32,44,0.95)');
-        ctx.fillStyle = dg; ctx.beginPath(); ctx.arc(dx, dyy, dr, 0, TAU); ctx.fill();
-        ctx.strokeStyle = 'rgba(210,218,230,0.5)'; ctx.lineWidth = Math.max(0.6, r * 0.015); ctx.beginPath(); ctx.arc(dx, dyy, dr, Math.PI * 0.15, Math.PI * 1.1); ctx.stroke();
-        ctx.fillStyle = 'rgba(150,255,170,0.55)'; ctx.beginPath(); ctx.arc(dx, dyy, dr * 0.12, 0, TAU); ctx.fill();
-        ctx.restore();
-        // Rim light, and work lights blinking along the edge of the plating.
-        ctx.restore();
-        ctx.strokeStyle = 'rgba(200,215,240,0.28)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(x, y, r, Math.PI * 0.8, Math.PI * 1.75); ctx.stroke();
-        ctx.globalCompositeOperation = 'lighter';
-        for (let k = 1; k < 8; k++) {
-          const s = k / 8; const lx = ax + (bx - ax) * s; const ly = ay + (by - ay) * s;
-          if (Math.hypot(lx - x, ly - y) > r * 0.96) continue;
-          const a = 0.35 + 0.35 * Math.sin(t * 2.2 + k * 1.7);
-          ctx.fillStyle = `rgba(255,214,140,${a.toFixed(2)})`; ctx.beginPath(); ctx.arc(lx, ly, Math.max(1, r * 0.022), 0, TAU); ctx.fill();
-        }
+        deathStar2(ctx, x, y, r, t);
       } else if (f === 'shieldgate') {
         ctx.strokeStyle = `rgba(120,255,255,${0.08 + Math.sin(t) * 0.03})`; ctx.lineWidth = 1;
         const step = 34;

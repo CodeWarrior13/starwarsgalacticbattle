@@ -9,6 +9,11 @@
 
   const PREF_KEY = 'swcg-battle-prefs';
   const AUTO_REPEAT_LEVEL = 15;
+  // Auto-repeat can stop after a set number of battles (update 2.1). Battles
+  // still to go in the current run; null = keep going.
+  const REPEAT_MAX = 999;
+  let repeatLeft = null;
+  const v21 = () => !!(root.Update21 && root.Update21.on());
   const AUTO_NEXT_LEVEL = 20;
   function loadPrefs() {
     try {
@@ -2038,8 +2043,12 @@
       const autoOn = mode !== 'off';
       const targetOf = (md) => (md === 'repeat' ? { ...p } : nextParams);
       const seg = (md, label, on) => `<button type="button" class="${mode === md ? 'on' : ''}" data-auto-mode="${md}" ${on ? '' : 'disabled'}>${label}</button>`;
+      const timesOn = canRepeat && v21();
+      const repeatN = Player.state.repeatN || 0;
+      if (timesOn && mode === 'repeat' && repeatLeft == null && repeatN) repeatLeft = repeatN;
+      const timesHtml = timesOn ? `<div class="auto-times" data-auto-times><span class="muted small">Repeat</span><input type="number" inputmode="numeric" min="1" max="${REPEAT_MAX}" step="1" class="auto-times-in" data-times-in value="${repeatN || ''}" placeholder="#" aria-label="How many battles to repeat"><span class="muted small">times</span><button type="button" class="${repeatN ? '' : 'on'}" data-times="0" aria-label="Keep repeating">∞</button></div>` : '';
       const autoHtml = !(nextParams || canRepeat) ? '' : canAuto
-        ? `<div class="auto-next"><span class="auto-lbl"><span class="at-dot ${autoOn ? 'on' : ''}"></span>Auto-continue</span><div class="auto-seg" role="group" aria-label="Auto-continue">${seg('off', 'Off', true)}${seg('repeat', 'Repeat', canRepeat)}${hasNext ? seg('next', 'Next', !!nextParams) : ''}</div><span class="auto-count" data-auto-count></span></div>${!hasNext ? `<p class="auto-locked muted small">Next (jump straight to the next battle) unlocks at level ${AUTO_NEXT_LEVEL}</p>` : ''}`
+        ? `<div class="auto-next"><span class="auto-lbl"><span class="at-dot ${autoOn ? 'on' : ''}"></span>Auto-continue</span><div class="auto-seg" role="group" aria-label="Auto-continue">${seg('off', 'Off', true)}${seg('repeat', 'Repeat', canRepeat)}${hasNext ? seg('next', 'Next', !!nextParams) : ''}</div><span class="auto-count" data-auto-count></span></div>${timesHtml}${!hasNext ? `<p class="auto-locked muted small">Next (jump straight to the next battle) unlocks at level ${AUTO_NEXT_LEVEL}</p>` : ''}`
         : `<p class="auto-locked muted small">Auto-repeat (farm this battle) unlocks at account level ${AUTO_REPEAT_LEVEL}</p>`;
       const m = openModal(`
         <div class="result-title ${won ? 'win' : 'lose'}">${won ? 'VICTORY' : 'DEFEAT'}</div>
@@ -2073,23 +2082,53 @@
       let countdown = null;
       const stopCount = () => { if (countdown) { clearInterval(countdown); countdown = null; } const c = m.root.querySelector('[data-auto-count]'); if (c) c.textContent = ''; };
       // Battles replayed by Auto-repeat are marked so they earn the farming XP rate.
-      const go = (next, farm) => { stopCount(); m.close(); this.quickStart(farm ? { ...next, farm: true } : next); };
+      const go = (next, farm) => {
+        if (farm && repeatLeft != null) repeatLeft -= 1;
+        stopCount(); m.close(); this.quickStart(farm ? { ...next, farm: true } : next);
+      };
       const startCount = () => {
         const md = curMode();
         const target = targetOf(md);
         if (md === 'off' || !target || countdown || !m.root.isConnected) return;
-        let n = 3;
         const c = m.root.querySelector('[data-auto-count]');
-        const tick = () => { if (!m.root.isConnected) return stopCount(); if (document.querySelector('.rank-up, .walkout, .feat-show, .feat-cine')) return; if (n <= 0) return go(target, md === 'repeat'); if (c) c.textContent = `${md === 'repeat' ? 'Again' : 'Next battle'} in ${n}…`; n -= 1; };
+        // The chosen number of repeats is done: stop here.
+        if (md === 'repeat' && repeatLeft != null && repeatLeft <= 0) {
+          if (c) c.textContent = `Auto-repeat done: ${Player.state.repeatN || ''} battles`;
+          repeatLeft = null;
+          toast(`Auto-repeat finished after ${Player.state.repeatN} battles.`);
+          return;
+        }
+        let n = 3;
+        const left = md === 'repeat' && repeatLeft != null ? ` (${repeatLeft} left)` : '';
+        const tick = () => { if (!m.root.isConnected) return stopCount(); if (document.querySelector('.rank-up, .walkout, .feat-show, .feat-cine')) return; if (n <= 0) return go(target, md === 'repeat'); if (c) c.textContent = `${md === 'repeat' ? 'Again' : 'Next battle'} in ${n}…${left}`; n -= 1; };
         tick();
         countdown = setInterval(tick, 1000);
       };
       // Wait for the luck spin (and any level-up flourish) before counting down.
       if (autoOn) setTimeout(startCount, won ? 4700 : 600);
+      // How many battles Auto-repeat runs: type a number, or ∞ to keep going.
+      const setTimes = (n) => {
+        Player.state.repeatN = n;
+        Player.save();
+        repeatLeft = n || null;
+        const inf = m.root.querySelector('[data-times]');
+        if (inf) inf.classList.toggle('on', !n);
+        stopCount();
+        if (curMode() === 'repeat') startCount();
+      };
+      const tin = m.root.querySelector('[data-times-in]');
+      if (tin) {
+        tin.addEventListener('focus', () => stopCount());
+        tin.addEventListener('change', () => { const n = Math.max(0, Math.min(REPEAT_MAX, Math.floor(Number(tin.value) || 0))); tin.value = n || ''; setTimes(n); });
+        tin.addEventListener('keydown', (e) => { if (e.key === 'Enter') tin.blur(); });
+      }
       m.root.addEventListener('click', (e) => {
+        const tm = e.target.closest('[data-times]');
+        if (tm) { setTimes(0); const i = m.root.querySelector('[data-times-in]'); if (i) i.value = ''; return; }
         const am = e.target.closest('[data-auto-mode]');
         if (am && !am.disabled) {
           const md = am.dataset.autoMode;
+          if (md === 'repeat') repeatLeft = Player.state.repeatN || null;
           Player.state.autoNext = md === 'off' ? false : md === 'repeat' ? 'repeat' : true;
           Player.save();
           m.root.querySelectorAll('[data-auto-mode]').forEach((b) => b.classList.toggle('on', b === am));
