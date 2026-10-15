@@ -27,7 +27,7 @@
         'NEW|The level-up pop-up and results screen now tell you what each level unlocks.',
         'NEW|The Rank road shows what each level unlocks, and what\'s coming up next.',
         'NEW|Duel bans: every card can be banned, even ones neither player owns. Sort by strongest, rarity, damage, health, defense, speed or name, and filter by class and by owner. Each card shows its duel stats.',
-        'NEW|Auto-repeat can stop on its own: type how many battles to repeat on the results screen, or pick ∞ to keep going.',
+        'NEW|Auto-repeat can stop on its own: type how many battles to repeat (up to 100,000) on the results screen, or pick ∞ to keep going.',
         'BALANCE|Auto-repeat now unlocks at level 15, and Auto-continue at level 20.',
         'BALANCE|Auto-repeat earns less XP from level 15, and less the higher you go. Playing battles yourself still earns the full amount.',
         'FIXED|Your profile picture sat off-centre in its frame in the profile editor on phones.',

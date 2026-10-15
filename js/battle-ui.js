@@ -11,7 +11,7 @@
   const AUTO_REPEAT_LEVEL = 15;
   // Auto-repeat can stop after a set number of battles (update 2.1). Battles
   // still to go in the current run; null = keep going.
-  const REPEAT_MAX = 999;
+  const REPEAT_MAX = 100000;
   let repeatLeft = null;
   const v21 = () => !!(root.Update21 && root.Update21.on());
   const AUTO_NEXT_LEVEL = 20;
@@ -2046,7 +2046,7 @@
       const timesOn = canRepeat && v21();
       const repeatN = Player.state.repeatN || 0;
       if (timesOn && mode === 'repeat' && repeatLeft == null && repeatN) repeatLeft = repeatN;
-      const timesHtml = timesOn ? `<div class="auto-times" data-auto-times><span class="muted small">Repeat</span><input type="number" inputmode="numeric" min="1" max="${REPEAT_MAX}" step="1" class="auto-times-in" data-times-in value="${repeatN || ''}" placeholder="#" aria-label="How many battles to repeat"><span class="muted small">times</span><button type="button" class="${repeatN ? '' : 'on'}" data-times="0" aria-label="Keep repeating">∞</button></div>` : '';
+      const timesHtml = timesOn ? `<div class="auto-times" data-auto-times><span class="muted small">Repeat</span><input type="text" inputmode="numeric" maxlength="7" autocomplete="off" class="auto-times-in" data-times-in value="${repeatN ? fmt(repeatN) : ''}" placeholder="#" aria-label="How many battles to repeat (up to ${fmt(REPEAT_MAX)})"><span class="muted small">times</span><button type="button" class="${repeatN ? '' : 'on'}" data-times="0" aria-label="Keep repeating">∞</button></div>` : '';
       const autoHtml = !(nextParams || canRepeat) ? '' : canAuto
         ? `<div class="auto-next"><span class="auto-lbl"><span class="at-dot ${autoOn ? 'on' : ''}"></span>Auto-continue</span><div class="auto-seg" role="group" aria-label="Auto-continue">${seg('off', 'Off', true)}${seg('repeat', 'Repeat', canRepeat)}${hasNext ? seg('next', 'Next', !!nextParams) : ''}</div><span class="auto-count" data-auto-count></span></div>${timesHtml}${!hasNext ? `<p class="auto-locked muted small">Next (jump straight to the next battle) unlocks at level ${AUTO_NEXT_LEVEL}</p>` : ''}`
         : `<p class="auto-locked muted small">Auto-repeat (farm this battle) unlocks at account level ${AUTO_REPEAT_LEVEL}</p>`;
@@ -2093,13 +2093,13 @@
         const c = m.root.querySelector('[data-auto-count]');
         // The chosen number of repeats is done: stop here.
         if (md === 'repeat' && repeatLeft != null && repeatLeft <= 0) {
-          if (c) c.textContent = `Auto-repeat done: ${Player.state.repeatN || ''} battles`;
+          if (c) c.textContent = `Auto-repeat done: ${fmt(Player.state.repeatN || 0)} battles`;
           repeatLeft = null;
-          toast(`Auto-repeat finished after ${Player.state.repeatN} battles.`);
+          toast(`Auto-repeat finished after ${fmt(Player.state.repeatN || 0)} battles.`);
           return;
         }
         let n = 3;
-        const left = md === 'repeat' && repeatLeft != null ? ` (${repeatLeft} left)` : '';
+        const left = md === 'repeat' && repeatLeft != null ? ` (${fmt(repeatLeft)} left)` : '';
         const tick = () => { if (!m.root.isConnected) return stopCount(); if (document.querySelector('.rank-up, .walkout, .feat-show, .feat-cine')) return; if (n <= 0) return go(target, md === 'repeat'); if (c) c.textContent = `${md === 'repeat' ? 'Again' : 'Next battle'} in ${n}…${left}`; n -= 1; };
         tick();
         countdown = setInterval(tick, 1000);
@@ -2119,7 +2119,17 @@
       const tin = m.root.querySelector('[data-times-in]');
       if (tin) {
         tin.addEventListener('focus', () => stopCount());
-        tin.addEventListener('change', () => { const n = Math.max(0, Math.min(REPEAT_MAX, Math.floor(Number(tin.value) || 0))); tin.value = n || ''; setTimes(n); });
+        // Commas appear as you type (10,000), capped at 100,000.
+        const digits = () => Math.min(REPEAT_MAX, Number(String(tin.value).replace(/\D/g, '')) || 0);
+        tin.addEventListener('input', () => {
+          const before = tin.value.slice(0, tin.selectionStart || 0).replace(/\D/g, '').length;
+          const n = digits();
+          tin.value = n ? fmt(n) : '';
+          let pos = 0; let seen = 0;
+          while (pos < tin.value.length && seen < before) { if (/\d/.test(tin.value[pos])) seen += 1; pos += 1; }
+          try { tin.setSelectionRange(pos, pos); } catch (err) { /* not focused */ }
+        });
+        tin.addEventListener('change', () => { const n = digits(); tin.value = n ? fmt(n) : ''; setTimes(n); });
         tin.addEventListener('keydown', (e) => { if (e.key === 'Enter') tin.blur(); });
       }
       m.root.addEventListener('click', (e) => {
