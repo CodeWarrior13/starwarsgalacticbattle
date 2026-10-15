@@ -578,10 +578,9 @@
       mech: [['Praetorian Guard', 'Starts with four Praetorian Guards. A fallen one steps back in every 3 turns.'], ['Bridge the Minds', 'Takes control of a card for a turn and turns it against your squad.'], ['Supreme Will', 'Every 4 turns revives every fallen guard, unless Snoke took an ultimate since his last turn.']],
     },
   ];
-  // Update 2.2 switch (null until the 2.2 date is set): raid bosses get at
+  // Update 2.2 (switch in js/friends.js, off until the 2.2 date is set): raid bosses get at
   // least 5,000,000 health and hit much harder; their guards hit a bit harder.
-  const V22 = root.__v22Test != null ? root.__v22Test : null;
-  const v22 = () => V22 != null && Date.now() >= V22;
+  const v22 = () => !!(root.Update22 && root.Update22.on());
   const RAID_HP_MIN = 5000000;
   const RAID_BOSS_ATK = 1.6;
   const RAID_GUARD_ATK = 1.25;
@@ -1633,6 +1632,8 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   App.go = function (screen, params, opts) {
     if (focus() && ['home', 'collection', 'market', 'campaign', 'squad', 'secret'].includes(screen)) { screen = 'holonet'; params = params && params.view ? params : {}; }
     if (screen === 'campaign' && HNB.retreated) { HNB.retreated = false; screen = 'holonet'; params = HNB.back || {}; }
+    // Leaving a friendly battle goes back to the game, with Friends open.
+    if (screen === 'holonet' && params && params.friends) { screen = 'home'; params = {}; setTimeout(() => { if (HN.friends) HN.friends.open(); }, 300); }
     const r = baseGo.call(this, screen, params, opts);
     // Go online only once a level 25+ player actually opens the HoloNet.
     if (screen === 'holonet' && unlocked()) { HN.Net.init(); if (HN.Duel && HN.Duel.start) HN.Duel.start(); }
@@ -2815,7 +2816,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   function setPresence() {
     if (!Duel.room) return;
     const h = HN.S();
-    Duel.room.presence({ hn: 1, nm: myNm(), rating: h.rating, g: HN.squadPower(HN.squadEntries('character')), f: HN.squadPower(HN.squadEntries('ship')), busy: Duel.match || Duel.prep ? 1 : 0 }).catch(() => {});
+    Duel.room.presence({ hn: HN.ui.unlocked() ? 1 : 0, fr: 1, nm: myNm(), rating: h.rating, g: HN.squadPower(HN.squadEntries('character')), f: HN.squadPower(HN.squadEntries('ship')), busy: Duel.match || Duel.prep ? 1 : 0 }).catch(() => {});
   }
   // My callsign as other players should see it ('' when I haven't picked one).
   const myNm = () => { const n = String(HN.Net.name(HN.Net.me) || ''); return n === 'You' ? '' : n.replace(/ \(you\)$/, ''); };
@@ -2838,15 +2839,15 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   const unitName = (id) => (id && D.UNIT_MAP[id] ? D.UNIT_MAP[id].name : '');
   const say = (to, data) => Duel.room && Duel.room.emit('answer', { to, nm: myNm(), ...data }).catch(() => {});
 
-  function challenge(peer, kind) {
+  function challenge(peer, kind, fr) {
     if (!HN.pool(kind).length) return toast(kind === 'ship' ? 'You need a ship to fly a Fleet duel.' : 'You need a character for a Ground duel.');
     if (!Duel.room) return toast('Lost the HoloNet connection.');
     if (Duel.prep) return toast('Finish setting up your other duel first.');
     const id = rid();
     const seed = 1 + Math.floor(Math.random() * 2e9);
-    Duel.pending = { id, peer: peer.peer, by: peer.by, kind, seed };
-    Duel.room.emit('challenge', { to: peer.peer, id, kind, seed, rating: HN.S().rating, nm: myNm(), pool: poolIds(kind) }).catch(() => toast('Could not reach them.'));
-    const m = openModal(`<div class="hn-result"><div class="result-title" style="color:#8fe8ff">CHALLENGE SENT</div><p style="text-align:center">Waiting for <b>${esc(Duel.name(peer))}</b> to accept a ${kindName(kind)} duel…</p><div class="modal-actions"><button type="button" class="btn" data-x="cancel">Cancel</button></div></div>`, { small: true, dismissable: false });
+    Duel.pending = { id, peer: peer.peer, by: peer.by, kind, seed, fr: !!fr };
+    Duel.room.emit('challenge', { to: peer.peer, id, kind, seed, rating: HN.S().rating, nm: myNm(), pool: poolIds(kind), fr: fr ? 1 : 0 }).catch(() => toast('Could not reach them.'));
+    const m = openModal(`<div class="hn-result"><div class="result-title" style="color:#8fe8ff;${fr ? 'font-size:clamp(22px,6vw,34px)' : ''}">${fr ? 'FRIENDLY BATTLE' : 'CHALLENGE SENT'}</div><p style="text-align:center">Waiting for <b>${esc(Duel.name(peer))}</b> to accept a ${kindName(kind)} ${fr ? 'friendly battle' : 'duel'}…</p><div class="modal-actions"><button type="button" class="btn" data-x="cancel">Cancel</button></div></div>`, { small: true, dismissable: false });
     Duel.pending.modal = m;
     Duel.pending.timer = setTimeout(() => { if (Duel.pending && Duel.pending.id === id) { Duel.pending = null; m.close(); toast('No answer. Try again later.'); } }, 30000);
     m.root.addEventListener('click', (e) => {
@@ -2860,15 +2861,19 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   function onChallenge(msg) {
     const d = msg.data || {};
     if (msg.isMe || d.to !== Duel.myPeer() || !d.id || !['character', 'ship'].includes(d.kind)) return;
+    // Friendly battles only from friends; ranked duels only once the HoloNet is unlocked.
+    if (d.fr ? !(HN.friends && HN.friends.isFriend(msg.by)) : !HN.ui.unlocked()) { say(msg.peer, { id: d.id, step: 'no' }); return; }
     if (Duel.match || App.battleActive || Duel.prep) { say(msg.peer, { id: d.id, step: 'no', busy: true }); return; }
     Duel.invite = { ...d, peer: msg.peer, by: msg.by };
     learn(msg.by, d.nm);
     refresh();
     if (root.Sound) root.Sound.play('reveal_rare');
     const who = Duel.name(msg);
-    const m = openModal(`<div class="hn-result" data-invite="${esc(d.id)}"><div class="result-title" style="color:#8fe8ff">LIVE DUEL</div>
+    const m = openModal(`<div class="hn-result" data-invite="${esc(d.id)}">${d.fr ? `<div class="result-title" style="color:#8fe8ff;font-size:clamp(22px,6vw,34px)">FRIENDLY BATTLE</div>
+      <p style="text-align:center">Your friend <b>${esc(who)}</b> challenges you to a <b>${kindName(d.kind)}</b> battle.</p>
+      <p class="muted small" style="text-align:center;margin:0">You each ban one card, then build your squads. Just for fun: no rating, no rewards.</p>` : `<div class="result-title" style="color:#8fe8ff">LIVE DUEL</div>
       <p style="text-align:center"><b>${esc(who)}</b> (${fmt(d.rating || 0)} rating) challenges you to a <b>${kindName(d.kind)}</b> duel.</p>
-      <p class="muted small" style="text-align:center;margin:0">You each ban one card, then build your squads.</p>
+      <p class="muted small" style="text-align:center;margin:0">You each ban one card, then build your squads.</p>`}
       <div class="modal-actions"><button type="button" class="btn" data-x="no">Decline</button><button type="button" class="btn btn-primary" data-x="yes">Accept</button></div></div>`, { small: true, dismissable: false });
     Duel.invite.modal = m;
     const timer = setTimeout(() => { m.close(); if (Duel.invite && Duel.invite.id === d.id) Duel.invite = null; refresh(); }, 25000);
@@ -2885,7 +2890,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       // Accepting drops any challenge we were still waiting on.
       if (Duel.pending) { const p = Duel.pending; clearTimeout(p.timer); if (p.modal) p.modal.close(); say(p.peer, { id: p.id, step: 'cancel' }); Duel.pending = null; }
       say(inv.peer, { id: inv.id, step: 'go', pool: poolIds(inv.kind), rating: HN.S().rating });
-      prep({ id: inv.id, host: false, kind: inv.kind, seed: inv.seed, peer: inv.peer, by: inv.by, who, rating: inv.rating, theirPool: okIds(inv.pool, inv.kind) });
+      prep({ id: inv.id, host: false, kind: inv.kind, seed: inv.seed, peer: inv.peer, by: inv.by, who, rating: inv.rating, theirPool: okIds(inv.pool, inv.kind), fr: !!inv.fr });
     });
   }
 
@@ -2910,7 +2915,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     if (step === 'go') {
       // They accepted too late: we're already fighting someone else.
       if (Duel.match || App.battleActive || Duel.prep) { say(msg.peer, { id: p.id, step: 'cancel' }); return; }
-      return prep({ id: p.id, host: true, kind: p.kind, seed: p.seed, peer: msg.peer, by: msg.by, who: Duel.name(msg), rating: d.rating, theirPool: okIds(d.pool, p.kind) });
+      return prep({ id: p.id, host: true, kind: p.kind, seed: p.seed, peer: msg.peer, by: msg.by, who: Duel.name(msg), rating: d.rating, theirPool: okIds(d.pool, p.kind), fr: !!p.fr });
     }
     toast(d.busy ? 'They are busy in another fight.' : 'Challenge declined.');
   }
@@ -3004,7 +3009,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     });
   }
   function fight(P) {
-    const cfg = { id: P.id, host: P.host, kind: P.kind, seed: P.seed, mine: P.mine, theirs: P.theirs, peer: P.peer, by: P.by, name: P.who, oppRating: +P.rating || 800, bans: P.bans.filter(Boolean) };
+    const cfg = { id: P.id, host: P.host, kind: P.kind, seed: P.seed, mine: P.mine, theirs: P.theirs, peer: P.peer, by: P.by, name: P.who, oppRating: +P.rating || 800, bans: P.bans.filter(Boolean), fr: !!P.fr };
     endPrep(P);
     start(cfg);
   }
@@ -3165,7 +3170,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     let room;
     try { room = await Duel.room.join(`duel-${cfg.id}`); } catch (e) { return toast('Could not open the duel room.'); }
     const M = Duel.match = { ...cfg, room, turn: 0, out: {}, inbox: {}, lastIn: 0, waiter: null, ended: false, desync: false, gone: null, timers: [], seenAt: Date.now(), lastTick: Date.now(), away: 0, lost: null, startAt: Date.now(), warned: false };
-    try { localStorage.setItem('hn-duel-live', JSON.stringify({ id: cfg.id, name: cfg.name, at: Date.now() })); } catch (e) { /* ignore */ }
+    try { localStorage.setItem('hn-duel-live', JSON.stringify({ id: cfg.id, name: cfg.name, at: Date.now(), fr: cfg.fr ? 1 : 0 })); } catch (e) { /* ignore */ }
     room.on('ping', (msg) => { if (msg.isMe) return; M.seenAt = Date.now(); room.emit('pong', {}).catch(() => {}); }, () => {});
     room.on('pong', (msg) => { if (!msg.isMe) M.seenAt = Date.now(); }, () => {});
     room.on('move', (msg) => {
@@ -3188,10 +3193,10 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     // Both screens build the same battle: the challenger's squad is always
     // listed first, so turn order and every roll match.
     const rng = HN.rng(cfg.seed);
-    HN.B.back = { view: 'duels' };
+    HN.B.back = cfg.fr ? { friends: true } : { view: 'duels' };
     HN.hnStart({ type: 'hn', hn: 'duel', kind: cfg.kind }, cfg.mine.map(atDuelLevel), cfg.theirs.map(atDuelLevel), {
-      name: `Live Duel · vs ${cfg.name}`, kind: cfg.kind, planet: cfg.kind === 'ship' ? 'coruscant' : 'geonosis', rng,
-      intro: `Live: every card fights at Level ${DUEL_LEVEL} ★${DUEL_STARS}.${(cfg.bans || []).length ? ` Banned: ${cfg.bans.map(unitName).join(' and ')}.` : ''} You play your squad, they play theirs. 45 seconds per move.`,
+      name: `${cfg.fr ? 'Friendly Battle' : 'Live Duel'} · vs ${cfg.name}`, kind: cfg.kind, planet: cfg.kind === 'ship' ? 'coruscant' : 'geonosis', rng,
+      intro: `${cfg.fr ? 'Friendly battle (unranked, no rewards)' : 'Live'}: every card fights at Level ${DUEL_LEVEL} ★${DUEL_STARS}.${(cfg.bans || []).length ? ` Banned: ${cfg.bans.map(unitName).join(' and ')}.` : ''} You play your squad, they play theirs. 45 seconds per move.`,
       setup(b) {
         b.duel = M;
         for (const u of b.units) {
@@ -3335,6 +3340,8 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const M = Duel.match;
     if (!M) return;
     M.room.emit('bye', {}).catch(() => {});
+    // Friendly battles: leaving costs nothing.
+    if (M.fr) { cleanup(M); return; }
     const h = HN.S();
     h.duels = h.duels || { w: 0, l: 0 };
     h.duels.l += 1;
@@ -3459,6 +3466,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
 
   HN.duelDone = (p, won) => {
     const M = Duel.match;
+    if (M && M.fr) return friendlyDone(M, won);
     const h = HN.S();
     h.duels = h.duels || { w: 0, l: 0 };
     const draw = !!(M && M.result === 'draw');
@@ -3479,6 +3487,26 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       <div class="modal-actions"><button type="button" class="btn btn-primary" data-r="ok">Back to the lobby</button></div></div>`, { small: true, dismissable: false, cls: 'result-modal' });
     m.root.addEventListener('click', (e) => { if (e.target.closest('[data-r]')) { m.close(); HN.ui.go('duels'); } });
   };
+
+  // Friendly battles: the result, and nothing else changes.
+  function friendlyDone(M, won) {
+    const draw = M.result === 'draw';
+    const timeNote = M.dealt ? `<p style="text-align:center" class="muted">Time ran out · damage dealt ${fmt(M.dealt.mine)} to ${fmt(M.dealt.theirs)}</p>` : '';
+    const name = M.name;
+    cleanup(M);
+    const m = openModal(`<div class="hn-result"><div class="result-title ${draw ? '' : won ? 'win' : 'lose'}">${draw ? 'DRAW' : won ? 'VICTORY' : 'DEFEAT'}</div>
+      <p style="text-align:center">Friendly battle against <b>${esc(name)}</b></p>${timeNote}
+      <p class="muted small" style="text-align:center">Just for fun: no rating, rewards or records change.</p>
+      <div class="modal-actions"><button type="button" class="btn" data-r="home">Done</button><button type="button" class="btn btn-primary" data-r="friends">Back to Friends</button></div></div>`, { small: true, dismissable: false, cls: 'result-modal' });
+    m.root.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-r]');
+      if (!b) return;
+      m.close();
+      App.go('home');
+      if (b.dataset.r === 'friends' && HN.friends) setTimeout(() => HN.friends.open(), 250);
+    });
+  }
+  Duel.challengeFriend = (peer, kind) => challenge(peer, kind, true);
 
   // ---------- the lobby screen ----------
   HN.VIEWS.duels = () => {
@@ -3509,6 +3537,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const M = Duel.match;
     if (!M || M.ended) return;
     Duel.forfeit();
+    if (M.fr) return;
     try { localStorage.setItem('hn-duel-left', JSON.stringify({ name: M.name, at: Date.now() })); } catch (e) { /* ignore */ }
   });
   setTimeout(() => {
@@ -3520,6 +3549,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       localStorage.removeItem('hn-duel-left'); localStorage.removeItem('hn-duel-live');
     } catch (e) { /* ignore */ }
     // The page closed without saying goodbye (a crash, a dead battery): book the loss now.
+    if (left && left.fr) { left = null; crashed = false; }
     if (crashed) { const h = HN.S(); h.duels = h.duels || { w: 0, l: 0 }; h.duels.l += 1; HN.save(); }
     if (left && Date.now() - left.at < 6 * 3600000) toast(`Your live duel against ${left.name || 'a player'} ended when you left, so it counted as a loss.`);
   }, 4000);
@@ -7303,6 +7333,205 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
   const st = document.createElement('style');
   st.textContent = css;
   document.head.appendChild(st);
+})(window);
+
+// Friends (update 2.2): from account level 5, add pilots by callsign and
+// challenge them to friendly battles: the live duel (bans, squads, every card
+// at the same level), but unranked, with no rewards and nothing recorded.
+//
+// One doc per pair of pilots, friends/{a}_{b} (the two ids in order): who
+// asked, and whether it's been accepted. Who's online comes from the duel
+// lobby heartbeat, read only for your friends and only while the panel is open.
+(function (root) {
+  'use strict';
+  const HN = root.HN;
+  const UI = root.UI;
+  const { esc, toast, openModal } = UI;
+  const Net = HN.Net;
+  const MAX = 50;
+  const ONLINE_MS = 150000;
+  const nameKey = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  const cleanNm = (s) => String(s || '').replace(/[^A-Za-z0-9_ .-]/g, '').trim().slice(0, 16);
+  const myTag = () => { const n = String(Net.name(Net.me) || '').replace(/ \(you\)$/, ''); return n === 'You' ? '' : cleanNm(n); };
+  const pairId = (x, y) => (x < y ? `${x}_${y}` : `${y}_${x}`);
+
+  const F = {
+    rows: new Map(), // pair id -> doc
+    online: {}, // uid -> { at, busy }
+    started: false,
+    view: null,
+    other(r) { return r.a === Net.me ? r.b : r.a; },
+    otherName(r) { return cleanNm(r.a === Net.me ? r.nb : r.na) || 'Pilot'; },
+    friends() { return [...this.rows.values()].filter((r) => r.ok); },
+    incoming() { return [...this.rows.values()].filter((r) => !r.ok && r.by !== Net.me); },
+    outgoing() { return [...this.rows.values()].filter((r) => !r.ok && r.by === Net.me); },
+    isFriend(uid) { return this.friends().some((r) => this.other(r) === uid); },
+  };
+
+  const on = () => !!(root.Friends && root.Friends.unlocked());
+  const dot = () => { if (root.Friends) root.Friends.dot(F.incoming().length > 0); };
+  const redraw = () => { if (F.view) F.view(); };
+
+  async function boot() {
+    if (!on()) return;
+    await Net.init();
+    if (!Net.ready) return;
+    if (!F.started) {
+      F.started = true;
+      const take = (side) => (snap) => {
+        for (const [id, r] of F.rows) if (r[side] === Net.me && !snap.docs.some((d) => d.id === id)) F.rows.delete(id);
+        for (const d of snap.docs) { const v = d.data(); if (v) F.rows.set(d.id, { ...v, id: d.id }); }
+        dot(); redraw();
+      };
+      Net.db.collection('friends').where('a', '==', Net.me).limit(MAX * 2).onSnapshot(take('a'), () => {});
+      Net.db.collection('friends').where('b', '==', Net.me).limit(MAX * 2).onSnapshot(take('b'), () => {});
+    }
+    // Being online for friends: the duel lobby heartbeat (also how challenges arrive).
+    if (HN.Duel && HN.Duel.start) HN.Duel.start();
+  }
+
+  async function poll() {
+    const ids = F.friends().map((r) => F.other(r));
+    await Promise.all(ids.map(async (uid) => {
+      try {
+        const d = await Net.db.doc(`lobby/${uid}`).get();
+        const v = d.exists ? d.data() : null;
+        const t = v ? (v.ts && v.ts.toMillis ? v.ts.toMillis() : v.t || 0) : 0;
+        F.online[uid] = { at: t, busy: !!(v && v.p && v.p.busy) };
+      } catch (e) { /* leave as it was */ }
+    }));
+    redraw();
+  }
+  const isOnline = (uid) => { const o = F.online[uid]; return !!(o && Date.now() - o.at < ONLINE_MS); };
+
+  async function add(q, st) {
+    const key = nameKey(q);
+    if (key.length < 3) return st('Callsigns have at least 3 letters or numbers.', 'bad');
+    if (F.friends().length + F.outgoing().length >= MAX) return st(`You can have up to ${MAX} friends and requests.`, 'bad');
+    st('Searching…');
+    let uid = null;
+    try { const d = await Net.db.doc(`names/${key}`).get(); uid = d.exists ? d.data().uid : null; } catch (e) { return st("Couldn't search right now. Try again.", 'bad'); }
+    if (!uid) return st(`No pilot is called "${q}". Check the spelling.`, 'bad');
+    if (uid === Net.me) return st("That's you!", 'bad');
+    const id = pairId(Net.me, uid);
+    const have = F.rows.get(id);
+    if (have && have.ok) return st(`${F.otherName(have)} is already your friend.`, 'bad');
+    if (have && have.by === Net.me) return st('Request already sent.', 'bad');
+    if (have) return accept(have, st);
+    const [a, b] = Net.me < uid ? [Net.me, uid] : [uid, Net.me];
+    const mine = myTag();
+    const theirs = cleanNm(q);
+    try {
+      await Net.db.doc(`friends/${id}`).set({ a, b, by: Net.me, ok: false, na: a === Net.me ? mine : theirs, nb: b === Net.me ? mine : theirs, t: Date.now() });
+      F.rows.set(id, { id, a, b, by: Net.me, ok: false, na: a === Net.me ? mine : theirs, nb: b === Net.me ? mine : theirs });
+      st(`Friend request sent to ${theirs}.`, 'good');
+      redraw();
+    } catch (e) { st("Couldn't send the request. They may have already sent you one: check Requests.", 'bad'); }
+  }
+  async function accept(r, st) {
+    const mine = myTag();
+    const body = { a: r.a, b: r.b, by: r.by, ok: true, na: r.a === Net.me ? mine : cleanNm(r.na), nb: r.b === Net.me ? mine : cleanNm(r.nb), t: Date.now() };
+    try { await Net.db.doc(`friends/${r.id}`).set(body); F.rows.set(r.id, { ...body, id: r.id }); toast(`You and ${F.otherName(r)} are now friends!`); poll(); } catch (e) { if (st) st("Couldn't accept right now. Try again.", 'bad'); else toast("Couldn't accept right now. Try again."); }
+    dot(); redraw();
+  }
+  async function drop(r, msg) {
+    try { await Net.db.doc(`friends/${r.id}`).delete(); F.rows.delete(r.id); if (msg) toast(msg); } catch (e) { toast("Couldn't do that right now. Try again."); }
+    dot(); redraw();
+  }
+
+  function challenge(r, kind) {
+    const uid = F.other(r);
+    if (!isOnline(uid)) return toast(`${F.otherName(r)} isn't online right now.`);
+    if (!HN.Duel || !HN.Duel.challengeFriend) return toast('Connecting… try again in a moment.');
+    HN.Duel.challengeFriend({ peer: uid, by: uid, nm: F.otherName(r) }, kind);
+  }
+
+  function open() {
+    if (!on()) return;
+    if (!Net.ready) { boot().then(() => (Net.ready ? open() : toast("Couldn't reach the HoloNet. Check your connection and try again."))); return; }
+    if (!HN.hasProfile()) {
+      toast('Pick a callsign first: friends find you by it.');
+      return HN.setupProfile((ok) => { if (ok !== false && HN.hasProfile()) open(); }, false);
+    }
+    let tab = F.incoming().length ? 'req' : 'list';
+    const m = openModal('<div class="frp" data-frp></div>', { cls: 'frp-modal', onClose: () => { clearInterval(timer); F.view = null; } });
+    const host = m.root.querySelector('[data-frp]');
+    let status = { msg: '', cls: '' };
+    const st = (msg, cls) => { status = { msg, cls }; const n = host.querySelector('[data-st]'); if (n) { n.textContent = msg || ''; n.className = `pe-st ${cls || ''}`; } };
+    const row = (r) => {
+      const uid = F.other(r);
+      const o = F.online[uid];
+      const live = isOnline(uid);
+      const busy = live && o && o.busy;
+      return `<div class="fr-row"><span class="fr-av">${esc(F.otherName(r).slice(0, 2).toUpperCase())}</span>
+        <span class="fr-who"><b>${esc(F.otherName(r))}</b><small class="${live ? (busy ? 'busy' : 'on') : ''}">${live ? (busy ? 'In a battle' : 'Online') : 'Offline'}</small></span>
+        <span class="fr-go"><button type="button" class="btn" data-f="ground" data-id="${esc(r.id)}" ${live && !busy ? '' : 'disabled'}>Ground</button><button type="button" class="btn" data-f="fleet" data-id="${esc(r.id)}" ${live && !busy ? '' : 'disabled'}>Fleet</button><button type="button" class="fr-x" data-f="remove" data-id="${esc(r.id)}" aria-label="Remove friend">✕</button></span></div>`;
+    };
+    const render = () => {
+      const fr = F.friends().sort((x, y) => Number(isOnline(F.other(y))) - Number(isOnline(F.other(x))) || F.otherName(x).localeCompare(F.otherName(y)));
+      const inc = F.incoming();
+      const out = F.outgoing();
+      const body = tab === 'list'
+        ? (fr.length ? `<div class="fr-list">${fr.map(row).join('')}</div>` : '<p class="muted small fr-empty">No friends yet. Tap <b>Add</b> and type a pilot\'s callsign.</p>')
+        : tab === 'req'
+          ? `${inc.length ? `<h4>Wants to be friends</h4><div class="fr-list">${inc.map((r) => `<div class="fr-row"><span class="fr-av">${esc(F.otherName(r).slice(0, 2).toUpperCase())}</span><span class="fr-who"><b>${esc(F.otherName(r))}</b><small>Friend request</small></span><span class="fr-go"><button type="button" class="btn" data-f="decline" data-id="${esc(r.id)}">Decline</button><button type="button" class="btn btn-primary" data-f="accept" data-id="${esc(r.id)}">Accept</button></span></div>`).join('')}</div>` : '<p class="muted small fr-empty">No new requests.</p>'}
+            ${out.length ? `<h4>Sent</h4><div class="fr-list">${out.map((r) => `<div class="fr-row"><span class="fr-av">${esc(F.otherName(r).slice(0, 2).toUpperCase())}</span><span class="fr-who"><b>${esc(F.otherName(r))}</b><small>Waiting for them</small></span><span class="fr-go"><button type="button" class="btn" data-f="cancel" data-id="${esc(r.id)}">Cancel</button></span></div>`).join('')}</div>` : ''}`
+          : `<p class="muted small">Type a pilot's callsign to send them a friend request. They'll see it next time they open Friends.</p>
+            <div class="fp-row"><input class="pf-in" data-q maxlength="16" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Callsign"><button type="button" class="btn btn-primary" data-f="add">Send</button></div>
+            <p class="muted small">Your callsign is <b>${esc(myTag())}</b>. Share it so friends can add you.</p>`;
+      host.innerHTML = `<div class="fr-head"><div><p class="eyebrow">Friends</p><h2>Friendly battles</h2></div><button type="button" class="btn" data-f="close">Close</button></div>
+        <p class="muted small fr-blurb">Challenge a friend who's online to a Ground or Fleet battle: you each ban a card, build a squad, and every card fights at the same level. Just for fun: no rating, no rewards.</p>
+        <div class="fr-tabs"><button type="button" class="${tab === 'list' ? 'on' : ''}" data-tab="list">Friends <i>${fr.length}</i></button><button type="button" class="${tab === 'req' ? 'on' : ''}" data-tab="req">Requests ${inc.length ? `<i class="hot">${inc.length}</i>` : ''}</button><button type="button" class="${tab === 'add' ? 'on' : ''}" data-tab="add">Add</button></div>
+        ${body}<p class="pe-st ${status.cls}" data-st>${esc(status.msg)}</p>`;
+      if (tab === 'add') { const i = host.querySelector('[data-q]'); if (i) { i.addEventListener('keydown', (e) => { if (e.key === 'Enter') add(i.value.trim(), st); }); setTimeout(() => i.focus(), 60); } }
+    };
+    F.view = render;
+    render();
+    poll();
+    const timer = setInterval(poll, 20000);
+    host.addEventListener('click', (e) => {
+      const t = e.target.closest('[data-tab]');
+      if (t) { tab = t.dataset.tab; status = { msg: '', cls: '' }; render(); return; }
+      const b = e.target.closest('[data-f]');
+      if (!b || b.disabled) return;
+      const r = b.dataset.id ? F.rows.get(b.dataset.id) : null;
+      const f = b.dataset.f;
+      if (f === 'close') return m.close();
+      if (f === 'add') return add(host.querySelector('[data-q]').value.trim(), st);
+      if (!r) return;
+      if (f === 'accept') return accept(r, st);
+      if (f === 'decline') return drop(r, 'Request declined.');
+      if (f === 'cancel') return drop(r, 'Request cancelled.');
+      if (f === 'remove') {
+        return UI.confirmBox(`Remove ${F.otherName(r)}?`, 'They\'ll be taken off your friends list. You can add them again any time.', 'Remove').then((yes) => { if (yes) drop(r, `${F.otherName(r)} removed.`); });
+      }
+      if (f === 'ground' || f === 'fleet') { m.close(); challenge(r, f === 'fleet' ? 'ship' : 'character'); }
+    });
+  }
+
+  HN.friends = { boot, open, isFriend: (uid) => F.isFriend(uid), F };
+
+  const css = document.createElement('style');
+  css.textContent = `.modal.frp-modal { width: min(560px, 100%); }
+.frp { display: grid; gap: 10px; }
+.fr-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.fr-head h2 { margin: 0; } .fr-head .eyebrow { margin: 0 0 2px; }
+.fr-blurb { margin: 0; }
+.fr-tabs { display: flex; gap: 6px; }
+.fr-tabs button { flex: 1; padding: 9px 8px; border-radius: 10px; border: 1px solid rgba(95, 216, 255, 0.25); background: rgba(8, 20, 32, 0.85); color: #dff8ff; font: 700 13px var(--font-display, inherit); cursor: pointer; }
+.fr-tabs button.on { border-color: #5fd8ff; background: rgba(95, 216, 255, 0.18); }
+.fr-tabs i { font-style: normal; margin-left: 4px; opacity: .75; } .fr-tabs i.hot { display: inline-block; min-width: 18px; padding: 0 5px; border-radius: 9px; background: #ff5a3a; color: #fff; opacity: 1; }
+.fr-list { display: grid; gap: 6px; max-height: 50vh; overflow-y: auto; }
+.frp h4 { margin: 4px 0 0; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: #8fb4c8; }
+.fr-row { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; padding: 8px 10px; border-radius: 12px; background: rgba(8, 20, 32, 0.85); border: 1px solid rgba(95, 216, 255, 0.14); }
+.fr-av { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: #0d2234; border: 1px solid #5fd8ff; font: 800 12px var(--font-display, inherit); color: #bfefff; }
+.fr-who { display: grid; min-width: 0; } .fr-who b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fr-who small { font-size: 11px; color: #7a8a9a; } .fr-who small.on { color: #4ade80; } .fr-who small.busy { color: #ffb03a; }
+.fr-go { display: flex; gap: 6px; align-items: center; } .fr-go .btn { padding: 7px 10px; font-size: 12px; min-height: 34px; }
+.fr-x { width: 30px; height: 30px; border-radius: 50%; border: 1px solid rgba(255, 122, 90, 0.4); background: transparent; color: #ff9a8a; cursor: pointer; }
+.fr-empty { text-align: center; padding: 14px 0; margin: 0; }
+@media (max-width: 460px) { .fr-row { grid-template-columns: auto 1fr; } .fr-go { grid-column: 1 / -1; justify-content: flex-end; } }`;
+  document.head.appendChild(css);
 })(window);
 
 // HoloNet offline: when the HoloNet can't be reached (no Wi-Fi or data, or

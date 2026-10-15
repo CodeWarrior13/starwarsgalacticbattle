@@ -2230,6 +2230,7 @@
       const list = D.SLOT_UNLOCKS.map((r) => ({ level: r.level, name: `Squad slot ${r.slot}`, desc: Player.planetComplete(r.planet) ? `Field ${r.slot} units in ground and fleet battles.` : `Liberate ${D.PLANET_MAP[r.planet].name} to field ${r.slot} units.` }));
       list.push({ level: AUTO_REPEAT_LEVEL, name: 'Auto-repeat', desc: 'Replay the same stage or boss again and again after every win.' });
       list.push({ level: AUTO_NEXT_LEVEL, name: 'Auto-continue', desc: 'Jump straight into your next battle with your saved squad.' });
+      if (root.Update22 && root.Update22.on()) list.push({ level: 5, name: 'Friends', desc: 'Add pilots by callsign and challenge them to friendly battles.' });
       list.push({ level: 25, name: 'The HoloNet', desc: 'Battle real players: arenas, live duels, guilds and more.' });
       return list.sort((a, b) => a.level - b.level);
     },
