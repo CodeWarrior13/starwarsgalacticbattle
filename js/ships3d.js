@@ -534,12 +534,66 @@
     return S.render(o.box);
   };
 
+  // ---------- Outrider: Dash Rendar's YT-2400, saucer with the long cockpit pod to starboard and oversized engines ----------
+  SH.outrider = (o = {}) => {
+    const S = P3.scene({ yaw: 90, pitch: o.pitch || 68, light: [0.25, 0.12, 1] });
+    const HULL = '#d4d7da'; const TRIM = '#3c4a5e'; const R = 26;
+    const arcPts = (pr, r, a0, a1, z, n = 24, cx = 0) => { const pts = []; for (let i = 0; i <= n; i++) { const t = (a0 + (a1 - a0) * (i / n)) * Math.PI / 180; pts.push(pr([cx + r * Math.cos(t), r * Math.sin(t), z])); } return pts; };
+    const pl = (pts) => 'M' + pts.map((q) => f(q[0]) + ' ' + f(q[1])).join(' L');
+    // the oversized engine block across the stern
+    S.box([-R - 6, -R + 10, -15, 15, -1.6, 4.2], '#aeb3b9', { g: 'eng', after: (pr, sc) => {
+      let m = '';
+      for (const y of [-11, -5.5, 0, 5.5, 11]) m += quad(pr, [[-R - 6, y - 2.2, 3.4], [-R - 6, y + 2.2, 3.4], [-R - 6, y + 2.2, -0.8], [-R - 6, y - 2.2, -0.8]], '#1a2230');
+      for (const y of [-12, -6, 0, 6, 12]) m += seg(pr, [-R + 9, y, 4.25], [-R - 5.5, y, 4.25], '#6a7078', 0.5);
+      m += `<path d="${pl([pr([-R - 6.2, -13.6, 1.3]), pr([-R - 6.2, 13.6, 1.3])])}" stroke="${o.engine || '#bfe8ff'}" stroke-width="${f(2.2 * sc)}" stroke-linecap="round" style="filter:drop-shadow(0 0 3px #4ab8ff)"/>`;
+      for (const y of [-9, 9]) m += quad(pr, [[-R + 8, y - 3, 4.25], [-R - 4, y - 3, 4.25], [-R - 4, y + 3, 4.25], [-R + 8, y + 3, 4.25]], '#8a9098');
+      m += seg(pr, [-R - 5, -15, 4.25], [-R - 5, 15, 4.25], TRIM, 0.9);
+      return m;
+    } });
+    // the saucer
+    const prof = []; for (let i = 0; i <= 16; i++) { const x = R - (2 * R * i) / 16; const w = Math.sqrt(Math.max(0.01, R * R - x * x)); prof.push([x, w, 1.3 + 3.8 * Math.sqrt(Math.max(0, 1 - (x * x) / (R * R))) * 0.85]); }
+    S.body(prof, { color: HULL, n: 40, z: 0, after: (pr, sc) => {
+      let m = '';
+      // raised central hub with its two panel rings
+      m += `<path d="${pl(arcPts(pr, 10, 0, 360, 4.4, 40))}Z" fill="#c2c6ca" stroke="#6a6e74" stroke-width=".45"/>`;
+      m += `<path d="${pl(arcPts(pr, 17.5, 0, 360, 3.4, 48))}Z" fill="none" stroke="#6a6e74" stroke-width=".4" opacity=".7"/>`;
+      for (let a = 15; a < 360; a += 30) { const t = a * Math.PI / 180; m += seg(pr, [10 * Math.cos(t), 10 * Math.sin(t), 4.3], [25 * Math.cos(t), 25 * Math.sin(t), 1.7], '#7a7e84', 0.4, 'opacity=".55"'); }
+      // Dash's dark blue-grey livery: a forward chevron and a port stripe
+      m += `<path d="${pl(arcPts(pr, 24.5, -38, 38, 1.9, 14).concat(arcPts(pr, 18.5, 30, -30, 3.1, 12)))}Z" fill="${TRIM}" opacity=".9"/>`;
+      m += `<path d="${pl(arcPts(pr, 24.5, 70, 118, 1.9, 10).concat(arcPts(pr, 19.5, 118, 70, 3, 10)))}Z" fill="${TRIM}" opacity=".85"/>`;
+      // worn panels
+      for (const [r0, a0, da, c] of [[12, 160, 26, '#a8aeb4'], [13, 250, 20, '#b6a890'], [19, 200, 18, '#9aa0a6'], [12, 40, 20, '#b0b4b8'], [20, 140, 14, '#a89a84']]) {
+        const a = arcPts(pr, r0, a0, a0 + da, 4, 6); const b = arcPts(pr, r0 + 4.5, a0 + da, a0, 3, 6); m += `<path d="${pl(a.concat(b))}Z" fill="${c}" opacity=".7"/>`;
+      }
+      // port airlock and hull vents
+      { const c = pr([-3, R - 1, 1.6]); m += `<circle cx="${f(c[0])}" cy="${f(c[1])}" r="${f(2.2 * sc)}" fill="#9a9ea4" stroke="#5a5e64" stroke-width=".4"/>`; }
+      for (let a = 0; a < 360; a += 45) { const tt = (a + 22) * Math.PI / 180; const c = pr([14 * Math.cos(tt), 14 * Math.sin(tt), 3.9]); m += `<rect x="${f(c[0] - 1 * sc)}" y="${f(c[1] - 0.7 * sc)}" width="${f(2 * sc)}" height="${f(1.4 * sc)}" fill="#7a7e84" opacity=".8"/>`; }
+      return m;
+    } });
+    // connecting arm out to the cockpit pod
+    S.box([-6, 12, -R - 3, -R + 4, 0.2, 3.8], '#c4c8cc', { zBias: -6, after: (pr) => seg(pr, [3, -R - 3, 3.85], [3, -R + 4, 3.85], TRIM, 0.8) + seg(pr, [-6, -R - 3, 3.85], [12, -R - 3, 3.85], '#7a7e84', 0.5) });
+    // the long cockpit pod, running ahead of the saucer
+    const PY = -R - 7.5;
+    S.body([[R + 7, 0.8, 0.8], [R + 6, 3.8, 3.4], [R + 2, 5, 4.4], [-8, 5, 4.4], [-13, 4.2, 3.8], [-14, 2, 2]].map(([x, w, h]) => [x, w, h, 2, PY]), { color: '#cdd0d3', rings: [2, 3], zBias: -8, after: (pr, sc) => {
+      const a = pr([R + 5.4, PY, 4]);
+      let m = `<ellipse cx="${f(a[0])}" cy="${f(a[1])}" rx="${f(2.6 * sc)}" ry="${f(1.9 * sc)}" fill="#14202c" stroke="#7a8088" stroke-width=".4"/><path d="M${f(a[0] - 1.4 * sc)} ${f(a[1] - 0.7 * sc)} L${f(a[0] + 0.7 * sc)} ${f(a[1] - 1.2 * sc)}" stroke="#9fd4ff" stroke-width=".5" opacity=".85"/>`;
+      m += seg(pr, [R, PY, 6.4], [-10, PY, 6.4], TRIM, 1.3 * sc);
+      for (const x of [R - 6, 6, -6]) { const c = pr([x, PY, 6.3]); m += `<rect x="${f(c[0] - 0.9 * sc)}" y="${f(c[1] - 1.3 * sc)}" width="${f(1.8 * sc)}" height="${f(2.6 * sc)}" fill="#8a9098" opacity=".9"/>`; }
+      return m;
+    } });
+    // twin forward blasters on the bow, a dorsal turret and the sensor dish
+    for (const y of [-6, 6]) S.at([R - 1, y, 2.4], (q, sc, pr) => seg(pr, [R - 3, y, 2.6], [R + 6, y, 2.6], '#2e3440', 0.9 * sc), { zBias: -7 });
+    S.at([0, 0, 5.4], (q, sc, pr) => `<circle cx="${f(q[0])}" cy="${f(q[1])}" r="${f(3.8 * sc)}" fill="#8a8e94" stroke="#4a4e54" stroke-width=".5"/><circle cx="${f(q[0])}" cy="${f(q[1])}" r="${f(2.1 * sc)}" fill="#1a2430"/>` + [-1.1, 1.1].map((dy) => seg(pr, [1, dy, 6], [10, dy, 6], '#3a3e44', 0.6 * sc)).join(''), { zBias: -9 });
+    S.at([-8, 13, 4.4], (q, sc) => `<ellipse cx="${f(q[0])}" cy="${f(q[1])}" rx="${f(3.4 * sc)}" ry="${f(2.6 * sc)}" fill="#e2e4e6" stroke="#6a6e74" stroke-width=".5"/><circle cx="${f(q[0] + 0.4 * sc)}" cy="${f(q[1] + 0.3 * sc)}" r="${f(1.6 * sc)}" fill="#b4b8bc"/><circle cx="${f(q[0] + 0.4 * sc)}" cy="${f(q[1] + 0.3 * sc)}" r="${f(0.5 * sc)}" fill="#5a5e64"/>`, { zBias: -9 });
+    return S.render(o.box);
+  };
+
   root.Ships3 = SH;
 })(typeof window !== 'undefined' ? window : globalThis);
 
 // Register the three-quarter-lit ships with the card art.
 (function (root) {
   const SH = root.Ships3;
-  const map = { cassian_haulcraft: 'cassian_haulcraft', mando_n1: 'mando_n1', n1: 'n1', uwing: 'uwing', houndstooth: 'houndstooth', falcon: 'falcon' };
+  const map = { cassian_haulcraft: 'cassian_haulcraft', mando_n1: 'mando_n1', n1: 'n1', uwing: 'uwing', houndstooth: 'houndstooth', falcon: 'falcon', hn_outrider: 'outrider' };
   for (const [shape, fn] of Object.entries(map)) root.Art.addArt('ship', shape, () => SH[fn]());
 })(typeof window !== 'undefined' ? window : globalThis);

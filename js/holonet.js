@@ -79,9 +79,7 @@
     + P('M41 52 L8 48 L6 56 L41 62Z', '#6a7080') + P('M59 52 L92 48 L94 56 L59 62Z', '#6a7080')
     + R(2, 40, 8, 22, '#9aa0ac', 'rx="2"') + R(90, 40, 8, 22, '#9aa0ac', 'rx="2"') + R(3, 44, 6, 3, '#c8402a') + R(91, 44, 6, 3, '#c8402a')
     + `<path d="M42 56 H58 M43 66 H57" ${LINE}/>` + eng(45, 82, 3.2, '#ffb36a') + eng(55, 82, 3.2, '#ffb36a'));
-  add('ship', 'hn_outrider', () => P('M14 58 C14 38 32 28 52 28 C72 28 86 38 86 56 C86 70 72 76 52 76 C30 76 14 72 14 58Z', '#b4bac6') + shade('M14 58 C14 38 32 28 52 28 L52 76 C30 76 14 72 14 58Z', 0.12)
-    + P('M52 28 C64 28 72 34 76 42 H38 C40 34 46 28 52 28Z', '#d8dce4') + P('M76 42 L95 38 L97 47 L80 53Z', '#9aa0ac') + C(91, 43, 3, '#152235')
-    + `<path d="M20 64 H40 M60 64 H82 M30 50 H74" ${LINE}/>` + R(30, 46, 10, 4, '#7a8090', 'rx="1"') + eng(40, 76, 3, '#9fdcff') + eng(52, 77, 3.4, '#9fdcff') + eng(64, 76, 3, '#9fdcff'));
+  // hn_outrider is a 3D model in js/ships3d.js.
 
   // ---------- raid bosses ----------
   add('char', 'raid_jabba', () => R(0, 0, 100, 100, '#2a1c10') + R(0, 0, 100, 100, '#ff9a3a', 'opacity=".12"') + R(0, 70, 100, 30, '#3a2614')
@@ -587,10 +585,11 @@
   const RAID_HP_MIN = 5000000;
   const RAID_BOSS_ATK = 1.6;
   const RAID_GUARD_ATK = 1.25;
-  for (const r of RAIDS) {
+  const toughPool = (r) => {
     const base = r.pool;
     Object.defineProperty(r, 'pool', { enumerable: true, get: () => (v22() ? Math.max(RAID_HP_MIN, base * 7) : base) });
-  }
+  };
+  for (const r of RAIDS) toughPool(r);
   // Applied in the raid battle setup.
   const raidToughen = (b, bossId) => {
     if (!v22()) return;
@@ -1068,7 +1067,7 @@
     };
   }
 
-  root.HN = { BETA, v22, raidToughen, xp, grantBase, HN_IDS, HOW, RAIDS, LEAGUES, DIVS, LEAGUE_REWARD, S, save, owns, card, grant, entry, pool, squad, squadEntries, squadPower, powerOf, avgLevel, divOf, opponents, payout, arenaResult, claimDivisions, week, raidNow, raidTotals, bankRaid, claimRaid, Net, rng, BOT_NAMES };
+  root.HN = { BETA, v22, raidToughen, toughPool, xp, grantBase, HN_IDS, HOW, RAIDS, LEAGUES, DIVS, LEAGUE_REWARD, S, save, owns, card, grant, entry, pool, squad, squadEntries, squadPower, powerOf, avgLevel, divOf, opponents, payout, arenaResult, claimDivisions, week, raidNow, raidTotals, bankRaid, claimRaid, Net, rng, BOT_NAMES };
 })(window);
 
 // HoloNet Arena screens (tester build only): the 4th tab, the level-25
@@ -4657,6 +4656,8 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   ];
   // Unit ids above that may not exist in every build fall back to plain TIEs.
   for (const g of GRAIDS) for (const f of ['ground', 'fleet']) g[f].slots = g[f].slots.map((id) => (D.UNIT_MAP[id] ? id : (f === 'fleet' ? 'tie_fighter' : 'stormtrooper')));
+  // Update 2.2: guild raid fronts get the same toughening as weekly raids.
+  for (const g of GRAIDS) for (const f of ['ground', 'fleet']) HN.toughPool(g[f]);
   const graidNow = () => GRAIDS[week() % GRAIDS.length];
 
   // Guild raid mechanics on top of the raid engine hooks.
@@ -5715,6 +5716,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
         b.hnRaid = { boss: F.boss, turn: 0, limit: 100, guild: true };
         const boss = b.units.find((u) => u.id === F.boss);
         boss.maxHp = F.pool; boss.hp = Math.max(1, t.left);
+        HN.raidToughen(b, F.boss);
         if (boss.hp <= boss.maxHp / 2) { boss.enraged = true; boss.statuses.offUp = 99; }
         b.hnStartHp = boss.hp;
         b.side('enemy').forEach((u, i) => { if (!F.start.includes(i)) { u.alive = false; u.hp = 0; u.hnWait = true; } });
