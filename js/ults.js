@@ -331,7 +331,7 @@
       const move = ally && !['heal', 'aegis', 'rally', 'suns'].includes(spec.move) ? 'rally' : spec.move;
       const S = this.sigStage(spec.color, move);
       // Rarer units get a bigger show: tiers stack on top of the unique move.
-      S.tier = actor.boss ? 3 : (TIER[actor.def.rarity] || 0);
+      S.tier = this.liteSig ? 0 : actor.boss ? 3 : (TIER[actor.def.rarity] || 0);
       S.layer.classList.add(`tier-${S.tier}`);
       const from = this.vp(actor.uid);
       const T = targets.filter((t) => this.cards[t.uid]).map((t) => ({ uid: t.uid, ...this.vp(t.uid) }));
@@ -343,7 +343,7 @@
         await this.sigFinale(S, actor, T, spec);
         const floor = [1700, 2100, 2600, 3200, 3800][S.tier] / S.speed;
         const left = floor - (performance.now() - t0);
-        if (left > 120) await this.sigLinger(S, T, spec, left);
+        if (left > 120 && !this.liteSig) await this.sigLinger(S, T, spec, left);
       } finally {
         await S.end();
       }
@@ -1125,11 +1125,19 @@
   const baseSuper = B.superMove;
   B.superMove = async function (anim, actor, targets, ev) {
     const spec = SIG[actor.id] || actor.def.sig;
-    if (!spec || spec.legacy || reduced() || (root.Perf && root.Perf.simpleUlts)) return baseSuper.call(this, spec && spec.legacy ? spec.legacy : anim, actor, targets, ev);
+    if (!spec || spec.legacy || reduced()) return baseSuper.call(this, spec && spec.legacy ? spec.legacy : anim, actor, targets, ev);
+    // Performance mode keeps every unit's own signature move, just lighter
+    // (no rarity extras, no lingering embers).
+    this.liteSig = !!(root.Perf && root.Perf.simpleUlts);
     try {
       await this.sig(actor, targets, ev);
     } catch (err) {
-      // Never let a cosmetic glitch stall the battle.
+      // Never let a cosmetic glitch stall the battle, and never let an
+      // ultimate go by with nothing on screen: play the classic version.
+      if (root.console) console.warn('Ultimate animation failed:', actor && actor.id, err);
+      try { await baseSuper.call(this, anim, actor, targets, ev); } catch (e) { /* ignore */ }
+    } finally {
+      this.liteSig = false;
     }
   };
 })(window);

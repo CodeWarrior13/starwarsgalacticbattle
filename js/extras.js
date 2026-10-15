@@ -802,6 +802,40 @@ if (B && !B.__xqr) {
   const irisSet = (cls) => Array.from({ length: 8 }, (_, k) => `<div class="iw" style="transform:rotate(${k * 45}deg)"><div class="ib${cls}"></div></div>`).join('');
   const iris = (cls = '') => el(`<div class="xq-iris ${cls}" aria-hidden="true"><div class="ic">${irisSet('')}${irisSet(' sm')}</div></div>`);
 
+  // Jar Jar's "Meesa Sorry!": he trips, cartwheels across the field bouncing off
+  // every enemy, and a spray of Gungan booma balls goes off behind him.
+  B.mv_whirl = async function (S, actor, from, T, spec, hit) {
+    const size = Math.min(S.W, S.H) * 0.22;
+    const jj = el(`<div class="xq-whirl" style="width:${size}px;height:${size}px">${root.Art.unitArt(actor.def)}</div>`);
+    S.layer.appendChild(jj);
+    const pts = [{ x: -size, y: S.H * 0.62 }, ...T.slice().sort((a, b) => a.x - b.x).map((t) => ({ x: t.x, y: t.y, t })), { x: S.W + size, y: S.H * 0.55 }];
+    const hop = 520 / S.speed;
+    let spin = 0;
+    for (let i = 1; i < pts.length; i++) {
+      const p0 = pts[i - 1];
+      const p1 = pts[i];
+      const peak = Math.min(p0.y, p1.y) - size * 1.1;
+      spin += 360;
+      await jj.animate([
+        { transform: `translate(${p0.x - size / 2}px, ${p0.y - size / 2}px) rotate(${spin - 360}deg)` },
+        { transform: `translate(${(p0.x + p1.x) / 2 - size / 2}px, ${peak - size / 2}px) rotate(${spin - 180}deg)`, offset: 0.5 },
+        { transform: `translate(${p1.x - size / 2}px, ${p1.y - size / 2}px) rotate(${spin}deg)` },
+      ], { duration: hop, easing: 'ease-in-out', fill: 'forwards' }).finished.catch(() => {});
+      if (p1.t) {
+        hit(p1.t);
+        for (let k = 0; k < 4; k++) {
+          const b = el(`<i class="xq-booma" style="left:${p1.x}px;top:${p1.y}px"></i>`);
+          S.layer.appendChild(b);
+          const a = Math.random() * Math.PI * 2;
+          const d = 40 + Math.random() * 50;
+          b.animate([{ transform: 'translate(-50%,-50%) scale(.4)', opacity: 1 }, { transform: `translate(calc(-50% + ${Math.cos(a) * d}px), calc(-50% + ${Math.sin(a) * d}px)) scale(1.3)`, opacity: 0 }], { duration: 650 / S.speed }).onfinish = () => b.remove();
+        }
+        if (root.Sound) root.Sound.play('explosion');
+      }
+    }
+    jj.remove();
+  };
+
   // The Shatterpoint ultimate: a camera shutter freezes the frame, fault lines
   // race across each enemy, then the frozen moment breaks.
   B.mv_shatter = async function (S, actor, from, T, spec, hit) {
@@ -982,6 +1016,9 @@ const cssSS = `
 @keyframes xq-rec { 50% { opacity: .2; } }
 .xq-shut { position: absolute; inset: 0; z-index: 6; pointer-events: none; }
 .xq-iris { position: absolute; inset: 0; z-index: 6; pointer-events: none; overflow: hidden; }
+.xq-whirl { position: absolute; left: 0; top: 0; z-index: 7; border-radius: 50%; overflow: hidden; border: 3px solid #ffb347; box-shadow: 0 0 18px rgba(255, 179, 71, 0.7); background: #2a1a0e; will-change: transform; }
+.xq-whirl svg { width: 100%; height: 100%; display: block; }
+.xq-booma { position: absolute; z-index: 7; width: 22px; height: 22px; border-radius: 50%; background: radial-gradient(circle, #e8fbff 0 25%, #5ad8ff 55%, rgba(40, 140, 255, 0) 72%); pointer-events: none; }
 .xq-iris .ic { position: absolute; left: 50%; top: 50%; width: 0; height: 0; }
 .xq-iris .iw { position: absolute; left: 0; top: 0; width: 0; height: 0; }
 .xq-iris .ib { position: absolute; left: 0; top: -110vmax; width: 110vmax; height: 110vmax; transform-origin: 0% 100%;
