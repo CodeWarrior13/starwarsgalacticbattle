@@ -580,6 +580,22 @@
       mech: [['Praetorian Guard', 'Starts with four Praetorian Guards. A fallen one steps back in every 3 turns.'], ['Bridge the Minds', 'Takes control of a card for a turn and turns it against your squad.'], ['Supreme Will', 'Every 4 turns revives every fallen guard, unless Snoke took an ultimate since his last turn.']],
     },
   ];
+  // Update 2.2 switch (null until the 2.2 date is set): raid bosses get at
+  // least 5,000,000 health and hit much harder; their guards hit a bit harder.
+  const V22 = root.__v22Test != null ? root.__v22Test : null;
+  const v22 = () => V22 != null && Date.now() >= V22;
+  const RAID_HP_MIN = 5000000;
+  const RAID_BOSS_ATK = 1.6;
+  const RAID_GUARD_ATK = 1.25;
+  for (const r of RAIDS) {
+    const base = r.pool;
+    Object.defineProperty(r, 'pool', { enumerable: true, get: () => (v22() ? Math.max(RAID_HP_MIN, base * 7) : base) });
+  }
+  // Applied in the raid battle setup.
+  const raidToughen = (b, bossId) => {
+    if (!v22()) return;
+    b.side('enemy').forEach((u) => { u.atk = Math.round(u.atk * (u.id === bossId ? RAID_BOSS_ATK : RAID_GUARD_ATK)); });
+  };
   const BOSS_KIT = {
     raid_jabba: { role: 'tank', spd: 88, abilities: [ab('Tail Slam', 0, 'enemy', [dmg(1.3)], 'Crushes one enemy.'), ab('Mocking Laughter', 3, 'allEnemies', [debuff('offDown', 2, 0.7)], 'Ho ho ho. Offense Down on every enemy.')], ultimate: ult('Bounty on Your Heads', 'allEnemies', [dmg(1.7), debuff('defDown', 2)], 'Puts a price on everyone: heavy damage and Defense Down.', 'Bo shuda!') },
     raid_nihilus: { role: 'attacker', spd: 136, abilities: [ab('Void Strike', 0, 'enemy', [dmg(1.4)], 'A strike that empties the target.'), ab('Drain Life', 3, 'enemy', [dmg(1.8), { ...heal(0.04), on: 'self' }], 'Drinks one enemy\'s life.')], ultimate: ult('Feast on the World', 'allEnemies', [dmg(2.0), { ...heal(0.06), on: 'self' }], 'Tears the life out of every enemy and feeds on it.', '…') },
@@ -1052,7 +1068,7 @@
     };
   }
 
-  root.HN = { BETA, xp, grantBase, HN_IDS, HOW, RAIDS, LEAGUES, DIVS, LEAGUE_REWARD, S, save, owns, card, grant, entry, pool, squad, squadEntries, squadPower, powerOf, avgLevel, divOf, opponents, payout, arenaResult, claimDivisions, week, raidNow, raidTotals, bankRaid, claimRaid, Net, rng, BOT_NAMES };
+  root.HN = { BETA, v22, raidToughen, xp, grantBase, HN_IDS, HOW, RAIDS, LEAGUES, DIVS, LEAGUE_REWARD, S, save, owns, card, grant, entry, pool, squad, squadEntries, squadPower, powerOf, avgLevel, divOf, opponents, payout, arenaResult, claimDivisions, week, raidNow, raidTotals, bankRaid, claimRaid, Net, rng, BOT_NAMES };
 })(window);
 
 // HoloNet Arena screens (tester build only): the 4th tab, the level-25
@@ -2225,6 +2241,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
         b.hnRaid = { boss: r.id, turn: 0, limit: 100 };
         const boss = b.units.find((u) => u.id === r.id);
         boss.maxHp = t.pool; boss.hp = Math.max(1, t.left);
+        HN.raidToughen(b, r.id);
         if (boss.hp <= boss.maxHp / 2) { boss.enraged = true; boss.statuses.offUp = 99; }
         b.hnStartHp = boss.hp;
         b.side('enemy').forEach((u, i) => { if (!r.start.includes(i)) { u.alive = false; u.hp = 0; u.hnWait = true; } });
