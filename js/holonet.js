@@ -1525,6 +1525,58 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
 @keyframes hn-holo { from { opacity: 0; transform: translateY(18%) scaleY(.2); } to { opacity: .95; transform: none; } }
 @keyframes hn-scan { to { background-position: 0 8px; } }
 .hn-capture .tap { position: absolute; bottom: 16px; right: 16px; font-size: 12px; color: #9fc4d8; }
+/* Bounty data: the puck projects each card as a hologram, then decrypts it to full colour. */
+.hn-bounty { position: fixed; inset: 0; z-index: 9700; background: radial-gradient(circle at 50% 45%, #14283c, #020408); display: grid; grid-template-rows: auto 1fr auto auto; justify-items: center; gap: 8px; padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom)); overflow: hidden; color: #dff4ff; }
+.hn-bounty .hb-top { text-align: center; display: grid; gap: 2px; }
+.hn-bounty .hb-top .eyebrow { color: var(--tc); margin: 0; }
+.hn-bounty .hb-top h2 { margin: 0; font-size: clamp(18px, 4.6vw, 26px); min-height: 1.3em; }
+.hn-bounty .hb-top small { font: 700 11px var(--font-display); letter-spacing: .2em; color: #8fb4c8; }
+.hn-bounty .hb-stage { position: relative; width: min(64vw, 240px, 40vh); display: grid; align-content: center; justify-items: center; cursor: pointer; }
+.hn-bounty .hb-card { position: relative; width: 100%; opacity: 0; }
+.hn-bounty .hb-card .ucard { width: 100%; }
+.hn-bounty .hb-card .glow { position: absolute; inset: 0; border-radius: 12px; box-shadow: 0 0 30px 4px var(--rc); opacity: 0; }
+.hn-bounty .hb-tint { position: absolute; inset: 0; border-radius: 12px; background: var(--tc); mix-blend-mode: color; pointer-events: none; }
+.hn-bounty .hb-tint::after { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.16) 0 1px, transparent 1px 4px); }
+.hn-bounty .hb-sweep { position: absolute; left: -6%; right: -6%; height: 3px; top: 0; background: #fff; box-shadow: 0 0 12px 3px var(--tc); opacity: 0; }
+.hn-bounty .hb-stamp { position: absolute; top: 10%; right: -8%; z-index: 3; padding: 4px 10px; border: 2px solid currentColor; border-radius: 6px; font: 800 clamp(12px, 3.4vw, 16px) var(--font-display); letter-spacing: .12em; color: #ff9a2a; background: rgba(10, 6, 2, 0.75); transform: rotate(12deg) scale(2.4); opacity: 0; }
+.hn-bounty .hb-stamp.dup { color: #7fd0ff; }
+.hn-bounty .hb-beam { width: 70%; height: 42px; margin-top: -4px; background: linear-gradient(0deg, color-mix(in srgb, var(--tc) 60%, transparent), transparent); clip-path: polygon(42% 100%, 58% 100%, 100% 0, 0 0); filter: blur(1.5px); opacity: 0; }
+.hn-bounty .hb-puck { width: 74px; height: 74px; animation: hn-hover 1.6s ease-in-out infinite; }
+.hn-bounty .hb-puck svg { width: 100%; height: 100%; }
+.hn-bounty .hb-tray { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; min-height: 30px; max-width: 700px; }
+.hn-bounty .hb-mini { position: relative; width: 46px; animation: hn-tray .35s cubic-bezier(.2,.9,.3,1.3); }
+.hn-bounty .hb-mini .thumb { width: 46px; height: 46px; border-radius: 10px; overflow: hidden; border: 2px solid var(--rc); background: #070b12; }
+.hn-bounty .hb-mini .thumb .portrait { width: 100%; height: 100%; }
+.hn-bounty .hb-mini .full { display: none; }
+.hn-bounty .hb-mini .ucard { width: 100%; }
+.hn-bounty .hb-mini .t { position: absolute; left: 50%; bottom: -6px; transform: translateX(-50%); padding: 1px 5px; border-radius: 5px; font-size: 9px; font-weight: 800; white-space: nowrap; background: #1a6a9a; color: #fff; }
+.hn-bounty .hb-mini .t.new { background: #ff9a2a; color: #1a0e00; }
+.hn-bounty .hb-act { display: flex; gap: 10px; min-height: 42px; align-items: center; }
+.hn-bounty .hb-hint { font-size: 12px; color: #9fc4d8; }
+/* Projection: beam flares, card builds bottom-up in the puck's colour, a line sweeps it into full colour, then the stamp lands. */
+.hn-bounty .go .hb-card { animation: hn-proj .5s ease-out .15s forwards; }
+.hn-bounty .go .hb-beam { animation: hn-beam 1.4s ease-out forwards; }
+.hn-bounty .go .hb-tint { animation: hn-decrypt .55s ease-in var(--dt) forwards; }
+.hn-bounty .go .hb-sweep { animation: hn-sweep .55s ease-in var(--dt) forwards; }
+.hn-bounty .go .glow { animation: hn-glow .6s ease-out calc(var(--dt) + .5s) forwards; }
+.hn-bounty .go .hb-stamp { animation: hn-stamp .3s cubic-bezier(.3,1.4,.5,1) calc(var(--dt) + .65s) forwards; }
+.hn-bounty .skip .hb-card, .hn-bounty .skip .glow, .hn-bounty .skip .hb-stamp { animation: none; opacity: 1; clip-path: none; }
+.hn-bounty .skip .hb-stamp { transform: rotate(12deg); }
+.hn-bounty .skip .hb-tint, .hn-bounty .skip .hb-sweep { animation: none; opacity: 0; }
+@keyframes hn-proj { 0% { opacity: 0; clip-path: inset(100% 0 0 0); transform: scaleX(.4); } 40% { opacity: .9; } 55% { opacity: .5; } 70% { opacity: .95; } 100% { opacity: 1; clip-path: inset(-30% -30% -30% -30%); transform: none; } }
+@keyframes hn-beam { 0% { opacity: 0; transform: scaleY(.2); transform-origin: 50% 100%; } 20% { opacity: .95; transform: none; } 75% { opacity: .7; } 100% { opacity: 0; } }
+@keyframes hn-decrypt { from { clip-path: inset(0 0 0 0); } to { clip-path: inset(100% 0 0 0); } }
+@keyframes hn-sweep { 0% { opacity: 1; top: 0; } 90% { opacity: 1; top: 100%; } 100% { opacity: 0; top: 100%; } }
+@keyframes hn-glow { 0% { opacity: 0; } 40% { opacity: 1; } 100% { opacity: .55; } }
+@keyframes hn-stamp { to { opacity: 1; transform: rotate(12deg) scale(1); } }
+@keyframes hn-tray { from { opacity: 0; transform: translateY(-60px) scale(1.8); } }
+.hn-bounty.done .hb-stage, .hn-bounty.done .hb-beam { display: none; }
+.hn-bounty.done .hb-tray { align-self: center; align-content: center; min-height: 0; gap: 14px 10px; max-height: 100%; overflow-y: auto; padding: 4px 4px 10px; }
+.hn-bounty.done { grid-template-rows: auto minmax(0, 1fr) auto; }
+.hn-bounty.done .hb-mini { width: min(40vw, 150px); }
+.hn-bounty.done .hb-mini .thumb { display: none; }
+.hn-bounty.done .hb-mini .full { display: block; }
+.hn-bounty.done .hb-mini .t { font-size: 10px; bottom: -8px; }
 .hn-reveal { display: grid; gap: 12px; }
 .hn-reveal .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(30%, 120px), 1fr)); gap: 10px; }
 .hn-reveal .rc { position: relative; opacity: 0; transform: translateY(16px) rotateY(80deg); animation: hn-flip .5s cubic-bezier(.2,.9,.3,1.2) var(--t) forwards; }
@@ -2472,7 +2524,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     if (!h.capRows[rowTier] && row.every(([k]) => h.captured[k])) { h.capRows[rowTier] = true; rowPaid = CAP_ROWS.find((x) => x[0] === rowTier)[2]; h.beskar += rowPaid; }
     Player.state.stats.packsOpened += 1;
     Player.save();
-    return { results, rowPaid, first: h.captured[target] === 1 };
+    return { results, rowPaid, target, first: h.captured[target] === 1 };
   }
   function capture(tier, target, norm) {
     return new Promise((resolve) => {
@@ -2500,16 +2552,78 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       setTimeout(end, motion() ? 4800 : 50);
     });
   }
-  // The cards come out one at a time, like a crate, centred on any screen.
+  // Bounty data: the puck stays on screen and projects each card as a
+  // hologram in its tier colour, then a scan line decrypts it to full colour
+  // and the result is stamped on. Tap for the next card; collected cards
+  // drop into the tray, which becomes the summary at the end.
+  const R_COL = { common: '#9aa8bc', rare: '#4fa3ff', epic: '#b77bff', legendary: '#ffb938', mythic: '#ff2a5a', secret: '#e8f0ff' };
+  const R_RANK = { common: 0, rare: 1, epic: 2, legendary: 3, mythic: 4, secret: 4 };
   function reveal(out, t) {
     return new Promise((resolve) => {
-      const res = out.results.map((r) => ({ id: r.id, isNew: r.isNew, shards: r.shards || 0, holo: !!r.holo }));
-      const after = async () => {
-        if (out.rowPaid) toast(`Row complete in the Captured log! +${fmt(out.rowPaid)} Beskar`);
-        for (const r of out.results) if (r.isNew && (r.hn || r.rarity === 'mythic')) await UI.walkout(D.UNIT_MAP[r.id], D.UNIT_MAP[r.id].rarity, !!r.holo, { exclusive: r.hn, isNew: true, shards: 0 });
-        resolve();
+      const tier = t.tier;
+      const tc = { guild: '#5fd8ff', elite: '#c08aff', high: '#ffd23f', legend: '#ff8a4a' }[tier] || '#5fd8ff';
+      const res = out.results;
+      const node = el(`<div class="hn-bounty" role="dialog" aria-label="Bounty collected" style="--tc:${tc}">
+        <div class="hb-top"><p class="eyebrow">${esc(t.name)} · bounty collected${out.first ? ' · new capture' : ''}</p><h2 data-t>Decrypting bounty data…</h2><small data-n></small></div>
+        <div class="hb-stage" data-stage></div>
+        <div class="hb-tray" data-tray></div>
+        <div class="hb-act"><span class="hb-hint" data-hint>Tap the card</span><button type="button" class="btn btn-primary" data-done hidden>Done</button></div>
+      </div>`);
+      const $ = (q) => node.querySelector(q);
+      const puck = `<div class="hb-beam"></div><div class="hb-puck"><svg viewBox="0 0 100 100">${A.puck(tier, out.target || null, { bare: true })}</svg></div>`;
+      document.body.appendChild(node);
+      let i = -1;
+      let ready = false;
+      let timer = null;
+      const tagOf = (r) => (r.isNew ? 'NEW!' : `+${r.shards || 0} shards`);
+      const cardOf = (def, r) => (def.hn ? hnCard(def, { holo: !!r.holo }) : UI.unitCard(def, { tag: 'div', hideShards: true, holo: !!r.holo }));
+      const show = () => {
+        i += 1;
+        const r = res[i];
+        const def = D.UNIT_MAP[r.id];
+        const rank = R_RANK[def.rarity] || 0;
+        const dt = 0.75 + rank * 0.22;
+        ready = false;
+        $('[data-n]').textContent = res.length > 1 ? `CARD ${i + 1} OF ${res.length}` : '';
+        $('[data-t]').textContent = 'Decrypting bounty data…';
+        $('[data-stage]').innerHTML = `<div class="hb-card" style="--rc:${R_COL[def.rarity]};--dt:${dt}s"><span class="glow"></span>${cardOf(def, r)}<span class="hb-tint"></span><span class="hb-sweep"></span><span class="hb-stamp ${r.isNew ? '' : 'dup'}">${tagOf(r)}</span></div>${puck}`;
+        const stage = $('[data-stage]');
+        stage.className = 'hb-stage';
+        const settle = () => { ready = true; $('[data-t]').textContent = def.name; $('[data-hint]').textContent = i < res.length - 1 ? 'Tap the card for the next one' : 'Tap the card to finish'; };
+        if (!motion()) { stage.classList.add('skip'); settle(); return; }
+        void stage.offsetWidth;
+        stage.classList.add('go');
+        sound('zap');
+        timer = setTimeout(() => { sound(`reveal_${def.rarity}`); timer = setTimeout(settle, 700); }, dt * 1000 + 150);
       };
-      UI.packReveal(res, null, { eyebrow: `${t.name} · bounty collected${out.first ? ' · new capture' : ''}`, doneTitle: 'Bounty collected', onClose: after });
+      const toTray = () => {
+        const r = res[i];
+        $('[data-tray]').appendChild(el(`<div class="hb-mini" style="--rc:${R_COL[D.UNIT_MAP[r.id].rarity]}"><div class="thumb">${portrait(D.UNIT_MAP[r.id])}</div><div class="full">${cardOf(D.UNIT_MAP[r.id], r)}</div><span class="t ${r.isNew ? 'new' : ''}">${tagOf(r)}</span></div>`));
+      };
+      const finish = () => {
+        node.classList.add('done');
+        $('[data-t]').textContent = 'Bounty collected';
+        $('[data-n]').textContent = `${res.length} CARD${res.length > 1 ? 'S' : ''}`;
+        $('[data-hint]').hidden = true;
+        $('[data-done]').hidden = false;
+        $('[data-done]').focus();
+      };
+      node.addEventListener('click', async (e) => {
+        if (e.target.closest('[data-done]')) {
+          node.remove();
+          UI.App.refresh();
+          if (out.rowPaid) toast(`Row complete in the Captured log! +${fmt(out.rowPaid)} Beskar`);
+          for (const r of res) if (r.isNew && (r.hn || r.rarity === 'mythic')) await UI.walkout(D.UNIT_MAP[r.id], D.UNIT_MAP[r.id].rarity, !!r.holo, { exclusive: r.hn, isNew: true, shards: 0 });
+          resolve();
+          return;
+        }
+        if (node.classList.contains('done') || !e.target.closest('[data-stage]')) return;
+        // First tap mid-projection finishes it; the next tap moves on.
+        if (!ready) { clearTimeout(timer); $('[data-stage]').classList.remove('go'); $('[data-stage]').classList.add('skip'); ready = true; $('[data-t]').textContent = D.UNIT_MAP[res[i].id].name; $('[data-hint]').textContent = i < res.length - 1 ? 'Tap the card for the next one' : 'Tap the card to finish'; return; }
+        toTray();
+        if (i < res.length - 1) show(); else finish();
+      });
+      show();
     });
   }
   const pay = (cur, n) => {

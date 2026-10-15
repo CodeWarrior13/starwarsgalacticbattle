@@ -30,7 +30,7 @@
         'NEW|Auto-repeat can stop on its own: type how many battles to repeat (up to 100,000) on the results screen, or pick ∞ to keep going. When it reaches your number it switches itself off.',
         'BALANCE|Auto-repeat now unlocks at level 15, and Auto-continue at level 20.',
         'BALANCE|Auto-repeat earns far less XP from level 15: less the higher your level, and less the more you repeat in a day. Playing battles yourself still earns the full amount.',
-        'NEW|Bounty pucks have their own opening: the target\'s hologram rises from the puck before it\'s frozen in carbonite, then your cards are revealed one at a time.',
+        'NEW|Bounty pucks have their own opening: the target\'s hologram rises from the puck before it\'s frozen in carbonite, then the puck projects each card as a hologram and decrypts it into full colour, one at a time.',
         'FIXED|Your profile picture sat off-centre in its frame in the profile editor on phones.',
         'FIXED|Cards from bounty pucks are now centred on every screen.',
         'IMPROVED|The half-built Death Star II over Endor has been redrawn for fleet battles and the galaxy map, now with a slowly turning frame and blinking work lights.',
