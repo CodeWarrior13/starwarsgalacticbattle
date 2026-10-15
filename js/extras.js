@@ -9,7 +9,8 @@ const { P, E, C, R, L, shade, SCENES, shoulders, SHIPS } = K;
 const el = (h) => UI.el(h);
 const esc = (t) => UI.esc(t);
 const motion = () => UI.motionOK();
-const Z = () => { const s = Player.state; s.z = s.z || {}; s.z.kt = s.z.kt || []; return s.z; };
+// While the save is being swapped (reset, sign-in), there's briefly no state: hand back a throwaway.
+const Z = () => { const s = Player.state; if (!s) return { kt: [], hf: [] }; s.z = s.z || {}; s.z.kt = s.z.kt || []; return s.z; };
 
 // ---------- styles (injected so the stylesheet stays clean) ----------
 const css = `
