@@ -493,6 +493,167 @@
   root.HNArt = { puck, figure, TARGETS, ROSTER, TIER, badge, varka };
 })(window);
 
+// Update 2.2: 15 new bounty targets for the Forge and the Captured log, drawn
+// in the same hologram bust style as the rest of the roster (hn-art.js).
+// They join the roster only once 2.2 is live (root.Update22).
+(function (root) {
+  const { P, E, C, R, L } = root.ArtX;
+  const A = root.HNArt;
+  if (!A || !(root.Update22 && root.Update22.on())) return;
+  const K = '#02141c';
+  const ln = (c, w = 0.6, o = 0.9) => `fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" opacity="${o}"`;
+  const H = (d, c) => P(d, c, `stroke="${c}" stroke-width=".7" stroke-opacity="1"`);
+  const dk = (d, o = 0.6) => P(d, K, `opacity="${o}"`);
+  const sh = (c, collar) => H('M30 52 C31 44 38 40 44 39 L56 39 C62 40 69 44 70 52Z', c) + (collar || '');
+  const T = {
+    // Greedo: Rodian with the trumpet snout, spines and his vest
+    greedo: (c) => sh(c, H('M41 40 L46 52 L54 52 L59 40 L55 39 L50 46 L45 39Z', c) + P('M46 44 L46 50 M54 44 L54 50', 'none', ln(K, 0.5, 0.5)))
+      + H('M41 21 C41 13.4 45 9.6 50 9.6 C55 9.6 59 13.4 59 21 C59 26 56.6 29.2 54.2 31.2 L53 33.6 C52 35.6 48 35.6 47 33.6 L45.8 31.2 C43.4 29.2 41 26 41 21Z', c)
+      + H('M47.6 30 L52.4 30 L53.4 36.8 C51.6 38 48.4 38 46.6 36.8Z', c) + E(50, 36.6, 2.2, 0.9, K, 'opacity=".75"')
+      + `<ellipse cx="45.4" cy="21" rx="3.6" ry="4.6" transform="rotate(-20 45.4 21)" fill="${K}" opacity=".82"/><ellipse cx="54.6" cy="21" rx="3.6" ry="4.6" transform="rotate(20 54.6 21)" fill="${K}" opacity=".82"/>`
+      + C(44.3, 19.6, 0.9, c) + C(53.5, 19.6, 0.9, c)
+      + P('M44 12 L42 8.4 M47 10.4 L46.4 6.8 M50 10 L50 6.4 M53 10.4 L53.6 6.8 M56 12 L58 8.4', 'none', ln(c, 0.8, 1))
+      + P('M40.6 18 L37.4 15.6 M59.4 18 L62.6 15.6', 'none', ln(c, 0.9, 1)),
+    // Ponda Baba: Aqualish, walrus face with downward tusks and small eyes up top
+    ponda: (c) => sh(c, H('M40 40 C44 42 56 42 60 40 L58 47 L42 47Z', c))
+      + H('M39 26 C38 16 43 10.4 50 10.4 C57 10.4 62 16 61 26 C60.6 32 58 36.6 54 38.4 L46 38.4 C42 36.6 39.4 32 39 26Z', c)
+      + E(45.6, 18.4, 1.7, 1.3, K, 'opacity=".85"') + E(54.4, 18.4, 1.7, 1.3, K, 'opacity=".85"') + C(45.2, 18, 0.45, c) + C(54, 18, 0.45, c)
+      + P('M42 15.4 C44.6 14 47.4 14.6 48.4 16 M58 15.4 C55.4 14 52.6 14.6 51.6 16', 'none', ln(K, 0.8, 0.7))
+      + dk('M43 26 C45 23 55 23 57 26 C57 30 54 33 50 33 C46 33 43 30 43 26Z', 0.55)
+      + H('M45.4 29.4 C45 33 45.6 37 46.8 40.4 C47.4 37 47.6 33 47.4 29.6Z M54.6 29.4 C55 33 54.4 37 53.2 40.4 C52.6 37 52.4 33 52.6 29.6Z', c)
+      + P('M44 24.6 Q50 22.4 56 24.6', 'none', ln(c, 0.6, 0.9)) + [[42, 21], [58, 21], [41, 30], [59, 30]].map(([x, y]) => C(x, y, 0.6, K, 'opacity=".45"')).join(''),
+    // Dr. Evazan: scarred human surgeon with a sneer
+    evazan: (c) => sh(c, H('M43 38 L50 44 L57 38 L57 42 L50 48 L43 42Z', c))
+      + H('M42 24 C42 15 45.6 11 50 11 C54.4 11 58 15 58 24 C58 31 55 37 50 37.4 C45 37 42 31 42 24Z', c)
+      + H('M42 18.6 C42.6 12.4 46 10 50 10 C54 10 57.4 12.4 58 18.6 C55 15.6 52 15 50 15.4 C47 15 44.4 16 42 18.6Z', c)
+      + E(46.6, 23.4, 1.2, 0.8, K) + E(53.4, 23.6, 1, 0.6, K) + P('M44.8 21.4 L48.4 22 M55.4 21.6 L52 22.2', 'none', ln(K, 0.8, 0.8))
+      + P('M47 32 C48.6 30.8 51.6 31.4 53.6 30.4', 'none', ln(K, 0.8, 0.85))
+      + P('M53 17.8 L54.8 22 L53.6 25.6 L56.2 30.6', 'none', ln('#ffffff', 0.8, 0.95)) + P('M53.4 19.6 L55.4 19.4 M54.6 23.4 L56.2 23.6 M54.4 27.6 L56.2 27', 'none', ln('#ffffff', 0.4, 0.8))
+      + P('M49.6 25 L49.2 28 L50.8 28.2', 'none', ln(K, 0.5, 0.6)) + C(45, 28.4, 0.5, K, 'opacity=".5"') + C(44.2, 30, 0.4, K, 'opacity=".5"'),
+    // Bib Fortuna: pale Twi'lek, lekku over the shoulder, robe collar, red eyes
+    bib: (c) => sh(c, H('M38 41 L44 39 L50 47 L56 39 L62 41 L58 48 L42 48Z', c))
+      + H('M42.6 26 C42 17 45.4 12 50 12 C54.6 12 58 17 57.4 26 C57 31.4 54.4 35.6 50 36 C45.6 35.6 43 31.4 42.6 26Z', c)
+      + H('M44 16 C40 18 36 26 35.4 36 C35 42 36.6 47 38.4 50 L41.6 49 C40 44 40 38 41.6 30 C42.4 25 43.6 20 45.4 17Z', c)
+      + H('M56 16 C60 19 62.4 26 62 33 C61.6 37 60 40 58 42 L56 40 C57.6 37 58 33 57.6 28Z', c)
+      + `<g style="filter:drop-shadow(0 0 1.2px #ff6a5a)">${E(46.8, 24, 1.3, 0.8, '#ff6a5a')}${E(53.2, 24, 1.3, 0.8, '#ff6a5a')}</g>`
+      + P('M45 22 L48.6 22.6 M55 22 L51.4 22.6', 'none', ln(K, 0.7, 0.75)) + P('M47 31 Q50 32.6 53 31', 'none', ln(K, 0.7, 0.8)) + P('M48.2 31.4 L48.6 32.8 M51.8 31.4 L51.4 32.8', 'none', ln(c, 0.4, 0.9))
+      + P('M37.6 30 C38.4 34 38.6 40 38.2 46 M40 22 C38.6 24 37.8 27 37.6 30', 'none', ln(K, 0.5, 0.45)),
+    // Ziro the Hutt: wide Hutt head, body tattoos and a jewelled headband
+    ziro: (c) => H('M24 54 C24 44 30 38 38 37 L62 37 C70 38 76 44 76 54Z', c)
+      + H('M33 28 C32 18 40 11.6 50 11.6 C60 11.6 68 18 67 28 C66.6 34 62 39 50 39.6 C38 39 33.4 34 33 28Z', c)
+      + R(37, 15.6, 26, 2.6, K, 'opacity=".6" rx="1.2"') + C(50, 16.9, 1.6, c) + C(50, 16.9, 0.8, K, 'opacity=".7"')
+      + E(42.6, 23, 2.4, 1.2, K, 'opacity=".85"') + E(57.4, 23, 2.4, 1.2, K, 'opacity=".85"') + L(42.6, 22, 42.6, 24, c, 0.6) + L(57.4, 22, 57.4, 24, c, 0.6)
+      + P('M38 31 Q50 36.4 62 31', 'none', ln(K, 1, 0.85)) + E(48.4, 27.4, 0.6, 0.9, K) + E(51.6, 27.4, 0.6, 0.9, K)
+      + P('M30 44 C33 42 36 43 37 46 M34 48 C36 47 38 48 38.6 50 M70 44 C67 42 64 43 63 46 M66 48 C64 47 62 48 61.4 50 M36 20 C38 19 39 20.4 38.4 22 M64 20 C62 19 61 20.4 61.6 22', 'none', ln(K, 0.6, 0.6)),
+    // Hondo Ohnaka: Weequay pirate, goggles up on the head, braided head-tails, coat collar
+    hondo: (c) => sh(c, H('M36 40 L42 38 L45 50 L38 52Z M64 40 L58 38 L55 50 L62 52Z', c) + P('M45 42 L55 42', 'none', ln(K, 0.6, 0.5)))
+      + H('M43.4 26 C43 17 46 12.6 50 12.6 C54 12.6 57 17 56.6 26 C56.4 32 54 36.6 50 37.4 C46 36.6 43.6 32 43.4 26Z', c)
+      + H('M42.4 17.6 C44 14.4 56 14.4 57.6 17.6 L57 20 L43 20Z', c) + C(46.4, 17.4, 2.2, K, 'opacity=".75"') + C(53.6, 17.4, 2.2, K, 'opacity=".75"') + C(46, 17, 0.7, c) + C(53.2, 17, 0.7, c)
+      + E(47.4, 24, 1.2, 0.7, K) + E(52.6, 24, 1.2, 0.7, K) + [28, 30.6, 33.2].map((y) => P(`M45.4 ${y} Q50 ${y + 1.4} 54.6 ${y}`, 'none', ln(K, 0.45, 0.5))).join('')
+      + P('M47.4 31.4 Q50 33.2 52.6 31.4', 'none', ln(K, 0.7, 0.8))
+      + P('M44 22 C41 24 39.4 30 40 38 M56 22 C59 24 60.6 30 60 38', 'none', ln(c, 1.3, 1)) + [26, 30, 34].map((y) => C(40.2, y, 0.7, K, 'opacity=".5"') + C(59.8, y, 0.7, K, 'opacity=".5"')).join(''),
+    // Cad Bane: wide-brimmed hat, breathing tubes, red eyes, tall collar
+    cadbane: (c) => sh(c, H('M40 41 L42 33 L46 39 L54 39 L58 33 L60 41 L58 47 L42 47Z', c))
+      + H('M43.6 26 C43.6 19.6 46.4 16.6 50 16.6 C53.6 16.6 56.4 19.6 56.4 26 C56.4 31.4 53.6 35.4 50 35.6 C46.4 35.4 43.6 31.4 43.6 26Z', c)
+      + `<g style="filter:drop-shadow(0 0 1.3px #ff4a3a)">${E(47.4, 24.6, 1.4, 1, '#ff4a3a')}${E(52.6, 24.6, 1.4, 1, '#ff4a3a')}</g>`
+      + P('M47.4 31.6 L52.6 31.6', 'none', ln(K, 0.7, 0.8)) + C(43.4, 28.6, 1.3, c) + C(56.6, 28.6, 1.3, c) + P('M43.4 29.8 C42.4 33 43 36 45 38.4 M56.6 29.8 C57.6 33 57 36 55 38.4', 'none', ln(c, 0.9, 1))
+      + H('M30 18.6 C34 16.6 40 16 44 16.2 L44.6 9.6 C46 8 54 8 55.4 9.6 L56 16.2 C60 16 66 16.6 70 18.6 C66 20 60 20.4 50 20.4 C40 20.4 34 20 30 18.6Z', c)
+      + P('M44.4 14 L55.6 14', 'none', ln(K, 1, 0.6)),
+    // Dr. Pershing: Remnant cloning scientist, receding hair, implant on the temple
+    pershing: (c) => sh(c, H('M41 39 L50 41 L59 39 L58 46 L42 46Z', c) + R(52.4, 42, 4.4, 2.4, K, 'opacity=".55" rx=".4"') + C(53.6, 43.2, 0.5, c) + C(55.4, 43.2, 0.5, c))
+      + H('M42.4 24.6 C42.4 15.4 45.8 11.6 50 11.6 C54.2 11.6 57.6 15.4 57.6 24.6 C57.6 31.6 54.4 36.4 50 36.6 C45.6 36.4 42.4 31.6 42.4 24.6Z', c)
+      + P('M42.6 20 C43 15 45 13.2 47 13 M57.4 20 C57 15 55 13.2 53 13', 'none', ln(K, 1.1, 0.55))
+      + R(56.6, 20.4, 3.6, 5.4, c, 'rx=".8"') + R(57.4, 21.4, 2, 1.2, K, 'opacity=".7"') + `<g style="filter:drop-shadow(0 0 1px #8affc8)">${C(58.4, 24, 0.6, '#8affc8')}</g>`
+      + E(47.2, 24.2, 1.1, 0.8, K) + E(52.8, 24.2, 1.1, 0.8, K) + P('M45.6 22.4 C46.6 21.8 48 21.8 48.8 22.4 M54.4 22.4 C53.4 21.8 52 21.8 51.2 22.4', 'none', ln(K, 0.6, 0.7))
+      + P('M47.6 31.4 Q50 30.6 52.4 31.4', 'none', ln(K, 0.6, 0.75)) + P('M49.6 25.4 L49.2 28.4 L50.8 28.6', 'none', ln(K, 0.5, 0.6)),
+    // Pyke Enforcer: long armoured skull with a crest, small high-set eyes, breather mask with hoses, plated shoulders
+    pyke: (c) => H('M28 52 C29 45 34 41 40 40 L60 40 C66 41 71 45 72 52Z', c)
+      + H('M30 47 C31 42 35 40 40 40 L42 46 C38 46 33 47 30 50Z M70 47 C69 42 65 40 60 40 L58 46 C62 46 67 47 70 50Z', c)
+      + H('M41 41 L59 41 L57.6 48 L42.4 48Z', c) + [44.6, 48.2, 51.8, 55.4].map((x) => L(x, 42.4, x, 46.8, K, 0.5, 'opacity=".5"')).join('')
+      + `<g transform="translate(0 3.4)">` + H('M43.2 29 C42 17 44.6 7.6 50 7.6 C55.4 7.6 58 17 56.8 29 L56 35.6 C54 38.6 46 38.6 44 35.6Z', c)
+      + H('M47.6 8.6 C48.4 5.6 51.6 5.6 52.4 8.6 L51.6 18 L48.4 18Z', c) + P('M50 6 L50 18', 'none', ln(K, 0.5, 0.5))
+      + P('M43.6 15 C46 13.4 54 13.4 56.4 15 M43.2 20 C46 18.6 54 18.6 56.8 20', 'none', ln(K, 0.55, 0.45))
+      + dk('M44.6 21.6 C46.6 20.4 53.4 20.4 55.4 21.6 L54.8 24.6 C52.6 25.4 47.4 25.4 45.2 24.6Z', 0.85)
+      + `<g style="filter:drop-shadow(0 0 1px #fff3a0)">${E(47.6, 22.9, 1, 0.55, '#fff3a0')}${E(52.4, 22.9, 1, 0.55, '#fff3a0')}</g>`
+      + H('M45.4 27.4 C47 26.4 53 26.4 54.6 27.4 L54 34.4 C52.4 35.6 47.6 35.6 46 34.4Z', c) + [28.8, 30.6, 32.4].map((y) => L(47, y, 53, y, K, 0.5, 'opacity=".6"')).join('')
+      + C(45.2, 31.4, 1.2, c) + C(54.8, 31.4, 1.2, c) + P('M45 32.6 C43.6 35.6 43.4 38.4 44 41.4 M55 32.6 C56.4 35.6 56.6 38.4 56 41.4', 'none', ln(c, 1, 1))
+      + P('M45 33.6 C43.8 36 43.8 38.6 44.4 41 M55 33.6 C56.2 36 56.2 38.6 55.6 41', 'none', ln(K, 0.35, 0.4)) + '</g>',
+    // Kowakian Monkey-Lizard: huge ears, wide cackling grin, tiny body
+    crumb: (c) => H('M40 52 C40 45 44 41 50 41 C56 41 60 45 60 52Z', c)
+      + H('M41 30 C40 22 44 17.4 50 17.4 C56 17.4 60 22 59 30 C58.6 36 55 40.4 50 40.6 C45 40.4 41.4 36 41 30Z', c)
+      + H('M42 25 C36 21 30.6 21 28.4 23.6 C31 28 36 30 41.4 30Z M58 25 C64 21 69.4 21 71.6 23.6 C69 28 64 30 58.6 30Z', c)
+      + P('M31.6 24 C35 25 38.4 27 40.4 28.4 M68.4 24 C65 25 61.6 27 59.6 28.4', 'none', ln(K, 0.5, 0.5))
+      + C(46.4, 26.4, 1.6, K, 'opacity=".85"') + C(53.6, 26.4, 1.6, K, 'opacity=".85"') + C(46, 26, 0.5, c) + C(53.2, 26, 0.5, c)
+      + P('M44 32.6 Q50 39 56 32.6 Q50 35.4 44 32.6Z', K, 'opacity=".8"') + [46, 48, 50, 52, 54].map((x) => P(`M${x} ${33.4 + Math.abs(x - 50) * -0.12} l.5 1.2 l.5 -1.2`, 'none', ln(c, 0.4, 0.95))).join('')
+      + P('M48 18 C48.6 15.6 49.4 14 50 13.6 C50.6 14 51.4 15.6 52 18', 'none', ln(c, 0.7, 1)),
+    // Ugnaught Smuggler: pig snout, white side whiskers, coverall collar
+    ugnaught: (c) => sh(c, H('M42 39 L46 50 L54 50 L58 39Z', c) + P('M50 41 L50 50 M45 45 L55 45', 'none', ln(K, 0.5, 0.5)))
+      + H('M41.6 25 C41.6 17 45 13 50 13 C55 13 58.4 17 58.4 25 C58.4 31.6 55 36.4 50 36.8 C45 36.4 41.6 31.6 41.6 25Z', c)
+      + H('M41.6 25 C38 28 37.4 33 39.6 37.4 C41.4 35 43 33 44 30Z M58.4 25 C62 28 62.6 33 60.4 37.4 C58.6 35 57 33 56 30Z', c)
+      + P('M39.6 30 L41.6 31.4 M39.4 33.4 L41.6 34 M60.4 30 L58.4 31.4 M60.6 33.4 L58.4 34', 'none', ln(K, 0.4, 0.45))
+      + E(50, 26.6, 3.2, 2.4, c) + E(48.8, 26.6, 0.7, 1, K) + E(51.2, 26.6, 0.7, 1, K)
+      + E(46.4, 21.8, 1, 0.8, K) + E(53.6, 21.8, 1, 0.8, K) + P('M44.6 19.6 L48 20.4 M55.4 19.6 L52 20.4', 'none', ln(K, 0.6, 0.6))
+      + P('M47 31.8 Q50 33 53 31.8', 'none', ln(K, 0.6, 0.75)) + P('M43 14.4 L41.6 11.6 L45 13 M57 14.4 L58.4 11.6 L55 13', 'none', ln(c, 0.7, 1)),
+    // Twi'lek Spice Runner: lekku down both sides, headband, flight-jacket collar
+    twilek: (c) => sh(c, H('M38 40 L44 39 L47 50 L40 52Z M62 40 L56 39 L53 50 L60 52Z', c) + P('M44 44 L56 44', 'none', ln(K, 0.5, 0.45)))
+      + H('M43 26 C42.4 17.4 45.6 12.6 50 12.6 C54.4 12.6 57.6 17.4 57 26 C56.6 31.6 54 35.6 50 36 C46 35.6 43.4 31.6 43 26Z', c)
+      + H('M44 18 C40.6 22 39.6 30 40 40 C40.2 44 41 47 42 49 L44.4 48.4 C43.6 44 43.4 38 44.2 30 C44.6 25 45.4 21 46.4 18.6Z', c)
+      + H('M56 18 C59.4 22 60.4 30 60 40 C59.8 44 59 47 58 49 L55.6 48.4 C56.4 44 56.6 38 55.8 30 C55.4 25 54.6 21 53.6 18.6Z', c)
+      + R(43.4, 17.6, 13.2, 2.2, K, 'opacity=".6" rx="1"') + C(50, 18.7, 0.8, c)
+      + E(47.2, 24.4, 1.2, 0.8, K) + E(52.8, 24.4, 1.2, 0.8, K) + C(46.9, 24.1, 0.35, c) + C(52.5, 24.1, 0.35, c)
+      + P('M47.6 31 Q50 32.4 52.4 31', 'none', ln(K, 0.6, 0.8)) + P('M41.6 30 L42.6 30.6 M41.6 36 L42.8 36.4 M58.4 30 L57.4 30.6 M58.4 36 L57.2 36.4', 'none', ln(K, 0.5, 0.5)),
+    // Duros Spacer: wide hairless cranium tapering to a narrow chin, big angled red eyes, no nose,
+    // cheek ridges, a comm headset with mic boom, and a flight vest with harness straps
+    duros: (c) => sh(c, H('M38 41 L44 38.6 L47.6 51 L40 52Z M62 41 L56 38.6 L52.4 51 L60 52Z', c)
+        + P('M44.6 40 L48.4 52 M55.4 40 L51.6 52', 'none', ln(K, 0.9, 0.55)) + R(46.4, 45, 7.2, 3, K, 'opacity=".55" rx=".6"') + C(50, 46.5, 0.8, c)
+        + R(57.6, 43.6, 3.4, 2.4, K, 'opacity=".5" rx=".4"'))
+      + `<g transform="translate(0 3)">` + H('M38.4 19 C38.4 10.6 43.6 6.6 50 6.6 C56.4 6.6 61.6 10.6 61.6 19 C61.6 24.6 59.4 28.6 56.4 32 C54.4 34.6 52.6 37 50 37 C47.4 37 45.6 34.6 43.6 32 C40.6 28.6 38.4 24.6 38.4 19Z', c)
+      + `<g style="filter:drop-shadow(0 0 1.3px #ff5a4a)"><path d="M40.4 19.4 C41.4 15.8 46.4 15.2 48.8 17.6 C49.4 21 47 24.2 43.4 24.2 C41.4 23.6 40.4 21.6 40.4 19.4Z" fill="#ff5a4a"/><path d="M59.6 19.4 C58.6 15.8 53.6 15.2 51.2 17.6 C50.6 21 53 24.2 56.6 24.2 C58.6 23.6 59.6 21.6 59.6 19.4Z" fill="#ff5a4a"/></g>`
+      + E(44.8, 20.2, 1.8, 1.4, K, 'opacity=".55"') + E(55.2, 20.2, 1.8, 1.4, K, 'opacity=".55"') + C(44.4, 19.4, 0.4, '#fff') + C(54.4, 19.4, 0.4, '#fff')
+      + P('M40 15 C43 13 47 13 49 15.6 M60 15 C57 13 53 13 51 15.6', 'none', ln(K, 0.9, 0.75))
+      + P('M42.6 25.6 C44.4 28 46 29 47.4 29.4 M57.4 25.6 C55.6 28 54 29 52.6 29.4', 'none', ln(K, 0.6, 0.55))
+      + P('M48.6 25.4 L49.2 26.2 M51.4 25.4 L50.8 26.2', 'none', ln(K, 0.45, 0.5)) + P('M47.4 31.8 L52.6 31.8', 'none', ln(K, 0.7, 0.85))
+      + P('M43 10.6 C46.4 8.8 53.6 8.8 57 10.6 M41.2 13.4 C45 11.6 55 11.6 58.8 13.4', 'none', ln(K, 0.45, 0.35))
+      + H('M60.4 16.4 C62.6 16.4 63.6 18 63.6 20.6 C63.6 23 62.6 24.4 60.6 24.4Z', c) + P('M62.4 23.6 C61.6 28 58.6 31 54.6 32', 'none', ln(c, 0.8, 1)) + C(54.2, 32.1, 0.9, c)
+      + P('M39.6 15 C44 9 56 9 60.4 15', 'none', ln(c, 0.9, 0.9)) + '</g>',
+    // Crimson Dawn Agent: hooded, masked lower face, the three-blade sigil
+    crimson: (c) => H('M28 54 C30 44 36 38 42 36 L58 36 C64 38 70 44 72 54Z', c)
+      + H('M38.6 32 C37 18 42 8.6 50 8.6 C58 8.6 63 18 61.4 32 L58.6 37 L41.4 37Z', c)
+      + dk('M42.6 30 C41.6 20 45 14.4 50 14.4 C55 14.4 58.4 20 57.4 30 L55.6 35 L44.4 35Z', 0.7)
+      + H('M44.6 22.4 C45.4 19.6 54.6 19.6 55.4 22.4 L55 25.4 L45 25.4Z', c) + E(47.6, 23, 1.1, 0.6, K) + E(52.4, 23, 1.1, 0.6, K)
+      + H('M44.4 26.6 L55.6 26.6 L54.6 33.6 L45.4 33.6Z', c) + [47, 49, 51, 53].map((x) => L(x, 27.6, x, 32.6, K, 0.4, 'opacity=".5"')).join('')
+      + `<g style="filter:drop-shadow(0 0 1.2px #ff4a5a)">${P('M50 41 L51 45 L54.4 46.8 L51 47 L50 50.6 L49 47 L45.6 46.8 L49 45Z', '#ff4a5a')}</g>`,
+    // Black Sun Vigo: Falleen noble, scaled skin, topknot, high Black Sun collar
+    vigo: (c) => H('M26 54 C28 44 35 38.6 42 37.4 L58 37.4 C65 38.6 72 44 74 54Z', c)
+      + H('M38.4 40 L42 31 L46 38 L54 38 L58 31 L61.6 40 L58 45 L42 45Z', c)
+      + H('M43 25 C43 16.6 46.2 12.6 50 12.6 C53.8 12.6 57 16.6 57 25 C57 31 54.2 35.4 50 35.6 C45.8 35.4 43 31 43 25Z', c)
+      + H('M48 13.4 C48 9.6 49 7.6 50 7.6 C51 7.6 52 9.6 52 13.4Z', c) + P('M50 8 C53 9 56 12 57 17', 'none', ln(c, 1.2, 1)) + P('M57 17 C58 22 58 28 56.6 34', 'none', ln(c, 0.9, 0.9))
+      + E(47.4, 23.6, 1.2, 0.7, K) + E(52.6, 23.6, 1.2, 0.7, K) + P('M45.8 21.6 L48.8 22.2 M54.2 21.6 L51.2 22.2', 'none', ln(K, 0.7, 0.8))
+      + P('M47.6 30.6 Q50 31.6 52.4 30.6', 'none', ln(K, 0.6, 0.8))
+      + [[45, 17], [47, 15.4], [53, 15.4], [55, 17], [44.6, 28], [55.4, 28], [46, 32], [54, 32]].map(([x, y]) => C(x, y, 0.5, K, 'opacity=".35"')).join('')
+      + C(50, 46.4, 3, K, 'opacity=".7"') + [0, 45, 90, 135].map((a) => { const t = a * Math.PI / 180; return L(50 - 4.4 * Math.cos(t), 46.4 - 4.4 * Math.sin(t), 50 + 4.4 * Math.cos(t), 46.4 + 4.4 * Math.sin(t), c, 0.5); }).join('') + C(50, 46.4, 1.4, c),
+  };
+  const ROSTER = {
+    greedo: { name: 'Greedo', tier: 'guild', bias: { trait: 'scoundrel' }, bounty: 1200, line: 'Owes Jabba, and shot second.' },
+    ponda: { name: 'Ponda Baba', tier: 'guild', bias: { faction: 'dark', trait: 'scoundrel' }, bounty: 1000, line: 'Started a fight in the wrong cantina.' },
+    crumb: { name: 'Kowakian Monkey-Lizard', tier: 'guild', bias: { trait: 'scoundrel' }, bounty: 600, line: 'Stole a Hutt\'s dinner. Cackled about it.' },
+    ugnaught: { name: 'Ugnaught Smuggler', tier: 'guild', bias: { trait: 'droid' }, bounty: 800, line: 'Running Tibanna gas out of Cloud City.' },
+    duros: { name: 'Duros Spacer', tier: 'guild', bias: { faction: 'light' }, bounty: 900, line: 'Flew a stolen freighter through a blockade.' },
+    evazan: { name: 'Dr. Evazan', tier: 'elite', bias: { faction: 'dark' }, bounty: 4600, line: 'The death sentence on twelve systems.' },
+    twilek: { name: 'Twi\'lek Spice Runner', tier: 'elite', bias: { trait: 'scoundrel' }, bounty: 4000, line: 'Dumped a Pyke shipment and ran.' },
+    pyke: { name: 'Pyke Enforcer', tier: 'elite', bias: { faction: 'dark' }, bounty: 4400, line: 'Collects spice debts the hard way.' },
+    pershing: { name: 'Dr. Pershing', tier: 'elite', bias: { faction: 'dark', trait: 'empire' }, bounty: 5200, line: 'Wanted alive. The client insists.' },
+    bib: { name: 'Bib Fortuna', tier: 'elite', bias: { faction: 'dark', trait: 'leader' }, bounty: 5000, line: 'Took Jabba\'s throne while no one was looking.' },
+    ziro: { name: 'Ziro the Hutt', tier: 'high', bias: { faction: 'dark', trait: 'leader' }, bounty: 20000, line: 'Broke out of a Republic prison. Again.' },
+    hondo: { name: 'Hondo Ohnaka', tier: 'high', bias: { trait: 'scoundrel' }, bounty: 16000, line: 'Says it\'s nothing personal. It\'s always personal.' },
+    crimson: { name: 'Crimson Dawn Agent', tier: 'high', bias: { faction: 'dark' }, bounty: 19000, line: 'Nobody has seen the face under the mask.' },
+    cadbane: { name: 'Cad Bane', tier: 'legend', bias: { trait: 'bounty' }, bounty: 70000, line: 'The fastest draw in the Outer Rim.' },
+    vigo: { name: 'Black Sun Vigo', tier: 'gold', bias: { faction: 'dark', trait: 'leader' }, bounty: 140000, line: 'Runs a third of Black Sun from the shadows.' },
+  };
+  Object.assign(A.TARGETS, T);
+  Object.assign(A.ROSTER, ROSTER);
+})(window);
+
 // HoloNet Arena core (tester build only): cards, bosses, saved state, the
 // shared tester database, arena maths, raid mechanics and engine hooks.
 (function (root) {
@@ -6334,6 +6495,248 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
 @media (max-width: 520px) { .g-front { grid-template-columns: 1fr; } .g-front .art { max-width: 160px; } .pf-top { grid-template-columns: auto minmax(0, 1fr); } .pf-lg { grid-column: 1 / -1; justify-self: start; grid-template-columns: 40px auto; width: auto; align-items: center; } .pf-lg .hn-badge { width: 40px; } }
 `;
   document.head.appendChild(css);
+})(window);
+
+// Update 2.2 (READY, not in the build yet: add it to live-bundle.sh after
+// hn-social once the owner approves): seven new HoloNet-only cards. Bossk, Cad
+// Bane, IG-11, Greef Karga, Cara Dune, Zuckuss and Todo 360, with their art,
+// kits, signature ultimates and where they come from. Off until 2.2 is live.
+(function (root) {
+  'use strict';
+  if (!(root.Update22 && root.Update22.on())) return;
+  const D = root.GameData;
+  const HN = root.HN;
+  const { P, E, C, R, L, shade, shoulders, neck, head, eyes, brows, nose, mouth, glowEyes, blaster, SCENES } = root.ArtX;
+  const add = (id, fn) => root.Art.addArt('char', id, fn);
+  const dmg = (mult, hits) => ({ type: 'damage', mult, hits: hits || 1 });
+  const heal = (pct) => ({ type: 'heal', pct });
+  const buff = (status, turns) => ({ type: 'status', status, turns, chance: 1 });
+  const debuff = (status, turns, chance) => ({ type: 'status', status, turns, chance: chance == null ? 1 : chance });
+  const tm = (amount) => ({ type: 'tm', amount });
+  const cleanse = () => ({ type: 'cleanse' });
+  const dispel = () => ({ type: 'dispel' });
+  const ab = (name, cd, target, effects, desc) => ({ name, cd, target, effects, desc });
+  const ult = (name, target, effects, desc, quote) => ({ name, cd: 0, target, effects, desc, quote, ultimate: true });
+
+  // ---------- shared props ----------
+  // A proper blaster rifle: stock, receiver, scope, barrel, muzzle and grip, drawn along +x then rotated.
+  const rifle = (x, y, rot, s = 1, o = {}) => `<g transform="translate(${x} ${y}) rotate(${rot}) scale(${s})">`
+    + P('M-15 -2.2 L-4 -3.2 L-2.4 2 L-13.4 4.6 C-15 4 -15.6 2 -15 -2.2Z', o.stock || '#4a3424') + L(-13, 0, -5, -1, '#6a4a34', 0.6)
+    + R(-4, -3.6, 23, 6.6, o.body || '#2a2d33', 'rx="1.4"') + R(-2, -2.6, 18, 1.2, '#5a5e66') + [2, 6, 10].map((k) => R(k, 0.2, 2.4, 1.6, '#16181c')).join('')
+    + R(19, -1.8, 15, 3.4, '#1e2026') + R(21, -2.6, 2, 5, '#3a3e46') + R(26, -2.6, 2, 5, '#3a3e46') + R(33, -2.6, 3.4, 5.2, '#3a3e46', 'rx=".6"')
+    + R(1, -7.6, 14, 3.4, '#3a3e46', 'rx="1.2"') + C(15.4, -5.9, 1.7, '#14202c') + C(15.1, -6.3, 0.6, '#8ad0ff', 'opacity=".8"') + L(4, -4.4, 4, -3.4, '#2a2d33', 1.2) + L(12, -4.4, 12, -3.4, '#2a2d33', 1.2)
+    + P('M4 2.6 L8.6 2.6 L10 10 L6 10.4Z', '#22252b') + (o.mag ? R(12, 2.6, 4, 6, '#3a3e46', 'rx=".8"') : '') + '</g>';
+  const hand = (x, y, col, r = 3.4) => E(x, y, r, r * 0.8, col) + P(`M${x - r * 0.8} ${y - r * 0.2} Q${x} ${y - r * 0.9} ${x + r * 0.8} ${y - r * 0.2}`, 'none', 'stroke="#000" stroke-opacity=".25" stroke-width=".6"');
+  const win = (x, y, w, h, c = '#ffcf7a') => R(x, y, w, h, c, 'opacity=".85"');
+
+  // Bossk: Trandoshan hunter aboard the Hound's Tooth. Heavy brow, deep-set slit eyes,
+  // broad squared jaw, thick neck, yellow flight suit with harness, Relby mortar rifle.
+  add('hn_bossk', () => R(0, 0, 100, 100, '#1a1310')
+    + [0, 20, 40, 60, 80].map((x) => R(x + 1, 0, 18, 100, '#241a14') + L(x + 1, 0, x + 1, 100, '#0e0a08', 1)).join('')
+    + C(22, 26, 19, '#0c0a10') + C(22, 26, 16.6, '#0a1020') + C(14, 33, 9, '#c86a2a') + C(12, 31, 9, '#e08a3a', 'opacity=".6"') + [[28, 16], [31, 30], [18, 14], [34, 22], [24, 38]].map(([x, y]) => C(x, y, 0.5, '#fff', 'opacity=".8"')).join('')
+    + C(22, 26, 19, 'none', 'stroke="#3a2a20" stroke-width="2.4"') + [0, 60, 120, 180, 240, 300].map((a) => { const t = a * Math.PI / 180; return C(22 + 19 * Math.cos(t), 26 + 19 * Math.sin(t), 1, '#6a4a30'); }).join('')
+    + R(60, 10, 40, 3, '#ff9a3a', 'opacity=".55"') + R(60, 10, 40, 1, '#ffd08a', 'opacity=".8"') + R(66, 30, 30, 22, '#2e221a', 'rx="1.5"') + R(68, 32, 26, 3, '#ff6a2a', 'opacity=".5"') + [70, 76, 82, 88].map((x) => R(x, 38, 4, 10, '#18120e')).join('')
+    + R(0, 88, 100, 12, '#120c0a')
+    + P('M2 100 C4 84 20 74 36 72 L64 72 C80 74 96 84 98 100Z', '#d4ac38') + P('M2 100 C4 84 20 74 36 72 L46 100Z', '#000', 'opacity=".18"')
+    + P('M24 82 C30 86 34 94 34 100 M76 82 C70 86 66 94 66 100', 'none', 'stroke="#9a7a1e" stroke-width="1.2" opacity=".8"')
+    + P('M30 74 L56 100 L49 100 L26 77Z', '#5a3a1e') + [0, 1, 2, 3, 4].map((k) => R(32 + k * 4.4, 78.6 + k * 4.4, 3.4, 2.6, '#c8a858', `transform="rotate(45 ${33.7 + k * 4.4} ${79.9 + k * 4.4})"`)).join('')
+    + P('M36 72 C40 66 60 66 64 72 L62 78 C56 75 44 75 38 78Z', '#b8922a')
+    + P('M41 70 L42 56 L58 56 L59 70Z', '#6e7c46') + P('M41 64 L59 64 L59 70 L41 70Z', '#000', 'opacity=".2"')
+    + P('M32.6 40 C32.6 27.6 40 21.6 50 21.6 C60 21.6 67.4 27.6 67.4 40 L66.4 51 C64.6 59 58.6 64.4 50 65 C41.4 64.4 35.4 59 33.6 51Z', '#6c7444')
+    + P('M32.6 40 C32.6 27.6 40 21.6 50 21.6 L50 65 C41.4 64.4 35.4 59 33.6 51Z', '#000', 'opacity=".14"')
+    + P('M36 30 C40 24 46 22.6 50 22.6 C54 22.6 60 24 64 30 C58 27.4 54 27 50 27.4 C46 27 42 27.4 36 30Z', '#848c5a', 'opacity=".6"')
+    + P('M33.4 38.6 C37.6 33.4 45.6 33 49 37.4 L50 39.4 L51 37.4 C54.4 33 62.4 33.4 66.6 38.6 L66.2 42 C61.4 39.2 55.4 39.4 51.6 42.2 L48.4 42.2 C44.6 39.4 38.6 39.2 33.8 42Z', '#3e4626')
+    + E(43, 43.8, 3.6, 2.2, '#1a1408') + E(57, 43.8, 3.6, 2.2, '#1a1408')
+    + `<g style="filter:drop-shadow(0 0 1px #ff8a1a)">${E(43, 44, 2.6, 1.5, '#ff9a2a')}${E(57, 44, 2.6, 1.5, '#ff9a2a')}</g>` + R(42.5, 42.6, 1, 2.8, '#1a0a02', 'rx=".5"') + R(56.5, 42.6, 1, 2.8, '#1a0a02', 'rx=".5"')
+    + P('M40.4 50 C43.4 47.4 56.6 47.4 59.6 50 C60 56 56 60.6 50 60.8 C44 60.6 40 56 40.4 50Z', '#767e4e')
+    + P('M46.6 50.6 L47.8 52.4 M53.4 50.6 L52.2 52.4', 'none', 'stroke="#232c12" stroke-width="1.1" stroke-linecap="round"')
+    + P('M40.6 56 C44.6 58.4 55.4 58.4 59.4 56', 'none', 'stroke="#232c12" stroke-width="1.3" stroke-linecap="round"')
+    + P('M43.4 56.9 L44.2 59.2 L45 57.2Z M56.6 56.9 L55.8 59.2 L55 57.2Z', '#efe6c8')
+    + [[38, 30], [43, 27.6], [50, 26.4], [57, 27.6], [62, 30], [36, 47], [64, 47], [37.4, 53], [62.6, 53], [42, 62], [58, 62], [46, 31], [54, 31]].map(([x, y]) => E(x, y, 1.3, 0.8, '#4a522c', 'opacity=".45"')).join('') + [[34.4, 40, 37.4, 47], [65.6, 40, 62.6, 47], [38, 56, 42, 61.6], [62, 56, 58, 61.6]].map(([a, b, c2, d]) => L(a, b, c2, d, '#3e4626', 0.8, 'opacity=".6"')).join('')
+    + [[40, 34.6], [60, 34.6], [35, 44], [65, 44]].map(([x, y]) => C(x, y, 0.7, '#a8b874', 'opacity=".6"')).join('')
+    + rifle(16, 82, -22, 1.4, { stock: '#5a4028' }) + hand(27, 76.6, '#5e6a3c', 3.8) + hand(49, 67.8, '#5e6a3c', 3.6)
+    + P('M24 78.4 L23 81.4 M26.6 79.2 L26 82.4 M29.2 79 L29.4 82.4', 'none', 'stroke="#1a1408" stroke-width=".8" stroke-linecap="round"'));
+
+  // Cad Bane: Duros gunslinger at a frontier outpost. Wide hat throwing a shadow, red eyes,
+  // breathing tubes, toothpick, flared high collar, twin LL-30 pistols, a wanted poster behind.
+  add('hn_cadbane', () => R(0, 0, 100, 100, '#3a1c2a') + R(0, 0, 100, 45, '#6a2a2a') + R(0, 30, 100, 30, '#c8642a', 'opacity=".55"') + C(80, 46, 9, '#ffd89a', 'opacity=".9"') + C(68, 50, 6, '#ffb86a', 'opacity=".8"')
+    + P('M0 62 L0 46 L12 46 L12 40 L26 40 L26 50 L40 50 L40 62Z', '#2a1612') + P('M70 62 L70 44 L84 44 L84 36 L100 36 L100 62Z', '#2a1612') + win(16, 44, 3, 3) + win(88, 42, 3, 3) + win(76, 50, 3, 3, '#ffb85a')
+    + R(0, 60, 100, 40, '#4a2a1c') + R(0, 60, 100, 2, '#2a160e')
+    + R(4, 64, 18, 24, '#d8c08a', 'transform="rotate(-6 13 76)"') + R(6, 66, 14, 3, '#5a2a1a', 'transform="rotate(-6 13 76)"') + C(13, 76, 4, '#8a6a4a', 'transform="rotate(-6 13 76)"') + [80, 83].map((y) => R(7, y, 12, 1.2, '#8a6a4a', 'transform="rotate(-6 13 76)"')).join('')
+    + P('M4 100 C6 86 22 78 36 77 L64 77 C78 78 94 86 96 100Z', '#4a3222') + P('M4 100 C6 86 22 78 36 77 L44 100Z', '#000', 'opacity=".2"')
+    + P('M28 82 L36 62 L45 74 L41 100 L34 100Z', '#5a3e2a') + P('M72 82 L64 62 L55 74 L59 100 L66 100Z', '#5a3e2a') + P('M36 62 L45 74 L41 77Z M64 62 L55 74 L59 77Z', '#000', 'opacity=".3"')
+    + P('M44 76 L56 76 L55 100 L45 100Z', '#2a1c14') + R(44, 88, 12, 3.4, '#6a4a2a') + R(48, 87.6, 4, 4.2, '#c8a24a', 'rx=".8"')
+    + R(45.8, 59, 8.4, 18, '#3e6c8c') + P('M45.8 66 H54.2 V77 H45.8Z', '#000', 'opacity=".2"')
+    + P('M36 44 C36 32 42 27 50 27 C58 27 64 32 64 44 C64 55 58 62 50 62 C42 62 36 55 36 44Z', '#4f86a8')
+    + P('M36 44 C36 32 42 27 50 27 L50 62 C42 62 36 55 36 44Z', '#000', 'opacity=".16"') + P('M38 50 C40 56 44 59 47 60 M62 50 C60 56 56 59 53 60', 'none', 'stroke="#2e5a78" stroke-width=".8"')
+    + R(36, 34, 28, 6, '#000', 'opacity=".28"')
+    + E(45, 43.4, 3, 2, '#1a2a38') + E(55, 43.4, 3, 2, '#1a2a38') + glowEyes(45, 55, 43.4, '#ff3a2a', 1.5) + C(44.5, 42.8, 0.4, '#ffd0c0') + C(54.5, 42.8, 0.4, '#ffd0c0')
+    + P('M41 40 L47.6 41.2 M59 40 L52.4 41.2', 'none', 'stroke="#1e3a4e" stroke-width="1.4" stroke-linecap="round"')
+    + P('M46 54.6 Q50 55.6 54 54.4', 'none', 'stroke="#1e3a4e" stroke-width="1.1" stroke-linecap="round"') + L(53.4, 54.6, 59.6, 52.6, '#d8c89a', 0.8)
+    + C(36.4, 49, 2.4, '#9aa1ab') + C(36.4, 49, 1.2, '#4a4e56') + C(63.6, 49, 2.4, '#9aa1ab') + C(63.6, 49, 1.2, '#4a4e56')
+    + P('M36.4 51.4 C34.6 56 35.4 61 39 64 M63.6 51.4 C65.4 56 64.6 61 61 64', 'none', 'stroke="#7a828c" stroke-width="1.8" stroke-linecap="round"') + P('M36.4 51.4 C34.6 56 35.4 61 39 64', 'none', 'stroke="#c8ccd2" stroke-width=".5" opacity=".7"')
+    + P('M6 30 C16 25.4 30 24.4 38 24.8 L39.4 11.6 C42 8 58 8 60.6 11.6 L62 24.8 C70 24.4 84 25.4 94 30 C84 33.6 66 34.6 50 34.6 C34 34.6 16 33.6 6 30Z', '#5a3e2a')
+    + P('M6 30 C16 25.4 30 24.4 38 24.8 L39.4 11.6 C42 8 50 8 50 8 L50 34.6 C34 34.6 16 33.6 6 30Z', '#000', 'opacity=".15"') + R(39.2, 20.6, 21.6, 3.4, '#2a1c14') + R(39.2, 21.2, 21.6, 0.8, '#8a6a4a')
+    + P('M8 30 C18 27 32 26 50 26.4', 'none', 'stroke="#7a5a3e" stroke-width=".7" opacity=".8"')
+    + blaster(68, 74, -62, '#2a2d33') + hand(70, 76, '#4f86a8', 3.2) + R(30, 86, 6, 10, '#2a2d33', 'rx="1.2" transform="rotate(10 33 91)"') + R(29.4, 84.6, 7.2, 3, '#3a2a1c', 'rx="1"'));
+
+  // IG-11: the bounty-droid-turned-nurse on Nevarro. Tall cylinder head with a curved ring of
+  // sensor lenses, skeletal ribbed torso, ammo bandolier, twin rifles, lava glow behind.
+  add('hn_ig11', () => R(0, 0, 100, 100, '#140c0c') + R(0, 0, 100, 55, '#1e1418') + C(78, 18, 7, '#c8b8a8', 'opacity=".25"')
+    + P('M0 60 L0 40 L10 40 L10 32 L22 32 L22 44 L30 44 L30 60Z', '#241a1a') + P('M70 60 L70 36 L80 28 L90 36 L90 30 L100 30 L100 60Z', '#241a1a') + win(14, 36, 2.4, 3, '#ff8a3a') + win(84, 40, 2.4, 3, '#ff8a3a')
+    + R(0, 58, 100, 42, '#1a1010') + P('M0 92 Q25 84 50 90 T100 86 V100 H0Z', '#ff5a1a', 'opacity=".5"') + P('M0 96 Q30 90 60 95 T100 92 V100 H0Z', '#ffb03a', 'opacity=".6"')
+    + P('M18 100 L26 80 C34 74 66 74 74 80 L82 100Z', '#4a4e56') + P('M18 100 L26 80 C34 74 50 74 50 74 L50 100Z', '#000', 'opacity=".22"')
+    + R(46.6, 74, 6.8, 26, '#2e3138') + [80, 85, 90, 95].map((y) => P(`M30 ${y} Q50 ${y - 3} 70 ${y}`, 'none', 'stroke="#2a2d33" stroke-width="1.6"')).join('')
+    + P('M24 78 L76 98 L72 100 L22 82Z', '#5a4630') + [0, 1, 2, 3, 4, 5, 6].map((k) => R(27 + k * 6.6, 79.6 + k * 2.6, 3, 4.6, '#c8a858', `transform="rotate(21 ${28.5 + k * 6.6} ${81.9 + k * 2.6})"`)).join('')
+    + R(45, 58, 10, 17, '#3a3e46') + L(46.6, 58, 46.6, 75, '#8a8e96', 1) + L(53.4, 58, 53.4, 75, '#8a8e96', 1) + [62, 66, 70].map((y) => L(45, y, 55, y, '#22252b', 0.8)).join('')
+    + R(36.4, 16, 27.2, 44, '#6a6e76', 'rx="4"') + R(36.4, 16, 9, 44, '#000', 'opacity=".2" rx="4"') + R(56, 16, 3, 44, '#a8acb4', 'opacity=".35"')
+    + E(50, 16.8, 13.6, 3.4, '#8a8e96') + E(50, 16.8, 9, 2, '#5a5e66') + R(48.6, 9, 2.8, 7, '#4a4e56', 'rx="1"') + C(50, 8.6, 1.2, '#ff5a3a')
+    + P('M36.4 33 C42 31 58 31 63.6 33 L63.6 43 C58 41 42 41 36.4 43Z', '#1a1c22')
+    + `<g style="filter:drop-shadow(0 0 1.4px #ff5a3a)">${E(38.6, 37.2, 1, 2, '#ff5a3a', 'opacity=".7"')}${C(44, 36.6, 2, '#ff5a3a')}${C(50, 36.4, 2.2, '#ffb48a')}${C(56, 36.6, 2, '#ff5a3a')}${E(61.4, 37.2, 1, 2, '#ff5a3a', 'opacity=".7"')}</g>`
+    + [22, 26, 48, 52, 56].map((y) => P(`M36.4 ${y} Q50 ${y - 1.4} 63.6 ${y}`, 'none', 'stroke="#4a4e56" stroke-width=".7"')).join('')
+    + [[39, 20], [61, 20], [39, 55], [61, 55]].map(([x, y]) => C(x, y, 0.8, '#3a3e46')).join('') + [[42, 46], [57, 28], [45, 53]].map(([x, y]) => C(x, y, 1.2, '#8a5a3a', 'opacity=".55"')).join('')
+    + L(30, 80, 24, 70, '#5a5e66', 2.2) + L(70, 80, 76, 70, '#5a5e66', 2.2) + rifle(14, 80, -22, 1.15) + rifle(86, 80, -158, 1.15) + hand(24, 72, '#5a5e66', 3) + hand(76, 72, '#5a5e66', 3));
+
+  // Greef Karga: Guild magistrate under Nevarro's night sky. Cool blue backdrop so his
+  // warm skin, maroon coat and pale fur collar stand out; rim light on the head.
+  add('hn_greef', () => R(0, 0, 100, 100, '#0e1a30') + R(0, 0, 100, 40, '#16284a') + C(80, 16, 7, '#dfe8ff', 'opacity=".9"') + C(78, 15, 7, '#16284a', 'opacity=".35"')
+    + [[12, 8], [30, 14], [48, 6], [62, 20], [90, 30], [8, 26]].map(([x, y]) => C(x, y, 0.5, '#fff', 'opacity=".8"')).join('')
+    + P('M0 70 L0 40 L14 40 L14 30 L28 30 L28 46 L36 46 L36 70Z', '#2a3a58') + P('M64 70 L64 44 L74 36 L84 44 L84 34 L100 34 L100 70Z', '#2a3a58')
+    + [[4, 44], [8, 52], [18, 34], [22, 40], [30, 52], [68, 48], [76, 42], [88, 40], [94, 50], [70, 58]].map(([x, y]) => win(x, y, 3, 3)).join('')
+    + R(0, 68, 100, 32, '#1a2640')
+    + P('M4 100 C6 86 22 78 36 77 L64 77 C78 78 94 86 96 100Z', '#7a2a2e') + P('M4 100 C6 86 22 78 36 77 L44 100Z', '#000', 'opacity=".2"')
+    + P('M18 84 C26 73 38 71 50 75 C62 71 74 73 82 84 L78 92 C70 84 60 82 50 84 C40 82 30 84 22 92Z', '#d8c8a4')
+    + [22, 28, 34, 40, 60, 66, 72, 78].map((x) => L(x, 78 + Math.abs(50 - x) * 0.1, x + 1.4, 85, '#a8987a', 0.9)).join('')
+    + P('M44 84 L56 84 L54 100 L46 100Z', '#c8a24a') + [88, 93].map((y) => L(46, y, 54, y, '#7a5a2a', 0.8)).join('')
+    + neck('#6a4430') + E(36.8, 47, 2.2, 3.6, '#7a5038') + E(63.2, 47, 2.2, 3.6, '#7a5038') + E(50, 45, 12.5, 15, '#7a5038')
+    + P('M37.5 45 Q37.5 60 50 60', 'none', 'stroke="#000" stroke-opacity=".18" stroke-width="4"')
+    + E(50, 45, 12.9, 15.4, 'none', 'stroke="#8ab8ff" stroke-width=".7" opacity=".55"')
+    + eyes({ y: 45.6, iris: '#1a0e08', spread: 5 }) + brows('#e8e0d0', { y: 41.8, w: 1.4 }) + nose({ y: 47 })
+    + P('M42.6 52.6 C43.6 59.6 47 63.6 50 64.4 C53 63.6 56.4 59.6 57.4 52.6 C54 55 46 55 42.6 52.6Z', '#f2ecdf') + P('M45.6 52.2 Q50 54 54.4 52.2', 'none', 'stroke="#f2ecdf" stroke-width="1.8" stroke-linecap="round"') + mouth('smirk', { y: 54.6, color: '#3a1a10' })
+    + P('M37 38 C37 27 43 23 50 23 C57 23 63 27 63 38 C58 35 42 35 37 38Z', '#2a1e1a') + P('M36.6 38.6 C42 35.6 58 35.6 63.4 38.6 L63 40.6 C58 37.8 42 37.8 37 40.6Z', '#d8b24a')
+    + P('M40 26 C44 24 56 24 60 26', 'none', 'stroke="#4a3a32" stroke-width=".8"'));
+
+  // Cara Dune: Alliance shock trooper. Short dark hair shaved at the sides, rebel tattoo,
+  // armoured pauldron, and a heavy blaster rifle held across her body in both hands.
+  add('hn_cara', () => R(0, 0, 100, 100, '#c8844a') + R(0, 0, 100, 40, '#e8b07a') + C(24, 18, 7, '#fff2d6') + P('M0 64 L14 50 L26 58 L40 46 L56 60 L70 48 L86 58 L100 50 V100 H0Z', '#8a5030') + P('M0 76 Q30 66 60 74 T100 70 V100 H0Z', '#6a3a22')
+    + P('M4 100 C6 86 22 78 36 77 L64 77 C78 78 94 86 96 100Z', '#4e5246') + P('M4 100 C6 86 22 78 36 77 L44 100Z', '#000', 'opacity=".2"')
+    + P('M34 80 C40 76 60 76 66 80 L64 100 L36 100Z', '#6e7262') + P('M38 84 L62 84 L60 92 L40 92Z', '#5a5e50') + P('M50 85 L51.4 88 L54.6 88.4 L52.2 90.4 L52.8 93.4 L50 91.8 L47.2 93.4 L47.8 90.4 L45.4 88.4 L48.6 88Z', '#c8402a', 'opacity=".85"')
+    + P('M10 86 C12 76 22 72 32 74 L34 86 C26 84 18 86 12 92Z', '#8a8e7e') + P('M12 82 C18 78 26 77 32 78', 'none', 'stroke="#5a5e50" stroke-width="1"') + P('M90 88 C88 80 80 76 70 77 L68 88 C76 86 84 88 88 92Z', '#6e7262')
+    + neck('#c89a7a') + head('#d0a282', { cy: 45, rx: 12, ry: 14.6 }) + eyes({ y: 46, iris: '#2a1a10', spread: 5 }) + brows('#1a1210', { y: 42.2, w: 1.5 })
+    + nose({ y: 47.4 }) + mouth('', { y: 55.4, color: '#8a4a3a' })
+    + P('M38.2 42 C37.4 30 42.6 25.4 50 25.4 C57.4 25.4 62.6 30 61.8 42 C60.4 36.4 57 33.4 50 33.4 C44 33.4 40 36 38.2 42Z', '#1a1210')
+    + P('M38.2 42 L38 47 C37.6 44 37.6 42.6 38.2 42Z M61.8 42 L62 47 C62.4 44 62.4 42.6 61.8 42Z', '#3a2a22', 'opacity=".7"')
+    + P('M57.6 48.6 L59.6 50 L58.4 52.4 L60.4 53.6', 'none', 'stroke="#2a3a5a" stroke-width=".8" stroke-linecap="round"') + C(59.2, 51.2, 0.5, '#2a3a5a') + C(60.6, 48.4, 0.4, '#2a3a5a')
+    + rifle(18, 84, -20, 1.5, { stock: '#3a3e46', mag: true }) + hand(29, 79, '#3a3a32', 3.8) + hand(53, 70.4, '#3a3a32', 3.6));
+
+  // Todo 360 (Clone Wars design), three-quarter side view: a long briefcase-shaped head with a dark
+  // top panel and two small yellow eyes on its front face, a ribbed spine column, a round egg body
+  // with a big dark port, thin jointed arms with little hands, and rod legs ending in disc thrusters
+  // firing blue. Set in the cockpit of Cad Bane's ship, hyperspace through the viewport.
+  add('hn_todo', () => R(0, 0, 100, 100, '#100c12')
+    + P('M6 6 H94 L86 46 H14Z', '#06101e') + [[10, 16, 46, 26], [20, 9, 50, 24], [30, 30, 52, 28], [62, 10, 52, 24], [80, 18, 56, 26], [74, 36, 54, 29], [16, 38, 47, 30], [88, 30, 58, 27], [40, 8, 51, 22], [58, 40, 52, 30]].map(([x1, y1, x2, y2]) => L(x1, y1, x1 + (x2 - x1) * 0.55, y1 + (y2 - y1) * 0.55, '#bfe8ff', 0.7, 'opacity=".8"')).join('')
+    + C(50, 26, 9, '#4ab8ff', 'opacity=".18"') + C(50, 26, 4, '#dff6ff', 'opacity=".5"')
+    + P('M6 6 H94 L86 46 H14Z', 'none', 'stroke="#3a2a32" stroke-width="2.4"') + L(50, 6, 50, 46, '#3a2a32', 1.8) + L(10, 26, 90, 26, '#2a1e26', 1)
+    + P('M0 0 H100 V6 H0Z', '#1e1418') + P('M0 6 L6 6 L14 46 L0 52Z', '#1e1418') + P('M100 6 L94 6 L86 46 L100 52Z', '#1e1418')
+    + P('M0 46 H100 V100 H0Z', '#1a1216') + P('M8 50 H92 L96 62 H4Z', '#2a1e24')
+    + [[10, 53, '#ff3a4a'], [16, 53, '#ffb03a'], [22, 53, '#3affb0'], [70, 53, '#3ab8ff'], [76, 53, '#ff3a4a'], [82, 53, '#ffb03a'], [88, 56, '#3affb0'], [12, 57, '#3ab8ff']].map(([x, y, c]) => R(x, y, 4, 2, c, 'opacity=".9" rx=".5"')).join('')
+    + R(30, 52, 14, 7, '#0a1a24', 'rx="1"') + P('M31 57 L34 54 L37 56 L40 53 L43 55', 'none', 'stroke="#3affb0" stroke-width=".6"') + R(56, 52, 12, 7, '#0a1a24', 'rx="1"') + C(62, 55.5, 2.4, 'none', 'stroke="#ff8a3a" stroke-width=".6"')
+    + R(4, 64, 22, 30, '#22181e', 'rx="3"') + R(7, 68, 16, 6, '#0a1a24', 'rx="1"') + P('M8 72 L11 69.6 L14 71.4 L17 68.6 L21 70.6', 'none', 'stroke="#3ab8ff" stroke-width=".6"') + [78, 83, 88].map((y) => R(8, y, 14, 2, '#3a2a32', 'rx=".6"')).join('') + C(20, 78.8, 0.9, '#ff3a4a')
+    + `<g style="filter:drop-shadow(0 0 3px #4ab8ff)">${P('M42.4 76 L45 88 L47.6 76Z', '#8ae0ff')}${P('M55.4 75 L58 86 L60.6 75Z', '#8ae0ff')}</g>` + P('M43.6 76 L45 81.6 L46.4 76Z M56.6 75 L58 80.6 L59.4 75Z', '#e8faff')
+    + L(55.5, 63, 59, 68.4, '#8a8e96', 1.5) + L(59, 68.4, 58, 72.6, '#8a8e96', 1.5) + C(59, 68.4, 1.4, '#3a3e46') + E(58, 74, 4, 1.7, '#3a3e46') + E(58, 73, 3.2, 1.2, '#7a7e86')
+    + L(41, 52, 37.6, 57.4, '#7a7e86', 1.3) + L(37.6, 57.4, 37, 62, '#7a7e86', 1.3) + C(37.6, 57.4, 1.1, '#3a3e46') + P('M37 62 L35.6 64.4 M37 62 L37.2 64.8 M37 62 L38.6 64', 'none', 'stroke="#7a7e86" stroke-width=".8" stroke-linecap="round"')
+    + R(47.8, 30, 6.4, 14, '#5a5e66', 'rx="1"') + R(48.6, 30, 1.6, 14, '#9aa0a8') + [33, 36.4, 39.8].map((y) => R(47.8, y, 6.4, 1, '#2a2d33')).join('') + C(51, 44, 2.2, '#3a3e46')
+    + E(51, 54, 11, 12.4, '#b8bcc4') + P('M40 54 C40 47 45 41.6 51 41.6 C47 44 44.6 49 44.6 54 C44.6 60 47 64 51 66.4 C45 66.4 40 61 40 54Z', '#000', 'opacity=".18"') + P('M47 43.4 C52 42 58 44.6 60.6 50', 'none', 'stroke="#fff" stroke-width="1.2" opacity=".55" stroke-linecap="round"')
+    + E(47, 53, 5.4, 6.4, '#5a5e66') + E(47, 53, 4.4, 5.4, '#141619') + E(46, 51.4, 1.4, 1.8, '#2e3238') + C(56.4, 60, 2.4, '#8a8e96') + C(56.4, 60, 1.3, '#3a3e46') + R(56, 45.4, 3, 1.6, '#6a6e76', 'rx=".6"')
+    + L(48, 64.4, 45, 69.4, '#a8acb4', 1.6) + L(45, 69.4, 45, 73.6, '#a8acb4', 1.6) + C(45, 69.4, 1.5, '#4a4e56') + C(48.6, 64.6, 1.6, '#4a4e56') + E(45, 75, 4.4, 1.8, '#4a4e56') + E(45, 74, 3.4, 1.3, '#a8acb4')
+    + C(58.6, 44.6, 1.6, '#4a4e56') + L(58.6, 44.6, 63.6, 53.6, '#c8ccd2', 1.5) + L(63.6, 53.6, 64.4, 61.4, '#c8ccd2', 1.5) + C(63.6, 53.6, 1.3, '#4a4e56')
+    + P('M64.4 61.4 L62.8 64.2 M64.4 61.4 L64.6 64.6 M64.4 61.4 L66.4 63.8', 'none', 'stroke="#c8ccd2" stroke-width=".9" stroke-linecap="round"')
+    + P('M35.6 12.6 L67.6 9.4 C70.6 9.2 72.4 11 72.4 14 L72.4 25.6 C72.4 28.8 70.6 30.6 67.6 30.8 L35.6 33.4Z', '#a8acb4')
+    + P('M35.6 12.6 L67.6 9.4 C70.6 9.2 72.4 11 72.4 14 L72.4 17 L35.6 19.6Z', '#c8ccd2', 'opacity=".7"') + L(36, 26.6, 72, 23.6, '#7a7e86', 0.6) + R(60, 24.6, 8, 3.4, '#6a6e76', 'rx=".8" transform="rotate(-4.8 64 26.3)"') + C(69.6, 27.6, 0.7, '#5a5e66')
+    + P('M24.6 15.4 C25.6 11 28.6 8.4 32.6 8 L67 5 C70.4 4.8 72.4 6.6 72.4 9.4 L72.4 14 C72.4 11 70.6 9.2 67.6 9.4 L35.6 12.6 L27.6 13.6 C26 13.8 25 14.4 24.6 15.4Z', '#dfe2e6')
+    + P('M30 10.6 L66 7.4 C68 7.2 69.2 8 69.6 9.6 L36.4 12.4 Z', '#1a1c22')
+    + P('M25.4 13.4 L35.6 12.6 L35.6 33.4 L25.4 34.6 C23 34.8 21.4 33.4 21.4 31.2 L21.4 17 C21.4 14.8 23 13.6 25.4 13.4Z', '#8e9299')
+    + P('M24.6 15.6 L34.2 14.8 L34.2 31.8 L24.6 32.8 C23.6 32.9 23 32.2 23 31.2 L23 17.2 C23 16.3 23.6 15.7 24.6 15.6Z', '#25282e')
+    + L(28.6, 15.4, 28.6, 32.4, '#5a5e66', 0.9) + L(28.6, 15.4, 28.6, 32.4, '#0e1013', 0.4)
+    + E(25.8, 24.2, 2.6, 2.9, '#0b0c0f') + E(31.6, 23.8, 2.6, 2.9, '#0b0c0f') + E(25.8, 24.2, 2.6, 2.9, 'none', 'stroke="#6a6e76" stroke-width=".5"') + E(31.6, 23.8, 2.6, 2.9, 'none', 'stroke="#6a6e76" stroke-width=".5"')
+    + `<g style="filter:drop-shadow(0 0 1.8px #ffd23f) drop-shadow(0 0 3.6px #ffb000)">${C(25.8, 24.2, 1.55, '#ffd23f')}${C(31.6, 23.8, 1.55, '#ffd23f')}</g>` + C(25.3, 23.6, 0.5, '#fffbe0') + C(31.1, 23.2, 0.5, '#fffbe0')
+    + L(25.8, 27.6, 25.8, 31.4, '#4a4e56', 0.7) + L(31.6, 27.2, 31.6, 31, '#4a4e56', 0.7)
+    + P('M21.4 31.2 C21.4 33.4 23 34.8 25.4 34.6 L35.6 33.4 L35.6 34.6 L25.6 35.8 C22.6 36 21 34.4 21 32Z', '#5a5e66')
+    + P('M21.4 17 C21.4 14.8 23 13.6 25.4 13.4 L25.8 14.2 C23.8 14.4 22.6 15.4 22.6 17.2 L22.6 31 C22.6 32.4 23.2 33.4 24.4 33.8 L24 34.6 C22.4 34.4 21.4 33.2 21.4 31.2Z', '#fff', 'opacity=".28"'));
+
+  // Zuckuss: Gand findsman on the Star Destroyer bridge. Big dark compound eyes, ribbed breather
+  // snout with hoses to a chest tank, heavy hooded coat and harness, the bridge window behind.
+  add('hn_zuckuss', () => R(0, 0, 100, 100, '#1c2026') + P('M4 8 H96 L88 54 H12Z', '#0a0e18') + [[20, 16], [34, 30], [60, 14], [78, 26], [50, 40], [26, 44], [70, 46]].map(([x, y]) => C(x, y, 0.5, '#fff', 'opacity=".8"')).join('')
+    + P('M4 8 H96 L88 54 H12Z', 'none', 'stroke="#3a404a" stroke-width="2"') + L(36, 8, 32, 54, '#3a404a', 1.6) + L(64, 8, 68, 54, '#3a404a', 1.6) + L(8, 30, 92, 30, '#3a404a', 1.2)
+    + P('M30 28 L44 26 L50 30 L44 32 Z', '#5a606a', 'opacity=".6"') + R(0, 54, 100, 46, '#2a2e36') + [8, 30, 70, 88].map((x) => R(x, 60, 12, 4, '#3a8ae0', 'opacity=".45" rx="1"')).join('')
+    + P('M4 100 C6 84 20 75 34 73 L66 73 C80 75 94 84 96 100Z', '#5e5446') + P('M4 100 C6 84 20 75 34 73 L44 100Z', '#000', 'opacity=".2"')
+    + P('M24 76 C30 66 38 60 50 60 C62 60 70 66 76 76 C70 72 62 70 50 70 C38 70 30 72 24 76Z', '#4a4236')
+    + P('M28 78 L58 100 L52 100 L24 82Z', '#3a2e22') + R(56, 80, 14, 12, '#7a8088', 'rx="3"') + R(58, 82, 10, 3, '#4a5058', 'rx="1"') + C(63, 89, 1.6, '#2a2e36')
+    + P('M30 46 C28 30 37 20 50 20 C63 20 72 30 70 46 C69 56 62 64 50 66 C38 64 31 56 30 46Z', '#6a6050') + P('M30 46 C28 30 37 20 50 20 L50 66 C38 64 31 56 30 46Z', '#000', 'opacity=".15"')
+    + P('M26 46 C24 26 36 14 50 14 C64 14 76 26 74 46 C72 40 70 34 66 30 C62 26 56 24 50 24 C44 24 38 26 34 30 C30 34 28 40 26 46Z', '#4a4236')
+    + E(40, 40, 8, 9.4, '#0e1218') + E(60, 40, 8, 9.4, '#0e1218') + E(40, 40, 8, 9.4, 'none', 'stroke="#2a3038" stroke-width="1.4"') + E(60, 40, 8, 9.4, 'none', 'stroke="#2a3038" stroke-width="1.4"')
+    + [[37, 36], [43, 37], [39, 42], [44, 43], [57, 36], [63, 37], [59, 42], [64, 43]].map(([x, y]) => C(x, y, 1.6, '#1a2230')).join('') + C(37.4, 35.6, 1.6, '#8ab0d0', 'opacity=".55"') + C(57.4, 35.6, 1.6, '#8ab0d0', 'opacity=".55"')
+    + R(44, 48, 12, 15, '#5a5e66', 'rx="4"') + [51, 54, 57, 60].map((y) => L(44.6, y, 55.4, y, '#2e3238', 0.9)).join('') + E(50, 63.4, 4.4, 2, '#2e3238')
+    + P('M46 60 C40 64 36 70 38 78 M54 60 C60 64 64 70 62 80', 'none', 'stroke="#7a8088" stroke-width="2.4" stroke-linecap="round"') + P('M46 60 C40 64 36 70 38 78 M54 60 C60 64 64 70 62 80', 'none', 'stroke="#2e3238" stroke-width=".6" stroke-dasharray="1.2 1.2"')
+    + R(30, 22, 6, 4, '#3a3e46', 'rx="1" transform="rotate(-24 33 24)"') + R(64, 22, 6, 4, '#3a3e46', 'rx="1" transform="rotate(24 67 24)"')
+    + R(6, 80, 30, 5, '#2a2d33', 'rx="1.5" transform="rotate(-14 21 82)"') + R(30, 74, 10, 3, '#2a2d33', 'transform="rotate(-14 35 75)"') + E(30, 82, 3.6, 2.8, '#4a4236'));
+
+
+  const NEW = [
+    { id: 'hn_bossk', name: 'Bossk', kind: 'character', faction: 'dark', rarity: 'legendary', role: 'attacker', spd: 142, traits: ['bounty'], home: 'tatooine',
+      bio: 'A Trandoshan hunter who has made a career of tracking Wookiees. Passive, Cold-Blooded: +20% damage against enemies below 50% health.',
+      abilities: [ab('Relby Scattergun', 0, 'enemy', [dmg(1.1), debuff('defDown', 2, 0.3)], 'Deal damage with a 30% chance of Defense Down.'), ab('Hunt the Wookiee', 3, 'enemy', [dmg(1.8), debuff('defDown', 2)], 'Heavy damage and Defense Down for 2 turns.')],
+      ultimate: ult('Trandoshan Rage', 'allEnemies', [dmg(1.7), { ...heal(0.15), on: 'self' }], 'Tear into every enemy, healing for 15% as he goes.', 'Bossk hunts.'),
+      how: 'Raid champion: top damage when a raid boss falls (rotates with Krrsantan)' },
+    { id: 'hn_cadbane', name: 'Cad Bane', kind: 'character', faction: 'dark', rarity: 'legendary', role: 'attacker', spd: 160, traits: ['bounty', 'scoundrel'], home: 'tatooine',
+      bio: 'The fastest draw in the Outer Rim, and he knows it. Passive, Quickest Draw: always takes the first turn of a battle.',
+      abilities: [ab('Quick Draw', 0, 'enemy', [dmg(0.65, 2)], 'Hit one enemy twice.'), ab('Rocket Boots', 3, 'self', [buff('defUp', 1), tm(30)], 'Dodge in the air: Defense Up and 30% Turn Meter.')],
+      ultimate: ult('Hostage Play', 'enemy', [dmg(2.4), debuff('stun', 1), dispel()], 'Heavy damage to one enemy, Stun it and strip its buffs.', 'You\'re not as fast as me.'),
+      how: 'Capture Cad Bane in a Legendary bounty puck' },
+    { id: 'hn_ig11', name: 'IG-11', kind: 'character', faction: 'light', rarity: 'epic', role: 'tank', spd: 118, traits: ['droid', 'bounty'], home: 'tatooine',
+      bio: 'A hunter droid reprogrammed to nurse and protect. Passive, Protocol: Protect: allies below 30% health gain Defense Up.',
+      abilities: [ab('Spinning Torso', 0, 'enemy', [dmg(0.6, 2)], 'Spin and fire twice at one enemy.'), ab('Nurse Protocol', 4, 'ally', [heal(0.3), buff('defUp', 2)], 'Heal one ally 30% and give them Defense Up.')],
+      ultimate: ult('Self-Destruct Protocol', 'allEnemies', [dmg(2.0), { ...buff('taunt', 2), on: 'self' }], 'Draw every enemy in, then blow them all back: heavy damage to all enemies and Taunt.', 'I am not a nurse droid.'),
+      how: "Varka's Forge · Beskar" },
+    { id: 'hn_greef', name: 'Greef Karga', kind: 'character', faction: 'light', rarity: 'rare', role: 'support', spd: 132, traits: ['leader'], home: 'tatooine',
+      bio: 'The Guild agent turned magistrate of Nevarro. Passive, Good Business: +10% Beskar from every HoloNet battle he fights in.',
+      abilities: [ab('Hold-out Blaster', 0, 'enemy', [dmg(1.0)], 'Damage one enemy.'), ab('Guild Contract', 3, 'allAllies', [tm(15), buff('offUp', 1)], 'All allies gain 15% Turn Meter and Offense Up.')],
+      ultimate: ult('Magistrate of Nevarro', 'allAllies', [buff('offUp', 2), buff('defUp', 2)], 'Every ally gains Offense Up and Defense Up for 2 turns.', 'That\'s good business.'),
+      how: 'Guild reward: Beskar Vault, guild level 4' },
+    { id: 'hn_cara', name: 'Cara Dune', kind: 'character', faction: 'light', rarity: 'epic', role: 'tank', spd: 120, traits: ['rebel'], home: 'tatooine',
+      bio: 'A former Rebel shock trooper who became Marshal of Nevarro. Passive, Shock Trooper: +15% defense while Taunting.',
+      abilities: [ab('Heavy Rifle', 0, 'enemy', [dmg(1.0), { ...buff('taunt', 1), on: 'self' }], 'Damage one enemy and Taunt for 1 turn.'), ab('Shock Trooper', 3, 'enemy', [dmg(1.4), debuff('stun', 1, 0.6), { ...buff('defUp', 2), on: 'self' }], 'Charge in: damage, 60% Stun chance, and Defense Up.')],
+      ultimate: ult('Marshal of Nevarro', 'allAllies', [heal(0.15), buff('defUp', 2), { ...buff('taunt', 2), on: 'self' }], 'Heal every ally 15%, give them Defense Up, and Taunt to shield the squad.', 'Nobody touches them.'),
+      how: 'Raid reward (chance when a boss falls)' },
+    { id: 'hn_zuckuss', name: 'Zuckuss', kind: 'character', faction: 'dark', rarity: 'epic', role: 'support', spd: 136, traits: ['bounty'], home: 'tatooine',
+      bio: 'A Gand findsman who tracks quarry through meditation and mist. Passive, Findsman: the first enemy he hits each battle takes +15% damage from your squad.',
+      abilities: [ab('Findsman Shot', 0, 'enemy', [dmg(1.0), debuff('defDown', 2)], 'Damage one enemy and inflict Defense Down.'), ab('Ammonia Cloud', 3, 'allEnemies', [debuff('offDown', 2)], 'Offense Down on every enemy for 2 turns.')],
+      ultimate: ult('Gand Mystic Trance', 'allEnemies', [dmg(1.6), { ...tm(25), on: 'allies' }], 'Foresee the fight: damage every enemy and all allies gain 25% Turn Meter.', 'Zuckuss sees.'),
+      how: 'Reach the Gold league' },
+    { id: 'hn_todo', name: 'Todo 360', kind: 'character', faction: 'dark', rarity: 'epic', role: 'healer', spd: 140, traits: ['droid'], home: 'tatooine',
+      bio: 'Cad Bane\'s chatty techno-service droid, who flies on booster legs. Passive, Partner: +20 speed with Cad Bane in the squad.',
+      abilities: [ab('Shock Prod', 0, 'enemy', [dmg(0.9), debuff('stun', 1, 0.3)], 'Damage one enemy with a 30% chance to Stun.'), ab('Repair Protocol', 3, 'ally', [heal(0.25), cleanse()], 'Heal one ally 25% and clear their debuffs.')],
+      ultimate: ult('Overclocked Core', 'allAllies', [heal(0.2), tm(20)], 'Heal every ally 20% and give them 20% Turn Meter.', 'Hello! I am Todo!'),
+      how: 'Capture Cad Bane (bonus chance), or a rare Legendary puck pull' },
+  ];
+  const SIG = {
+    hn_bossk: { move: 'volley', prop: 'bolt', impact: 'burn', color: '#ffb02a', n: 5 },
+    hn_cadbane: { move: 'ricochet', prop: 'bolt', impact: 'scorch', color: '#ff4a3a', n: 2 },
+    hn_ig11: { move: 'turret', prop: 'bolt', impact: 'knock', color: '#ff5a3a' },
+    hn_greef: { move: 'rally', color: '#ffcf7a' },
+    hn_cara: { move: 'aegis', prop: 'deflector', color: '#c8402a' },
+    hn_zuckuss: { move: 'shockwave', prop: 'mist', impact: 'freeze', color: '#9ad0a0' },
+    hn_todo: { move: 'heal', prop: 'spark', color: '#3affb0' },
+  };
+  for (const c of NEW) {
+    if (D.UNIT_MAP[c.id]) continue;
+    const def = { ...c, hn: true, sig: SIG[c.id] };
+    delete def.how;
+    D.UNIT_MAP[c.id] = def;
+    if (D.BIOS) D.BIOS[c.id] = c.bio;
+    if (!HN.HN_IDS.includes(c.id)) HN.HN_IDS.push(c.id);
+    HN.HOW[c.id] = c.how;
+  }
 })(window);
 
 // Season leaderboard cards. Darth Vader in the hallway is the prize for
