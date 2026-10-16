@@ -1,6 +1,6 @@
 // Update 2.2 planet bosses: one for each world that had none (Dagobah, Endor,
 // Geonosis, Mustafar, Exegol, Battle of Coruscant), each with its own battle
-// mechanics, plus new art for the Hoth Star Destroyer.
+// mechanics, plus new art for the Hoth Star Destroyer and General Grievous.
 // Everything stays switched off until 2.2 (see Update22 in js/friends.js).
 // The Xyston Star Destroyer and the Invisible Hand are drawn here too, saved
 // for a future raid or boss battle; nothing uses them yet.
@@ -284,6 +284,132 @@
     + R(46, 60.4, 8, 0.8, '#ffe8b0', 'opacity=".7"')
     + `<g ${glow('#4ab8ff', 3)}>${C(38, 87, 3, '#9ad8ff')}${C(50, 88, 3.6, '#bfe8ff')}${C(62, 87, 3, '#9ad8ff')}${C(44, 86.4, 1.4, '#9ad8ff')}${C(56, 86.4, 1.4, '#9ad8ff')}</g>`
     + fighters([[20, 44, 0.6], [26, 36, 0.5], [78, 50, 0.6]], '#7a808c'));
+
+  // ---------- General Grievous update (2.2): new card portrait ----------
+  {
+  const { saber } = root.ArtX;
+  const glow = (c, b = 2) => `style="filter:drop-shadow(0 0 ${b}px ${c})"`;
+  const BONE = '#e4dcc4', BONE_S = '#bfb497', BONE_D = '#978c70', LIMB = '#3a3c42', LIMB_H = '#5e626a', STEEL = '#80858e', CAPE = '#4c5872', CAPE_D = '#2c3446';
+
+  // A limb: dark skeletal upper arm, forearm sheathed in a bone plate, clawed hand.
+  const limb = ([sx, sy], [ex, ey], [hx, hy], far) => {
+    const k = far ? 0.8 : 1;
+    const dx = hx - ex, dy = hy - ey, len = Math.hypot(dx, dy) || 1, nx = -dy / len, ny = dx / len, w = 2.1 * k;
+    const plate = `M${(ex + nx * w).toFixed(2)} ${(ey + ny * w).toFixed(2)} L${(ex + dx * 0.85 + nx * w * 0.7).toFixed(2)} ${(ey + dy * 0.85 + ny * w * 0.7).toFixed(2)} L${(ex + dx * 0.85 - nx * w * 0.4).toFixed(2)} ${(ey + dy * 0.85 - ny * w * 0.4).toFixed(2)} L${(ex - nx * w * 0.6).toFixed(2)} ${(ey - ny * w * 0.6).toFixed(2)}Z`;
+    return L(sx, sy, ex, ey, LIMB, 2.8 * k) + L(sx, sy, ex, ey, LIMB_H, 0.6 * k) + L(ex, ey, hx, hy, LIMB, 2.3 * k)
+      + P(plate, far ? BONE_S : BONE) + P(plate, 'none', `stroke="${BONE_D}" stroke-width=".3"`)
+      + C(ex, ey, 1.5 * k, '#2a2c31') + C(ex, ey, 0.6 * k, STEEL) + C(sx, sy, 1.8 * k, '#2a2c31')
+      + C(hx, hy, 1.2 * k, '#2a2c31');
+  };
+
+  // The head: long narrow skull mask, grooves through the eyes, sunken soulless eyes,
+  // slatted grille at the end of the muzzle, tall curved side plates.
+  const HEAD_OUT = 'M37 32 C37 24 39.4 19.6 43.4 18.4 C46 17.8 54 17.8 56.6 18.4 C60.6 19.6 63 24 63 32 L63 41 L58.2 47.6 L57.2 58 C56.6 61.6 53.2 63 50 63 C46.8 63 43.4 61.6 42.8 58 L41.8 47.6 L37 41Z';
+  const head = () =>
+    // mechanical innards behind the mask
+    P('M34 28 C34 22 66 22 66 28 L66 56 L34 56Z', '#16171b') + [38, 44, 50].map((y) => L(35, y, 65, y, '#2a2c33', 0.8)).join('')
+    // the tall curved side plates
+    + [1, -1].map((s) => { const X = (x) => 50 + s * (x - 50); return P(`M${X(39.4)} 58 C${X(34.4)} 50 ${X(32.6)} 40 ${X(33.2)} 30 L${X(34.4)} 13 L${X(36.4)} 29 C${X(36)} 38 ${X(37.4)} 47 ${X(41.4)} 55Z`, s > 0 ? STEEL : '#666b74')
+      + P(`M${X(34.5)} 15 L${X(36)} 29 C${X(35.6)} 38 ${X(36.8)} 46 ${X(40.6)} 53`, 'none', `stroke="${s > 0 ? '#b4b9c0' : '#8a8f96'}" stroke-width=".5"`)
+      + [32, 37, 42].map((y) => L(X(33 + (y - 32) * 0.04), y, X(35.2 + (y - 32) * 0.04), y, '#4a4e56', 0.5)).join(''); }).join('')
+    // the mask: rounded dome, straight sides, straight cheek lines into a short muzzle
+    + P(HEAD_OUT, BONE)
+    + P('M50 17.9 C54 17.9 55.4 18 56.6 18.4 C60.6 19.6 63 24 63 32 L63 41 L58.2 47.6 L57.2 58 C56.6 61.6 53.2 63 50 63Z', '#000', 'opacity=".15"')
+    + P('M37.4 41.4 L42 47.6 M62.6 41.4 L58 47.6', 'none', `stroke="${BONE_D}" stroke-width=".6"`) + P('M41.8 47.6 L48 46.4 M58.2 47.6 L52 46.4', 'none', `stroke="${BONE_D}" stroke-width=".45"`) + P('M38.4 31 L38.4 40.6', 'none', 'stroke="#fff6e0" stroke-width=".6" opacity=".45"')
+    + P('M44 19.2 C47 18.6 53 18.6 56 19.2', 'none', 'stroke="#fff6e0" stroke-width="1" opacity=".7"')
+    + P('M38.4 30 C38.6 25 40.4 21.4 43.4 19.8', 'none', 'stroke="#fff6e0" stroke-width=".7" opacity=".5"')
+    // the two grooves running down through the eyes
+    + P('M45.2 18.6 C45 25 44.9 31 45 35.4 M54.8 18.6 C55 25 55.1 31 55 35.4', 'none', 'stroke="#2a241a" stroke-width="1"')
+    + P('M45.3 41 C45.5 44 45.9 47 46.3 50 M54.7 41 C54.5 44 54.1 47 53.7 50', 'none', 'stroke="#5a5040" stroke-width=".6"')
+    // sunken eyes: dark red-rimmed sockets, small yellow irises under heavy lids
+    + '<g transform="translate(50 37.8) translate(-50 -39.9)">' + [1, -1].map((s) => { const X = (x) => 50 + s * (x - 50);
+      return P(`M${X(39.4)} 38.4 C${X(41.4)} 35.6 ${X(46.6)} 35.8 ${X(48.6)} 39 C${X(47.4)} 43 ${X(42.4)} 43.6 ${X(39.8)} 41.6Z`, '#4a1812')
+        + P(`M${X(39.8)} 38.6 C${X(41.8)} 36.2 ${X(46.4)} 36.4 ${X(48.1)} 39.2 C${X(47)} 42.6 ${X(42.6)} 43 ${X(40.2)} 41.3Z`, '#070302') + E(X(44.6), 40.2, 2.6, 1.9, '#000')
+        + C(X(44.6), 40.3, 1.5, '#3a2a08') + `<g ${glow('#b8a42a', 0.6)}>${C(X(44.6), 40.3, 1.1, '#c8b838')}</g>` + C(X(44.6), 40.3, 0.5, '#0a0602') + C(X(44.2), 39.9, 0.2, '#fff8c8', 'opacity=".55"')
+        + P(`M${X(39.2)} 38.2 C${X(41.6)} 36.4 ${X(46.8)} 36.6 ${X(48.8)} 39.4 C${X(46.6)} 39.6 ${X(42.6)} 39.2 ${X(39.4)} 39.6Z`, BONE_S)
+        + P(`M${X(40)} 42 C${X(42.6)} 43.4 ${X(46.6)} 43 ${X(48.4)} 40.4`, 'none', `stroke="${BONE_D}" stroke-width=".5"`); }).join('') + '</g>'
+    // muzzle ridge and the slatted grille
+    + P('M50 41 L51.2 47 L50 50.5 L48.8 47Z', BONE_S, 'opacity=".7"')
+    + P('M45.6 52.6 L54.4 52.6 L54 60.6 C53.2 62.2 46.8 62.2 46 60.6Z', '#24201a') + [47, 48.7, 50.4, 52.1].map((x) => R(x, 53.2, 0.9, 7.6, BONE_S)).join('') + R(45.6, 52.4, 8.8, 0.8, BONE_D);
+
+  // Big skeletal claw gripping a saber hilt: palm, bone knuckle plate, three wrapped fingers, thumb.
+  const hand = (hx, hy, tx, ty) => {
+    const len = Math.hypot(tx - hx, ty - hy) || 1, ax = (tx - hx) / len, ay = (ty - hy) / len, nx = -ay, ny = ax;
+    const pt = (a, n) => `${(hx + ax * a + nx * n).toFixed(2)} ${(hy + ay * a + ny * n).toFixed(2)}`;
+    return C(hx, hy, 2.6, '#2a2c31')
+      + P(`M${pt(-2.2, -2.8)} L${pt(2.2, -2.8)} L${pt(2.6, -1.2)} L${pt(-2.6, -1.2)}Z`, BONE) + P(`M${pt(-2.2, -2.8)} L${pt(2.2, -2.8)}`, 'none', `stroke="${BONE_D}" stroke-width=".35"`)
+      + [-1.4, 0, 1.4].map((a) => L(+pt(a, -1.4).split(' ')[0], +pt(a, -1.4).split(' ')[1], +pt(a, 2.4).split(' ')[0], +pt(a, 2.4).split(' ')[1], '#2a2c31', 1.1) + C(+pt(a, 2.4).split(' ')[0], +pt(a, 2.4).split(' ')[1], 0.55, LIMB_H)).join('')
+      + L(+pt(-2.4, 1).split(' ')[0], +pt(-2.4, 1).split(' ')[1], +pt(-3.6, 2.6).split(' ')[0], +pt(-3.6, 2.6).split(' ')[1], '#2a2c31', 1);
+  };
+
+  // B body, layered: cape hanging behind, rib cage, arms, cape draped over the shoulders, collar.
+  const capeBack = () => P('M29 66 C17 70 9 82 5 100 L95 100 C91 82 83 70 71 66Z', CAPE)
+    + P('M5 100 C9 84 15 76 24 71 L19 100Z', '#171c25') + P('M95 100 C91 84 85 76 76 71 L81 100Z', '#171c25')
+    + P('M19 100 C19 90 21 80 24 71', 'none', 'stroke="#52607a" stroke-width=".7"') + P('M81 100 C81 90 79 80 76 71', 'none', 'stroke="#52607a" stroke-width=".7"')
+    + P('M29 76 C27 84 27 92 28 100 M71 76 C73 84 73 92 72 100 M24 84 C23 90 23 95 23.6 100 M76 84 C77 90 77 95 76.4 100', 'none', `stroke="${CAPE_D}" stroke-width="1.1"`)
+    + P('M26 80 C25 87 25 94 25.6 100 M74 80 C75 87 75 94 74.4 100', 'none', 'stroke="#6a7894" stroke-width=".7" opacity=".8"')
+    + P('M29 66 C17 70 9 82 5 100', 'none', 'stroke="#8a98b4" stroke-width=".8" opacity=".7"') + P('M71 66 C83 70 91 82 95 100', 'none', 'stroke="#ff8a4a" stroke-width=".8" opacity=".6"');
+  // Torso armour: layered bone plates down to the bottom of the card, dark machinery in the gaps.
+  const ribcage = () => {
+    const sym = (d, fill, extra = '') => P(d, fill, extra) + P(d.replace(/(-?\d+(?:\.\d+)?) (-?\d+(?:\.\d+)?)/g, (m, x, y) => `${(100 - +x).toFixed(2)} ${y}`), fill === BONE ? BONE_S : fill, extra);
+    // machinery behind the plates
+    let g = P('M37 72 L63 72 L61 104 L39 104Z', '#16171b')
+      + [84, 90, 96, 102].map((y) => L(40, y, 60, y, '#2c2e35', 0.7)).join('')
+      + P('M44 80 C43 88 45 96 44 104 M56 80 C57 88 55 96 56 104', 'none', 'stroke="#3a3d44" stroke-width="1.4"')
+      + P('M47 82 L47 104 M53 82 L53 104', 'none', 'stroke="#5e626a" stroke-width=".6"');
+    // chest plate under the collar
+    g += P('M36.6 70 L63.4 70 L62 79 L55 81.4 L45 81.4 L38 79Z', BONE) + P('M50 70 L63.4 70 L62 79 L55 81.4 L50 81.4Z', '#000', 'opacity=".12"')
+      + P('M38 79 L45 81.4 L55 81.4 L62 79', 'none', `stroke="${BONE_D}" stroke-width=".5"`) + L(54.4, 72.4, 56.6, 79.4, '#5a5040', 0.6) + L(42, 73, 44.6, 75.4, '#5a5040', 0.45)
+      + [[40, 72.4], [60, 72.4], [41.4, 77.6], [58.6, 77.6]].map(([x, y]) => C(x, y, 0.45, BONE_D)).join('');
+    // chevron plates stacked down the abdomen, each overlapping the next
+    [[82.6, 11.4, 4.6], [88.4, 10.4, 4.4], [94, 9.6, 4.4], [99.6, 9, 5]].forEach(([y, w, h], i) => {
+      g += sym(`M50 ${y + 2} L${50 - w} ${y} L${50 - w + 1} ${y + h} L50 ${y + h + 2}Z`, BONE)
+        + P(`M${50 - w} ${y} L50 ${y + 2} L${50 + w} ${y}`, 'none', 'stroke="#fff6e0" stroke-width=".4" opacity=".6"')
+        + P(`M${50 - w + 1} ${y + h} L50 ${y + h + 2} L${50 + w - 1} ${y + h}`, 'none', `stroke="${BONE_D}" stroke-width=".5"`)
+        + C(50 - w + 2.2, y + 1.6, 0.4, BONE_D) + C(50 + w - 2.2, y + 1.6, 0.4, BONE_D);
+      if (i === 1) g += L(52.6, y + 1.4, 55.4, y + 4.4, '#5a5040', 0.5);
+    });
+    // side plates over the flanks, and a small status light
+    g += sym('M36.8 81 L40.6 82.4 L40 92 L37.6 90Z', BONE_S);
+    return g;
+  };
+  // Motion trails behind a saber spinning around the hand: ghost blade and arcs.
+  const spin = (hx, hy, tx, ty, color, dir) => {
+    const r = Math.hypot(tx - hx, ty - hy), a0 = Math.atan2(ty - hy, tx - hx), sweep = -dir * 0.85;
+    const at = (rr, a) => `${(hx + Math.cos(a) * rr).toFixed(2)} ${(hy + Math.sin(a) * rr).toFixed(2)}`;
+    const arc = (rr, w, o) => P(`M${at(rr, a0)} A${rr.toFixed(2)} ${rr.toFixed(2)} 0 0 ${dir > 0 ? 0 : 1} ${at(rr, a0 + sweep)}`, 'none', `stroke="${color}" stroke-width="${w}" stroke-linecap="round" opacity="${o}"`);
+    const ghost = (k, o) => L(+at(r * 0.15, a0 + sweep * k).split(' ')[0], +at(r * 0.15, a0 + sweep * k).split(' ')[1], +at(r, a0 + sweep * k).split(' ')[0], +at(r, a0 + sweep * k).split(' ')[1], color, 1.6).replace('/>', ` opacity="${o}"/>`);
+    return `<g ${glow(color, 2)}>` + P(`M${at(r * 0.2, a0)} L${at(r, a0)} A${r.toFixed(2)} ${r.toFixed(2)} 0 0 ${dir > 0 ? 0 : 1} ${at(r, a0 + sweep * 0.7)} L${at(r * 0.2, a0 + sweep * 0.7)}Z`, color, 'opacity=".12"')
+      + ghost(0.3, 0.32) + ghost(0.6, 0.16) + arc(r * 0.98, 1.2, 0.55) + arc(r * 0.8, 0.6, 0.4) + arc(r * 0.6, 0.5, 0.3) + '</g>';
+  };
+  const drapes = () => [1, -1].map((s) => { const X = (x) => 50 + s * (x - 50); return P(`M${X(16)} 76 C${X(20)} 66 ${X(32)} 63 ${X(41)} 67.6 L${X(39.4)} 75 C${X(32)} 73.4 ${X(24)} 76 ${X(17)} 84Z`, s > 0 ? CAPE : '#3c4760')
+    + P(`M${X(18)} 76 C${X(23)} 69 ${X(31)} 67.4 ${X(38.6)} 70`, 'none', `stroke="${s > 0 ? '#5a6880' : '#3e4a5c'}" stroke-width=".7"`) + P(`M${X(17)} 84 C${X(24)} 76 ${X(32)} 73.4 ${X(39.4)} 75`, 'none', `stroke="${CAPE_D}" stroke-width=".8"`); }).join('');
+  const collar = () => P('M27 69 C35.6 62 64.4 62 73 69 L71.4 76 C62 70.4 38 70.4 28.6 76Z', BONE) + P('M50 63.4 C59 63.6 66.6 65.4 73 69 L71.4 76 C64 71.8 57 70.8 50 70.8Z', '#000', 'opacity=".14"')
+    + P('M30 72 C37.6 67.4 62.4 67.4 70 72', 'none', `stroke="${BONE_D}" stroke-width=".6"`) + L(35, 73.4, 41, 71.6, '#5a5040', 0.6) + L(59, 71.6, 65, 73.4, '#5a5040', 0.6);
+
+  // General Grievous on the bridge of the Invisible Hand, the Coruscant battle burning outside.
+  add('grievous_22', () => R(0, 0, 100, 100, '#101218')
+    + P('M6 4 L94 4 L88 56 L12 56Z', '#1a0e14') + E(50, 70, 60, 26, '#ff6a2a', 'opacity=".25"')
+    + C(50, 120, 66, '#1a1018') + C(50, 120, 66, 'none', 'stroke="#ffaa5a" stroke-width="1" opacity=".5"')
+    + Array.from({ length: 40 }, (_, k) => C(((k * 37) % 76 + 12).toFixed(1), (6 + (k * 13) % 48).toFixed(1), 0.25, '#fff', `opacity="${0.3 + (k % 4) * 0.15}"`)).join('')
+    + [[20, 20, 0.5], [78, 14, 0.42], [66, 34, 0.32]].map(([x, y, s]) => `<g transform="translate(${x} ${y}) scale(${s})">${P('M-14 0 L10 -4 L14 0 L10 4Z', '#c8ccd4')}${P('M-6 -2 L4 -2 L2 -8 L-4 -8Z', '#b83a2a', 'opacity=".8"')}</g>`).join('')
+    + `<g ${glow('#ff4a3a', 1.2)}>${L(24, 24, 40, 34, '#ff5a4a', 0.7)}${L(74, 18, 60, 30, '#4ab8ff', 0.7)}${L(14, 42, 32, 48, '#4ab8ff', 0.7)}</g>`
+    + `<g ${glow('#ff8a2a', 3)}>${C(30, 44, 1.6, '#ffb03a')}${C(82, 32, 1.2, '#ffd08a')}</g>`
+    + P('M6 4 L94 4 L88 56 L12 56Z', 'none', 'stroke="#3a3e48" stroke-width="2.4"') + L(28, 4, 30, 56, '#3a3e48', 1.6) + L(72, 4, 70, 56, '#3a3e48', 1.6) + L(9, 30, 91, 30, '#3a3e48', 1.2)
+    + R(0, 56, 100, 44, '#1a1c22') + R(0, 56, 100, 2, '#ff5a2a', 'opacity=".35"')
+    + [[6, 62], [12, 64], [86, 62], [92, 64]].map(([x, y], i) => R(x, y, 3, 1.2, i % 2 ? '#ff4a3a' : '#ffb03a', 'opacity=".8"')).join('')
+    // the cape hangs behind him, then the rib cage, the lower arms, the drape over his shoulders, the collar
+    + capeBack() + ribcage()
+    + limb([38, 80], [30, 92], [28, 86]) + limb([62, 80], [70, 92], [72, 86])
+    + spin(28, 86, 16, 98, '#46e070', 1) + spin(72, 86, 84, 98, '#3d8bff', -1)
+    + saber(28, 86, 16, 98, '#46e070') + saber(72, 86, 84, 98, '#3d8bff') + hand(28, 86, 16, 98) + hand(72, 86, 84, 98)
+    + limb([30, 72], [21, 62], [22, 46]) + limb([70, 72], [79, 62], [78, 46])
+    + drapes() + collar()
+    + spin(22, 46, 15, 6, '#3d8bff', 1) + spin(78, 46, 85, 6, '#46e070', -1)
+    + saber(22, 46, 15, 6, '#3d8bff') + saber(78, 46, 85, 6, '#46e070') + hand(22, 46, 15, 6) + hand(78, 46, 85, 6)
+    + head()
+    + P('M63 30 L63 41 L58.2 47.6 L57.2 58', 'none', 'stroke="#ff8a4a" stroke-width=".6" opacity=".75"'));
+  }
 
   // Sith Trooper: the Legion's rank and file.
   add('sith_trooper', () => R(0, 0, 100, 100, '#0a080e') + R(0, 0, 100, 70, '#2a2440', 'opacity=".45"')
@@ -599,4 +725,6 @@
   Object.assign(D.BIOS, BIOS22);
   // The Hoth Star Destroyer gets its new portrait.
   if (D.UNIT_MAP.star_destroyer && root.Art && root.Art.CHARACTER_IDS.includes('star_destroyer_22')) D.UNIT_MAP.star_destroyer.portrait = 'star_destroyer_22';
+  // General Grievous update: his new card art.
+  if (D.UNIT_MAP.grievous && root.Art && root.Art.CHARACTER_IDS.includes('grievous_22')) D.UNIT_MAP.grievous.portrait = 'grievous_22';
 })(typeof window !== 'undefined' ? window : globalThis);
