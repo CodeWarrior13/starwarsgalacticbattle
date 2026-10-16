@@ -1253,7 +1253,7 @@
   // collection and squad lists render far faster. addArt() clears it.
   const ART_CACHE = new Map();
   function unitArt(def) {
-    const key = `${def.id}|${def.kind}|${def.shape || ''}`;
+    const key = `${def.id}|${def.kind}|${def.shape || ''}|${def.portrait || ''}`;
     let svg = ART_CACHE.get(key);
     if (svg === undefined) { svg = drawUnitArt(def); ART_CACHE.set(key, svg); }
     return svg;
@@ -1263,7 +1263,8 @@
     // Player-supplied art in art/ (see art/README.md) wins over the drawings.
     const img = root.ART_IMAGES && root.ART_IMAGES[def.id];
     if (img) return `<svg class="art custom-art" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><rect width="100" height="100" fill="#05070d"/><image href="${img}" width="100" height="100" preserveAspectRatio="xMidYMid slice"/></svg>`;
-    const inner = def.kind === 'ship' ? shipArt(def) : characterArt(def.id);
+    // A ship boss can carry a painted portrait for its card; battles still use its ship shape.
+    const inner = def.portrait && CHAR[def.portrait] ? CHAR[def.portrait]() : def.kind === 'ship' ? shipArt(def) : characterArt(def.id);
     return `<svg class="art" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${inner}</svg>`;
   }
 
@@ -1508,5 +1509,5 @@
 
   // The full drawing kit, for content drawn outside this file (the HoloNet's cards).
   root.ArtX = { P, E, C, R, L, shade, LG, RG, shoulders, neck, head, eyes, brows, nose, mouth, saber, blaster, glowEyes, stars, SCENES, SHIPS };
-  root.Art = { kit: { P, E, C, R, L, shade, SCENES, shoulders, SHIPS }, addArt: (kind, key, fn) => { (kind === 'ship' ? SHIPS : CHAR)[key] = fn; ART_CACHE.clear(); }, unitArt, shipOnly, cardBack, ICONS, crateArt, setCrateStyle: (v) => { CRATE_STYLE = ['holo', 'faction'].includes(v) ? v : 'relic'; }, get crateStyle() { return CRATE_STYLE; }, merchantArt, get SHIP_SHAPES() { return Object.keys(SHIPS); }, CHARACTER_IDS: Object.keys(CHAR) };
+  root.Art = { kit: { P, E, C, R, L, shade, SCENES, shoulders, SHIPS }, addArt: (kind, key, fn) => { (kind === 'ship' ? SHIPS : CHAR)[key] = fn; ART_CACHE.clear(); }, unitArt, shipOnly, cardBack, ICONS, crateArt, setCrateStyle: (v) => { CRATE_STYLE = ['holo', 'faction'].includes(v) ? v : 'relic'; }, get crateStyle() { return CRATE_STYLE; }, merchantArt, get SHIP_SHAPES() { return Object.keys(SHIPS); }, get CHARACTER_IDS() { return Object.keys(CHAR); } };
 })(typeof window !== 'undefined' ? window : globalThis);

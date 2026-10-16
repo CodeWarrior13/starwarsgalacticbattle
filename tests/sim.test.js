@@ -621,4 +621,87 @@ test('the training battle cannot be lost', () => {
   assert.ok(b.side('player').every((u) => u.alive && u.hp > 0), 'nobody on the player side falls');
 });
 
+test('2.2 planet bosses stay off until 2.2, then fight with their mechanics', () => {
+  require('../js/art.js');
+  require('../js/ships3d.js');
+  assert.strictEqual(D.BOSS_ENCOUNTERS.length, 5, 'off: only the original bosses');
+  require('../js/bosses22.js');
+  assert.ok(!D.UNIT_MAP.dragonsnake && D.BOSS_ENCOUNTERS.length === 5, 'loading the file alone adds nothing');
+  delete require.cache[require.resolve('../js/bosses22.js')];
+  globalThis.__v22Test = 0;
+  require('../js/bosses22.js');
+  delete globalThis.__v22Test;
+  const ids = ['dragonsnake', 'death_star_2', 'acklay', 'executor', 'sith_legion', 'zillo_beast'];
+  assert.deepStrictEqual(ids.filter((id) => D.BOSS_ENCOUNTERS.some((e) => e.id === id)), ids);
+  assert.strictEqual(D.UNIT_MAP.star_destroyer.portrait, 'star_destroyer_22');
+  for (const id of [...ids, 'sith_trooper']) {
+    const u = D.UNIT_MAP[id];
+    assert.ok(D.BIOS[id], `${id} bio`);
+    assert.ok(globalThis.Art.CHARACTER_IDS.includes(u.kind === 'ship' ? u.portrait : id), `${id} art`);
+    if (u.kind === 'ship') assert.ok(globalThis.Art.SHIP_SHAPES.includes(u.shape), `${id} ship shape`);
+  }
+  // Every new fight finishes, with each player squad at the boss's level.
+  for (const enc of D.BOSS_ENCOUNTERS.filter((e) => ids.includes(e.id))) {
+    Player.reset();
+    const e = Player.encounter({ type: 'boss', boss: enc.id });
+    assert.ok(e.enemies.includes(enc.id) && e.enemies.length === 5, enc.id);
+    const squad = D.UNITS.filter((u) => u.kind === enc.kind && u.rarity !== 'common').slice(0, D.SQUAD_SIZE[enc.kind])
+      .map((u) => ({ id: u.id, level: enc.level + 3, stars: 3 }));
+    const res = runAuto(new Battle(squad, e.enemies.map((id) => ({ id, level: enc.level, stars: 1 })), seeded(7), { planet: enc.planet }), 3000);
+    assert.ok(res.winner, enc.id);
+  }
+  const fight = (bossId, minions, kind) => {
+    const squad = D.UNITS.filter((u) => u.kind === kind && u.rarity !== 'common').slice(0, 3).map((u) => ({ id: u.id, level: 20, stars: 3 }));
+    const b = new Battle(squad, [{ id: bossId, level: 20, stars: 1 }, ...minions.map((id) => ({ id, level: 20, stars: 1 }))], seeded(9));
+    return { b, boss: b.side('enemy')[0] };
+  };
+  // Shield Generator: half damage while a shield escort lives, full once it falls.
+  {
+    const { b, boss } = fight('death_star_2', ['lambda_shuttle'], 'ship');
+    b.advance();
+    assert.ok(boss.statuses.shielded);
+    const hp = boss.hp; b.applyDamage(boss, 1000, false, []); assert.strictEqual(hp - boss.hp, 500);
+    const ev = []; b.applyDamage(b.side('enemy')[1], 1e9, false, ev);
+    assert.ok(!boss.statuses.shielded && ev.some((e) => e.type === 'b22'));
+    const hp2 = boss.hp; b.applyDamage(boss, 1000, false, []); assert.strictEqual(hp2 - boss.hp, 1000);
+  }
+  // Superlaser: warns, counts down, then fires at the strongest ship.
+  {
+    const { b, boss } = fight('death_star_2', [], 'ship');
+    const fired = [];
+    for (let i = 1; i <= 8; i++) { const out = b.beginTurn(boss); if (out.events.some((e) => e.type === 'b22' && /fired/.test(e.text))) fired.push(i); }
+    assert.deepStrictEqual(fired, [7]);
+  }
+  // Submerge: can't be targeted until its next turn.
+  {
+    const { b, boss } = fight('dragonsnake', ['jawa'], 'character');
+    for (let i = 0; i < 3; i++) b.beginTurn(boss);
+    assert.ok(boss.statuses.submerged);
+    const hero = b.side('player')[0];
+    assert.ok(!b.validTargets(hero, 0).includes(boss));
+    b.beginTurn(boss);
+    assert.ok(!boss.statuses.submerged && b.validTargets(hero, 0).includes(boss));
+  }
+  // Relaunch: fallen TIEs come back; the bridge escort gives Offense Up.
+  {
+    const { b, boss } = fight('executor', ['tie_fighter', 'tie_defender'], 'ship');
+    const tie = b.side('enemy')[1];
+    b.applyDamage(tie, 1e9, false, []);
+    b.beginTurn(boss); assert.ok(boss.statuses.offUp);
+    b.beginTurn(boss); assert.ok(tie.alive);
+  }
+  // Armoured Scales: basic attacks do 60%.
+  {
+    const { b, boss } = fight('zillo_beast', [], 'character');
+    const hero = b.side('player')[0];
+    hero.tm = 100;
+    const before = boss.hp;
+    b.act(hero, 0, boss.uid);
+    const basicDealt = before - boss.hp;
+    assert.ok(basicDealt > 0);
+    let seen = 0; b.__basic = true; const hp = boss.hp; b.applyDamage(boss, 1000, false, []); seen = hp - boss.hp; b.__basic = false;
+    assert.strictEqual(seen, 600);
+  }
+});
+
 console.log(`\n${passed} tests passed`);
