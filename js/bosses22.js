@@ -7,7 +7,12 @@
 (function (root) {
   'use strict';
   const D = root.GameData;
-  const live = () => (root.Update22 ? root.Update22.on() : root.__v22Test != null && Date.now() >= root.__v22Test);
+  const released = () => (root.Update22 ? root.Update22.on() : root.__v22Test != null && Date.now() >= root.__v22Test);
+  // Tester preview: a private code in Settings turns this file's 2.2 content on for
+  // one device before release (Friends and raids stay off, so no shared data changes).
+  const PREVIEW = 'swcg-v22-preview';
+  const previewOn = () => { try { return root.localStorage.getItem(PREVIEW) === '1'; } catch (e) { return false; } };
+  const live = () => released() || previewOn();
 
   // ---------- Art ----------
   if (root.ArtX && root.Art) {
@@ -714,6 +719,95 @@
     };
   }
 
+  // ---------- General Grievous update: "Jedi Killer" ultimate ----------
+  // He looms over the field, ignites all four sabers into two spinning blade
+  // wheels that tear through every enemy, then finishes with a four-blade slash.
+  if (BUI && !BUI.mv_jedikiller) {
+    const el = (h) => { const t = document.createElement('template'); t.innerHTML = h.trim(); return t.content.firstChild; };
+    if (typeof document !== 'undefined' && !document.getElementById('gv-css')) {
+      const st = document.createElement('style');
+      st.id = 'gv-css';
+      st.textContent = `.gv-face{position:absolute;z-index:3;pointer-events:none;border-radius:16px;overflow:hidden;opacity:0;-webkit-mask-image:radial-gradient(ellipse at 50% 45%,#000 52%,transparent 74%);mask-image:radial-gradient(ellipse at 50% 45%,#000 52%,transparent 74%)}
+.gv-face svg{width:100%;height:100%;display:block}
+.gv-quote{position:absolute;z-index:4;left:50%;transform:translateX(-50%);width:min(92vw,620px);text-align:center;font:italic 700 clamp(14px,2.4vw,22px)/1.3 system-ui,sans-serif;color:#f2ead6;text-shadow:0 2px 12px #000,0 0 18px #000;opacity:0;letter-spacing:.02em}
+.gv-quote b{display:block;font:900 clamp(11px,1.6vw,14px)/1 system-ui,sans-serif;letter-spacing:.32em;color:#d8cc48;margin-bottom:6px;font-style:normal}
+.gv-wheel{position:absolute;z-index:4;left:0;top:0;pointer-events:none;will-change:transform}
+.gv-wheel>div{width:100%;height:100%;animation:gv-spin .16s linear infinite}
+.gv-wheel.ccw>div{animation-direction:reverse}
+.gv-wheel svg{width:100%;height:100%;overflow:visible}
+@keyframes gv-spin{to{transform:rotate(360deg)}}`;
+      document.head.appendChild(st);
+    }
+    const blades = (a, b) => `<svg viewBox="-50 -50 100 100"><circle r="46" fill="none" stroke="${a}" stroke-width="10" opacity=".14"/><circle r="40" fill="none" stroke="${b}" stroke-width="5" opacity=".2"/>`
+      + [[a, 0], [b, 90]].map(([c, r]) => `<g transform="rotate(${r})" style="filter:drop-shadow(0 0 4px ${c}) drop-shadow(0 0 9px ${c})"><line x1="-46" y1="0" x2="46" y2="0" stroke="${c}" stroke-width="6" stroke-linecap="round"/><line x1="-44" y1="0" x2="44" y2="0" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></g>`).join('')
+      + '<circle r="5" fill="#2a2c31"/><circle r="2.4" fill="#9aa1ab"/></svg>';
+    BUI.mv_jedikiller = async function (S, actor, from, T, spec, hit) {
+      const Snd = root.Sound, sp = S.speed;
+      const anim = (node, frames, ms, o = {}) => node.animate(frames, { duration: ms / sp, fill: 'forwards', easing: 'ease-out', ...o }).finished.catch(() => {});
+      // 1. He looms over the field and speaks.
+      const sz = Math.min(S.W, S.H) * (this.liteSig ? 0.42 : 0.56);
+      const face = el(`<div class="gv-face" style="width:${sz}px;height:${sz}px;left:${S.W / 2 - sz / 2}px;top:${Math.max(8, S.H * 0.08)}px">${root.Art.unitArt(actor.def)}</div>`);
+      const quote = el(`<div class="gv-quote" style="top:${Math.min(S.H - 90, S.H * 0.08 + sz + 6)}px"><b>JEDI KILLER</b>“Your lightsabers will make a fine addition to my collection.”</div>`);
+      S.layer.appendChild(face); S.layer.appendChild(quote);
+      if (Snd) Snd.play('ignite');
+      await Promise.all([anim(face, [{ opacity: 0, transform: 'scale(1.18)' }, { opacity: 0.92, transform: 'scale(1)' }], 650), anim(quote, [{ opacity: 0, transform: 'translate(-50%, 10px)' }, { opacity: 1, transform: 'translate(-50%, 0)' }], 500, { delay: 200 / sp })]);
+      await this.wait(this.liteSig ? 350 : 750);
+      // 2. Four sabers ignite into two spinning blade wheels.
+      const ws = Math.max(110, Math.min(S.W, S.H) * 0.2);
+      const mk = (a, b, cls) => { const w = el(`<div class="gv-wheel ${cls}" style="width:${ws}px;height:${ws}px"><div>${blades(a, b)}</div></div>`); S.layer.appendChild(w); return w; };
+      const wheels = [mk('#3d8bff', '#46e070', ''), mk('#46e070', '#3d8bff', 'ccw')];
+      const at = (w, x, y, sc = 1) => `translate(${x - ws / 2}px, ${y - ws / 2}px) scale(${sc})`;
+      const starts = [{ x: from.x - ws * 0.45, y: from.y - ws * 0.3 }, { x: from.x + ws * 0.45, y: from.y - ws * 0.3 }];
+      await Promise.all(wheels.map((w, i) => anim(w, [{ transform: at(w, from.x, from.y, 0.1), opacity: 0 }, { transform: at(w, starts[i].x, starts[i].y, 1), opacity: 1 }], 380)));
+      if (Snd) Snd.play('whoosh');
+      anim(face, [{ opacity: 0.92 }, { opacity: 0.25 }], 500);
+      anim(quote, [{ opacity: 1 }, { opacity: 0 }], 400);
+      // 3. The wheels carve through every enemy in turn, one high, one low.
+      const route = T.slice().sort((a, b) => a.x - b.x);
+      let pos = starts.slice();
+      for (const t of route) {
+        const dest = [{ x: t.x - ws * 0.12, y: t.y - ws * 0.22 }, { x: t.x + ws * 0.12, y: t.y + ws * 0.22 }];
+        await Promise.all(wheels.map((w, i) => anim(w, [{ transform: at(w, pos[i].x, pos[i].y) }, { transform: at(w, dest[i].x, dest[i].y) }], 260, { easing: 'cubic-bezier(.6,0,.4,1)' })));
+        S.trail(pos[0], dest[0], '#3d8bff', 0.6); S.trail(pos[1], dest[1], '#46e070', 0.6);
+        const r = ws * 0.55;
+        S.trail({ x: t.x - r, y: t.y - r }, { x: t.x + r, y: t.y + r }, '#3d8bff', 0.9);
+        S.trail({ x: t.x + r, y: t.y - r }, { x: t.x - r, y: t.y + r }, '#46e070', 0.9);
+        hit(t);
+        if (this.shake) this.shake();
+        pos = dest;
+        await this.wait(90);
+      }
+      // 4. Four-blade finishing slash across the whole field.
+      await Promise.all(wheels.map((w, i) => anim(w, [{ transform: at(w, pos[i].x, pos[i].y), opacity: 1 }, { transform: at(w, S.W / 2, S.H * 0.45, 1.5), opacity: 0 }], 320)));
+      wheels.forEach((w) => w.remove());
+      if (Snd) Snd.play('whoosh');
+      const ys = T.length ? T.reduce((a, t) => a + t.y, 0) / T.length : S.H / 2;
+      [['#3d8bff', -0.32], ['#46e070', -0.1], ['#3d8bff', 0.1], ['#46e070', 0.32]].forEach(([c, k], i) => setTimeout(() => S.trail({ x: -40, y: ys + k * S.H - S.H * 0.18 }, { x: S.W + 40, y: ys + k * S.H + S.H * 0.18 }, c, 1.3), i * 70 / sp));
+      if (this.env) this.env.flash('#e8f4ff', 0.35);
+      await this.wait(420);
+      anim(face, [{ opacity: 0.25 }, { opacity: 0 }], 300);
+      await this.wait(150);
+      face.remove(); quote.remove();
+    };
+  }
+
+  // ---------- Tester code ----------
+  const H = root.UI && root.UI.hooks;
+  if (H && !released()) {
+    const code = String.fromCharCode(71, 82, 73, 69, 86, 79, 85, 83, 50, 50);
+    const before = H.redeem;
+    H.redeem = (c) => {
+      if (c !== code || released()) return before ? before(c) : false;
+      const on = !previewOn();
+      try { if (on) root.localStorage.setItem(PREVIEW, '1'); else root.localStorage.removeItem(PREVIEW); } catch (e) { /* ignore */ }
+      if (root.UI.toast) root.UI.toast(on ? '2.2 preview ON for this device: new General Grievous, his ultimate and the planet bosses. Reloading…' : '2.2 preview OFF. Reloading…');
+      setTimeout(() => root.location.reload(), 1600);
+      return true;
+    };
+  }
+  // At release the preview flag is no longer needed.
+  if (released()) { try { root.localStorage.removeItem(PREVIEW); } catch (e) { /* ignore */ } }
+
   // ---------- Switch on at 2.2 ----------
   if (!D) return;
   Object.assign(D.STATUS_INFO, STATUS22);
@@ -727,4 +821,5 @@
   if (D.UNIT_MAP.star_destroyer && root.Art && root.Art.CHARACTER_IDS.includes('star_destroyer_22')) D.UNIT_MAP.star_destroyer.portrait = 'star_destroyer_22';
   // General Grievous update: his new card art.
   if (D.UNIT_MAP.grievous && root.Art && root.Art.CHARACTER_IDS.includes('grievous_22')) D.UNIT_MAP.grievous.portrait = 'grievous_22';
+  if (BUI && BUI.SIG && BUI.mv_jedikiller) BUI.SIG.grievous = { move: 'jedikiller', prop: 'saber', impact: 'xslash', color: '#46e070' };
 })(typeof window !== 'undefined' ? window : globalThis);
