@@ -7,12 +7,7 @@
 (function (root) {
   'use strict';
   const D = root.GameData;
-  const released = () => (root.Update22 ? root.Update22.on() : root.__v22Test != null && Date.now() >= root.__v22Test);
-  // Tester preview: a private code in Settings turns this file's 2.2 content on for
-  // one device before release (Friends and raids stay off, so no shared data changes).
-  const PREVIEW = 'swcg-v22-preview';
-  const previewOn = () => { try { return root.localStorage.getItem(PREVIEW) === '1'; } catch (e) { return false; } };
-  const live = () => released() || previewOn();
+  const live = () => (root.Update22 ? root.Update22.on() : root.__v22Test != null && Date.now() >= root.__v22Test);
 
   // ---------- Art ----------
   if (root.ArtX && root.Art) {
@@ -790,23 +785,6 @@
       face.remove(); quote.remove();
     };
   }
-
-  // ---------- Tester code ----------
-  const H = root.UI && root.UI.hooks;
-  if (H && !released()) {
-    const code = String.fromCharCode(71, 82, 73, 69, 86, 79, 85, 83, 50, 50);
-    const before = H.redeem;
-    H.redeem = (c) => {
-      if (c !== code || released()) return before ? before(c) : false;
-      const on = !previewOn();
-      try { if (on) root.localStorage.setItem(PREVIEW, '1'); else root.localStorage.removeItem(PREVIEW); } catch (e) { /* ignore */ }
-      if (root.UI.toast) root.UI.toast(on ? '2.2 preview ON for this device: new General Grievous, his ultimate and the planet bosses. Reloading…' : '2.2 preview OFF. Reloading…');
-      setTimeout(() => root.location.reload(), 1600);
-      return true;
-    };
-  }
-  // At release the preview flag is no longer needed.
-  if (released()) { try { root.localStorage.removeItem(PREVIEW); } catch (e) { /* ignore */ } }
 
   // ---------- Switch on at 2.2 ----------
   if (!D) return;
