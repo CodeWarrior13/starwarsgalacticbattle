@@ -814,10 +814,24 @@
           <div class="rf-traits" aria-label="Filter by trait"><button type="button" class="rf-chip ${tf === 'all' ? 'on' : ''}" data-tf="all">All</button>${traits.map((t) => `<button type="button" class="rf-chip ${tf === t ? 'on' : ''} ${inSquad[t] ? 'in-squad' : ''}" data-tf="${t}" title="${D.TRAIT_INFO[t].label}: ${inSquad[t] ? `${inSquad[t]} in your squad, ` : ''}${traitCount[t]} owned">${D.TRAIT_INFO[t].icon} ${D.TRAIT_INFO[t].label}<em>${inSquad[t] ? `${inSquad[t]}/` : ''}${traitCount[t]}</em></button>`).join('')}</div>
         </div>`;
       const roster = owned.filter((u) => (rf === 'all' || u.role === rf) && (tf === 'all' || (D.TRAITS[u.id] || []).includes(tf)));
-      $('[data-roster]', v).innerHTML = (roster.length ? '' : '<p class="muted">No units match these filters.</p>') + roster.map((def) => {
-        const idx = squad.indexOf(def.id);
-        return unitCard(def, { selected: idx >= 0, badge: idx >= 0 ? idx + 1 : null, hideShards: true, traits: true });
-      }).join('');
+      // Picking or dropping a card only flips its highlight and number; the
+      // roster is rebuilt only when the filters change what's in it.
+      const host = $('[data-roster]', v);
+      const rkey = `${rf}|${tf}|${roster.map((u) => u.id).join(',')}`;
+      if (host.__key === rkey && roster.length) {
+        host.querySelectorAll('.ucard').forEach((c) => {
+          const idx = squad.indexOf(c.dataset.id);
+          c.classList.toggle('selected', idx >= 0);
+          let bd = c.querySelector(':scope > .sel-badge');
+          if (idx >= 0) { if (!bd) { bd = document.createElement('span'); bd.className = 'sel-badge'; c.prepend(bd); } bd.textContent = idx + 1; } else if (bd) bd.remove();
+        });
+      } else {
+        host.__key = rkey;
+        host.innerHTML = (roster.length ? '' : '<p class="muted">No units match these filters.</p>') + roster.map((def) => {
+          const idx = squad.indexOf(def.id);
+          return unitCard(def, { selected: idx >= 0, badge: idx >= 0 ? idx + 1 : null, hideShards: true, traits: true });
+        }).join('');
+      }
       $('[data-fight]', v).disabled = squad.length === 0;
     }
 
@@ -1310,8 +1324,32 @@
           const ob = Player.owns(b.id) ? 0 : 1;
           return oa - ob || SORTS[ui.collectionSort].fn(a, b);
         });
-      $('[data-grid]', v).innerHTML = list.length ? list.map((def) => unitCard(def, { traits: true })).join('') : '<p class="muted">No units match these filters.</p>';
+      // Cards are built a batch at a time as you scroll, not all ~140 at once:
+      // each one is a detailed drawing, and building them all made the screen
+      // slow to open and heavy to scroll on phones.
+      const grid = $('[data-grid]', v);
+      if (moreObs) { moreObs.disconnect(); moreObs = null; }
+      if (!list.length) { grid.innerHTML = '<p class="muted">No units match these filters.</p>'; return; }
+      let shown = 0;
+      const BATCH = 18;
+      const more = () => {
+        const next = list.slice(shown, shown + BATCH);
+        shown += next.length;
+        const old = grid.querySelector('.grid-more');
+        if (old) old.remove();
+        grid.insertAdjacentHTML('beforeend', next.map((def) => unitCard(def, { traits: true })).join('') + (shown < list.length ? '<i class="grid-more" aria-hidden="true"></i>' : ''));
+        const tail = grid.querySelector('.grid-more');
+        if (tail && moreObs) moreObs.observe(tail);
+      };
+      grid.innerHTML = '';
+      if ('IntersectionObserver' in root) {
+        moreObs = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) more(); }, { rootMargin: '900px 0px' });
+        more();
+      } else {
+        while (shown < list.length) more();
+      }
     }
+    let moreObs = null;
 
     v.addEventListener('click', (e) => {
       if (e.target.closest('[data-filters-toggle]')) {

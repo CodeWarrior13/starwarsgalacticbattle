@@ -55,7 +55,7 @@ h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; le
     radial-gradient(900px 500px at -10% 110%, rgba(255, 75, 75, 0.10), transparent 60%),
     var(--void);
 }
-.starfield { overflow: hidden; }
+.starfield { overflow: hidden; background-image: var(--sf-img, none), radial-gradient(1200px 600px at 80% -10%, rgba(90, 180, 255, 0.12), transparent 60%), radial-gradient(900px 500px at -10% 110%, rgba(255, 75, 75, 0.10), transparent 60%); background-size: 100% 100%, auto, auto; background-repeat: no-repeat; }
 .starfield .sf-layer { position: absolute; top: 0; left: 0; height: 100%; width: 200%; display: flex; will-change: transform, opacity;
   animation: sf-drift var(--sf-drift) linear infinite, sf-twinkle var(--sf-tw) ease-in-out var(--sf-delay) infinite alternate; }
 .starfield .sf-layer canvas { width: 50%; height: 100%; display: block; flex: none; }
@@ -3482,3 +3482,7 @@ body.perf-on .card-back .cb-rays { animation: none; }
 .friends-btn .fr-dot[hidden] { display: none; }
 @media (max-width: 760px) and (orientation: portrait) { .friends-btn { width: 34px; height: 34px; order: 8; } }
 @media (max-height: 520px) and (orientation: landscape) and (pointer: coarse) { .friends-btn { width: 32px; height: 32px; order: 8; } }
+
+/* Collection: off-screen cards skip layout and paint until they scroll near. */
+.card-grid > .ucard { content-visibility: auto; contain-intrinsic-size: auto 260px; }
+.card-grid > .grid-more { display: block; grid-column: 1 / -1; height: 1px; }

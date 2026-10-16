@@ -11,6 +11,8 @@
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   // Graphics settings (js/perf.js): glows, resolution, particles, frame cap.
   const P = () => root.Perf || { glow: true, dpr: 1.5, fps: 60, count: (n) => n, particles: 1 };
+  // Touch devices (phones, tablets) get lower frame caps on animated backdrops.
+  const COARSE = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
   const LITE_GLOW = () => !P().glow;
 
   // A soft halo plus a solid core: looks like a glow, costs two fills.
@@ -1721,7 +1723,9 @@
       if (!this.running) return;
       if (!this.canvas.isConnected) return this.stop();
       // Performance mode draws the scene at a lower frame rate.
-      const fps = root.sigOpen > 0 ? Math.min(30, P().fps) : P().fps;
+      // Weather and drifting scenery read the same at 30-40 frames a second as at
+      // 60, so the backdrop never takes more (30 on phones and tablets).
+      const fps = root.sigOpen > 0 ? Math.min(30, P().fps) : Math.min(COARSE ? 30 : 40, P().fps);
       if (fps < 60 && now - this.last < 1000 / fps - 4) return requestAnimationFrame(this.frame);
       this.dt = Math.min(0.05, (now - this.last) / 1000);
       this.last = now;
@@ -2085,7 +2089,8 @@
       }
       // Everything on the map drifts slowly, so 40 frames a second looks the
       // same as 60 and leaves a third of the work undone.
-      const fps = Math.min(40, P().fps);
+      // Phones and tablets: 30 is plenty for a map this slow, and it halves the heat.
+      const fps = Math.min(COARSE ? 30 : 40, P().fps);
       if (now - this.last < 1000 / fps - 3) return requestAnimationFrame(this.frame);
       const dt = Math.min(0.05, (now - this.last) / 1000);
       this.last = now;

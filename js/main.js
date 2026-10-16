@@ -3,44 +3,35 @@
 (function (root) {
   const { $, App } = root.UI;
 
-  // The ambient starfield: three depths of stars drawn once into still
-  // pictures, then drifted and twinkled by the browser's compositor. Nothing
-  // is redrawn per frame, so it costs almost nothing even on old tablets.
+  // The ambient starfield: three depths of stars drawn once into a single
+  // still picture and set as the page background. No layers, no animation:
+  // it costs nothing per frame. (It used to drift and twinkle on six
+  // full-screen layers, which kept every phone redrawing all the time.)
   function starfield() {
     const host = $('.starfield');
-    const still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const DEPTHS = [
-      { n: 0.45, r: [0.3, 0.7], a: 0.55, drift: 420, tw: 5.2 },
-      { n: 0.35, r: [0.5, 1.0], a: 0.75, drift: 300, tw: 3.8 },
-      { n: 0.2, r: [0.8, 1.5], a: 0.95, drift: 200, tw: 6.4 },
+      { n: 0.45, r: [0.3, 0.7], a: 0.55 },
+      { n: 0.35, r: [0.5, 1.0], a: 0.75 },
+      { n: 0.2, r: [0.8, 1.5], a: 0.95 },
     ];
     function build() {
       host.innerHTML = '';
       const w = Math.ceil(window.innerWidth);
       const h = Math.ceil(window.innerHeight);
       const total = Math.round((w * h) / 5000);
-      DEPTHS.forEach((d, i) => {
-        const tile = document.createElement('canvas');
-        tile.width = w; tile.height = h;
-        const ctx = tile.getContext('2d');
-        ctx.fillStyle = '#dfe8ff';
+      const cv = document.createElement('canvas');
+      cv.width = w; cv.height = h;
+      const ctx = cv.getContext('2d');
+      ctx.fillStyle = '#dfe8ff';
+      for (const d of DEPTHS) {
         for (let k = 0; k < Math.round(total * d.n); k++) {
           ctx.globalAlpha = d.a * (0.55 + Math.random() * 0.45);
           ctx.beginPath();
           ctx.arc(Math.random() * w, Math.random() * h, d.r[0] + Math.random() * (d.r[1] - d.r[0]), 0, Math.PI * 2);
           ctx.fill();
         }
-        // Two copies side by side so the drift loops without a seam.
-        const layer = document.createElement('div');
-        layer.className = 'sf-layer';
-        layer.style.cssText = `--sf-drift:${d.drift}s;--sf-tw:${d.tw}s;--sf-delay:-${(i * 1.7).toFixed(1)}s`;
-        const twin = document.createElement('canvas');
-        twin.width = w; twin.height = h;
-        twin.getContext('2d').drawImage(tile, 0, 0);
-        layer.append(tile, twin);
-        host.appendChild(layer);
-      });
-      host.classList.toggle('sf-still', !!still);
+      }
+      host.style.setProperty('--sf-img', `url(${cv.toDataURL('image/png')})`);
     }
     build();
     let t = 0;
