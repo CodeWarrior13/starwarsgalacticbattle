@@ -1351,7 +1351,9 @@
   // each frame only adds a few lines. Used over Endor in fleet battles and on
   // the galaxy map.
   const DS2_CACHE = {};
-  const ds2Edge = (x, y, r) => [x + r * 1.15, y - r * 0.55, x - r * 0.55, y + r * 1.15];
+  // The edge of the plating runs from the top to the right: like the film, the
+  // lower half is finished and the bare frame shows through the upper right.
+  const ds2Edge = (x, y, r) => [x - r * 0.55, y - r * 1.15, x + r * 1.15, y + r * 0.55];
   function ds2Hull(r, scale) {
     const key = `${Math.round(r)}|${scale}`;
     if (DS2_CACHE[key]) return DS2_CACHE[key];
@@ -1364,12 +1366,12 @@
     c.beginPath(); c.arc(x, y, r, 0, TAU); c.clip();
     const [ax, ay, bx, by] = ds2Edge(x, y, r);
     const hull = new Path2D();
-    hull.moveTo(x - r * 2, y - r * 2); hull.lineTo(x + r * 2, y - r * 2); hull.lineTo(ax, ay);
+    hull.moveTo(x - r * 2, y - r * 2); hull.lineTo(ax, ay);
     for (let k = 1; k < 12; k++) {
       const s = k / 12; const off = (k % 2 ? 0.12 : -0.05) * r * (k % 3 === 0 ? 1.6 : 1);
-      hull.lineTo(ax + (bx - ax) * s - off * 0.7, ay + (by - ay) * s - off * 0.7);
+      hull.lineTo(ax + (bx - ax) * s + off * 0.7, ay + (by - ay) * s - off * 0.7);
     }
-    hull.lineTo(bx, by); hull.lineTo(x - r * 2, y + r * 2); hull.closePath();
+    hull.lineTo(bx, by); hull.lineTo(x + r * 2, y + r * 2); hull.lineTo(x - r * 2, y + r * 2); hull.closePath();
     const g = c.createRadialGradient(x - r * 0.45, y - r * 0.5, r * 0.1, x, y, r * 1.1);
     g.addColorStop(0, 'rgba(196,204,216,0.95)'); g.addColorStop(0.55, 'rgba(128,138,154,0.94)'); g.addColorStop(1, 'rgba(58,66,80,0.94)');
     c.fillStyle = g; c.fill(hull);
