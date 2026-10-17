@@ -28,18 +28,90 @@
     if (s.aurodium > CAPS.aurodium) { const x = s.aurodium - CAPS.aurodium; s.aurodium = CAPS.aurodium; au -= Math.min(au, x); s.crystals += x * KY_PER_AU; ky += x * KY_PER_AU; }
     return { au, ky };
   }
-  let pend = { au: 0, ky: 0 };
-  let pendT = 0;
-  const notify = (g) => {
-    pend.au += g.au; pend.ky += g.ky;
-    clearTimeout(pendT);
-    pendT = setTimeout(() => {
-      const t = UI() && UI().toast;
-      if (t && pend.au) t(`Credit vault full (${fmt(CAPS.credits)}): overflow turned into ${fmt(pend.au)} Aurodium.`);
-      if (t && pend.ky) t(`Aurodium vault full (${fmt(CAPS.aurodium)}): overflow turned into ${fmt(pend.ky)} Kyber.`);
-      pend = { au: 0, ky: 0 };
-    }, 700);
-  };
+  // Overflow converts quietly. The first time each vault fills, a one-off moment
+  // explains it: credits get the vault scene, the Piggy Bank Saver badge and
+  // Captain Rex; Aurodium gets Rex on its own.
+  const busy = () => typeof document === 'undefined' || document.body.classList.contains('in-battle')
+    || !!document.querySelector('.modal-backdrop, .walkout, .feat-show, .v23-broke, .v23-vault, .v23-rex, .crate-cine, .secret-load');
+  const whenFree = (fn) => { if (typeof document === 'undefined') return; const tick = () => (busy() ? setTimeout(tick, 1200) : fn()); setTimeout(tick, 900); };
+  function capCheck(s) {
+    const v = s.v23 || (s.v23 = {});
+    if (s.credits >= CAPS.credits && !v.capCr) { v.capCr = 1; whenFree(creditMoment); }
+    if (s.aurodium >= CAPS.aurodium && !v.capAu) { v.capAu = 1; whenFree(() => rex(REX_AU)); }
+  }
+  const REX_CR = [
+    'Look at you, overachiever! Your credit vault is full: 7,500,000 credits.',
+    'Nothing goes to waste, though. Every credit over the cap drops into an overflow bank.',
+    'Every 2,500 credits in that bank turns into 1 Aurodium, all on its own.',
+    'And if your Aurodium vault ever fills up too, the extra turns into Kyber. Keep it up, Commander!',
+  ];
+  const REX_AU = [
+    'Ten thousand Aurodium? Commander, you\'re richer than a Hutt.',
+    'Your Aurodium vault is full, so every extra ingot now turns into 10 Kyber Crystals.',
+    'Kyber has no limit, so nothing you earn is ever lost.',
+  ];
+  // Captain Rex on the comm, one line per tap.
+  function rex(lines) {
+    return new Promise((resolve) => {
+      const u = UI();
+      const def = D.UNIT_MAP.captain_rex;
+      const node = document.createElement('div');
+      node.className = 'v23-rex';
+      node.innerHTML = `<div class="vr-card"><div class="vr-pic">${def ? root.Art.unitArt(def) : ''}</div><div class="vr-box"><b>${u.esc(def ? def.name : 'Captain Rex')}</b><p data-l></p><span class="vr-next">Tap to continue</span></div></div>`;
+      document.body.appendChild(node);
+      const line = node.querySelector('[data-l]');
+      let i = 0;
+      const show = () => { line.textContent = lines[i]; line.animate([{ opacity: 0, transform: 'translateY(4px)' }, { opacity: 1, transform: 'none' }], { duration: 260 }); };
+      show();
+      if (root.Sound) root.Sound.play('click');
+      node.addEventListener('click', () => {
+        i += 1;
+        if (i < lines.length) { show(); if (root.Sound) root.Sound.play('click'); return; }
+        node.classList.add('out');
+        setTimeout(() => { node.remove(); resolve(); }, 300);
+      });
+    });
+  }
+  // The vault moment: credit chips pour into a giant safe, the counter tops out
+  // at 7,500,000 and the door wheel spins shut.
+  const chip = '<svg viewBox="0 0 60 36"><rect x="2" y="4" width="56" height="28" rx="7" fill="#e8b830" stroke="#7a5206" stroke-width="2"/><path d="M28 14 H48 M28 18 H42 M28 22 H46" stroke="#7a5206" stroke-width="2"/><circle cx="15" cy="18" r="6" fill="#fff2a8" stroke="#7a5206" stroke-width="1.6"/></svg>';
+  const vaultSvg = '<svg viewBox="0 0 200 200"><defs><radialGradient id="v23vd" cx=".4" cy=".35" r=".8"><stop offset="0" stop-color="#8a929e"/><stop offset="1" stop-color="#2a2e36"/></radialGradient></defs>'
+    + '<rect x="14" y="20" width="172" height="166" rx="16" fill="#1c2028" stroke="#ffd23f" stroke-width="3"/><rect x="74" y="8" width="52" height="12" rx="4" fill="#0a0c10" stroke="#ffd23f" stroke-width="2"/>'
+    + '<circle cx="100" cy="104" r="62" fill="url(#v23vd)" stroke="#c8a030" stroke-width="5"/>'
+    + Array.from({ length: 12 }, (_, k) => `<circle cx="${(100 + Math.cos(k * Math.PI / 6) * 54).toFixed(1)}" cy="${(104 + Math.sin(k * Math.PI / 6) * 54).toFixed(1)}" r="3.4" fill="#ffd23f"/>`).join('')
+    + '<g class="vv-wheel">' + [0, 60, 120].map((r) => `<rect x="62" y="100" width="76" height="8" rx="4" fill="#c8ccd2" transform="rotate(${r} 100 104)"/>`).join('') + '<circle cx="100" cy="104" r="14" fill="#ffd23f" stroke="#7a5206" stroke-width="3"/></g>'
+    + '<rect x="22" y="176" width="20" height="10" rx="2" fill="#0a0c10"/><rect x="158" y="176" width="20" height="10" rx="2" fill="#0a0c10"/></svg>';
+  function vault() {
+    return new Promise((resolve) => {
+      const node = document.createElement('div');
+      node.className = 'v23-vault';
+      node.innerHTML = `<p class="vv-kick">CREDIT VAULT</p><div class="vv-count">0</div><div class="vv-stage"><div class="vv-chips">${Array.from({ length: 12 }, (_, k) => `<i style="--t:${(0.2 + k * 0.16).toFixed(2)}s;--x:${(k % 3 - 1) * 14}px">${chip}</i>`).join('')}</div><div class="vv-safe">${vaultSvg}</div></div><div class="vv-full">VAULT FULL</div>`;
+      document.body.appendChild(node);
+      if (root.Sound) { root.Sound.play('coins'); for (let k = 0; k < 12; k++) setTimeout(() => root.Sound.play('click'), 200 + k * 160); }
+      const count = node.querySelector('.vv-count');
+      const t0 = performance.now();
+      const step = (now) => { if (!node.isConnected) return; const q = Math.min(1, (now - t0) / 2400); count.textContent = fmt(Math.round(CAPS.credits * (1 - Math.pow(1 - q, 3)))); if (q < 1) requestAnimationFrame(step); };
+      requestAnimationFrame(step);
+      setTimeout(() => { node.classList.add('shut'); if (root.Sound) root.Sound.play('reveal_legendary'); }, 2600);
+      const done = () => { if (node.classList.contains('out')) return; node.classList.add('out'); setTimeout(() => { node.remove(); resolve(); }, 350); };
+      setTimeout(done, 4600);
+      setTimeout(() => node.addEventListener('click', done), 1500);
+    });
+  }
+  async function creditMoment() {
+    await vault();
+    const u = UI();
+    const x = u.achievements().find((a) => a.id === 'v23_piggy');
+    if (x) { u.markFeatSeen('v23_piggy'); u.playFeat(x); await new Promise((res) => { const w = () => (document.querySelector('.feat-show') ? setTimeout(w, 400) : res()); setTimeout(w, 800); }); }
+    await rex(REX_CR);
+  }
+  // Legendary badge for filling the credit vault.
+  const FEAT_PIGGY = { id: 'v23_piggy', tier: 7, icon: 'trophy', name: 'Piggy Bank Saver', desc: 'Fill your credit vault: 7,500,000 credits' };
+  const piggyCrest = () => `<svg viewBox="-70 -70 140 140" aria-hidden="true"><defs><linearGradient id="v23pg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff2b0"/><stop offset=".5" stop-color="#ffb938"/><stop offset="1" stop-color="#7a3a08"/></linearGradient></defs>`
+    + Array.from({ length: 16 }, (_, k) => `<path d="M0 -${k % 2 ? 56 : 64} L3 -46 L-3 -46Z" fill="#ffd86a" opacity=".85" transform="rotate(${k * 22.5})"/>`).join('')
+    + '<circle r="46" fill="#1c2028" stroke="url(#v23pg)" stroke-width="7"/><circle r="32" fill="#4a505c" stroke="#c8a030" stroke-width="3"/>'
+    + [0, 60, 120].map((r) => `<rect x="-24" y="-3" width="48" height="6" rx="3" fill="#c8ccd2" transform="rotate(${r})"/>`).join('')
+    + '<circle r="9" fill="#ffd23f" stroke="#7a5206" stroke-width="2"/><g transform="translate(0 50)"><path d="M-26 -7 L26 -7 L21 0 L26 7 L-26 7 L-21 0Z" fill="#c87a10" stroke="#fff2b0" stroke-width="1.2"/><text y="3.4" text-anchor="middle" font-size="8" font-weight="800" fill="#fff2b0" font-family="Oxanium, sans-serif">7.5M</text></g></svg>';
   const walletTitles = (s) => {
     if (typeof document === 'undefined') return;
     const c = document.getElementById('credits');
@@ -54,8 +126,8 @@
     const base = Pl.save;
     Pl.save = function () {
       if (live() && this.state) {
-        const g = root.Update23.settle(this.state);
-        if (g.au || g.ky) notify(g);
+        root.Update23.settle(this.state);
+        capCheck(this.state);
       }
       const r = base.apply(this, arguments);
       if (live() && this.state) walletTitles(this.state);
@@ -90,6 +162,8 @@
   if (H && !H.__v23) {
     H.__v23 = true;
     H.feats.push((s) => (s.v23 && s.v23.jjAuto ? [FEAT_JJ] : []));
+    H.feats.push((s) => (live() ? [{ ...FEAT_PIGGY, have: s.v23 && s.v23.capCr ? 1 : 0, need: 1 }] : []));
+    H.crests.v23_piggy = piggyCrest;
     H.scenes.xq_jj_auto = () => (root.__xq && root.__xq.jj ? root.__xq.jj() : null);
   }
 
@@ -209,8 +283,9 @@
     const can = affordable(pack);
     const m = u.openModal(`<div class="v23-setup"><p class="eyebrow">Auto-open</p><h2>${u.esc(pack.name)}</h2>
       <p class="muted small">Opens crates one after another, plays every reveal, and moves on by itself. ${u.cur(costKey(pack), pack.cost[costKey(pack)])} each · you can afford <b>${fmt(can)}</b>.</p>
-      <label class="v23-lbl">How many?</label>
-      <div class="v23-n"><input type="number" min="1" max="100000" value="${last.n === Infinity || last.n === 'inf' ? '' : last.n}" placeholder="∞" data-n>${[10, 25, 50, 100].map((n) => `<button type="button" class="btn btn-small" data-preset="${n}">${n}</button>`).join('')}<button type="button" class="btn btn-small" data-preset="inf">∞</button></div>
+      <label class="v23-lbl" for="v23-n">How many crates?</label>
+      <div class="v23-custom"><span>Custom amount</span><input id="v23-n" type="number" inputmode="numeric" min="1" max="100000" value="${last.n === Infinity || last.n === 'inf' ? '' : last.n}" placeholder="∞ (until you run out)" data-n></div>
+      <div class="v23-n">${[10, 25, 50, 100].map((n) => `<button type="button" class="btn btn-small" data-preset="${n}">${n}</button>`).join('')}<button type="button" class="btn btn-small" data-preset="inf">∞</button></div>
       <label class="v23-chk"><input type="checkbox" data-sm ${last.m ? 'checked' : ''}> Stop when I pull a Mythic</label>
       <label class="v23-chk"><input type="checkbox" data-sl ${last.l ? 'checked' : ''}> Stop when I pull a Legendary</label>
       <p class="v23-odds">Auto-open odds per card: ${oddsLine(odds)}${AUTO_ODDS[pack.id] ? '<br><small>Holocrons have lower odds in Auto-open than when opened by hand.</small>' : ''}</p>
@@ -257,6 +332,14 @@
 .reveal-modal.auto-open [data-auto-stop]{margin-left:auto}
 .v23-setup .v23-lbl{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}.v23-n{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin:6px 0 10px}.v23-n input{width:110px;padding:8px;border-radius:8px;border:1px solid var(--line);background:#0a0f1a;color:#fff;font:600 16px var(--font-display);text-align:center}
 .v23-chk{display:flex;gap:8px;align-items:center;justify-content:center;font-size:14px;margin:4px 0}.v23-odds{font-size:12px;color:#cde;background:var(--panel-2);border-radius:8px;padding:8px}
+.v23-custom{display:flex;align-items:center;gap:10px;justify-content:center;margin:6px 0}.v23-custom span{font-size:13px;color:var(--muted)}.v23-custom input{width:190px;padding:10px;border-radius:10px;border:1px solid var(--crawl);background:#0a0f1a;color:#fff;font:700 18px var(--font-display);text-align:center}.v23-n input{display:none}
+.v23-rex{position:fixed;inset:0;z-index:96;display:grid;align-items:end;justify-items:center;padding:0 12px 20px;background:rgba(3,4,8,.55);cursor:pointer;animation:fade-in .25s}.v23-rex.out{animation:v23-out .3s forwards}
+.vr-card{display:grid;grid-template-columns:110px 1fr;gap:12px;width:min(640px,100%);padding:12px;border-radius:16px;background:linear-gradient(180deg,#121c2c,#0a111c);border:1px solid #5ab4ff;box-shadow:0 0 30px rgba(90,180,255,.25);animation:vb-bub .4s both}.vr-pic{width:110px;height:110px;border-radius:12px;overflow:hidden;border:2px solid #5ab4ff}.vr-pic svg{width:100%;height:100%;display:block}.vr-box b{font-family:var(--font-display);letter-spacing:.08em;color:#8fd3ff}.vr-box p{margin:6px 0;font-size:16px;line-height:1.35}.vr-next{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.v23-vault{position:fixed;inset:0;z-index:96;display:grid;place-items:center;align-content:center;gap:6px;background:radial-gradient(circle at 50% 55%,#2a2008,#05060a 70%);cursor:pointer;animation:fade-in .3s}.v23-vault.out{animation:v23-out .35s forwards}
+.vv-kick{margin:0;font-family:var(--font-display);letter-spacing:.4em;color:#ffd23f;font-size:13px}.vv-count{font:800 clamp(38px,9vmin,72px) var(--font-display);color:#ffe27a;text-shadow:0 0 24px rgba(255,200,60,.6),0 3px 0 #7a5206}
+.vv-stage{position:relative;width:min(300px,70vw);height:min(330px,76vw)}.vv-safe{position:absolute;inset:auto 0 0 0}.vv-safe svg{width:100%;display:block}.vv-wheel{transform-box:fill-box;transform-origin:center}.v23-vault.shut .vv-wheel{animation:vv-spin 1s cubic-bezier(.3,.6,.4,1) forwards}@keyframes vv-spin{to{transform:rotate(540deg)}}
+.vv-chips{position:absolute;left:50%;top:-6%;width:56px;height:0}.vv-chips i{position:absolute;left:calc(-28px + var(--x));width:56px;opacity:0;animation:vv-drop .55s ease-in forwards;animation-delay:var(--t)}.vv-chips i svg{width:100%;display:block}@keyframes vv-drop{0%{opacity:0;transform:translateY(-40vh) rotate(-30deg)}20%{opacity:1}90%{opacity:1}100%{opacity:0;transform:translateY(8px) rotate(0)}}
+.vv-full{font:800 clamp(22px,5vmin,34px) var(--font-display);letter-spacing:.3em;color:#fff;text-shadow:0 0 18px #ffb938;opacity:0;transform:scale(1.6)}.v23-vault.shut .vv-full{animation:vv-stamp .4s .5s cubic-bezier(.2,1.4,.4,1) forwards}@keyframes vv-stamp{to{opacity:1;transform:none}}
 .v23-broke{position:fixed;inset:0;z-index:95;overflow:hidden;background:#05030a;cursor:pointer;animation:fade-in .3s}.v23-broke.out{animation:v23-out .35s forwards}@keyframes v23-out{to{opacity:0}}
 .vb-alley{position:absolute;inset:0;opacity:.85}.vb-alley svg{width:100%;height:100%;display:block}.vb-rain{position:absolute;inset:0;background:repeating-linear-gradient(105deg,transparent 0 22px,rgba(160,190,255,.07) 22px 23px)}
 .vb-vekko{position:absolute;right:-2%;bottom:0;width:clamp(190px,46vmin,360px);animation:vb-in .8s cubic-bezier(.2,.8,.3,1.1) both}.vb-vekko svg{width:100%;display:block}@keyframes vb-in{from{opacity:0;transform:translateX(45%)}}
@@ -273,6 +356,7 @@
   }
 
   root.Update23 = { on, CAPS, CR_PER_AU, KY_PER_AU, AUTO_LEVEL, AUTO_ODDS, settle, unlocked, autoOpen: (id, n, m, l) => run(D.PACKS.find((p) => p.id === id), n, m, l), setup,
-    // Tester preview of Vekko's out-of-funds screen.
+    // Tester previews: the vault moment, Rex's Aurodium talk and Vekko's screen.
+    previewVault: () => creditMoment(), previewRexAu: () => rex(REX_AU),
     previewBroke: (id, opened, best) => dealer(D.PACKS.find((p) => p.id === (id || 'strongbox')), { opened: opened || 12, top: best || null }) };
 })(typeof window !== 'undefined' ? window : globalThis);
