@@ -272,5 +272,7 @@
     document.head.appendChild(st);
   }
 
-  root.Update23 = { on, CAPS, CR_PER_AU, KY_PER_AU, AUTO_LEVEL, AUTO_ODDS, settle, unlocked, autoOpen: (id, n, m, l) => run(D.PACKS.find((p) => p.id === id), n, m, l), setup };
+  root.Update23 = { on, CAPS, CR_PER_AU, KY_PER_AU, AUTO_LEVEL, AUTO_ODDS, settle, unlocked, autoOpen: (id, n, m, l) => run(D.PACKS.find((p) => p.id === id), n, m, l), setup,
+    // Tester preview of Vekko's out-of-funds screen.
+    previewBroke: (id, opened, best) => dealer(D.PACKS.find((p) => p.id === (id || 'strongbox')), { opened: opened || 12, top: best || null }) };
 })(typeof window !== 'undefined' ? window : globalThis);
