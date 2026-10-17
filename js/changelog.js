@@ -11,7 +11,24 @@
   const LAUNCH_2 = root.__hnLaunchTest != null ? root.__hnLaunchTest : Date.UTC(2026, 9, 14, 12, 0, 0);
   // Update 2.1 goes live at 7:05 a.m. Central on October 28, 2026.
   const LAUNCH_21 = root.__v21Test != null ? root.__v21Test : Date.UTC(2026, 9, 28, 12, 5, 0);
+  // Update 2.2 goes live at 7:05 a.m. Central on November 11, 2026.
+  const LAUNCH_22 = root.__v22Test != null ? root.__v22Test : Date.UTC(2026, 10, 11, 13, 5, 0);
   const ALL_UPDATES = [
+    {
+      v: '2.2', date: 'November 11, 2026', title: 'Friends and Foes', from: LAUNCH_22,
+      items: [
+        'NEW|Friends: from level 5, add pilots by callsign and play friendly battles (unranked, no rewards).',
+        'NEW|Six new planet bosses: the Dragonsnake on Dagobah, Death Star II over Endor, the Acklay in the Geonosis arena, the Executor above Mustafar, the Sith Trooper Legion on Exegol and the Zillo Beast loose on Coruscant, each with its own battle tricks.',
+        'NEW|General Grievous update: brand-new card art and a new "Jedi Killer" ultimate where he spins all four lightsabers through the enemy line.',
+        'NEW|15 new bounty targets, including Greedo, Hondo Ohnaka, Cad Bane and the Most Wanted Black Sun Vigo.',
+        'NEW|7 new HoloNet cards: Bossk, Cad Bane, IG-11, Greef Karga, Cara Dune, Zuckuss and Todo 360.',
+        'BALANCE|Raid bosses (weekly and guild) are much tougher: at least 5,000,000 health, harder-hitting bosses and guards.',
+        'IMPROVED|The Hoth Star Destroyer boss has new art.',
+        'IMPROVED|Big performance boost: smoother menus and battles on all devices.',
+        'FIXED|Some ultimates weren\'t playing their animations; Performance mode now keeps every card\'s own ultimate.',
+        'IMPROVED|Removing test code.',
+      ],
+    },
     {
       v: '2.1', date: 'October 28, 2026', title: 'Squadrons', from: LAUNCH_21,
       items: [
