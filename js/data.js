@@ -1691,19 +1691,19 @@
   const PACKS = [
     {
       id: 'recruit', name: 'Astromech Delivery', desc: 'An R2 unit rolls in with 3 hero datacards', cost: { credits: 300 },
-      kind: 'character', count: 3, odds: { common: 60, rare: 28, epic: 9.6, legendary: 2, mythic: 0.4 },
+      kind: 'character', count: 3, odds: { common: 62, rare: 28, epic: 8.4, legendary: 1.4, mythic: 0.2 },
     },
     {
       id: 'squadron', name: 'Carbonite Block', desc: '3 ship cards frozen in carbonite for safekeeping', cost: { credits: 300 },
-      kind: 'ship', count: 3, odds: { common: 55, rare: 31, epic: 10.6, legendary: 3, mythic: 0.4 },
+      kind: 'ship', count: 3, odds: { common: 57, rare: 31, epic: 9.6, legendary: 2.2, mythic: 0.2 },
     },
     {
       id: 'holocron', name: 'Jedi Holocron', desc: '3 cards, rare or better, kept by the Jedi Order', cost: { crystals: 50 },
-      kind: 'any', count: 3, odds: { common: 0, rare: 55, epic: 33.5, legendary: 10, mythic: 1.5 },
+      kind: 'any', count: 3, odds: { common: 0, rare: 60, epic: 31.5, legendary: 7.5, mythic: 1.0 },
     },
     {
       id: 'strongbox', name: 'Sith Holocron', desc: '1 guaranteed Legendary and 2 Epic-or-better cards', cost: { aurodium: 8 },
-      kind: 'any', count: 3, odds: { common: 0, rare: 0, epic: 67, legendary: 30, mythic: 3 }, guarantee: 'legendary',
+      kind: 'any', count: 3, odds: { common: 0, rare: 0, epic: 74, legendary: 24, mythic: 2.0 }, guarantee: 'legendary',
     },
   ];
 
@@ -1725,8 +1725,8 @@
       { mult: 5, weight: 8 },
       { mult: 10, weight: 2 },
     ],
-    holoChance: 0.08,
-    holoChanceCharmed: 0.22,
+    holoChance: 0.05,
+    holoChanceCharmed: 0.15,
     charmOdds: { legendary: 2.5, epic: 1.6, mythic: 2 },
     pityCrates: 20,
     sabacc: [
