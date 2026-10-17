@@ -1703,7 +1703,7 @@
     },
     {
       id: 'strongbox', name: 'Sith Holocron', desc: '1 guaranteed Legendary and 2 Epic-or-better cards', cost: { aurodium: 8 },
-      kind: 'any', count: 3, odds: { common: 0, rare: 0, epic: 74, legendary: 24, mythic: 2.0 }, guarantee: 'legendary',
+      kind: 'any', count: 3, odds: { common: 0, rare: 0, epic: 74.5, legendary: 24, mythic: 1.5 }, guarantee: 'legendary',
     },
   ];
 

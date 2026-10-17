@@ -23,7 +23,7 @@
         'NEW|15 new bounty targets, including Greedo, Hondo Ohnaka, Cad Bane and the Most Wanted Black Sun Vigo.',
         'NEW|7 new HoloNet cards: Bossk, Cad Bane, IG-11, Greef Karga, Cara Dune, Zuckuss and Todo 360.',
         'BALANCE|Raid bosses (weekly and guild) are much tougher: at least 5,000,000 health, harder-hitting bosses and guards.',
-        'BALANCE|Crate odds lowered: fewer Mythic, Legendary and Holo cards from every crate (Sith Holocron Mythic chance 3% → 2% per card, Legendary 30% → 24%).',
+        'BALANCE|Crate odds lowered: fewer Mythic, Legendary and Holo cards from every crate (Sith Holocron Mythic chance 3% → 1.5% per card, Legendary 30% → 24%).',
         'IMPROVED|The Hoth Star Destroyer boss has new art.',
         'IMPROVED|Big performance boost: smoother menus and battles on all devices.',
         'FIXED|Some ultimates weren\'t playing their animations; Performance mode now keeps every card\'s own ultimate.',
