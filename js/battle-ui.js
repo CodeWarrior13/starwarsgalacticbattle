@@ -2232,6 +2232,7 @@
       list.push({ level: AUTO_NEXT_LEVEL, name: 'Auto-continue', desc: 'Jump straight into your next battle with your saved squad.' });
       if (root.Update22 && root.Update22.on()) list.push({ level: 5, name: 'Friends', desc: 'Add pilots by callsign and challenge them to friendly battles.' });
       list.push({ level: 25, name: 'The HoloNet', desc: 'Battle real players: arenas, live duels, guilds and more.' });
+      if (root.Update23 && root.Update23.on()) list.push({ level: 30, name: 'Auto-open', desc: 'Open Black Market crates one after another, hands-free, until you reach your number.' });
       return list.sort((a, b) => a.level - b.level);
     },
 

@@ -1141,6 +1141,8 @@ const crestCC = () => {
   return frame(u, inner, 'HOT CHIPS', { glow: '#ff2e88', core: '#1a0a24', tail: '#5a1040' });
 };
 H.crests.xq_cc = crestCC;
+// Vekko and his alley, shared with other scenes (Auto-open's out-of-funds moment).
+root.__vekkoArt = { vekko: () => vekkoSvg(), alley: () => alleySvg() };
 const sceneCC = (x) => {
   const chips = Array.from({ length: 10 }, (_, k) => `<div class="cc-chip" style="--t:${(0.5 + k * 0.17).toFixed(2)}s;--t2:${((9 - k) * 0.09).toFixed(2)}s;--y:${-k * 9}px;--r:${(k % 2 ? 1 : -1) * (20 + k * 6)}deg;z-index:${k}">${chipSvg()}</div>`).join('');
   const stage = `<div class="cc-alley">${alleySvg()}</div><div class="cc-rain"></div>

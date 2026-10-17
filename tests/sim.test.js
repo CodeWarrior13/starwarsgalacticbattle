@@ -707,4 +707,36 @@ test('2.2 planet bosses stay off until 2.2, then fight with their mechanics', ()
   }
 });
 
+test('2.3: currency caps overflow into Aurodium then Kyber; Auto-open uses lower Holocron odds', () => {
+  require('../js/v23.js');
+  Player.reset();
+  Player.state.credits = 7499800; Player.save();
+  Player.state.credits += 500; Player.save();
+  assert.strictEqual(Player.state.credits, 7499800 + 500, 'off: no cap before 2.3');
+  delete require.cache[require.resolve('../js/v23.js')];
+  globalThis.__v23Test = 0;
+  require('../js/v23.js');
+  delete globalThis.__v23Test;
+  const U = globalThis.Update23;
+  assert.ok(U.on());
+  Player.reset();
+  const s = Player.state;
+  s.credits = 7499800; s.aurodium = 5; Player.save();
+  s.credits += 500; Player.save();
+  assert.deepStrictEqual([s.credits, s.ovf.cr, s.aurodium], [7500000, 300, 5]);
+  s.credits += 5000; Player.save();
+  assert.deepStrictEqual([s.credits, s.ovf.cr, s.aurodium], [7500000, 300, 7]);
+  s.aurodium = 9999; const k0 = s.crystals; s.credits += 5000; Player.save();
+  assert.deepStrictEqual([s.aurodium, s.crystals - k0], [10000, 10]);
+  // Auto-open odds only apply while Auto-open runs.
+  const sith = D.PACKS.find((p) => p.id === 'strongbox');
+  assert.strictEqual(Player.effectiveOdds(sith).mythic, 1.5);
+  Player.__auto = true;
+  assert.deepStrictEqual([Player.effectiveOdds(sith).mythic, Player.effectiveOdds(sith).legendary], [1, 22]);
+  const jedi = D.PACKS.find((p) => p.id === 'holocron');
+  assert.deepStrictEqual([Player.effectiveOdds(jedi).mythic, Player.effectiveOdds(jedi).legendary], [0.8, 7.2]);
+  assert.strictEqual(Player.effectiveOdds(D.PACKS.find((p) => p.id === 'recruit')).mythic, 0.2);
+  Player.__auto = false;
+});
+
 console.log(`\n${passed} tests passed`);

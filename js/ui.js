@@ -2994,7 +2994,7 @@
           };
           requestAnimationFrame(step);
         }
-        timer = setTimeout(close, ex ? 7000 : mythic ? 5000 : 4400);
+        timer = setTimeout(close, opts.finalMs || (ex ? 7000 : mythic ? 5000 : 4400));
       };
       const next = () => {
         if (i >= steps.length) return showFinal();
@@ -3030,7 +3030,12 @@
     });
   }
 
+  // opts.auto (Auto-open): every card opens and deals by itself, holds by rarity,
+  // and the reveal closes on its own; the call then resolves when it's gone.
   async function packReveal(results, packId, opts = {}) {
+    const auto = opts.auto || null;
+    let doneAuto = null;
+    const closed = auto ? new Promise((res) => { doneAuto = res; }) : null;
     const best = results.reduce((b, r) => (R_ORDER[D.UNIT_MAP[r.id].rarity] > R_ORDER[b] ? D.UNIT_MAP[r.id].rarity : b), 'common');
     if (packId) await crateCinematic(packId, best);
     const cards = results.map((r, i) => {
@@ -3042,14 +3047,15 @@
       </div>`;
     }).join('');
     const m = openModal(`
-      <div style="text-align:center"><p class="eyebrow">${opts.eyebrow ? esc(opts.eyebrow) : packId ? 'Relic unsealed' : 'Delivery from Vekko'}</p><h2 data-reveal-title>Tap to reveal</h2></div>
+      <div style="text-align:center"><p class="eyebrow">${auto ? esc(auto.label) : opts.eyebrow ? esc(opts.eyebrow) : packId ? 'Relic unsealed' : 'Delivery from Vekko'}</p><h2 data-reveal-title>${auto ? 'Opening…' : 'Tap to reveal'}</h2></div>
       <div class="reveal-stack" data-stack>${cards}</div>
       <p class="reveal-hint" data-reveal-hint hidden>Tap the card for the next one</p>
       <div class="reveal-summary" data-summary hidden></div>
       <div class="modal-actions" style="justify-content:center">
         <button class="btn btn-primary" type="button" data-next-card hidden>Next card</button>
         <button class="btn btn-primary" type="button" data-done hidden>Done</button>
-      </div>`, { onClose: () => { App.refresh(); if (opts.onClose) opts.onClose(); }, cls: `reveal-modal best-${best}` });
+        ${auto ? '<button class="btn btn-danger" type="button" data-auto-stop>Stop Auto-open</button>' : ''}
+      </div>`, { onClose: () => { App.refresh(); if (opts.onClose) opts.onClose(); if (doneAuto) doneAuto(); }, cls: `reveal-modal best-${best}${auto ? ' auto-open' : ''}` });
     // One card at a time: the next one stays hidden under the deck until the
     // current reveal finishes and the player asks for it.
     let current = 0;
@@ -3064,8 +3070,9 @@
         const cur = $(`.flip[data-i="${i}"]`, m.root);
         cur.classList.add('tap-next');
         cur.setAttribute('aria-label', 'Next card');
-        $('[data-reveal-hint]', m.root).hidden = false;
+        $('[data-reveal-hint]', m.root).hidden = !!auto;
         cur.focus({ preventScroll: true });
+        if (auto) setTimeout(() => { if (cur.isConnected) cur.click(); }, 250);
       } else if (results.length > 1) {
         // Crate finished: lay out everything you pulled.
         const sum = $('[data-summary]', m.root);
@@ -3075,10 +3082,12 @@
         doneBtn.hidden = false;
         title.textContent = opts.doneTitle || 'Crate complete';
         doneBtn.focus();
+        if (auto) setTimeout(() => m.close(), auto.summaryMs || 1600);
       } else {
         doneBtn.hidden = false;
         title.textContent = def.name;
         doneBtn.focus();
+        if (auto) setTimeout(() => m.close(), 600);
       }
     };
     let busy = Promise.resolve();
@@ -3117,7 +3126,7 @@
         // Every card gets a walkout; rarer cards get a longer, louder one.
         await new Promise((res) => setTimeout(res, tier >= 2 ? 300 : 150));
         const custom = HOOKS.reveal && HOOKS.reveal(r, def);
-        await (custom || walkout(def, def.rarity, r.holo));
+        await (custom || walkout(def, def.rarity, r.holo, auto ? { finalMs: auto.hold(def.rarity) } : {}));
         if (r.holo) toast('HOLO card! Double value.');
         await new Promise((res) => setTimeout(res, 120));
         afterReveal(Number(f.dataset.i));
@@ -3151,6 +3160,7 @@
         else deal();
       }
       if (e.target.closest('[data-done]')) m.close();
+      if (auto && e.target.closest('[data-auto-stop]')) { auto.onStop(); e.target.closest('[data-auto-stop]').textContent = 'Stopping after this crate'; }
       const rs = e.target.closest('.rs-card .ucard');
       if (rs) inspect(rs.dataset.id);
     });
@@ -3161,6 +3171,10 @@
         else flip(e.target);
       }
     });
+    if (auto) {
+      setTimeout(() => { const f0 = $('.flip[data-i="0"]', m.root); if (f0) flip(f0); }, 350);
+      return closed;
+    }
   }
 
   root.UI = { hooks: HOOKS, achievements, featBadge, packReveal, motionOK, walkout, settings, profile, playFeat, celebrateFeat, markFeatSeen, soundSettings: settings, homeworldOf, $, $$, el, esc, fmt, cur, portrait, stars, unitCard, toast, openModal, confirmBox, updateWallet, inspect, synergyBanner, App, Screens };
