@@ -1301,7 +1301,10 @@
       }).join('');
     }
 
-    function render() {
+    // keep: after closing a card, rebuild at least as many cards as were
+    // showing and put the scroll back, so you land where you were instead of
+    // at the top (the grid briefly shrank to one batch and the page jumped).
+    function render(keep) {
       $$('[data-filter="kind"] button', v).forEach((b) => b.classList.toggle('active', b.dataset.v === ui.collectionKind));
       $$('[data-filter="faction"] button', v).forEach((b) => b.classList.toggle('active', b.dataset.v === ui.collectionFaction));
       $$('[data-filter="sort"] button', v).forEach((b) => b.classList.toggle('active', b.dataset.v === ui.collectionSort));
@@ -1341,10 +1344,13 @@
         const tail = grid.querySelector('.grid-more');
         if (tail && moreObs) moreObs.observe(tail);
       };
+      const had = keep ? grid.querySelectorAll('.ucard').length : 0;
+      const y = window.scrollY;
       grid.innerHTML = '';
       if ('IntersectionObserver' in root) {
         moreObs = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) more(); }, { rootMargin: '900px 0px' });
-        more();
+        do more(); while (shown < had && shown < list.length);
+        if (keep) window.scrollTo({ top: y });
       } else {
         while (shown < list.length) more();
       }
@@ -1383,7 +1389,7 @@
         return;
       }
       const card = e.target.closest('.ucard');
-      if (card) inspect(card.dataset.id, render, $$('[data-grid] .ucard', v).map((c) => c.dataset.id));
+      if (card) inspect(card.dataset.id, () => render(true), $$('[data-grid] .ucard', v).map((c) => c.dataset.id));
     });
     render();
     return v;
