@@ -628,6 +628,7 @@ test('2.2 planet bosses stay off until 2.2, then fight with their mechanics', ()
   require('../js/bosses22.js');
   assert.ok(!D.UNIT_MAP.dragonsnake && D.BOSS_ENCOUNTERS.length === 5, 'loading the file alone adds nothing');
   assert.ok(!D.UNIT_MAP.grievous.portrait, 'Grievous keeps his current art until 2.2');
+  assert.strictEqual(D.UNIT_MAP.grievous.spd, 150, 'Grievous buff waits for 2.2');
   delete require.cache[require.resolve('../js/bosses22.js')];
   globalThis.__v22Test = 0;
   require('../js/bosses22.js');
@@ -636,6 +637,7 @@ test('2.2 planet bosses stay off until 2.2, then fight with their mechanics', ()
   assert.deepStrictEqual(ids.filter((id) => D.BOSS_ENCOUNTERS.some((e) => e.id === id)), ids);
   assert.strictEqual(D.UNIT_MAP.star_destroyer.portrait, 'star_destroyer_22');
   assert.strictEqual(D.UNIT_MAP.grievous.portrait, 'grievous_22');
+  assert.ok(D.UNIT_MAP.grievous.spd === 152 && D.abilitiesFor(D.UNIT_MAP.grievous)[2].effects.length === 2, 'Grievous buff applies at 2.2');
   assert.ok(globalThis.Art.unitArt(D.UNIT_MAP.grievous).includes('#e4dcc4'), 'Grievous draws his new portrait');
   for (const id of [...ids, 'sith_trooper']) {
     const u = D.UNIT_MAP[id];

@@ -20,6 +20,7 @@
         'NEW|Friends: from level 5, add pilots by callsign and play friendly battles (unranked, no rewards).',
         'NEW|Six new planet bosses: the Dragonsnake on Dagobah, Death Star II over Endor, the Acklay in the Geonosis arena, the Executor above Mustafar, the Sith Trooper Legion on Exegol and the Zillo Beast loose on Coruscant, each with its own battle tricks.',
         'NEW|General Grievous update: brand-new card art and a new "Jedi Killer" ultimate where he spins all four lightsabers through the enemy line.',
+        'BALANCE|Buffed General Grievous: Four-Blade Frenzy hits harder, Jedi Hunter\'s Burn chance is up to 65%, Blade Whirlwind can now inflict Defense Down, and he\'s a little faster.',
         'NEW|15 new bounty targets, including Greedo, Hondo Ohnaka, Cad Bane and the Most Wanted Black Sun Vigo.',
         'NEW|7 new HoloNet cards: Bossk, Cad Bane, IG-11, Greef Karga, Cara Dune, Zuckuss and Todo 360.',
         'BALANCE|Raid bosses (weekly and guild) are much tougher: at least 5,000,000 health, harder-hitting bosses and guards.',

@@ -800,4 +800,14 @@
   // General Grievous update: his new card art.
   if (D.UNIT_MAP.grievous && root.Art && root.Art.CHARACTER_IDS.includes('grievous_22')) D.UNIT_MAP.grievous.portrait = 'grievous_22';
   if (BUI && BUI.SIG && BUI.mv_jedikiller) BUI.SIG.grievous = { move: 'jedikiller', prop: 'saber', impact: 'xslash', color: '#46e070' };
+  // General Grievous buff: one of the strongest epics, able to take on some legendaries.
+  const gv = D.UNIT_MAP.grievous;
+  if (gv && !gv.__buff22) {
+    gv.__buff22 = true;
+    gv.spd = 152;
+    gv.abilities[0].effects[0].mult = 0.42;
+    gv.abilities[1].effects = [gv.abilities[1].effects[0], { ...gv.abilities[1].effects[1], chance: 0.65 }];
+    gv.abilities[1].desc = 'Deal heavy damage with a 65% chance to Burn.';
+    gv.ultimate = U('Blade Whirlwind', 'allEnemies', [dmg(0.62, 3), debuff('defDown', 2, 0.25)], 'Strike all enemies three times, with a 25% chance of Defense Down.', 'Your lightsabers will make a fine addition to my collection.');
+  }
 })(typeof window !== 'undefined' ? window : globalThis);
