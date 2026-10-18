@@ -1332,9 +1332,11 @@
       // slow to open and heavy to scroll on phones.
       const grid = $('[data-grid]', v);
       if (moreObs) { moreObs.disconnect(); moreObs = null; }
+      if (winObs) { winObs.disconnect(); winObs = null; }
       if (!list.length) { grid.innerHTML = '<p class="muted">No units match these filters.</p>'; return; }
       let shown = 0;
-      const BATCH = 18;
+      const win = root.Update23 && root.Update23.on() ? cardWindow(grid, list) : null;
+      const BATCH = win ? win.batch : 18;
       const more = () => {
         const next = list.slice(shown, shown + BATCH);
         shown += next.length;
@@ -1343,12 +1345,13 @@
         grid.insertAdjacentHTML('beforeend', next.map((def) => unitCard(def, { traits: true })).join('') + (shown < list.length ? '<i class="grid-more" aria-hidden="true"></i>' : ''));
         const tail = grid.querySelector('.grid-more');
         if (tail && moreObs) moreObs.observe(tail);
+        if (win) win.watch(grid.querySelectorAll('.ucard:not([data-o])'));
       };
       const had = keep ? grid.querySelectorAll('.ucard').length : 0;
       const y = window.scrollY;
       grid.innerHTML = '';
       if ('IntersectionObserver' in root) {
-        moreObs = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) more(); }, { rootMargin: '900px 0px' });
+        moreObs = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) more(); }, { rootMargin: win ? win.ahead : '900px 0px' });
         do more(); while (shown < had && shown < list.length);
         if (keep) window.scrollTo({ top: y });
       } else {
@@ -1356,6 +1359,41 @@
       }
     }
     let moreObs = null;
+    let winObs = null;
+
+    // 2.3: only the rows near the screen hold a real card. Batches are sized
+    // to this device (columns that fit x rows per screen), and cards that
+    // scroll far away are emptied down to a blank slot of the same height,
+    // then drawn again when you scroll back, so long collections stay light
+    // on memory, CPU and GPU. Slots keep their size, so nothing jumps.
+    function cardWindow(grid, list) {
+      const dev = root.Perf ? root.Perf.device() : 'pc';
+      const lite = root.Perf && root.Perf.on;
+      const screens = lite ? 0.75 : { iphone: 1, android: 1, ipad: 1.5 }[dev] || 2;
+      const cols = Math.max(1, getComputedStyle(grid).gridTemplateColumns.split(' ').length);
+      const rows = Math.ceil(window.innerHeight / 240);
+      const ahead = Math.round(window.innerHeight * screens);
+      const byId = Object.fromEntries(list.map((d) => [d.id, d]));
+      winObs = new IntersectionObserver((es) => es.forEach((e) => {
+        const c = e.target;
+        if (!e.isIntersecting && !c.dataset.w) {
+          c.style.height = c.getBoundingClientRect().height + 'px';
+          c.dataset.w = '1';
+          c.innerHTML = '';
+        } else if (e.isIntersecting && c.dataset.w) {
+          const fresh = el(unitCard(byId[c.dataset.id], { traits: true }));
+          c.className = fresh.className;
+          c.innerHTML = fresh.innerHTML;
+          c.style.height = '';
+          delete c.dataset.w;
+        }
+      }), { rootMargin: `${ahead * 2}px 0px` });
+      return {
+        batch: Math.max(6, cols * Math.ceil(rows * (1 + screens))),
+        ahead: `${ahead}px 0px`,
+        watch: (cards) => cards.forEach((c) => { c.dataset.o = '1'; winObs.observe(c); }),
+      };
+    }
 
     v.addEventListener('click', (e) => {
       if (e.target.closest('[data-filters-toggle]')) {
