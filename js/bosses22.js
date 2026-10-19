@@ -786,6 +786,110 @@
     };
   }
 
+  // ---------- Starkiller update: "Unleashed" one destroyer at a time ----------
+  // He tears a Star Destroyer out of the sky for EACH enemy, one after
+  // another: lightning grips the hull, it drops nose-first, glowing from
+  // re-entry, and slams into its target. The hull is a detailed top-down
+  // wedge in the loading-screen style, with burning engines and scorch marks.
+  if (BUI && !BUI.mv_starfall) {
+    const el = (h) => { const t = document.createElement('template'); t.innerHTML = h.trim(); return t.content.firstChild; };
+    const shipSvg = (() => {
+      let seed = 7;
+      const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+      // Point on the hull at depth k (0 back .. 1 nose), across u (-1 left .. 1 right).
+      const pt = (k, u) => [60 + u * 56 * (1 - k), 12 + 184 * k];
+      let greeble = '';
+      for (let i = 0; i < 46; i++) {
+        const k = 0.08 + rnd() * 0.8, u = (rnd() * 2 - 1) * 0.9, [x, y] = pt(k, u);
+        const w = 2 + rnd() * 9 * (1 - k), h = 1.5 + rnd() * 6 * (1 - k);
+        greeble += `<rect x="${(x - w / 2).toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" fill="${u < 0 ? '#5a626e' : '#1e242c'}" opacity="${(0.25 + rnd() * 0.35).toFixed(2)}"/>`;
+      }
+      let guns = '';
+      for (let i = 1; i <= 7; i++) {
+        const k = i / 9;
+        for (const u of [-0.78, 0.78]) { const [x, y] = pt(k, u); guns += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="1.5" fill="${u < 0 ? '#3a424e' : '#0e1218'}"/><line x1="${x.toFixed(1)}" y1="${y.toFixed(1)}" x2="${(x + (u < 0 ? 1.6 : -1.6)).toFixed(1)}" y2="${(y + 2.6).toFixed(1)}" stroke="#0e1218" stroke-width=".6"/>`; }
+      }
+      const scorch = [[38, 70, 9], [80, 104, 7], [52, 130, 6], [70, 52, 5]].map(([x, y, r]) => `<ellipse cx="${x}" cy="${y}" rx="${r}" ry="${r * 0.7}" fill="#120a06" opacity=".45"/><circle cx="${x}" cy="${y}" r="${r * 0.3}" fill="#ff7a1a" opacity=".7"/>`).join('');
+      const trench = (u) => { const a = pt(0.06, u), b = pt(0.92, u * 0.4); return `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="${u < 0 ? '#8a929e' : '#0a0e14'}" stroke-width="1.6" opacity=".8"/>`; };
+      return `<svg viewBox="-6 -14 132 216" width="100%" height="100%" aria-hidden="true"><defs>
+<linearGradient id="skL" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#f2f5f8"/><stop offset="1" stop-color="#a6aeba"/></linearGradient>
+<linearGradient id="skR" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#5e6672"/><stop offset="1" stop-color="#2c333d"/></linearGradient>
+<linearGradient id="skHeat" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#fff2c0"/><stop offset=".18" stop-color="#ff9a2a" stop-opacity=".9"/><stop offset=".45" stop-color="#ff4a1a" stop-opacity=".35"/><stop offset="1" stop-color="#ff4a1a" stop-opacity="0"/></linearGradient>
+<radialGradient id="skEng"><stop offset="0" stop-color="#fff"/><stop offset=".35" stop-color="#9ad8ff"/><stop offset="1" stop-color="#2a8aff" stop-opacity="0"/></radialGradient></defs>
+<g class="sk-eng">${[[24, 7], [44, 9], [60, 11], [76, 9], [96, 7]].map(([x, r]) => `<circle cx="${x}" cy="4" r="${r}" fill="url(#skEng)"/>`).join('')}</g>
+<polygon points="60,196 4,12 60,12" fill="url(#skL)"/><polygon points="60,196 116,12 60,12" fill="url(#skR)"/>
+${trench(-0.62)}${trench(0.62)}${greeble}${guns}${scorch}
+<line x1="60" y1="12" x2="60" y2="196" stroke="#0a0e14" stroke-width="1.1"/>
+<rect x="2" y="7" width="116" height="6" fill="#2c333d"/><rect x="2" y="7" width="58" height="6" fill="#8a929e"/>
+<rect x="40" y="14" width="40" height="22" fill="#9aa2ae"/><rect x="60" y="14" width="20" height="22" fill="#4a525e"/>
+<rect x="48" y="36" width="24" height="34" fill="#8a929e"/><rect x="60" y="36" width="12" height="34" fill="#3a424e"/>
+<rect x="53" y="70" width="14" height="10" fill="#6a727e"/><rect x="60" y="70" width="7" height="10" fill="#2c333d"/>
+<rect x="34" y="2" width="52" height="9" rx="1" fill="#c8d0da"/><rect x="60" y="2" width="26" height="9" rx="1" fill="#5a626e"/>
+${Array.from({ length: 11 }, (_, i) => `<rect x="${37 + i * 4.3}" y="5.6" width="2.2" height="1.6" fill="#ffd27a"/>`).join('')}
+<circle cx="38" cy="-2" r="5" fill="#e8eef4"/><circle cx="82" cy="-2" r="5" fill="#6a727e"/><rect x="58.6" y="-12" width="2.8" height="12" fill="#8a929e"/>
+<polygon class="sk-heat" points="60,200 10,30 110,30" fill="url(#skHeat)" opacity="0"/></svg>`;
+    })();
+    BUI.mv_starfall = async function (S, actor, from, T, spec, hit) {
+      const sp = S.speed, lite = this.liteSig, Snd = root.Sound;
+      S.layer.classList.add('sig-quake');
+      const w = Math.max(104, Math.min(200, S.W * 0.2)), h = w * 1.64;
+      const route = T.slice().sort((a, b) => a.x - b.x);
+      const one = (t, i) => new Promise((done) => {
+        const ship = el(`<div class="sp-prop" style="position:absolute;left:0;top:0;width:${w}px;height:${h}px;z-index:4;pointer-events:none;will-change:transform;filter:drop-shadow(0 10px 18px rgba(0,0,0,.7))">${shipSvg}</div>`);
+        S.layer.appendChild(ship);
+        const heat = ship.querySelector('.sk-heat');
+        const sx = Math.max(w / 2, Math.min(S.W - w / 2, t.x + (i % 2 ? 1 : -1) * S.W * (0.12 + Math.random() * 0.12)));
+        // Held up in plain view above its target before the drop.
+        const sy = Math.min(t.y - h * 0.75, Math.max(h * 0.62, S.H * 0.18));
+        const ang = (Math.atan2(t.x - sx, t.y - sy) * 180) / Math.PI;
+        const grip = 460 / sp, fall = 560 / sp;
+        if (Snd) Snd.play('lightning');
+        let t0 = null, last = null, el2 = 0, f = 0;
+        const step = (now) => {
+          if (last !== null) el2 += Math.min(now - last, 50);
+          last = now;
+          if (t0 === null) t0 = el2;
+          const e = el2 - t0;
+          let x, y, sc, rot;
+          if (e < grip) {
+            // Gripped: dragged into view, shuddering against the Force.
+            const k = e / grip;
+            const ease = 1 - (1 - k) * (1 - k);
+            x = sx + Math.sin(e / 18) * 3; y = -h + (sy + h) * ease; sc = 1.25; rot = -ang * k + Math.sin(e / 25) * 2;
+            if (f++ % (lite ? 4 : 2) === 0) BUI.sigBolt.call(this, S, from, { x, y: y + h * 0.3 }, spec.color, 0.8);
+          } else {
+            const k = Math.min(1, (e - grip) / fall), q = k * k * k;
+            x = sx + (t.x - sx) * q; y = sy + (t.y - sy - h * 0.22) * q; sc = 1.25 - 0.55 * q; rot = -ang;
+            heat.setAttribute('opacity', Math.min(1, k * 1.6).toFixed(2));
+            if (!lite && k < 0.6 && f++ % 3 === 0) BUI.sigBolt.call(this, S, from, { x, y }, spec.color, 0.5);
+            if (k >= 1) {
+              ship.animate([{ opacity: 1, transform: ship.style.transform }, { opacity: 0, transform: `${ship.style.transform} scale(1.15, .6)` }], { duration: 220, fill: 'forwards' }).onfinish = () => ship.remove();
+              this.boom(this.toField(t), '#ff8a2a', lite ? 1.4 : 2);
+              if (this.env) this.env.flash('#ffd27a', 0.3);
+              if (this.shake) this.shake();
+              if (Snd) Snd.play('explosion');
+              hit(t);
+              return done();
+            }
+          }
+          // Anchor at the nose so the point of the wedge lands on the card.
+          ship.style.transform = `translate(${x - w / 2}px, ${y - h * 0.5}px) rotate(${rot}deg) scale(${sc})`;
+          requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
+      });
+      // One after another: the next hull is torn loose as the last one falls.
+      const all = [];
+      for (let i = 0; i < route.length; i++) {
+        all.push(one(route[i], i));
+        await this.wait(lite ? 380 : 560);
+      }
+      await Promise.all(all);
+      if (this.env) this.env.flash('#ffd27a', 0.6);
+      await this.wait(420);
+    };
+  }
+
   // ---------- Switch on at 2.2 ----------
   if (!D) return;
   Object.assign(D.STATUS_INFO, STATUS22);
@@ -800,6 +904,8 @@
   // General Grievous update: his new card art.
   if (D.UNIT_MAP.grievous && root.Art && root.Art.CHARACTER_IDS.includes('grievous_22')) D.UNIT_MAP.grievous.portrait = 'grievous_22';
   if (BUI && BUI.SIG && BUI.mv_jedikiller) BUI.SIG.grievous = { move: 'jedikiller', prop: 'saber', impact: 'xslash', color: '#46e070' };
+  // Starkiller update: one Star Destroyer per enemy.
+  if (BUI && BUI.SIG && BUI.mv_starfall) BUI.SIG.starkiller = { move: 'starfall', prop: 'isd', impact: 'crush', color: '#7ac8ff' };
   // General Grievous buff: one of the strongest epics, able to take on some legendaries.
   const gv = D.UNIT_MAP.grievous;
   if (gv && !gv.__buff22) {

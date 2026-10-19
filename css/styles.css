@@ -582,6 +582,15 @@ body.in-battle .main-nav, body.in-battle .brand { pointer-events: none; opacity:
   background: var(--crawl); color: var(--void);
 }
 .reveal-tag.dup { background: var(--epic); }
+/* 2.2: "NEW CARD" ribbon across the top-left corner of a card you didn't own. */
+.new-corner { position: absolute; top: 0; left: 0; z-index: 5; width: 78px; height: 78px; overflow: hidden; border-top-left-radius: 12px; pointer-events: none; }
+.new-corner b { position: absolute; top: 18px; left: -28px; width: 116px; transform: rotate(-45deg); text-align: center; font-size: 9px; font-weight: 900; line-height: 17px; letter-spacing: 0.12em; color: #1a1000; background: linear-gradient(180deg, #fff1a0, #ffc21a 55%, #e89a00); box-shadow: 0 2px 6px rgba(0,0,0,.55), 0 0 10px rgba(255,210,60,.55); animation: new-corner 2.4s ease-in-out infinite; }
+@keyframes new-corner { 50% { filter: brightness(1.25); } }
+.rs-card { position: relative; }
+.rs-card .new-corner { width: 58px; height: 58px; border-top-left-radius: 10px; }
+.rs-card .new-corner b { top: 12px; left: -22px; width: 88px; font-size: 7px; line-height: 13px; }
+.holo-tag.right { left: auto; right: 8px; }
+@media (prefers-reduced-motion: reduce) { .new-corner b { animation: none; } }
 
 /* ---------- Toast ---------- */
 #toast-root { position: fixed; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%); z-index: 90; display: grid; gap: 8px; width: min(420px, calc(100% - 32px)); }
@@ -639,6 +648,10 @@ body.in-battle .main-nav, body.in-battle .brand { pointer-events: none; opacity:
 .midline::before, .midline::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--line), transparent); }
 
 .row { display: flex; justify-content: center; align-items: center; gap: clamp(6px, 1.6vw, 18px); }
+/* A crowded row (a boss plus four escorts, like the Krayt Dragon in the Dune
+   Sea) shrinks every card evenly to fit instead of running off the screen. */
+.row { min-width: 0; max-width: 100%; }
+.row > .bcard { min-width: 0; flex-shrink: 1; }
 .bcard {
   position: relative;
   width: clamp(72px, 19vw, 150px);

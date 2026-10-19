@@ -1335,7 +1335,7 @@
       if (winObs) { winObs.disconnect(); winObs = null; }
       if (!list.length) { grid.innerHTML = '<p class="muted">No units match these filters.</p>'; return; }
       let shown = 0;
-      const win = root.Update23 && root.Update23.on() ? cardWindow(grid, list) : null;
+      const win = root.Update22 && root.Update22.on() ? cardWindow(grid, list) : null;
       const BATCH = win ? win.batch : 18;
       const more = () => {
         const next = list.slice(shown, shown + BATCH);
@@ -1361,7 +1361,7 @@
     let moreObs = null;
     let winObs = null;
 
-    // 2.3: only the rows near the screen hold a real card. Batches are sized
+    // 2.2: only the rows near the screen hold a real card. Batches are sized
     // to this device (columns that fit x rows per screen), and cards that
     // scroll far away are emptied down to a blank slot of the same height,
     // then drawn again when you scroll back, so long collections stay light
@@ -3076,6 +3076,9 @@
 
   // opts.auto (Auto-open): every card opens and deals by itself, holds by rarity,
   // and the reveal closes on its own; the call then resolves when it's gone.
+  const v22 = () => !!(root.Update22 && root.Update22.on());
+  const NEW_CORNER = '<span class="new-corner" aria-label="New card"><b>NEW CARD</b></span>';
+
   async function packReveal(results, packId, opts = {}) {
     const auto = opts.auto || null;
     let doneAuto = null;
@@ -3084,10 +3087,13 @@
     if (packId) await crateCinematic(packId, best);
     const cards = results.map((r, i) => {
       const def = D.UNIT_MAP[r.id];
-      const tag = r.isNew ? '<span class="reveal-tag">NEW!</span>' : `<span class="reveal-tag dup">+${r.shards} shards</span>`;
+      // 2.2: a new card gets a small "NEW CARD" ribbon in its top-left corner
+      // (here and on the crate summary); Holo then moves to the right.
+      const corner = r.isNew && v22();
+      const tag = corner ? NEW_CORNER : r.isNew ? '<span class="reveal-tag">NEW!</span>' : `<span class="reveal-tag dup">+${r.shards} shards</span>`;
       return `<div class="flip glow-${def.rarity} r-${def.rarity} side-${def.faction} ${r.holo ? 'is-holo' : ''} ${i > 0 ? 'stack-hidden' : ''}" style="--rc:${R_COLOR[def.rarity]};--i:${i};--fc:${def.faction === 'dark' ? '#ff2a3a' : '#5ab4ff'}" data-i="${i}" tabindex="0" role="button" aria-label="Reveal card">
         <div class="flip-face flip-back">${Art.cardBack(def.faction)}</div>
-        <div class="flip-face flip-front">${tag}${r.holo ? '<span class="holo-tag">HOLO</span>' : ''}${r.pity ? '<span class="holo-tag pity">PITY</span>' : ''}${unitCard(def, { tag: 'div', hideShards: true, holo: r.holo })}</div>
+        <div class="flip-face flip-front">${tag}${r.holo ? `<span class="holo-tag${corner ? ' right' : ''}">HOLO</span>` : ''}${r.pity ? '<span class="holo-tag pity">PITY</span>' : ''}${unitCard(def, { tag: 'div', hideShards: true, holo: r.holo })}</div>
       </div>`;
     }).join('');
     const m = openModal(`
@@ -3120,7 +3126,7 @@
       } else if (results.length > 1) {
         // Crate finished: lay out everything you pulled.
         const sum = $('[data-summary]', m.root);
-        sum.innerHTML = results.map((r, k) => `<div class="rs-card" style="--k:${k}">${unitCard(D.UNIT_MAP[r.id], { tag: 'div', hideShards: true, holo: r.holo })}<span class="rs-tag ${r.isNew ? 'new' : ''}">${r.isNew ? 'New!' : `+${r.shards} shards`}</span></div>`).join('');
+        sum.innerHTML = results.map((r, k) => `<div class="rs-card" style="--k:${k}">${r.isNew && v22() ? NEW_CORNER : ''}${unitCard(D.UNIT_MAP[r.id], { tag: 'div', hideShards: true, holo: r.holo })}<span class="rs-tag ${r.isNew ? 'new' : ''}">${r.isNew ? 'New!' : `+${r.shards} shards`}</span></div>`).join('');
         $('[data-stack]', m.root).hidden = true;
         sum.hidden = false;
         doneBtn.hidden = false;
