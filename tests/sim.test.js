@@ -741,4 +741,37 @@ test('2.3: currency caps overflow into Aurodium then Kyber; Auto-open uses lower
   Player.__auto = false;
 });
 
+test('2.3: Legendary Exchange opens once a week for 30 minutes, one trade, then shuts', () => {
+  require('../js/exchange23.js');
+  const X = globalThis.LegendaryExchange;
+  const t0 = Date.UTC(2026, 10, 2, 12, 0, 0);
+  const w = X.windowFor(t0);
+  assert.strictEqual(X.windowFor(t0).start, w.start, 'same window for everyone');
+  assert.ok(w.end - w.start === 30 * 60e3 && w.gone - w.end === 5 * 60e3);
+  // Ten weeks: every window sits inside its own Monday-to-Sunday week, at varied hours.
+  const hours = new Set();
+  for (let k = 0; k < 10; k++) {
+    const x = X.windowFor(t0 + k * 7 * 864e5);
+    const wk = Date.UTC(2026, 0, 5, 6) + x.week * 7 * 864e5;
+    assert.ok(x.start >= wk && x.gone <= wk + 7 * 864e5);
+    hours.add(new Date(x.start).getUTCHours());
+  }
+  assert.ok(hours.size >= 5, 'random times of day');
+  Player.reset();
+  const s = Player.state;
+  assert.strictEqual(X.status(w.start - 1000).state, 'hidden');
+  s.aurodium = 3; assert.strictEqual(X.status(w.start + 1000).state, 'broke');
+  s.aurodium = 12; s.credits = 1000;
+  assert.strictEqual(X.status(w.start + 1000).state, 'open');
+  assert.ok(X.trade(w.start + 60e3).ok);
+  assert.deepStrictEqual([s.aurodium, s.credits], [7, 16000]);
+  assert.strictEqual(X.trade(w.start + 61e3).ok, false, 'one trade per window');
+  assert.strictEqual(X.status(w.start + 61e3).state, 'sold');
+  assert.strictEqual(X.status(w.start + 60e3 + 5 * 60e3 + 1).state, 'hidden', 'gone 5 minutes after the trade');
+  Player.reset();
+  Player.state.aurodium = 20;
+  assert.strictEqual(X.status(w.end + 1000).state, 'timeup');
+  assert.strictEqual(X.status(w.gone + 1).state, 'hidden');
+});
+
 console.log(`\n${passed} tests passed`);
