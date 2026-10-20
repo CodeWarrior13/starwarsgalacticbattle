@@ -5272,7 +5272,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
         <div class="pf-lg">${A.badge(d.league, d.div)}<small>${esc(d.name)}</small></div></div>`;
     const actions = () => `<div class="modal-actions">${p.me ? '<button type="button" class="btn" data-x="edit">Edit profile</button>' : `${canInvite(p) ? `<button type="button" class="btn" data-x="invite">${((gmap.get(myGuildId()) || {}).ok || []).includes(p.uid) ? 'Invited' : 'Invite to guild'}</button>` : ''}<button type="button" class="btn" data-x="mute">${isMuted(p.uid) ? 'Unmute' : 'Mute in chat'}</button>`}<button type="button" class="btn btn-primary" data-x="ok">Close</button></div>`;
     const body = () => `${head()}${tabs()}<div data-pcbody>${({ overview, collection, badges, stats })[tab]()}</div>${actions()}`;
-    const m = openModal(`<div class="pf-card pc-card" style="--gc:${g ? g.color : '#5fd8ff'}">${body()}</div>`, { small: true });
+    const m = openModal(`<div class="pf-card pc-card" style="--gc:${g ? g.color : '#5fd8ff'}">${body()}</div>`, { small: true, cls: 'pf-modal' });
     const card = m.root.querySelector('.pc-card');
     const redraw = () => { card.innerHTML = body(); };
     m.root.addEventListener('click', (e) => {

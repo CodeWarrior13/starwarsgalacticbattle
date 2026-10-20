@@ -1256,9 +1256,9 @@
     return Player.owns(def.id) ? Player.powerOf(def.id) : D.power(def, 1, 1);
   }
 
-  // 2.2: a HoloNet filter shows every HoloNet-only card, owned or locked with
+  // A HoloNet filter shows every HoloNet-only card, owned or locked with
   // how to earn it (once the HoloNet is loaded, level 25+).
-  const hnFilter = () => !!(root.Update22 && root.Update22.on() && root.HN && root.HN.HN_IDS && root.HN.card);
+  const hnFilter = () => !!(root.HN && root.HN.HN_IDS && root.HN.card);
   const hnDefs = () => {
     const future = new Set((root.HN.SEASON_CARDS && root.HN.SEASON_CARDS.future) || []);
     return root.HN.HN_IDS.filter((id) => D.UNIT_MAP[id] && !future.has(id)).map((id) => D.UNIT_MAP[id]);

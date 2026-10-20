@@ -1,11 +1,11 @@
 // Player collections: open someone's HoloNet profile to see Overview,
 // Collection, Badges and Stats tabs (their favorite card, strongest cards,
 // everything they own, every badge, the full stat sheet).
-// Part of update 2.1 (switches on with Update21; __pcTest turns it on for testing).
+// Live since Oct 20 (owner asked to ship it early to replace the old HoloNet profile).
 // Card use is counted from now on, so "favorite card" is ready when it ships.
 (function (root) {
   'use strict';
-  const on = () => root.__pcTest != null || !!(root.Update21 && root.Update21.on());
+  const on = () => true;
   const D = root.GameData;
   const P = () => root.Player;
 
@@ -77,6 +77,7 @@
 .pc-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.pc-stats div{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:rgba(255,255,255,.03)}.pc-stats span{display:block;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}.pc-stats b{font:800 16px/1.2 var(--font-display,system-ui);font-variant-numeric:tabular-nums}
 .pc-cmp{margin-top:10px;padding:10px;border-radius:12px;border:1px solid #5fd8ff;background:rgba(95,216,255,.07)}.pc-cmp h4{margin:0 0 6px;font:800 15px/1.1 var(--font-display,system-ui)}.pc-cmp table{width:100%;border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums}.pc-cmp th,.pc-cmp td{padding:4px;text-align:center;border-top:1px solid var(--line)}.pc-cmp th:first-child,.pc-cmp td:first-child{text-align:left;color:var(--muted)}
 .pc-empty{color:var(--muted);font-size:13px;margin:4px 0}
+@media (min-width:760px){.modal.pf-modal{width:min(880px,94vw)}.pf-modal .pc-grid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))}.pf-modal .pc-stats{grid-template-columns:repeat(3,minmax(0,1fr))}.pf-modal .pc-badges{grid-template-columns:repeat(auto-fill,minmax(96px,1fr))}.pf-modal .pc-fav{grid-template-columns:150px minmax(0,1fr)}.pf-modal .pc-strong{grid-template-columns:repeat(5,minmax(0,1fr))}}
 @media (max-width:420px){.pc-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}.pc-strong{grid-template-columns:repeat(3,minmax(0,1fr))}}`;
     document.head.appendChild(st);
   }
