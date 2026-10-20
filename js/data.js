@@ -1742,7 +1742,7 @@
   };
 
   const CHARMS = [
-    { id: 'chance_cube', name: 'Chance Cubes', desc: 'Next 3 crates: 2.5× Legendary odds, 1.6× Epic odds and more Holo cards.', cost: { crystals: 25 }, grants: { charmCrates: 3 } },
+    { id: 'chance_cube', name: 'Chance Cubes', desc: 'Next 3 crates: 2.5× Legendary odds, 1.6× Epic odds and more Holo cards.', cost: { crystals: 10 }, grants: { charmCrates: 3 } },
     { id: 'loaded_dice', name: 'Loaded Dice', desc: 'Next 3 victory spins roll from a luckier table (up to 10×).', cost: { credits: 700 }, grants: { dice: 3 } },
   ];
 
