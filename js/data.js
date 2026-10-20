@@ -1698,7 +1698,7 @@
       kind: 'ship', count: 3, odds: { common: 57, rare: 31, epic: 9.6, legendary: 2.2, mythic: 0.2 },
     },
     {
-      id: 'holocron', name: 'Jedi Holocron', desc: '3 cards, rare or better, kept by the Jedi Order', cost: { crystals: 50 },
+      id: 'holocron', name: 'Jedi Holocron', desc: '3 cards, rare or better, kept by the Jedi Order', cost: { crystals: 40 },
       kind: 'any', count: 3, odds: { common: 0, rare: 60, epic: 31.5, legendary: 7.5, mythic: 1.0 },
     },
     {
@@ -1748,6 +1748,7 @@
 
   const MARKET_REFRESH_MS = 4 * 60 * 60 * 1000;
   const FLASH_MS = 60 * 60 * 1000;
+  const FLASH_KYBER_MIN = 20;
 
   // ---------- Endless Tower ----------
   // Infinite floors on random worlds. Every 10th floor is a boss; losing drops
@@ -1826,7 +1827,7 @@
   ];
   // Kyber sinks in the Night Market, priced against 1-2 Kyber per win.
   const RESTOCK_KYBER = 10;
-  const EXCHANGE = { crystals: 20, credits: 1000 };
+  const EXCHANGE = { crystals: 10, credits: 1000 };
   const SHELL_PAYOUT = 2.7;
   const SHELL_BETS = [50, 150, 400];
 
@@ -1839,7 +1840,7 @@
   root.GameData = {
     RARITIES, ROLE_BASE, ROLE_ICONS, STATUS_INFO, UNITS, UNIT_MAP, get MAX_LEVEL() { return maxLevel(); }, MAX_STARS, STAR_COSTS, STAR_AURODIUM, STAR_AURODIUM_MULT, starAurodium,
     DUPLICATE_SHARDS, SQUAD_SIZE, PACKS, STARTER, levelCost, unitStats, power, stageRewards,
-    ultimateFor, abilitiesFor, BOSSES, BOSS_ENCOUNTERS, bossRewards, CURRENCIES, LUCK, CHARMS, MARKET_REFRESH_MS, FLASH_MS, DAILY, SECRET_PLANET, SECRET_BOSSES, SECRET_COSTS, secretCost, RESTOCK_KYBER, EXCHANGE, TOWER, towerFloor, towerRewards, towerCheckpoint, SHELL_PAYOUT, SHELL_BETS, BIOS,
+    ultimateFor, abilitiesFor, BOSSES, BOSS_ENCOUNTERS, bossRewards, CURRENCIES, LUCK, CHARMS, MARKET_REFRESH_MS, FLASH_MS, FLASH_KYBER_MIN, DAILY, SECRET_PLANET, SECRET_BOSSES, SECRET_COSTS, secretCost, RESTOCK_KYBER, EXCHANGE, TOWER, towerFloor, towerRewards, towerCheckpoint, SHELL_PAYOUT, SHELL_BETS, BIOS,
     BASE_SLOTS, SLOT_UNLOCKS, MAX_ACCOUNT_LEVEL, xpToNext, levelReward, XP, planetSquadSize,
     TRAITS, TRAIT_INFO, ROLE_SYNERGIES, SYN_THEME, CLASS_INFO, classesOf, attackStyle, WEAPON, ULT_ANIM, SYNERGIES, PLANETS, PLANET_MAP, enemyStars, PLANET_CLEAR_KYBER, PLANET_CLEAR_AURODIUM, BASE_DOUBLE, traitsOf, squadBonuses,
   };

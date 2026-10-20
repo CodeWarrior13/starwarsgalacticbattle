@@ -2250,12 +2250,16 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   };
 
   // ---------- forge ----------
-  const TIER_PRICE = { guild: ['beskar', 600], elite: ['beskar', 1500], high: ['crystals', 480], legend: ['beskar', 3000] };
+  const TIER_PRICE = { guild: ['beskar', 600], elite: ['beskar', 1500], high: ['crystals', 300], legend: ['beskar', 3000] };
   const TIER_INFO = { guild: '3 cards, Rare or better', elite: '5 cards, an Epic guaranteed', high: '6 cards, a Legendary guaranteed', legend: 'An arena-only card guaranteed, plus 3 Epic+' };
   const dayKey = () => Player.dayKey();
   function board() {
     const h = S();
-    if (h.board && h.board.day === dayKey() && h.board.v === 2) return h.board;
+    if (h.board && h.board.day === dayKey() && h.board.v === 2) {
+      // Today's board from before the price cut: the unbought High-Value puck moves into 260-340.
+      h.board.pucks.forEach((pk) => { if (pk.tier === 'high' && !pk.bought && (A.ROSTER[pk.target] || {}).tier !== 'gold') pk.price = Math.min(340, Math.max(260, pk.price)); });
+      return h.board;
+    }
     const r = HN.rng((h.seed || 1) * 104729 + parseInt(dayKey().replace(/\D/g, ''), 10));
     const pucks = ['guild', 'elite', 'high', 'legend'].map((tier) => {
       const roster = Object.entries(A.ROSTER).filter(([, v]) => v.tier === tier);
@@ -2265,14 +2269,17 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       const tierBounties = roster.map(([, v]) => v.bounty);
       const lo = Math.min(...tierBounties), hi = Math.max(...tierBounties);
       const norm = t.tier === 'gold' ? 1 : hi > lo ? (t.bounty - lo) / (hi - lo) : 0.5;
-      return { tier, target, cur, price: Math.round((base * (0.85 + 0.3 * norm) * (t.tier === 'gold' ? 1.5 : 1)) / 10) * 10, norm, bought: false };
+      let price = Math.round((base * (0.85 + 0.3 * norm) * (t.tier === 'gold' ? 1.5 : 1)) / 10) * 10;
+      // High-Value pucks cost 260-340 Kyber: a real grind, but weeks, not months.
+      if (tier === 'high' && t.tier !== 'gold') price = Math.min(340, Math.max(260, price));
+      return { tier, target, cur, price, norm, bought: false };
     });
     h.forceGold = false;
     h.board = { day: dayKey(), v: 2, pucks };
     HN.save();
     return h.board;
   }
-  const DIRECT = [{ id: 'hn_armorer', cur: 'beskar', price: 4000 }, { id: 'hn_paz', cur: 'beskar', price: 4000 }, { id: 'hn_outrider', cur: 'crystals', price: 600 }];
+  const DIRECT = [{ id: 'hn_armorer', cur: 'beskar', price: 4000 }, { id: 'hn_paz', cur: 'beskar', price: 4000 }, { id: 'hn_outrider', cur: 'crystals', price: 400 }];
   const price = (cur, n) => (cur === 'beskar' ? bes(n) : kyb(n));
   VIEWS.forge = () => {
     const h = S();

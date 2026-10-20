@@ -430,14 +430,16 @@
       const discount = [50, 60, 70][Math.floor(random() * 3)];
       const full = unit.rarity === 'legendary' ? 1800 : 1100;
       const pack = D.PACKS[Math.floor(random() * 3)];
-      const packDiscount = 40;
       const packFull = pack.cost.crystals || pack.cost.credits;
       const key = pack.cost.crystals ? 'crystals' : 'credits';
+      // Kyber deals never drop below 20 Kyber, so a flash Holocron stays fair.
+      const packPrice = key === 'crystals' ? Math.max(D.FLASH_KYBER_MIN, Math.round(packFull * 0.6)) : Math.round(packFull * 0.6);
+      const packDiscount = Math.round((1 - packPrice / packFull) * 100);
       this.state.flash = {
         endsAt: now + D.FLASH_MS,
         items: [
           { type: 'shards', id: unit.id, shards: 15, discount, full, cost: { credits: Math.round(full * (1 - discount / 100)) }, sold: false },
-          { type: 'pack', id: pack.id, discount: packDiscount, full: packFull, cost: { [key]: Math.round(packFull * (1 - packDiscount / 100)) }, sold: false },
+          { type: 'pack', id: pack.id, discount: packDiscount, full: packFull, cost: { [key]: packPrice }, sold: false },
         ],
       };
       this.save();
