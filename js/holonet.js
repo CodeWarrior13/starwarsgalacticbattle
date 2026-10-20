@@ -5031,6 +5031,8 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const top = [...pick, ...rest].slice(0, 6).map((x) => ({ id: x.id || '', tier: x.tier || 1, icon: x.icon, name: x.name, desc: x.desc, secret: !!x.secret, level: x.level }));
     return { top, n: list.length, all: list };
   }
+  // Every badge you've earned, small enough for your arena row (secret ones stay hidden).
+  const allBadges = () => myBadges().all.filter((x) => !x.secret).slice(0, 80).map((x) => ({ id: x.id || '', tier: x.tier || 1, icon: x.icon, name: x.name, desc: String(x.desc || '').slice(0, 90), level: x.level }));
   function myStats() {
     const h = S();
     const raidDmg = Object.values(h.raids || {}).reduce((a, r) => a + (r.dmg || 0), 0);
@@ -5046,9 +5048,10 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   // A row from the database, or me, in one shape.
   function prof(uid) {
     const me = !uid || uid === Net.me || uid === 'me';
-    if (me) { const h = S(); const p = myProfile(); return { uid: Net.me || 'me', me: true, ...p, rating: h.rating, level: Player.state.account.level, guild: h.guild || null, gpl: P2().soc.gpl }; }
-    const a = Net.arena.find((x) => x.uid === uid) || {};
-    return { uid, me: false, tag: cleanTag(a.tag), av: a.av && D.UNIT_MAP[a.av] ? a.av : ((a.ground || [])[0] || {}).id || 'luke', frame: FRAMES[a.frame] ? a.frame : 'recruit', badges: Array.isArray(a.badges) ? a.badges.slice(0, 6) : [], nb: a.nb || 0, st: a.st || {}, rating: a.rating || 800, level: a.level || 1, guild: a.guild || null, gpl: a.gpl || 0 };
+    const PC = root.PlayerCollections;
+    if (me) { const h = S(); const p = myProfile(); return { uid: Net.me || 'me', me: true, ...p, rating: h.rating, level: Player.state.account.level, guild: h.guild || null, gpl: P2().soc.gpl, col: PC ? PC.encode() : '', use: PC ? PC.encodeUse() : '', ball: allBadges() }; }
+    const a = Net.arena.find((x) => x.uid === uid) || Net.rows.get(uid) || {};
+    return { uid, me: false, col: a.col || '', use: a.use || '', ball: Array.isArray(a.ball) ? a.ball : null, tag: cleanTag(a.tag), av: a.av && D.UNIT_MAP[a.av] ? a.av : ((a.ground || [])[0] || {}).id || 'luke', frame: FRAMES[a.frame] ? a.frame : 'recruit', badges: Array.isArray(a.badges) ? a.badges.slice(0, 6) : [], nb: a.nb || 0, st: a.st || {}, rating: a.rating || 800, level: a.level || 1, guild: a.guild || null, gpl: a.gpl || 0 };
   }
   // Name shown everywhere: your callsign, else your account name.
   const baseName = Net.name.bind(Net);
@@ -5090,6 +5093,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   // Leaders and co-leaders (and elders, if allowed) can invite players with no guild.
   const canInvite = (p) => { const gid = myGuildId(); return !!gid && !p.me && !p.guild && canReview(gid) && Net.ready; };
   function openProfile(uid) {
+    if (root.PlayerCollections && root.PlayerCollections.on()) return openProfileTabs(uid);
     const p = prof(uid);
     const d = HN.divOf(p.rating);
     const g = p.guild && guildOf(p.guild);
@@ -5112,6 +5116,120 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       <div class="modal-actions">${p.me ? '<button type="button" class="btn" data-x="edit">Edit profile</button>' : `${canInvite(p) ? `<button type="button" class="btn" data-x="invite">${((gmap.get(myGuildId()) || {}).ok || []).includes(p.uid) ? 'Invited' : 'Invite to guild'}</button>` : ''}<button type="button" class="btn" data-x="mute">${isMuted(p.uid) ? 'Unmute' : 'Mute in chat'}</button>`}<button type="button" class="btn btn-primary" data-x="ok">Close</button></div>
     </div>`, { small: true });
     m.root.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-bdg]');
+      if (b) { try { const x = JSON.parse(b.dataset.bdg); toast(`${x.name}: ${x.desc || ''}`); } catch (er) { /* ignore */ } return; }
+      const x = e.target.closest('[data-x]');
+      if (!x) return;
+      m.close();
+      if (x.dataset.x === 'edit') editProfile();
+      if (x.dataset.x === 'invite') inviteTo(p.uid);
+      if (x.dataset.x === 'mute') {
+        const list = muted();
+        if (isMuted(p.uid)) { list.splice(list.indexOf(p.uid), 1); toast(`${Net.name(p.uid)} is unmuted.`); } else { list.push(p.uid); toast(`${Net.name(p.uid)} is muted. You won't see their chat.`); }
+        HN.save(); rerender();
+      }
+    });
+  }
+  // Player collections: the profile in four tabs (Overview, Collection, Badges, Stats).
+  const RANK = { common: 0, rare: 1, epic: 2, legendary: 3, mythic: 4, secret: 5 };
+  const RCOL = { common: '#9aa4b4', rare: '#4aa8ff', epic: '#b070ff', legendary: '#ffb020', mythic: '#ff4a6a' };
+  function openProfileTabs(uid) {
+    const PC = root.PlayerCollections;
+    const p = prof(uid);
+    const d = HN.divOf(p.rating);
+    const g = p.guild && guildOf(p.guild);
+    const st = p.st || {};
+    const wr = (st.w || 0) + (st.l || 0) ? Math.round(((st.w || 0) / ((st.w || 0) + (st.l || 0))) * 100) : 0;
+    const col = PC.decode(p.col);
+    const use = PC.decodeUse(p.use);
+    const mineCol = PC.mine();
+    const myUse = PC.myUse();
+    const hnSet = new Set(HN.HN_IDS);
+    const power = (id, c) => D.power(D.UNIT_MAP[id], c.level, c.stars);
+    const owned = Object.keys(col).filter((id) => D.UNIT_MAP[id]);
+    const fav = owned.filter((id) => use[id] && use[id].b > 0).sort((a, b) => use[b].b - use[a].b)[0];
+    const strong = owned.slice().sort((a, b) => power(b, col[b]) - power(a, col[a])).slice(0, 5);
+    const all = D.UNITS.filter((u) => !u.boss && !u.exclusive && !u.raid && (D.UNIT_MAP[u.id] === u));
+    const pool = [...all.filter((u) => !hnSet.has(u.id)), ...HN.HN_IDS.map((id) => D.UNIT_MAP[id]).filter(Boolean)];
+    const mini = (id, c) => UI.unitCard(D.UNIT_MAP[id], { tag: 'div', owned: true, level: c.level, stars: c.stars, hideShards: true }).replace('class="ucard', `data-pc="${id}" class="ucard`);
+    let tab = 'overview';
+    let chip = 'ground';
+    let sort = 'power';
+    let pick = null;
+    const ball = p.ball || p.badges;
+    const tabs = () => `<div class="pc-tabs" role="tablist">${[['overview', 'Overview'], ['collection', 'Collection'], ['badges', 'Badges'], ['stats', 'Stats']].map(([k, n]) => `<button type="button" role="tab" aria-selected="${tab === k}" class="${tab === k ? 'on' : ''}" data-pct="${k}">${n}</button>`).join('')}</div>`;
+    const overview = () => {
+      const f = fav && col[fav];
+      const fu = fav && use[fav];
+      return `<div class="pc-tiles"><div><b>${fmt(p.rating)}</b><span>Rating</span></div><div><b>${fmt(st.best || p.rating)}</b><span>Best</span></div><div><b>${fmt(st.w || 0)}–${fmt(st.l || 0)}</b><span>Arena · ${wr}%</span></div><div><b>${fmt(st.dw || 0)}–${fmt(st.dl || 0)}</b><span>Live duels</span></div></div>
+        <h3 class="pc-h">Favorite card <small>most used</small></h3>
+        ${f ? `<div class="pc-fav"><div class="pt">${UI.portrait(D.UNIT_MAP[fav])}</div><div><h4>${esc(D.UNIT_MAP[fav].name)}</h4><div class="sub">${esc(D.RARITIES[D.UNIT_MAP[fav].rarity].label)} · Lv ${f.level} · ${'★'.repeat(f.stars)}</div>
+          <div class="nums"><div><b>${fmt(fu.b)}</b><span>battles</span></div><div><b>${fu.b ? Math.round((fu.w / fu.b) * 100) : 0}%</b><span>win rate</span></div><div><b>${fmt(power(fav, f))}</b><span>power</span></div></div></div></div>` : '<p class="pc-empty">Not enough battles yet to pick a favorite.</p>'}
+        <h3 class="pc-h">Strongest cards <small>by power</small></h3>
+        ${strong.length ? `<div class="pc-strong pc-grid">${strong.map((id) => mini(id, col[id])).join('')}</div>` : '<p class="pc-empty">No cards to show yet.</p>'}
+        <h3 class="pc-h">Top badges <small>${p.nb} earned</small></h3>
+        <div class="pc-badges">${p.badges.slice(0, 6).map((x) => `<button type="button" data-bdg='${esc(JSON.stringify(x))}'>${still(UI.featBadge(x))}</button>`).join('') || '<p class="pc-empty">No badges yet.</p>'}</div>`;
+    };
+    const collection = () => {
+      const inPool = pool.filter((u) => col[u.id]).length;
+      const hnOwned = HN.HN_IDS.filter((id) => col[id]).length;
+      const bars = ['legendary', 'epic', 'rare', 'common'].map((r) => {
+        const tot = all.filter((u) => u.rarity === r && !hnSet.has(u.id)).length;
+        const have = all.filter((u) => u.rarity === r && !hnSet.has(u.id) && col[u.id]).length;
+        return tot ? `<div class="pc-bar" style="--c:${RCOL[r]}"><span style="color:${RCOL[r]}">${D.RARITIES[r].label}</span><i><b style="width:${(have / tot) * 100}%"></b></i><span>${have}/${tot}</span></div>` : '';
+      }).join('');
+      let ids = owned.filter((id) => (chip === 'holo' ? hnSet.has(id) : !hnSet.has(id) && D.UNIT_MAP[id].kind === (chip === 'fleet' ? 'ship' : 'character')));
+      const by = { power: (a, b) => power(b, col[b]) - power(a, col[a]), rarity: (a, b) => (RANK[D.UNIT_MAP[b].rarity] || 0) - (RANK[D.UNIT_MAP[a].rarity] || 0) || power(b, col[b]) - power(a, col[a]), level: (a, b) => col[b].level - col[a].level || col[b].stars - col[a].stars, used: (a, b) => ((use[b] || {}).b || 0) - ((use[a] || {}).b || 0) };
+      ids = ids.sort(by[sort]);
+      return `<div class="pc-bars"><div class="pc-total">${fmt(inPool)} <small>/ ${fmt(pool.length)} cards · ${hnOwned} / ${HN.HN_IDS.length} HoloNet</small></div>${bars}</div>
+        <div class="pc-chips">${[['ground', 'Ground'], ['fleet', 'Fleet'], ['holo', 'HoloNet']].map(([k, n]) => `<button type="button" class="${chip === k ? 'on' : ''}" data-pcc="${k}">${n}</button>`).join('')}<span style="flex:1"></span>${[['power', 'Power'], ['rarity', 'Rarity'], ['level', 'Level'], ['used', 'Most used']].map(([k, n]) => `<button type="button" class="${sort === k ? 'on' : ''}" data-pcs="${k}">${n}</button>`).join('')}</div>
+        ${pick ? compare(pick) : ''}
+        ${ids.length ? `<div class="pc-grid">${ids.map((id) => mini(id, col[id])).join('')}</div>` : '<p class="pc-empty">No cards here yet.</p>'}`;
+    };
+    const compare = (id) => {
+      const def = D.UNIT_MAP[id];
+      const t = col[id];
+      const y = mineCol[id];
+      const tu = use[id] || { b: 0, w: 0 };
+      const yu = myUse[id] || { b: 0, w: 0 };
+      const row = (n, a, b) => `<tr><td>${n}</td><td>${a}</td><td>${b}</td></tr>`;
+      return `<div class="pc-cmp"><h4>${esc(def.name)}</h4><table><tr><th></th><th>${p.me ? 'You' : esc(Net.name(p.uid))}</th><th>${p.me ? '' : 'You'}</th></tr>
+        ${row('Level', t.level, p.me ? '' : y ? y.level : '—')}${row('Stars', '★'.repeat(t.stars), p.me ? '' : y ? '★'.repeat(y.stars) : '—')}${row('Power', fmt(power(id, t)), p.me ? '' : y ? fmt(power(id, y)) : 'Not owned')}
+        ${row('Battles', fmt(tu.b), p.me ? '' : fmt(yu.b))}${row('Win rate', tu.b ? `${Math.round((tu.w / tu.b) * 100)}%` : '—', p.me ? '' : yu.b ? `${Math.round((yu.w / yu.b) * 100)}%` : '—')}</table></div>`;
+    };
+    const badges = () => (ball && ball.length
+      ? `<p class="pc-empty">${p.nb} badges earned · tap one to see how it was earned</p><div class="pc-badges">${ball.map((x) => `<button type="button" data-bdg='${esc(JSON.stringify(x))}'>${still(UI.featBadge(x))}<span>${esc(x.name)}</span></button>`).join('')}</div>`
+      : '<p class="pc-empty">No badges yet.</p>');
+    const stats = () => {
+      const cell = (n, v) => `<div><span>${n}</span><b>${v}</b></div>`;
+      const totalB = Object.values(use).reduce((a, u) => a + u.b, 0);
+      return `<div class="pc-stats">${cell('Rating', fmt(p.rating))}${cell('Best rating', fmt(st.best || p.rating))}${cell('League', esc(d.name))}${cell('Arena W–L', `${fmt(st.w || 0)}–${fmt(st.l || 0)} · ${wr}%`)}${cell('Live duels', `${fmt(st.dw || 0)}–${fmt(st.dl || 0)}`)}${cell('Raid damage', fmt(st.raid || 0))}${cell('Bosses beaten', fmt(st.bosses || 0))}${cell('Cards', `${fmt(owned.length)}`)}${cell('HoloNet cards', `${HN.HN_IDS.filter((id) => col[id]).length} / ${HN.HN_IDS.length}`)}${cell('Seasons played', fmt(st.seasons || 0))}${cell('Favorite card', fav ? `${esc(D.UNIT_MAP[fav].name)} · ${fmt(use[fav].b)}` : '—')}${cell('Battles tracked', fmt(totalB))}${cell('Guild', g ? `[${esc(g.tag)}]` : '—')}${cell('Account level', fmt(p.level))}</div>`;
+    };
+    const head = () => `<button type="button" class="pf-x" data-x="ok" aria-label="Close">✕</button>
+      <div class="pf-top">${avatar(p, 'lg')}<div class="pf-id"><p class="eyebrow">${p.me ? 'Your HoloNet profile' : 'HoloNet profile'}</p><h2>${esc(Net.name(p.uid).replace(' (you)', ''))}</h2>
+        <p class="muted small">Level ${p.level} · ${esc(FRAMES[p.frame].name)} frame${g ? ` · <b style="color:${g.color}">[${esc(g.tag)}] ${esc(g.name)}</b>` : ''}</p></div>
+        <div class="pf-lg">${A.badge(d.league, d.div)}<small>${esc(d.name)}</small></div></div>`;
+    const actions = () => `<div class="modal-actions">${p.me ? '<button type="button" class="btn" data-x="edit">Edit profile</button>' : `${canInvite(p) ? `<button type="button" class="btn" data-x="invite">${((gmap.get(myGuildId()) || {}).ok || []).includes(p.uid) ? 'Invited' : 'Invite to guild'}</button>` : ''}<button type="button" class="btn" data-x="mute">${isMuted(p.uid) ? 'Unmute' : 'Mute in chat'}</button>`}<button type="button" class="btn btn-primary" data-x="ok">Close</button></div>`;
+    const body = () => `${head()}${tabs()}<div data-pcbody>${({ overview, collection, badges, stats })[tab]()}</div>${actions()}`;
+    const m = openModal(`<div class="pf-card pc-card" style="--gc:${g ? g.color : '#5fd8ff'}">${body()}</div>`, { small: true });
+    const card = m.root.querySelector('.pc-card');
+    const redraw = () => { card.innerHTML = body(); };
+    m.root.addEventListener('click', (e) => {
+      const t = e.target.closest('[data-pct]');
+      if (t) { tab = t.dataset.pct; pick = null; return redraw(); }
+      const c = e.target.closest('[data-pcc]');
+      if (c) { chip = c.dataset.pcc; pick = null; return redraw(); }
+      const so = e.target.closest('[data-pcs]');
+      if (so) { sort = so.dataset.pcs; return redraw(); }
+      const pc = e.target.closest('[data-pc]');
+      if (pc) {
+        if (tab !== 'collection') { tab = 'collection'; chip = hnSet.has(pc.dataset.pc) ? 'holo' : D.UNIT_MAP[pc.dataset.pc].kind === 'ship' ? 'fleet' : 'ground'; }
+        pick = pick === pc.dataset.pc ? null : pc.dataset.pc;
+        redraw();
+        const cmp = card.querySelector('.pc-cmp');
+        if (cmp) cmp.scrollIntoView({ block: 'nearest' });
+        return;
+      }
       const b = e.target.closest('[data-bdg]');
       if (b) { try { const x = JSON.parse(b.dataset.bdg); toast(`${x.name}: ${x.desc || ''}`); } catch (er) { /* ignore */ } return; }
       const x = e.target.closest('[data-x]');
@@ -5418,6 +5536,9 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       ss: seasonNo() * 1e5 + Math.max(h.soc.sBest || 0, h.rating),
       guild: h.guild || null, apply: (!h.guild && h.apply) || null, gp: h.soc.gp, gpw: h.soc.gpw, gpl: h.soc.gpl, don: h.soc.don && h.soc.don.g ? { g: h.soc.don.g, a: h.soc.don.a | 0 } : null, gr: { w: h.soc.gr.w, b: h.soc.gr.b, d: h.soc.gr.d, f: h.soc.gr.f },
     };
+    // Player collections: what you own, your most-used cards and every badge.
+    const PC = root.PlayerCollections;
+    if (PC && PC.on()) { body.col = PC.encode(); body.use = PC.encodeUse(); body.ball = allBadges(); }
     const key = JSON.stringify(body);
     if (key === this.lastKey) return;
     body.updated = Date.now();

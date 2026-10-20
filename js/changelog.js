@@ -45,6 +45,7 @@
         'NEW|Card level cap raised to 40, and levelling up costs far less: taking a card all the way to level 40 costs less than reaching level 30 used to. Live Duels stay at Level 20 ★3.',
         'NEW|Suggestion box in Settings: send your ideas for cards, ships, events and features straight to the team.',
         'NEW|Find a pilot: look up anyone in the HoloNet by their callsign to see their profile.',
+        'NEW|Player collections: open any pilot\'s HoloNet profile to see their whole collection, favorite card, strongest cards, every badge and their full stats. Tap a card to compare it with yours.',
         'NEW|The level-up pop-up and results screen now tell you what each level unlocks.',
         'NEW|The Rank road shows what each level unlocks, and what\'s coming up next.',
         'NEW|Duel bans: every card can be banned, even ones neither player owns. Sort by strongest, rarity, damage, health, defense, speed or name, and filter by class and by owner. Each card shows its duel stats.',
