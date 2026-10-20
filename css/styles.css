@@ -449,7 +449,11 @@ body.in-battle .main-nav, body.in-battle .brand { pointer-events: none; opacity:
   background: rgba(3, 4, 8, 0.78);
   backdrop-filter: blur(4px);
   display: grid; place-items: center;
+  /* "safe" keeps a tall panel's top on screen instead of centering it off the top. */
+  place-items: safe center;
   padding: 16px;
+  /* Clear the phone's notch, status bar and home bar. */
+  padding: calc(12px + env(safe-area-inset-top, 0px)) calc(12px + env(safe-area-inset-right, 0px)) calc(12px + env(safe-area-inset-bottom, 0px)) calc(12px + env(safe-area-inset-left, 0px));
   animation: fade-in 0.2s ease-out;
   overflow-y: auto;
 }
@@ -457,6 +461,8 @@ body.in-battle .main-nav, body.in-battle .brand { pointer-events: none; opacity:
 .modal {
   width: min(720px, 100%);
   max-height: calc(100vh - 32px);
+  /* Phones: 100vh counts the hidden address bar, so size to what's visible. */
+  max-height: calc(100dvh - 24px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
   overflow-y: auto;
   background: var(--panel);
   border: 1px solid var(--line);
@@ -2295,6 +2301,7 @@ button.account:hover { border-color: var(--crawl); box-shadow: 0 0 14px rgba(255
 .set-head { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
 .set-head > .swi { width: 40px; height: 40px; color: var(--crawl); filter: drop-shadow(0 0 8px rgba(255, 210, 63, 0.5)); }
 .set-head h2 { margin: 0; }
+.set-head > div { text-align: left; }
 .set-sec { border-top: 1px solid var(--line); padding: 12px 0 4px; display: grid; gap: 8px; }
 .set-sec h3 { margin: 0; font-size: 14px; letter-spacing: 0.12em; text-transform: uppercase; display: flex; align-items: center; gap: 8px; color: #cfe0ff; }
 .set-sec h3 .swi { color: var(--crawl); }
