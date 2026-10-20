@@ -1348,7 +1348,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
 .hn-sec > h3 { margin: 4px 0 0; font-family: var(--font-display); letter-spacing: 0.12em; font-size: 14px; color: #8fe8ff; text-transform: uppercase; }
 
 /* ---- hub tiles ---- */
-.hn-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); gap: 12px; }
+.hn-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 12px; }
 .hn-tile { position: relative; overflow: hidden; display: grid; align-content: end; min-height: 150px; padding: 14px; border-radius: 16px; text-align: left; cursor: pointer; color: #fff; border: 1px solid rgba(95, 216, 255, 0.35); background: #071420; isolation: isolate; transition: transform .2s, border-color .2s; }
 .hn-tile:hover { transform: translateY(-2px); border-color: #8fe8ff; }
 .hn-tile .bg { position: absolute; inset: 0; z-index: -1; opacity: .85; }
@@ -1358,7 +1358,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
 .hn-tile b { font-family: var(--font-display); font-size: 20px; letter-spacing: 0.08em; }
 .hn-tile span { font-size: 13px; color: #c8dcea; }
 .hn-tile.soon { cursor: default; opacity: .7; }
-.hn-mini-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 150px), 1fr)); gap: 10px; }
+.hn-mini-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: 10px; }
 .hn-mini { display: grid; gap: 4px; padding: 12px; border-radius: 14px; background: rgba(8, 20, 32, 0.9); border: 1px solid rgba(95, 216, 255, 0.25); color: #e6f6ff; text-align: left; cursor: pointer; font: inherit; }
 .hn-mini b { font-family: var(--font-display); letter-spacing: 0.08em; }
 .hn-mini small { color: #9fc4d8; }
@@ -1450,7 +1450,11 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
 
 /* ---- card vault ---- */
 .hn-vault { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(46%, 150px), 1fr)); gap: 10px; }
-.hn-vault .ucard { width: 100%; }
+.hn-vault .ucard { width: 100%; height: 100%; }
+/* Each card fills its cell, so every card in a row lines up whatever its text length. */
+.hn-vault .hn-vbtn { display: block; width: 100%; height: 100%; vertical-align: top; }
+/* PC: the HoloNet uses the room it has: bigger tiles and cards. */
+@media (min-width: 1100px) { .hn-tile { min-height: 190px; padding: 18px; } .hn-tile b { font-size: 1.25em; } .hn-mini { padding: 16px; } .hn-vault { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 14px; } }
 .hn-how { font-size: 11px; color: #8fe8ff; text-align: center; margin-top: 4px; }
 .hn-insp { display: grid; grid-template-columns: minmax(0, 200px) minmax(0, 1fr); gap: 14px; }
 .hn-insp .pt { border-radius: 14px; overflow: hidden; aspect-ratio: 1; }
