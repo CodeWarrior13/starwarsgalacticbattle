@@ -172,6 +172,15 @@
   // ---------- Wallet ----------
   const lastWallet = {};
   // Currency chips roll up (or down) to the new amount.
+  // Phones: big balances shorten (1.23M, 45.6K) so the wallet and the
+  // settings gear always fit in the top bar. The full amount is in the tooltip.
+  function walletFmt(n) {
+    if (window.innerWidth > 520 || n < 10000) return fmt(n);
+    const short = (v, d) => String(Number(v.toFixed(d)));
+    if (n >= 1e6) return short(n / 1e6, n < 1e7 ? 2 : 1) + 'M';
+    return short(n / 1e3, n < 1e5 ? 1 : 0) + 'K';
+  }
+
   function countUp(node, from, to) {
     const t0 = performance.now();
     const dur = Math.min(900, 300 + Math.abs(to - from) * 0.4);
@@ -181,7 +190,7 @@
       if (node.dataset.counting !== id) return;
       const k = Math.min(1, (now - t0) / dur);
       const e = 1 - Math.pow(1 - k, 3);
-      node.textContent = fmt(Math.round(from + (to - from) * e));
+      node.textContent = walletFmt(Math.round(from + (to - from) * e));
       if (k < 1) requestAnimationFrame(step);
       else delete node.dataset.counting;
     };
@@ -203,7 +212,9 @@
       const node = $('#' + key);
       if (!node) continue;
       if (lastWallet[key] != null && lastWallet[key] !== s[key]) countUp(node, lastWallet[key], s[key]);
-      else if (!node.dataset.counting) node.textContent = fmt(s[key]);
+      else if (!node.dataset.counting) node.textContent = walletFmt(s[key]);
+      const chipEl = node.closest('.currency');
+      chipEl.title = `${chipEl.title.split(':')[0]}: ${fmt(s[key])}`;
       if (lastWallet[key] != null && lastWallet[key] !== s[key]) {
         const chip = node.closest('.currency');
         chip.classList.remove('bump');

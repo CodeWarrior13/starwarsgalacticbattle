@@ -3261,6 +3261,9 @@ body.perf-on .sig-layer.sig-glitch canvas { filter: none; }
    are skipped until you scroll to them, so Collection opens much faster. */
 .card-grid > .ucard, .card-grid > .scard, .card-grid > * { content-visibility: auto; contain-intrinsic-size: auto 230px; }
 
+/* The wallet gives way before the settings gear does. */
+.wallet { min-width: 0; }
+.wallet .currency { min-width: 0; white-space: nowrap; }
 /* Narrow phones (360px and below): tighten the top bar so the settings gear never clips. */
 @media (max-width: 380px) and (orientation: portrait) {
   .topbar { gap: 4px; padding: 8px 6px; }
