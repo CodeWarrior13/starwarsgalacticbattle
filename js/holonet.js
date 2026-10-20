@@ -5184,6 +5184,13 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       <div class="modal-actions">${p.me ? '<button type="button" class="btn" data-x="edit">Edit profile</button>' : `${canInvite(p) ? `<button type="button" class="btn" data-x="invite">${((gmap.get(myGuildId()) || {}).ok || []).includes(p.uid) ? 'Invited' : 'Invite to guild'}</button>` : ''}<button type="button" class="btn" data-x="mute">${isMuted(p.uid) ? 'Unmute' : 'Mute in chat'}</button>`}<button type="button" class="btn btn-primary" data-x="ok">Close</button></div>
     </div>`, { small: true });
     m.root.addEventListener('click', (e) => {
+      const af = e.target.closest('[data-addfr]');
+      if (af) {
+        af.disabled = true;
+        af.textContent = 'Sending…';
+        HN.friends.addUid(p.uid, Net.name(p.uid)).then((msg) => { af.textContent = msg || 'Add friend'; if (!/sent|Friends|Already/.test(msg)) af.disabled = false; });
+        return;
+      }
       const b = e.target.closest('[data-bdg]');
       if (b) { try { const x = JSON.parse(b.dataset.bdg); toast(`${x.name}: ${x.desc || ''}`); } catch (er) { /* ignore */ } return; }
       const x = e.target.closest('[data-x]');
@@ -5277,7 +5284,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       <div class="pf-top">${avatar(p, 'lg')}<div class="pf-id"><p class="eyebrow">${p.me ? 'Your HoloNet profile' : 'HoloNet profile'}</p><h2>${esc(Net.name(p.uid).replace(' (you)', ''))}</h2>
         <p class="muted small">Level ${p.level} · ${esc(FRAMES[p.frame].name)} frame${g ? ` · <b style="color:${g.color}">[${esc(g.tag)}] ${esc(g.name)}</b>` : ''}</p></div>
         <div class="pf-lg">${A.badge(d.league, d.div)}<small>${esc(d.name)}</small></div></div>`;
-    const actions = () => `<div class="modal-actions">${p.me ? '<button type="button" class="btn" data-x="edit">Edit profile</button>' : `${canInvite(p) ? `<button type="button" class="btn" data-x="invite">${((gmap.get(myGuildId()) || {}).ok || []).includes(p.uid) ? 'Invited' : 'Invite to guild'}</button>` : ''}<button type="button" class="btn" data-x="mute">${isMuted(p.uid) ? 'Unmute' : 'Mute in chat'}</button>`}<button type="button" class="btn btn-primary" data-x="ok">Close</button></div>`;
+    const actions = () => `<div class="modal-actions">${p.me ? '<button type="button" class="btn" data-x="edit">Edit profile</button>' : `${HN.duelChat ? HN.duelChat.friendBtn(p.uid) : ''}${canInvite(p) ? `<button type="button" class="btn" data-x="invite">${((gmap.get(myGuildId()) || {}).ok || []).includes(p.uid) ? 'Invited' : 'Invite to guild'}</button>` : ''}<button type="button" class="btn" data-x="mute">${isMuted(p.uid) ? 'Unmute' : 'Mute in chat'}</button>`}<button type="button" class="btn btn-primary" data-x="ok">Close</button></div>`;
     const body = () => `${head()}${tabs()}<div data-pcbody>${({ overview, collection, badges, stats })[tab]()}</div>${actions()}`;
     const m = openModal(`<div class="pf-card pc-card" style="--gc:${g ? g.color : '#5fd8ff'}">${body()}</div>`, { small: true, cls: 'pf-modal' });
     const card = m.root.querySelector('.pc-card');
@@ -7978,9 +7985,20 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
     if (!Net.ready) return;
     if (!F.started) {
       F.started = true;
+      const loaded = { a: false, b: false };
       const take = (side) => (snap) => {
         for (const [id, r] of F.rows) if (r[side] === Net.me && !snap.docs.some((d) => d.id === id)) F.rows.delete(id);
-        for (const d of snap.docs) { const v = d.data(); if (v) F.rows.set(d.id, { ...v, id: d.id }); }
+        for (const d of snap.docs) {
+          const v = d.data();
+          if (!v) continue;
+          const had = F.rows.get(d.id);
+          F.rows.set(d.id, { ...v, id: d.id });
+          // A new request while you play: a small note that doesn't cover the screen.
+          if (loaded[side] && !v.ok && v.by !== Net.me && !had && !F.view) toast(`${F.otherName({ ...v, id: d.id })} sent you a friend request. Tap the Friends button to answer.`);
+          // They accepted yours.
+          if (loaded[side] && v.ok && had && !had.ok && v.by === Net.me) toast(`${F.otherName({ ...v, id: d.id })} accepted your friend request!`);
+        }
+        loaded[side] = true;
         dot(); redraw();
       };
       Net.db.collection('friends').where('a', '==', Net.me).limit(MAX * 2).onSnapshot(take('a'), () => {});
@@ -8485,7 +8503,7 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
 .dchat-quick button { border: 1px solid rgba(95, 216, 255, 0.3); background: rgba(95, 216, 255, 0.08); color: #dff8ff; border-radius: 999px; padding: 5px 9px; font-size: 12px; cursor: pointer; }
 .dchat-form { display: flex; gap: 6px; } .dchat-form input { flex: 1; min-width: 0; padding: 8px 10px; border-radius: 10px; border: 1px solid rgba(95, 216, 255, 0.35); background: #04101a; color: #fff; font-size: 16px; }
 .dchat-form .btn { padding: 8px 12px; }
-.dchat-add { margin-right: auto; }
+.modal-actions .dchat-add { order: 2; }
 `;
   document.head.appendChild(st);
 })(window);

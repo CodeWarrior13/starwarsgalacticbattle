@@ -57,7 +57,6 @@
     {
       v: '2.1', date: 'October 21, 2026', title: 'Squadrons', from: LAUNCH_21,
       items: [
-        'BALANCE|Account levels 2 to 5 take a little longer to reach, and your 4th squad slot now opens at level 3 (was 4).',
         'NEW|Save your game: sign in with Google or an email to keep your progress safe and play on any device. Find it in Settings.',
         'NEW|Save your game to earn the Holo Link profile frame and the Never Lost badge.',
         'NEW|Invite friends: share your link or QR code. Friends get a welcome gift of 1,000 credits and 25 Kyber, and you earn 2 Kyber for every friend who reaches level 5.',
