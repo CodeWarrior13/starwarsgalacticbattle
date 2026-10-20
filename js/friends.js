@@ -7,7 +7,7 @@
   // Update 2.2 goes live at 7:05 a.m. Central, Wednesday November 11, 2026 (13:05 UTC, after DST ends).
   const RELEASE22 = root.__v22Test != null ? root.__v22Test : Date.UTC(2026, 10, 11, 13, 5, 0);
   const on = () => RELEASE22 != null && Date.now() >= RELEASE22;
-  root.Update22 = { on };
+  root.Update22 = { on, at: RELEASE22 };
 
   const FRIENDS_LEVEL = 5;
   const level = () => (root.Player && root.Player.state && root.Player.state.account && root.Player.state.account.level) || 1;

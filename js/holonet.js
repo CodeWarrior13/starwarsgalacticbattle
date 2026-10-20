@@ -975,7 +975,55 @@
   // ---------- arena opponents ----------
   // Gamer tags like real players pick; opponents rotate through them.
   const BOT_NAMES = ['KesselRunner12', 'xXSithLordXx', 'MandoMike', 'wookiee_wendy', 'Lukewarm', 'DarthVapor99', 'jedi_jess', 'TIEfighterTom', 'NerfHerder', 'HanShotFirst', 'BobaFettish', 'rebel_rachel', 'ObiWanKenobae', 'Sabine_Fan', 'GrogusDad', 'ackbar_trapped', 'Tatooine_Tyler', 'kyber_kat', 'StormtrooperAim', 'Hoth_Hannah', 'R2_D2_Dee', 'MaulMadness', 'yoda_best', 'AhsokaNotSorry', 'BeskarBen', 'Endor_Ewoker', 'thrawn_tactics', 'Jango_Jen', 'Chewie_Chris', 'ForceGhostGabe', 'PadmeMe', 'Rancor_Ryan', 'Lando_Lewis', 'DinDjarinDan', 'Starkiller88', 'quigon_quinn', 'Ezra_Elli', 'PoeDameronFan', 'Mustafar_Max', 'Jyn_Erso_Jo'];
+  // 2.2: opponents are built for their league, not from your own cards, with a
+  // little randomness (one card above the rest now and then). For the first two
+  // days of a season the field is much tougher.
+  const BOT_BAND = { bronze: [5, 10, 1, 2], silver: [10, 18, 2, 3], gold: [18, 26, 3, 4], kyber: [26, 34, 4, 5], legend: [34, 40, 5, 7] };
+  const BOT_MIX = {
+    bronze: { common: 55, rare: 35, epic: 9, legendary: 1 }, silver: { common: 25, rare: 45, epic: 25, legendary: 5 },
+    gold: { common: 5, rare: 30, epic: 45, legendary: 18, mythic: 2 }, kyber: { rare: 15, epic: 45, legendary: 34, mythic: 6 },
+    legend: { epic: 30, legendary: 55, mythic: 15 },
+  };
+  const LEAGUE_IDS = ['bronze', 'silver', 'gold', 'kyber', 'legend'];
+  function botSquad22(kind, rating, r) {
+    const dv = divOf(rating);
+    const si = root.HN && root.HN.seasonInfo ? root.HN.seasonInfo() : null;
+    const sweat = !!(si && si.started >= 0 && si.started < 2 * 864e5);
+    const li = LEAGUE_IDS.indexOf(dv.league);
+    const lg = sweat ? LEAGUE_IDS[Math.min(4, li + 1)] : dv.league;
+    const [lo, hi, s0, s1] = BOT_BAND[dv.league];
+    const cap = D.MAX_LEVEL || 40;
+    // Divisions I-III sit low, middle and high in the league's level band.
+    const t = dv.league === 'legend' ? 0.5 : (dv.div - 1) / 2;
+    const center = lo + (hi - lo) * (0.2 + 0.6 * t);
+    const boost = sweat ? 8 + Math.floor(r() * 8) : 0;
+    const mix = BOT_MIX[lg];
+    const avail = D.UNITS.filter((u) => u.kind === kind && !u.exclusive && !u.boss && !u.raid);
+    const pick = () => {
+      let roll = r() * Object.values(mix).reduce((a, b) => a + b, 0);
+      let rar = 'rare';
+      for (const [k, w] of Object.entries(mix)) { roll -= w; if (roll <= 0) { rar = k; break; } }
+      const list = avail.filter((u) => u.rarity === rar && !picks.includes(u.id));
+      const from = list.length ? list : avail.filter((u) => !picks.includes(u.id));
+      return from[Math.floor(r() * from.length)];
+    };
+    const picks = [];
+    while (picks.length < 5 && picks.length < avail.length) { const u = pick(); if (!u) break; picks.push(u.id); }
+    // Sweat days: now and then a secret card shows up from Gold up.
+    if (sweat && li >= 2 && r() < 0.12) {
+      const sec = D.UNITS.filter((u) => u.kind === kind && u.exclusive && !u.boss && !u.raid);
+      if (sec.length) picks[Math.floor(r() * picks.length)] = sec[Math.floor(r() * sec.length)].id;
+    }
+    const odd = r() < 0.35 ? Math.floor(r() * picks.length) : -1;
+    return picks.map((id, i) => {
+      let lvl = Math.max(lo, Math.min(hi, Math.round(center + (r() - 0.5) * (hi - lo) * 0.5))) + boost;
+      if (i === odd) lvl = hi + 2 + Math.floor(r() * 5) + boost;
+      const stars = Math.min(7, s0 + Math.floor(r() * (s1 - s0 + 1)) + (sweat ? 1 : 0));
+      return { id, level: Math.max(1, Math.min(cap, lvl)), stars };
+    });
+  }
   function botSquad(kind, rating, r) {
+    if (root.Update22 && root.Update22.on()) return botSquad22(kind, rating, r);
     const mine = squadEntries(kind);
     const f = Math.pow(rating / Math.max(600, S().rating), 0.8);
     const lvl = Math.max(1, Math.min(D.MAX_LEVEL || 30, Math.round(avgLevel(mine) * f + (r() - 0.5) * 2)));
@@ -4931,8 +4979,21 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   // =====================================================================
   // Saved state for the social layer
   // =====================================================================
+  // Seasons were 4 weeks; from 2.2 they're 3. The 4-week season running when
+  // 2.2 lands finishes normally, and 3-week seasons start right after it.
   const SEASON_WEEKS = 4;
-  const seasonNo = () => Math.floor(week() / SEASON_WEEKS);
+  const WEEK_MS = 7 * 24 * 3600 * 1000;
+  const short22 = () => !!(root.Update22 && root.Update22.on());
+  const switchWeek = () => Math.ceil(Math.floor((root.Update22 && root.Update22.at || 0) / WEEK_MS) / SEASON_WEEKS) * SEASON_WEEKS;
+  const seasonNo = () => {
+    const w = week();
+    const B = switchWeek();
+    return !short22() || w < B ? Math.floor(w / SEASON_WEEKS) : B / SEASON_WEEKS + Math.floor((w - B) / 3);
+  };
+  const seasonStartWeek = (n) => {
+    const B = switchWeek();
+    return !short22() || n < B / SEASON_WEEKS ? n * SEASON_WEEKS : B + (n - B / SEASON_WEEKS) * 3;
+  };
   const P2 = () => {
     const h = S();
     if (!h.prof) h.prof = { tag: '', av: '', frame: 'recruit', feat: [] };
@@ -6180,7 +6241,9 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     legend: { beskar: 4000, puck: 'legend', card: 'hn_kelleran', frame: 'victor' },
   };
   function trackSeasonBest() { const h = P2(); h.soc.sBest = Math.max(h.soc.sBest || 0, h.rating); }
-  function seasonEnds() { const next = (seasonNo() + 1) * SEASON_WEEKS; return (next * 7 * 24 * 3600 * 1000) - ((S().weekShift || 0) * 7 * 24 * 3600 * 1000) - Date.now(); }
+  function seasonEnds() { const next = seasonStartWeek(seasonNo() + 1); return (next * WEEK_MS) - ((S().weekShift || 0) * WEEK_MS) - Date.now(); }
+  const seasonLength = () => (seasonStartWeek(seasonNo() + 1) - seasonStartWeek(seasonNo())) * WEEK_MS;
+  HN.seasonInfo = () => ({ no: seasonNo(), ends: seasonEnds(), length: seasonLength(), started: seasonLength() - seasonEnds() });
   function checkSeason() {
     const h = P2();
     if (h.soc.season === seasonNo() || h.soc.pendingSeason) return;
@@ -7110,8 +7173,7 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
   // =====================================================================
   // Season leaderboard: ranks by best rating this season
   // =====================================================================
-  const SEASON_MS = 4 * 7 * 24 * 3600 * 1000;
-  const seasonFrac = () => Math.max(0, Math.min(1, 1 - SO.seasonEnds() / SEASON_MS));
+  const seasonFrac = () => { const si = HN.seasonInfo(); return Math.max(0, Math.min(1, 1 - si.ends / si.length)); };
   const LB_REWARD = [
     { from: 1, to: 1, label: '1st', beskar: 3000, puck: 'legend', frame: 'champion', card: 'hn_vader_hallway' },
     { from: 2, to: 3, label: '2nd–3rd', beskar: 2000, puck: 'legend', frame: 'podium' },

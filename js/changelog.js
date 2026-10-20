@@ -24,6 +24,7 @@
         'NEW|15 new bounty targets, including Greedo, Hondo Ohnaka, Cad Bane and the Most Wanted Black Sun Vigo.',
         'NEW|7 new HoloNet cards: Bossk, Cad Bane, IG-11, Greef Karga, Cara Dune, Zuckuss and Todo 360.',
         'BALANCE|Raid bosses (weekly and guild) are much tougher: at least 5,000,000 health, harder-hitting bosses and guards.',
+        'BALANCE|Leagues: seasons now last 3 weeks, and arena matchmaking is better at finding opponents that fit your league.',
         'BALANCE|Crate odds lowered: fewer Mythic, Legendary and Holo cards from every crate (Sith Holocron Mythic chance 3% → 1.5% per card, Legendary 30% → 24%).',
         'IMPROVED|Starkiller\'s Unleashed ultimate is bigger: he tears a Star Destroyer out of the sky for every enemy, one after another, and slams each one into its target.',
         'NEW|A "NEW CARD" ribbon marks cards you didn\'t have yet when you open a crate, and on the crate summary after.',
