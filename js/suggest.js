@@ -148,7 +148,7 @@
   // pop-up once, next time they open the game while signed in. They can close
   // it. Firebase is never loaded just for this: only players already signed
   // in (saved account or HoloNet) are checked.
-  const INVITE = [];
+  const INVITE = ['D95XOFLQCiNTHFb8xXVqSa5CAVf2'];
   function maybeInvite(tries = 0) {
     if (!INVITE.length) return;
     const F = root.__hnFb;
