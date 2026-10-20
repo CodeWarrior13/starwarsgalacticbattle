@@ -1335,7 +1335,7 @@
       if (winObs) { winObs.disconnect(); winObs = null; }
       if (!list.length) { grid.innerHTML = '<p class="muted">No units match these filters.</p>'; return; }
       let shown = 0;
-      const win = root.Update22 && root.Update22.on() ? cardWindow(grid, list) : null;
+      const win = root.Update23 && root.Update23.on() ? cardWindow(grid, list) : null;
       const BATCH = win ? win.batch : 18;
       const more = () => {
         const next = list.slice(shown, shown + BATCH);
@@ -1361,7 +1361,7 @@
     let moreObs = null;
     let winObs = null;
 
-    // 2.2: only the rows near the screen hold a real card. Batches are sized
+    // 2.3: only the rows near the screen hold a real card. Batches are sized
     // to this device (columns that fit x rows per screen), and cards that
     // scroll far away are emptied down to a blank slot of the same height,
     // then drawn again when you scroll back, so long collections stay light

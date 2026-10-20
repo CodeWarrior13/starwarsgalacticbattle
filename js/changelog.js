@@ -29,7 +29,6 @@
         'NEW|A "NEW CARD" ribbon marks cards you didn\'t have yet when you open a crate, and on the crate summary after.',
         'IMPROVED|The Hoth Star Destroyer boss has new art.',
         'IMPROVED|Big performance boost: smoother menus and battles on all devices.',
-        'IMPROVED|Optimized the Collection: only the cards near your screen are drawn, sized to your device, so scrolling is smoother and uses less battery.',
         'FIXED|Some ultimates weren\'t playing their animations; Performance mode now keeps every card\'s own ultimate.',
         'IMPROVED|Removing test code.',
       ],
