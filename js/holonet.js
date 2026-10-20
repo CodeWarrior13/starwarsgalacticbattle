@@ -8165,7 +8165,7 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
       ? 'Your device is offline. Check your Wi-Fi or mobile data.'
       : 'The HoloNet relay isn\'t answering right now. It might be your connection, or the relay is busy.';
     return `<div class="ho">
-      <div class="ho-bg" aria-hidden="true"><i class="s1"></i><i class="s2"></i><i class="scan"></i><i class="noise"></i></div>
+      <div class="ho-bg" aria-hidden="true"><i class="s1"></i><i class="s2"></i><i class="ship"><svg viewBox="0 0 64 30" aria-hidden="true"><ellipse cx="6" cy="15" rx="7" ry="3.2" fill="#7fd4ff" opacity=".55"/><ellipse cx="4" cy="15" rx="3.4" ry="1.6" fill="#e6f8ff"/><path d="M10 9 L40 9 C52 9 60 12 62 15 C60 18 52 21 40 21 L10 21 Z" fill="#b8c6d2"/><path d="M10 15 L62 15 C60 18 52 21 40 21 L10 21Z" fill="#7d8b98"/><path d="M20 9 L28 2 L34 2 L30 9Z M20 21 L28 28 L34 28 L30 21Z" fill="#9aa8b4"/><rect x="38" y="12" width="9" height="6" rx="2" fill="#2a3a4a"/><rect x="40" y="13" width="5" height="2" rx="1" fill="#8fe3ff"/><rect x="14" y="13" width="14" height="1.2" fill="#5a6876"/><rect x="14" y="16" width="10" height="1.2" fill="#5a6876"/></svg></i><i class="scan"></i><i class="noise"></i></div>
       <div class="ho-card">
         <div class="ho-dish">${DISH}</div>
         <p class="ho-k">SIGNAL LOST</p>
@@ -8235,6 +8235,10 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
 .ho-bg i { position: absolute; inset: -50%; display: block; }
 .ho-bg .s1 { background-image: radial-gradient(1px 1px at 10% 20%, #fff, transparent), radial-gradient(1px 1px at 30% 70%, #cfe8ff, transparent), radial-gradient(1.5px 1.5px at 60% 40%, #fff, transparent), radial-gradient(1px 1px at 80% 80%, #9ad8ff, transparent), radial-gradient(1px 1px at 45% 10%, #fff, transparent), radial-gradient(1.5px 1.5px at 90% 30%, #fff, transparent); background-size: 260px 260px; opacity: .7; animation: ho-drift 60s linear infinite; }
 .ho-bg .s2 { background-image: radial-gradient(1px 1px at 20% 50%, #fff, transparent), radial-gradient(1px 1px at 70% 15%, #cfe8ff, transparent), radial-gradient(1px 1px at 50% 85%, #fff, transparent); background-size: 180px 180px; opacity: .45; animation: ho-drift 100s linear infinite reverse; }
+/* Now and then a ship drifts slowly across the dead relay's sky. */
+.ho-bg .ship { inset: 7% 0 auto 0; height: 30px; animation: ho-ship 46s linear infinite; animation-delay: -30s; }
+.ho-bg .ship svg { width: 64px; height: 30px; display: block; filter: drop-shadow(0 0 6px rgba(127, 212, 255, .35)); }
+@keyframes ho-ship { 0%, 62% { transform: translate3d(-90px, 0, 0); opacity: 0; } 63% { opacity: .85; } 98% { opacity: .85; } 100% { transform: translate3d(calc(100% + 40px), 26px, 0); opacity: 0; } }
 .ho-bg .scan { inset: 0; background: repeating-linear-gradient(180deg, rgba(95, 216, 255, 0.06) 0 2px, transparent 2px 5px); }
 .ho-bg .noise { inset: auto 0 0 0; height: 30%; background: linear-gradient(180deg, transparent, rgba(95, 216, 255, 0.12) 50%, transparent); animation: ho-sweep 4.5s ease-in-out infinite; }
 @keyframes ho-drift { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(-260px, 130px, 0); } }
@@ -8254,7 +8258,7 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
 .ho-auto { opacity: .8; }
 .ho-spin { display: inline-block; width: 12px; height: 12px; margin-right: 6px; vertical-align: -2px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: ho-rot .8s linear infinite; }
 @keyframes ho-rot { to { transform: rotate(360deg); } }
-@media (prefers-reduced-motion: reduce) { .ho-bg i, .ho-sway, .ho-arcs, .ho-k { animation: none !important; } }
+@media (prefers-reduced-motion: reduce) { .ho-bg i, .ho-sway, .ho-arcs, .ho-k { animation: none !important; } .ho-bg .ship { display: none; } }
 `;
   const st = document.createElement('style');
   st.textContent = css;
