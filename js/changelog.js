@@ -37,6 +37,7 @@
       v: '2.2', date: 'October 28, 2026', title: 'Friends and Foes', from: LAUNCH_22,
       items: [
         'NEW|Friends: from level 5, add pilots by callsign and play friendly battles (unranked, no rewards).',
+        'NEW|Duel chat: in live duels and friendly battles, tap Chat to send a quick line or a short message (filtered for bad language). After a duel, add your opponent as a friend right from the results screen.',
         'NEW|Six new planet bosses: the Dragonsnake on Dagobah, Death Star II over Endor, the Acklay in the Geonosis arena, the Executor above Mustafar, the Sith Trooper Legion on Exegol and the Zillo Beast loose on Coruscant, each with its own battle tricks.',
         'NEW|General Grievous update: brand-new card art and a new "Jedi Killer" ultimate where he spins all four lightsabers through the enemy line.',
         'BALANCE|Buffed General Grievous: Four-Blade Frenzy hits harder, Jedi Hunter\'s Burn chance is up to 65%, Blade Whirlwind can now inflict Defense Down, and he\'s a little faster.',
@@ -56,6 +57,7 @@
     {
       v: '2.1', date: 'October 21, 2026', title: 'Squadrons', from: LAUNCH_21,
       items: [
+        'BALANCE|Account levels 2 to 5 take a little longer to reach, and your 4th squad slot now opens at level 3 (was 4).',
         'NEW|Save your game: sign in with Google or an email to keep your progress safe and play on any device. Find it in Settings.',
         'NEW|Save your game to earn the Holo Link profile frame and the Never Lost badge.',
         'NEW|Invite friends: share your link or QR code. Friends get a welcome gift of 1,000 credits and 25 Kyber, and you earn 2 Kyber for every friend who reaches level 5.',

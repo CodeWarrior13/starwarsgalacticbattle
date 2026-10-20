@@ -626,11 +626,22 @@
     if (H) {
       const before = H.redeem;
       H.redeem = (c) => {
-        // The tester code stops working at launch.
-        if (c !== code() || released()) return before ? before(c) : false;
+        if (c !== code()) return before ? before(c) : false;
+        // The same code also tests Friends (friends, friendly battles, duel chat,
+        // Add friend after duels) until 2.2 is out; then it stops working.
+        const U22 = root.Update22;
+        const frOpen = U22 && U22.test && !U22.on();
+        if (released()) {
+          if (!frOpen) return before ? before(c) : false;
+          const on = !U22.test();
+          U22.test(on);
+          toast(on ? 'Friends test: ON for this device. Friends unlock at level 5.' : 'Friends test: OFF for this device.');
+          return true;
+        }
         const on = ls(TEST) !== '1';
         ls(TEST, on ? '1' : null);
-        toast(on ? 'Saved accounts test: ON for this device. Open Settings to try it.' : 'Saved accounts test: OFF for this device.');
+        if (frOpen) U22.test(on);
+        toast(on ? 'Saved accounts and Friends test: ON for this device. Open Settings to try it.' : 'Saved accounts and Friends test: OFF for this device.');
         paintChip();
         if (on) maybeOffer();
         return true;

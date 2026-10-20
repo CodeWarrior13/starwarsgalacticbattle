@@ -1203,11 +1203,14 @@
   // a liberated planet, for ground and fleet squads alike.
   const BASE_SLOTS = 3;
   const SLOT_UNLOCKS = [
-    { slot: 4, level: 4, planet: 'tatooine' },
+    { slot: 4, level: 3, planet: 'tatooine' },
     { slot: 5, level: 6, planet: 'hoth' },
   ];
   const MAX_ACCOUNT_LEVEL = 50;
-  const xpToNext = (level) => Math.round(60 + level * 35 + level * level * 5);
+  // Levels 1-4 take a little longer (level 5 unlocks Friends and counts for
+  // invites): about 15 wins to reach it, roughly the end of Hoth.
+  const EARLY_XP = [0, 160, 260, 380, 520];
+  const xpToNext = (level) => (level < 5 ? EARLY_XP[level] : Math.round(60 + level * 35 + level * level * 5));
   // Kyber is the premium currency: a trickle from play, a little more on milestones.
   const levelReward = (level) => ({ credits: 150 + level * 50, crystals: level % 5 === 0 ? 10 : 2 });
   const XP = { stage: (lvl) => 50 + lvl * 8, boss: (lvl) => 150 + lvl * 10, loss: 15 };

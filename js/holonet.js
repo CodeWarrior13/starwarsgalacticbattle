@@ -3404,6 +3404,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       if (M.waiter && M.inbox[M.waiter.seq]) { const w = M.waiter; M.waiter = null; w.resolve(M.inbox[w.seq]); }
     }, () => {});
     room.on('ack', (msg) => { if (!msg.isMe) { M.seenAt = Date.now(); delete M.out[(msg.data || {}).seq]; } }, () => {});
+    if (HN.duelChat) HN.duelChat.attach(M);
     room.on('bye', (msg) => { if (!msg.isMe && !M.ended) { M.byeFrom = true; if (M.waiter) { const w = M.waiter; M.waiter = null; w.resolve(null); } else forfeitWin(); } }, () => {});
     // Re-send anything not yet confirmed.
     M.timers.push(setInterval(() => { for (const d of Object.values(M.out)) room.emit('move', d).catch(() => {}); }, 1500));
@@ -3534,6 +3535,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     linkBox(M, '');
     M.timers.forEach(clearInterval);
     if (M.gone) clearTimeout(M.gone);
+    if (HN.duelChat) HN.duelChat.detach();
     setTimeout(() => M.room.leave().catch(() => {}), 2500);
     if (Duel.match === M) Duel.match = null;
     setPresence();
@@ -3704,7 +3706,8 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       <div class="big-num" style="color:${rr.delta >= 0 ? '#7af0a0' : '#ff7a7a'}">${rr.delta >= 0 ? '+' : ''}${rr.delta} rating</div>
       <div class="rows"><div><span>Rating</span><b>${fmt(h.rating)} · ${esc(rr.after.name)}</b></div><div><span>Beskar</span><b>${HN.ui.bes(bes)}</b></div><div><span>Duel record</span><b>${h.duels.w} W · ${h.duels.l} L${h.duels.d ? ` · ${h.duels.d} D` : ''}</b></div>${won && HN.social ? '<div><span>Guild points</span><b>+15</b></div>' : ''}</div>
       ${rr.rewards.filter((x) => x.type === 'div').map((x) => `<p style="text-align:center"><b>${esc(x.div.name)} reached!</b> ${HN.ui.bes(x.beskar)}</p>`).join('')}
-      <div class="modal-actions"><button type="button" class="btn btn-primary" data-r="ok">Back to the lobby</button></div></div>`, { small: true, dismissable: false, cls: 'result-modal' });
+      <div class="modal-actions">${M && HN.duelChat ? HN.duelChat.friendBtn(M.by) : ''}<button type="button" class="btn btn-primary" data-r="ok">Back to the lobby</button></div></div>`, { small: true, dismissable: false, cls: 'result-modal' });
+    if (M && HN.duelChat) HN.duelChat.wireFriend(m.root, M.by, name);
     m.root.addEventListener('click', (e) => { if (e.target.closest('[data-r]')) { m.close(); HN.ui.go('duels'); } });
   };
 
@@ -8106,7 +8109,26 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
     });
   }
 
-  HN.friends = { boot, open, isFriend: (uid) => F.isFriend(uid), F };
+  // From the end of a live duel: send a request to the pilot you just played.
+  // Returns a short status line for the button.
+  async function addUid(uid, nm) {
+    if (!on() || !uid || uid === Net.me) return '';
+    await boot();
+    if (!Net.ready) return "Couldn't reach the HoloNet.";
+    if (!HN.hasProfile()) return 'Pick a callsign first.';
+    const id = pairId(Net.me, uid);
+    const have = F.rows.get(id);
+    if (have && have.ok) return 'Already friends';
+    if (have && have.by === Net.me) return 'Request sent';
+    if (have) { await accept(have); return 'Friends!'; }
+    if (F.friends().length + F.outgoing().length >= MAX) return `Friends list full (${MAX})`;
+    const [a, b] = Net.me < uid ? [Net.me, uid] : [uid, Net.me];
+    const mine = myTag(), theirs = cleanNm(nm);
+    const body = { a, b, by: Net.me, ok: false, na: a === Net.me ? mine : theirs, nb: b === Net.me ? mine : theirs, t: Date.now() };
+    try { await Net.db.doc(`friends/${id}`).set(body); F.rows.set(id, { ...body, id }); redraw(); return 'Request sent'; } catch (e) { return "Couldn't send. Try again."; }
+  }
+
+  HN.friends = { boot, open, addUid, isFriend: (uid) => F.isFriend(uid), state: (uid) => { const r = F.rows.get(pairId(Net.me, uid)); return r ? (r.ok ? 'friends' : r.by === Net.me ? 'sent' : 'incoming') : ''; }, F };
 
   const css = document.createElement('style');
   css.textContent = `.modal.frp-modal { width: min(560px, 100%); }
@@ -8269,3 +8291,201 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
   document.head.appendChild(st);
 })(window);
 
+
+// Duel chat (update 2.2): a small chat bubble in live duels and friendly
+// battles. One-tap quick lines, or type a short message (60 characters,
+// filtered the same way as HoloNet chat, one message every 3 seconds, 25 a
+// match). Messages ride the duel's own private channel, so only the two
+// players see them, and nothing is stored after the match.
+(function (root) {
+  'use strict';
+  const HN = root.HN;
+  const UI = root.UI;
+  const { esc, toast } = UI;
+  const on = () => !!(root.Update22 && (root.Update22.friends || root.Update22.on)());
+  const QUICK = ['Good luck!', 'Well played!', 'Nice move!', 'Oops!', 'Thanks!', 'Good game!', 'May the Force be with you.', 'I have a bad feeling about this…'];
+  const MAX_LEN = 60;
+  const GAP_MS = 3000;
+  const MAX_SENT = 25;
+  const SHOW_MS = 4500;
+  let C = null;
+
+  function attach(M) {
+    detach();
+    if (!on() || !M || !M.room) return;
+    C = { M, log: [], sent: 0, last: 0, open: false, unread: 0, muted: false };
+    M.room.on('chat', (msg) => { if (!msg.isMe && C && C.M === M && !M.ended) hear(msg.data || {}); }, () => {});
+    const el = document.createElement('div');
+    el.className = 'dchat';
+    el.innerHTML = `<div class="dchat-pops" aria-live="polite"></div>
+      <div class="dchat-panel" hidden>
+        <div class="dchat-head"><b>Chat with ${esc(M.name)}</b><button type="button" class="dchat-mute" data-dc="mute">Mute</button><button type="button" class="dchat-x" data-dc="toggle" aria-label="Close chat">✕</button></div>
+        <div class="dchat-log"></div>
+        <div class="dchat-quick">${QUICK.map((q, i) => `<button type="button" data-q="${i}">${esc(q)}</button>`).join('')}</div>
+        <form class="dchat-form"><input type="text" maxlength="${MAX_LEN}" placeholder="Say something…" autocomplete="off" enterkeyhint="send"><button type="submit" class="btn btn-primary">Send</button></form>
+      </div>`;
+    document.body.appendChild(el);
+    C.el = el;
+    // The Chat button sits in the battle's top bar, next to Retreat (the battle screen is still being drawn).
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn btn-small dchat-btn';
+    btn.dataset.dc = 'toggle';
+    btn.setAttribute('aria-label', 'Chat');
+    btn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H10l-5 4v-4H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z" fill="currentColor"/></svg>Chat<i class="dchat-dot" hidden></i>';
+    btn.addEventListener('click', () => toggle());
+    C.btn = btn;
+    let tries = 0;
+    const place = () => {
+      if (!C || C.btn !== btn) return;
+      const r = document.querySelector('.battle-top [data-retreat]');
+      if (r) { r.parentNode.insertBefore(btn, r); return; }
+      if (++tries < 60) setTimeout(place, 250);
+    };
+    place();
+    el.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-dc],[data-q]');
+      if (!b) return;
+      if (b.dataset.q != null) return send({ q: +b.dataset.q });
+      if (b.dataset.dc === 'toggle') return toggle();
+      if (b.dataset.dc === 'mute') { C.muted = !C.muted; b.textContent = C.muted ? 'Unmute' : 'Mute'; toast(C.muted ? `${M.name}'s messages are hidden.` : `Showing ${M.name}'s messages.`); paint(); }
+    });
+    el.querySelector('form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const inp = e.target.querySelector('input');
+      const raw = inp.value.trim();
+      if (!raw) return;
+      if (send({ t: raw })) inp.value = '';
+    });
+  }
+  function detach() {
+    if (C && C.el) C.el.remove();
+    if (C && C.btn) C.btn.remove();
+    C = null;
+  }
+  // The panel and message bubbles hang just under the battle's top bar.
+  function anchor() {
+    const bar = document.querySelector('.battle-top');
+    const b = bar ? bar.getBoundingClientRect().bottom : 0;
+    C.el.style.top = `${Math.max(8, Math.round(b) + 6)}px`;
+  }
+  function toggle() {
+    anchor();
+    C.open = !C.open;
+    C.el.querySelector('.dchat-panel').hidden = !C.open;
+    C.btn.classList.toggle('on', C.open);
+    if (C.open) { C.unread = 0; paint(); }
+  }
+  // Text that goes on screen: a quick line by number, or typed text run through the filter.
+  function textOf(d) {
+    if (Number.isInteger(d.q) && QUICK[d.q]) return QUICK[d.q];
+    if (typeof d.t !== 'string') return '';
+    const r = HN.safe.clean(d.t.slice(0, MAX_LEN));
+    return r.blocked ? '' : r.text.trim();
+  }
+  function send(d) {
+    if (!C || C.M.ended) return false;
+    const now = Date.now();
+    if (C.sent >= MAX_SENT) { toast('That\'s all the chat for this match.'); return false; }
+    if (now - C.last < GAP_MS) { toast('Slow down a little.'); return false; }
+    if (d.t != null) {
+      const r = HN.safe.clean(d.t.slice(0, MAX_LEN));
+      if (r.blocked || !r.text.trim()) { toast('That message can\'t be sent.'); return false; }
+      d = { t: r.text.trim() };
+    }
+    C.last = now;
+    C.sent += 1;
+    C.M.room.emit('chat', d).catch(() => {});
+    add(true, textOf(d));
+    return true;
+  }
+  function hear(d) {
+    const text = textOf(d);
+    if (!text) return;
+    add(false, text);
+    if (C.muted) return;
+    if (!C.open) { C.unread += 1; pop(text); }
+    paint();
+  }
+  function add(mine, text) {
+    if (!text) return;
+    C.log.push({ mine, text });
+    if (C.log.length > 40) C.log.shift();
+    paint();
+  }
+  function pop(text) {
+    anchor();
+    const box = C.el.querySelector('.dchat-pops');
+    const p = document.createElement('div');
+    p.className = 'dchat-pop';
+    p.innerHTML = `<b>${esc(C.M.name)}</b> ${esc(text)}`;
+    box.appendChild(p);
+    while (box.children.length > 2) box.firstChild.remove();
+    setTimeout(() => p.remove(), SHOW_MS);
+  }
+  function paint() {
+    if (!C) return;
+    const log = C.el.querySelector('.dchat-log');
+    const rows = C.log.filter((x) => x.mine || !C.muted);
+    log.innerHTML = rows.length ? rows.map((x) => `<p class="${x.mine ? 'me' : ''}"><b>${x.mine ? 'You' : esc(C.M.name)}</b> ${esc(x.text)}</p>`).join('') : '<p class="muted small">Say hi, or tap a quick line.</p>';
+    log.scrollTop = log.scrollHeight;
+    const dot = C.btn.querySelector('.dchat-dot');
+    dot.hidden = !C.unread || C.muted;
+    dot.textContent = C.unread > 9 ? '9+' : String(C.unread || '');
+  }
+
+  // The end-of-duel "Add friend" button (needs Friends, level 5).
+  function friendBtn(uid) {
+    if (!on() || !uid || !HN.friends || !(root.Friends && root.Friends.unlocked())) return '';
+    const st = HN.friends.state(uid);
+    const label = st === 'friends' ? 'Friends ✓' : st === 'sent' ? 'Request sent' : st === 'incoming' ? 'Accept friend' : 'Add friend';
+    return `<button type="button" class="btn dchat-add" data-addfr="${esc(uid)}" ${st === 'friends' || st === 'sent' ? 'disabled' : ''}>${label}</button>`;
+  }
+  function wireFriend(root2, uid, nm) {
+    const b = root2.querySelector('[data-addfr]');
+    if (!b) return;
+    // If they send a request while this screen is up, the button turns into Accept.
+    const tick = setInterval(() => {
+      if (!b.isConnected) return clearInterval(tick);
+      if (b.disabled) return;
+      const st = HN.friends.state(uid);
+      b.textContent = st === 'incoming' ? 'Accept friend' : st === 'friends' ? 'Friends ✓' : st === 'sent' ? 'Request sent' : 'Add friend';
+      if (st === 'friends' || st === 'sent') b.disabled = true;
+    }, 1500);
+    b.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      b.disabled = true;
+      b.textContent = 'Sending…';
+      const msg = await HN.friends.addUid(uid, nm);
+      b.textContent = msg || 'Add friend';
+      if (!/sent|Friends|Already/.test(msg)) b.disabled = false;
+    });
+  }
+
+  HN.duelChat = { attach, detach, friendBtn, wireFriend, QUICK };
+
+  const st = document.createElement('style');
+  st.textContent = `.dchat { position: fixed; right: calc(10px + env(safe-area-inset-right, 0px)); top: calc(64px + env(safe-area-inset-top, 0px)); z-index: 60; display: grid; justify-items: end; gap: 6px; pointer-events: none; }
+.dchat > * { pointer-events: auto; }
+.dchat-btn { position: relative; display: inline-flex; align-items: center; gap: 5px; }
+.dchat-btn svg { width: 15px; height: 15px; }
+.dchat-btn.on { border-color: #5fd8ff; color: #8fe8ff; }
+.dchat-panel[hidden] { display: none; }
+.dchat-dot { position: absolute; top: -4px; right: -4px; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 9px; background: #ff5a3a; color: #fff; font: 800 11px/18px var(--font-display, system-ui); font-style: normal; text-align: center; }
+.dchat-pops { display: grid; gap: 4px; justify-items: end; pointer-events: none; }
+.dchat-pop { max-width: min(260px, 70vw); padding: 7px 11px; border-radius: 12px 12px 4px 12px; background: rgba(6, 18, 30, 0.94); border: 1px solid rgba(95, 216, 255, 0.5); color: #e8f8ff; font-size: 13px; line-height: 1.3; overflow-wrap: anywhere; animation: dchatIn .25s ease-out; }
+.dchat-pop b { color: #8fe8ff; margin-right: 4px; }
+@keyframes dchatIn { from { opacity: 0; transform: translateY(-6px); } }
+.dchat-panel { width: min(320px, calc(100vw - 20px)); display: grid; gap: 8px; padding: 10px; border-radius: 14px; background: rgba(6, 16, 26, 0.97); border: 1px solid rgba(95, 216, 255, 0.45); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55); }
+.dchat-head { display: flex; align-items: center; gap: 8px; } .dchat-head b { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+.dchat-mute, .dchat-x { border: 1px solid rgba(95, 216, 255, 0.3); background: transparent; color: #bfefff; border-radius: 8px; padding: 4px 8px; font-size: 12px; cursor: pointer; }
+.dchat-log { max-height: 26vh; min-height: 48px; overflow-y: auto; display: grid; gap: 4px; align-content: start; }
+.dchat-log p { margin: 0; font-size: 13px; line-height: 1.3; overflow-wrap: anywhere; } .dchat-log b { color: #8fe8ff; margin-right: 4px; } .dchat-log p.me b { color: #ffd23f; }
+.dchat-quick { display: flex; flex-wrap: wrap; gap: 5px; }
+.dchat-quick button { border: 1px solid rgba(95, 216, 255, 0.3); background: rgba(95, 216, 255, 0.08); color: #dff8ff; border-radius: 999px; padding: 5px 9px; font-size: 12px; cursor: pointer; }
+.dchat-form { display: flex; gap: 6px; } .dchat-form input { flex: 1; min-width: 0; padding: 8px 10px; border-radius: 10px; border: 1px solid rgba(95, 216, 255, 0.35); background: #04101a; color: #fff; font-size: 16px; }
+.dchat-form .btn { padding: 8px 12px; }
+.dchat-add { margin-right: auto; }
+`;
+  document.head.appendChild(st);
+})(window);

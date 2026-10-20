@@ -7,11 +7,24 @@
   // Update 2.2 goes live at 7:05 a.m. Central, Wednesday October 28, 2026 (12:05 UTC).
   const RELEASE22 = root.__v22Test != null ? root.__v22Test : Date.UTC(2026, 9, 28, 12, 5, 0);
   const on = () => RELEASE22 != null && Date.now() >= RELEASE22;
-  root.Update22 = { on, at: RELEASE22 };
+  // Testers (the saved-accounts tester code) get Friends early on this device:
+  // friends, friendly battles, duel chat and Add friend after duels. Nothing
+  // else from 2.2 turns on. The switch does nothing once 2.2 is out.
+  const TEST_KEY = 'swcg-fr-test';
+  const test = (v) => {
+    try {
+      if (v === undefined) return localStorage.getItem(TEST_KEY) === '1';
+      if (v) localStorage.setItem(TEST_KEY, '1'); else localStorage.removeItem(TEST_KEY);
+    } catch (e) { return false; }
+    if (root.Friends) { root.Friends.paint(); if (v) root.Friends.boot(); }
+    return !!v;
+  };
+  const friendsOn = () => on() || test();
+  root.Update22 = { on, at: RELEASE22, test, friends: friendsOn };
 
   const FRIENDS_LEVEL = 5;
   const level = () => (root.Player && root.Player.state && root.Player.state.account && root.Player.state.account.level) || 1;
-  const unlocked = () => on() && level() >= FRIENDS_LEVEL;
+  const unlocked = () => friendsOn() && level() >= FRIENDS_LEVEL;
   let btn = null;
   let booted = null;
 
