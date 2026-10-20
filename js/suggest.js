@@ -126,6 +126,10 @@
     if (busy) { if (tries < 30) setTimeout(() => maybePop(tries + 1), 30000); return; }
     pops.push(Date.now());
     ls(POPS, JSON.stringify(pops));
+    showPop();
+  }
+
+  function showPop() {
     const m = UI().openModal(`<div class="sug sug-pop">
       <div class="sug-hero">${root.Icons ? root.Icons.svg('holocron') : ''}</div>
       <h2>Got any suggestions for the game?</h2>
@@ -137,6 +141,27 @@
       m.close();
       if (b.dataset.p === 'yes') open();
     });
+  }
+
+  // Personal invite: players whose user ID (from the Firebase console,
+  // Authentication > Users) is listed here get the "Got any suggestions?"
+  // pop-up once, next time they open the game while signed in. They can close
+  // it. Firebase is never loaded just for this: only players already signed
+  // in (saved account or HoloNet) are checked.
+  const INVITE = [];
+  function maybeInvite(tries = 0) {
+    if (!INVITE.length) return;
+    const F = root.__hnFb;
+    const u = F && F.auth && F.auth.currentUser;
+    if (!u) { if (tries < 20) setTimeout(() => maybeInvite(tries + 1), 15000); return; }
+    const key = `swcg-sugg-invite-${u.uid}`;
+    if (!INVITE.includes(u.uid) || ls(key)) return;
+    const App = UI() && UI().App;
+    const busy = !App || App.battleActive || !['home', 'collection', 'market'].includes(App.current)
+      || document.querySelector('.app-splash, .modal-backdrop, .tut-intro, .tut-coach, .walkout, .feat-show, .feat-cine, .rank-up, .hc, .code-entry, .inst-banner');
+    if (busy) { if (tries < 60) setTimeout(() => maybeInvite(tries + 1), 15000); return; }
+    ls(key, '1');
+    showPop();
   }
 
   // Owner's inbox: tap the game version in Settings five times.
@@ -168,6 +193,7 @@
       }
     });
     setTimeout(() => maybePop(), 5000);
+    setTimeout(() => maybeInvite(), 8000);
   }
   root.Suggest = { open, settingsHtml, inbox, maybePop };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => setTimeout(init, 0));
