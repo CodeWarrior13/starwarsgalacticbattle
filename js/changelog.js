@@ -9,13 +9,32 @@
   // Update 2.0 goes live at 7:00 a.m. Central on October 14, 2026; until then
   // its entry stays hidden.
   const LAUNCH_2 = root.__hnLaunchTest != null ? root.__hnLaunchTest : Date.UTC(2026, 9, 14, 12, 0, 0);
-  // Update 2.1 goes live at 7:05 a.m. Central on October 28, 2026.
-  const LAUNCH_21 = root.__v21Test != null ? root.__v21Test : Date.UTC(2026, 9, 28, 12, 5, 0);
-  // Update 2.2 goes live at 7:05 a.m. Central on November 11, 2026.
-  const LAUNCH_22 = root.__v22Test != null ? root.__v22Test : Date.UTC(2026, 10, 11, 13, 5, 0);
+  // Update 2.1 goes live at 7:05 a.m. Central on October 21, 2026.
+  const LAUNCH_21 = root.__v21Test != null ? root.__v21Test : Date.UTC(2026, 9, 21, 12, 5, 0);
+  // Update 2.2 goes live at 7:05 a.m. Central on October 28, 2026.
+  const LAUNCH_22 = root.__v22Test != null ? root.__v22Test : Date.UTC(2026, 9, 28, 12, 5, 0);
+  // Update 2.3 goes live at 7:05 a.m. Central on November 11, 2026 (after DST ends).
+  const LAUNCH_23 = root.__v23Test != null ? root.__v23Test : Date.UTC(2026, 10, 11, 13, 5, 0);
   const ALL_UPDATES = [
     {
-      v: '2.2', date: 'November 11, 2026', title: 'Friends and Foes', from: LAUNCH_22,
+      v: '2.3', date: 'November 11, 2026', title: 'The Hutt\'s Vault', from: LAUNCH_23,
+      items: [
+        'NEW|The Legendary Exchange: once a week, at a time no one knows, a Hutt broker opens his vault for 30 minutes. Trade 5 Aurodium Ingots for 15,000 credits. Look under the gambling tables.',
+        'NEW|Auto-open (level 30): open Black Market crates hands-free until you reach your number.',
+        'NEW|Wallet caps: 7,500,000 credits and 10,000 Aurodium. Anything over the cap isn\'t lost: every 2,500 extra credits become 1 Aurodium, and extra Aurodium becomes 10 Kyber each. Fill your credit vault for the new Piggy Bank Saver badge.',
+        'IMPROVED|Optimized the Collection: only the cards near your screen are drawn, sized to your device, so scrolling is smoother and uses less battery.',
+        'BALANCE|Chance Cubes now cost 10 Kyber (was 25).',
+        'BALANCE|Jedi Holocrons now cost 40 Kyber (was 50).',
+        'BALANCE|The Kyber Exchange now trades 10 Kyber for 1,000 credits.',
+        'BALANCE|HoloNet: High-Value bounty pucks now cost 260-340 Kyber, and the Outrider costs 400.',
+        'FIXED|Promoting or levelling a card in the Collection no longer sends you back to the top.',
+        'FIXED|Cards in the Krayt Dragon battle now fit on phone screens.',
+        'FIXED|Fixed Settings and other pop-ups not fitting at the top of phone screens.',
+        'FIXED|Fixed the settings gear getting pushed off phone screens; big balances now show as 1.2M or 12.3K on phones.',
+      ],
+    },
+    {
+      v: '2.2', date: 'October 28, 2026', title: 'Friends and Foes', from: LAUNCH_22,
       items: [
         'NEW|Friends: from level 5, add pilots by callsign and play friendly battles (unranked, no rewards).',
         'NEW|Six new planet bosses: the Dragonsnake on Dagobah, Death Star II over Endor, the Acklay in the Geonosis arena, the Executor above Mustafar, the Sith Trooper Legion on Exegol and the Zillo Beast loose on Coruscant, each with its own battle tricks.',
@@ -35,7 +54,7 @@
       ],
     },
     {
-      v: '2.1', date: 'October 28, 2026', title: 'Squadrons', from: LAUNCH_21,
+      v: '2.1', date: 'October 21, 2026', title: 'Squadrons', from: LAUNCH_21,
       items: [
         'NEW|Save your game: sign in with Google or an email to keep your progress safe and play on any device. Find it in Settings.',
         'NEW|Save your game to earn the Holo Link profile frame and the Never Lost badge.',

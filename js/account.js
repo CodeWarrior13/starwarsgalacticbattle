@@ -10,8 +10,8 @@
 (function (root) {
   'use strict';
   // Update 2.1 goes live for everyone at 7:05 a.m. Central on Wednesday,
-  // October 28, 2026; until then only tester devices see it.
-  const RELEASE = root.__v21Test != null ? root.__v21Test : Date.UTC(2026, 9, 28, 12, 5, 0);
+  // October 21, 2026; until then only tester devices see it.
+  const RELEASE = root.__v21Test != null ? root.__v21Test : Date.UTC(2026, 9, 21, 12, 5, 0);
   const released = () => Date.now() >= RELEASE;
   const SAVE_KEY = 'swcg-save-v1';
   const META = 'swcg-acct';

@@ -4,8 +4,8 @@
 // The panel itself lives in the HoloNet code (hn-friends), which loads on demand.
 (function (root) {
   'use strict';
-  // Update 2.2 goes live at 7:05 a.m. Central, Wednesday November 11, 2026 (13:05 UTC, after DST ends).
-  const RELEASE22 = root.__v22Test != null ? root.__v22Test : Date.UTC(2026, 10, 11, 13, 5, 0);
+  // Update 2.2 goes live at 7:05 a.m. Central, Wednesday October 28, 2026 (12:05 UTC).
+  const RELEASE22 = root.__v22Test != null ? root.__v22Test : Date.UTC(2026, 9, 28, 12, 5, 0);
   const on = () => RELEASE22 != null && Date.now() >= RELEASE22;
   root.Update22 = { on, at: RELEASE22 };
 

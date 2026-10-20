@@ -1,8 +1,9 @@
 // Update 2.3: currency caps with fallback rewards, and Auto-open in the Black Market.
-// Everything here stays switched off until 2.3 (RELEASE23; null keeps it off).
+// Everything here stays switched off until 2.3: 7:05 a.m. Central, Wednesday
+// November 11, 2026 (13:05 UTC, after DST ends). RELEASE23 null keeps it off.
 (function (root) {
   'use strict';
-  const RELEASE23 = root.__v23Test != null ? root.__v23Test : null;
+  const RELEASE23 = root.__v23Test != null ? root.__v23Test : Date.UTC(2026, 10, 11, 13, 5, 0);
   const on = () => RELEASE23 != null && Date.now() >= RELEASE23;
   // Hooks read the current switch, so a reload of this file never leaves a stale one behind.
   const live = () => !!(root.Update23 && root.Update23.on && root.Update23.on());
