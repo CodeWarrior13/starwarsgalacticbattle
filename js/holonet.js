@@ -2470,7 +2470,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   const HNB = { retreated: false, back: null };
   HN.B = HNB;
   HN.hnStart = (...a) => hnStart(...a);
-  HN.ui = { ACKBAR, unlocked: () => unlocked(), head: (...a) => head(...a), mini: (id) => mini(id), go: (...a) => go(...a), bes: (n) => bes(n), award: (f) => award(f) };
+  HN.ui = { ACKBAR, inspect: (id, after) => inspect(id, after || (() => {})), unlocked: () => unlocked(), head: (...a) => head(...a), mini: (id) => mini(id), go: (...a) => go(...a), bes: (n) => bes(n), award: (f) => award(f) };
   async function hnStart(params, squad, enemies, opts) {
     const self = BUI;
     self.params = params;

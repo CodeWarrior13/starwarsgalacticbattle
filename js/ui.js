@@ -1256,9 +1256,22 @@
     return Player.owns(def.id) ? Player.powerOf(def.id) : D.power(def, 1, 1);
   }
 
+  // 2.2: a HoloNet filter shows every HoloNet-only card, owned or locked with
+  // how to earn it (once the HoloNet is loaded, level 25+).
+  const hnFilter = () => !!(root.Update22 && root.Update22.on() && root.HN && root.HN.HN_IDS && root.HN.card);
+  const hnDefs = () => {
+    const future = new Set((root.HN.SEASON_CARDS && root.HN.SEASON_CARDS.future) || []);
+    return root.HN.HN_IDS.filter((id) => D.UNIT_MAP[id] && !future.has(id)).map((id) => D.UNIT_MAP[id]);
+  };
+  const hnCardHtml = (def) => {
+    const c = root.HN.card(def.id);
+    return unitCard(def, { traits: true, owned: !!c, level: c ? c.level : 1, stars: c ? c.stars : 1 }).replace('Find in the Black Market', esc(root.HN.HOW[def.id] || 'HoloNet reward')).replace('class="ucard', 'data-hn-card class="ucard');
+  };
+
   Screens.collection = function () {
     const ui = App.ui;
     if (!ui.collectionClass) ui.collectionClass = 'all';
+    if (ui.collectionKind === 'holonet' && !hnFilter()) ui.collectionKind = 'all';
     const v = el(`<section class="view">
       <div class="view-head">
         <div>
@@ -1274,7 +1287,7 @@
         <div class="fd-inner">
         <div class="filters-row">
           <div class="seg" data-filter="kind">
-            <button type="button" data-v="all">All</button><button type="button" data-v="character">Heroes</button><button type="button" data-v="ship">Ships</button>
+            <button type="button" data-v="all">All</button><button type="button" data-v="character">Heroes</button><button type="button" data-v="ship">Ships</button>${hnFilter() ? '<button type="button" data-v="holonet">HoloNet</button>' : ''}
           </div>
           <div class="seg" data-filter="faction">
             <button type="button" data-v="all">Both</button><button type="button" data-v="light">Light</button><button type="button" data-v="dark">Dark</button>
@@ -1287,12 +1300,13 @@
         <div class="class-bar" data-classes></div>
         </div>
       </div>
+      <p class="muted small" data-hn-note hidden>HoloNet-only cards: earned in the HoloNet, never in crates. Locked ones show how to get them.</p>
       <div class="card-grid" data-grid></div>
     </section>`);
 
     // Class buttons with a Light/Dark breakdown of how many you own.
     function renderClasses() {
-      const inKind = D.UNITS.filter((u) => ui.collectionKind === 'all' || u.kind === ui.collectionKind);
+      const inKind = ui.collectionKind === 'holonet' ? hnDefs() : D.UNITS.filter((u) => ui.collectionKind === 'all' || u.kind === ui.collectionKind);
       const entries = [['all', { label: 'All classes', icon: '◈' }], ...Object.entries(D.CLASS_INFO)];
       $('[data-classes]', v).innerHTML = entries.map(([key, info]) => {
         const list = key === 'all' ? inKind : inKind.filter((u) => D.classesOf(u).includes(key));
@@ -1322,26 +1336,30 @@
       renderClasses();
       // Closed drawer: a one-line summary of what is filtered.
       const parts = [];
-      if (ui.collectionKind !== 'all') parts.push(ui.collectionKind === 'ship' ? 'Ships' : 'Heroes');
+      if (ui.collectionKind !== 'all') parts.push(ui.collectionKind === 'ship' ? 'Ships' : ui.collectionKind === 'holonet' ? 'HoloNet' : 'Heroes');
       if (ui.collectionFaction !== 'all') parts.push(ui.collectionFaction === 'light' ? 'Light Side' : 'Dark Side');
       if (ui.collectionClass !== 'all') parts.push(D.CLASS_INFO[ui.collectionClass].label);
       const n = parts.length;
       parts.push(SORTS[ui.collectionSort].label);
       $('[data-ft-count]', v).textContent = n ? String(n) : '';
       $('[data-ft-summary]', v).innerHTML = parts.map((x) => `<span>${esc(x)}</span>`).join('');
-      const list = D.UNITS
-        .filter((u) => ui.collectionKind === 'all' || u.kind === ui.collectionKind)
+      const hn = ui.collectionKind === 'holonet';
+      const hnOwns = (u) => !!root.HN.card(u.id);
+      const list = (hn ? hnDefs() : D.UNITS)
+        .filter((u) => hn || ui.collectionKind === 'all' || u.kind === ui.collectionKind)
         .filter((u) => ui.collectionFaction === 'all' || u.faction === ui.collectionFaction)
         .filter((u) => ui.collectionClass === 'all' || D.classesOf(u).includes(ui.collectionClass))
         .sort((a, b) => {
-          const oa = Player.owns(a.id) ? 0 : 1;
-          const ob = Player.owns(b.id) ? 0 : 1;
+          const oa = (hn ? hnOwns(a) : Player.owns(a.id)) ? 0 : 1;
+          const ob = (hn ? hnOwns(b) : Player.owns(b.id)) ? 0 : 1;
           return oa - ob || SORTS[ui.collectionSort].fn(a, b);
         });
       // Cards are built a batch at a time as you scroll, not all ~140 at once:
       // each one is a detailed drawing, and building them all made the screen
       // slow to open and heavy to scroll on phones.
       const grid = $('[data-grid]', v);
+      const note = $('[data-hn-note]', v);
+      if (note) note.hidden = !hn;
       if (moreObs) { moreObs.disconnect(); moreObs = null; }
       if (winObs) { winObs.disconnect(); winObs = null; }
       if (!list.length) { grid.innerHTML = '<p class="muted">No units match these filters.</p>'; return; }
@@ -1353,7 +1371,7 @@
         shown += next.length;
         const old = grid.querySelector('.grid-more');
         if (old) old.remove();
-        grid.insertAdjacentHTML('beforeend', next.map((def) => unitCard(def, { traits: true })).join('') + (shown < list.length ? '<i class="grid-more" aria-hidden="true"></i>' : ''));
+        grid.insertAdjacentHTML('beforeend', next.map((def) => (hn ? hnCardHtml(def) : unitCard(def, { traits: true }))).join('') + (shown < list.length ? '<i class="grid-more" aria-hidden="true"></i>' : ''));
         const tail = grid.querySelector('.grid-more');
         if (tail && moreObs) moreObs.observe(tail);
         if (win) win.watch(grid.querySelectorAll('.ucard:not([data-o])'));
@@ -1437,6 +1455,8 @@
         render();
         return;
       }
+      const hc = e.target.closest('[data-hn-card]');
+      if (hc) return root.HN.ui && root.HN.ui.inspect ? root.HN.ui.inspect(hc.dataset.id, () => render(true)) : toast(root.HN.HOW[hc.dataset.id] || 'HoloNet reward');
       const card = e.target.closest('.ucard');
       if (card) inspect(card.dataset.id, () => render(true), $$('[data-grid] .ucard', v).map((c) => c.dataset.id));
     });

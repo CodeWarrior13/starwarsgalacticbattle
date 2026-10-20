@@ -23,6 +23,7 @@
         'BALANCE|Buffed General Grievous: Four-Blade Frenzy hits harder, Jedi Hunter\'s Burn chance is up to 65%, Blade Whirlwind can now inflict Defense Down, and he\'s a little faster.',
         'NEW|15 new bounty targets, including Greedo, Hondo Ohnaka, Cad Bane and the Most Wanted Black Sun Vigo.',
         'NEW|7 new HoloNet cards: Bossk, Cad Bane, IG-11, Greef Karga, Cara Dune, Zuckuss and Todo 360.',
+        'NEW|Collection: new HoloNet filter shows every HoloNet card, and how to earn the ones you\'re missing.',
         'BALANCE|Raid bosses (weekly and guild) are much tougher: at least 5,000,000 health, harder-hitting bosses and guards.',
         'BALANCE|Leagues: seasons now last 3 weeks, and arena matchmaking is better at finding opponents that fit your league.',
         'BALANCE|Crate odds lowered: fewer Mythic, Legendary and Holo cards from every crate (Sith Holocron Mythic chance 3% → 1.5% per card, Legendary 30% → 24%).',
