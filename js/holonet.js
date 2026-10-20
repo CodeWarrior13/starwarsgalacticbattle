@@ -5229,7 +5229,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
         <h3 class="pc-h">Strongest cards <small>by power</small></h3>
         ${strong.length ? `<div class="pc-strong pc-grid">${strong.map((id) => mini(id, col[id])).join('')}</div>` : '<p class="pc-empty">No cards to show yet.</p>'}
         <h3 class="pc-h">Top badges <small>${p.nb} earned</small></h3>
-        <div class="pc-badges">${p.badges.slice(0, 6).map((x) => `<button type="button" data-bdg='${esc(JSON.stringify(x))}'>${still(UI.featBadge(x))}</button>`).join('') || '<p class="pc-empty">No badges yet.</p>'}</div>`;
+        <div class="pf-bdgs">${p.badges.slice(0, 6).map((x) => `<button type="button" class="pf-bdg" data-bdg='${esc(JSON.stringify(x))}'>${still(UI.featBadge(x))}<span>${esc(x.name)}</span></button>`).join('') || '<p class="pc-empty">No badges yet.</p>'}</div>`;
     };
     const collection = () => {
       const inPool = pool.filter((u) => col[u.id]).length;
@@ -5259,7 +5259,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
         ${row('Battles', fmt(tu.b), p.me ? '' : fmt(yu.b))}${row('Win rate', tu.b ? `${Math.round((tu.w / tu.b) * 100)}%` : '—', p.me ? '' : yu.b ? `${Math.round((yu.w / yu.b) * 100)}%` : '—')}</table></div>`;
     };
     const badges = () => (ball && ball.length
-      ? `<p class="pc-empty">${p.nb} badges earned · tap one to see how it was earned</p><div class="pc-badges">${ball.map((x) => `<button type="button" data-bdg='${esc(JSON.stringify(x))}'>${still(UI.featBadge(x))}<span>${esc(x.name)}</span></button>`).join('')}</div>`
+      ? `<p class="pc-empty">${p.nb} badges earned · tap one to see how it was earned</p><div class="pf-bdgs">${ball.map((x) => `<button type="button" class="pf-bdg" data-bdg='${esc(JSON.stringify(x))}'>${still(UI.featBadge(x))}<span>${esc(x.name)}</span></button>`).join('')}</div>`
       : '<p class="pc-empty">No badges yet.</p>');
     const stats = () => {
       const cell = (n, v) => `<div><span>${n}</span><b>${v}</b></div>`;
