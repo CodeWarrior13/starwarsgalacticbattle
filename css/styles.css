@@ -3181,6 +3181,8 @@ body.event-sith .topbar { border-bottom-color: rgba(255, 60, 70, 0.7); box-shado
 /* Tutorial tour bubbles sit above dialogs; "bottom" ones leave the dialog's tabs visible. */
 .tut-coach.tour { z-index: 270; }
 .tut-coach.tour.bottom { top: auto; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }
+.tut-coach.rexg { pointer-events: none; } .tut-coach.rexg .btn { pointer-events: auto; }
+.tut-coach.rexg.thin p { font-size: 13px; line-height: 1.3; } .tut-coach.rexg.thin .tc-face { display: none; }
 .tut-coach.two { flex-wrap: wrap; } .tut-coach.two p { flex: 1 1 calc(100% - 64px); } .tut-coach.two .btn { flex: 1 1 140px; }
 
 /* Settings > Performance */

@@ -26,13 +26,53 @@
   let waits = [];
 
   // Run cb once test() is true; every wait is cleared when the guide ends.
+  // During the profile part of the walk: if the profile got closed (and no
+  // editor is open), Rex opens it again so the step can carry on.
+  let inProfile = false;
   function waitFor(test, cb) {
-    const t = setInterval(() => { if (!running) return clearInterval(t); if (test()) { clearInterval(t); cb(); } }, 250);
+    const t = setInterval(() => {
+      if (!running) return clearInterval(t);
+      if (test()) { clearInterval(t); cb(); return; }
+      if (inProfile && !$('.p2-modal') && !$('.p2-lv-modal') && !$('.pe-modal') && !$('.tut-intro') && ui().profile) ui().profile();
+    }, 250);
     waits.push(t);
   }
-  const coach = (text, glow, opts) => T().coach(text, glow, { tour: true, ...(opts || {}) });
+  // Rex's box never hides what he's pointing at: it moves to the other edge of
+  // the screen if it would cover it, taps pass through it, and if a step is
+  // still waiting after 30 seconds a "Skip this step" button appears.
+  let stuck = 0;
+  const overlaps = (a, b) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+  function coach(text, glow, opts) {
+    const o = { tour: true, ...(opts || {}) };
+    T().coach(text, glow, o);
+    const box = $('.tut-coach');
+    if (!box) return;
+    box.classList.add('rexg');
+    const fit = () => {
+      const tgt = glow ? [...document.querySelectorAll(glow)].find((n) => n.offsetParent) : null;
+      if (!tgt || !box.isConnected) return;
+      const tr = tgt.getBoundingClientRect();
+      if (overlaps(box.getBoundingClientRect(), tr)) box.classList.toggle('bottom');
+      if (overlaps(box.getBoundingClientRect(), tr)) box.classList.add('thin');
+    };
+    requestAnimationFrame(fit);
+    setTimeout(fit, 400);
+    clearTimeout(stuck);
+    if (!o.next) {
+      stuck = setTimeout(() => {
+        if (!box.isConnected || !running || box.querySelector('[data-rexskip]')) return;
+        const sk = ui().el('<button class="btn btn-small" type="button" data-rexskip>Skip this step</button>');
+        sk.addEventListener('click', (e) => { e.stopPropagation(); if (skipStep) skipStep(); });
+        box.appendChild(sk);
+      }, 30000);
+    }
+  }
+  let skipStep = null;
   function end() {
     running = false;
+    inProfile = false;
+    clearTimeout(stuck);
+    skipStep = null;
     waits.forEach(clearInterval);
     waits = [];
     T().clearCoach();
@@ -76,7 +116,8 @@
   function run(steps) {
     running = true;
     let i = 0;
-    const next = () => { if (running && i < steps.length) steps[i++](next); };
+    const next = () => { if (running && i < steps.length) { waits.forEach(clearInterval); waits = []; steps[i++](next); } };
+    skipStep = () => { document.querySelectorAll('.p2-lv-modal').forEach((m) => m.remove()); next(); };
     next();
   }
   const closeProfile = () => { const x = $('.p2-modal [data-p2="close"]'); if (x) x.click(); };
@@ -115,6 +156,7 @@
     const finish = () => { end(); mark('tour'); if (frOn()) mark('fr5'); };
     run([
       (next) => { coach(fresh ? 'One last thing, Commander. Tap your <b>level</b> up here to open your <b>Commander profile</b>.' : 'Tap your <b>level</b> up here to open your <b>Commander profile</b>.', '[data-profile]'); waitFor(() => $('.p2-modal'), next); },
+      (next) => { inProfile = true; next(); },
       (next) => coach(named() ? 'This is you. Tap your <b>picture</b> any time to change it.' : 'This is you. Tap your <b>picture</b> any time to change it. Until you make a profile you show up as a <b>Guest</b>.', '.p2-pic', { next, label: 'Got it', bottom: true }),
       (next) => { coach('Tap your <b>level</b>, the ring or the bar, to see your rank, your next reward and what unlocks next.', '.p2-ring, .p2-lvbtn', { bottom: true }); waitFor(() => $('.p2-lv-modal'), next); },
       (next) => { coach('Everything you\'ll unlock soon is listed here. Tap <b>Got it</b> when you\'re ready.', '.p2-lv-modal [data-close]', { bottom: true }); waitFor(() => !$('.p2-lv-modal'), next); },
@@ -127,7 +169,7 @@
         if (!frOn()) return coach(`Friends unlock at level ${root.Friends ? root.Friends.LEVEL : 5}. Keep fighting, Commander. When you get there, I'll come find you.`, '[data-p2t="friends"]', { next: finish, label: 'Done', bottom: true });
         return coach('You\'ve already unlocked Friends: add other pilots, chat with them, and challenge them to friendly battles. Let me show you.', '[data-p2t="friends"]', { next, label: 'Show me', bottom: true });
       },
-      (next) => profileStep(() => { closeProfile(); setTimeout(next, 400); }, finish),
+      (next) => { inProfile = false; profileStep(() => { closeProfile(); setTimeout(next, 400); }, finish); },
       ...friendSteps,
       () => finish(),
     ]);
@@ -202,7 +244,7 @@
     setTimeout(returning, 500);
   }
 
-  root.RexGuide = { returning, friendsLesson, profileTour, tester, boot, end };
+  root.RexGuide = { returning, friendsLesson, profileTour, tester, boot, end, active: () => running };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => setTimeout(boot, 1500));
   else setTimeout(boot, 1500);
   // The tester code switched on mid-session starts it too.

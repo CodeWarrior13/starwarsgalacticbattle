@@ -185,6 +185,7 @@
       if (x.dataset.p2 === 'level') return levelInfo();
       // No profile yet: make one (callsign and picture). The button stays until you do.
       if (x.dataset.p2 === 'addprof') { m.close(); if (root.Account && root.Account.profile) root.Account.profile(() => open(), false); return; }
+      if (x.dataset.p2 === 'pic' && root.RexGuide && root.RexGuide.active && root.RexGuide.active()) return toast('Finish Captain Rex\'s tour first, then tap your picture to change it.');
       if (x.dataset.p2 === 'pic') { m.close(); if (root.Account && root.Account.profile) root.Account.profile(() => open(), true); return; }
       if (x.dataset.p2 === 'friends') { m.close(); if (root.Friends) root.Friends.open(); }
     });
