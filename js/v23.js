@@ -152,7 +152,7 @@
     const baseOdds = Pl.effectiveOdds;
     Pl.effectiveOdds = function (pack) {
       if (!this.__auto || !AUTO_ODDS[pack.id]) return baseOdds.call(this, pack);
-      return baseOdds.call(this, { ...pack, odds: AUTO_ODDS[pack.id] });
+      return baseOdds.call(this, { ...pack, odds: AUTO_ODDS[pack.id], charmMythicPct: 0 });
     };
   }
   const v23 = () => { const s = P().state; return (s.v23 = s.v23 || {}); };

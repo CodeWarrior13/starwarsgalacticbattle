@@ -305,6 +305,10 @@
         odds.legendary *= D.LUCK.charmOdds.legendary;
         if (odds.mythic) odds.mythic *= D.LUCK.charmOdds.mythic;
         odds.epic *= D.LUCK.charmOdds.epic;
+        if (pack.charmMythicPct) {
+          const rest = Object.entries(odds).reduce((n, [r, w]) => n + (r === 'mythic' ? 0 : w), 0);
+          odds.mythic = (rest * pack.charmMythicPct) / (100 - pack.charmMythicPct);
+        }
       }
       return odds;
     },
