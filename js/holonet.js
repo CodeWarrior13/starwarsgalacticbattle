@@ -8159,6 +8159,17 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
     HN.Duel.challengeFriend({ peer: uid, by: uid, nm: F.otherName(r) }, kind);
   }
 
+  // Callsigns starting with key, closest first (exact, then shortest, then A-Z).
+  async function findNames(key, max) {
+    try {
+      const fsx = root.firebase && root.firebase.firestore;
+      const idf = fsx && fsx.FieldPath ? fsx.FieldPath.documentId() : '__name__';
+      const snap = await Net.db.collection('names').where(idf, '>=', key).where(idf, '<=', `${key}\uf8ff`).limit(max || 20).get();
+      return snap.docs.map((d) => ({ key: d.id, uid: (d.data() || {}).uid })).filter((r) => r.uid)
+        .sort((a, b) => Number(b.key === key) - Number(a.key === key) || a.key.length - b.key.length || a.key.localeCompare(b.key));
+    } catch (e) { return null; }
+  }
+
   function open() {
     if (!on()) return;
     if (!Net.ready) { boot().then(() => (Net.ready ? open() : toast("Couldn't reach the HoloNet. Check your connection and try again."))); return; }
@@ -8198,7 +8209,9 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
       host.querySelector('[data-dmform]').addEventListener('submit', (e) => { e.preventDefault(); const v = inp.value; sendDm(r, v).then((ok) => { if (ok) { const i2 = host.querySelector('[data-dmin]'); if (i2) { i2.value = ''; i2.focus(); } } }); });
       if (!keep) setTimeout(() => inp.focus(), 60);
     };
+    let hadFocus = false;
     const render = () => {
+      hadFocus = !!(document.activeElement && document.activeElement.matches && document.activeElement.matches('.frp [data-q]'));
       if (F.chatWith) { const cr = F.rows.get(F.chatWith); if (cr && cr.ok) return renderChat(cr); F.chatWith = null; }
       const fr = F.friends().sort((x, y) => Number(isOnline(F.other(y))) - Number(isOnline(F.other(x))) || F.otherName(x).localeCompare(F.otherName(y)));
       const inc = F.incoming();
@@ -8209,14 +8222,61 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
           ? `${inc.length ? `<h4>Wants to be friends</h4><div class="fr-list">${inc.map((r) => `<div class="fr-row"><span class="fr-av">${esc(F.otherName(r).slice(0, 2).toUpperCase())}</span><span class="fr-who"><b>${esc(F.otherName(r))}</b><small>Friend request</small></span><span class="fr-go"><button type="button" class="btn" data-f="decline" data-id="${esc(r.id)}">Decline</button><button type="button" class="btn btn-primary" data-f="accept" data-id="${esc(r.id)}">Accept</button></span></div>`).join('')}</div>` : '<p class="muted small fr-empty">No new requests.</p>'}
             ${out.length ? `<h4>Sent</h4><div class="fr-list">${out.map((r) => `<div class="fr-row"><span class="fr-av">${esc(F.otherName(r).slice(0, 2).toUpperCase())}</span><span class="fr-who"><b>${esc(F.otherName(r))}</b><small>Waiting for them</small></span><span class="fr-go"><button type="button" class="btn" data-f="cancel" data-id="${esc(r.id)}">Cancel</button></span></div>`).join('')}</div>` : ''}`
           : `<p class="muted small">Type a pilot's callsign to send them a friend request. They'll see it next time they open Friends.</p>
-            <div class="fp-row"><input class="pf-in" data-q maxlength="16" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Callsign"><button type="button" class="btn btn-primary" data-f="add">Send</button></div>
+            <div class="fp-row"><input class="pf-in" data-q maxlength="16" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Search callsigns"><button type="button" class="btn btn-primary" data-f="add">Search</button></div>
+            <div class="fr-sug" data-sug hidden></div>
             <p class="muted small">Your callsign is <b>${esc(myTag())}</b>. Share it so friends can add you.</p>`;
       host.innerHTML = `<div class="fr-head"><div><p class="eyebrow">Friends</p><h2>Friendly battles</h2></div><button type="button" class="btn" data-f="close">Close</button></div>
         <p class="muted small fr-blurb">Challenge a friend who's online to a Ground or Fleet battle: you each ban a card, build a squad, and every card fights at the same level. Just for fun: no rating, no rewards.</p>
         <div class="fr-tabs"><button type="button" class="${tab === 'list' ? 'on' : ''}" data-tab="list">Friends <i>${fr.length}</i></button><button type="button" class="${tab === 'req' ? 'on' : ''}" data-tab="req">Requests ${inc.length ? `<i class="hot">${inc.length}</i>` : ''}</button><button type="button" class="${tab === 'add' ? 'on' : ''}" data-tab="add">Add</button></div>
         ${body}<p class="pe-st ${status.cls}" data-st>${esc(status.msg)}</p>`;
-      if (tab === 'add') { const i = host.querySelector('[data-q]'); if (i) { i.addEventListener('keydown', (e) => { if (e.key === 'Enter') add(i.value.trim(), st); }); setTimeout(() => i.focus(), 60); } }
+      if (tab === 'add') {
+        const i = host.querySelector('[data-q]');
+        if (i) {
+          i.value = lastQ;
+          if (hadFocus) { i.focus(); i.setSelectionRange(lastQ.length, lastQ.length); }
+          // Results drop down as you type: the closest callsigns first.
+          let tmr = 0;
+          i.addEventListener('input', () => { clearTimeout(tmr); lastQ = i.value; tmr = setTimeout(() => showSug(i.value), 220); });
+          i.addEventListener('keydown', (e) => { if (e.key === 'Enter') showSug(i.value, true); });
+          if (!hadFocus) setTimeout(() => i.focus(), 60);
+          if (lastQ) showSug(lastQ);
+        }
+      }
     };
+    // Live search: callsigns that start with what you've typed, closest first.
+    let lastQ = '';
+    let seq = 0;
+    const showSug = async (q, full) => {
+      const box = host.querySelector('[data-sug]');
+      if (!box) return;
+      const key = nameKey(q);
+      if (key.length < 2) { box.hidden = true; box.innerHTML = ''; return; }
+      const my = ++seq;
+      box.hidden = false;
+      box.innerHTML = '<p class="muted small fr-sug-msg">Searching…</p>';
+      const list = await findNames(key, full ? 40 : 20);
+      if (my !== seq || !box.isConnected) return;
+      if (!list) { box.innerHTML = '<p class="muted small fr-sug-msg">Couldn\'t search right now. Try again.</p>'; return; }
+      if (!list.length) { box.innerHTML = `<p class="muted small fr-sug-msg">No pilots start with "${esc(q.trim())}".</p>`; return; }
+      box.innerHTML = list.map((r) => {
+        const me = r.uid === Net.me;
+        const stt = me ? 'you' : (HN.friends && HN.friends.state ? HN.friends.state(r.uid) : '');
+        const btn = me ? '<span class="muted small">You</span>'
+          : stt === 'friends' ? '<span class="fr-sug-tag">Friends</span>'
+            : stt === 'sent' ? '<span class="fr-sug-tag">Sent</span>'
+              : `<button type="button" class="fr-sug-add" data-sugadd="${esc(r.uid)}" data-sugnm="${esc(r.key)}" aria-label="Add ${esc(r.key)}" title="${stt === 'incoming' ? 'Accept' : 'Add friend'}"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="8" r="3.6" fill="currentColor"/><path d="M3 19.5c.6-3.7 3.4-5.8 7-5.8s6.4 2.1 7 5.8z" fill="currentColor"/><path d="M19 7v6M16 10h6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button>`;
+        return `<div class="fr-sug-row ${r.key === key ? 'exact' : ''}"><span class="fr-av">${esc(r.key.slice(0, 2).toUpperCase())}</span><span class="fr-who"><b>${esc(r.key)}</b><small>${r.key === key ? 'Exact match' : 'Pilot'}</small></span>${btn}</div>`;
+      }).join('');
+    };
+    host.addEventListener('click', async (e) => {
+      const b = e.target.closest('[data-sugadd]');
+      if (!b) return;
+      e.stopPropagation();
+      b.disabled = true;
+      const msg = await addUid(b.dataset.sugadd, b.dataset.sugnm);
+      st(msg === 'Request sent' ? `Friend request sent to ${b.dataset.sugnm}.` : msg === 'Friends!' ? `You and ${b.dataset.sugnm} are now friends!` : msg, /sent|Friends/.test(msg) ? 'good' : 'bad');
+      showSug(lastQ);
+    });
     F.view = render;
     render();
     poll();
@@ -8230,7 +8290,7 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
       const f = b.dataset.f;
       if (f === 'close') return m.close();
       if (f === 'back') { F.chatWith = null; return render(); }
-      if (f === 'add') return add(host.querySelector('[data-q]').value.trim(), st);
+      if (f === 'add') return showSug(host.querySelector('[data-q]').value, true);
       if (!r) return;
       if (f === 'chat') { F.chatWith = r.id; return render(); }
       if (f === 'accept') return accept(r, st);
@@ -8267,6 +8327,15 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
   const css = document.createElement('style');
   css.textContent = `.modal.frp-modal { width: min(560px, 100%); }
 .frp { display: grid; gap: 10px; }
+.fr-sug { display: grid; gap: 4px; max-height: min(42vh, 320px); overflow-y: auto; padding: 6px; border-radius: 12px; border: 1px solid rgba(95, 216, 255, 0.3); background: rgba(4, 12, 20, 0.95); box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45); animation: frSug .18s ease-out; }
+@keyframes frSug { from { opacity: 0; transform: translateY(-6px); } }
+.fr-sug-row { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; padding: 6px 8px; border-radius: 10px; }
+.fr-sug-row:hover, .fr-sug-row.exact { background: rgba(95, 216, 255, 0.08); }
+.fr-sug-row .fr-av { width: 32px; height: 32px; }
+.fr-sug-add { width: 38px; height: 38px; border-radius: 50%; border: 1px solid #5fd8ff; background: rgba(95, 216, 255, 0.15); color: #bfefff; display: grid; place-items: center; cursor: pointer; }
+.fr-sug-add svg { width: 20px; height: 20px; } .fr-sug-add:disabled { opacity: .5; }
+.fr-sug-tag { font: 700 11px var(--font-display, system-ui); color: #7af0a0; letter-spacing: .04em; }
+.fr-sug-msg { margin: 6px 4px; }
 .fr-chat { position: relative; }
 .fr-n { position: absolute; top: -6px; right: -6px; min-width: 17px; height: 17px; padding: 0 4px; border-radius: 9px; background: #ff3b30; color: #fff; font: 800 10.5px/17px var(--font-display, system-ui); font-style: normal; text-align: center; }
 .fr-chatwho { display: grid; text-align: right; } .fr-chatwho small { color: #8fb4c8; }

@@ -633,12 +633,12 @@
         const frOpen = U22 && U22.test && !U22.on();
         if (released()) {
           if (!frOpen) return before ? before(c) : false;
-          const on = !U22.test();
-          U22.test(on);
-          toast(on ? 'Friends test: ON for this device (friends, chat, friendly battles, the new profile and Rex\'s walkthrough).' : 'Friends test: OFF for this device.');
-          // Testers also get the new profile and Rex's walkthrough.
-          if (root.ProfileV2) root.ProfileV2.preview(on);
-          if (on && root.RexGuide) setTimeout(() => root.RexGuide.tester(), 900);
+          // Always on (entering it again never switches it off): Friends, chat,
+          // friendly battles, the new profile, and Rex's walkthrough replays.
+          U22.test(true);
+          if (root.ProfileV2) root.ProfileV2.preview(true);
+          toast('2.2 test ON for this device: Friends, chat, friendly battles, the new profile and Rex\'s walkthrough.');
+          if (root.RexGuide) setTimeout(() => root.RexGuide.tester(), 900);
           return true;
         }
         const on = ls(TEST) !== '1';
