@@ -64,11 +64,11 @@
       const lg = hn && root.HN.divOf ? root.HN.divOf(hn.rating) : null;
       return `<button type="button" class="pf-x p2-x" data-p2="close" aria-label="Close">✕</button>
       <div class="p2-top">
-        <div class="p2-av"><div class="p2-pic">${pic}</div><div class="acct-ring p2-ring" style="--p:${pct}"><b>${a.level}</b></div></div>
+        <div class="p2-av"><button type="button" class="p2-pic" data-p2="pic" aria-label="Change your picture">${pic}<span class="p2-edit">Change</span></button><button type="button" class="acct-ring p2-ring" data-p2="level" style="--p:${pct}" aria-label="Level ${a.level}: what's coming up"><b>${a.level}</b></button></div>
         <div class="p2-id"><p class="eyebrow">Commander profile</p><h2>${esc(name)}</h2>
           <p class="muted small">${title(a.level)} · Level ${a.level}${lg ? ` · ${esc(lg.name)}` : ''}</p>
-          <div class="p2-xp"><i style="width:${pct}%"></i></div>
-          <p class="muted small" style="margin:2px 0 0">${a.level >= D.MAX_ACCOUNT_LEVEL ? 'Maximum rank reached.' : `${fmt(a.xp)} / ${fmt(need)} XP to level ${a.level + 1}`}</p></div>
+          <button type="button" class="p2-lvbtn" data-p2="level" aria-label="Level ${a.level}: what's coming up"><span class="p2-xp"><i style="width:${pct}%"></i></span>
+          <span class="muted small">${a.level >= D.MAX_ACCOUNT_LEVEL ? 'Maximum rank reached.' : `${fmt(a.xp)} / ${fmt(need)} XP to level ${a.level + 1}`} · <b class="p2-more">Coming up ›</b></span></button></div>
       </div>`;
     };
     const tabs = () => `<div class="pc-tabs p2-tabs" role="tablist">${[['overview', 'Overview'], ['collection', 'Collection'], ['worlds', 'Worlds'], ['badges', 'Badges'], ['friends', 'Friends'], ['stats', 'Stats']].map(([k, n]) => `<button type="button" role="tab" aria-selected="${tab === k}" class="${tab === k ? 'on' : ''}" data-p2t="${k}">${n}</button>`).join('')}</div>`;
@@ -77,7 +77,6 @@
       const won = st.battlesWon, lost = st.battlesLost;
       const f = fav && use[fav];
       return `<div class="pc-tiles"><div><b>${a.level}</b><span>Level</span></div><div><b>${fmt(won)}</b><span>Battles won</span></div><div><b>${won + lost ? Math.round((won / (won + lost)) * 100) : 0}%</b><span>Win rate</span></div><div><b>${W.filter((w) => w.full).length}/${W.length}</b><span>Worlds freed</span></div></div>
-        ${next.length ? `<h3 class="pc-h">Coming up <small>next unlocks</small></h3><div class="p2-next">${next.map((lv) => unlockAt[lv].map((t) => `<div><b>Level ${lv}</b><span><em>${esc(t.name)}</em> ${esc(t.desc)}</span></div>`).join('')).join('')}</div>` : ''}
         <h3 class="pc-h">Favorite card <small>most used</small></h3>
         ${fav ? `<div class="pc-fav"><div class="pt">${UI.portrait(D.UNIT_MAP[fav])}</div><div><h4>${esc(D.UNIT_MAP[fav].name)}</h4><div class="sub">${esc(D.RARITIES[D.UNIT_MAP[fav].rarity].label)} · Lv ${col[fav].level} · ${'★'.repeat(col[fav].stars)}</div>
           <div class="nums"><div><b>${fmt(f.b)}</b><span>battles</span></div><div><b>${f.b ? Math.round((f.w / f.b) * 100) : 0}%</b><span>win rate</span></div><div><b>${fmt(power(fav))}</b><span>power</span></div></div></div></div>` : '<p class="pc-empty">Play a few battles and your most-used card shows here.</p>'}
@@ -146,6 +145,19 @@
         ${hn ? '' : '<p class="pc-empty" style="margin-top:8px">HoloNet stats (rating, league, arena) appear here once you unlock the HoloNet at level 25.</p>'}`;
     };
 
+    // Tapping the level ring or XP bar: your level, the next rewards and what's coming up.
+    const levelInfo = () => {
+      const r = D.levelReward(a.level + 1);
+      const ranks = [[6, 'Commander'], [15, 'General'], [30, 'Fleet Admiral'], [D.MAX_ACCOUNT_LEVEL, 'Grand Master']].filter(([lv]) => lv > a.level);
+      const lm = openModal(`<div class="p2-lv"><div class="acct-ring big" style="--p:${pct}"><b>${a.level}</b><span>Level</span></div>
+        <h3>${title(a.level)} · Level ${a.level}</h3>
+        <p class="muted small">${a.level >= D.MAX_ACCOUNT_LEVEL ? 'Maximum rank reached.' : `${fmt(a.xp)} / ${fmt(need)} XP to level ${a.level + 1}. Level ${a.level + 1} pays ${fmt(r.credits)} credits${r.crystals ? ` and ${r.crystals} Kyber` : ''}.`}</p>
+        ${ranks.length ? `<p class="small">Next rank: <b>${ranks[0][1]}</b> at level ${ranks[0][0]}</p>` : ''}
+        <h4>Coming up</h4>
+        ${next.length ? `<div class="p2-next">${next.map((lv) => unlockAt[lv].map((t) => `<div><b>Level ${lv}</b><span><em>${esc(t.name)}</em> ${esc(t.desc)}</span></div>`).join('')).join('')}</div>` : '<p class="muted small">You\'ve unlocked everything. Keep climbing for rewards.</p>'}
+        <div class="modal-actions"><button type="button" class="btn btn-primary" data-close>Got it</button></div></div>`, { small: true, cls: 'p2-lv-modal' });
+      lm.root.addEventListener('click', (e) => { if (e.target.closest('[data-close]')) lm.close(); });
+    };
     const body = () => `${head()}${tabs()}<div data-p2body>${({ overview, collection, worlds: worldsTab, badges: badgesTab, friends: friendsTab, stats })[tab]()}</div>`;
     const m = openModal(`<div class="pf-card pc-card p2-card">${body()}</div>`, { small: true, cls: 'pf-modal p2-modal' });
     const card = m.root.querySelector('.p2-card');
@@ -170,6 +182,8 @@
       const x = e.target.closest('[data-p2]');
       if (!x) return;
       if (x.dataset.p2 === 'close') return m.close();
+      if (x.dataset.p2 === 'level') return levelInfo();
+      if (x.dataset.p2 === 'pic') { m.close(); if (root.Account && root.Account.profile) root.Account.profile(() => open(), true); return; }
       if (x.dataset.p2 === 'friends') { m.close(); if (root.Friends) root.Friends.open(); }
     });
     return m;
@@ -181,14 +195,20 @@
   const base = UI.profile;
   if (base && !UI.__p2) {
     UI.__p2 = true;
-    UI.profile = function () { return preview() ? open() : base.apply(this, arguments); };
+    // Switches on for everyone with 2.2 (testers earlier with the HOLOSAVE21 code).
+    UI.profile = function () { return preview() || (root.Update22 && root.Update22.on()) ? open() : base.apply(this, arguments); };
   }
 
   const st = document.createElement('style');
   st.textContent = `.modal.p2-modal { width: min(720px, 100%); }
 .p2-top { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 14px; align-items: center; padding: 14px; border-radius: 16px; border: 1px solid rgba(95, 216, 255, 0.35); background: linear-gradient(135deg, rgba(95, 216, 255, 0.12), rgba(176, 112, 255, 0.08)); }
 .p2-av { position: relative; width: 84px; height: 84px; }
-.p2-pic { width: 84px; height: 84px; border-radius: 50%; overflow: hidden; border: 3px solid #ffd23f; box-shadow: 0 0 16px rgba(255, 210, 63, 0.35); }
+.p2-pic { position: relative; width: 84px; height: 84px; padding: 0; border-radius: 50%; overflow: hidden; border: 3px solid #ffd23f; box-shadow: 0 0 16px rgba(255, 210, 63, 0.35); background: #0b1422; cursor: pointer; }
+.p2-edit { position: absolute; left: 0; right: 0; bottom: 0; padding: 3px 0 5px; background: rgba(0, 0, 0, 0.6); color: #fff; font: 700 10px var(--font-display, system-ui); letter-spacing: .06em; text-transform: uppercase; opacity: .85; }
+.p2-ring { border: 0; padding: 0; cursor: pointer; }
+.p2-lvbtn { display: grid; gap: 3px; width: 100%; padding: 0; margin-top: 4px; border: 0; background: none; color: inherit; text-align: left; cursor: pointer; }
+.p2-more { color: #ffd23f; }
+.p2-lv { display: grid; justify-items: center; gap: 6px; text-align: center; } .p2-lv h3 { margin: 4px 0 0; } .p2-lv h4 { margin: 8px 0 0; letter-spacing: .08em; text-transform: uppercase; font-size: 12px; color: #8fb4c8; } .p2-lv .p2-next { width: 100%; text-align: left; }
 .p2-pic svg, .p2-pic img { width: 100%; height: 100%; display: block; object-fit: cover; }
 .p2-ring { position: absolute; right: -8px; bottom: -6px; width: 38px; height: 38px; }
 .p2-ring b { font-size: 14px; }
