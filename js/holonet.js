@@ -7973,10 +7973,38 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
     incoming() { return [...this.rows.values()].filter((r) => !r.ok && r.by !== Net.me); },
     outgoing() { return [...this.rows.values()].filter((r) => !r.ok && r.by === Net.me); },
     isFriend(uid) { return this.friends().some((r) => this.other(r) === uid); },
+    dms: new Map(), // pair id -> { msgs: [{ by, x, t }] }
+    unread(id) {
+      const d = this.dms.get(id);
+      if (!d || !this.rows.get(id) || !this.rows.get(id).ok) return 0;
+      const seen = dmSeen()[id] || 0;
+      return (d.msgs || []).filter((m) => m && m.by !== Net.me && (m.t || 0) > seen).length;
+    },
+    badge() { return this.incoming().length + this.friends().reduce((n, r) => n + this.unread(r.id), 0); },
   };
+  // When you last read each chat, kept on this device.
+  const SEEN_KEY = 'swcg-dm-seen';
+  function dmSeen() { try { return JSON.parse(localStorage.getItem(SEEN_KEY) || '{}') || {}; } catch (e) { return {}; } }
+  function markSeen(id) {
+    const d = F.dms.get(id);
+    const last = d && d.msgs && d.msgs.length ? d.msgs[d.msgs.length - 1].t || 0 : 0;
+    const all = dmSeen();
+    if ((all[id] || 0) >= last) return;
+    all[id] = last;
+    try { localStorage.setItem(SEEN_KEY, JSON.stringify(all)); } catch (e) { /* ignore */ }
+  }
+  const DM_MAX = 200;
+  const DM_KEEP = 40;
+  const DM_GAP = 1500;
+  // A message as it shows on screen: only from the two of you, re-filtered, trimmed.
+  function dmText(m, r) {
+    if (!m || typeof m.x !== 'string' || (m.by !== r.a && m.by !== r.b)) return '';
+    const c = HN.safe.clean(m.x.slice(0, DM_MAX));
+    return c.blocked ? '' : c.text.trim();
+  }
 
   const on = () => !!(root.Friends && root.Friends.unlocked());
-  const dot = () => { if (root.Friends) root.Friends.dot(F.incoming().length > 0); };
+  const dot = () => { if (root.Friends) { if (root.Friends.badge) root.Friends.badge(F.badge()); else root.Friends.dot(F.badge() > 0); } };
   const redraw = () => { if (F.view) F.view(); };
 
   async function boot() {
@@ -8003,6 +8031,30 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
       };
       Net.db.collection('friends').where('a', '==', Net.me).limit(MAX * 2).onSnapshot(take('a'), () => {});
       Net.db.collection('friends').where('b', '==', Net.me).limit(MAX * 2).onSnapshot(take('b'), () => {});
+      // Chats with friends: one doc per pair, the last 40 messages.
+      const dmLoaded = { a: false, b: false };
+      const takeDm = (side) => (snap) => {
+        // Chats that are gone (deleted, or a write the server refused) drop out.
+        for (const id of [...F.dms.keys()]) { const mineSide = side === 'a' ? id.startsWith(`${Net.me}_`) : id.endsWith(`_${Net.me}`); if (mineSide && !snap.docs.some((d) => d.id === id)) F.dms.delete(id); }
+        for (const d of snap.docs) {
+          const v = d.data();
+          if (!v) continue;
+          const before = F.dms.get(d.id);
+          const lastBefore = before && before.msgs && before.msgs.length ? before.msgs[before.msgs.length - 1].t : 0;
+          F.dms.set(d.id, { msgs: Array.isArray(v.msgs) ? v.msgs.slice(-DM_KEEP) : [] });
+          const r = F.rows.get(d.id);
+          const last = (v.msgs || [])[(v.msgs || []).length - 1];
+          // A new message while you're elsewhere: a small note that doesn't cover the screen.
+          if (dmLoaded[side] && r && r.ok && last && last.by !== Net.me && (last.t || 0) > (lastBefore || 0) && F.chatWith !== d.id) {
+            const x = dmText(last, r);
+            if (x) toast(`${F.otherName(r)}: ${x.length > 60 ? `${x.slice(0, 57)}…` : x}`);
+          }
+        }
+        dmLoaded[side] = true;
+        dot(); redraw();
+      };
+      Net.db.collection('dms').where('a', '==', Net.me).limit(MAX).onSnapshot(takeDm('a'), () => {});
+      Net.db.collection('dms').where('b', '==', Net.me).limit(MAX).onSnapshot(takeDm('b'), () => {});
     }
     // Being online for friends: the duel lobby heartbeat (also how challenges arrive).
     if (HN.Duel && HN.Duel.start) HN.Duel.start();
@@ -8053,8 +8105,25 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
     dot(); redraw();
   }
   async function drop(r, msg) {
+    if (r.ok) { Net.db.doc(`dms/${r.id}`).delete().catch(() => {}); F.dms.delete(r.id); }
     try { await Net.db.doc(`friends/${r.id}`).delete(); F.rows.delete(r.id); if (msg) toast(msg); } catch (e) { toast("Couldn't do that right now. Try again."); }
     dot(); redraw();
+  }
+
+  let lastDm = 0;
+  async function sendDm(r, raw) {
+    const text = String(raw || '').trim().slice(0, DM_MAX);
+    if (!text) return false;
+    if (Date.now() - lastDm < DM_GAP) { toast('Slow down a little.'); return false; }
+    const c = HN.safe.clean(text);
+    if (c.blocked || !c.text.trim()) { toast('That message can\'t be sent.'); return false; }
+    lastDm = Date.now();
+    const cur = F.dms.get(r.id) || { msgs: [] };
+    const msgs = (cur.msgs || []).concat({ by: Net.me, x: c.text.trim(), t: Date.now() }).slice(-DM_KEEP);
+    F.dms.set(r.id, { msgs });
+    markSeen(r.id);
+    redraw();
+    try { await Net.db.doc(`dms/${r.id}`).set({ a: r.a, b: r.b, msgs, t: Date.now() }); return true; } catch (e) { toast("Couldn't send. Try again."); return false; }
   }
 
   function challenge(r, kind) {
@@ -8072,7 +8141,7 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
       return HN.setupProfile((ok) => { if (ok !== false && HN.hasProfile()) open(); }, false);
     }
     let tab = F.incoming().length ? 'req' : 'list';
-    const m = openModal('<div class="frp" data-frp></div>', { cls: 'frp-modal', onClose: () => { clearInterval(timer); F.view = null; } });
+    const m = openModal('<div class="frp" data-frp></div>', { cls: 'frp-modal', onClose: () => { clearInterval(timer); F.view = null; F.chatWith = null; } });
     const host = m.root.querySelector('[data-frp]');
     let status = { msg: '', cls: '' };
     const st = (msg, cls) => { status = { msg, cls }; const n = host.querySelector('[data-st]'); if (n) { n.textContent = msg || ''; n.className = `pe-st ${cls || ''}`; } };
@@ -8083,9 +8152,28 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
       const busy = live && o && o.busy;
       return `<div class="fr-row"><span class="fr-av">${esc(F.otherName(r).slice(0, 2).toUpperCase())}</span>
         <span class="fr-who"><b>${esc(F.otherName(r))}</b><small class="${live ? (busy ? 'busy' : 'on') : ''}">${live ? (busy ? 'In a battle' : 'Online') : 'Offline'}</small></span>
-        <span class="fr-go"><button type="button" class="btn" data-f="ground" data-id="${esc(r.id)}" ${live && !busy ? '' : 'disabled'}>Ground</button><button type="button" class="btn" data-f="fleet" data-id="${esc(r.id)}" ${live && !busy ? '' : 'disabled'}>Fleet</button><button type="button" class="fr-x" data-f="remove" data-id="${esc(r.id)}" aria-label="Remove friend">✕</button></span></div>`;
+        <span class="fr-go"><button type="button" class="btn fr-chat" data-f="chat" data-id="${esc(r.id)}">Chat${F.unread(r.id) ? `<i class="fr-n">${F.unread(r.id) > 9 ? '9+' : F.unread(r.id)}</i>` : ''}</button><button type="button" class="btn" data-f="ground" data-id="${esc(r.id)}" ${live && !busy ? '' : 'disabled'}>Ground</button><button type="button" class="btn" data-f="fleet" data-id="${esc(r.id)}" ${live && !busy ? '' : 'disabled'}>Fleet</button><button type="button" class="fr-x" data-f="remove" data-id="${esc(r.id)}" aria-label="Remove friend">✕</button></span></div>`;
+    };
+    const renderChat = (r) => {
+      markSeen(r.id);
+      dot();
+      const msgs = (F.dms.get(r.id) || { msgs: [] }).msgs || [];
+      const keep = host.querySelector('[data-dmin]');
+      const draft = keep ? keep.value : '';
+      const lines = msgs.map((m) => { const x = dmText(m, r); return x ? `<p class="${m.by === Net.me ? 'me' : ''}"><span>${esc(x)}</span></p>` : ''; }).join('');
+      host.innerHTML = `<div class="fr-head"><button type="button" class="btn" data-f="back">‹ Friends</button><div class="fr-chatwho"><b>${esc(F.otherName(r))}</b><small>${isOnline(F.other(r)) ? 'Online' : 'Offline'}</small></div></div>
+        <div class="fr-dmlog" data-dmlog>${lines || '<p class="muted small fr-empty">No messages yet. Say hi!</p>'}</div>
+        <form class="fr-dmform" data-dmform><input type="text" data-dmin maxlength="${DM_MAX}" placeholder="Message ${esc(F.otherName(r))}…" autocomplete="off" enterkeyhint="send"><button type="submit" class="btn btn-primary">Send</button></form>
+        <p class="muted small" style="margin:0">Messages are checked for bad language and links. The last ${DM_KEEP} are kept.</p>`;
+      const inp = host.querySelector('[data-dmin]');
+      inp.value = draft;
+      const log = host.querySelector('[data-dmlog]');
+      log.scrollTop = log.scrollHeight;
+      host.querySelector('[data-dmform]').addEventListener('submit', (e) => { e.preventDefault(); const v = inp.value; sendDm(r, v).then((ok) => { if (ok) { const i2 = host.querySelector('[data-dmin]'); if (i2) { i2.value = ''; i2.focus(); } } }); });
+      if (!keep) setTimeout(() => inp.focus(), 60);
     };
     const render = () => {
+      if (F.chatWith) { const cr = F.rows.get(F.chatWith); if (cr && cr.ok) return renderChat(cr); F.chatWith = null; }
       const fr = F.friends().sort((x, y) => Number(isOnline(F.other(y))) - Number(isOnline(F.other(x))) || F.otherName(x).localeCompare(F.otherName(y)));
       const inc = F.incoming();
       const out = F.outgoing();
@@ -8115,8 +8203,10 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
       const r = b.dataset.id ? F.rows.get(b.dataset.id) : null;
       const f = b.dataset.f;
       if (f === 'close') return m.close();
+      if (f === 'back') { F.chatWith = null; return render(); }
       if (f === 'add') return add(host.querySelector('[data-q]').value.trim(), st);
       if (!r) return;
+      if (f === 'chat') { F.chatWith = r.id; return render(); }
       if (f === 'accept') return accept(r, st);
       if (f === 'decline') return drop(r, 'Request declined.');
       if (f === 'cancel') return drop(r, 'Request cancelled.');
@@ -8146,11 +8236,19 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
     try { await Net.db.doc(`friends/${id}`).set(body); F.rows.set(id, { ...body, id }); redraw(); return 'Request sent'; } catch (e) { return "Couldn't send. Try again."; }
   }
 
-  HN.friends = { boot, open, addUid, isFriend: (uid) => F.isFriend(uid), state: (uid) => { const r = F.rows.get(pairId(Net.me, uid)); return r ? (r.ok ? 'friends' : r.by === Net.me ? 'sent' : 'incoming') : ''; }, F };
+  HN.friends = { boot, open, addUid, badge: () => F.badge(), isFriend: (uid) => F.isFriend(uid), state: (uid) => { const r = F.rows.get(pairId(Net.me, uid)); return r ? (r.ok ? 'friends' : r.by === Net.me ? 'sent' : 'incoming') : ''; }, F };
 
   const css = document.createElement('style');
   css.textContent = `.modal.frp-modal { width: min(560px, 100%); }
 .frp { display: grid; gap: 10px; }
+.fr-chat { position: relative; }
+.fr-n { position: absolute; top: -6px; right: -6px; min-width: 17px; height: 17px; padding: 0 4px; border-radius: 9px; background: #ff3b30; color: #fff; font: 800 10.5px/17px var(--font-display, system-ui); font-style: normal; text-align: center; }
+.fr-chatwho { display: grid; text-align: right; } .fr-chatwho small { color: #8fb4c8; }
+.fr-dmlog { display: grid; gap: 6px; align-content: start; min-height: 180px; max-height: min(52vh, 420px); overflow-y: auto; padding: 10px; border-radius: 12px; background: rgba(4, 12, 20, 0.85); border: 1px solid rgba(95, 216, 255, 0.2); }
+.fr-dmlog p { margin: 0; display: flex; } .fr-dmlog p.me { justify-content: flex-end; }
+.fr-dmlog p span { max-width: 78%; padding: 7px 11px; border-radius: 14px 14px 14px 4px; background: #13263a; color: #e8f6ff; font-size: 14px; line-height: 1.35; overflow-wrap: anywhere; }
+.fr-dmlog p.me span { border-radius: 14px 14px 4px 14px; background: #1d6fa8; color: #fff; }
+.fr-dmform { display: flex; gap: 8px; } .fr-dmform input { flex: 1; min-width: 0; padding: 10px 12px; border-radius: 12px; border: 1px solid rgba(95, 216, 255, 0.35); background: #04101a; color: #fff; font-size: 16px; }
 .fr-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
 .fr-head h2 { margin: 0; } .fr-head .eyebrow { margin: 0 0 2px; }
 .fr-blurb { margin: 0; }

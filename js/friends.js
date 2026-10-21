@@ -60,7 +60,15 @@
     btn.hidden = false;
   }
   // The HoloNet code lights the dot for new requests and friendly-battle invites.
-  root.Friends = { open, paint, boot, unlocked, dot: (v) => { if (btn) btn.querySelector('.fr-dot').hidden = !v; }, LEVEL: FRIENDS_LEVEL };
+  // The red number on the Friends button: friend requests waiting plus unread messages.
+  const badge = (n) => {
+    if (!btn) return;
+    const d = btn.querySelector('.fr-dot');
+    d.hidden = !n;
+    d.textContent = n > 9 ? '9+' : String(n || '');
+    btn.setAttribute('aria-label', n ? `Friends (${n} new)` : 'Friends');
+  };
+  root.Friends = { open, paint, boot, unlocked, badge, dot: (v) => badge(v ? 1 : 0), LEVEL: FRIENDS_LEVEL };
 
   function init() {
     paint();
