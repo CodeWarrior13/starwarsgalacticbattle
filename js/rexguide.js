@@ -39,7 +39,7 @@
   }
   // Rex's box never hides what he's pointing at: it moves to the other edge of
   // the screen if it would cover it, taps pass through it, and if a step is
-  // still waiting after 30 seconds a "Skip this step" button appears.
+  // still waiting after 15 seconds a "Skip this step" button appears.
   let stuck = 0;
   const overlaps = (a, b) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
   function coach(text, glow, opts) {
@@ -64,7 +64,7 @@
         const sk = ui().el('<button class="btn btn-small" type="button" data-rexskip>Skip this step</button>');
         sk.addEventListener('click', (e) => { e.stopPropagation(); if (skipStep) skipStep(); });
         box.appendChild(sk);
-      }, 30000);
+      }, 15000);
     }
   }
   let skipStep = null;

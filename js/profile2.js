@@ -64,7 +64,7 @@
       const lg = hn && root.HN.divOf ? root.HN.divOf(hn.rating) : null;
       return `<button type="button" class="pf-x p2-x" data-p2="close" aria-label="Close">✕</button>
       <div class="p2-top">
-        <div class="p2-av"><button type="button" class="p2-pic" data-p2="pic" aria-label="Change your picture">${pic}<span class="p2-edit">Change</span></button><button type="button" class="acct-ring p2-ring" data-p2="level" style="--p:${pct}" aria-label="Level ${a.level}: what's coming up"><b>${a.level}</b></button></div>
+        <div class="p2-av"><button type="button" class="p2-pic" data-p2="pic" aria-label="Change your picture"><span class="p2-face">${pic}</span><span class="p2-edit" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4z" fill="currentColor"/></svg></span></button><button type="button" class="acct-ring p2-ring" data-p2="level" style="--p:${pct}" aria-label="Level ${a.level}: what's coming up"><b>${a.level}</b></button></div>
         <div class="p2-id"><p class="eyebrow">Commander profile</p><h2>${esc(name)}</h2>${prof.tag ? '' : '<button type="button" class="btn btn-small btn-primary p2-addprof" data-p2="addprof">Add profile</button>'}
           <p class="muted small">${title(a.level)} · Level ${a.level}${lg ? ` · ${esc(lg.name)}` : ''}</p>
           <button type="button" class="p2-lvbtn" data-p2="level" aria-label="Level ${a.level}: what's coming up"><span class="p2-xp"><i style="width:${pct}%"></i></span>
@@ -207,7 +207,20 @@
 .p2-top { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 14px; align-items: center; padding: 14px; border-radius: 16px; border: 1px solid rgba(95, 216, 255, 0.35); background: linear-gradient(135deg, rgba(95, 216, 255, 0.12), rgba(176, 112, 255, 0.08)); }
 .p2-av { position: relative; width: 84px; height: 84px; }
 .p2-pic { position: relative; width: 84px; height: 84px; padding: 0; border-radius: 50%; overflow: hidden; border: 3px solid #ffd23f; box-shadow: 0 0 16px rgba(255, 210, 63, 0.35); background: #0b1422; cursor: pointer; }
-.p2-edit { position: absolute; left: 0; right: 0; bottom: 0; padding: 3px 0 5px; background: rgba(0, 0, 0, 0.6); color: #fff; font: 700 10px var(--font-display, system-ui); letter-spacing: .06em; text-transform: uppercase; opacity: .85; }
+.p2-pic { overflow: visible; }
+.p2-face { position: absolute; inset: 0; border-radius: 50%; overflow: hidden; display: block; }
+.p2-edit { position: absolute; left: -4px; top: -4px; width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50%; background: #5fd8ff; color: #04121c; box-shadow: 0 0 0 2px #0a1220; }
+.p2-edit svg { width: 14px !important; height: 14px !important; }
+.p2-card { position: relative; }
+.p2-card > .p2-x { position: absolute; top: 8px; right: 8px; float: none; margin: 0; z-index: 4; }
+.p2-top { padding-right: 46px; }
+.p2-card .ucard { width: 100%; min-width: 0; font-size: 11px; }
+.p2-card .ucard:hover { transform: none; }
+.p2-card .ucard-body { padding: 7px 8px 9px; gap: 3px; min-width: 0; }
+.p2-card .ucard-name { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.p2-card .ucard-meta { min-width: 0; font-size: 10.5px; flex-wrap: nowrap; } .p2-card .ucard-meta > * { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.p2-card .ucard-meta { gap: 4px; } .p2-card .ucard-meta > :last-child { flex: none; overflow: visible; }
+.p2-card .ucard-meta .rar { font-size: 8.5px; letter-spacing: 0; }
 .p2-ring { border: 0; padding: 0; cursor: pointer; }
 .p2-lvbtn { display: grid; gap: 3px; width: 100%; padding: 0; margin-top: 4px; border: 0; background: none; color: inherit; text-align: left; cursor: pointer; }
 .p2-more { color: #ffd23f; }
