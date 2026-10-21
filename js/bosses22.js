@@ -890,6 +890,9 @@ ${Array.from({ length: 11 }, (_, i) => `<rect x="${37 + i * 4.3}" y="5.6" width=
     };
   }
 
+  // Starkiller update: one Star Destroyer per enemy (live early, Oct 21; listed in the 2.2 notes).
+  if (BUI && BUI.SIG && BUI.mv_starfall) BUI.SIG.starkiller = { move: 'starfall', prop: 'isd', impact: 'crush', color: '#7ac8ff' };
+
   // ---------- Switch on at 2.2 ----------
   if (!D) return;
   Object.assign(D.STATUS_INFO, STATUS22);
@@ -904,8 +907,6 @@ ${Array.from({ length: 11 }, (_, i) => `<rect x="${37 + i * 4.3}" y="5.6" width=
   // General Grievous update: his new card art.
   if (D.UNIT_MAP.grievous && root.Art && root.Art.CHARACTER_IDS.includes('grievous_22')) D.UNIT_MAP.grievous.portrait = 'grievous_22';
   if (BUI && BUI.SIG && BUI.mv_jedikiller) BUI.SIG.grievous = { move: 'jedikiller', prop: 'saber', impact: 'xslash', color: '#46e070' };
-  // Starkiller update: one Star Destroyer per enemy.
-  if (BUI && BUI.SIG && BUI.mv_starfall) BUI.SIG.starkiller = { move: 'starfall', prop: 'isd', impact: 'crush', color: '#7ac8ff' };
   // General Grievous buff: one of the strongest epics, able to take on some legendaries.
   const gv = D.UNIT_MAP.grievous;
   if (gv && !gv.__buff22) {

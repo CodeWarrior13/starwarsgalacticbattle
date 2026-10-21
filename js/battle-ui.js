@@ -42,6 +42,8 @@
   const SABER = { light: '#5ab4ff', dark: '#ff2a2a' };
   const rand = (a, b) => a + Math.random() * (b - a);
 
+  // A mouse or trackpad (not a touch screen): aim with a click, attack with a second click.
+  const aimFirst = () => !!(root.matchMedia && root.matchMedia('(hover: hover) and (pointer: fine)').matches);
   const BattleUI = {
     battle: null,
     prefs: loadPrefs(),
@@ -329,7 +331,7 @@
         </button>`;
       }).join('');
       const ab = actor.abilities[this.selected];
-      const hint = b.needsTarget(actor, this.selected) ? 'Tap a highlighted enemy, or ←/→ then Enter.'
+      const hint = b.needsTarget(actor, this.selected) ? (aimFirst() && !this.isTutorial() ? 'Click an enemy to aim, then double-click it (or click it again) to attack. Pick any ability first.' : 'Tap a highlighted enemy, or ←/→ then Enter.')
         : ab.target === 'allEnemies' ? 'Tap any enemy (or Enter) to hit them all.'
           : ab.target === 'allAllies' ? 'Tap any ally (or Enter) to use it on your whole squad.'
             : 'Tap your unit (or Enter) to use it.';
@@ -584,7 +586,20 @@
       const abBtn = e.target.closest('[data-ab]');
       if (abBtn) return this.selectAbility(Number(abBtn.dataset.ab));
       const card = e.target.closest('.bcard.targetable');
-      if (card && this.pending) return this.fireAt(card.dataset.uid);
+      if (card && this.pending) {
+        // Mouse and trackpad: the first click aims at a single-target enemy and
+        // the second click (or a double-click) attacks, so you can aim first and
+        // then pick any ability. Touch screens attack on the first tap.
+        const uid = card.dataset.uid;
+        if (aimFirst() && !this.isTutorial() && this.battle.needsTarget(this.pending.actor, this.selected) && uid !== this.focusUid) {
+          this.focusUid = uid;
+          this.showFocus();
+          this.updateEstimates();
+          this.aimAt = Date.now();
+          return;
+        }
+        return this.fireAt(uid);
+      }
       if (e.target.closest('[data-auto]')) return this.toggleAuto();
       if (e.target.closest('[data-speed]')) return this.cycleSpeed();
       if (e.target.closest('[data-help]')) return this.toggleHelp();

@@ -1482,8 +1482,14 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
 @keyframes hn-glow { 50% { transform: scale(1.18); } }
 
 /* ---- squad picker ---- */
-.hn-pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; max-height: 56vh; overflow: auto; padding: 4px; }
-.hn-pick .ucard { width: 100%; font-size: 11px; }
+.hn-pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 8px; max-height: 56vh; overflow: auto; padding: 4px; align-items: start; }
+.hn-pick .ucard { width: 100%; min-width: 0; font-size: 11px; }
+.hn-pick .ucard:hover { transform: none; }
+.hn-pick .ucard-body { padding: 7px 8px 9px; gap: 3px; min-width: 0; }
+.hn-pick .ucard-name { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hn-pick .ucard-meta { min-width: 0; font-size: 10.5px; } .hn-pick .ucard-meta > * { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hn-pick .ucard-meta .rar { font-size: 9.5px; letter-spacing: .04em; }
+@media (min-width: 760px) { .modal.hn-pick-modal { width: min(980px, 94vw); } .hn-pick { grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 10px; max-height: 62vh; } .hn-pick .ucard-name { font-size: 13px; } }
 .hn-pick .ucard.selected { outline: 2px solid #5fd8ff; outline-offset: 2px; }
 .hn-pick-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 8px; }
 
@@ -2430,11 +2436,17 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const body = () => `<div class="hn-pick-head"><b>${kind === 'ship' ? 'Fleet' : 'Ground'} squad · ${sel.length}/5</b><span class="muted small">HoloNet cards can join here, and only here.</span></div>
       <div class="hn-pick" data-noswipe>${list.map((u) => (u.hn ? hnCard(u, { selected: sel.includes(u.id) }) : UI.unitCard(u, { tag: 'div', hideShards: true, selected: sel.includes(u.id) })).replace('class="ucard', `data-pick="${u.id}" class="ucard`)).join('')}</div>
       <div class="modal-actions"><button type="button" class="btn" data-x="auto">Auto-pick</button><button type="button" class="btn btn-primary" data-x="save">Save</button></div>`;
-    const m = openModal(`<div data-body>${body()}</div>`, {});
+    const m = openModal(`<div data-body>${body()}</div>`, { cls: 'hn-pick-modal' });
     const redraw = () => { m.root.querySelector('[data-body]').innerHTML = body(); };
+    // Tapping a card only flips its highlight: the list isn't redrawn, so nothing jumps or scrolls.
+    const mark = () => {
+      m.root.querySelectorAll('.hn-pick [data-pick]').forEach((n) => n.classList.toggle('selected', sel.includes(n.dataset.pick)));
+      const hd = m.root.querySelector('.hn-pick-head b');
+      if (hd) hd.textContent = `${kind === 'ship' ? 'Fleet' : 'Ground'} squad · ${sel.length}/5`;
+    };
     m.root.addEventListener('click', (e) => {
       const c = e.target.closest('[data-pick]');
-      if (c) { const id = c.dataset.pick; sel = sel.includes(id) ? sel.filter((x) => x !== id) : sel.length < 5 ? [...sel, id] : sel; return redraw(); }
+      if (c) { const id = c.dataset.pick; sel = sel.includes(id) ? sel.filter((x) => x !== id) : sel.length < 5 ? [...sel, id] : sel; return mark(); }
       const x = e.target.closest('[data-x]');
       if (!x) return;
       if (x.dataset.x === 'auto') { sel = list.slice(0, 5).map((u) => u.id); return redraw(); }
@@ -5100,7 +5112,13 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     return { top, n: list.length, all: list };
   }
   // Every badge you've earned, small enough for your arena row (secret ones stay hidden).
-  const allBadges = () => myBadges().all.filter((x) => !x.secret).slice(0, 80).map((x) => ({ id: x.id || '', tier: x.tier || 1, icon: x.icon, name: x.name, desc: String(x.desc || '').slice(0, 90), level: x.level }));
+  // Every badge for the profile's Badges tab. Secret badges show too, but never how they're earned.
+  const allBadges = () => {
+    const list = myBadges().all;
+    const out = list.filter((x) => !x.secret).map((x) => ({ id: x.id || '', tier: x.tier || 1, icon: x.icon, name: x.name, desc: String(x.desc || '').slice(0, 90), level: x.level }));
+    const sec = list.filter((x) => x.secret).map((x) => ({ id: x.id || '', tier: x.tier || 1, icon: x.icon, name: x.name, desc: '', level: x.level, secret: 1 }));
+    return out.slice(0, 80 - Math.min(20, sec.length)).concat(sec.slice(0, 20));
+  };
   function myStats() {
     const h = S();
     const raidDmg = Object.values(h.raids || {}).reduce((a, r) => a + (r.dmg || 0), 0);
@@ -5207,7 +5225,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   }
   // Player collections: the profile in four tabs (Overview, Collection, Badges, Stats).
   const RANK = { common: 0, rare: 1, epic: 2, legendary: 3, mythic: 4, secret: 5 };
-  const RCOL = { common: '#9aa4b4', rare: '#4aa8ff', epic: '#b070ff', legendary: '#ffb020', mythic: '#ff4a6a' };
+  const RCOL = { common: '#9aa4b4', rare: '#4aa8ff', epic: '#b070ff', legendary: '#ffb020', mythic: '#ff4a6a', secret: '#3dffc8' };
   function openProfileTabs(uid) {
     const PC = root.PlayerCollections;
     const p = prof(uid);
@@ -5224,7 +5242,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const owned = Object.keys(col).filter((id) => D.UNIT_MAP[id]);
     const fav = owned.filter((id) => use[id] && use[id].b > 0).sort((a, b) => use[b].b - use[a].b)[0];
     const strong = owned.slice().sort((a, b) => power(b, col[b]) - power(a, col[a])).slice(0, 5);
-    const all = D.UNITS.filter((u) => !u.boss && !u.exclusive && !u.raid && (D.UNIT_MAP[u.id] === u));
+    const all = D.UNITS.filter((u) => !u.boss && (!u.exclusive || u.rarity === 'secret') && !u.raid && (D.UNIT_MAP[u.id] === u));
     const pool = [...all.filter((u) => !hnSet.has(u.id)), ...HN.HN_IDS.map((id) => D.UNIT_MAP[id]).filter(Boolean)];
     const mini = (id, c) => UI.unitCard(D.UNIT_MAP[id], { tag: 'div', owned: true, level: c.level, stars: c.stars, hideShards: true }).replace('class="ucard', `data-pc="${id}" class="ucard`);
     let tab = 'overview';
@@ -5248,7 +5266,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const collection = () => {
       const inPool = pool.filter((u) => col[u.id]).length;
       const hnOwned = HN.HN_IDS.filter((id) => col[id]).length;
-      const bars = ['legendary', 'epic', 'rare', 'common'].map((r) => {
+      const bars = ['secret', 'mythic', 'legendary', 'epic', 'rare', 'common'].map((r) => {
         const tot = all.filter((u) => u.rarity === r && !hnSet.has(u.id)).length;
         const have = all.filter((u) => u.rarity === r && !hnSet.has(u.id) && col[u.id]).length;
         return tot ? `<div class="pc-bar" style="--c:${RCOL[r]}"><span style="color:${RCOL[r]}">${D.RARITIES[r].label}</span><i><b style="width:${(have / tot) * 100}%"></b></i><span>${have}/${tot}</span></div>` : '';
@@ -5272,9 +5290,13 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
         ${row('Level', t.level, p.me ? '' : y ? y.level : '—')}${row('Stars', '★'.repeat(t.stars), p.me ? '' : y ? '★'.repeat(y.stars) : '—')}${row('Power', fmt(power(id, t)), p.me ? '' : y ? fmt(power(id, y)) : 'Not owned')}
         ${row('Battles', fmt(tu.b), p.me ? '' : fmt(yu.b))}${row('Win rate', tu.b ? `${Math.round((tu.w / tu.b) * 100)}%` : '—', p.me ? '' : yu.b ? `${Math.round((yu.w / yu.b) * 100)}%` : '—')}</table></div>`;
     };
-    const badges = () => (ball && ball.length
-      ? `<p class="pc-empty">${p.nb} badges earned · tap one to see how it was earned</p><div class="pf-bdgs">${ball.map((x) => `<button type="button" class="pf-bdg" data-bdg='${esc(JSON.stringify(x))}'>${still(UI.featBadge(x))}<span>${esc(x.name)}</span></button>`).join('')}</div>`
-      : '<p class="pc-empty">No badges yet.</p>');
+    const badges = () => {
+      if (!ball || !ball.length) return '<p class="pc-empty">No badges yet.</p>';
+      const open = ball.filter((x) => !x.secret), sec = ball.filter((x) => x.secret);
+      const btn = (x) => `<button type="button" class="pf-bdg${x.secret ? ' pf-sec' : ''}" data-bdg='${esc(JSON.stringify(x.secret ? { name: x.name, desc: 'A secret badge. How to earn it stays a secret.' } : x))}'>${still(UI.featBadge(x))}<span>${esc(x.name)}</span></button>`;
+      return `<p class="pc-empty">${p.nb} badges earned · tap one to see how it was earned</p><div class="pf-bdgs">${open.map(btn).join('')}</div>
+        ${sec.length ? `<h3 class="pc-h">Secret badges <small>${sec.length} found</small></h3><div class="pf-bdgs">${sec.map(btn).join('')}</div>` : ''}`;
+    };
     const stats = () => {
       const cell = (n, v) => `<div><span>${n}</span><b>${v}</b></div>`;
       const totalB = Object.values(use).reduce((a, u) => a + u.b, 0);
@@ -6608,6 +6630,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
 .pf-bdg .fs-badge { width: 40px; height: 40px; margin: 0; position: relative; inset: auto; transform: none; animation: none; filter: none; }
 .pf-bdg .fs-badge, .pf-bdg .fs-badge * { animation: none !important; }
 .pf-bdg span { font-size: 10px; line-height: 1.15; }
+.pf-bdg.pf-sec { border-color: rgba(61, 255, 200, 0.45); background: linear-gradient(160deg, rgba(61, 255, 200, 0.12), rgba(8, 20, 32, 0.85)); }
 .pf-card { position: relative; }
 .pf-x { position: sticky; top: 0; float: right; z-index: 3; width: 34px; height: 34px; margin: -6px -6px 0 0; border-radius: 50%; border: 1px solid rgba(95, 216, 255, 0.5); background: #0a1622; color: #dff8ff; font-size: 16px; line-height: 1; cursor: pointer; }
 .pf-bdg .fs-badge svg { width: 100%; height: 100%; }
