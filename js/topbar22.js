@@ -1,5 +1,6 @@
-// The 2.2 top bar: Friends folds into your profile chip (your picture, your
-// level and the red number for friend requests and messages), and on phones
+// The 2.2 top bar: your profile chip shows your picture, your level and the
+// red number for friend requests and messages (the Friends button stays too,
+// just before Settings, for quick chats), and on phones
 // all three currencies stay on show, shortened (5.4M); tap one to see
 // its full amount. Switches on with 2.2 (testers: the HOLOSAVE21 code).
 (function (root) {
@@ -86,8 +87,7 @@
   setInterval(() => { hook(); if (on()) { apply(); chip(); } }, 3000);
 
   const st = document.createElement('style');
-  st.textContent = `.tb22 .topbar .friends-btn { display: none !important; }
-.tb22 .topbar .account { position: relative; gap: 6px; padding: 3px 10px 3px 3px; }
+  st.textContent = `.tb22 .topbar .account { position: relative; gap: 6px; padding: 3px 10px 3px 3px; }
 .tb22 .topbar .account .acct-bar, .tb22 .topbar .account .acct-who { display: none !important; }
 .tb22 .topbar .account .acct-lv { font-size: 0; letter-spacing: 0; } .tb22 .topbar .account .acct-lv b { font-size: 15px; }
 .tb-pic { width: 30px; height: 30px; border-radius: 50%; overflow: hidden; border: 2px solid #ffd23f; flex: none; display: block; background: #0b1422; }

@@ -2618,6 +2618,17 @@
     setTimeout(() => node.addEventListener('click', close), 600);
   }
 
+  // A secret badge shown from a profile: the badge and its name, never how it's earned.
+  function secretPeek(x) {
+    const m = openModal(`<div class="sec-peek">${featBadge({ ...x, desc: '' }, 'pop')}<span class="fs-kicker">Secret badge</span><h3>${esc(x.name)}</h3><p class="muted small">How it's earned stays a secret.</p>
+      <div class="modal-actions" style="justify-content:center"><button type="button" class="btn btn-primary" data-close>Close</button></div></div>`, { small: true, cls: 'sec-peek-modal' });
+    m.root.addEventListener('click', (e) => { if (e.target.closest('[data-close]')) m.close(); });
+    return m;
+  }
+  const secCss = document.createElement('style');
+  secCss.textContent = '.sec-peek { display: grid; justify-items: center; gap: 6px; text-align: center; padding: 8px 0 0; } .sec-peek .fs-badge { position: static; width: 120px; height: 120px; margin: 0 auto 4px; animation: none; } .sec-peek h3 { margin: 0; } .sec-peek .fs-kicker { color: #3dffc8; letter-spacing: .14em; text-transform: uppercase; font-size: 11px; font-weight: 800; }';
+  document.head.appendChild(secCss);
+
   function featCutscene(x) {
     if (x.id === 'grinder') return grinderCutscene(x);
     if (x.id === 'tutorial_again') return againCutscene(x);
@@ -2832,7 +2843,7 @@
       <div class="pf-pane" data-pane="feats">
         <div class="feat-list">${ach.map((x) => {
           const done = x.have >= x.need;
-          return `<button type="button" class="feat ${done ? 'done' : ''} ${x.secret ? 'secret' : ''} t-${x.tier || 1}" data-feat="${ach.indexOf(x)}"><span class="feat-ico ${CRESTS[x.id] || HOOKS.crests[x.id] ? 'crest' : ''}">${HOOKS.crests[x.id] ? HOOKS.crests[x.id](x) : CRESTS[x.id] ? CRESTS[x.id](x) : root.Icons.svg(x.icon)}</span><div><b>${esc(x.name)}${x.secret ? ` <span class="feat-secret ${x.tier === 7 ? 'legend' : ''}">${x.tier === 7 ? 'Legendary' : 'Secret'}</span>` : ''}</b><span class="muted small">${esc(x.desc)}</span><i class="feat-bar"><i style="width:${Math.min(100, (x.have / x.need) * 100)}%"></i></i></div><em>${done ? '✓' : `${fmt(Math.min(x.have, x.need))}/${fmt(x.need)}`}</em></button>`;
+          return `<button type="button" class="feat ${done ? 'done' : ''} ${x.secret ? 'secret' : ''} t-${x.tier || 1}" data-feat="${ach.indexOf(x)}"><span class="feat-ico ${CRESTS[x.id] || HOOKS.crests[x.id] ? 'crest' : ''}">${HOOKS.crests[x.id] ? HOOKS.crests[x.id](x) : CRESTS[x.id] ? CRESTS[x.id](x) : root.Icons.svg(x.icon)}</span><div><b>${esc(x.name)}${x.secret ? ` <span class="feat-secret ${x.tier === 7 ? 'legend' : ''}">${x.tier === 7 ? 'Legendary' : 'Secret'}</span>` : ''}</b><span class="muted small">${x.secret ? (done ? 'A secret badge. How it\'s earned stays a secret.' : '???') : esc(x.desc)}</span><i class="feat-bar"><i style="width:${Math.min(100, (x.have / x.need) * 100)}%"></i></i></div><em>${done ? '✓' : `${fmt(Math.min(x.have, x.need))}/${fmt(x.need)}`}</em></button>`;
         }).join('')}</div>
       </div>
       <div class="modal-actions"><button class="btn btn-primary" type="button" data-close>Close</button></div>`, { cls: 'profile-modal' });
@@ -2853,7 +2864,7 @@
       const fb = e.target.closest('[data-feat]');
       if (fb) {
         const x = ach[Number(fb.dataset.feat)];
-        if (x.have >= x.need) return playFeat(x);
+        if (x.have >= x.need) return x.secret ? secretPeek(x) : playFeat(x);
         fb.classList.remove('shake');
         void fb.offsetWidth;
         fb.classList.add('shake');
@@ -3258,5 +3269,5 @@
     }
   }
 
-  root.UI = { hooks: HOOKS, achievements, featBadge, packReveal, motionOK, walkout, settings, profile, playFeat, celebrateFeat, markFeatSeen, soundSettings: settings, homeworldOf, $, $$, el, esc, fmt, cur, portrait, stars, unitCard, toast, openModal, confirmBox, updateWallet, inspect, synergyBanner, App, Screens };
+  root.UI = { hooks: HOOKS, achievements, featBadge, secretPeek, packReveal, motionOK, walkout, settings, profile, playFeat, celebrateFeat, markFeatSeen, soundSettings: settings, homeworldOf, $, $$, el, esc, fmt, cur, portrait, stars, unitCard, toast, openModal, confirmBox, updateWallet, inspect, synergyBanner, App, Screens };
 })(window);

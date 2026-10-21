@@ -176,7 +176,7 @@
       const b = e.target.closest('[data-p2b]');
       if (b) {
         const x = ach[+b.dataset.p2b];
-        if (x.have >= x.need) return UI.playFeat(x);
+        if (x.have >= x.need) return x.secret ? UI.secretPeek(x) : UI.playFeat(x);
         return toast(x.secret ? 'A secret badge. How to earn it stays a secret.' : `${x.name}: ${x.desc} (${fmt(Math.min(x.have, x.need))}/${fmt(x.need)})`);
       }
       const x = e.target.closest('[data-p2]');

@@ -5108,7 +5108,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     try { list = UI.achievements().filter((x) => x.have >= x.need); } catch (e) { list = []; }
     const pick = (P2().prof.feat || []).map((id) => list.find((x) => (x.id || x.name) === id)).filter(Boolean);
     const rest = list.filter((x) => !pick.includes(x)).sort((a, b) => (b.tier || 1) - (a.tier || 1));
-    const top = [...pick, ...rest].slice(0, 6).map((x) => ({ id: x.id || '', tier: x.tier || 1, icon: x.icon, name: x.name, desc: x.desc, secret: !!x.secret, level: x.level }));
+    const top = [...pick, ...rest].slice(0, 6).map((x) => ({ id: x.id || '', tier: x.tier || 1, icon: x.icon, name: x.name, desc: x.secret ? '' : x.desc, secret: !!x.secret, level: x.level }));
     return { top, n: list.length, all: list };
   }
   // Every badge you've earned, small enough for your arena row (secret ones stay hidden).
@@ -5185,7 +5185,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const g = p.guild && guildOf(p.guild);
     const st = p.st || {};
     const wr = (st.w || 0) + (st.l || 0) ? Math.round(((st.w || 0) / ((st.w || 0) + (st.l || 0))) * 100) : 0;
-    const badges = p.badges.length ? p.badges.map((x) => `<button type="button" class="pf-bdg" data-bdg='${esc(JSON.stringify(x))}'>${still(UI.featBadge(x))}<span>${esc(x.name)}</span></button>`).join('') : '<p class="muted small">No badges yet.</p>';
+    const badges = p.badges.length ? p.badges.map((x) => `<button type="button" class="pf-bdg" data-bdg='${esc(JSON.stringify(x.secret ? { ...x, desc: '' } : x))}'>${still(UI.featBadge(x))}<span>${esc(x.name)}</span></button>`).join('') : '<p class="muted small">No badges yet.</p>';
     const m = openModal(`<div class="pf-card" style="--gc:${g ? g.color : '#5fd8ff'}">
       <button type="button" class="pf-x" data-x="ok" aria-label="Close">✕</button>
       <div class="pf-top">${avatar(p, 'lg')}<div class="pf-id"><p class="eyebrow">${p.me ? 'Your HoloNet profile' : 'HoloNet profile'}</p><h2>${esc(Net.name(p.uid).replace(' (you)', ''))}</h2>
@@ -5210,7 +5210,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
         return;
       }
       const b = e.target.closest('[data-bdg]');
-      if (b) { try { const x = JSON.parse(b.dataset.bdg); toast(`${x.name}: ${x.desc || ''}`); } catch (er) { /* ignore */ } return; }
+      if (b) { try { const x = JSON.parse(b.dataset.bdg); if (x.secret) UI.secretPeek(x); else toast(`${x.name}: ${x.desc || ''}`); } catch (er) { /* ignore */ } return; }
       const x = e.target.closest('[data-x]');
       if (!x) return;
       m.close();
@@ -5261,7 +5261,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
         <h3 class="pc-h">Strongest cards <small>by power</small></h3>
         ${strong.length ? `<div class="pc-strong pc-grid">${strong.map((id) => mini(id, col[id])).join('')}</div>` : '<p class="pc-empty">No cards to show yet.</p>'}
         <h3 class="pc-h">Top badges <small>${p.nb} earned</small></h3>
-        <div class="pf-bdgs">${p.badges.slice(0, 6).map((x) => `<button type="button" class="pf-bdg" data-bdg='${esc(JSON.stringify(x))}'>${still(UI.featBadge(x))}<span>${esc(x.name)}</span></button>`).join('') || '<p class="pc-empty">No badges yet.</p>'}</div>`;
+        <div class="pf-bdgs">${p.badges.slice(0, 6).map((x) => `<button type="button" class="pf-bdg" data-bdg='${esc(JSON.stringify(x.secret ? { ...x, desc: '' } : x))}'>${still(UI.featBadge(x))}<span>${esc(x.name)}</span></button>`).join('') || '<p class="pc-empty">No badges yet.</p>'}</div>`;
     };
     const collection = () => {
       const inPool = pool.filter((u) => col[u.id]).length;
@@ -5293,7 +5293,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const badges = () => {
       if (!ball || !ball.length) return '<p class="pc-empty">No badges yet.</p>';
       const open = ball.filter((x) => !x.secret), sec = ball.filter((x) => x.secret);
-      const btn = (x) => `<button type="button" class="pf-bdg${x.secret ? ' pf-sec' : ''}" data-bdg='${esc(JSON.stringify(x.secret ? { name: x.name, desc: 'A secret badge. How to earn it stays a secret.' } : x))}'>${still(UI.featBadge(x))}<span>${esc(x.name)}</span></button>`;
+      const btn = (x) => `<button type="button" class="pf-bdg${x.secret ? ' pf-sec' : ''}" data-bdg='${esc(JSON.stringify(x.secret ? { ...x, desc: '' } : x))}'>${still(UI.featBadge(x))}<span>${esc(x.name)}</span></button>`;
       return `<p class="pc-empty">${p.nb} badges earned · tap one to see how it was earned</p><div class="pf-bdgs">${open.map(btn).join('')}</div>
         ${sec.length ? `<h3 class="pc-h">Secret badges <small>${sec.length} found</small></h3><div class="pf-bdgs">${sec.map(btn).join('')}</div>` : ''}`;
     };
@@ -5328,7 +5328,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
         return;
       }
       const b = e.target.closest('[data-bdg]');
-      if (b) { try { const x = JSON.parse(b.dataset.bdg); toast(`${x.name}: ${x.desc || ''}`); } catch (er) { /* ignore */ } return; }
+      if (b) { try { const x = JSON.parse(b.dataset.bdg); if (x.secret) UI.secretPeek(x); else toast(`${x.name}: ${x.desc || ''}`); } catch (er) { /* ignore */ } return; }
       const x = e.target.closest('[data-x]');
       if (!x) return;
       m.close();
