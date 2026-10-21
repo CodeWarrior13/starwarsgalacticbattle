@@ -30,6 +30,7 @@
         'IMPROVED|On computers, click an enemy to aim and double-click it to attack, so you can choose your target first and then any ability.',
         'FIXED|HoloNet squad pickers: cards no longer squish or jump when you tap them, on phones, tablets and computers.',
         'FIXED|HoloNet profiles now count Mythic and Secret cards in the collection, and show secret badges (but not how they were earned).',
+        'FIXED|The Training Complete screen shows every card in full on phones (names and stats were cut off).',
         'FIXED|Promoting or levelling a card in the Collection no longer sends you back to the top.',
         'FIXED|Cards in the Krayt Dragon battle now fit on phone screens.',
         'FIXED|Fixed Settings and other pop-ups not fitting at the top of phone screens.',
