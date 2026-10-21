@@ -257,10 +257,16 @@
     // toward it and ingots cover only the missing share. 0 = shards are enough.
     starTopUpCost(id) {
       const u = this.unit(id);
-      if (!u || u.stars >= D.MAX_STARS) return 0;
+      if (!u || u.stars >= D.MAX_STARS || this.ingotLocked(id)) return 0;
       const need = D.STAR_COSTS[u.stars - 1];
       if (u.shards >= need) return 0;
       return Math.max(1, Math.ceil((D.starAurodium(D.UNIT_MAP[id].rarity, u.stars) * (need - u.shards)) / need));
+    },
+
+    // The Monolith's trial rewards only climb with shards won from the trials
+    // themselves; ingots can't promote them.
+    ingotLocked(id) {
+      return (D.SECRET_BOSSES || []).some((b) => (b.rewards || []).includes(id));
     },
 
     // Promote using every shard you have plus Aurodium Ingots for the rest.
