@@ -8263,7 +8263,7 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
         const stt = me ? 'you' : (HN.friends && HN.friends.state ? HN.friends.state(r.uid) : '');
         const btn = me ? '<span class="muted small">You</span>'
           : stt === 'friends' ? '<span class="fr-sug-tag">Friends</span>'
-            : stt === 'sent' ? '<span class="fr-sug-tag">Sent</span>'
+            : stt === 'sent' ? '<span class="fr-sug-sent" title="Friend request sent" aria-label="Friend request sent"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="8" r="3.6" fill="currentColor"/><path d="M3 19.5c.6-3.7 3.4-5.8 7-5.8s6.4 2.1 7 5.8z" fill="currentColor"/><path d="M15.5 10.5l2.2 2.2 4.3-4.6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><small>Sent</small></span>'
               : `<button type="button" class="fr-sug-add" data-sugadd="${esc(r.uid)}" data-sugnm="${esc(r.key)}" aria-label="Add ${esc(r.key)}" title="${stt === 'incoming' ? 'Accept' : 'Add friend'}"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="8" r="3.6" fill="currentColor"/><path d="M3 19.5c.6-3.7 3.4-5.8 7-5.8s6.4 2.1 7 5.8z" fill="currentColor"/><path d="M19 7v6M16 10h6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button>`;
         return `<div class="fr-sug-row ${r.key === key ? 'exact' : ''}"><span class="fr-av">${esc(r.key.slice(0, 2).toUpperCase())}</span><span class="fr-who"><b>${esc(r.key)}</b><small>${r.key === key ? 'Exact match' : 'Pilot'}</small></span>${btn}</div>`;
       }).join('');
@@ -8334,6 +8334,7 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
 .fr-sug-row .fr-av { width: 32px; height: 32px; }
 .fr-sug-add { width: 38px; height: 38px; border-radius: 50%; border: 1px solid #5fd8ff; background: rgba(95, 216, 255, 0.15); color: #bfefff; display: grid; place-items: center; cursor: pointer; }
 .fr-sug-add svg { width: 20px; height: 20px; } .fr-sug-add:disabled { opacity: .5; }
+.fr-sug-sent { display: grid; justify-items: center; color: #7af0a0; } .fr-sug-sent svg { width: 22px; height: 22px; } .fr-sug-sent small { font: 700 9.5px var(--font-display, system-ui); letter-spacing: .04em; }
 .fr-sug-tag { font: 700 11px var(--font-display, system-ui); color: #7af0a0; letter-spacing: .04em; }
 .fr-sug-msg { margin: 6px 4px; }
 .fr-chat { position: relative; }
