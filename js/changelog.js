@@ -40,6 +40,7 @@
       v: '2.2', date: 'October 28, 2026', title: 'Friends and Foes', from: LAUNCH_22,
       items: [
         'NEW|Friends: from level 5, add pilots by callsign and play friendly battles (unranked, no rewards).',
+        'NEW|A new Commander profile: tap your level to open it. Overview, Collection, Worlds, Badges, Friends and Stats tabs; tap your picture to change it, or your level to see what\'s coming up. Worlds light up in full colour once every stage and boss on them is beaten.',
         'NEW|Message your friends: tap Chat next to a friend to talk (filtered for bad language). A red number on the Friends button shows new friend requests and unread messages.',
         'NEW|Duel chat: in live duels and friendly battles, tap Chat to send a quick line or a short message (filtered for bad language). After a duel, add your opponent as a friend right from the results screen.',
         'NEW|Six new planet bosses: the Dragonsnake on Dagobah, Death Star II over Endor, the Acklay in the Geonosis arena, the Executor above Mustafar, the Sith Trooper Legion on Exegol and the Zillo Beast loose on Coruscant, each with its own battle tricks.',
