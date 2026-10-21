@@ -7834,7 +7834,9 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
     { view: 'forge', at: '.hn-forge-top', host: 'varka', say: 'Varka here. Spend your Beskar at my <b>Forge</b>: bounty pucks capture new cards, and shard caches power up the ones you have. New bounties every day. Here\'s a free puck to start you off.', gift: true },
     { view: 'leaders', at: '.hv-rw', say: 'The <b>leaderboards</b> rank the season ladder, duel wins, raid damage and guilds. Finish a season in the top 25 and you earn rewards, with special frames for the top 3.' },
     { view: 'databank', at: '.hn-seg', say: 'The <b>Databank</b> keeps every HoloNet-only card and every bounty you\'ve captured. Finish a row of bounties for bonus Beskar.' },
-    { view: 'hub', say: 'That\'s the HoloNet, Commander. Here\'s 500 Beskar to get you started. <b>One last step:</b> every pilot needs a callsign, the name other players will know you by.', next: 'Choose my callsign', end: true },
+    { view: 'hub', say: 'That\'s the HoloNet, Commander. Here\'s 500 Beskar to get you started. <b>One last step:</b> every pilot needs a callsign, the name other players will know you by.', next: 'Choose my callsign', end: true,
+      // Already made a profile (Captain Rex helps at level 5): no callsign step.
+      named: { say: 'That\'s the HoloNet, Commander. Here\'s 500 Beskar to get you started. Your callsign is already on your profile, so you\'re ready to go.', next: 'Let\'s go' } },
   ];
 
   let box = null;
@@ -7866,7 +7868,7 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
   }
   function show() {
     const t = T();
-    const st = STEPS[t.step];
+    let st = STEPS[t.step];
     if (!want() || !st) return hide();
     const view = (App.params || {}).view || 'hub';
     const kind = (App.params || {}).kind || 'character';
@@ -7880,6 +7882,7 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
     box.className = 'hv-tour';
     const host = st.host === 'varka' ? varka() : HN.ui.ACKBAR;
     const waiting = st.fight && !t.fought[st.fight];
+    if (st.named && HN.needName && !HN.needName()) st = { ...st, ...st.named };
     box.innerHTML = `<div class="who">${host}</div><div class="say"><small>${st.host === 'varka' ? 'VARKA · BESKAR BROKER' : 'ADMIRAL ACKBAR'} · ${t.step + 1}/${STEPS.length}</small><p>${st.say}</p>
       <div class="acts"><button type="button" class="hn-btn ghost" data-tour="skip">${st.end ? '' : 'Skip tour'}</button>${waiting ? '<span class="muted small">Win or lose, the tour carries on after the fight.</span>' : `<button type="button" class="hn-btn gold" data-tour="next">${esc(st.next || (st.end ? 'Finish' : 'Next'))}</button>`}</div></div>`;
     if (st.end) box.querySelector('[data-tour="skip"]').remove();

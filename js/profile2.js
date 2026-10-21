@@ -65,7 +65,7 @@
       return `<button type="button" class="pf-x p2-x" data-p2="close" aria-label="Close">✕</button>
       <div class="p2-top">
         <div class="p2-av"><button type="button" class="p2-pic" data-p2="pic" aria-label="Change your picture">${pic}<span class="p2-edit">Change</span></button><button type="button" class="acct-ring p2-ring" data-p2="level" style="--p:${pct}" aria-label="Level ${a.level}: what's coming up"><b>${a.level}</b></button></div>
-        <div class="p2-id"><p class="eyebrow">Commander profile</p><h2>${esc(name)}</h2>
+        <div class="p2-id"><p class="eyebrow">Commander profile</p><h2>${esc(name)}</h2>${prof.tag ? '' : '<button type="button" class="btn btn-small btn-primary p2-addprof" data-p2="addprof">Add profile</button>'}
           <p class="muted small">${title(a.level)} · Level ${a.level}${lg ? ` · ${esc(lg.name)}` : ''}</p>
           <button type="button" class="p2-lvbtn" data-p2="level" aria-label="Level ${a.level}: what's coming up"><span class="p2-xp"><i style="width:${pct}%"></i></span>
           <span class="muted small">${a.level >= D.MAX_ACCOUNT_LEVEL ? 'Maximum rank reached.' : `${fmt(a.xp)} / ${fmt(need)} XP to level ${a.level + 1}`} · <b class="p2-more">Coming up ›</b></span></button></div>
@@ -183,6 +183,8 @@
       if (!x) return;
       if (x.dataset.p2 === 'close') return m.close();
       if (x.dataset.p2 === 'level') return levelInfo();
+      // No profile yet: make one (callsign and picture). The button stays until you do.
+      if (x.dataset.p2 === 'addprof') { m.close(); if (root.Account && root.Account.profile) root.Account.profile(() => open(), false); return; }
       if (x.dataset.p2 === 'pic') { m.close(); if (root.Account && root.Account.profile) root.Account.profile(() => open(), true); return; }
       if (x.dataset.p2 === 'friends') { m.close(); if (root.Friends) root.Friends.open(); }
     });
@@ -196,7 +198,7 @@
   if (base && !UI.__p2) {
     UI.__p2 = true;
     // Switches on for everyone with 2.2 (testers earlier with the HOLOSAVE21 code).
-    UI.profile = function () { return preview() || (root.Update22 && root.Update22.on()) ? open() : base.apply(this, arguments); };
+    UI.profile = function () { return preview() || (root.Update22 && (root.Update22.friends || root.Update22.on)()) ? open() : base.apply(this, arguments); };
   }
 
   const st = document.createElement('style');
@@ -208,6 +210,7 @@
 .p2-ring { border: 0; padding: 0; cursor: pointer; }
 .p2-lvbtn { display: grid; gap: 3px; width: 100%; padding: 0; margin-top: 4px; border: 0; background: none; color: inherit; text-align: left; cursor: pointer; }
 .p2-more { color: #ffd23f; }
+.p2-addprof { margin: 4px 0 2px; }
 .p2-lv { display: grid; justify-items: center; gap: 6px; text-align: center; } .p2-lv h3 { margin: 4px 0 0; } .p2-lv h4 { margin: 8px 0 0; letter-spacing: .08em; text-transform: uppercase; font-size: 12px; color: #8fb4c8; } .p2-lv .p2-next { width: 100%; text-align: left; }
 .p2-pic svg, .p2-pic img { width: 100%; height: 100%; display: block; object-fit: cover; }
 .p2-ring { position: absolute; right: -8px; bottom: -6px; width: 38px; height: 38px; }

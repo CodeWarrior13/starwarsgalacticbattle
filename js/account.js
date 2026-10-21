@@ -635,7 +635,7 @@
           if (!frOpen) return before ? before(c) : false;
           const on = !U22.test();
           U22.test(on);
-          toast(on ? 'Friends test: ON for this device. Friends unlock at level 5.' : 'Friends test: OFF for this device.');
+          toast(on ? 'Friends test: ON for this device (friends, chat, friendly battles, the new profile and Rex\'s walkthrough).' : 'Friends test: OFF for this device.');
           // Testers also get the new profile and Rex's walkthrough.
           if (root.ProfileV2) root.ProfileV2.preview(on);
           if (on && root.RexGuide) setTimeout(() => root.RexGuide.tester(), 900);
