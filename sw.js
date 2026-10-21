@@ -1,7 +1,7 @@
 // Offline support for the installed app. Every request goes to the network
 // first, so players always get the newest version when online; the saved copy
 // is only used when the network is unavailable.
-const CACHE = 'gcb-v2';
+const CACHE = 'gcb-v3';
 
 self.addEventListener('install', (event) => {
   // Save the page plus every local file it links to, so the first launch
