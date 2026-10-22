@@ -112,7 +112,7 @@
       const got = x.have >= x.need;
       const hidden = x.secret && !got;
       return `<button type="button" class="p2-bdg ${got ? 'got' : ''} ${x.secret ? 'sec' : ''}" data-p2b="${ach.indexOf(x)}">
-        <span class="p2-bico">${hidden ? '<span class="p2-q">?</span>' : UI.featBadge(x)}</span>
+        <span class="p2-bico">${hidden ? '<span class="p2-q">?</span>' : (UI.stillSvg || String)(UI.featBadge(x))}</span>
         <span class="p2-bn">${hidden ? 'Secret badge' : esc(x.name)}</span>
         ${got || hidden ? '' : `<i><b style="width:${Math.round((Math.min(x.have, x.need) / x.need) * 100)}%"></b></i>`}</button>`;
     }
@@ -176,8 +176,8 @@
       const b = e.target.closest('[data-p2b]');
       if (b) {
         const x = ach[+b.dataset.p2b];
-        if (x.have >= x.need) return x.secret ? UI.secretPeek(x) : UI.playFeat(x);
-        return toast(x.secret ? 'A secret badge. How to earn it stays a secret.' : `${x.name}: ${x.desc} (${fmt(Math.min(x.have, x.need))}/${fmt(x.need)})`);
+        if (x.secret && x.have < x.need) return toast('A secret badge. How to earn it stays a secret.');
+        return UI.badgePeek(x);
       }
       const x = e.target.closest('[data-p2]');
       if (!x) return;
@@ -234,6 +234,8 @@
 .p2-tabs { grid-template-columns: repeat(6, minmax(0, 1fr)); } .p2-tabs button { font-size: 12px; padding: 8px 2px; }
 @media (max-width: 480px) { .p2-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 .p2-next { display: grid; gap: 6px; } .p2-next div { display: grid; grid-template-columns: 70px 1fr; gap: 8px; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.03); font-size: 12.5px; } .p2-next b { color: #ffd23f; } .p2-next em { font-style: normal; font-weight: 700; }
+.p2-bico *, .p2-bico *::before, .p2-bico *::after { animation: none !important; transition: none !important; }
+.p2-bdg { content-visibility: auto; contain-intrinsic-size: auto 96px; }
 .p2-bdgs { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 6px; }
 .p2-bdg { display: grid; justify-items: center; gap: 4px; padding: 8px 4px; border-radius: 12px; border: 1px solid rgba(95, 216, 255, 0.15); background: rgba(8, 20, 32, 0.8); color: #dff8ff; cursor: pointer; font: 600 11px var(--font-body, system-ui); text-align: center; }
 .p2-bdg:not(.got) .p2-bico { filter: grayscale(1) brightness(0.55); }

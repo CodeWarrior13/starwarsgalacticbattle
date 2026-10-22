@@ -2092,11 +2092,13 @@
       // Everything on the map drifts slowly, so 40 frames a second looks the
       // same as 60 and leaves a third of the work undone.
       // Phones and tablets: 30 is plenty for a map this slow, and it halves the heat.
-      const fps = Math.min(COARSE ? 30 : 40, P().fps);
+      const fps = Math.min(30, P().fps);
       if (now - this.last < 1000 / fps - 3) return requestAnimationFrame(this.frame);
       const dt = Math.min(0.05, (now - this.last) / 1000);
       this.last = now;
       this.t += dt;
+      // A pop-up covers the map: hold the last frame and check back four times a second.
+      if (document.body.classList.contains('overlay-on')) { this.last = now; return setTimeout(() => requestAnimationFrame(this.frame), 250); }
       if (!document.hidden) this.draw();
       requestAnimationFrame(this.frame);
     }

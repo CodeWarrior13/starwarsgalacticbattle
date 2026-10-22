@@ -106,7 +106,7 @@
 
   // Looping effects (crate lights, card shines, button sweeps) only run while
   // they're on screen; scrolled away, they pause until they come back.
-  const LOOPING = '.pack, .daily-card, .flash-card, .ucard.rarity-legendary, .ucard.rarity-secret, .btn-primary, .crate-art';
+  const LOOPING = '.pack, .daily-card, .flash-card, .ucard, .btn-primary, .crate-art';
   function watchOffscreen() {
     const screen = document.getElementById('screen');
     if (!screen || !('IntersectionObserver' in root)) return;

@@ -304,6 +304,15 @@
       const B = root.BattleUI;
       if (B.prefs && B.prefs.auto) { B.prefs.auto = false; try { localStorage.setItem('swcg-battle-prefs', JSON.stringify(B.prefs)); } catch (e) { /* ignore */ } }
       ui().updateWallet();
+      // A replay skips the card reveal (those cards are already yours) and goes
+      // straight home to the Easter egg.
+      if (res.again) {
+        if (root.Sound) root.Sound.play('victory');
+        ui().App.go('home');
+        this.active = false;
+        ui().markFeatSeen('tutorial_again');
+        return setTimeout(() => ui().playFeat({ id: 'tutorial_again', secret: true, tier: 5, icon: 'badge', level: Player.state.tutorial.replays, rexUnlock: !!res.rex, name: 'Back for More?', desc: 'Oh, really? You just love the tutorial that much?', have: 1, need: 1 }), 450);
+      }
       const fresh = res.units.length > 0;
       const back = root.Art.cardBack ? root.Art.cardBack('light') : '';
       // The six who fought arrive now; the other four come in the Recruit Crate.

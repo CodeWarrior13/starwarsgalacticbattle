@@ -5210,7 +5210,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
         return;
       }
       const b = e.target.closest('[data-bdg]');
-      if (b) { try { const x = JSON.parse(b.dataset.bdg); if (x.secret) UI.secretPeek(x); else toast(`${x.name}: ${x.desc || ''}`); } catch (er) { /* ignore */ } return; }
+      if (b) { try { const x = JSON.parse(b.dataset.bdg); UI.badgePeek(x); } catch (er) { /* ignore */ } return; }
       const x = e.target.closest('[data-x]');
       if (!x) return;
       m.close();
@@ -5328,7 +5328,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
         return;
       }
       const b = e.target.closest('[data-bdg]');
-      if (b) { try { const x = JSON.parse(b.dataset.bdg); if (x.secret) UI.secretPeek(x); else toast(`${x.name}: ${x.desc || ''}`); } catch (er) { /* ignore */ } return; }
+      if (b) { try { const x = JSON.parse(b.dataset.bdg); UI.badgePeek(x); } catch (er) { /* ignore */ } return; }
       const x = e.target.closest('[data-x]');
       if (!x) return;
       m.close();
@@ -8146,10 +8146,13 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
     lastDm = Date.now();
     const cur = F.dms.get(r.id) || { msgs: [] };
     const msgs = (cur.msgs || []).concat({ by: Net.me, x: c.text.trim(), t: Date.now() }).slice(-DM_KEEP);
+    const t = msgs[msgs.length - 1].t;
     F.dms.set(r.id, { msgs });
+    F.sending = t;
     markSeen(r.id);
+    if (root.Sound) root.Sound.play('click');
     redraw();
-    try { await Net.db.doc(`dms/${r.id}`).set({ a: r.a, b: r.b, msgs, t: Date.now() }); return true; } catch (e) { toast("Couldn't send. Try again."); return false; }
+    try { await Net.db.doc(`dms/${r.id}`).set({ a: r.a, b: r.b, msgs, t: Date.now() }); return true; } catch (e) { toast("Couldn't send. Try again."); return false; } finally { if (F.sending === t) F.sending = 0; redraw(); }
   }
 
   function challenge(r, kind) {
@@ -8197,7 +8200,22 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
       const msgs = (F.dms.get(r.id) || { msgs: [] }).msgs || [];
       const keep = host.querySelector('[data-dmin]');
       const draft = keep ? keep.value : '';
-      const lines = msgs.map((m) => { const x = dmText(m, r); return x ? `<p class="${m.by === Net.me ? 'me' : ''}"><span>${esc(x)}</span></p>` : ''; }).join('');
+      const lastMine = [...msgs].reverse().find((m) => m.by === Net.me);
+      const lines = msgs.map((m) => { const x = dmText(m, r); if (!x) return ''; const mine = m.by === Net.me; const tick = mine && m === lastMine ? `<small class="fr-tick">${F.sending === m.t ? 'Sending…' : 'Sent ✓'}</small>` : ''; return `<p class="${mine ? 'me' : ''} ${mine && F.sending === m.t ? 'sending' : ''}" data-t="${m.t}"><span>${esc(x)}</span>${tick}</p>`; }).join('');
+      // Same chat already open: only the messages change, so the box keeps its
+      // text and focus, and a new message just slides in.
+      const openLog = host.dataset.chat === r.id && host.querySelector('[data-dmlog]');
+      if (openLog) {
+        const seen = new Set([...openLog.querySelectorAll('p[data-t]')].map((n) => n.dataset.t));
+        const atEnd = openLog.scrollHeight - openLog.scrollTop - openLog.clientHeight < 40;
+        openLog.innerHTML = lines || '<p class="muted small fr-empty">No messages yet. Say hi!</p>';
+        openLog.querySelectorAll('p[data-t]').forEach((n) => { if (!seen.has(n.dataset.t)) n.classList.add('fr-new'); });
+        if (atEnd || F.sending) openLog.scrollTop = openLog.scrollHeight;
+        const st = host.querySelector('.fr-chatwho small');
+        if (st) st.textContent = isOnline(F.other(r)) ? 'Online' : 'Offline';
+        return;
+      }
+      host.dataset.chat = r.id;
       host.innerHTML = `<div class="fr-head"><button type="button" class="btn" data-f="back">‹ Friends</button><div class="fr-chatwho"><b>${esc(F.otherName(r))}</b><small>${isOnline(F.other(r)) ? 'Online' : 'Offline'}</small></div></div>
         <div class="fr-dmlog" data-dmlog>${lines || '<p class="muted small fr-empty">No messages yet. Say hi!</p>'}</div>
         <form class="fr-dmform" data-dmform><input type="text" data-dmin maxlength="${DM_MAX}" placeholder="Message ${esc(F.otherName(r))}…" autocomplete="off" enterkeyhint="send"><button type="submit" class="btn btn-primary">Send</button></form>
@@ -8225,6 +8243,7 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
             <div class="fp-row"><input class="pf-in" data-q maxlength="16" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Search callsigns"><button type="button" class="btn btn-primary" data-f="add">Search</button></div>
             <div class="fr-sug" data-sug hidden></div>
             <p class="muted small">Your callsign is <b>${esc(myTag())}</b>. Share it so friends can add you.</p>`;
+      host.dataset.chat = '';
       host.innerHTML = `<div class="fr-head"><div><p class="eyebrow">Friends</p><h2>Friendly battles</h2></div><button type="button" class="btn" data-f="close">Close</button></div>
         <p class="muted small fr-blurb">Challenge a friend who's online to a Ground or Fleet battle: you each ban a card, build a squad, and every card fights at the same level. Just for fun: no rating, no rewards.</p>
         <div class="fr-tabs"><button type="button" class="${tab === 'list' ? 'on' : ''}" data-tab="list">Friends <i>${fr.length}</i></button><button type="button" class="${tab === 'req' ? 'on' : ''}" data-tab="req">Requests ${inc.length ? `<i class="hot">${inc.length}</i>` : ''}</button><button type="button" class="${tab === 'add' ? 'on' : ''}" data-tab="add">Add</button></div>
@@ -8344,6 +8363,11 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
 .fr-dmlog p { margin: 0; display: flex; } .fr-dmlog p.me { justify-content: flex-end; }
 .fr-dmlog p span { max-width: 78%; padding: 7px 11px; border-radius: 14px 14px 14px 4px; background: #13263a; color: #e8f6ff; font-size: 14px; line-height: 1.35; overflow-wrap: anywhere; }
 .fr-dmlog p.me span { border-radius: 14px 14px 4px 14px; background: #1d6fa8; color: #fff; }
+.fr-dmlog p.me { flex-direction: column; align-items: flex-end; } .fr-dmlog p.me span { max-width: 78%; }
+.fr-dmlog p.sending span { opacity: .65; }
+.fr-tick { font-size: 10.5px; color: #8fb4c8; margin-top: 2px; }
+.fr-dmlog p.fr-new span { animation: frIn .22s ease-out; }
+@keyframes frIn { from { opacity: 0; transform: translateY(8px) scale(.96); } }
 .fr-dmform { display: flex; gap: 8px; } .fr-dmform input { flex: 1; min-width: 0; padding: 10px 12px; border-radius: 12px; border: 1px solid rgba(95, 216, 255, 0.35); background: #04101a; color: #fff; font-size: 16px; }
 .fr-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
 .fr-head h2 { margin: 0; } .fr-head .eyebrow { margin: 0 0 2px; }

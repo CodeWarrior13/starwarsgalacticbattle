@@ -2618,15 +2618,24 @@
     setTimeout(() => node.addEventListener('click', close), 600);
   }
 
-  // A secret badge shown from a profile: the badge and its name, never how it's earned.
-  function secretPeek(x) {
-    const m = openModal(`<div class="sec-peek">${featBadge({ ...x, desc: '' }, 'pop')}<span class="fs-kicker">Secret badge</span><h3>${esc(x.name)}</h3><p class="muted small">How it's earned stays a secret.</p>
-      <div class="modal-actions" style="justify-content:center"><button type="button" class="btn btn-primary" data-close>Close</button></div></div>`, { small: true, cls: 'sec-peek-modal' });
-    m.root.addEventListener('click', (e) => { if (e.target.closest('[data-close]')) m.close(); });
+  // SVG with its SMIL animations stripped: badge grids stay still and cheap; the
+  // badge only animates once you tap it open.
+  const stillSvg = (html) => String(html).replace(/<animate(?:Transform|Motion)?\b[^>]*\/>/g, '').replace(/<animate(?:Transform|Motion)?\b[^>]*>[\s\S]*?<\/animate(?:Transform|Motion)?>/g, '');
+  // One badge, opened from a profile: it animates here, alone. A secret badge
+  // shows its name only, never how it's earned.
+  function badgePeek(x) {
+    const got = x.have == null || x.have >= x.need;
+    const kicker = x.secret ? 'Secret badge' : `${(FEAT_TIER[x.tier || 1] || FEAT_TIER[1])[0]} badge`;
+    const text = x.secret ? 'How it\'s earned stays a secret.' : esc(x.desc || '');
+    const prog = !got && x.need ? `<i class="peek-bar"><i style="width:${Math.round((Math.min(x.have, x.need) / x.need) * 100)}%"></i></i><b class="peek-n">${fmt(Math.min(x.have, x.need))} / ${fmt(x.need)}</b>` : '';
+    const m = openModal(`<div class="sec-peek ${x.secret ? 'is-sec' : ''} ${got ? '' : 'locked'}">${featBadge({ ...x, desc: '' }, 'pop')}<span class="fs-kicker">${kicker}</span><h3>${esc(x.name)}</h3><p class="muted small">${text}</p>${prog}
+      <div class="modal-actions" style="justify-content:center">${got && !x.secret && x.have != null ? '<button type="button" class="btn btn-ghost" data-replay>Watch again</button>' : ''}<button type="button" class="btn btn-primary" data-close>Close</button></div></div>`, { small: true, cls: 'sec-peek-modal' });
+    m.root.addEventListener('click', (e) => { if (e.target.closest('[data-close]')) m.close(); if (e.target.closest('[data-replay]')) { m.close(); playFeat(x); } });
     return m;
   }
+  const secretPeek = (x) => badgePeek({ ...x, secret: true });
   const secCss = document.createElement('style');
-  secCss.textContent = '.sec-peek { display: grid; justify-items: center; gap: 6px; text-align: center; padding: 8px 0 0; } .sec-peek .fs-badge { position: static; width: 120px; height: 120px; margin: 0 auto 4px; animation: none; } .sec-peek h3 { margin: 0; } .sec-peek .fs-kicker { color: #3dffc8; letter-spacing: .14em; text-transform: uppercase; font-size: 11px; font-weight: 800; }';
+  secCss.textContent = '.sec-peek { display: grid; justify-items: center; gap: 6px; text-align: center; padding: 8px 0 0; } .sec-peek .fs-badge { position: static; width: 120px; height: 120px; margin: 0 auto 4px; animation: none; } .sec-peek h3 { margin: 0; } .sec-peek .fs-kicker { color: #ffd23f; letter-spacing: .14em; text-transform: uppercase; font-size: 11px; font-weight: 800; } .sec-peek.is-sec .fs-kicker { color: #3dffc8; } .sec-peek.locked .fs-badge { filter: grayscale(1) brightness(.6); animation: none; } .peek-bar { display: block; width: 70%; height: 6px; border-radius: 3px; background: #1b2436; overflow: hidden; } .peek-bar i { display: block; height: 100%; background: #5fd8ff; } .peek-n { font-size: 12px; color: #9fc4d8; }';
   document.head.appendChild(secCss);
 
   function featCutscene(x) {
@@ -2843,7 +2852,7 @@
       <div class="pf-pane" data-pane="feats">
         <div class="feat-list">${ach.map((x) => {
           const done = x.have >= x.need;
-          return `<button type="button" class="feat ${done ? 'done' : ''} ${x.secret ? 'secret' : ''} t-${x.tier || 1}" data-feat="${ach.indexOf(x)}"><span class="feat-ico ${CRESTS[x.id] || HOOKS.crests[x.id] ? 'crest' : ''}">${HOOKS.crests[x.id] ? HOOKS.crests[x.id](x) : CRESTS[x.id] ? CRESTS[x.id](x) : root.Icons.svg(x.icon)}</span><div><b>${esc(x.name)}${x.secret ? ` <span class="feat-secret ${x.tier === 7 ? 'legend' : ''}">${x.tier === 7 ? 'Legendary' : 'Secret'}</span>` : ''}</b><span class="muted small">${x.secret ? (done ? 'A secret badge. How it\'s earned stays a secret.' : '???') : esc(x.desc)}</span><i class="feat-bar"><i style="width:${Math.min(100, (x.have / x.need) * 100)}%"></i></i></div><em>${done ? '✓' : `${fmt(Math.min(x.have, x.need))}/${fmt(x.need)}`}</em></button>`;
+          return `<button type="button" class="feat ${done ? 'done' : ''} ${x.secret ? 'secret' : ''} t-${x.tier || 1}" data-feat="${ach.indexOf(x)}"><span class="feat-ico ${CRESTS[x.id] || HOOKS.crests[x.id] ? 'crest' : ''}">${stillSvg(HOOKS.crests[x.id] ? HOOKS.crests[x.id](x) : CRESTS[x.id] ? CRESTS[x.id](x) : root.Icons.svg(x.icon))}</span><div><b>${esc(x.name)}${x.secret ? ` <span class="feat-secret ${x.tier === 7 ? 'legend' : ''}">${x.tier === 7 ? 'Legendary' : 'Secret'}</span>` : ''}</b><span class="muted small">${x.secret ? (done ? 'A secret badge. How it\'s earned stays a secret.' : '???') : esc(x.desc)}</span><i class="feat-bar"><i style="width:${Math.min(100, (x.have / x.need) * 100)}%"></i></i></div><em>${done ? '✓' : `${fmt(Math.min(x.have, x.need))}/${fmt(x.need)}`}</em></button>`;
         }).join('')}</div>
       </div>
       <div class="modal-actions"><button class="btn btn-primary" type="button" data-close>Close</button></div>`, { cls: 'profile-modal' });
@@ -2864,7 +2873,7 @@
       const fb = e.target.closest('[data-feat]');
       if (fb) {
         const x = ach[Number(fb.dataset.feat)];
-        if (x.have >= x.need) return x.secret ? secretPeek(x) : playFeat(x);
+        if (x.have >= x.need) return badgePeek(x);
         fb.classList.remove('shake');
         void fb.offsetWidth;
         fb.classList.add('shake');
@@ -3269,5 +3278,5 @@
     }
   }
 
-  root.UI = { hooks: HOOKS, achievements, featBadge, secretPeek, packReveal, motionOK, walkout, settings, profile, playFeat, celebrateFeat, markFeatSeen, soundSettings: settings, homeworldOf, $, $$, el, esc, fmt, cur, portrait, stars, unitCard, toast, openModal, confirmBox, updateWallet, inspect, synergyBanner, App, Screens };
+  root.UI = { hooks: HOOKS, achievements, featBadge, secretPeek, badgePeek, stillSvg, packReveal, motionOK, walkout, settings, profile, playFeat, celebrateFeat, markFeatSeen, soundSettings: settings, homeworldOf, $, $$, el, esc, fmt, cur, portrait, stars, unitCard, toast, openModal, confirmBox, updateWallet, inspect, synergyBanner, App, Screens };
 })(window);
