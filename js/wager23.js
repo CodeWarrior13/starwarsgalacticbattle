@@ -25,12 +25,29 @@
   const ESCROW = 'swcg-wager';
   let HN = null;
 
-  const on = () => !!((root.Update23 && root.Update23.on && root.Update23.on()) || root.__wgTest);
+  // Testers can switch on just this mechanic early with its own code (nothing else from 2.3).
+  const TEST_KEY = 'swcg-wg-test';
+  const tested = () => { try { return localStorage.getItem(TEST_KEY) === '1'; } catch (e) { return false; } };
+  const on = () => !!((root.Update23 && root.Update23.on && root.Update23.on()) || root.__wgTest || tested());
+  const code = () => String.fromCharCode(83, 65, 66, 65, 67, 67, 66, 69, 84, 83);
+  const H = UI.hooks;
+  if (H) {
+    const before = H.redeem;
+    H.redeem = (c) => {
+      if (c !== code()) return before ? before(c) : false;
+      try { localStorage.setItem(TEST_KEY, '1'); } catch (e) { /* ignore */ }
+      toast('Wager duel test ON for this device: no league needed. Open HoloNet, Live Duels, Wager. The other pilot needs this code too.');
+      if (HN && HN.Duel && HN.Duel.start) HN.Duel.start();
+      return true;
+    };
+  }
   const needDiv = () => (HN && HN.DIVS ? HN.DIVS.find((d) => d.key === 'silver3') : null) || { name: 'Silver III', min: 1350 };
   const seasonNo = () => (HN && HN.seasonInfo ? HN.seasonInfo().no : 0);
   // Reaching Silver III opens wagers for the rest of that season.
   function unlocked() {
     if (!on() || !HN || !HN.ui || !HN.ui.unlocked()) return false;
+    // The tester code skips the league requirement (ratings stay real for the leaderboards).
+    if (tested() && !(root.Update23 && root.Update23.on && root.Update23.on())) return true;
     const h = HN.S();
     const no = seasonNo();
     if (h.rating >= needDiv().min && h.wgs !== no) { h.wgs = no; HN.save(); }
