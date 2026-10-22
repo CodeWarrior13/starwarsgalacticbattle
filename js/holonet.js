@@ -3048,7 +3048,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   function setPresence() {
     if (!Duel.room) return;
     const h = HN.S();
-    Duel.room.presence({ hn: HN.ui.unlocked() ? 1 : 0, fr: 1, nm: myNm(), rating: h.rating, g: HN.squadPower(HN.squadEntries('character')), f: HN.squadPower(HN.squadEntries('ship')), busy: Duel.match || Duel.prep ? 1 : 0 }).catch(() => {});
+    Duel.room.presence({ hn: HN.ui.unlocked() ? 1 : 0, fr: 1, nm: myNm(), rating: h.rating, g: HN.squadPower(HN.squadEntries('character')), f: HN.squadPower(HN.squadEntries('ship')), busy: Duel.match || Duel.prep ? 1 : 0, wg: HN.Wager && HN.Wager.ready() ? 1 : 0 }).catch(() => {});
   }
   // My callsign as other players should see it ('' when I haven't picked one).
   const myNm = () => { const n = String(HN.Net.name(HN.Net.me) || ''); return n === 'You' ? '' : n.replace(/ \(you\)$/, ''); };
@@ -3071,15 +3071,16 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   const unitName = (id) => (id && D.UNIT_MAP[id] ? D.UNIT_MAP[id].name : '');
   const say = (to, data) => Duel.room && Duel.room.emit('answer', { to, nm: myNm(), ...data }).catch(() => {});
 
-  function challenge(peer, kind, fr) {
+  function challenge(peer, kind, fr, wg) {
     if (!HN.pool(kind).length) return toast(kind === 'ship' ? 'You need a ship to fly a Fleet duel.' : 'You need a character for a Ground duel.');
+    if (wg && !(HN.Wager && HN.Wager.canStart(peer.by))) return;
     if (!Duel.room) return toast('Lost the HoloNet connection.');
     if (Duel.prep) return toast('Finish setting up your other duel first.');
     const id = rid();
     const seed = 1 + Math.floor(Math.random() * 2e9);
-    Duel.pending = { id, peer: peer.peer, by: peer.by, kind, seed, fr: !!fr };
-    Duel.room.emit('challenge', { to: peer.peer, id, kind, seed, rating: HN.S().rating, nm: myNm(), pool: poolIds(kind), fr: fr ? 1 : 0 }).catch(() => toast('Could not reach them.'));
-    const m = openModal(`<div class="hn-result"><div class="result-title" style="color:#8fe8ff;${fr ? 'font-size:clamp(22px,6vw,34px)' : ''}">${fr ? 'FRIENDLY BATTLE' : 'CHALLENGE SENT'}</div><p style="text-align:center">Waiting for <b>${esc(Duel.name(peer))}</b> to accept a ${kindName(kind)} ${fr ? 'friendly battle' : 'duel'}…</p><div class="modal-actions"><button type="button" class="btn" data-x="cancel">Cancel</button></div></div>`, { small: true, dismissable: false });
+    Duel.pending = { id, peer: peer.peer, by: peer.by, kind, seed, fr: !!fr, wg: !!wg };
+    Duel.room.emit('challenge', { to: peer.peer, id, kind, seed, rating: HN.S().rating, nm: myNm(), pool: poolIds(kind), fr: fr ? 1 : 0, wg: wg ? 1 : 0 }).catch(() => toast('Could not reach them.'));
+    const m = openModal(`<div class="hn-result"><div class="result-title" style="color:${wg ? '#ffd23f' : '#8fe8ff'};${fr || wg ? 'font-size:clamp(22px,6vw,34px)' : ''}">${fr ? 'FRIENDLY BATTLE' : wg ? 'WAGER DUEL' : 'CHALLENGE SENT'}</div><p style="text-align:center">Waiting for <b>${esc(Duel.name(peer))}</b> to accept a ${kindName(kind)} ${fr ? 'friendly battle' : wg ? 'wager duel' : 'duel'}…</p><div class="modal-actions"><button type="button" class="btn" data-x="cancel">Cancel</button></div></div>`, { small: true, dismissable: false });
     Duel.pending.modal = m;
     Duel.pending.timer = setTimeout(() => { if (Duel.pending && Duel.pending.id === id) { Duel.pending = null; m.close(); toast('No answer. Try again later.'); } }, 30000);
     m.root.addEventListener('click', (e) => {
@@ -3095,6 +3096,8 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     if (msg.isMe || d.to !== Duel.myPeer() || !d.id || !['character', 'ship'].includes(d.kind)) return;
     // Friendly battles only from friends; ranked duels only once the HoloNet is unlocked.
     if (d.fr ? !(HN.friends && HN.friends.isFriend(msg.by)) : !HN.ui.unlocked()) { say(msg.peer, { id: d.id, step: 'no' }); return; }
+    // Wager duels: only when I can wager too (league, credits, today's limit with them).
+    if (d.wg && !d.fr && !(HN.Wager && HN.Wager.canAccept(msg.by))) { say(msg.peer, { id: d.id, step: 'no', nowg: 1 }); return; }
     if (Duel.match || App.battleActive || Duel.prep) { say(msg.peer, { id: d.id, step: 'no', busy: true }); return; }
     Duel.invite = { ...d, peer: msg.peer, by: msg.by };
     learn(msg.by, d.nm);
@@ -3103,7 +3106,9 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const who = Duel.name(msg);
     const m = openModal(`<div class="hn-result" data-invite="${esc(d.id)}">${d.fr ? `<div class="result-title" style="color:#8fe8ff;font-size:clamp(22px,6vw,34px)">FRIENDLY BATTLE</div>
       <p style="text-align:center">Your friend <b>${esc(who)}</b> challenges you to a <b>${kindName(d.kind)}</b> battle.</p>
-      <p class="muted small" style="text-align:center;margin:0">You each ban one card, then build your squads. Just for fun: no rating, no rewards.</p>` : `<div class="result-title" style="color:#8fe8ff">LIVE DUEL</div>
+      <p class="muted small" style="text-align:center;margin:0">You each ban one card, then build your squads. Just for fun: no rating, no rewards.</p>` : d.wg ? `<div class="result-title" style="color:#ffd23f;font-size:clamp(22px,6vw,34px)">WAGER DUEL</div>
+      <p style="text-align:center"><b>${esc(who)}</b> (${fmt(d.rating || 0)} rating) challenges you to a <b>${kindName(d.kind)}</b> wager duel.</p>
+      <p class="muted small" style="text-align:center;margin:0">After bans you have 45 seconds to agree a credit wager (1,000 to 100,000). The winner takes both, minus a 10% house tax. Ranked: rating counts.</p>` : `<div class="result-title" style="color:#8fe8ff">LIVE DUEL</div>
       <p style="text-align:center"><b>${esc(who)}</b> (${fmt(d.rating || 0)} rating) challenges you to a <b>${kindName(d.kind)}</b> duel.</p>
       <p class="muted small" style="text-align:center;margin:0">You each ban one card, then build your squads.</p>`}
       <div class="modal-actions"><button type="button" class="btn" data-x="no">Decline</button><button type="button" class="btn btn-primary" data-x="yes">Accept</button></div></div>`, { small: true, dismissable: false });
@@ -3122,7 +3127,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       // Accepting drops any challenge we were still waiting on.
       if (Duel.pending) { const p = Duel.pending; clearTimeout(p.timer); if (p.modal) p.modal.close(); say(p.peer, { id: p.id, step: 'cancel' }); Duel.pending = null; }
       say(inv.peer, { id: inv.id, step: 'go', pool: poolIds(inv.kind), rating: HN.S().rating });
-      prep({ id: inv.id, host: false, kind: inv.kind, seed: inv.seed, peer: inv.peer, by: inv.by, who, rating: inv.rating, theirPool: okIds(inv.pool, inv.kind), fr: !!inv.fr });
+      prep({ id: inv.id, host: false, kind: inv.kind, seed: inv.seed, peer: inv.peer, by: inv.by, who, rating: inv.rating, theirPool: okIds(inv.pool, inv.kind), fr: !!inv.fr, wg: !!inv.wg && !inv.fr });
     });
   }
 
@@ -3147,9 +3152,9 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     if (step === 'go') {
       // They accepted too late: we're already fighting someone else.
       if (Duel.match || App.battleActive || Duel.prep) { say(msg.peer, { id: p.id, step: 'cancel' }); return; }
-      return prep({ id: p.id, host: true, kind: p.kind, seed: p.seed, peer: msg.peer, by: msg.by, who: Duel.name(msg), rating: d.rating, theirPool: okIds(d.pool, p.kind), fr: !!p.fr });
+      return prep({ id: p.id, host: true, kind: p.kind, seed: p.seed, peer: msg.peer, by: msg.by, who: Duel.name(msg), rating: d.rating, theirPool: okIds(d.pool, p.kind), fr: !!p.fr, wg: !!p.wg });
     }
-    toast(d.busy ? 'They are busy in another fight.' : 'Challenge declined.');
+    toast(d.busy ? 'They are busy in another fight.' : d.nowg ? 'They can\'t take wager duels right now.' : 'Challenge declined.');
   }
 
   // ---------- duel setup: bans, then squads ----------
@@ -3177,6 +3182,8 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   function endPrep(P, note) {
     if (P.done) return;
     P.done = true;
+    // A wager was agreed but the battle never started: whoever left forfeits it.
+    if (P.wager && !P.fought && HN.Wager) HN.Wager.prepEnded(P);
     closeWait(P);
     if (P.ui) { const u = P.ui; P.ui = null; u.close(); }
     if (Duel.prep === P) Duel.prep = null;
@@ -3184,7 +3191,9 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     setPresence();
     refresh();
   }
-  const leave = (P, note) => { say(P.peer, { id: P.id, step: 'cancel' }); endPrep(P, note); };
+  const leave = (P, note) => { P.iLeft = true; say(P.peer, { id: P.id, step: 'cancel' }); endPrep(P, note); };
+  // They stopped answering: called off, and it's on them (not me).
+  const timedOut = (P, note) => { say(P.peer, { id: P.id, step: 'cancel' }); endPrep(P, note); };
   const banLine = (P) => {
     const b = P.bans.filter(Boolean);
     return b.length ? `<p class="dp-bans">Banned: ${b.map((id) => `<b>${esc(unitName(id))}</b>`).join(' · ')}</p>` : '';
@@ -3196,7 +3205,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       <p style="text-align:center"><span class="ho-spin"></span> ${html}</p>${banLine(P)}
       <div class="modal-actions"><button type="button" class="btn" data-x="leave">Leave duel</button></div></div>`, { small: true, dismissable: false });
     P.wait.root.addEventListener('click', (e) => { if (e.target.closest('[data-x="leave"]')) leave(P, 'You left the duel.'); });
-    P.timer = setTimeout(() => { if (live(P)) leave(P, `${P.who} took too long, so the duel was called off.`); }, ms);
+    P.timer = setTimeout(() => { if (live(P)) timedOut(P, `${P.who} took too long, so the duel was called off.`); }, ms);
   }
   function myBan(P) {
     closeWait(P);
@@ -3206,20 +3215,21 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       if (card === false) return leave(P, 'You left the duel.');
       P.bans.push(card || null);
       say(P.peer, { id: P.id, step: 'ban', card: card || '' });
-      if (P.bans.length >= 2) return build(P);
+      if (P.bans.length >= 2) return afterBans(P);
       waitFor(P, `<b>${esc(P.who)}</b> is choosing their ban…`, BAN_MS + 15000);
     });
   }
   function prepMsg(P, step, d) {
     if (!live(P)) return;
     if (step === 'cancel' || step === 'no') return endPrep(P, `${P.who} left the duel.`);
+    if (step === 'wg') { if (P.wg && HN.Wager) HN.Wager.msg(P, d); return; }
     if (step === 'ban') {
       if (P.bans.length >= 2) return;
       const card = typeof d.card === 'string' && D.UNIT_MAP[d.card] && D.UNIT_MAP[d.card].kind === P.kind && !P.bans.includes(d.card) ? d.card : null;
       P.bans.push(card);
       if (card) toast(`${P.who} banned ${unitName(card)}.`);
       // The challenger has both bans now; the other player bans next.
-      return P.bans.length >= 2 ? build(P) : myBan(P);
+      return P.bans.length >= 2 ? afterBans(P) : myBan(P);
     }
     if (step === 'squad') {
       const sq = Array.isArray(d.squad) ? d.squad.filter((e) => e && D.UNIT_MAP[e.id] && D.UNIT_MAP[e.id].kind === P.kind && !P.bans.includes(e.id)).slice(0, 5) : [];
@@ -3228,6 +3238,9 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       if (P.mine) fight(P);
     }
   }
+  // Wager duels agree the stake between the bans and the squads.
+  const WAPI = { say: (P, data) => say(P.peer, { id: P.id, step: 'wg', ...data }), build: (P) => build(P), leave: (P, note) => leave(P, note), timedOut: (P, note) => timedOut(P, note), live: (P) => live(P), closeWait: (P) => closeWait(P), endPrep: (P, note) => endPrep(P, note) };
+  const afterBans = (P) => (P.wg && HN.Wager ? HN.Wager.table(P, WAPI) : build(P));
   function build(P) {
     closeWait(P);
     P.ui = buildSquad(P.kind, { who: P.who, role: P.host ? 'challenge' : 'accept', bans: P.bans.filter(Boolean) }, (mine) => {
@@ -3241,7 +3254,8 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     });
   }
   function fight(P) {
-    const cfg = { id: P.id, host: P.host, kind: P.kind, seed: P.seed, mine: P.mine, theirs: P.theirs, peer: P.peer, by: P.by, name: P.who, oppRating: +P.rating || 800, bans: P.bans.filter(Boolean), fr: !!P.fr };
+    const cfg = { id: P.id, host: P.host, kind: P.kind, seed: P.seed, mine: P.mine, theirs: P.theirs, peer: P.peer, by: P.by, name: P.who, oppRating: +P.rating || 800, bans: P.bans.filter(Boolean), fr: !!P.fr, wager: P.wager || 0 };
+    P.fought = true;
     endPrep(P);
     start(cfg);
   }
@@ -3580,6 +3594,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     h.duels = h.duels || { w: 0, l: 0 };
     h.duels.l += 1;
     rate(M, false);
+    if (M.wager && HN.Wager) HN.Wager.settle(M, 'lost');
     HN.save();
     HN.Net.publish();
     cleanup(M);
@@ -3708,13 +3723,14 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const bes = draw ? 30 : won ? 60 : 15;
     h.beskar += bes;
     const rr = draw ? { delta: 0, after: HN.divOf(h.rating), rewards: [] } : rate(M, won);
+    const wres = M && M.wager && HN.Wager ? HN.Wager.settle(M, draw ? 'draw' : won ? 'won' : 'lost') : null;
     const timeNote = M && M.dealt ? `<p style="text-align:center" class="muted">Time ran out · damage dealt ${fmt(M.dealt.mine)} to ${fmt(M.dealt.theirs)}</p>` : '';
     HN.save();
     HN.Net.publish();
     const name = M ? M.name : 'your opponent';
     if (M) cleanup(M);
     const m = openModal(`<div class="hn-result"><div class="result-title ${draw ? '' : won ? 'win' : 'lose'}">${draw ? 'DRAW' : won ? 'VICTORY' : 'DEFEAT'}</div>
-      <p style="text-align:center">Live duel against <b>${esc(name)}</b></p>${timeNote}
+      <p style="text-align:center">${wres ? 'Wager duel' : 'Live duel'} against <b>${esc(name)}</b></p>${timeNote}${wres ? HN.Wager.rows(wres) : ''}
       <div class="big-num" style="color:${rr.delta >= 0 ? '#7af0a0' : '#ff7a7a'}">${rr.delta >= 0 ? '+' : ''}${rr.delta} rating</div>
       <div class="rows"><div><span>Rating</span><b>${fmt(h.rating)} · ${esc(rr.after.name)}</b></div><div><span>Beskar</span><b>${HN.ui.bes(bes)}</b></div><div><span>Duel record</span><b>${h.duels.w} W · ${h.duels.l} L${h.duels.d ? ` · ${h.duels.d} D` : ''}</b></div>${won && HN.social ? '<div><span>Guild points</span><b>+15</b></div>' : ''}</div>
       ${rr.rewards.filter((x) => x.type === 'div').map((x) => `<p style="text-align:center"><b>${esc(x.div.name)} reached!</b> ${HN.ui.bes(x.beskar)}</p>`).join('')}
@@ -3755,15 +3771,22 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
           <div class="who">${HN.chip && p.by ? HN.chip(p.by) : `<b>${esc(Duel.name(p))}</b>`}${pr.busy ? '<span class="tag" style="background:#7a4a1a">IN A DUEL</span>' : '<span class="tag" style="background:#1a7a4a">ONLINE</span>'}<small>${esc(d.name)} · ${fmt(pr.rating || 0)}</small></div>
           <div class="go"><button type="button" class="hn-btn" data-hn="duelgo" data-peer="${esc(p.peer)}" data-kind="character" ${pr.busy ? 'disabled' : ''}>Ground</button><button type="button" class="hn-btn" data-hn="duelgo" data-peer="${esc(p.peer)}" data-kind="ship" ${pr.busy ? 'disabled' : ''}>Fleet</button></div></div>`; }).join('')}</div>`
           : '<div class="hn-free"><span class="grow"><b>Nobody else is in the HoloNet right now.</b> When another player opens it, they\'ll show up here live.</span></div>';
-    return `${HN.ui.head('LIVE DUELS', `Ranked · real players, real time · record ${rec.w} W · ${rec.l} L`, true)}
+    // 2.3: a Wager tab beside the ranked list.
+    const W = HN.Wager && HN.Wager.on() ? HN.Wager : null;
+    const tabs = W ? `<div class="dw-tabs" role="tablist"><button type="button" role="tab" class="${Duel.tab !== 'wager' ? 'on' : ''}" data-hn="dueltab" data-tab="ranked">Ranked</button><button type="button" role="tab" class="${Duel.tab === 'wager' ? 'on' : ''}" data-hn="dueltab" data-tab="wager">Wager${W.unlocked() ? '' : ' <span aria-label="locked">🔒</span>'}</button></div>` : '';
+    if (W && Duel.tab === 'wager') {
+      return `${HN.ui.head('WAGER DUELS', `Credits on the line · record ${rec.w} W · ${rec.l} L`, true)}${tabs}${W.lobby(list, off, !!Duel.room, Duel.ready)}`;
+    }
+    return `${HN.ui.head('LIVE DUELS', `Ranked · real players, real time · record ${rec.w} W · ${rec.l} L`, true)}${tabs}
       <p class="muted" style="margin:0">Challenge a player who's online now. You both build a squad for the duel first, and every card fights at Level ${DUEL_LEVEL} ★${DUEL_STARS}, so it's skill and team-building, not who has the highest levels. You play every move yourself (no Auto). Duels are ranked: win or lose rating just like the arena. 45 seconds per move and 12 minutes per match (then the most damage dealt wins); leaving counts as a loss.</p>
       ${body}`;
   };
   HN.clicks.duelgo = (b) => {
     const p = Duel.lobby().find((x) => x.peer === b.dataset.peer);
     if (!p) return toast('They just left.');
-    challenge(p, b.dataset.kind);
+    challenge(p, b.dataset.kind, false, b.dataset.wg === '1');
   };
+  HN.clicks.dueltab = (b) => { Duel.tab = b.dataset.tab === 'wager' ? 'wager' : 'ranked'; refresh(); };
   // Closing or reloading mid-duel: warn first; if they go anyway it's a forfeit,
   // recorded now, and explained when the game next opens.
   addEventListener('beforeunload', (e) => { if (Duel.match && !Duel.match.ended) { e.preventDefault(); e.returnValue = ''; } });
