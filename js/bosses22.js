@@ -7,7 +7,7 @@
 (function (root) {
   'use strict';
   const D = root.GameData;
-  const live = () => (root.Update22 ? root.Update22.on() : root.__v22Test != null && Date.now() >= root.__v22Test);
+  const live = () => (root.Update22 ? (root.Update22.content || root.Update22.on)() : root.__v22Test != null && Date.now() >= root.__v22Test);
 
   // ---------- Art ----------
   if (root.ArtX && root.Art) {

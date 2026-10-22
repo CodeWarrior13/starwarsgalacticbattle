@@ -3127,7 +3127,7 @@
 
   // opts.auto (Auto-open): every card opens and deals by itself, holds by rarity,
   // and the reveal closes on its own; the call then resolves when it's gone.
-  const v22 = () => !!(root.Update22 && root.Update22.on());
+  const v22 = () => !!(root.Update22 && (root.Update22.content || root.Update22.on)());
   const NEW_CORNER = '<span class="new-corner" aria-label="New card"><b>NEW CARD</b></span>';
 
   async function packReveal(results, packId, opts = {}) {

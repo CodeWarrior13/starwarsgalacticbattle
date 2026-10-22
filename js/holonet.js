@@ -499,7 +499,7 @@
 (function (root) {
   const { P, E, C, R, L } = root.ArtX;
   const A = root.HNArt;
-  if (!A || !(root.Update22 && root.Update22.on())) return;
+  if (!A || !(root.Update22 && (root.Update22.content || root.Update22.on)())) return;
   const K = '#02141c';
   const ln = (c, w = 0.6, o = 0.9) => `fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" opacity="${o}"`;
   const H = (d, c) => P(d, c, `stroke="${c}" stroke-width=".7" stroke-opacity="1"`);
@@ -1023,7 +1023,7 @@
     });
   }
   function botSquad(kind, rating, r) {
-    if (root.Update22 && root.Update22.on()) return botSquad22(kind, rating, r);
+    if (root.Update22 && (root.Update22.content || root.Update22.on)()) return botSquad22(kind, rating, r);
     const mine = squadEntries(kind);
     const f = Math.pow(rating / Math.max(600, S().rating), 0.8);
     const lvl = Math.max(1, Math.min(D.MAX_LEVEL || 30, Math.round(avgLevel(mine) * f + (r() - 0.5) * 2)));
@@ -6751,10 +6751,10 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
 // Update 2.2 (READY, not in the build yet: add it to live-bundle.sh after
 // hn-social once the owner approves): seven new HoloNet-only cards. Bossk, Cad
 // Bane, IG-11, Greef Karga, Cara Dune, Zuckuss and Todo 360, with their art,
-// kits, signature ultimates and where they come from. Off until 2.2 is live.
+// kits, signature ultimates and where they come from. Off until 2.2 is live (testers: HOLOSAVE21).
 (function (root) {
   'use strict';
-  if (!(root.Update22 && root.Update22.on())) return;
+  if (!(root.Update22 && (root.Update22.content || root.Update22.on)())) return;
   const D = root.GameData;
   const HN = root.HN;
   const { P, E, C, R, L, shade, shoulders, neck, head, eyes, brows, nose, mouth, glowEyes, blaster, SCENES } = root.ArtX;

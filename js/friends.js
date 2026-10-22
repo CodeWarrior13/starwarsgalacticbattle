@@ -7,9 +7,12 @@
   // Update 2.2 goes live at 7:05 a.m. Central, Wednesday October 28, 2026 (12:05 UTC).
   const RELEASE22 = root.__v22Test != null ? root.__v22Test : Date.UTC(2026, 9, 28, 12, 5, 0);
   const on = () => RELEASE22 != null && Date.now() >= RELEASE22;
-  // Testers (the saved-accounts tester code) get Friends early on this device:
-  // friends, friendly battles, duel chat and Add friend after duels. Nothing
-  // else from 2.2 turns on. The switch does nothing once 2.2 is out.
+  // Testers (the HOLOSAVE21 code) get 2.2 early on this device: Friends (friends,
+  // chat, friendly battles, friend profiles, guild invites), the new profile and
+  // Rex's walkthrough, plus 2.2's content (the new planet bosses, bounty cards,
+  // league bots and NEW card tags). Things shared with every player (season
+  // timing, guild raid toughness) wait for the real date. The switch does
+  // nothing once 2.2 is out.
   const TEST_KEY = 'swcg-fr-test';
   const test = (v) => {
     try {
@@ -20,7 +23,7 @@
     return !!v;
   };
   const friendsOn = () => on() || test();
-  root.Update22 = { on, at: RELEASE22, test, friends: friendsOn };
+  root.Update22 = { on, at: RELEASE22, test, friends: friendsOn, content: friendsOn };
 
   const FRIENDS_LEVEL = 5;
   const level = () => (root.Player && root.Player.state && root.Player.state.account && root.Player.state.account.level) || 1;
