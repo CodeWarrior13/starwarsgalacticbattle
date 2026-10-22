@@ -137,6 +137,10 @@
         }
       }
       if (!covered && !document.body.classList.contains('in-battle') && document.querySelector('#modal-root .modal-backdrop')) covered = true;
+      if (document.body.classList.contains('overlay-on') !== covered) {
+        // Script-driven fly-bys (the ships crossing the galaxy) ignore the CSS pause, so hold them by hand.
+        document.querySelectorAll('#screen .hg-actor').forEach((n) => n.getAnimations().forEach((a) => { try { if (covered) a.pause(); else a.play(); } catch (e) { /* ignore */ } }));
+      }
       document.body.classList.toggle('overlay-on', covered);
     };
     const mo = new MutationObserver(() => { if (!queued) { queued = true; requestAnimationFrame(check); } });

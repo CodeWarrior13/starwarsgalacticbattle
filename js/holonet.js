@@ -8667,8 +8667,14 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
   function anchor() {
     const bar = document.querySelector('.battle-top');
     const b = bar ? bar.getBoundingClientRect().bottom : 0;
-    C.el.style.top = `${Math.max(8, Math.round(b) + 6)}px`;
+    // Under the battle bar, but never so low the panel runs off a short screen.
+    const top = Math.max(8, Math.min(Math.round(b) + 6, Math.round(innerHeight * 0.45)));
+    C.el.style.top = `${top}px`;
+    C.el.style.setProperty('--dcmax', `${Math.max(180, innerHeight - top - 12)}px`);
   }
+  const reAnchor = () => { if (C && C.open) anchor(); };
+  addEventListener('resize', reAnchor, { passive: true });
+  addEventListener('scroll', reAnchor, { passive: true });
   function toggle() {
     anchor();
     C.open = !C.open;
@@ -8776,7 +8782,7 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
 .dchat-pop { max-width: min(260px, 70vw); padding: 7px 11px; border-radius: 12px 12px 4px 12px; background: rgba(6, 18, 30, 0.94); border: 1px solid rgba(95, 216, 255, 0.5); color: #e8f8ff; font-size: 13px; line-height: 1.3; overflow-wrap: anywhere; animation: dchatIn .25s ease-out; }
 .dchat-pop b { color: #8fe8ff; margin-right: 4px; }
 @keyframes dchatIn { from { opacity: 0; transform: translateY(-6px); } }
-.dchat-panel { width: min(320px, calc(100vw - 20px)); display: grid; gap: 8px; padding: 10px; border-radius: 14px; background: rgba(6, 16, 26, 0.97); border: 1px solid rgba(95, 216, 255, 0.45); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55); }
+.dchat-panel { width: min(320px, calc(100vw - 20px)); max-height: var(--dcmax, 70vh); overflow-y: auto; overscroll-behavior: contain; display: grid; gap: 8px; padding: 10px; border-radius: 14px; background: rgba(6, 16, 26, 0.97); border: 1px solid rgba(95, 216, 255, 0.45); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55); }
 .dchat-head { display: flex; align-items: center; gap: 8px; } .dchat-head b { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
 .dchat-mute, .dchat-x { border: 1px solid rgba(95, 216, 255, 0.3); background: transparent; color: #bfefff; border-radius: 8px; padding: 4px 8px; font-size: 12px; cursor: pointer; }
 .dchat-log { max-height: 26vh; min-height: 48px; overflow-y: auto; display: grid; gap: 4px; align-content: start; }
@@ -8785,6 +8791,7 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
 .dchat-quick button { border: 1px solid rgba(95, 216, 255, 0.3); background: rgba(95, 216, 255, 0.08); color: #dff8ff; border-radius: 999px; padding: 5px 9px; font-size: 12px; cursor: pointer; }
 .dchat-form { display: flex; gap: 6px; } .dchat-form input { flex: 1; min-width: 0; padding: 8px 10px; border-radius: 10px; border: 1px solid rgba(95, 216, 255, 0.35); background: #04101a; color: #fff; font-size: 16px; }
 .dchat-form .btn { padding: 8px 12px; }
+@media (max-height: 560px), (max-width: 520px) { .dchat-quick { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; } .dchat-quick button { flex: none; } .dchat-log { max-height: 18vh; } }
 .modal-actions .dchat-add { order: 2; }
 `;
   document.head.appendChild(st);

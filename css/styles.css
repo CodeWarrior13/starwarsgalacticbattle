@@ -3524,3 +3524,8 @@ body.perf-on .card-back .cb-rays { animation: none; }
 /* Card grids inside profiles and pickers stay still: dozens of saber hums and
    frame shimmers at once were the biggest drain on phones. */
 .p2-card .ucard, .p2-card .ucard *, .pc-card .ucard, .pc-card .ucard *, .hn-pick .ucard *, .p2-card .ucard::before, .p2-card .ucard::after, .pc-card .ucard::before, .pc-card .ucard::after { animation: none !important; }
+/* Small portraits (top-bar chip, friend lists, friend profiles) stay still:
+   a saber hum on every tiny picture costs more than it shows. */
+.tb-pic *, .fr-av *, .p2-fr .fa *, .fp-pic *, .p2-face *, .hn-opp .who *, .pe-av .pic *, .g-e * { animation: none !important; }
+/* Daily reward rays rotate on their own layer, so a spin never repaints the card. */
+.dc-rays { will-change: transform; contain: strict; }

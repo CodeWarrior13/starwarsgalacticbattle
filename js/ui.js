@@ -651,7 +651,7 @@
     scenes[0]();
     const tick = () => {
       if (!host.isConnected) return;
-      if (!document.hidden && host.childElementCount < 10) pickScene()();
+      if (!document.hidden && !document.body.classList.contains('overlay-on') && host.childElementCount < 10) pickScene()();
       setTimeout(tick, 2200 + Math.random() * 2600);
     };
     setTimeout(tick, 1500);

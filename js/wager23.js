@@ -116,7 +116,7 @@
         <div class="wg-pick"><input type="range" min="${MIN}" max="${c}" step="1000" value="${W.pick}" data-wg="range" aria-label="Wager amount"><b data-wg="pickv">${fmt(W.pick)}</b></div>
         <div class="wg-quick">${quick.map((n) => `<button type="button" class="${W.pick === n ? 'on' : ''}" data-wgq="${n}">${short(n)}</button>`).join('')}${quick.includes(c) ? '' : `<button type="button" class="${W.pick === c ? 'on' : ''}" data-wgq="${c}">Max</button>`}</div>
         <div class="wg-acts">${theirsOpen ? `<button type="button" class="btn" data-wgx="offer">Counter ${short(W.pick)}</button><button type="button" class="btn btn-primary" data-wgx="accept" ${W.myLock === o.amt ? 'disabled' : ''}>${W.myLock === o.amt ? 'Locked in ✓' : `Accept ${short(o.amt)}`}</button>` : `<button type="button" class="btn btn-primary wide" data-wgx="offer" ${o && o.by === 'me' && o.amt === W.pick ? 'disabled' : ''}>${o && o.by === 'me' ? (o.amt === W.pick ? 'Offer sent · waiting' : `Change offer to ${short(W.pick)}`) : `Offer ${short(W.pick)}`}</button>`}</div>
-        <div class="wg-locks"><span class="${W.myLock ? 'ok' : ''}">You: ${W.myLock ? `locked ${short(W.myLock)} ✓` : 'deciding…'}</span><span class="${W.theirLock ? 'ok' : ''}">${esc(Pp.who)}: ${W.theirLock ? `locked ${short(W.theirLock)} ✓` : 'deciding…'}</span></div>`;
+        <div class="wg-locks"><span class="${W.myLock ? 'ok' : ''}">You ${W.myLock ? `✓ ${short(W.myLock)}` : '· deciding…'}</span><span class="${W.theirLock ? 'ok' : ''}">Them ${W.theirLock ? `✓ ${short(W.theirLock)}` : '· deciding…'}</span></div>`;
     };
     const tick = () => {
       if (W.dealt || !api.live(Pp)) return;
@@ -290,8 +290,10 @@
   if (root.HN && root.HN.Duel) init(); else root.addEventListener('hn-ready', init);
 
   const st = document.createElement('style');
-  st.textContent = `.modal.wg-modal { width: min(520px, 100%); }
+  st.textContent = `.modal.wg-modal { width: min(480px, 100%); max-height: calc(100dvh - 24px); overflow-y: auto; }
+@media (max-height: 640px) { .wg-timer { width: 54px; height: 54px; } .wg-timer b { font-size: 18px; } .wg-offer { padding: 8px; } .wg { gap: 8px; } }
 .wg { display: grid; gap: 12px; }
+.wg [data-wg="body"] { display: grid; gap: 10px; }
 .wg-top { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: center; text-align: center; }
 .wg-top .p b { display: block; font: 700 15px var(--font-display, inherit); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .wg-top .p small { color: #8fb4c8; font-size: 12px; }
 .wg-timer { --p: 100; width: 66px; height: 66px; border-radius: 50%; display: grid; place-items: center; position: relative; background: conic-gradient(#ffd23f calc(var(--p) * 1%), #1b2436 0); }
@@ -299,14 +301,14 @@
 .wg-timer b { position: relative; font: 800 22px var(--font-display, inherit); color: #ffd23f; font-variant-numeric: tabular-nums; }
 .wg-timer.low { background: conic-gradient(#ff5a4a calc(var(--p) * 1%), #1b2436 0); } .wg-timer.low b { color: #ff7a6a; }
 .wg-offer { display: grid; gap: 4px; text-align: center; padding: 12px; border-radius: 14px; background: rgba(8, 20, 32, 0.85); border: 1px solid rgba(255, 210, 63, 0.4); }
-.wg-offer b { font: 800 34px var(--font-display, inherit); color: #ffd23f; font-variant-numeric: tabular-nums; } .wg-offer.none b { color: #5a6a7a; } .wg-offer small { color: #8fb4c8; font-size: 12px; }
+.wg-offer b { font: 800 clamp(26px, 8vw, 34px) var(--font-display, inherit); color: #ffd23f; font-variant-numeric: tabular-nums; } .wg-offer.none b { color: #5a6a7a; } .wg-offer small { color: #8fb4c8; font-size: 12px; }
 .wg-pick { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; } .wg-pick b { font: 700 15px var(--font-display, inherit); min-width: 74px; text-align: right; font-variant-numeric: tabular-nums; }
 .wg-pick input[type=range] { width: 100%; accent-color: #ffd23f; height: 28px; }
 .wg-quick { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; } .wg-quick button { flex: 1 1 60px; padding: 8px 4px; border-radius: 10px; border: 1px solid rgba(95, 216, 255, 0.25); background: #13213a; color: #e8f6ff; font: 700 12px var(--font-display, inherit); cursor: pointer; } .wg-quick button.on { border-color: #ffd23f; color: #ffd23f; }
-.wg-acts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; } .wg-acts .btn { padding: 13px 8px; font-size: 15px; width: 100%; } .wg-acts .btn.wide { grid-column: 1 / -1; }
-.wg-locks { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 12px; text-align: center; } .wg-locks span { padding: 6px; border-radius: 9px; background: rgba(8, 20, 32, 0.8); border: 1px solid rgba(95, 216, 255, 0.2); color: #8fb4c8; } .wg-locks span.ok { color: #7af0a0; border-color: rgba(122, 240, 160, 0.45); }
+.wg-acts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; } .wg-acts .btn { padding: 12px 8px; font-size: 14px; width: 100%; white-space: nowrap; } .wg-acts .btn.wide { grid-column: 1 / -1; }
+.wg-locks { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 12px; text-align: center; } .wg-locks span { padding: 2px 4px; color: #8fb4c8; } .wg-locks span.ok { color: #7af0a0; font-weight: 700; }
 .wg-wait { text-align: center; color: #cfe6f5; margin: 6px 0; }
-.wg-chat { display: grid; gap: 6px; } .wg-log { display: grid; gap: 5px; align-content: start; max-height: 120px; min-height: 60px; overflow-y: auto; padding: 8px; border-radius: 12px; background: rgba(4, 12, 20, 0.85); border: 1px solid rgba(95, 216, 255, 0.2); }
+.wg-chat { display: grid; gap: 6px; } .wg-log { display: grid; gap: 5px; align-content: start; max-height: min(120px, 18vh); min-height: 44px; overflow-y: auto; padding: 8px; border-radius: 12px; background: rgba(4, 12, 20, 0.85); border: 1px solid rgba(95, 216, 255, 0.2); }
 .wg-log p { margin: 0; display: flex; } .wg-log p.me { justify-content: flex-end; } .wg-log p span { max-width: 80%; padding: 5px 10px; border-radius: 12px 12px 12px 4px; background: #13263a; font-size: 13px; overflow-wrap: anywhere; } .wg-log p.me span { border-radius: 12px 12px 4px 12px; background: #1d6fa8; }
 .wg-form { display: grid; grid-template-columns: 1fr auto; gap: 6px; } .wg-form input { min-width: 0; padding: 9px 10px; border-radius: 10px; border: 1px solid rgba(95, 216, 255, 0.35); background: #06121e; color: #e8f6ff; font: inherit; }
 .wg-foot { display: flex; justify-content: center; }
