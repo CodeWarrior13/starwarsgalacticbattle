@@ -8074,6 +8074,7 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
           if (dmLoaded[side] && r && r.ok && last && last.by !== Net.me && (last.t || 0) > (lastBefore || 0) && F.chatWith !== d.id) {
             const x = dmText(last, r);
             if (x) toast(`${F.otherName(r)}: ${x.length > 60 ? `${x.slice(0, 57)}…` : x}`);
+            else if (last.k === 'gi') toast(`${F.otherName(r)} invited you to a guild. Open your chat to join.`);
           }
         }
         dmLoaded[side] = true;
@@ -8155,6 +8156,34 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
     try { await Net.db.doc(`dms/${r.id}`).set({ a: r.a, b: r.b, msgs, t: Date.now() }); return true; } catch (e) { toast("Couldn't send. Try again."); return false; } finally { if (F.sending === t) F.sending = 0; redraw(); }
   }
 
+  // A guild invite card in your chat: no typed text, just the guild's details.
+  async function sendCard(r, card) {
+    if (Date.now() - lastDm < DM_GAP) { toast('Slow down a little.'); return false; }
+    lastDm = Date.now();
+    const cur = F.dms.get(r.id) || { msgs: [] };
+    const msgs = (cur.msgs || []).concat({ by: Net.me, t: Date.now(), ...card }).slice(-DM_KEEP);
+    F.dms.set(r.id, { msgs });
+    markSeen(r.id);
+    if (root.Sound) root.Sound.play('click');
+    redraw();
+    try { await Net.db.doc(`dms/${r.id}`).set({ a: r.a, b: r.b, msgs, t: Date.now() }); return true; } catch (e) { toast("Couldn't send. Try again."); return false; }
+  }
+  // A guild invite as it shows in chat (guild details re-checked by the filter).
+  function inviteCard(m, r) {
+    const g = m && m.k === 'gi' && m.g && typeof m.g === 'object' ? m.g : null;
+    if (!g || (m.by !== r.a && m.by !== r.b) || typeof g.id !== 'string') return '';
+    const mine = m.by === Net.me;
+    const okTxt = (t, n) => { const v = String(t || '').slice(0, n); return HN.safe.ok(v) ? v : ''; };
+    const gg = { id: g.id, name: okTxt(g.n, 24) || 'Guild', tag: okTxt(g.tg, 5) || 'GLD', color: /^#[0-9a-f]{6}$/i.test(g.c) ? g.c : '#5fd8ff', pic: typeof g.p === 'string' ? g.p : '', emblem: typeof g.e === 'string' ? g.e : '' };
+    const SO = HN.social;
+    const inThis = SO && SO.myGuildId && SO.myGuildId() === gg.id;
+    const emb = SO && SO.emblem ? SO.emblem(gg, 46) : '';
+    const members = `Level ${Math.max(1, g.l | 0)} guild · ${Math.max(1, g.m | 0)} member${(g.m | 0) === 1 ? '' : 's'}`;
+    return `<div class="fr-gi ${mine ? 'me' : ''}" data-t="${m.t}"><div class="fr-gi-top">${emb}<span><b style="color:${gg.color}">${esc(gg.name)} <small>[${esc(gg.tag)}]</small></b><small>${members}</small></span></div>
+      <p>${mine ? `You invited ${esc(F.otherName(r))} to join.` : `${esc(F.otherName(r))} invited you to join.`}</p>
+      ${mine ? '' : inThis ? '<p class="fr-gi-ok">You\'re in this guild ✓</p>' : `<div class="fr-gi-go"><button type="button" class="btn btn-primary" data-gjoin="${esc(gg.id)}">Join guild</button></div>`}</div>`;
+  }
+
   function challenge(r, kind) {
     const uid = F.other(r);
     if (!isOnline(uid)) return toast(`${F.otherName(r)} isn't online right now.`);
@@ -8190,7 +8219,8 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
       const o = F.online[uid];
       const live = isOnline(uid);
       const busy = live && o && o.busy;
-      return `<div class="fr-row"><span class="fr-av">${esc(F.otherName(r).slice(0, 2).toUpperCase())}</span>
+      const pic = HN.fcard ? HN.fcard.pic(uid) : '';
+      return `<div class="fr-row"><button type="button" class="fr-av ${pic ? 'pic' : ''}" data-f="prof" data-id="${esc(r.id)}" aria-label="${esc(F.otherName(r))}'s profile">${pic || esc(F.otherName(r).slice(0, 2).toUpperCase())}</button>
         <span class="fr-who"><b>${esc(F.otherName(r))}</b><small class="${live ? (busy ? 'busy' : 'on') : ''}">${live ? (busy ? 'In a battle' : 'Online') : 'Offline'}</small></span>
         <span class="fr-go"><button type="button" class="btn fr-chat" data-f="chat" data-id="${esc(r.id)}">Chat${F.unread(r.id) ? `<i class="fr-n">${F.unread(r.id) > 9 ? '9+' : F.unread(r.id)}</i>` : ''}</button><button type="button" class="btn" data-f="ground" data-id="${esc(r.id)}" ${live && !busy ? '' : 'disabled'}>Ground</button><button type="button" class="btn" data-f="fleet" data-id="${esc(r.id)}" ${live && !busy ? '' : 'disabled'}>Fleet</button><button type="button" class="fr-x" data-f="remove" data-id="${esc(r.id)}" aria-label="Remove friend">✕</button></span></div>`;
     };
@@ -8201,15 +8231,15 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
       const keep = host.querySelector('[data-dmin]');
       const draft = keep ? keep.value : '';
       const lastMine = [...msgs].reverse().find((m) => m.by === Net.me);
-      const lines = msgs.map((m) => { const x = dmText(m, r); if (!x) return ''; const mine = m.by === Net.me; const tick = mine && m === lastMine ? `<small class="fr-tick">${F.sending === m.t ? 'Sending…' : 'Sent ✓'}</small>` : ''; return `<p class="${mine ? 'me' : ''} ${mine && F.sending === m.t ? 'sending' : ''}" data-t="${m.t}"><span>${esc(x)}</span>${tick}</p>`; }).join('');
+      const lines = msgs.map((m) => { if (m && m.k === 'gi') return inviteCard(m, r); const x = dmText(m, r); if (!x) return ''; const mine = m.by === Net.me; const tick = mine && m === lastMine ? `<small class="fr-tick">${F.sending === m.t ? 'Sending…' : 'Sent ✓'}</small>` : ''; return `<p class="${mine ? 'me' : ''} ${mine && F.sending === m.t ? 'sending' : ''}" data-t="${m.t}"><span>${esc(x)}</span>${tick}</p>`; }).join('');
       // Same chat already open: only the messages change, so the box keeps its
       // text and focus, and a new message just slides in.
       const openLog = host.dataset.chat === r.id && host.querySelector('[data-dmlog]');
       if (openLog) {
-        const seen = new Set([...openLog.querySelectorAll('p[data-t]')].map((n) => n.dataset.t));
+        const seen = new Set([...openLog.querySelectorAll('[data-t]')].map((n) => n.dataset.t));
         const atEnd = openLog.scrollHeight - openLog.scrollTop - openLog.clientHeight < 40;
         openLog.innerHTML = lines || '<p class="muted small fr-empty">No messages yet. Say hi!</p>';
-        openLog.querySelectorAll('p[data-t]').forEach((n) => { if (!seen.has(n.dataset.t)) n.classList.add('fr-new'); });
+        openLog.querySelectorAll('[data-t]').forEach((n) => { if (!seen.has(n.dataset.t)) n.classList.add('fr-new'); });
         if (atEnd || F.sending) openLog.scrollTop = openLog.scrollHeight;
         const st = host.querySelector('.fr-chatwho small');
         if (st) st.textContent = isOnline(F.other(r)) ? 'Online' : 'Offline';
@@ -8303,6 +8333,8 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
     host.addEventListener('click', (e) => {
       const t = e.target.closest('[data-tab]');
       if (t) { tab = t.dataset.tab; status = { msg: '', cls: '' }; render(); return; }
+      const gj = e.target.closest('[data-gjoin]');
+      if (gj) { if (HN.fcard) HN.fcard.join(gj.dataset.gjoin, () => m.close()); return; }
       const b = e.target.closest('[data-f]');
       if (!b || b.disabled) return;
       const r = b.dataset.id ? F.rows.get(b.dataset.id) : null;
@@ -8312,6 +8344,7 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
       if (f === 'add') return showSug(host.querySelector('[data-q]').value, true);
       if (!r) return;
       if (f === 'chat') { F.chatWith = r.id; return render(); }
+      if (f === 'prof') { if (HN.fcard) HN.fcard.open(F.other(r), F.otherName(r)); return; }
       if (f === 'accept') return accept(r, st);
       if (f === 'decline') return drop(r, 'Request declined.');
       if (f === 'cancel') return drop(r, 'Request cancelled.');
@@ -8341,7 +8374,7 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
     try { await Net.db.doc(`friends/${id}`).set(body); F.rows.set(id, { ...body, id }); redraw(); return 'Request sent'; } catch (e) { return "Couldn't send. Try again."; }
   }
 
-  HN.friends = { boot, open, addUid, badge: () => F.badge(), isFriend: (uid) => F.isFriend(uid), state: (uid) => { const r = F.rows.get(pairId(Net.me, uid)); return r ? (r.ok ? 'friends' : r.by === Net.me ? 'sent' : 'incoming') : ''; }, F };
+  HN.friends = { boot, open, addUid, sendCard, pairId, chatWith: (uid) => { const r = F.rows.get(pairId(Net.me, uid)); if (!r || !r.ok) return; F.chatWith = r.id; open(); }, badge: () => F.badge(), isFriend: (uid) => F.isFriend(uid), state: (uid) => { const r = F.rows.get(pairId(Net.me, uid)); return r ? (r.ok ? 'friends' : r.by === Net.me ? 'sent' : 'incoming') : ''; }, F };
 
   const css = document.createElement('style');
   css.textContent = `.modal.frp-modal { width: min(560px, 100%); }
@@ -8379,7 +8412,15 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
 .fr-list { display: grid; gap: 6px; max-height: 50vh; overflow-y: auto; }
 .frp h4 { margin: 4px 0 0; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: #8fb4c8; }
 .fr-row { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; padding: 8px 10px; border-radius: 12px; background: rgba(8, 20, 32, 0.85); border: 1px solid rgba(95, 216, 255, 0.14); }
-.fr-av { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: #0d2234; border: 1px solid #5fd8ff; font: 800 12px var(--font-display, inherit); color: #bfefff; }
+.fr-av { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: #0d2234; border: 1px solid #5fd8ff; font: 800 12px var(--font-display, inherit); color: #bfefff; padding: 0; overflow: hidden; cursor: pointer; }
+.fr-av.pic { border: 2px solid #ffd23f; } .fr-av svg, .fr-av img { width: 100%; height: 100%; display: block; }
+.fr-gi { justify-self: start; width: min(88%, 340px); display: grid; gap: 8px; padding: 12px; border-radius: 14px; background: linear-gradient(135deg, #2a2010, #14100a); border: 1px solid rgba(255, 210, 63, 0.5); }
+.fr-gi.me { justify-self: end; }
+.fr-gi-top { display: grid; grid-template-columns: 46px minmax(0, 1fr); gap: 10px; align-items: center; } .fr-gi-top span { display: grid; min-width: 0; } .fr-gi-top b { font: 700 15px var(--font-display, inherit); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .fr-gi-top small { color: #8fb4c8; font-size: 12px; }
+.fr-gi p { margin: 0; font-size: 13px; color: #e8dcc0; text-align: center; }
+.fr-gi-go { display: grid; } .fr-gi-go .btn { width: 100%; padding: 11px; font-size: 15px; }
+.fr-gi-ok { color: #7af0a0 !important; font-weight: 700; }
+.fr-dmlog .fr-gi.fr-new { animation: frIn .22s ease-out; }
 .fr-who { display: grid; min-width: 0; } .fr-who b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .fr-who small { font-size: 11px; color: #7a8a9a; } .fr-who small.on { color: #4ade80; } .fr-who small.busy { color: #ffb03a; }
 .fr-go { display: flex; gap: 6px; align-items: center; } .fr-go .btn { padding: 7px 10px; font-size: 12px; min-height: 34px; }
@@ -8725,3 +8766,6 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
 `;
   document.head.appendChild(st);
 })(window);
+
+// Anything waiting for the HoloNet code (friend profiles, wagers) starts now.
+window.dispatchEvent(new Event('hn-ready'));

@@ -58,6 +58,7 @@
     const next = Object.keys(unlockAt).map(Number).filter((lv) => lv > a.level).sort((x, y) => x - y).slice(0, 3);
     let tab = 'overview';
     let chip = 'character';
+    let fetched = false;
 
     const head = () => {
       const hn = hnOn() && root.HN.S ? root.HN.S() : null;
@@ -131,8 +132,20 @@
       if (!F) return '<div class="p2-lock"><b>Friends</b><p class="muted small">Connecting to the HoloNet…</p><button type="button" class="btn btn-primary" data-p2="friends">Open Friends</button></div>';
       const list = F.friends();
       const inc = F.incoming().length;
+      const FC = root.HN.fcard;
+      // Friends' pictures load once, then the tab redraws with them.
+      if (FC && !fetched) { fetched = true; FC.prefetch(() => { if (tab === 'friends' && card.isConnected) draw(); }); }
+      const online = (uid) => F.online[uid] && Date.now() - F.online[uid].at < 150000;
+      const sorted = list.slice().sort((x, y) => Number(online(F.other(y))) - Number(online(F.other(x))) || F.otherName(x).localeCompare(F.otherName(y)));
+      const tile = (r) => {
+        const uid = F.other(r);
+        const c = FC && FC.card(uid);
+        const n = F.unread(r.id);
+        return `<button type="button" class="p2-fr" data-p2f="${esc(uid)}" data-p2fn="${esc(F.otherName(r))}"><span class="fa">${(FC && FC.pic(uid)) || esc(F.otherName(r).slice(0, 2).toUpperCase())}</span><b>${esc(F.otherName(r))}</b><small class="${online(uid) ? 'on' : ''}">${online(uid) ? 'Online' : c ? `Level ${c.lv | 0}` : 'Friend'}</small>${n ? `<i>${n > 9 ? '9+' : n}</i>` : ''}</button>`;
+      };
       return `<div class="pc-tiles" style="grid-template-columns:repeat(3,minmax(0,1fr))"><div><b>${list.length}</b><span>Friends</span></div><div><b>${inc}</b><span>Requests</span></div><div><b>${list.reduce((n, r) => n + F.unread(r.id), 0)}</b><span>Unread</span></div></div>
-        <div class="p2-frs">${list.slice(0, 8).map((r) => `<div class="fr-row"><span class="fr-av">${esc(F.otherName(r).slice(0, 2).toUpperCase())}</span><span class="fr-who"><b>${esc(F.otherName(r))}</b><small>${F.unread(r.id) ? `${F.unread(r.id)} new message${F.unread(r.id) > 1 ? 's' : ''}` : 'Friend'}</small></span></div>`).join('') || '<p class="pc-empty">No friends yet. Add pilots by their callsign.</p>'}</div>
+        <p class="pc-empty">Tap a friend to see their profile.</p>
+        <div class="p2-frs pics">${sorted.map(tile).join('') || '<p class="pc-empty">No friends yet. Add pilots by their callsign.</p>'}</div>
         <div class="modal-actions" style="justify-content:center"><button type="button" class="btn btn-primary" data-p2="friends">Open Friends${inc ? ` (${inc})` : ''}</button></div>`;
     };
 
@@ -179,6 +192,8 @@
         if (x.secret && x.have < x.need) return toast('A secret badge. How to earn it stays a secret.');
         return UI.badgePeek(x);
       }
+      const fp = e.target.closest('[data-p2f]');
+      if (fp && root.HN && root.HN.fcard) return root.HN.fcard.open(fp.dataset.p2f, fp.dataset.p2fn);
       const x = e.target.closest('[data-p2]');
       if (!x) return;
       if (x.dataset.p2 === 'close') return m.close();
