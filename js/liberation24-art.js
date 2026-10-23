@@ -24,6 +24,27 @@
     return o;
   };
 
+  // A shaggy fur mass: an ellipse whose edge breaks into tufts.
+  const shag = (cx, cy, rx, ry, n, amp, fill, extra) => {
+    const pts = [];
+    for (let i = 0; i < n * 2; i++) {
+      const a = (i / (n * 2)) * Math.PI * 2;
+      const k = i % 2 ? 1 : 1 - amp;
+      pts.push(`${(cx + Math.cos(a) * rx * k).toFixed(1)} ${(cy + Math.sin(a) * ry * k).toFixed(1)}`);
+    }
+    return P(`M${pts.join(' L')}Z`, fill, extra || '');
+  };
+  // Darth Vader's helmet, the shape everyone knows: dome, flared sides, lenses, the triangle grill.
+  const vaderHelmet = (o = {}) => {
+    const base = o.base || '#0e0e11';
+    return P('M29.5 46 C29.5 24 40 15.5 50 15.5 C60 15.5 70.5 24 70.5 46 L77 67 L62 60.5 L60 69 L40 69 L38 60.5 L23 67Z', base, o.stroke ? `stroke="${o.stroke}" stroke-width=".9"` : '')
+      + P('M34 30 C38 20 46 17.5 50 17.5 L50 22 C44 22 38 25 35 32Z', o.shine || '#5a5a66', 'opacity=".6"')
+      + P('M37.5 37.5 L47 37.5 L46 45.5 L38.5 45.5Z', '#1a1a20') + P('M62.5 37.5 L53 37.5 L54 45.5 L61.5 45.5Z', '#1a1a20')
+      + L(39.5, 39, 44, 39, o.lens || '#8a8aa0', 0.7) + L(56, 39, 60.5, 39, o.lens || '#8a8aa0', 0.7)
+      + P('M46 47 L54 47 L57.5 61 L42.5 61Z', '#23252c') + [45.5, 48.5, 51.5, 54.5].map((x) => L(x, 51, x + (x - 50) * 0.18, 60, '#9aa1ab', 0.6)).join('')
+      + P('M42.5 61 L57.5 61 L55 66 L45 66Z', '#16171b') + L(50, 22, 50, 37, '#2a2a33', 0.8);
+  };
+
   // ---------- Shared: Phase II clone trooper ----------
   // A proper Phase II bucket: brow ridge, T visor, cheek vents, vocoder,
   // ear caps, chin point. o.rangefinder adds a commander's hinged scope.
@@ -358,45 +379,57 @@
     + `<g transform="translate(26 96) rotate(-18)">${R(0, -3, 44, 6, '#1a1c20', 'rx="1.5"')}${R(8, -6.4, 14, 3.4, '#3a3d45')}${R(38, -1.6, 12, 3.2, '#1a1c20')}</g>`);
 
   // ---------- Hoth optional boss: The Wampa ----------
-  add('wampa', () => {
-    const fur = (d, fill) => P(d, fill, 'stroke="#b8c8d8" stroke-width=".6" stroke-linejoin="round"');
-    return iceCave()
-      // the raised claw coming down
-      + fur('M74 100 L72 66 C70 50 74 36 82 26 L86 22 L96 24 L94 34 L98 40 L90 46 C86 58 88 76 92 100Z', '#eef2f6')
-      + P('M84 20 L82 12 L87 19Z M89 19 L90 10 L92 20Z M94 22 L98 15 L96 24Z', '#1a1c22')
-      + fur('M2 100 C4 78 14 64 30 60 L28 56 L36 58 L50 56 L64 58 L72 56 L70 62 C82 68 90 82 92 100Z', '#f2f5f8')
-      + `<path d="M14 84 L18 80 L20 86 L24 80 L26 86 M58 72 L62 68 L64 74 L68 70 M30 76 L34 72 L36 78" stroke="#c8d4e0" stroke-width=".8" fill="none"/>`
-      // the shaggy head
-      + fur('M26 50 L28 40 L24 36 L32 32 L34 22 L42 24 L50 18 L58 24 L66 22 L68 32 L76 36 L72 40 L74 50 L70 60 L74 64 L62 66 L50 70 L38 66 L26 64 L30 60Z', '#f6f8fa')
-      // curling horns
-      + mirror('<path d="M34 30 C24 24 16 32 20 40 C22 46 30 46 30 40 C30 36 26 36 26 39" stroke="#8a7a5a" stroke-width="3.4" fill="none" stroke-linecap="round"/><path d="M34 30 C24 24 16 32 20 40" stroke="#c8b890" stroke-width="1.4" fill="none" stroke-linecap="round"/>')
-      // the grey face: sunken eyes, a long snarling mouth with fangs
-      + P('M40 38 C40 34 60 34 60 38 L58 56 C56 62 44 62 42 56Z', '#8a909a') + shade('M40 38 C40 34 50 34 50 34 L50 61 C46 61 43 59 42 56Z', 0.12)
-      + mirror('<path d="M41 41.6 Q44 39.4 48 41.4" stroke="#3a3e46" stroke-width="1.6" fill="none" stroke-linecap="round"/>')
-      + glowEyes(44.6, 55.4, 43.8, '#ffd23a', 1.2)
-      + P('M50 46 L48 50 L52 50Z', '#3a3e46')
-      + P('M42.4 52 Q50 50 57.6 52 L56 60 Q50 63 44 60Z', '#3a0c10') + mirror(P('M43.6 52.4 L45 57 L46.4 52.2Z', '#f2ead8') + P('M44.6 60 L45.6 56.4 L47 60.4Z', '#f2ead8'))
-      + `<path d="M48 61 Q48.6 64 47.6 66" stroke="#9a1a1a" stroke-width=".8" fill="none" opacity=".75"/>`;
-  });
+  // The wampa's ice cave from Empire: Luke hanging upside down from the
+  // ceiling, his lightsaber in the snow, the beast rearing up with both
+  // clawed arms raised.
+  add('wampa', () => iceCave()
+    // frozen columns and the cave mouth glowing behind
+    + E(50, 70, 30, 22, '#cfe6f6', 'opacity=".25"') + mirror(P('M0 30 Q8 50 4 84 L0 86Z', '#e8f4fc', 'opacity=".35"') + P('M8 26 Q14 52 10 88 L6 88 Q10 52 4 28Z', '#9ac4e4', 'opacity=".5"'))
+    // Luke, upside down with his boots frozen into the ceiling
+    + '<g transform="translate(-8 0) scale(.9)">' + ''
+    + R(10, 0, 13, 7, '#e8f6ff', 'rx="1.5"') + R(13, 5, 2.6, 11, '#e89a3a') + R(17.4, 5, 2.6, 11, '#e89a3a') + R(12, 15, 9, 10, '#e89a3a', 'rx="1.5"') + R(12, 18, 9, 1.4, '#2a2420')
+    + L(13, 24, 10.6, 32, '#e89a3a', 2) + L(20, 24, 22.4, 32, '#e89a3a', 2) + C(16.5, 28.6, 3, '#e8c4a0') + E(16.5, 31.4, 3.2, 1.8, '#d8b060') + '</g>'
+    // his lightsaber lying in the snow
+    + `<g transform="translate(76 95) rotate(-12)">${R(0, -1.2, 9, 2.4, '#9aa1ab', 'rx=".6"')}${R(2, -1.4, 1.6, 2.8, '#2a2d33')}</g>` + glow('#5aa8ff', C(85, 93, 1.2, '#cfe6ff'), 3)
+    // raised arms, claws spread
+    + mirror(shag(18, 54, 9, 22, 9, 0.22, '#eef2f6', 'stroke="#b8c8d8" stroke-width=".5" transform="rotate(-24 18 54)"')
+      + P('M6 32 L4 24 L8 31Z M10 30 L10 21 L12 30Z M14 31 L17 23 L16 32Z', '#22242a'))
+    // the body, a mountain of white fur
+    + shag(50, 92, 40, 30, 22, 0.08, '#f2f5f8', 'stroke="#b8c8d8" stroke-width=".6"')
+    + `<path d="M22 84 L26 80 L28 86 L32 80 L34 86 M60 74 L64 70 L66 76 L70 72 M36 78 L40 74 L42 80 M66 88 L70 84 L72 90 M40 92 L44 88 L46 94" stroke="#c8d4e0" stroke-width=".8" fill="none"/>`
+    + shade('M10 100 C12 80 28 66 50 64 L50 100Z', 0.06)
+    // the head with its curling horns
+    + shag(50, 46, 21, 20, 16, 0.14, '#f6f8fa', 'stroke="#b8c8d8" stroke-width=".6"')
+    + mirror('<path d="M34 32 C22 24 13 33 17 42 C20 48 28 47 28 41 C28 37 24 37 24 40" stroke="#7a6a4a" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M34 32 C22 24 13 33 17 42" stroke="#d8c8a0" stroke-width="1.4" fill="none" stroke-linecap="round"/>')
+    + `<path d="M36 34 L39 31 L41 35 M59 35 L61 31 L64 34 M44 28 L47 25 L49 29 M52 29 L54 25 L57 28" stroke="#c8d4e0" stroke-width=".7" fill="none"/>`
+    // grey face: sunken eyes under a heavy brow, long snout, fangs
+    + P('M40 38 C40 34 60 34 60 38 L58 56 C56 62 44 62 42 56Z', '#8a909a') + shade('M40 38 C40 34 50 34 50 34 L50 61 C46 61 43 59 42 56Z', 0.12)
+    + mirror('<path d="M41 41.6 Q44 39.4 48 41.4" stroke="#3a3e46" stroke-width="1.8" fill="none" stroke-linecap="round"/>')
+    + glowEyes(44.6, 55.4, 43.8, '#ffd23a', 1.2) + P('M48 47 L50 50 L52 47Z', '#3a3e46')
+    + P('M42.4 52 Q50 50 57.6 52 L56 60 Q50 63 44 60Z', '#3a0c10') + mirror(P('M43.6 52.4 L45 57 L46.4 52.2Z', '#f2ead8') + P('M44.6 60 L45.6 56.4 L47 60.4Z', '#f2ead8'))
+    + '<path d="M48 61 Q48.6 64 47.6 66" stroke="#9a1a1a" stroke-width=".8" fill="none" opacity=".75"/>');
 
   // ---------- Dagobah optional boss: The Cave's Vision ----------
-  // The apparition in the dark-side cave: a ghostly Vader whose mask has
-  // been blasted open, and the face inside is Luke's own.
+  // Inside the dark-side cave: Vader, plain as day, his red blade locked
+  // against Luke's blue one. Part of the mask has been cut away, and the
+  // face underneath is Luke's own.
   add('cave_vision', () => darkCave()
-    + `<g opacity=".92" style="filter:drop-shadow(0 0 3px #6affd8) drop-shadow(0 0 8px #2a8a6a)">`
-    + P('M4 100 C6 84 18 74 34 72 L66 72 C82 74 94 84 96 100Z', '#0a1410')
-    + P('M29.5 46 C29.5 24 40 15.5 50 15.5 C60 15.5 70.5 24 70.5 46 L77 67 L62 60.5 L60 69 L40 69 L38 60.5 L23 67Z', '#0c1612')
-    + `<path d="M29.5 46 C29.5 24 40 15.5 50 15.5 C60 15.5 70.5 24 70.5 46 L77 67" stroke="#6affd8" stroke-width=".8" fill="none" opacity=".6"/>`
-    + '</g>'
-    // the faceplate blown open, Luke's face inside the hole
-    + P('M38 36 L44 33 L48 36 L53 32 L58 35 L62 34 L61 42 L64 48 L60 54 L61 61 L55 60 L51 64 L46 60 L40 61 L41 54 L36 48 L39 42Z', '#e8bc96')
-    + P('M38 36 L44 33 L48 36 L53 32 L58 35 L62 34 L61 39 C56 36 44 36 39 40Z', '#e0b45a')
-    + mirror(E(45, 45.4, 2, 1.2, '#f4efe6') + C(45.3, 45.4, 0.95, '#3a7ab8') + L(42.6, 42.6, 47.2, 42.8, '#a07a3a', 1))
-    + nose({ y: 47 }) + mouth('frown', { y: 55, color: '#8a4a3a' })
-    + `<path d="M38 36 L44 33 L48 36 L53 32 L58 35 L62 34 L61 42 L64 48 L60 54 L61 61 L55 60 L51 64 L46 60 L40 61 L41 54 L36 48 L39 42Z" stroke="#6affd8" stroke-width=".8" fill="none" opacity=".9"/>`
-    // shards of the mask flying outward
-    + [[30, 30, -20], [70, 28, 24], [26, 56, 30], [74, 58, -30], [34, 70, 10], [66, 70, -10]].map(([x, y, a]) => P(`M${x} ${y} l3 -1.6 l1.2 3.4 l-3.6 1Z`, '#0c1612', `stroke="#6affd8" stroke-width=".5" transform="rotate(${a} ${x} ${y})"`)).join('')
-    + saber(22, 96, 12, 62, '#ff2a2a'));
+    // the gnarled tree and its roots crowding the cave mouth, and a snake on a branch
+    + `<path d="M0 0 L100 0 L100 8 Q80 16 74 6 Q60 18 50 8 Q40 18 26 6 Q20 16 0 8Z" fill="#14100a"/>`
+    + `<path d="M84 44 Q92 40 98 44" stroke="#3a5a2a" stroke-width="2" fill="none" stroke-linecap="round"/>` + C(97.6, 43.6, 1, '#3a5a2a')
+    + puffs('#9ad8c8', 0.25, [[50, 74, 46, 12]])
+    + `<g style="filter:drop-shadow(0 0 2px #6affd8) drop-shadow(0 0 6px #1a6a5a)">`
+    + P('M4 100 C6 84 18 74 34 72 L66 72 C82 74 94 84 96 100Z', '#0a0c0e') + R(41, 80, 18, 12, '#22242a', 'rx="1.5"') + R(43, 82, 3, 2, '#ff3b3b') + R(47, 82, 3, 2, '#3bff6a') + R(51, 82, 3, 2, '#3b8bff')
+    + vaderHelmet({ shine: '#4a6a62' }) + '</g>'
+    // the cut-away: a ragged hole across his right lens and cheek, Luke inside
+    + P('M53 33 L58 31 L62 34 L64 40 L62 46 L64 52 L60 57 L55 55 L53 50 L54 44 L52 39Z', '#e8bc96')
+    + P('M53 33 L58 31 L62 34 L63 37 C60 35 56 35 53.4 37Z', '#e0b45a')
+    + E(57.6, 42, 2.1, 1.3, '#f4efe6') + C(57.4, 42, 1, '#3a7ab8') + L(55, 39.2, 60.4, 39.6, '#a07a3a', 1)
+    + '<path d="M54 45 L53.4 49 L55 49.6" stroke="#b07a5a" stroke-width=".6" fill="none"/><path d="M55 52.6 Q57.6 53.6 60 52.4" stroke="#8a4a3a" stroke-width=".8" fill="none"/>'
+    + '<path d="M53 33 L58 31 L62 34 L64 40 L62 46 L64 52 L60 57 L55 55 L53 50 L54 44 L52 39Z" stroke="#6affd8" stroke-width=".7" fill="none"/>'
+    + [[68, 30, 20], [72, 46, -30], [70, 58, 40], [76, 36, 10]].map(([x, y, a]) => P(`M${x} ${y} l3 -1.6 l1.2 3.4 l-3.6 1Z`, '#0e0e11', `stroke="#6affd8" stroke-width=".4" transform="rotate(${a} ${x} ${y})"`)).join('')
+    // the blades crossed in front of him
+    + saber(82, 98, 30, 62, '#ff2a2a') + saber(16, 98, 70, 60, '#3d8bff'));
 
   // ---------- Bespin opponent: Cloud City Wing Guard ----------
   add('wing_guard', () => SCENES.cloud()
@@ -428,21 +461,32 @@
     + blaster(24, 92, -50, '#1c1d21'));
 
   // ---------- Endor optional boss: AT-ST Walker ----------
+  // The chicken walker in profile, striding through the redwoods, chin
+  // guns blazing, with an Ewok peeking out of the ferns.
   add('atst', () => {
-    const [hull, hd] = LG([[0, '#b8bec6'], [1, '#5a626c']], 0, 0, 1, 1);
-    return SCENES.endor() + hd
-      + puffs('#d8e0d0', 0.25, [[50, 96, 40, 8]])
-      // legs: thigh struts down to the reverse knee and the feet
-      + mirror(L(40, 52, 30, 70, '#4a5058', 4) + L(30, 70, 36, 92, '#4a5058', 3.4) + C(30, 70, 3, '#6a7078') + P('M28 92 L44 92 L42 98 L28 98Z', '#3a4048') + L(41, 56, 46, 64, '#2a3038', 1.6))
-      + R(40, 50, 20, 6, '#3a4048')
-      // the boxy head with its viewports, chin guns and side cannons
-      + P('M22 22 L78 22 L86 34 L78 50 L22 50 L14 34Z', hull, 'stroke="#2a3038" stroke-width="1"')
-      + P('M30 16 L70 16 L76 22 L24 22Z', '#8a929c', 'stroke="#2a3038" stroke-width=".8"') + R(44, 12, 12, 5, '#6a7078', 'rx="1"')
-      + P('M26 28 L74 28 L77 34 L23 34Z', '#0e1216') + glow('#ffb03a', R(32, 30, 8, 1.6, '#ffb03a', 'opacity=".9"') + R(60, 30, 8, 1.6, '#ffb03a', 'opacity=".9"'), 1.5)
-      + mirror(L(20, 38, 46, 38, '#4a5058', 0.6) + L(18, 42, 46, 42, '#4a5058', 0.6) + L(42, 50, 40, 60, '#2a3038', 2.4) + L(40, 60, 40, 63, '#1a1e24', 2.8)
-        + R(6, 32, 10, 5, '#5a626c', 'rx="1"') + L(6, 34.5, -2, 34.5, '#2a3038', 2.2))
-      + mirror(glow('#3aff6a', C(40, 64, 2, '#c8ffd0'), 3) + bolt(-2, 34.5, -12, 34.5, '#3aff6a'))
-      + puffs('#2a2a24', 0.45, [[82, 18, 12, 8], [88, 8, 10, 6]]);
+    const [hull, hd] = LG([[0, '#c8ced6'], [0.6, '#8a929c'], [1, '#5a626c']]);
+    return R(0, 0, 100, 100, '#16301c') + hd
+      + R(0, 0, 100, 40, '#4a7a52', 'opacity=".45"') + puffs('#cfe8d0', 0.3, [[50, 30, 50, 16]])
+      // redwood trunks with bark lines, near and far
+      + [[4, 9, '#2a1a10'], [26, 5, '#3a2616'], [80, 6, '#3a2616'], [90, 10, '#2a1a10']].map(([x, w, c]) => R(x, 0, w, 100, c) + [0.3, 0.6].map((k) => L(x + w * k, 0, x + w * k, 100, '#1a0e06', 0.6)).join('')).join('')
+      + R(0, 84, 100, 16, '#1e3a1c') + [[6, 90], [20, 92], [34, 88], [66, 90], [80, 92], [94, 88]].map(([x, y]) => P(`M${x} ${y} q-6 -8 -10 -4 M${x} ${y} q6 -8 10 -4 M${x} ${y} q-2 -10 0 -12`, 'none', 'stroke="#3a6a2a" stroke-width="1.6" stroke-linecap="round"')).join('')
+      // far leg, a step ahead
+      + `<g stroke="#3a4048" stroke-linecap="round" fill="none"><path d="M47 58 L37 72 L31 88" stroke-width="3.6"/></g>` + C(37, 72, 2.6, '#4a5058') + P('M22 88 L38 88 L39 93 L21 93Z', '#3a4048')
+      // near leg, bent back at the knee
+      + `<g stroke="#5a626c" stroke-linecap="round" fill="none"><path d="M53 58 L64 72 L56 88" stroke-width="4.2"/><path d="M55 62 L62 70" stroke="#2a3038" stroke-width="1.2"/></g>` + C(64, 72, 3, '#6a7078') + P('M46 88 L64 88 L66 94 L44 94Z', '#5a626c', 'stroke="#2a3038" stroke-width=".6"')
+      + R(44, 50, 14, 9, '#4a5058', 'rx="1.5"')
+      // the head: wedge nose, viewport slit, hatch, panel lines
+      + P('M16 32 L28 22 L68 20 L76 26 L76 44 L64 51 L28 51 L18 44Z', hull, 'stroke="#2a3038" stroke-width="1"')
+      + R(44, 14, 16, 7, '#8a929c', 'rx="1.5" stroke="#2a3038" stroke-width=".8"') + C(52, 14, 3, '#6a7078')
+      + P('M20 33 L30 26 L46 25 L46 31 L22 37Z', '#0e1216') + glow('#ffb03a', P('M24 32 L31 28 L44 27.6 L44 29.2 L25 33.4Z', '#ffb03a', 'opacity=".75"'), 1.5)
+      + `<path d="M50 22 L50 51 M30 42 L74 40 M64 22 L64 50" stroke="#4a5058" stroke-width=".6" fill="none"/>` + [56, 60].map((x) => C(x, 46, 0.8, '#4a5058')).join('')
+      // side grenade launcher and the twin chin blasters, firing
+      + C(58, 34, 5, '#6a7078', 'stroke="#2a3038" stroke-width=".8"') + C(58, 34, 2, '#2a3038') + R(76, 32, 10, 3.4, '#4a5058')
+      + R(6, 45, 22, 3, '#3a4048') + R(8, 49.4, 20, 2.4, '#3a4048')
+      + glow('#3aff6a', C(6, 46.5, 2.4, '#c8ffd0') + L(-4, 46, 4, 46.4, '#3aff6a', 2) + C(8, 50.6, 1.8, '#c8ffd0'), 3)
+      // an Ewok watching from the ferns
+      + E(86, 88, 6, 5.6, '#6a4a2a') + P('M80 88 C80 80 92 80 92 88 C90 84 82 84 80 88Z', '#a0602a') + C(84, 88.4, 1, '#0c0806') + C(88, 88.4, 1, '#0c0806') + E(86, 91, 2.4, 1.6, '#8a6440')
+      + puffs('#3a3a30', 0.4, [[12, 40, 10, 6]]);
   });
 
   // ---------- Scarif opponent: Shoretrooper ----------
@@ -460,23 +504,34 @@
     + `<g transform="translate(28 96) rotate(-18)">${R(0, -3, 48, 6, '#2a2620', 'rx="1.5"')}${R(8, -6.4, 18, 3.4, '#4a4436')}${R(42, -1.6, 12, 3.2, '#2a2620')}</g>`);
 
   // ---------- Scarif optional boss: Director Krennic ----------
+  // On the Citadel platform in his white cape, death troopers at his back,
+  // the Death Star over Scarif firing on the shield gate behind him.
   add('krennic', () => {
-    const [sky, sd] = LG([[0, '#5ab8e0'], [1, '#bfe8f4']]);
+    const [sky, sd] = LG([[0, '#4aa8d8'], [1, '#bfe8f4']]);
     return sd + R(0, 0, 100, 100, sky)
-      // the Death Star hanging over Scarif, its beam striking the horizon
-      + C(80, 18, 12, '#8a929c') + C(80, 18, 12, 'none', 'stroke="#5a626c" stroke-width=".6"') + L(68, 18, 92, 18, '#5a626c', 0.6) + C(75, 13, 3, '#4a525c')
-      + glow('#7aff6a', L(75, 13, 96, 66, '#9aff7a', 1.6), 3) + E(96, 66, 8, 3, '#e8ffd8', 'opacity=".8"')
-      + R(0, 62, 100, 12, '#2ba3b8') + R(0, 74, 100, 26, '#f2dfa6') + P('M14 62 L18 40 L28 40 L32 62Z', '#c8ccd2', 'opacity=".85"') + R(20, 30, 6, 10, '#c8ccd2', 'opacity=".85"')
-      // the white cape billowing behind him
-      + P('M2 100 C2 80 12 66 30 62 L70 62 C88 66 98 80 98 100Z', '#e8eaee', 'stroke="#9aa2ac" stroke-width=".8"')
-      + `<path d="M12 98 Q16 80 30 66 M88 98 Q84 80 70 66 M22 99 Q24 86 34 72 M78 99 Q76 86 66 72" stroke="#b8c0ca" stroke-width=".8" fill="none"/>`
-      + P('M30 74 C38 70 62 70 70 74 L68 100 L32 100Z', '#f6f6f4', 'stroke="#9aa2ac" stroke-width=".8"')
-      + R(32, 80, 10, 4, '#1a1a1e') + [0, 1, 2, 3].map((i) => R(32.6 + i * 2.4, 81, 1.6, 2, ['#3b6fd6', '#c43b2e', '#3b6fd6', '#e0b83a'][i])).join('')
-      + P('M40 70 L60 70 L58 76 L42 76Z', '#e8e8e4') + L(50, 76, 50, 100, '#c8ccd2', 0.8)
+      // the Death Star, big and unmistakable: dish, trench and the beam striking the sea
+      + C(78, 20, 16, '#9aa2ac') + shade('M78 4 A16 16 0 0 1 78 36 A10 16 0 0 0 78 4Z', 0.22) + L(62, 21, 94, 19, '#6a727c', 0.8)
+      + C(72, 13, 4.4, '#7a828c') + C(72, 13, 1.6, '#4a525c') + [[84, 12], [88, 26], [70, 28], [80, 30]].map(([x, y]) => R(x, y, 1.6, 0.8, '#6a727c')).join('')
+      + glow('#7aff6a', L(72, 13, 94, 60, '#c8ffb0', 1.4), 3) + E(94, 60, 12, 3.4, '#e8ffd8', 'opacity=".8"') + E(94, 60, 20, 5, '#ffffff', 'opacity=".25"')
+      + R(0, 56, 100, 10, '#2ba3b8') + P('M0 60 Q20 58 40 60 T80 60 T100 60', 'none', 'stroke="#8ad8e8" stroke-width=".6"')
+      // the Citadel tower and its dish
+      + P('M8 66 L12 20 L22 20 L26 66Z', '#cfd4da', 'stroke="#8a929c" stroke-width=".6"') + R(10, 14, 14, 6, '#b8bec6') + E(17, 12, 9, 2.6, '#9aa2ac') + L(17, 12, 17, 4, '#9aa2ac', 0.8)
+      + [28, 36, 44, 52].map((y) => L(13, y, 22 + (y - 28) * 0.06, y, '#8a929c', 0.5)).join('')
+      + R(0, 66, 100, 34, '#7a828c') + [70, 78, 88].map((y) => L(0, y, 100, y, '#5a626c', 0.6)).join('')
+      // two death troopers flanking him
+      + mirror(P('M0 100 L2 74 C4 66 12 62 18 62 C24 62 28 68 28 76 L30 100Z', '#16181c') + P('M8 54 C8 44 26 44 26 54 L26 64 C22 68 12 68 8 64Z', '#1f2126')
+        + glow('#4ade80', P('M10.6 55 C10.6 52.6 16 52.6 16 55 L15.4 58.6 C13.4 59.4 11.4 58.6 10.6 55Z', '#1a3a26') + P('M23.4 55 C23.4 52.6 18 52.6 18 55 L18.6 58.6 C20.6 59.4 22.6 58.6 23.4 55Z', '#1a3a26'), 1.5))
+      // the white cape and uniform
+      + P('M14 100 C14 82 20 70 32 66 L68 66 C80 70 86 82 86 100Z', '#eceef2', 'stroke="#9aa2ac" stroke-width=".8"')
+      + '<path d="M20 98 Q22 82 32 70 M80 98 Q78 82 68 70 M28 99 Q30 86 36 74 M72 99 Q70 86 64 74" stroke="#b8c0ca" stroke-width=".8" fill="none"/>'
+      + P('M32 74 C38 70 62 70 68 74 L66 100 L34 100Z', '#f8f8f6', 'stroke="#9aa2ac" stroke-width=".8"')
+      + R(34, 80, 10, 4, '#1a1a1e') + [0, 1, 2, 3].map((i) => R(34.6 + i * 2.4, 81, 1.6, 2, ['#3b6fd6', '#c43b2e', '#3b6fd6', '#e0b83a'][i])).join('')
+      + R(34, 92, 32, 3, '#2a2a2e') + R(47, 91.4, 6, 4, '#c8ccd2', 'rx=".6"')
+      + P('M40 70 L60 70 L58 76 L42 76Z', '#e8e8e4') + L(50, 76, 50, 92, '#c8ccd2', 0.8)
       + neck('#e8c4a4') + head('#e8c4a4', { ry: 14.5 }) + eyes({ iris: '#3a6aa8' }) + brows('#8a7a6a', { angry: true }) + nose() + mouth('smirk', { color: '#8a4a3a' })
       + P('M37 42 C36 30 42 27 46 28 L44 32 C40 33 39 37 38 43Z', '#c8c4be') + P('M63 42 C64 30 58 27 54 28 L56 32 C60 33 61 37 62 43Z', '#c8c4be')
-      + `<path d="M43 30 Q50 28 57 30" stroke="#d8b494" stroke-width=".6" fill="none"/>`
-      + blaster(70, 92, -40, '#1a1c20');
+      + '<path d="M43 30 Q50 28 57 30" stroke="#d8b494" stroke-width=".6" fill="none"/>'
+      + blaster(68, 90, -40, '#1a1c20');
   });
 
   // ---------- Geonosis opponent: Geonosian Warrior ----------
@@ -541,22 +596,28 @@
   // ================= Boss versions of existing cards =================
 
   // ---------- Bespin optional boss: Bossk with the Hound's Tooth ----------
+  // The Trandoshan hunter in his yellow flight suit, mortar rifle up, the
+  // Hound's Tooth on the landing pad behind him over Cloud City.
   add('bossk', () => {
     const [sk, sd] = LG([[0, '#9ab86a'], [1, '#4a6a2a']]);
-    return SCENES.hangar() + sd
-      // the Hound's Tooth docked behind him
-      + P('M58 30 C70 22 92 22 100 30 L100 48 L60 48 C54 44 54 34 58 30Z', '#c8ccd2', 'stroke="#5a626c" stroke-width=".8"') + C(66, 34, 3, '#2a6a8a') + R(76, 38, 22, 2, '#8a929c') + R(70, 26, 12, 3, '#a8b0b8')
-      + shoulders('#d8b44a', { top: 72 }) + P('M34 76 C40 72 60 72 66 76 L64 100 L36 100Z', '#c8a43a') + R(36, 86, 28, 4, '#5a4a22') + [40, 46, 54, 60].map((x) => R(x, 80, 3, 6, '#8a7a4a', 'rx="1"')).join('')
+    return SCENES.cloud() + sd
+      // the Hound's Tooth: boxy hull, raised bridge, twin engine pods
+      + P('M50 40 L54 22 L90 18 L100 22 L100 46 L56 48Z', '#c8ccd2', 'stroke="#5a626c" stroke-width=".8"') + P('M60 22 L66 12 L84 11 L88 18Z', '#a8b0b8', 'stroke="#5a626c" stroke-width=".7"')
+      + R(68, 13, 12, 3, '#2a4a6a') + R(56, 40, 44, 4, '#8a929c') + [62, 72, 82, 92].map((x) => L(x, 22, x, 44, '#8a929c', 0.6)).join('') + C(94, 34, 4, '#5a626c') + glow('#5fd8ff', C(94, 34, 2, '#9fe8ff'), 2)
+      + R(0, 62, 100, 6, '#d8c0a0', 'opacity=".6"')
+      + shoulders('#d8b44a', { top: 72 }) + P('M34 76 C40 72 60 72 66 76 L64 100 L36 100Z', '#c8a43a', 'stroke="#6a5420" stroke-width=".7"')
+      + mirror(L(30, 76, 44, 100, '#5a4a22', 2.2)) + R(36, 88, 28, 3.4, '#4a3a1a') + [40, 46, 54, 60].map((x) => R(x, 80, 3, 6, '#8a7a4a', 'rx="1"')).join('')
       + P('M42 60 L58 60 L60 76 L40 76Z', sk)
-      // the Trandoshan head: wide jaw, scaled brow ridge, slit-pupil eyes
-      + P('M34 44 C34 28 42 20 50 20 C58 20 66 28 66 44 C66 56 62 64 50 66 C38 64 34 56 34 44Z', sk, 'stroke="#2a3a14" stroke-width=".9"')
-      + shade('M50 20 C58 20 66 28 66 44 C66 56 62 64 50 66Z', 0.14)
-      + mirror(P('M36 40 Q42 34 48 39 Q42 37 36 40Z', '#3a4a1a') + E(42.6, 42.6, 3, 2.2, '#ff8a1a') + E(42.6, 42.6, 0.6, 1.9, '#1a0a00')
-        + [[40, 28], [44, 25], [38, 33], [36, 50], [40, 56], [44, 30]].map(([x, y]) => E(x, y, 1.4, 1, '#6a8a3a')).join(''))
-      + P('M40 54 Q50 60 60 54 Q50 57 40 54Z', '#1a2a0a') + mirror(P('M43 55.4 L44 58 L45 55.8Z', '#f0e8d0'))
-      + C(47.6, 49, 0.7, '#1a2a0a') + C(52.4, 49, 0.7, '#1a2a0a')
-      // his Relby flamethrower rifle
-      + `<g transform="translate(22 96) rotate(-30)">${R(0, -3.4, 46, 6.8, '#3a3d44', 'rx="1.5"')}${R(10, -7, 16, 3.6, '#5a5e66')}${C(46, 0, 3.6, '#2a2c30')}${glow('#ff8a2a', C(48, 0, 1.6, '#ffb04a'), 2)}</g>`;
+      // the Trandoshan head: wide flat skull, heavy brow, eyes set to the sides, scaled hide
+      + P('M31 46 C29 30 39 20 50 20 C61 20 71 30 69 46 C68 55 64 61 58 65 L42 65 C36 61 32 55 31 46Z', sk, 'stroke="#2a3a14" stroke-width=".9"')
+      + shade('M50 20 C61 20 71 30 69 46 C68 55 64 61 58 65 L50 65Z', 0.14)
+      + mirror(P('M33 39 Q40 31 47.6 37.6 Q40 35.6 33 39Z', '#3a4a1a') + E(40, 41.6, 3.4, 2.4, '#ff7a1a') + E(40.4, 41.6, 0.8, 2.1, '#1a0a00') + C(39.2, 40.8, 0.6, '#ffe0a0')
+        + [[38, 27], [43, 24], [35, 32], [33, 49], [37, 55], [42, 29], [46, 33], [36, 45]].map(([x, y]) => E(x, y, 1.5, 1.1, '#5a7a2a', 'stroke="#3a5a1a" stroke-width=".3"')).join('')
+        + P('M44 56.4 L45 59.2 L46 56.6Z', '#f0e8d0') + '<path d="M47.6 49 Q48.6 50 48 51.4" stroke="#1a2a0a" stroke-width=".8" fill="none"/>')
+      + '<path d="M38 56 Q50 61.4 62 56" stroke="#1a2a0a" stroke-width="1.2" fill="none"/>' + L(50, 22, 50, 36, '#3a5a1a', 0.6, 'opacity=".6"')
+      // clawed hand on the Relby mortar rifle
+      + `<g transform="translate(18 96) rotate(-32)">${R(0, -3.6, 50, 7.2, '#3a3d44', 'rx="1.5"')}${R(10, -7.4, 18, 3.8, '#5a5e66')}${R(30, -5, 8, 10, '#2a2c30', 'rx="1"')}${C(50, 0, 4, '#2a2c30')}${glow('#ff8a2a', C(52, 0, 1.8, '#ffb04a'), 2)}</g>`
+      + E(30, 84, 4, 3, sk) + '<path d="M28 82 L26 80 M30 81 L29.4 78.6 M32 81.6 L33 79.4" stroke="#1a2a0a" stroke-width=".8" stroke-linecap="round"/>';
   });
 
   // ---------- Geonosis optional boss: Jango Fett, arena ----------
@@ -576,36 +637,80 @@
   });
 
   // ---------- Exegol optional boss: Emperor Reborn ----------
-  // Clamped into the life-support rig on Exegol, eyes gone milky white,
-  // lightning pouring from both hands.
-  add('emperor_reborn', () => exegol('#b58cff')
-    // the hanging rig: claw arms and cables reaching down to him
-    + `<g stroke="#2a2830" stroke-linecap="round" fill="none"><path d="M50 0 L50 14" stroke-width="5"/><path d="M50 10 C38 10 28 16 24 30" stroke-width="3"/><path d="M50 10 C62 10 72 16 76 30" stroke-width="3"/><path d="M24 30 L20 38 M76 30 L80 38" stroke-width="2"/></g>`
-    + `<path d="M50 10 C38 10 28 16 24 30 M50 10 C62 10 72 16 76 30" stroke="#5a5664" stroke-width="1" fill="none"/>` + C(50, 14, 3.6, '#3a3640') + glow('#b58cff', C(50, 14, 1.4, '#d8c8ff'), 2)
-    + P('M16 100 L22 58 C24 30 38 18 50 18 C62 18 76 30 78 58 L84 100Z', '#0e0c12') + shade('M50 18 C38 18 24 30 22 58 L16 100 L40 100 L36 60Z', 0.3)
-    // the deep hood framing his face, its rim catching the lightning
-    + P('M28 70 C24 44 34 22 50 21 C66 22 76 44 72 70 C68 62 62 58 60 50 C58 40 54 36 50 36 C46 36 42 40 40 50 C38 58 32 62 28 70Z', '#1a1620')
-    + '<path d="M29 66 C27 44 36 25 50 24 C64 25 73 44 71 66" stroke="#5a4a7a" stroke-width="1" fill="none" opacity=".8"/><path d="M40 30 Q50 26 60 30" stroke="#2a2434" stroke-width="1.2" fill="none"/>'
-    + E(50, 53, 10, 12.5, '#c8beb4') + P('M39.4 47 C41 38 46 36 50 36 C54 36 59 38 60.6 47 C57 42.6 43 42.6 39.4 47Z', '#1a1620') + shade('M40 46 Q50 43 60 46 L60 50 Q50 47 40 50Z', 0.25)
-    + mirror(E(45.6, 50.6, 2, 1.3, '#eef2f6') + C(45.6, 50.6, 0.9, '#9aa6b4') + '<path d="M42.4 55.6 Q43.6 58 43 60.4" stroke="#8a7e74" stroke-width=".5" fill="none" opacity=".7"/>')
-    + '<path d="M50 50 L49 55.4 Q50 56.2 51 55.4" stroke="#8a7e74" stroke-width=".6" fill="none"/><path d="M46 60 Q50 61.2 54 60" stroke="#6a4a44" stroke-width=".9" fill="none" stroke-linecap="round"/>'
-    + mirror(glow('#7a4dff', '<path d="M30 86 L22 78 L26 74 L14 66 L18 62 L4 52 M26 74 L18 74 M18 62 L10 64" stroke="#e8dcff" stroke-width="1.5" fill="none"/><path d="M30 86 L20 88 L16 84 L2 90" stroke="#c8b0ff" stroke-width="1" fill="none"/>', 3) + E(30, 88, 4, 3, '#b8b0aa')));
+  // In the Sith Citadel on Exegol: the stadium of hooded cultists rising
+  // into the dark, the life-support arm holding him up, lightning in both hands.
+  add('emperor_reborn', () => {
+    const [face, fd] = LG([[0, '#d8d0c8'], [1, '#a8a098']]);
+    return exegol('#b58cff') + fd
+      // tiers of the Sith Eternal crowd, each a tiny hooded shape with a light
+      + [26, 34, 42, 50].map((y, r) => Array.from({ length: 16 }, (_, i) => { const x = 3 + i * 6.2 + (r % 2) * 3; return P(`M${x - 1.6} ${y + 3} L${x - 1} ${y} Q${x} ${y - 1.4} ${x + 1} ${y} L${x + 1.6} ${y + 3}Z`, '#1a1624') + C(x, y + 0.8, 0.35, '#b58cff', 'opacity=".6"'); }).join('') + L(0, y + 3.4, 100, y + 3.4, '#2a2436', 0.8)).join('')
+      // two great stone pillars
+      + mirror(P('M2 100 L4 20 L14 20 L16 100Z', '#120f18') + R(1, 18, 16, 3, '#1e1a26'))
+      // the life-support arm reaching down from the dark and gripping his shoulders
+      + '<g stroke-linecap="round" fill="none"><path d="M70 0 C70 10 62 14 56 18" stroke="#2a2830" stroke-width="5"/><path d="M70 0 C70 10 62 14 56 18" stroke="#5a5664" stroke-width="1.2"/><path d="M56 18 C48 20 40 22 34 30" stroke="#2a2830" stroke-width="3.6"/><path d="M56 18 C62 22 66 26 68 32" stroke="#2a2830" stroke-width="3.6"/></g>'
+      + C(56, 18, 3.6, '#3a3640') + glow('#b58cff', C(56, 18, 1.4, '#d8c8ff'), 2)
+      + P('M16 100 L22 58 C24 30 38 18 50 18 C62 18 76 30 78 58 L84 100Z', '#0e0c12') + shade('M50 18 C38 18 24 30 22 58 L16 100 L40 100 L36 60Z', 0.3)
+      + R(28, 64, 44, 4, '#2a2830', 'rx="1.5"') + mirror(C(32, 66, 1.4, '#5a5664'))
+      // the deep hood framing his face, its rim catching the lightning
+      + P('M28 70 C24 44 34 22 50 21 C66 22 76 44 72 70 C68 62 62 58 60 50 C58 40 54 36 50 36 C46 36 42 40 40 50 C38 58 32 62 28 70Z', '#1a1620')
+      + '<path d="M29 66 C27 44 36 25 50 24 C64 25 73 44 71 66" stroke="#5a4a7a" stroke-width="1" fill="none" opacity=".8"/><path d="M40 30 Q50 26 60 30" stroke="#2a2434" stroke-width="1.2" fill="none"/>'
+      + E(50, 53, 10, 12.5, face) + P('M39.4 47 C41 38 46 36 50 36 C54 36 59 38 60.6 47 C57 42.6 43 42.6 39.4 47Z', '#1a1620') + shade('M40 46 Q50 43 60 46 L60 50 Q50 47 40 50Z', 0.25)
+      + mirror(E(45.6, 50.6, 2, 1.3, '#eef2f6') + C(45.6, 50.6, 0.9, '#9aa6b4') + '<path d="M42.4 55.6 Q43.6 58 43 60.4" stroke="#8a7e74" stroke-width=".5" fill="none" opacity=".7"/>')
+      + '<path d="M50 50 L49 55.4 Q50 56.2 51 55.4" stroke="#8a7e74" stroke-width=".6" fill="none"/><path d="M46 60 Q50 61.2 54 60" stroke="#6a4a44" stroke-width=".9" fill="none" stroke-linecap="round"/>'
+      + mirror(glow('#7a4dff', '<path d="M30 86 L22 78 L26 74 L14 66 L18 62 L4 52 M26 74 L18 74 M18 62 L10 64" stroke="#e8dcff" stroke-width="1.5" fill="none"/><path d="M30 86 L20 88 L16 84 L2 90" stroke="#c8b0ff" stroke-width="1" fill="none"/>', 3) + E(30, 88, 4, 3, '#b8b0aa'));
+  });
 
   // ---------- Coruscant Under Siege optional boss: General Grievous, Warlord ----------
-  // Cloaked, all four arms out, the sabers spinning into blurred arcs over
-  // the burning city.
+  // All four arms out, a lightsaber in each, cape flaring, the Invisible
+  // Hand burning over Coruscant behind him.
   add('grievous_warlord', () => siege()
-    + `<g fill="none" stroke-linecap="round" opacity=".5"><path d="M8 50 A42 42 0 0 1 30 14" stroke="#46e070" stroke-width="3"/><path d="M92 50 A42 42 0 0 0 70 14" stroke="#3d8bff" stroke-width="3"/><path d="M10 80 A40 40 0 0 0 26 98" stroke="#3d8bff" stroke-width="2.4"/><path d="M90 80 A40 40 0 0 1 74 98" stroke="#46e070" stroke-width="2.4"/></g>`
-    + saber(22, 84, 4, 34, '#3d8bff') + saber(78, 84, 96, 34, '#46e070') + saber(28, 92, 6, 70, '#46e070') + saber(72, 92, 94, 70, '#3d8bff')
-    // the cape hanging off his shoulders
-    + P('M24 66 C14 74 8 88 6 100 L94 100 C92 88 86 74 76 66 L66 72 L34 72Z', '#3a3a40') + `<path d="M16 98 Q20 84 28 72 M84 98 Q80 84 72 72" stroke="#55555c" stroke-width="1" fill="none"/>`
-    + shoulders('#6b7077') + P('M40 76 L60 76 L58 100 L42 100Z', '#4a4e54') + [80, 85, 90, 95].map((y) => L(42, y, 58, y, '#8a9098', 1)).join('')
-    + mirror(L(30, 80, 22, 84, '#8a9098', 2.4) + L(32, 86, 28, 92, '#8a9098', 2.4))
-    + P('M40 26 C40 18 60 18 60 26 L64 36 L58 30 L42 30 L36 36Z', '#d9d2bf', 'stroke="#5a5444" stroke-width=".6"')
-    + P('M37 32 L63 32 L65 50 L58 66 L42 66 L35 50Z', '#e6e0cf', 'stroke="#5a5444" stroke-width=".7"') + shade('M37 32 L50 32 L50 66 L42 66 L35 50Z', 0.1)
-    + P('M39 39 L48 42 L47 48 L40 46Z', '#1a1810') + P('M61 39 L52 42 L53 48 L60 46Z', '#1a1810') + glowEyes(43.5, 56.5, 44.2, '#ffd23f', 1.7)
-    + P('M44 54 L56 54 L55 64 L45 64Z', '#3a3830') + [47, 50, 53].map((x) => L(x, 55, x, 63, '#6a6858', 0.7)).join('')
-    + `<path d="M37 32 L35 50 M63 32 L65 50" stroke="#ff8a3a" stroke-width=".8" opacity=".6"/>`);
+    // the Invisible Hand: long hull, spine of towers, engines aglow
+    + P('M2 26 L60 20 L74 24 L60 28 L2 30Z', '#2a1a1a', 'stroke="#4a2a24" stroke-width=".6"') + [10, 20, 30, 40].map((x) => R(x, 14 + (x % 20) / 4, 3, 7, '#2a1a1a')).join('') + glow('#5fd8ff', C(2, 28, 1.4, '#9fe8ff'), 2)
+    + glow('#ff7a2a', P('M50 22 Q52 18 54 22Z', '#ffa040'), 2)
+    + `<g fill="none" stroke-linecap="round" opacity=".45"><path d="M6 52 A44 44 0 0 1 28 12" stroke="#46e070" stroke-width="3"/><path d="M94 52 A44 44 0 0 0 72 12" stroke="#3d8bff" stroke-width="3"/></g>`
+    // the cape
+    + P('M26 62 C14 72 6 86 4 100 L96 100 C94 86 86 72 74 62 L64 70 L36 70Z', '#3a3a42') + '<path d="M14 98 Q18 84 28 70 M86 98 Q82 84 72 70 M24 99 Q26 88 34 76 M76 99 Q74 88 66 76" stroke="#55555e" stroke-width="1" fill="none"/>'
+    // four mechanical arms reaching out to the four hilts
+    + mirror(`<g stroke-linecap="round" fill="none"><path d="M36 74 L24 66 L14 52" stroke="#b8bcc4" stroke-width="2.6"/><path d="M36 80 L22 84 L14 90" stroke="#9aa0a8" stroke-width="2.4"/></g>` + C(24, 66, 1.8, '#6a7078') + C(22, 84, 1.8, '#6a7078'))
+    + saber(14, 52, 4, 14, '#3d8bff') + saber(86, 52, 96, 14, '#46e070') + saber(14, 90, 2, 66, '#46e070') + saber(86, 90, 98, 66, '#3d8bff')
+    // torso: the armoured shell over the gut sack, the ribs below
+    + P('M36 70 C40 66 60 66 64 70 L62 86 L38 86Z', '#d9d2bf', 'stroke="#5a5444" stroke-width=".7"') + E(50, 78, 6, 5, '#6a3a3a', 'opacity=".75"')
+    + P('M40 86 L60 86 L58 100 L42 100Z', '#4a4e54') + [89, 93, 97].map((y) => L(42, y, 58, y, '#8a9098', 1)).join('')
+    + R(46, 58, 8, 10, '#6a7078') + [60, 63, 66].map((y) => L(46, y, 54, y, '#3a3e44', 0.7)).join('')
+    // the bone-white mask: high crest, slanted sockets, yellow reptile eyes, grill mouth
+    + P('M41 22 C41 13 59 13 59 22 L63 32 L65 46 L59 58 L54 62 L46 62 L41 58 L35 46 L37 32Z', '#e8e2d0', 'stroke="#5a5444" stroke-width=".8"')
+    + shade('M50 13 C55 13 59 16 59 22 L63 32 L65 46 L59 58 L54 62 L50 62Z', 0.1)
+    + '<path d="M45 15 L46 26 M55 15 L54 26 M50 13 L50 28" stroke="#b8b0a0" stroke-width=".8" fill="none"/>'
+    + mirror(P('M38.6 34 L48 38 L47 45 L40 43Z', '#1a1810') + P('M37 46 L44 48 L45 56 L41 56Z', '#cfc8b4', 'stroke="#8a826e" stroke-width=".5"'))
+    + glowEyes(43.6, 56.4, 41, '#ffd23f', 1.6) + C(43.6, 41, 0.5, '#5a2a00') + C(56.4, 41, 0.5, '#5a2a00')
+    + P('M45 48 L55 48 L54 60 L46 60Z', '#3a3830') + [47, 49, 51, 53].map((x) => L(x, 49, x, 59, '#7a7868', 0.6)).join(''));
+
+  // ---------- Idea card: The Bendu (absorbs damage, stores it, unleashes it) ----------
+  // The ancient Force being on Atollon, the "one in the middle": blue and red
+  // energy pouring into him from both sides and gathering in his chest.
+  add('bendu', () => {
+    const [sky, sd] = LG([[0, '#2a1a3a'], [0.55, '#7a3a4a'], [1, '#e88a4a']]);
+    const [hide, hd] = LG([[0, '#8a8478'], [1, '#4a463e']]);
+    const [core, cd] = RG([[0, '#ffffff'], [0.35, '#c8b0ff', 0.9], [1, '#7a4dff', 0]]);
+    return sd + hd + cd + R(0, 0, 100, 100, sky)
+      + [[6, 40, 6], [16, 52, 4], [84, 44, 6], [94, 56, 4]].map(([x, y, w]) => P(`M${x - w} 80 L${x - 1} ${y} L${x + 1} ${y - 3} L${x + w} 80Z`, '#2a1820')).join('')
+      + R(0, 78, 100, 22, '#5a3424') + P('M0 82 Q30 78 60 82 T100 80 V100 H0Z', '#4a2a1c')
+      // light and dark energy streaming into him from both sides
+      + glow('#5aa8ff', '<path d="M0 30 C16 34 24 50 40 66" stroke="#9fd0ff" stroke-width="2" fill="none"/><path d="M0 48 C14 52 26 60 40 70" stroke="#5aa8ff" stroke-width="1.2" fill="none" opacity=".8"/>', 3)
+      + glow('#ff3a3a', '<path d="M100 30 C84 34 76 50 60 66" stroke="#ff9a9a" stroke-width="2" fill="none"/><path d="M100 48 C86 52 74 60 60 70" stroke="#ff4a4a" stroke-width="1.2" fill="none" opacity=".8"/>', 3)
+      // the great body, a hill of stony fur
+      + shag(50, 92, 44, 34, 20, 0.07, hide, 'stroke="#2a2620" stroke-width=".6"')
+      + '<path d="M18 84 L22 80 L24 86 M30 76 L34 72 L36 78 M64 76 L68 72 L70 78 M76 84 L80 80 L82 86" stroke="#a8a294" stroke-width=".8" fill="none"/>'
+      + C(50, 74, 12, core) + glow('#c8b0ff', C(50, 74, 3, '#ffffff'), 4)
+      // the head: long face, deep-set glowing eyes, a heavy beard
+      + shag(50, 44, 18, 20, 14, 0.1, hide, 'stroke="#2a2620" stroke-width=".6"')
+      // the two huge horns sweeping out and down
+      + mirror('<path d="M38 30 C28 18 12 18 8 30 C6 38 12 46 18 44" stroke="#3a342c" stroke-width="5.4" fill="none" stroke-linecap="round"/><path d="M38 30 C28 18 12 18 8 30" stroke="#b8ae9a" stroke-width="1.6" fill="none" stroke-linecap="round"/>')
+      + P('M40 40 C40 32 60 32 60 40 L58 58 C56 64 44 64 42 58Z', '#6a6458') + shade('M50 32 C55 32 60 34 60 40 L58 58 C56 64 50 64 50 64Z', 0.15)
+      + mirror('<path d="M41 41.4 Q44.6 39.2 48 41.4" stroke="#2a2620" stroke-width="1.6" fill="none" stroke-linecap="round"/>')
+      + glowEyes(44.6, 55.4, 44, '#8ad8ff', 1.3) + P('M48 50 L50 53 L52 50Z', '#2a2620')
+      + shag(50, 64, 9, 7, 9, 0.25, '#8a8478', 'stroke="#2a2620" stroke-width=".5"');
+  });
 
   // ================= Legendary badge: Liberator of the Galaxy =================
   // Beat all 22 bosses, main and optional. A spiral galaxy turning inside a
