@@ -743,13 +743,14 @@
         </div>
       </div>
       <div class="versus ${enc.boss ? 'boss-versus' : ''}">
-        <div><div class="side-label"><span>Your squad · ${size}/${maxSize} slots</span><b data-mypower></b></div><div class="slots" data-slots style="--n:${maxSize}"></div></div>
-        <div class="vs">VS</div>
         <div><div class="side-label"><span>Enemy · Lv ${enc.level} · ${enc.stars}★</span><b>⚡ ${fmt(enemyPower)}</b></div>
           <div class="slots" style="--n:${enc.enemies.length}">${enc.enemies.map((id) => `<div class="slot filled ${D.UNIT_MAP[id].boss ? 'boss-slot' : ''}">${portrait(D.UNIT_MAP[id])}</div>`).join('')}</div>
         </div>
+        <div class="vs">VS</div>
+        <div><div class="side-label"><span>Your squad · ${size}/${maxSize} slots</span><b data-mypower></b></div><div class="slots" data-slots style="--n:${maxSize}"></div></div>
       </div>
-      <div class="bonus-panel">
+      <button type="button" class="bonus-toggle" data-bonus-toggle aria-expanded="true"><span data-bonus-label>Hide synergies &amp; planet</span><i aria-hidden="true">▴</i></button>
+      <div class="bonus-panel" data-bonus-panel>
         <div class="bonus-col"><h3>Your synergies</h3><div data-my-bonus></div></div>
         <div class="bonus-col"><h3>Enemy synergies</h3>${bonusList(enemyBonus.active, 'No enemy synergies.')}</div>
         <div class="bonus-col planet-col"><h3>${esc(planet.name)}</h3>
@@ -763,6 +764,21 @@
         <div class="card-grid" data-roster></div>
       </div>
     </section>`);
+
+    // Synergies and planet rules fold away so your roster is quicker to reach (remembered).
+    const BONUS_KEY = 'swcg-hide-bonus';
+    const setBonus = (hide) => {
+      $('[data-bonus-panel]', v).hidden = hide;
+      const t = $('[data-bonus-toggle]', v);
+      t.setAttribute('aria-expanded', String(!hide));
+      t.classList.toggle('closed', hide);
+      $('[data-bonus-label]', v).textContent = hide ? 'Show synergies & planet' : 'Hide synergies & planet';
+      try { if (hide) localStorage.setItem(BONUS_KEY, '1'); else localStorage.removeItem(BONUS_KEY); } catch (e) { /* ignore */ }
+    };
+    let bonusHidden = false;
+    try { bonusHidden = localStorage.getItem(BONUS_KEY) === '1'; } catch (e) { /* ignore */ }
+    setBonus(bonusHidden);
+    $('[data-bonus-toggle]', v).addEventListener('click', () => { bonusHidden = !bonusHidden; setBonus(bonusHidden); });
 
     let prevSyn = null;
     // anim: { initial } | { added, from } | { auto }

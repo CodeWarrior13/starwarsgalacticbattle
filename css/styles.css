@@ -3529,3 +3529,9 @@ body.perf-on .card-back .cb-rays { animation: none; }
 .tb-pic *, .fr-av *, .p2-fr .fa *, .fp-pic *, .p2-face *, .hn-opp .who *, .pe-av .pic *, .g-e * { animation: none !important; }
 /* Daily reward rays rotate on their own layer, so a spin never repaints the card. */
 .dc-rays { will-change: transform; contain: strict; }
+/* Squad screen: fold the synergies and planet panel away. */
+.bonus-toggle { justify-self: center; display: inline-flex; align-items: center; gap: 8px; margin: -8px 0 -6px; padding: 7px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); color: var(--muted); font: 700 12px var(--font-display, inherit); letter-spacing: .08em; text-transform: uppercase; cursor: pointer; }
+.bonus-toggle:hover { color: var(--crawl); border-color: var(--crawl); }
+.bonus-toggle i { font-style: normal; transition: transform .2s; }
+.bonus-toggle.closed i { transform: rotate(180deg); }
+.bonus-panel[hidden] { display: none; }
