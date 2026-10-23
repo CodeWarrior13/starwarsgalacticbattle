@@ -936,10 +936,10 @@
       boss: { hp: 9, atk: 1.15, def: 1.3 },
       abilities: [
         { name: 'Radiant Lance', cd: 0, target: 'enemy', effects: [dmg(1.3)], desc: 'Deal damage to one enemy.' },
-        { name: 'Light of Mortis', cd: 3, target: 'allAllies', effects: [heal(0.18), cleanse()], desc: 'All allies heal 18% and are cleansed.' },
+        { name: 'Light of Mortis', cd: 3, target: 'allAllies', effects: [heal(0.13), cleanse()], desc: 'All allies heal 13% and are cleansed.' },
         { name: 'Blinding Dawn', cd: 4, target: 'allEnemies', effects: [dmg(0.9), debuff('offDown', 2)], desc: 'Damage all enemies and inflict Offense Down.' },
       ],
-      ultimate: U('Dawn of Mortis', 'allEnemies', [dmg(1.7), debuff('stun', 1, 0.4), { ...heal(0.2), on: 'allies' }], 'A blinding dawn damages every enemy; her allies heal 20%.', 'There is still light in you.'),
+      ultimate: U('Dawn of Mortis', 'allEnemies', [dmg(1.7), debuff('stun', 1, 0.4), { ...heal(0.14), on: 'allies' }], 'A blinding dawn damages every enemy; her allies heal 14%.', 'There is still light in you.'),
     },
     {
       id: 'boss_guardian', name: 'Temple Guardian Prime', kind: 'character', faction: 'light', rarity: 'legendary', role: 'tank', spd: 128,
