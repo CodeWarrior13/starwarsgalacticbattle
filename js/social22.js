@@ -27,6 +27,14 @@
   const okTxt = (t, n) => { const v = String(t || '').replace(/[^A-Za-z0-9_ .'!?-]/g, '').trim().slice(0, n); return HN && HN.safe && !HN.safe.ok(v) ? '' : v; };
 
   // ---------- my card ----------
+  // The frame I wear on my HoloNet profile (only frames I've earned).
+  function myFrame() {
+    try {
+      const SO = HN && HN.social;
+      const f = SO && SO.P2 ? SO.P2().prof.frame : '';
+      return f && SO.ownedFrames().includes(f) ? String(f).slice(0, 20) : 'recruit';
+    } catch (e) { return 'recruit'; }
+  }
   function myCard() {
     const s = P().state;
     const prof = (s.hn && s.hn.prof) || {};
@@ -41,7 +49,7 @@
       tag: okTxt(prof.tag, 16),
       av: prof.av && D.UNIT_MAP[prof.av] ? prof.av : '',
       lv: s.account.level | 0,
-      st: { w: s.stats.battlesWon | 0, l: s.stats.battlesLost | 0, pk: s.stats.packsOpened | 0, my: s.stats.mythics | 0, tw: (s.tower && s.tower.best) | 0, bs: Object.keys(s.bosses || {}).length },
+      st: { w: s.stats.battlesWon | 0, l: s.stats.battlesLost | 0, pk: s.stats.packsOpened | 0, my: s.stats.mythics | 0, tw: (s.tower && s.tower.best) | 0, bs: Object.keys(s.bosses || {}).length, fr: myFrame() },
       wd: W.map((w) => [w.p.id, w.cleared, w.stages, w.beat, w.bosses].join('.')).join(','),
       cur: cur ? cur.p.id : '',
       col: PC ? PC.encode() : '',
@@ -107,7 +115,16 @@
     return prefetching;
   }
   const art = (av) => (root.Art && av && D.UNIT_MAP[av] ? root.Art.unitArt(D.UNIT_MAP[av]) : '');
-  function pic(uid) { const c = cache.get(uid); return c && c.card ? art(c.card.av || 'luke') : ''; }
+  const initials = (nm) => esc(String(nm || '?').slice(0, 2).toUpperCase());
+  // A friend's picture in the frame they wear. No picture picked yet: their initials
+  // (rather than a stand-in card, which made everyone look alike).
+  function face(card, nm, size) {
+    const av = card && card.av && D.UNIT_MAP[card.av] ? card.av : '';
+    const fr = card && card.st && typeof card.st.fr === 'string' ? card.st.fr : 'recruit';
+    const frame = HN && HN.social && HN.social.frameSvg ? HN.social.frameSvg(fr) : '';
+    return `<span class="pf-av ${size || 'md'} fp-face">${av ? `<span class="pic">${art(av)}</span>` : `<span class="pic ini">${initials(nm || (card && card.tag))}</span>`}${frame}</span>`;
+  }
+  function pic(uid, nm, size) { const c = cache.get(uid); return c && c.card ? face(c.card, nm, size) : ''; }
   const cardOf = (uid) => { const c = cache.get(uid); return c ? c.card : null; };
 
   // ---------- the friend profile ----------
@@ -176,7 +193,7 @@
 
     const head = () => `<button type="button" class="pf-x p2-x" data-fp="close" aria-label="Close">✕</button>
       <div class="p2-top">
-        <div class="p2-av"><span class="p2-pic fp-pic"><span class="p2-face">${art(card.av || fav || 'luke')}</span></span><span class="acct-ring p2-ring" style="--p:100"><b>${lv}</b></span></div>
+        <div class="p2-av fp-av">${face(card, nm, 'lg')}<span class="acct-ring p2-ring" style="--p:100"><b>${lv}</b></span></div>
         <div class="p2-id"><p class="eyebrow">Friend</p><h2>${esc(okTxt(card.tag, 16) || nm)}</h2>
           <p class="muted small">${title(lv)} · Level ${lv}</p>
           <p class="small fp-cur">${cur ? `Currently on <b>${esc(cur.p.name)}</b> · stage ${Math.min(cur.cleared + 1, cur.stages)}/${cur.stages}` : '<b>Every world liberated</b>'}</p>
@@ -336,7 +353,10 @@
 
   const st = document.createElement('style');
   st.textContent = `.fp-card .p2-top { margin-bottom: 0; }
-.fp-card .fp-pic { display: block; cursor: default; }
+.fp-av { display: grid; place-items: center; }
+.fp-face .pic.ini { display: grid; place-items: center; background: radial-gradient(circle at 50% 35%, #1d3550, #081422); color: #bfefff; font: 800 1em var(--font-display, inherit); }
+.pf-av.lg .pic.ini { font-size: 30px; } .pf-av.md .pic.ini { font-size: 18px; } .pf-av.sm .pic.ini { font-size: 11px; }
+.fp-av .pf-av.lg { width: 76px; height: 76px; }
 .fp-card .p2-ring { display: grid; place-items: center; }
 .fp-cur { margin: 4px 0 0; color: #cfe6f5; } .fp-cur b { color: #ffd23f; }
 .fp-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; } .fp-chips span { font-size: 11.5px; padding: 3px 9px; border-radius: 999px; background: #13213a; border: 1px solid rgba(95, 216, 255, 0.25); color: #8fb4c8; } .fp-chips span.on { color: #7af0a0; border-color: rgba(122, 240, 160, 0.45); }
@@ -347,7 +367,7 @@
 @media (max-width: 440px) {
   .fp-acts .btn { font-size: 12.5px; letter-spacing: .02em; padding: 11px 4px; }
   .fp-card .p2-top { grid-template-columns: 64px minmax(0, 1fr); gap: 10px; padding: 12px 44px 12px 12px; }
-  .fp-card .p2-av, .fp-card .fp-pic { width: 64px; height: 64px; }
+  .fp-card .p2-av { width: 64px; height: 64px; } .fp-av .pf-av.lg { width: 58px; height: 58px; } .pf-av.lg .pic.ini { font-size: 22px; }
   .fp-card .p2-ring { width: 30px; height: 30px; right: -6px; bottom: -4px; } .fp-card .p2-ring b { font-size: 12px; }
   .fp-card .p2-id h2 { font-size: 20px; } .fp-card .p2-id .small, .fp-cur { font-size: 12px; }
 }
@@ -359,6 +379,8 @@
 .p2-frs.pics { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
 .p2-fr { display: grid; justify-items: center; gap: 4px; padding: 10px 6px; border-radius: 14px; border: 1px solid rgba(95, 216, 255, 0.2); background: rgba(8, 20, 32, 0.8); color: #e8f6ff; cursor: pointer; font: inherit; position: relative; }
 .p2-fr:hover { border-color: rgba(255, 210, 63, 0.6); }
+.p2-fr .fa:has(.pf-av) { border: 0; overflow: visible; background: none; } .p2-fr .fa .pf-av .pf-frame, .fr-av .pf-av .pf-frame { position: absolute; inset: -22%; width: 144%; height: 144%; } .p2-fr .fa .pf-av .pic svg, .fr-av .pf-av .pic svg { width: 100%; height: 100%; transform: scale(1.45) translateY(5%); } .p2-fr .fa .pf-av.md { width: 46px; height: 46px; }
+.fr-av.pic { border: 0 !important; overflow: visible; background: none; } .fr-av .pf-av.sm { width: 30px; height: 30px; }
 .p2-fr .fa { width: 56px; height: 56px; border-radius: 50%; overflow: hidden; border: 2px solid #ffd23f; background: #0b1422; display: grid; place-items: center; font: 800 16px var(--font-display, inherit); color: #bfefff; }
 .p2-fr .fa svg, .p2-fr .fa img { width: 100%; height: 100%; display: block; }
 .p2-fr b { font-size: 13px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

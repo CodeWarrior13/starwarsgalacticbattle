@@ -141,7 +141,7 @@
         const uid = F.other(r);
         const c = FC && FC.card(uid);
         const n = F.unread(r.id);
-        return `<button type="button" class="p2-fr" data-p2f="${esc(uid)}" data-p2fn="${esc(F.otherName(r))}"><span class="fa">${(FC && FC.pic(uid)) || esc(F.otherName(r).slice(0, 2).toUpperCase())}</span><b>${esc(F.otherName(r))}</b><small class="${online(uid) ? 'on' : ''}">${online(uid) ? 'Online' : c ? `Level ${c.lv | 0}` : 'Friend'}</small>${n ? `<i>${n > 9 ? '9+' : n}</i>` : ''}</button>`;
+        return `<button type="button" class="p2-fr" data-p2f="${esc(uid)}" data-p2fn="${esc(F.otherName(r))}"><span class="fa">${(FC && FC.pic(uid, F.otherName(r), 'md')) || esc(F.otherName(r).slice(0, 2).toUpperCase())}</span><b>${esc(F.otherName(r))}</b><small class="${online(uid) ? 'on' : ''}">${online(uid) ? 'Online' : c ? `Level ${c.lv | 0}` : 'Friend'}</small>${n ? `<i>${n > 9 ? '9+' : n}</i>` : ''}</button>`;
       };
       return `<div class="pc-tiles" style="grid-template-columns:repeat(3,minmax(0,1fr))"><div><b>${list.length}</b><span>Friends</span></div><div><b>${inc}</b><span>Requests</span></div><div><b>${list.reduce((n, r) => n + F.unread(r.id), 0)}</b><span>Unread</span></div></div>
         <p class="pc-empty">Tap a friend to see their profile.</p>

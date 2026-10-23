@@ -8242,7 +8242,7 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
       const o = F.online[uid];
       const live = isOnline(uid);
       const busy = live && o && o.busy;
-      const pic = HN.fcard ? HN.fcard.pic(uid) : '';
+      const pic = HN.fcard ? HN.fcard.pic(uid, F.otherName(r), 'sm') : '';
       return `<div class="fr-row"><button type="button" class="fr-av ${pic ? 'pic' : ''}" data-f="prof" data-id="${esc(r.id)}" aria-label="${esc(F.otherName(r))}'s profile">${pic || esc(F.otherName(r).slice(0, 2).toUpperCase())}</button>
         <span class="fr-who"><b>${esc(F.otherName(r))}</b><small class="${live ? (busy ? 'busy' : 'on') : ''}">${live ? (busy ? 'In a battle' : 'Online') : 'Offline'}</small></span>
         <span class="fr-go"><button type="button" class="btn fr-chat" data-f="chat" data-id="${esc(r.id)}">Chat${F.unread(r.id) ? `<i class="fr-n">${F.unread(r.id) > 9 ? '9+' : F.unread(r.id)}</i>` : ''}</button><button type="button" class="btn" data-f="ground" data-id="${esc(r.id)}" ${live && !busy ? '' : 'disabled'}>Ground</button><button type="button" class="btn" data-f="fleet" data-id="${esc(r.id)}" ${live && !busy ? '' : 'disabled'}>Fleet</button><button type="button" class="fr-x" data-f="remove" data-id="${esc(r.id)}" aria-label="Remove friend">✕</button></span></div>`;
@@ -8352,6 +8352,8 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
     F.view = render;
     render();
     poll();
+    // Friends' pictures and frames: loads any that aren't here yet, then redraws.
+    if (HN.fcard) HN.fcard.prefetch();
     const timer = setInterval(poll, 20000);
     host.addEventListener('click', (e) => {
       const t = e.target.closest('[data-tab]');
