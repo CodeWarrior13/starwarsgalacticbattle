@@ -215,6 +215,7 @@
     // Start-of-turn upkeep: burn damage, stun check, status and cooldown ticks.
     beginTurn(unit) {
       const events = [{ type: 'turn', uid: unit.uid }];
+      unit.healTaken = 0;
       if (unit.statuses.burn) {
         const amount = Math.max(1, Math.round(unit.maxHp * 0.08));
         this.applyDamage(unit, amount, false, events, 'burn');
@@ -376,7 +377,15 @@
           }
           break;
         case 'heal': {
-          const amount = Math.min(target.maxHp - target.hp, Math.round(target.maxHp * eff.pct * (this.overtime ? 0.5 : 1)));
+          let amount = Math.min(target.maxHp - target.hp, Math.round(target.maxHp * eff.pct * (this.overtime ? 0.5 : 1)));
+          // Some bosses (and their guards) can only be healed so much between each
+          // unit's own turns, so a stack of healer ultimates can't refill them in one round.
+          const capper = this.units.find((u) => u.boss && u.side === target.side && u.def.healCap);
+          if (capper) {
+            const room = Math.max(0, Math.round(target.maxHp * capper.def.healCap) - (target.healTaken || 0));
+            amount = Math.min(amount, room);
+            target.healTaken = (target.healTaken || 0) + amount;
+          }
           target.hp += amount;
           events.push({ type: 'heal', uid: target.uid, amount, hp: target.hp });
           break;
