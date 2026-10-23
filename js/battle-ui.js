@@ -1269,9 +1269,137 @@
       await this.wait(300);
     },
 
+    // The Death Star fires: the station looms in, eight tributary beams leap from
+    // the dish rim and meet in a charging orb, then one thick beam hits the target
+    // with a flash, shockwave rings and a spray of sparks. One canvas, one loop.
     async sm_superlaser(actor, targets) {
-      const from = this.center(actor.uid);
-      await this.superlaser(from, this.center(targets[0].uid));
+      const t = targets[0];
+      if (!t || !this.cards[t.uid] || actor.def.shape !== 'deathstar') {
+        const from = this.center(actor.uid);
+        return this.superlaser(from, this.center((t || actor).uid));
+      }
+      const layer = this.cineLayer();
+      layer.classList.add('ds-cine');
+      const W = window.innerWidth;
+      const H = window.innerHeight;
+      const enemy = actor.side !== 'player';
+      const size = Math.min(W, H) * (W > H ? 0.62 : 0.78);
+      const cx = W * (enemy ? 0.32 : 0.68);
+      const cy = enemy ? size * 0.42 : H - size * 0.42;
+      // The room darkens behind the station (not over it).
+      const dim = el('<div class="ds-dim"></div>');
+      layer.appendChild(dim);
+      const ship = el(`<div class="ds-ship">${root.Art.shipOnly(actor.def)}</div>`);
+      Object.assign(ship.style, { width: size + 'px', height: size + 'px', left: cx - size / 2 + 'px', top: cy - size / 2 + 'px' });
+      layer.appendChild(ship);
+      // The dish sits up and right of centre on the station's art (66, 32 of a 100 box).
+      const dish = { x: cx + size * 0.16, y: cy - size * 0.18 };
+      const dishR = size * 0.11;
+      const tr = this.cards[t.uid].getBoundingClientRect();
+      const hit = { x: tr.left + tr.width / 2, y: tr.top + tr.height / 2 };
+      const ang = Math.atan2(hit.y - dish.y, hit.x - dish.x);
+      const focus = { x: dish.x + Math.cos(ang) * dishR * 1.6, y: dish.y + Math.sin(ang) * dishR * 1.6 };
+      const dpr = Math.min(window.devicePixelRatio || 1, root.Perf ? root.Perf.dpr : 1.5);
+      const cv = document.createElement('canvas');
+      cv.className = 'ds-canvas';
+      cv.width = Math.round(W * dpr);
+      cv.height = Math.round(H * dpr);
+      layer.appendChild(cv);
+      const ctx = cv.getContext('2d');
+      ctx.scale(dpr, dpr);
+      const k = 1 / Math.min(this.speed, 2);
+      const T = { loom: 650 * k, charge: 1100 * k, fire: 1000 * k, fade: 650 * k };
+      const total = T.loom + T.charge + T.fire + T.fade;
+      ship.animate([{ transform: 'scale(.55) translateY(-18%)', opacity: 0 }, { transform: 'scale(1)', opacity: 1 }], { duration: T.loom, easing: 'cubic-bezier(.2,.8,.3,1)', fill: 'forwards' });
+      const GREEN = '74,222,128';
+      const sparks = [];
+      const rings = [];
+      let fired = false;
+      if (root.Sound) root.Sound.play('rumble');
+      const line = (a, b, w, color, alpha) => { ctx.globalAlpha = alpha; ctx.strokeStyle = color; ctx.lineWidth = w; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); };
+      const orb = (p, r, alpha) => {
+        const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r);
+        g.addColorStop(0, `rgba(255,255,255,${alpha})`);
+        g.addColorStop(0.3, `rgba(190,255,210,${alpha * 0.9})`);
+        g.addColorStop(1, `rgba(${GREEN},0)`);
+        ctx.globalAlpha = 1; ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fill();
+      };
+      await new Promise((resolve) => {
+        const t0 = performance.now();
+        const frame = (now) => {
+          const el2 = now - t0;
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          ctx.clearRect(0, 0, W, H);
+          ctx.globalCompositeOperation = 'source-over';
+          dim.style.opacity = String(Math.min(1, el2 / T.loom) * (el2 > total - T.fade ? Math.max(0, (total - el2) / T.fade) : 1));
+          ctx.globalCompositeOperation = 'lighter';
+          ctx.lineCap = 'round';
+          const cStart = T.loom;
+          const fStart = T.loom + T.charge;
+          // Charge: eight beams grow from the dish rim to the focus point.
+          if (el2 > cStart && el2 < fStart + T.fire * 0.5) {
+            const p = Math.min(1, (el2 - cStart) / (T.charge * 0.7));
+            const pulse = 0.75 + Math.sin(el2 / 40) * 0.25;
+            for (let i = 0; i < 8; i++) {
+              const a = (i / 8) * Math.PI * 2 + el2 / 900;
+              const rim = { x: dish.x + Math.cos(a) * dishR, y: dish.y + Math.sin(a) * dishR };
+              const end = { x: rim.x + (focus.x - rim.x) * p, y: rim.y + (focus.y - rim.y) * p };
+              line(rim, end, 5.5, `rgb(${GREEN})`, 0.35 * pulse);
+              line(rim, end, 2, '#eaffef', 0.9 * pulse);
+            }
+            const grow = Math.min(1, Math.max(0, (el2 - cStart - T.charge * 0.45) / (T.charge * 0.55)));
+            orb(focus, dishR * (0.3 + grow * 1.1) * pulse, 0.95);
+            orb(dish, dishR * 1.6, 0.25 * pulse);
+          }
+          // Fire: the main beam, thick white core in green fire.
+          if (el2 >= fStart && el2 < fStart + T.fire + T.fade * 0.6) {
+            if (!fired) {
+              fired = true;
+              if (root.Sound) { root.Sound.play('explosion'); root.Sound.play('laser'); }
+              this.env.flash('#4ade80', 0.85);
+              this.shake();
+              this.boom(this.center(t.uid), '#4ade80', 3.2);
+              for (let i = 0; i < 3; i++) rings.push({ at: el2 + i * 120 * k, max: Math.max(W, H) * (0.35 + i * 0.12) });
+            }
+            const into = el2 - fStart;
+            const out = el2 > fStart + T.fire ? 1 - (el2 - fStart - T.fire) / (T.fade * 0.6) : 1;
+            const ramp = Math.min(1, into / (90 * k)) * out;
+            const wob = 1 + Math.sin(el2 / 25) * 0.08;
+            const base = Math.min(W, H) * 0.06 * ramp * wob;
+            line(focus, hit, base * 2.6, `rgb(${GREEN})`, 0.22);
+            line(focus, hit, base * 1.5, `rgb(${GREEN})`, 0.5);
+            line(focus, hit, base * 0.75, '#c8ffd8', 0.85);
+            line(focus, hit, base * 0.32, '#ffffff', 1);
+            orb(focus, dishR * 1.5 * wob * Math.max(0.3, ramp), 0.9);
+            orb(hit, base * 2.4, 0.8 * ramp);
+            if (into < T.fire && Math.random() < 0.9) for (let i = 0; i < 4; i++) {
+              const a = Math.random() * Math.PI * 2;
+              const v = 3 + Math.random() * 9;
+              sparks.push({ x: hit.x, y: hit.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 2, life: 1 });
+            }
+          }
+          // Shockwave rings and sparks at the impact.
+          for (const r of rings) {
+            const q = (el2 - r.at) / (700 * k);
+            if (q <= 0 || q >= 1) continue;
+            ctx.globalAlpha = (1 - q) * 0.8; ctx.strokeStyle = '#b8ffcc'; ctx.lineWidth = 6 * (1 - q) + 1;
+            ctx.beginPath(); ctx.ellipse(hit.x, hit.y, r.max * q, r.max * q * 0.55, 0, 0, Math.PI * 2); ctx.stroke();
+          }
+          ctx.fillStyle = '#e8ffe0';
+          for (let i = sparks.length - 1; i >= 0; i--) {
+            const sp = sparks[i];
+            sp.x += sp.vx; sp.y += sp.vy; sp.vy += 0.25; sp.life -= 0.03;
+            if (sp.life <= 0) { sparks.splice(i, 1); continue; }
+            ctx.globalAlpha = sp.life; ctx.fillRect(sp.x, sp.y, 3, 3);
+          }
+          ctx.globalAlpha = 1;
+          ctx.globalCompositeOperation = 'source-over';
+          if (el2 < total) requestAnimationFrame(frame); else resolve();
+        };
+        requestAnimationFrame(frame);
+        setTimeout(() => ship.animate([{ opacity: 1 }, { opacity: 0, transform: 'scale(1.06)' }], { duration: T.fade, fill: 'forwards' }), total - T.fade);
+      });
+      layer.remove();
     },
 
     superlaser(from, to) {

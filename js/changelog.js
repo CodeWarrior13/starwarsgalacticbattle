@@ -33,6 +33,7 @@
         'FIXED|HoloNet profiles now count Mythic and Secret cards in the collection, and show secret badges (but not how they were earned).',
         'FIXED|The Training Complete screen shows every card in full on phones (names and stats were cut off).',
         'IMPROVED|Profiles run much smoother, especially on phones: badges and cards stay still until you tap one, and the galaxy map rests while a pop-up is open.',
+        'IMPROVED|The Death Star\'s superlaser is rebuilt: the station looms over the battle, eight beams converge on its dish, then one massive beam strikes with a shockwave.',
         'IMPROVED|Squad screen: the enemy squad (and the boss) now sits on top with your squad underneath, and a Hide synergies & planet button folds that panel away so your roster is right there. It remembers your choice.',
         'IMPROVED|Smoother menus: ships flying across the galaxy pause behind pop-ups, small profile pictures stay still, and the Black Market\'s spinning rays are lighter.',
         'IMPROVED|Tap any badge to see it up close with what it\'s for and how far along you are. Secret badges keep their secret.',
