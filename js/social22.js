@@ -152,7 +152,7 @@
         const d = await HN.Net.db.doc(`lobby/${uid}`).get();
         const v = d.exists ? d.data() : null;
         const t = v ? (v.ts && v.ts.toMillis ? v.ts.toMillis() : v.t || 0) : 0;
-        F.online[uid] = { at: t, busy: !!(v && v.p && v.p.busy) };
+        F.online[uid] = { at: t, busy: !!(v && v.p && v.p.busy), a: (v && v.p && typeof v.p.a === 'string' && v.p.a.slice(0, 8)) || '' };
       } catch (e) { /* keep what we had */ }
     })()]);
     const box = m.root.querySelector('.fp-card');
@@ -183,6 +183,7 @@
       return { id: String(b.i || ''), name: okTxt(b.n, 40) || 'Badge', icon: String(b.c || 'badge'), tier: Math.min(7, Math.max(1, b.t | 0)), secret: !!b.s, level: b.l | 0, desc: b.s ? '' : (def ? def.desc : '') };
     });
     const online = F.online[uid] && Date.now() - F.online[uid].at < 150000;
+    const doing = online && F.online[uid].a && root.FriendActivity ? root.FriendActivity.label(F.online[uid].a) : '';
     const fr = F.rows.get(HN.friends.pairId(HN.Net.me, uid));
     const since = fr && fr.t ? new Date(fr.t).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '';
     let tab = 'overview';
@@ -197,7 +198,7 @@
         <div class="p2-id"><p class="eyebrow">Friend</p><h2>${esc(okTxt(card.tag, 16) || nm)}</h2>
           <p class="muted small">${title(lv)} · Level ${lv}</p>
           <p class="small fp-cur">${cur ? `Currently on <b>${esc(cur.p.name)}</b> · stage ${Math.min(cur.cleared + 1, cur.stages)}/${cur.stages}` : '<b>Every world liberated</b>'}</p>
-          <div class="fp-chips"><span class="${online ? 'on' : ''}">${online ? '● Online' : 'Offline'}</span>${since ? `<span>Friends since ${esc(since)}</span>` : ''}</div></div>
+          <div class="fp-chips"><span class="${online ? 'on' : ''}">${online ? `● Online${doing ? ` · ${esc(doing)}` : ''}` : 'Offline'}</span>${since ? `<span>Friends since ${esc(since)}</span>` : ''}</div></div>
       </div>`;
     const tabsList = [['overview', 'Overview'], ['collection', 'Collection'], ['worlds', 'Worlds'], ['badges', 'Badges'], ['stats', 'Stats'], ...(hnOn ? [['holonet', 'HoloNet']] : [])];
     const tabs = () => `<div class="pc-tabs p2-tabs fp-tabs" style="--n:${tabsList.length}" role="tablist">${tabsList.map(([k, n]) => `<button type="button" role="tab" aria-selected="${tab === k}" class="${tab === k ? 'on' : ''}" data-fpt="${k}">${n}</button>`).join('')}</div>`;

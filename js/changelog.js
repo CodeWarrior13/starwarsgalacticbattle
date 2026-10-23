@@ -53,6 +53,7 @@
         'NEW|Find friends faster: start typing a callsign and matching pilots drop down, closest first. Tap the add button next to a name to send a request.',
         'NEW|Message your friends: tap Chat next to a friend to talk (filtered for bad language). A red number on your profile picture and the Friends button shows new friend requests and unread messages.',
         'NEW|Friend profiles: tap a friend to see their picture in the frame they wear, their level, stats, which world they\'re on, their collection and badges. Their HoloNet record shows too once they\'ve unlocked it.',
+        'NEW|See what your friends are playing: Online · Playing the Campaign, In a Friendly Battle, Climbing the Tower and more (secret areas stay a secret). Don\'t want to share? Turn it off in Settings, under Friends.',
         'NEW|Invite friends to your guild: leaders and officers can invite a friend who\'s level 25 or higher. The invite arrives in your chat with the guild\'s emblem, name and member count, and they join with one tap.',
         'IMPROVED|A cleaner top bar: your profile chip now shows your picture, your level and the red number for friend news, with the Friends button right beside Settings for quick chats. On phones your currencies show shortened (5.4M). Tap one to see the full amount.',
         'NEW|Duel chat: in live duels and friendly battles, tap Chat to send a quick line or a short message (filtered for bad language). After a duel, add your opponent as a friend right from the results screen.',

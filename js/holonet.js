@@ -3048,7 +3048,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   function setPresence() {
     if (!Duel.room) return;
     const h = HN.S();
-    Duel.room.presence({ hn: HN.ui.unlocked() ? 1 : 0, fr: 1, nm: myNm(), rating: h.rating, g: HN.squadPower(HN.squadEntries('character')), f: HN.squadPower(HN.squadEntries('ship')), busy: Duel.match || Duel.prep ? 1 : 0, wg: HN.Wager && HN.Wager.ready() ? 1 : 0 }).catch(() => {});
+    Duel.room.presence({ hn: HN.ui.unlocked() ? 1 : 0, fr: 1, nm: myNm(), rating: h.rating, g: HN.squadPower(HN.squadEntries('character')), f: HN.squadPower(HN.squadEntries('ship')), busy: Duel.match || Duel.prep ? 1 : 0, wg: HN.Wager && HN.Wager.ready() ? 1 : 0, a: root.FriendActivity ? root.FriendActivity.code() : '' }).catch(() => {});
   }
   // My callsign as other players should see it ('' when I haven't picked one).
   const myNm = () => { const n = String(HN.Net.name(HN.Net.me) || ''); return n === 'You' ? '' : n.replace(/ \(you\)$/, ''); };
@@ -8117,12 +8117,14 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
         const d = await Net.db.doc(`lobby/${uid}`).get();
         const v = d.exists ? d.data() : null;
         const t = v ? (v.ts && v.ts.toMillis ? v.ts.toMillis() : v.t || 0) : 0;
-        F.online[uid] = { at: t, busy: !!(v && v.p && v.p.busy) };
+        F.online[uid] = { at: t, busy: !!(v && v.p && v.p.busy), a: (v && v.p && typeof v.p.a === 'string' && v.p.a.slice(0, 8)) || '' };
       } catch (e) { /* leave as it was */ }
     }));
     redraw();
   }
   const isOnline = (uid) => { const o = F.online[uid]; return !!(o && Date.now() - o.at < ONLINE_MS); };
+  // What they're doing right now, if they share it (Settings can hide it).
+  const doingNow = (uid) => { const o = F.online[uid]; if (!isOnline(uid)) return 'Offline'; const l = o.a && root.FriendActivity ? root.FriendActivity.label(o.a) : ''; return l ? `Online · ${l}` : o.busy ? 'In a battle' : 'Online'; };
 
   async function add(q, st) {
     const key = nameKey(q);
@@ -8244,7 +8246,7 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
       const busy = live && o && o.busy;
       const pic = HN.fcard ? HN.fcard.pic(uid, F.otherName(r), 'sm') : '';
       return `<div class="fr-row"><button type="button" class="fr-av ${pic ? 'pic' : ''}" data-f="prof" data-id="${esc(r.id)}" aria-label="${esc(F.otherName(r))}'s profile">${pic || esc(F.otherName(r).slice(0, 2).toUpperCase())}</button>
-        <span class="fr-who"><b>${esc(F.otherName(r))}</b><small class="${live ? (busy ? 'busy' : 'on') : ''}">${live ? (busy ? 'In a battle' : 'Online') : 'Offline'}</small></span>
+        <span class="fr-who"><b>${esc(F.otherName(r))}</b><small class="${live ? (busy ? 'busy' : 'on') : ''}">${esc(doingNow(uid))}</small></span>
         <span class="fr-go"><button type="button" class="btn fr-chat" data-f="chat" data-id="${esc(r.id)}">Chat${F.unread(r.id) ? `<i class="fr-n">${F.unread(r.id) > 9 ? '9+' : F.unread(r.id)}</i>` : ''}</button><button type="button" class="btn" data-f="ground" data-id="${esc(r.id)}" ${live && !busy ? '' : 'disabled'}>Ground</button><button type="button" class="btn" data-f="fleet" data-id="${esc(r.id)}" ${live && !busy ? '' : 'disabled'}>Fleet</button><button type="button" class="fr-x" data-f="remove" data-id="${esc(r.id)}" aria-label="Remove friend">✕</button></span></div>`;
     };
     const renderChat = (r) => {
@@ -8265,11 +8267,11 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
         openLog.querySelectorAll('[data-t]').forEach((n) => { if (!seen.has(n.dataset.t)) n.classList.add('fr-new'); });
         if (atEnd || F.sending) openLog.scrollTop = openLog.scrollHeight;
         const st = host.querySelector('.fr-chatwho small');
-        if (st) st.textContent = isOnline(F.other(r)) ? 'Online' : 'Offline';
+        if (st) st.textContent = doingNow(F.other(r));
         return;
       }
       host.dataset.chat = r.id;
-      host.innerHTML = `<div class="fr-head"><button type="button" class="btn" data-f="back">‹ Friends</button><div class="fr-chatwho"><b>${esc(F.otherName(r))}</b><small>${isOnline(F.other(r)) ? 'Online' : 'Offline'}</small></div></div>
+      host.innerHTML = `<div class="fr-head"><button type="button" class="btn" data-f="back">‹ Friends</button><div class="fr-chatwho"><b>${esc(F.otherName(r))}</b><small>${esc(doingNow(F.other(r)))}</small></div></div>
         <div class="fr-dmlog" data-dmlog>${lines || '<p class="muted small fr-empty">No messages yet. Say hi!</p>'}</div>
         <form class="fr-dmform" data-dmform><input type="text" data-dmin maxlength="${DM_MAX}" placeholder="Message ${esc(F.otherName(r))}…" autocomplete="off" enterkeyhint="send"><button type="submit" class="btn btn-primary">Send</button></form>
         <p class="muted small" style="margin:0">Messages are checked for bad language and links. The last ${DM_KEEP} are kept.</p>`;

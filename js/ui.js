@@ -2245,6 +2245,7 @@
         ${track('battle', 'Battles')}
       </section>` : ''}
       ${root.Perf ? root.Perf.settingsHtml() : ''}
+      ${root.FriendActivity ? root.FriendActivity.settingsHtml() : ''}
       ${root.Install ? root.Install.settingsHtml() : ''}
       ${root.Account ? root.Account.settingsHtml() : ''}
       ${root.Suggest ? root.Suggest.settingsHtml() : ''}
@@ -2275,6 +2276,7 @@
       }
     });
     if (root.Perf) root.Perf.bind(m.root);
+    if (root.FriendActivity) root.FriendActivity.bind(m.root);
     if (root.Account) root.Account.bind(m.root, m);
     m.root.addEventListener('input', (e) => { if (e.target.dataset.vol) S.set(e.target.dataset.vol, Number(e.target.value)); });
     m.root.addEventListener('click', async (e) => {

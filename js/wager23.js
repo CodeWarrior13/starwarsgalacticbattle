@@ -25,9 +25,10 @@
   const ESCROW = 'swcg-wager';
   let HN = null;
 
-  // Testers can switch on just this mechanic early with its own code (nothing else from 2.3).
+  // Testers can switch on just this mechanic early with its own code (nothing else
+  // from 2.3), and the HOLOSAVE21 tester code turns it on too.
   const TEST_KEY = 'swcg-wg-test';
-  const tested = () => { try { return localStorage.getItem(TEST_KEY) === '1'; } catch (e) { return false; } };
+  const tested = () => { try { return localStorage.getItem(TEST_KEY) === '1' || !!(root.Update22 && root.Update22.test && root.Update22.test()); } catch (e) { return false; } };
   const on = () => !!((root.Update23 && root.Update23.on && root.Update23.on()) || root.__wgTest || tested());
   const code = () => String.fromCharCode(83, 65, 66, 65, 67, 67, 66, 69, 84, 83);
   const H = UI.hooks;

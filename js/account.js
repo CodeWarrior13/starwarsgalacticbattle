@@ -637,7 +637,7 @@
           // friendly battles, the new profile, and Rex's walkthrough replays.
           U22.test(true);
           if (root.ProfileV2) root.ProfileV2.preview(true);
-          toast('2.2 test ON for this device: Friends, friend profiles, guild invites, the new profile, Rex\'s walkthrough and the new 2.2 bosses and cards. Reload the game to see the new bosses.');
+          toast('2.2 test ON for this device: Friends, friend profiles, guild invites, the new profile, Rex\'s walkthrough, the new 2.2 bosses and cards, friend status (what friends are playing) and wager duels. Reload the game to see the new bosses.');
           if (root.RexGuide) setTimeout(() => root.RexGuide.tester(), 900);
           return true;
         }
