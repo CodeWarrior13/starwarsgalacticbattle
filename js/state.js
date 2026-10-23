@@ -265,8 +265,9 @@
 
     // The Monolith's trial rewards only climb with shards won from the trials
     // themselves; ingots can't promote them.
+    // Earned-only cards: promoted with shards from earning them again, never Aurodium.
     ingotLocked(id) {
-      return (D.SECRET_BOSSES || []).some((b) => (b.rewards || []).includes(id));
+      return id === 'falcon_kessel' || (D.SECRET_BOSSES || []).some((b) => (b.rewards || []).includes(id));
     },
 
     // Promote using every shard you have plus Aurodium Ingots for the rest.

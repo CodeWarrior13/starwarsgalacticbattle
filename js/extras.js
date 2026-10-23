@@ -554,11 +554,19 @@ H.battleEnd.push((battle, params, won) => {
       z.kt.push(z.ts || Date.now());
       z.kt = z.kt.slice(-12);
       const span = Date.now() - z.kt[0];
-      if (!z.k && z.kt.length >= 12 && span < 12 * 60000) {
-        z.k = 1; z.km = span / 60000;
+      if (z.kt.length >= 12 && span < 12 * 60000) {
+        // Every Kessel Run counts: the first one brings the Falcon itself, each one
+        // after that pays shards, the only way to promote it (no Aurodium).
+        const first = !z.k || !Player.owns('falcon_kessel');
+        z.k = 1; z.km = span / 60000; z.kt = [];
+        z.kn = (z.kn || 0) + 1;
         const g = Player.grantCard('falcon_kessel', false);
-        UI.markFeatSeen('xq_kr');
-        later(() => sceneKR(FEATS.kr, z.km).then(() => UI.walkout(D.UNIT_MAP.falcon_kessel, 'secret', false, { exclusive: true, isNew: g.isNew, shards: g.shards })));
+        if (first) {
+          UI.markFeatSeen('xq_kr');
+          later(() => sceneKR(FEATS.kr, z.km).then(() => UI.walkout(D.UNIT_MAP.falcon_kessel, 'secret', false, { exclusive: true, isNew: g.isNew, shards: g.shards })));
+        } else {
+          later(() => UI.toast(`Kessel Run complete in ${z.km.toFixed(1)} minutes! Millennium Falcon · Kessel Run +${g.shards} shards.`));
+        }
       }
     } else z.kt = [];
   }

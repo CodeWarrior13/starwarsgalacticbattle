@@ -1575,7 +1575,7 @@
         </div>
         <div class="upgrade">
           <b>${stars(u.stars)}</b>
-          <span class="muted">${maxStars ? 'Max stars reached.' : `Shards ${u.shards}/${starNeed}. ${Player.ingotLocked(id) ? 'Win its Monolith trial again for more shards.' : 'Duplicates and Hot Stock give shards.'}`}</span>
+          <span class="muted">${maxStars ? 'Max stars reached.' : `Shards ${u.shards}/${starNeed}. ${Player.ingotLocked(id) ? (id === 'falcon_kessel' ? 'Make the Kessel Run again (12 Tower floors in a row in under 12 minutes) for more shards.' : 'Win its Monolith trial again for more shards.') : 'Duplicates and Hot Stock give shards.'}`}</span>
           ${maxStars ? '' : `<div class="shardbar ${u.shards >= starNeed ? 'ready' : ''}"><i style="width:${Math.min(100, (u.shards / starNeed) * 100)}%"></i></div>`}
           ${maxStars || !starAur ? `<button class="btn" type="button" data-star ${maxStars ? 'disabled' : ''}>${maxStars ? 'Maxed' : `Promote to ${u.stars + 1}★`}</button>`
             : `<button class="btn btn-gold" type="button" data-star-aur ${Player.state.aurodium < starAur ? 'disabled' : ''}>Promote to ${u.stars + 1}★ · ${cur('aurodium', starAur)}</button>
