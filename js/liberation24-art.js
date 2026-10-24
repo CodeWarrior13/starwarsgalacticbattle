@@ -5,7 +5,7 @@
   'use strict';
   const K = root.ArtX;
   if (!K || !root.Art) return;
-  const { P, E, C, R, L, shade, shoulders, neck, head, eyes, brows, nose, mouth, saber, blaster, glowEyes, LG, RG, SCENES } = K;
+  const { P, E, C, R, L, shade, shoulders, neck, head, eyes, brows, nose, mouth, saber, blaster, glowEyes, LG, RG, SCENES, stars } = K;
   const add = (id, fn) => root.Art.addArt('char', id, fn);
   // Draw the left half of something and mirror it, so faces and helmets stay even.
   const mirror = (svg) => svg + `<g transform="matrix(-1 0 0 1 100 0)">${svg}</g>`;
@@ -550,9 +550,17 @@
       + '<path d="M18 36 L46 33 M20 44 L47 41 M31 23 L32 50" stroke="#7a828c" stroke-width=".6" fill="none"/>' + [[24, 39], [40, 37], [26, 47], [42, 45]].map(([x, y]) => C(x, y, 0.6, '#5a626c')).join('')
       + '<path d="M28 33 l3 2 M38 44 l2 -2" stroke="#4a525c" stroke-width=".6" opacity=".7"/>' + E(36, 49, 8, 1.6, '#5a4a2a', 'opacity=".3"')
       + `<g transform="translate(16 36) rotate(4)">${R(-12, -1.4, 13, 2.8, '#3a4048')}${C(1, 0, 2.4, '#5a626c', 'stroke="#2a3038" stroke-width=".5"')}</g>`
-      // an Ewok with a spear in the ferns
-      + E(14, 88, 6, 5.6, '#6a4a2a') + P('M8 88 C8 80 20 80 20 88 C18 84 10 84 8 88Z', '#a0602a') + C(12, 88.4, 1, '#0c0806') + C(16, 88.4, 1, '#0c0806') + E(14, 91, 2.4, 1.6, '#8a6440')
-      + L(21, 96, 25, 74, '#6a4a2a', 0.9) + P('M24.4 74 L26 70 L25.8 75Z', '#c8ccd2');
+      // an Ewok in the ferns with his spear: furry body, the leather hood, big dark eyes
+      + `<g transform="translate(14 84) scale(1.25)">`
+      + L(8, 12, 12, -14, '#6a4a2a', 1) + P('M11.4 -14 L13 -19 L13 -13.4Z', '#c8ccd2') + L(10.6, -9, 13, -8, '#a0602a', 0.8)
+      + P('M-8 16 C-8 6 -5 2 0 2 C5 2 8 6 8 16Z', '#6e4a2c') + '<path d="M-6 10 l1.4 2 M-3 7 l1 2 M3 7 l-1 2 M6 10 l-1.4 2 M-1 12 l1 2" stroke="#4a2e18" stroke-width=".6"/>'
+      + E(7, 8, 2.4, 2, '#7a5434') + E(-6.6, 8.4, 2.2, 1.8, '#7a5434')
+      + E(0, -2, 7, 6.4, '#7a5434') + E(0, 1.4, 4, 3, '#a07a54')
+      + P('M-7.4 -1 C-8 -9 -4 -12 0 -12 C4 -12 8 -9 7.4 -1 C6 -5 3 -7 0 -7 C-3 -7 -6 -5 -7.4 -1Z', '#b8692e', 'stroke="#6a3a14" stroke-width=".5"')
+      + C(-6.6, -8, 1.8, '#b8692e', 'stroke="#6a3a14" stroke-width=".4"') + C(6.6, -8, 1.8, '#b8692e', 'stroke="#6a3a14" stroke-width=".4"') + L(-6, -4.6, 6, -4.6, '#6a3a14', 0.5)
+      + E(-2.6, -2, 1.7, 1.9, '#0c0806') + E(2.6, -2, 1.7, 1.9, '#0c0806') + C(-2.1, -2.6, 0.55, '#fff') + C(3.1, -2.6, 0.55, '#fff')
+      + P('M-1.2 0.6 L1.2 0.6 L0 2Z', '#1a0f08') + '<path d="M-1.4 3 Q0 3.8 1.4 3" stroke="#3a2210" stroke-width=".5" fill="none"/>'
+      + '</g>';
   });
 
   // ---------- Scarif opponent: Shoretrooper ----------
@@ -620,7 +628,7 @@
       + [[66, 12, 8], [70, 28, 10], [82, 9, 9], [86, 29, 8], [74, 33, 6]].map(([x, y, w]) => L(x, y, x + w, y - 0.6, '#6a727c', 0.4)).join('')
       + [[67, 16], [84, 14], [88, 24], [76, 27], [70, 25], [90, 16]].map(([x, y]) => R(x, y, 0.8, 0.5, '#e8ecf0', 'opacity=".7"')).join('')
       + C(71, 12.6, 4.4, '#7a828c', 'stroke="#4a525c" stroke-width=".5"') + C(71, 12.6, 2.8, 'none', 'stroke="#5a626c" stroke-width=".4"') + C(71, 12.6, 1.2, '#4a525c')
-      + glow('#7aff6a', C(71, 12.6, 0.9, '#d8ffc8') + L(71, 12.6, 94, 58, '#c8ffb0', 1.4), 3) + E(94, 58, 12, 3.4, '#e8ffd8', 'opacity=".85"') + E(94, 58, 22, 6, '#ffffff', 'opacity=".25"')
+      + glow('#5aff4a', [0, 45, 90, 135, 180, 225, 270, 315].map((a) => { const r = (a * Math.PI) / 180; return L((71 + Math.cos(r) * 3.8).toFixed(2), (12.6 + Math.sin(r) * 3.8).toFixed(2), 72.4, 16.6, '#b8ff9a', 0.7); }).join('') + C(72.4, 16.6, 1.6, '#f0fff0') + L(72.4, 16.6, 94, 58, '#5aff4a', 3.4, 'opacity=".55"') + L(72.4, 16.6, 94, 58, '#e8ffe0', 1.3), 3) + E(94, 58, 12, 3.4, '#e8ffd8', 'opacity=".9"') + E(94, 58, 22, 6, '#ffffff', 'opacity=".3"') + P('M80 60 Q94 50 108 60', 'none', 'stroke="#ffffff" stroke-width="1" opacity=".5"')
       + R(0, 56, 100, 10, '#2ba3b8') + P('M0 60 Q20 58 40 60 T80 60 T100 60', 'none', 'stroke="#8ad8e8" stroke-width=".6"')
       // the Citadel tower and its dish
       + P('M8 66 L12 20 L22 20 L26 66Z', '#cfd4da', 'stroke="#8a929c" stroke-width=".6"') + R(10, 14, 14, 6, '#b8bec6') + E(17, 12, 9, 2.6, '#9aa2ac') + L(17, 12, 17, 4, '#9aa2ac', 0.8)
@@ -650,6 +658,10 @@
     const [sk, sd] = LG([[0, '#8a8a4a'], [0.5, '#6a5a2a'], [1, '#3a2e14']]);
     const [gold, gd] = LG([[0, '#f2d27a'], [1, '#9a6a1a']]);
     return SCENES.geonosis() + sd + gd
+      // a Separatist core ship lifting off and droid factory stacks smoking on the horizon
+      + C(76, 18, 9, '#6a5a50') + shade('M76 9 A9 9 0 0 1 76 27 A5 9 0 0 0 76 9Z', 0.25) + L(67, 18, 85, 18, '#4a3e36', 0.6) + E(76, 28, 4, 1.4, '#ffb04a', 'opacity=".6"')
+      + [[32, 40, 4], [62, 38, 5]].map(([x, y, w]) => R(x, y, w, 40, '#5a3418') + puffs('#4a2e1e', 0.6, [[x + w / 2, y - 6, 6, 5], [x + w / 2 + 3, y - 14, 7, 5]])).join('')
+      + [[22, 20], [56, 14], [88, 32]].map(([x, y]) => `<g transform="translate(${x} ${y})">${E(0, 0, 2, 0.8, '#3a2410')}${P('M-1 -0.4 L-5 -3 L-1 0.4Z M1 -0.4 L5 -3 L1 0.4Z', '#e8d8b0', 'opacity=".6"')}</g>`).join('')
       + [[8, 30, 8], [20, 42, 6], [82, 32, 7], [93, 46, 6]].map(([x, y, w]) => P(`M${x - w} 80 Q${x - w / 2} ${y + 10} ${x} ${y} Q${x + w / 2} ${y + 10} ${x + w} 80Z`, '#8a4a22', 'opacity=".9"') + C(x, y + 14, 1, '#ffb04a', 'opacity=".7"')).join('')
       // veined wings behind
       + mirror(P('M40 62 C26 48 10 44 4 52 C8 64 24 72 40 70Z', '#f2e6c8', 'opacity=".45" stroke="#7a5a2a" stroke-width=".6"') + '<path d="M40 66 C28 58 16 54 6 53 M40 68 C30 64 18 64 9 61 M40 64 C30 54 22 50 14 48" stroke="#7a5a2a" stroke-width=".5" fill="none" opacity=".8"/>')
@@ -670,7 +682,8 @@
       + mirror(E(43.4, 39, 2.4, 1.8, '#140c04', 'transform="rotate(-18 43.4 39)"') + C(42.8, 38.6, 0.5, '#f0e0b0', 'opacity=".8"') + '<path d="M46 58 C44 61 43.6 64 45 67" stroke="#3a2e14" stroke-width="1.1" fill="none" stroke-linecap="round"/>')
       + '<path d="M47.4 54 Q50 56 52.6 54" stroke="#2a2010" stroke-width=".8" fill="none"/>' + E(50, 58, 2.4, 3, '#4a3a1a')
       // the sonic blaster: a drum with a green glowing lens
-      + `<g transform="translate(16 74) rotate(-8)">${R(0, -6, 18, 12, '#5a3a1a', 'rx="5" stroke="#2a1a0a" stroke-width=".6"')}${R(14, -3, 8, 6, '#3a2410', 'rx="1"')}${C(2, 0, 6.2, '#2a1a0a')}${C(2, 0, 4.6, '#3aaa4a')}${C(2, 0, 4.6, 'none', 'stroke="#b0ffb8" stroke-width=".7"')}${C(2, 0, 2, '#d8ffd8', 'style="filter:drop-shadow(0 0 3px #7aff8a)"')}${L(-2, -1, 6, 1, '#1a3a1a', 0.6)}</g>`;
+      + `<g transform="translate(22 82) rotate(-10) scale(1.7)">${R(0, -6, 20, 12, '#5a3a1a', 'rx="5" stroke="#2a1a0a" stroke-width=".5"')}${R(4, -7, 10, 2, '#7a5226', 'rx=".6"')}${R(16, -3, 10, 6, '#3a2410', 'rx="1"')}${L(4, -6, 4, 6, '#2a1a0a', 0.5)}${L(10, -6, 10, 6, '#2a1a0a', 0.5)}${C(1, 0, 6.6, '#2a1a0a')}${C(1, 0, 5, '#3aaa4a')}${C(1, 0, 5, 'none', 'stroke="#b0ffb8" stroke-width=".6"')}${C(1, 0, 2.2, '#d8ffd8', 'style="filter:drop-shadow(0 0 3px #7aff8a)"')}${L(-3.4, -0.6, 5, 0.6, '#1a3a1a', 0.6)}</g>`
+      + mirror(E(30, 84, 3, 2.4, '#5a4a22'));
   });
 
   // ---------- Mustafar opponent: Purge Trooper ----------
@@ -721,7 +734,16 @@
   // edges, rust-orange joints, the vibrosword across the back, blaster in hand.
   add('commando_droid', () => {
     const [arm, ad] = LG([[0, '#8a7478'], [1, '#4a3a3e']]);
-    return siege() + ad
+    // The Rishi moon outpost at night, as in The Clone Wars: the gas giant
+    // overhead, the clone listening post on the crags with its lit dish,
+    // and more BX commandos scaling the rocks.
+    const [night, nd] = LG([[0, '#0a1020'], [0.7, '#1a2a44'], [1, '#2a3a50']]);
+    const rishi = C(74, 22, 20, '#c8a07a') + P('M54 18 Q74 14 94 20 M55 24 Q74 22 93 27 M58 30 Q74 30 90 33', 'none', 'stroke="#a0784e" stroke-width="1.6" opacity=".7"') + shade('M74 2 A20 20 0 0 1 74 42 A12 20 0 0 0 74 2Z', 0.35);
+    return nd + R(0, 0, 100, 100, night) + stars(17, 30, 60) + rishi
+      + P('M0 60 L10 46 L18 54 L28 40 L40 52 L52 44 L64 56 L76 46 L88 54 L100 48 L100 100 L0 100Z', '#141a24')
+      + R(16, 26, 10, 16, '#2a323e', 'stroke="#4a5462" stroke-width=".5"') + R(14, 24, 14, 3, '#3a4452') + E(21, 22, 6, 2, '#5a6472') + L(21, 22, 21, 14, '#5a6472', 0.6) + glow('#ffd88a', C(21, 14, 0.9, '#ffe8b0') + R(18, 30, 3, 2, '#ffd88a') + R(22, 34, 3, 2, '#ffd88a'), 2)
+      + [[8, 56], [88, 58], [34, 50]].map(([x, y]) => `<g transform="translate(${x} ${y}) scale(.5)">${E(0, -10, 2.6, 4, '#4a3a3e')}${R(-1, -6, 2, 4, '#3a2e30')}${P('M-5 -2 L5 -2 L4 8 L-4 8Z', '#4a3a3e')}${L(-3, 8, -4, 16, '#4a3a3e', 1.4)}${L(3, 8, 5, 15, '#4a3a3e', 1.4)}</g>`).join('')
+      + ad
       // the vibrosword slung across the back
       + `<g transform="rotate(38 74 40)">${R(70, 6, 6, 52, '#9a7aa8', 'opacity=".75" rx="1"')}${R(71, 8, 1.4, 48, '#e8d8f0', 'opacity=".7"')}${R(69, 56, 8, 3, '#2a2224')}${R(71.6, 59, 2.8, 8, '#3a3034')}</g>`
       // shoulders and the broad flat chest plate
@@ -787,7 +809,10 @@
       + [33, 37, 41].map((y, r) => Array.from({ length: 30 }, (_, i) => E(i * 3.4 + (r % 2) * 1.7, y, 1.1, 1.5, ['#5a2410', '#6a3418', '#4a1e0c'][(i + r) % 3])).join('')).join('')
       + prisoner(10, '#c8b48a', '#a0703a') + prisoner(90, '#2a2a30', '#5a3a1a') + prisoner(30, '#f2f2f2', '#3a2010')
       // jetpack flames roaring down from behind his shoulders
-      + mirror(glow('#ffb03a', P('M22 64 C18 76 20 88 26 100 C28 90 32 82 30 64Z', '#ffd27a', 'opacity=".85"') + P('M24 66 C22 76 24 86 27 94 C28 86 30 78 29 66Z', '#fff4d0'), 4) + R(20, 52, 10, 14, '#6a7a8a', 'rx="2" stroke="#2a3440" stroke-width=".6"'))
+      // the Z-6 jetpack on his back: frame behind his shoulders, thruster cans at each side, flames below
+      + mirror(glow('#ffb03a', P('M20 70 C16 80 18 90 24 100 C26 92 30 84 30 70Z', '#ffd27a', 'opacity=".85"') + P('M22 72 C20 80 22 88 25 95 C26 88 28 80 28 72Z', '#fff4d0'), 4))
+      + R(26, 46, 48, 26, '#4a5a6a', 'rx="3" stroke="#2a3440" stroke-width=".7"') + L(26, 54, 74, 54, '#2a3440', 0.6)
+      + mirror(R(18, 50, 12, 20, '#6a7a8a', 'rx="2.6" stroke="#2a3440" stroke-width=".7"') + R(19, 66, 10, 4, '#3a4450', 'rx="1"') + L(24, 50, 24, 66, '#9aa8b4', 0.6) + R(28, 56, 4, 4, '#3a4450'))
       // the Z-6's missile rising behind his helmet
       + R(45, 4, 10, 16, '#6a7a8a', 'rx="1.5" stroke="#2a3440" stroke-width=".6"') + P('M45 4 L50 -2 L55 4Z', '#b8c4cc') + R(45, 14, 10, 2, '#c43a2a')
       + bolt(18, 76, 0, 66, '#ff3a2a') + bolt(82, 76, 100, 70, '#ff3a2a') + bolt(14, 70, 0, 54, '#ff3a2a')
@@ -798,6 +823,8 @@
       + P('M34 72 L66 72 L63 92 L37 92Z', arm, 'stroke="#1a2230" stroke-width=".8"') + L(50, 72, 50, 92, '#2a3440', 0.8) + '<path d="M38 78 l3 1 M58 84 l-2 2 M44 88 l2 -1" stroke="#c8d4dc" stroke-width=".5" opacity=".7"/>'
       + R(34, 92, 32, 4, '#3a2a1a') + mirror(R(34, 93, 6, 7, '#2a1e12', 'rx="1"')) + L(36, 72, 62, 92, '#5a3a20', 1.2)
       // the helmet: T visor, dents, rangefinder stalk
+      // neck: the bodysuit collar running up into the helmet
+      + P('M41 60 L59 60 L61 74 L39 74Z', '#2a3440') + P('M36 70 C42 67 58 67 64 70 L62 75 C56 72.6 44 72.6 38 75Z', '#5a6a7a', 'stroke="#1a2230" stroke-width=".6"')
       + P('M34 46 C34 26 42 18 50 18 C58 18 66 26 66 46 L65 60 C61 66 39 66 35 60Z', hm, 'stroke="#1a2028" stroke-width=".9"')
       + P('M38 36 H62 V42 H54 V58 H46 V42 H38Z', '#0a0c10') + P('M36 26 C42 22 58 22 64 26 L64 30 C58 26 42 26 36 30Z', '#4a6a8a')
       + E(43, 24, 5, 2, '#fff', 'opacity=".4"') + '<path d="M58 30 l2 2 M40 50 l2 1 M60 52 l-1.6 1.4" stroke="#3a4450" stroke-width=".6"/>' + C(57, 48, 1, '#5a6a7a')
@@ -900,7 +927,14 @@
     const [red, rd] = LG([[0, '#e02a36'], [0.5, '#b0161f'], [1, '#6a0a10']]);
     return exegol('#a8b8ff') + rd
       // a Xyston Star Destroyer overhead, its planet-killer cannon glowing red
-      + P('M8 14 L92 8 L50 30Z', '#1a1822', 'stroke="#3a3648" stroke-width=".6"') + R(46, 4, 8, 6, '#1a1822') + glow('#ff2a3a', E(50, 26, 4, 1.6, '#ff4a4a'), 3)
+      // seen from below at an angle: the long dagger hull, its stepped superstructure and
+      // bridge tower, red running lights, and the axial planet-killer cannon glowing under it
+      + P('M2 20 L80 6 L98 10 L96 16 L62 30 L6 26Z', '#16141c', 'stroke="#3a3648" stroke-width=".7"') + P('M2 20 L80 6 L98 10 L60 18Z', '#2a2632')
+      + P('M60 8 L84 4 L90 7 L66 11Z', '#24202c', 'stroke="#3a3648" stroke-width=".5"') + R(78, 0, 8, 5, '#24202c') + R(76, 0, 12, 1.6, '#3a3648')
+      + [[12, 23], [24, 22], [36, 21], [48, 20], [60, 19]].map(([x, y]) => L(x, y, x + 8, y + 1.2, '#3a3648', 0.5)).join('')
+      + [[20, 24], [40, 23.4], [70, 16], [88, 12]].map(([x, y]) => C(x, y, 0.5, '#ff4a4a')).join('')
+      + R(46, 26, 10, 4, '#2a2632', 'rx="1"') + glow('#ff2a3a', E(51, 31, 4.4, 2, '#ff4a4a') + E(51, 31, 2, 1, '#ffd0d0'), 4)
+      + P('M70 2 L84 0 L80 4Z M8 8 L20 6 L16 10Z', '#16141c', 'opacity=".7"')
       // hooded statues and Sith Eternal banners
       + mirror(P('M2 84 L4 50 C4 42 8 38 12 38 C16 38 20 42 20 50 L22 84Z', '#16141e') + P('M8 46 C8 43 16 43 16 46 L15 50 L9 50Z', '#08060a') + R(24, 30, 6, 30, '#6a0a10') + P('M24 60 L27 56 L30 60Z', '#0a080e') + C(27, 40, 1.6, 'none', 'stroke="#d8c060" stroke-width=".5"'))
       // body: red plates over the black bodysuit
@@ -915,6 +949,46 @@
       + mirror([50, 53, 56].map((y) => L(34.4, y, 40, y + 1, '#5a0a10', 0.8)).join('') + C(34.4, 46, 1.4, '#6a0a10', 'stroke="#2a0406" stroke-width=".4"'))
       + R(45.6, 58.6, 8.8, 3, '#3a0408', 'rx=".6"') + [47, 48.8, 50.6, 52.4].map((x) => L(x, 59, x, 61.2, '#c8303a', 0.4)).join('')
       + `<g transform="translate(60 92) rotate(-28)">${R(-2, -2.6, 30, 5.2, '#1a1214', 'rx="1.5"')}${R(24, -1.4, 10, 2.8, '#1a1214')}${R(4, -5.6, 12, 3, '#3a2a2e', 'rx="1"')}</g>`;
+  });
+
+  // ---------- Hoth main boss (2.4 portrait): Imperial Star Destroyer ----------
+  // Over Hoth, nose down the card: the arrowhead hull in full detail, its
+  // centre spine and side trenches, rows of turbolaser turrets and plating,
+  // the stepped superstructure with the bridge tower and twin shield domes,
+  // the glowing ventral hangar, three main engines, and a TIE escort.
+  add('star_destroyer_24', () => {
+    const [hullL, hl] = LG([[0, '#e8ecf0'], [1, '#9aa2ac']], 0, 0, 1, 0);
+    const [hullR, hr] = LG([[0, '#b8bec6'], [1, '#6a727c']], 0, 0, 1, 0);
+    const [hoth, hd] = RG([[0, '#f4f8fc'], [0.7, '#b8d0e4'], [1, '#6a8aa8']], 0.35, 0.35, 0.8);
+    const rows = [];
+    for (let y = 30; y < 86; y += 5) {
+      const w = (y - 10) * 0.42;
+      for (let k = 1; k < 5; k++) {
+        const x1 = 50 - (w * k) / 5;
+        const x2 = 50 + (w * k) / 5;
+        rows.push(R(x1 - 1.2, y, 2.4, 1.2, '#7a828c', 'opacity=".8"') + R(x2 - 1.2, y, 2.4, 1.2, '#5a626c', 'opacity=".8"'));
+      }
+    }
+    return hd + hl + hr + R(0, 0, 100, 100, '#05070e') + stars(41, 60, 100)
+      + C(84, 16, 13, hoth) + P('M74 12 Q84 8 94 13 M73 19 Q84 16 95 20', 'none', 'stroke="#ffffff" stroke-width=".8" opacity=".6"')
+      // the arrowhead hull: lit port side, shaded starboard side, centre spine
+      + P('M50 6 L14 90 L50 84Z', hullL, 'stroke="#3a3e46" stroke-width=".7"') + P('M50 6 L86 90 L50 84Z', hullR, 'stroke="#3a3e46" stroke-width=".7"')
+      + P('M50 6 L46 40 L50 84 L54 40Z', '#c8ced6', 'stroke="#5a626c" stroke-width=".5"') + L(50, 8, 50, 82, '#7a828c', 0.5)
+      // side trenches and plating rows
+      + L(50, 12, 22, 82, '#6a727c', 0.8) + L(50, 12, 78, 82, '#3a4048', 0.8) + L(50, 20, 30, 80, '#8a929c', 0.5) + L(50, 20, 70, 80, '#4a525c', 0.5)
+      + rows.join('')
+      // turbolaser batteries along the edges
+      + [24, 34, 44, 54, 64, 74].map((y) => { const dx = (y - 6) * 0.43; return C(50 - dx + 1.6, y, 0.9, '#4a525c') + C(50 + dx - 1.6, y, 0.9, '#3a4048'); }).join('')
+      // the stepped superstructure, bridge tower and shield domes
+      + P('M40 62 L60 62 L58 80 L42 80Z', '#b8bec6', 'stroke="#3a4048" stroke-width=".6"') + P('M43 56 L57 56 L56 64 L44 64Z', '#d0d6dc', 'stroke="#3a4048" stroke-width=".6"')
+      + R(45, 50, 10, 7, '#c0c6ce', 'stroke="#3a4048" stroke-width=".6"') + R(41, 48, 18, 3, '#9aa2ac', 'stroke="#3a4048" stroke-width=".5"') + R(42, 49, 16, 0.8, '#ffe8a0', 'opacity=".7"')
+      + C(44, 46, 2.2, '#dfe4ea', 'stroke="#3a4048" stroke-width=".5"') + C(56, 46, 2.2, '#9aa2ac', 'stroke="#3a4048" stroke-width=".5"')
+      + [66, 70, 74].map((y) => L(43, y, 57, y, '#6a727c', 0.5)).join('')
+      // the ventral hangar glow and three main engines
+      + R(46, 30, 8, 10, '#1a2030', 'rx="1"') + R(47, 31, 6, 8, '#5fa8ff', 'opacity=".35"')
+      + glow('#7ac8ff', C(41, 87, 3.2, '#bfe4ff') + C(50, 88, 4.2, '#e8f6ff') + C(59, 87, 3.2, '#bfe4ff') + C(34, 86, 1.6, '#9fd8ff') + C(66, 86, 1.6, '#9fd8ff'), 4)
+      // TIE fighter escort
+      + [[18, 30, 0.7], [80, 44, 0.6], [24, 58, 0.5], [86, 70, 0.6]].map(([x, y, sc]) => `<g transform="translate(${x} ${y}) scale(${sc})">${R(-3, -0.4, 6, 0.8, '#8a929c')}${R(-3.6, -2.6, 1, 5.2, '#5a626c')}${R(2.6, -2.6, 1, 5.2, '#5a626c')}${C(0, 0, 1.2, '#9aa2ac')}</g>`).join('');
   });
 
   // ================= Legendary badge: Liberator of the Galaxy =================

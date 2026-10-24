@@ -335,6 +335,9 @@
     ? { credits: 1500, aurodium: firstClear ? 0 : 1, aurodiumMax: firstClear ? 0 : 1, kyber: 0, card: null, holocron: firstClear }
     : baseBossRewards(enc, firstClear));
 
+  // The Hoth Star Destroyer gets its detailed 2.4 portrait.
+  if (D.UNIT_MAP.star_destroyer && root.Art && root.Art.CHARACTER_IDS.includes('star_destroyer_24')) D.UNIT_MAP.star_destroyer.portrait = 'star_destroyer_24';
+
   // ---------- Progress rules ----------
   // Worlds finished before 2.4 stay open (next world, squad slots) even
   // though they now have more stages. Snapshotted once per save.
@@ -408,6 +411,12 @@
     if (enc && enc.main && !out.__lib && this.planetComplete(enc.planet)) out.liberated = D.PLANET_MAP[enc.planet].name;
     return out;
   };
+
+  // ---------- Card levels 31-35 cost more ----------
+  // A quarter more for each level from 31 to 35, so taking a card from level
+  // 1 to 35 costs about 150,000 credits instead of 140,000.
+  const baseLevelCost = D.levelCost;
+  D.levelCost = (level) => (level >= 31 && level <= 34 ? Math.round(baseLevelCost(level) * 1.25) : baseLevelCost(level));
 
   // ---------- Liberator of the Galaxy ----------
   if (H) {

@@ -198,7 +198,7 @@
         <div class="p2-id"><p class="eyebrow">Friend</p><h2>${esc(okTxt(card.tag, 16) || nm)}</h2>
           <p class="muted small">${title(lv)} · Level ${lv}</p>
           <p class="small fp-cur">${cur ? `Currently on <b>${esc(cur.p.name)}</b> · stage ${Math.min(cur.cleared + 1, cur.stages)}/${cur.stages}` : '<b>Every world liberated</b>'}</p>
-          <div class="fp-chips"><span class="${online ? 'on' : ''}">${online ? `● Online${doing ? ` · ${esc(doing)}` : ''}` : 'Offline'}</span>${since ? `<span>Friends since ${esc(since)}</span>` : ''}</div></div>
+          <div class="fp-chips"><span class="${online ? 'on' : ''}">${online ? `● Online${doing ? ` · ${esc(doing)}` : ''}` : esc(F.online[uid] && F.online[uid].at && root.FriendActivity ? root.FriendActivity.lastSeen(F.online[uid].at, F.online[uid].a) : 'Offline')}</span>${since ? `<span>Friends since ${esc(since)}</span>` : ''}</div></div>
       </div>`;
     const tabsList = [['overview', 'Overview'], ['collection', 'Collection'], ['worlds', 'Worlds'], ['badges', 'Badges'], ['stats', 'Stats'], ...(hnOn ? [['holonet', 'HoloNet']] : [])];
     const tabs = () => `<div class="pc-tabs p2-tabs fp-tabs" style="--n:${tabsList.length}" role="tablist">${tabsList.map(([k, n]) => `<button type="button" role="tab" aria-selected="${tab === k}" class="${tab === k ? 'on' : ''}" data-fpt="${k}">${n}</button>`).join('')}</div>`;

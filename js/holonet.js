@@ -8124,7 +8124,7 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
   }
   const isOnline = (uid) => { const o = F.online[uid]; return !!(o && Date.now() - o.at < ONLINE_MS); };
   // What they're doing right now, if they share it (Settings can hide it).
-  const doingNow = (uid) => { const o = F.online[uid]; if (!isOnline(uid)) return 'Offline'; const l = o.a && root.FriendActivity ? root.FriendActivity.label(o.a) : ''; return l ? `Online · ${l}` : o.busy ? 'In a battle' : 'Online'; };
+  const doingNow = (uid) => { const o = F.online[uid]; if (!isOnline(uid)) return o && o.at && root.FriendActivity ? root.FriendActivity.lastSeen(o.at, o.a) : 'Offline'; const l = o.a && root.FriendActivity ? root.FriendActivity.label(o.a) : ''; return l ? `Online · ${l}` : o.busy ? 'In a battle' : 'Online'; };
 
   async function add(q, st) {
     const key = nameKey(q);

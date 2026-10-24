@@ -47,6 +47,18 @@
     return 'home';
   }
   const label = (c) => LABELS[c] || '';
+  // "3 min ago", "5 hours ago", "3 days ago".
+  function ago(t) {
+    const m = Math.max(0, Math.round((Date.now() - t) / 60000));
+    if (m < 1) return 'just now';
+    if (m < 60) return `${m} min ago`;
+    const h = Math.round(m / 60);
+    if (h < 24) return `${h} hour${h === 1 ? '' : 's'} ago`;
+    const d = Math.round(h / 24);
+    return `${d} day${d === 1 ? '' : 's'} ago`;
+  }
+  // A friend who's gone offline: when they were last on, and what they were doing.
+  const lastSeen = (at, c) => (at ? `Last online ${ago(at)}${label(c) ? ` · ${label(c)}` : ''}` : 'Offline');
 
   // Tell friends soon after something changes (the heartbeat only writes when
   // the status is different, so this costs one write per change at most).
@@ -68,7 +80,7 @@
     if (!on()) return '';
     return `<section class="set-sec"><h3>${root.Icons ? root.Icons.svg('holocron') : ''} Friends</h3>
       <label class="switch"><input type="checkbox" data-act-show ${hidden() ? '' : 'checked'}><i></i> Show friends what I'm playing</label>
-      <p class="muted small">Friends see things like "Playing the Campaign" or "In a Friendly Battle" next to your name. Turn it off and they just see Online.</p></section>`;
+      <p class="muted small">Friends see things like "Playing the Campaign" or "In a Friendly Battle" next to your name, and what you were last doing once you go offline. Turn it off and they just see Online, or when you were last on.</p></section>`;
   }
   function bind(el) {
     el.addEventListener('change', (e) => {
@@ -78,5 +90,5 @@
     });
   }
 
-  root.FriendActivity = { code, label, hidden, settingsHtml, bind, nudge };
+  root.FriendActivity = { code, label, ago, lastSeen, hidden, settingsHtml, bind, nudge };
 })(window);
