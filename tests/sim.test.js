@@ -774,4 +774,122 @@ test('2.3: Legendary Exchange opens once a week for 30 minutes, one trade, then 
   assert.strictEqual(X.status(w.gone + 1).state, 'hidden');
 });
 
+test('2.4 Liberation: off until 2.4; then 10-stage worlds, 22 bosses, new cards and rules', () => {
+  const stagesBefore = D.PLANET_MAP.tatooine.stages.length;
+  require('../js/liberation24-art.js');
+  require('../js/liberation24.js');
+  assert.strictEqual(D.PLANET_MAP.tatooine.stages.length, stagesBefore, 'loading the file alone changes nothing');
+  assert.ok(!D.UNIT_MAP.bendu && !D.UNIT_MAP.carbon_vader, 'no 2.4 units yet');
+  // A save from before 2.4: Tatooine and Hoth finished (6 stages each), on Dagobah.
+  Player.reset();
+  Player.state.planets = { tatooine: 6, hoth: 6, dagobah: 2 };
+  Player.state.account.level = 8;
+  const slotsBefore = Player.slots();
+  delete require.cache[require.resolve('../js/liberation24.js')];
+  globalThis.__v24Test = 0;
+  require('../js/liberation24.js');
+  delete globalThis.__v24Test;
+  const L = globalThis.Lib24;
+  for (const p of D.PLANETS) {
+    assert.strictEqual(p.stages.length, 10, `${p.id} has 10 stages`);
+    for (const s of p.stages) for (const e of s.enemies) assert.ok(D.UNIT_MAP[e], `${p.id} ${s.name} ${e}`);
+    const lv = p.stages.map((s) => s.level);
+    assert.ok(lv.every((x, i) => i === 0 || x >= lv[i - 1]), `${p.id} levels climb`);
+  }
+  assert.strictEqual(L.ALL_BOSSES.length, 22);
+  for (const id of L.ALL_BOSSES) {
+    const enc = D.BOSS_ENCOUNTERS.find((b) => b.id === id);
+    assert.ok(enc && D.UNIT_MAP[id] && D.UNIT_MAP[id].boss, `${id} boss`);
+    assert.ok(enc.level <= 36 && enc.unlock === enc.planet, `${id} level/unlock`);
+    const bu = D.UNIT_MAP[id];
+    assert.ok(bu.kind === 'ship' ? globalThis.Art.SHIP_SHAPES.includes(bu.shape) : globalThis.Art.CHARACTER_IDS.includes(id), `${id} art`);
+  }
+  assert.strictEqual(D.BOSS_ENCOUNTERS.filter((b) => b.main).length, 11);
+  for (const id of ['gamorrean_guard', 'snowtrooper', 'wing_guard', 'scout_trooper', 'shoretrooper', 'cf66_trooper', 'geonosian_warrior', 'purge_trooper', 'knight_of_ren', 'commando_droid', 'bendu']) {
+    const u = D.UNIT_MAP[id];
+    assert.ok(u && D.UNITS.includes(u) && D.BIOS[id] && globalThis.Art.CHARACTER_IDS.includes(id), id);
+    for (const ab of D.abilitiesFor(u)) for (const e of ab.effects) if (e.type === 'status') assert.ok(D.STATUS_INFO[e.status], `${id} ${e.status}`);
+  }
+  assert.ok(!Player.collectable('any').some((u) => u.id === 'bendu' || u.boss), 'Bendu and bosses are not in crates');
+  // Old progress: stages kept, next worlds stay open, slots never lost.
+  assert.deepStrictEqual(L.lib().old.slice().sort(), ['hoth', 'tatooine']);
+  assert.ok(!Player.planetComplete('tatooine') && Player.planetUnlocked('hoth') && Player.planetUnlocked('dagobah'));
+  assert.strictEqual(Player.slots(), slotsBefore, 'squad slots kept');
+  assert.ok(!Player.planetUnlocked('bespin'), 'Dagobah still has to be finished');
+  assert.ok(!Player.bossUnlocked(D.BOSS_ENCOUNTERS.find((b) => b.id === 'rancor')), 'the Rancor waits for all 10 Tatooine stages');
+  // Replaying a beaten stage pays 60%.
+  const rng = seeded(3);
+  const c0 = Player.state.credits;
+  const r1 = Player.completeEncounter({ type: 'stage', planet: 'tatooine', stage: 2 }, true, () => 0.01);
+  assert.ok(r1.replay && Player.state.credits - c0 === r1.credits && r1.credits === Math.round((120 + 2 * 40) * 0.6 * r1.mult), 'replay pays 60%');
+  // Optional boss: Holocron by side on the first win, 1,500 credits and 1 Aurodium after.
+  Player.state.planets.hoth = 10;
+  const a0 = Player.state.aurodium;
+  const w1 = Player.completeEncounter({ type: 'boss', boss: 'wampa' }, true, rng);
+  assert.ok(w1.holocron && w1.cards.length === 3 && w1.aurodium === 0, 'first win opens a Holocron');
+  assert.strictEqual(w1.holocron, 'Sith Holocron opened');
+  const w2 = Player.completeEncounter({ type: 'boss', boss: 'wampa' }, true, () => 0.01);
+  assert.ok(!w2.holocron && w2.base === 1500 && w2.aurodium === 1 && Player.state.aurodium === a0 + 1, 'repeat pay');
+  // Liberation: stages AND the main boss.
+  assert.ok(!Player.liberated('hoth'));
+  Player.completeEncounter({ type: 'boss', boss: 'star_destroyer' }, true, rng);
+  assert.ok(Player.liberated('hoth'));
+  // Every new boss fight finishes.
+  for (const id of L.ALL_BOSSES.filter((x) => D.BOSS_ENCOUNTERS.find((b) => b.id === x).kind === 'character')) {
+    const enc = D.BOSS_ENCOUNTERS.find((b) => b.id === id);
+    Player.reset();
+    const e = Player.encounter({ type: 'boss', boss: id });
+    const squad = D.UNITS.filter((u) => u.kind === 'character' && u.rarity === 'legendary').slice(0, 5).map((u) => ({ id: u.id, level: enc.level + 2, stars: 4 }));
+    const res = runAuto(new Battle(squad, e.enemies.map((x) => ({ id: x, level: enc.level, stars: 1 })), seeded(11), { planet: enc.planet }), 3000);
+    assert.ok(res.winner, `${id} fight ends`);
+  }
+  // Carbon Freeze: frozen units can't be hurt or act.
+  {
+    const b = new Battle([{ id: 'luke', level: 20, stars: 3 }, { id: 'han_solo', level: 20, stars: 3 }], [{ id: 'carbon_vader', level: 20, stars: 1 }], seeded(5));
+    const boss = b.side('enemy')[0];
+    boss.__lt = 2;
+    const ev = b.beginTurn(boss).events;
+    const frozen = b.side('player').find((u) => u.statuses.frozen);
+    assert.ok(frozen && frozen.statuses.stun && ev.some((x) => x.type === 'b22'), 'someone is frozen');
+    const hp = frozen.hp;
+    b.applyDamage(frozen, 500, false, []);
+    assert.strictEqual(frozen.hp, hp, 'frozen takes no damage');
+    assert.ok(!b.validTargets(boss, 0).includes(frozen), 'frozen cannot be targeted');
+  }
+  // The Bendu stores damage (all of it while absorbing, at half the hurt) and releases it.
+  {
+    const b = new Battle([{ id: 'bendu', level: 30, stars: 7 }, { id: 'han_solo', level: 30, stars: 3 }], [{ id: 'stormtrooper', level: 30, stars: 1 }, { id: 'jawa', level: 30, stars: 1 }], seeded(6));
+    const bendu = b.side('player')[0];
+    const han = b.side('player')[1];
+    b.applyDamage(bendu, 100, false, []);
+    assert.strictEqual(bendu.__store, 100);
+    b.applyDamage(han, 100, false, []);
+    assert.strictEqual(bendu.__store, 125, 'a quarter of ally damage is stored');
+    bendu.statuses.absorb = 2;
+    const before = bendu.hp;
+    b.applyDamage(bendu, 100, false, []);
+    assert.ok(bendu.__store === 225 && before - bendu.hp === 50, 'absorb: half the hurt, full store');
+    const foes = b.side('enemy');
+    const hp = foes.map((f) => f.hp);
+    bendu.ult = 100;
+    b.act(bendu, bendu.abilities.length - 1, null);
+    const dealt = foes.reduce((a, f, i) => a + (hp[i] - f.hp), 0);
+    assert.ok(dealt >= 270 && !bendu.__store, `release dealt ${dealt}`);
+  }
+  // Jango dodges the first hit each round; the AT-ST takes double from Ewoks.
+  {
+    const b = new Battle([{ id: 'ewok_warrior', level: 20, stars: 3 }], [{ id: 'jango_arena', level: 20, stars: 1 }, { id: 'atst', level: 20, stars: 1 }], seeded(8));
+    const [jango, atst] = b.side('enemy');
+    const ewok = b.side('player')[0];
+    b.beginTurn(jango);
+    const h = jango.hp;
+    b.applyEffect(ewok, jango, { type: 'damage', mult: 1, hits: 1 }, []);
+    assert.strictEqual(jango.hp, h, 'dodged');
+    b.__src = ewok; const a1 = atst.hp; b.applyDamage(atst, 100, false, []); b.__src = null;
+    assert.strictEqual(a1 - atst.hp, 200, 'Ewoks hit the walker twice as hard');
+    const a2 = atst.hp; b.applyDamage(atst, 100, false, []);
+    assert.strictEqual(a2 - atst.hp, 70, 'armour takes 30% off');
+  }
+});
+
 console.log(`\n${passed} tests passed`);

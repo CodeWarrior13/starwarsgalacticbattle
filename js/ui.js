@@ -497,7 +497,7 @@
         <div class="pd-head">
           <canvas class="pd-sphere"></canvas>
           <div class="pd-title">
-            <p class="eyebrow">${esc(p.region)} · ${c.done}/${c.total} complete</p>
+            <p class="eyebrow">${esc(p.region)} · ${c.done}/${c.total} complete${Player.liberated ? (Player.liberated(p.id) ? ' · <b class="pd-lib">✓ Liberated</b>' : ' · beat the main boss to liberate it') : ''}</p>
             <h2>${esc(p.name)}</h2>
             <div class="banner-progress"><i style="width:${(c.done / c.total) * 100}%"></i></div>
           </div>
@@ -529,7 +529,7 @@
         return `<button class="pd-stage ${state} ${finale ? 'finale' : ''}" type="button" data-stage="${i}" ${state === 'locked' ? 'disabled' : ''} style="--k:${k}">
           <span class="stage-num">${state === 'cleared' ? '✓' : finale ? '☠' : i + 1}</span>
           <span class="pd-stage-body">
-            <b><span class="kind-badge ${stg.kind}">${stg.kind === 'ship' ? '✈ Fleet' : '⚔ Ground'}</span> ${esc(stg.name)}${finale ? ' <span class="tag">Finale boss</span>' : ''}</b>
+            <b><span class="kind-badge ${stg.kind}">${stg.kind === 'ship' ? '✈ Fleet' : '⚔ Ground'}</span> ${esc(stg.name)}${finale ? ` <span class="tag">${root.Update24 && root.Update24.on() ? 'Finale' : 'Finale boss'}</span>` : ''}</b>
             <span class="stage-info"><span>Lv ${stg.level} · ${enc.stars}★</span><span>⚡ ${fmt(enemyPower)}</span>${cur('credits', r.credits)}${state !== 'cleared' ? `<span class="first-clear">${cur('crystals', r.firstClearCrystals + (finale ? D.PLANET_CLEAR_KYBER : 0))}${finale ? cur('aurodium', D.PLANET_CLEAR_AURODIUM) : ''}</span>` : ''}</span>
           </span>
           <span class="mini-row">${enc.enemies.map((id) => miniPortrait(D.UNIT_MAP[id])).join('')}</span>
@@ -543,8 +543,8 @@
         return `<button class="pd-stage boss-row ${unlocked ? '' : 'locked'}" type="button" data-boss="${enc.id}" ${unlocked ? '' : 'disabled'} style="--k:${rows.length + k}">
           <span class="boss-thumb">${Art.unitArt(def)}</span>
           <span class="pd-stage-body">
-            <b><span class="kind-badge boss">☠ Boss</span> ${esc(enc.name)}</b>
-            <span class="stage-info"><span>${esc(def.name)} · Lv ${enc.level}</span>${cur('credits', r.credits)}${r.aurodiumMax > r.aurodium ? `<span class="cur cur-aurodium" title="${D.CURRENCIES.aurodium.name}">${Art.ICONS.aurodium}<b>${r.aurodium}–${r.aurodiumMax}</b></span>` : cur('aurodium', r.aurodium)}${r.kyber ? cur('crystals', r.kyber) : ''}<span>${unlocked ? (wins ? `Defeated ${wins}×` : 'Not yet defeated') : `🔒 Liberate ${esc(p.name)}`}</span></span>
+            <b><span class="kind-badge boss">${enc.main ? '☠ Main boss' : enc.optional ? '✦ Optional boss' : '☠ Boss'}</span> ${esc(enc.name)}${wins ? ' <span class="tag">✓ Beaten</span>' : ''}</b>
+            <span class="stage-info"><span>${esc(def.name)} · Lv ${enc.level}</span>${cur('credits', r.credits)}${r.aurodiumMax > r.aurodium ? `<span class="cur cur-aurodium" title="${D.CURRENCIES.aurodium.name}">${Art.ICONS.aurodium}<b>${r.aurodium}–${r.aurodiumMax}</b></span>` : r.aurodium ? cur('aurodium', r.aurodium) : ''}${r.kyber ? cur('crystals', r.kyber) : ''}${r.holocron ? `<span class="tag">First win: ${def.faction === 'light' ? 'Jedi' : 'Sith'} Holocron</span>` : ''}<span>${unlocked ? (wins ? `Defeated ${wins}×` : 'Not yet defeated') : root.Update24 && root.Update24.on() ? `🔒 Clear all ${p.stages.length} stages` : `🔒 Liberate ${esc(p.name)}`}</span></span>
           </span>
         </button>`;
       }) : [];

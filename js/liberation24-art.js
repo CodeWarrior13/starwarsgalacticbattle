@@ -847,7 +847,7 @@
   // and side vents, red armour with black joints. Behind him the Citadel's
   // hooded statues, a Xyston Star Destroyer with its planet-killer glowing
   // under the hull, and the Final Order's banners.
-  add('sith_trooper', () => {
+  add('sith_trooper_24', () => {
     const [red, rd] = LG([[0, '#e02a36'], [0.5, '#b0161f'], [1, '#6a0a10']]);
     return exegol('#a8b8ff') + rd
       // a Xyston Star Destroyer overhead, its planet-killer cannon glowing red
