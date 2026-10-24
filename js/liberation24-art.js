@@ -299,11 +299,16 @@
       + P('M22 100 L27 68 C29 58 38 53 50 53 C62 53 71 58 73 68 L78 100Z', robe) + shade('M50 53 C38 53 29 58 27 68 L22 100 L46 100Z', 0.22)
       + P('M38 57 L50 80 L62 57 C58 61 42 61 38 57Z', '#2a0408') + L(50, 80, 50, 100, '#4a060c', 1.2)
       + '<path d="M30 78 Q36 74 40 80 M70 78 Q64 74 60 80" stroke="#e8b04a" stroke-width=".8" fill="none" opacity=".7"/>'
-      + P('M29 60 C28 34 37 22 50 22 C63 22 72 34 71 60 C67 50 62 46 60 40 C58 32 54 29 50 29 C46 29 42 32 40 40 C38 46 33 50 29 60Z', '#8a1018')
-      + shade('M29 60 C28 34 37 22 50 22 L50 29 C46 29 42 32 40 40 C38 46 33 50 29 60Z', 0.25)
-      + '<path d="M31 56 C31 38 38 26 50 25" stroke="#c23038" stroke-width=".9" fill="none" opacity=".6"/>'
+      // the hood, raised: a peaked cowl rising over his head and falling to the shoulders
+      + P('M24 66 C22 38 32 14 50 10 C68 14 78 38 76 66 C71 58 65 52 62 44 L38 44 C35 52 29 58 24 66Z', '#8a1018')
+      + shade('M24 66 C22 38 32 14 50 10 L50 44 L38 44 C35 52 29 58 24 66Z', 0.22)
+      + '<path d="M27 60 C26 40 34 20 50 13 M73 60 C74 40 66 20 50 13" stroke="#c23038" stroke-width=".9" fill="none" opacity=".55"/><path d="M33 52 C31 42 35 30 42 22 M67 52 C69 42 65 30 58 22" stroke="#5a060c" stroke-width="1" fill="none" opacity=".8"/>'
       // the face, drawn as one half and mirrored so both sides match
       + mirror(faceHalf)
+      // the hood's front edge drawn down over his brow, its shadow across the forehead
+      + P('M37.6 41 C37 27 42 19.6 50 19.6 C58 19.6 63 27 62.4 41 C60 33.6 56 30.4 50 30.4 C44 30.4 40 33.6 37.6 41Z', '#9a141e')
+      + P('M38.6 40 C41 34 45 31.6 50 31.6 C55 31.6 59 34 61.4 40 L61 42.6 C58.4 37 54.6 35 50 35 C45.4 35 41.6 37 39 42.6Z', '#000', 'opacity=".38"')
+      + '<path d="M37.6 41 C37 27 42 19.6 50 19.6 C58 19.6 63 27 62.4 41" stroke="#d23a42" stroke-width=".9" fill="none" opacity=".7"/><path d="M44 22 Q50 20.4 56 22" stroke="#5a060c" stroke-width=".7" fill="none"/>'
       + shade('M50 25.5 C56 25.5 61 30 61 39.5 C61 49 58.4 55.6 54.4 59 L50 60.6Z', 0.1)
       + glowEyes(44.6, 55.4, 43.2, '#ffcf2a', 1.45) + C(44.6, 43.2, 0.55, '#a80000') + C(55.4, 43.2, 0.55, '#a80000')
       + '<path d="M50 42 L48.6 50.4 Q50 51.6 51.4 50.4Z" fill="#6a5e56" opacity=".6"/><path d="M48.4 51 Q50 52.2 51.6 51" stroke="#4a3e38" stroke-width=".6" fill="none"/>'
@@ -340,10 +345,18 @@
 
   // ---------- Tatooine opponent: Gamorrean Guard ----------
   // Jabba's palace muscle: green pig face, tusks, a horned leather cap and
-  // a heavy vibro-axe, torches burning behind.
+  // a heavy vibro-axe. Behind him the throne room: Han frozen on the wall,
+  // chains, torches and Jabba's silhouette on his dais through the arch.
   add('gamorrean_guard', () => {
     const [sk, sd] = RG([[0, '#9ab85a'], [1, '#5a7a2a']], 0.45, 0.4, 0.6);
     return palace() + sd
+      // Jabba on his dais through the arch, a band light glowing
+      + E(50, 70, 14, 7, '#2a180c') + P('M38 70 C38 58 44 52 50 52 C56 52 60 56 62 62 C66 66 70 68 72 70Z', '#3a2a14') + C(46, 58, 0.7, '#ffb04a') + C(52, 58, 0.7, '#ffb04a')
+      // Han in carbonite hanging on the wall, chains and a skull trophy
+      + R(4, 30, 10, 20, '#6a7480', 'rx="1" stroke="#2a3038" stroke-width=".6"') + P('M7 36 C7 33 11 33 11 36 L11 40 L7 40Z', '#8a96a4') + L(6, 33, 5, 31, '#8a96a4', 0.8) + L(12, 33, 13, 31, '#8a96a4', 0.8)
+      + mirror([0, 1, 2, 3, 4, 5].map((i) => E(24, 4 + i * 2.4, 0.8, 1.2, 'none', 'stroke="#5a4a3a" stroke-width=".5"')).join(''))
+      + C(90, 30, 2.4, '#d8ccb0') + C(89.2, 29.6, 0.5, '#2a1a0c') + C(90.8, 29.6, 0.5, '#2a1a0c')
+      + R(0, 92, 100, 8, '#2a180c') + [10, 22, 34, 66, 78, 90].map((x) => L(x, 92, x, 100, '#4a3020', 0.6)).join('')
       // the axe haft and blade behind his shoulder
       + L(80, 100, 86, 18, '#4a2e18', 3) + P('M84 18 C96 16 100 30 92 40 L87 34 C92 28 90 22 84 24Z', '#8a9098', 'stroke="#2a2c30" stroke-width=".8"') + P('M86 26 C78 24 74 32 78 38 L84 34Z', '#6a7078')
       + shoulders('#4a3020', { top: 70 }) + mirror(P('M4 100 C6 86 16 76 30 73 L34 82 C24 84 16 90 14 100Z', '#7a5a3a') + [[14, 86], [20, 80], [26, 77]].map(([x, y]) => C(x, y, 1, '#c8b890')).join(''))
@@ -363,20 +376,32 @@
   });
 
   // ---------- Hoth opponent: Snowtrooper ----------
-  add('snowtrooper', () => hothField()
-    + shoulders('#e6eaee', { top: 72 }) + P('M8 100 C10 86 22 78 34 76 L38 100Z', '#c8cfd8') + P('M92 100 C90 86 78 78 66 76 L62 100Z', '#c8cfd8')
-    + R(39, 80, 22, 16, '#d8dde3', 'rx="2"') + [83, 87, 91].map((y) => L(41, y, 59, y, '#9aa3ad', 0.7)).join('') + R(41, 92, 6, 4, '#3a3d45', 'rx="1"')
-    // the cloth skirt hanging off the helmet, its folds
-    + P('M31 50 C28 60 29 72 34 79 C40 82 60 82 66 79 C71 72 72 60 69 50Z', '#dfe4ea', 'stroke="#8a96a4" stroke-width=".7"')
-    + `<path d="M36 56 Q35 68 38 79 M42 60 Q41 70 43 81 M58 60 Q59 70 57 81 M64 56 Q65 68 62 79" stroke="#a8b2be" stroke-width=".8" fill="none"/>`
-    + P('M33.5 46 C33.5 28 41 20 50 20 C59 20 66.5 28 66.5 46 L66 52 L34 52Z', '#f4f6f8', 'stroke="#5a6676" stroke-width="1"')
-    + shade('M50 20 C59 20 66.5 28 66.5 46 L66 52 L50 52Z', 0.07) + E(42, 26, 6, 2.4, '#fff', 'transform="rotate(-24 42 26)"')
-    + `<path d="M34.4 34 Q50 29 65.6 34" stroke="#8a96a4" stroke-width="1" fill="none"/>`
-    // the polarised goggle visor and the breather
-    + P('M35.6 37.6 Q50 33.6 64.4 37.6 L63 46 Q50 43 37 46Z', '#0a0c12') + P('M38 38.6 Q50 35.6 62 38.6 L61.6 40 Q50 37.2 38.4 40Z', '#5a7ab0', 'opacity=".8"')
-    + P('M42.6 46.6 L57.4 46.6 L56 59 L44 59Z', '#eef1f4', 'stroke="#5a6676" stroke-width=".8"') + L(50, 47, 50, 58.6, '#8a96a4', 0.8)
-    + mirror(R(43.6, 50, 4.6, 1, '#3a3d45') + R(43.8, 52.4, 4.4, 1, '#3a3d45') + R(44, 54.8, 4.2, 1, '#3a3d45'))
-    + `<g transform="translate(26 96) rotate(-18)">${R(0, -3, 44, 6, '#1a1c20', 'rx="1.5"')}${R(8, -6.4, 14, 3.4, '#3a3d45')}${R(38, -1.6, 12, 3.2, '#1a1c20')}</g>`);
+  // The Blizzard Force trooper: domed helmet, the wide black polarised visor
+  // dipping to a point, the breather and the cloth face skirt hanging to the
+  // chest, heater pack straps. Echo Base trenches and an AT-AT behind.
+  add('snowtrooper', () => {
+    const [cloth, cd] = LG([[0, '#e6eaee'], [1, '#a8b2be']]);
+    return hothField() + cd
+      // the trench line and a Rebel turret with blaster bolts flying
+      + P('M0 74 L100 70 L100 76 L0 80Z', '#c8d4de') + R(70, 62, 10, 6, '#7a848e', 'rx="1"') + L(74, 62, 64, 56, '#5a646e', 1.6) + bolt(64, 56, 46, 50, '#ff3a2a') + bolt(20, 30, 4, 26, '#3aff6a')
+      + shoulders('#dfe4ea', { top: 72 }) + P('M4 100 C6 88 14 80 26 77 L30 100Z', '#f2f5f8', 'stroke="#7a8696" stroke-width=".7"') + P('M96 100 C94 88 86 80 74 77 L70 100Z', '#f2f5f8', 'stroke="#7a8696" stroke-width=".7"')
+      + mirror(L(30, 78, 40, 100, '#5a646e', 2.2)) + R(40, 86, 20, 10, '#e8ecf0', 'rx="2" stroke="#7a8696" stroke-width=".6"') + [89, 92].map((y) => L(42, y, 58, y, '#9aa3ad', 0.6)).join('') + R(46, 87, 8, 2, '#3a3d45', 'rx=".5"')
+      // the cloth face skirt, falling in folds from under the helmet
+      + P('M30 50 C28 62 30 74 36 81 C42 84 58 84 64 81 C70 74 72 62 70 50Z', cloth, 'stroke="#7a8696" stroke-width=".8"')
+      + '<path d="M34 56 Q33 70 37 80 M39 60 Q38 72 41 82 M44 62 Q44 74 45 83 M56 62 Q56 74 55 83 M61 60 Q62 72 59 82 M66 56 Q67 70 63 80" stroke="#9aa6b4" stroke-width=".8" fill="none"/>'
+      // the helmet: dome, brow ridge, ear caps
+      + P('M32 47 C32 28 40 19 50 19 C60 19 68 28 68 47 L68 53 L32 53Z', '#f6f8fa', 'stroke="#5a6676" stroke-width="1"')
+      + shade('M50 19 C60 19 68 28 68 47 L68 53 L50 53Z', 0.07) + E(42, 25, 6, 2.4, '#fff', 'transform="rotate(-24 42 25)"')
+      + '<path d="M33 33 Q50 27 67 33" stroke="#9aa6b4" stroke-width="1.2" fill="none"/><path d="M50 20 L50 30" stroke="#c8d0da" stroke-width="1.4"/>'
+      + mirror(C(32, 46, 3.4, '#e8ecf0', 'stroke="#5a6676" stroke-width=".8"') + C(32, 46, 1.4, '#7a8696'))
+      // the polarised visor: one wide black lens dipping to a point over the nose
+      + P('M35 37 L65 37 L64.6 44 L56 45.4 L50 50.6 L44 45.4 L35.4 44Z', '#08090c')
+      + P('M36.6 38.4 L50 38.4 L49 40 L37 40.4Z', '#5a7ab0', 'opacity=".75"') + P('M52 38.4 L63.4 38.4 L63.2 39.6 L54 39.8Z', '#5a7ab0', 'opacity=".5"')
+      // the breather mask with its two filters
+      + P('M43 47.6 L57 47.6 L56 60 C54 62 46 62 44 60Z', '#eef1f4', 'stroke="#5a6676" stroke-width=".8"') + L(50, 51, 50, 61, '#9aa6b4', 0.7)
+      + mirror(C(46.2, 55, 2.4, '#3a3d45') + [53.6, 55, 56.4].map((y) => L(44.6, y, 47.8, y, '#7a828c', 0.4)).join(''))
+      + `<g transform="translate(24 98) rotate(-20)">${R(0, -3, 46, 6, '#1a1c20', 'rx="1.5"')}${R(8, -6.4, 14, 3.4, '#3a3d45')}${R(40, -1.6, 12, 3.2, '#1a1c20')}${R(16, 3, 5, 7, '#1a1c20', 'rx="1"')}</g>`;
+  });
 
   // ---------- Hoth optional boss: The Wampa ----------
   // The wampa's ice cave from Empire: Luke hanging upside down from the
@@ -444,86 +469,139 @@
     + blaster(64, 94, -36, '#2a2c32'));
 
   // ---------- Endor opponent: Scout Trooper ----------
+  // The biker scout: the white helmet with its wide brim, the black visor
+  // under it and the long breather snout, black bodysuit and white chest
+  // plate, a 74-Z speeder bike parked in the redwoods.
   add('scout_trooper', () => SCENES.endor()
-    // a speeder bike nose behind his shoulder
-    + P('M60 66 L98 58 L100 66 L64 74Z', '#c8ccd2') + R(86, 52, 10, 3, '#2a2c30') + R(88, 56, 3, 8, '#2a2c30')
-    + shoulders('#16171a', { top: 72 }) + P('M34 76 C40 72 60 72 66 76 L64 96 L36 96Z', '#eef0f2', 'stroke="#2a2c30" stroke-width=".8"') + L(50, 76, 50, 96, '#9aa3ad', 0.8)
-    + mirror(P('M8 88 C10 82 18 78 26 77 L30 84 C22 86 16 90 14 96Z', '#eef0f2', 'stroke="#2a2c30" stroke-width=".7"'))
-    + P('M40 62 L60 62 L61 74 L39 74Z', '#16171a')
-    // the helmet: domed top with a wide brim, long black visor, nose ridge to the breather
-    + P('M35 40 C35 26 42 20 50 20 C58 20 65 26 65 40Z', '#f4f6f8', 'stroke="#2a2c30" stroke-width="1"')
-    + P('M28 41 C28 38 34 37 50 37 C66 37 72 38 72 41 C72 44 66 44 50 44 C34 44 28 44 28 41Z', '#eef0f2', 'stroke="#2a2c30" stroke-width="1"')
-    + E(43, 27, 5, 2, '#fff', 'transform="rotate(-24 43 27)"') + R(48.6, 20.4, 2.8, 16, '#c8ccd2')
-    + P('M37 44 L63 44 L62 50 L38 50Z', '#0a0b0e') + P('M38.6 45 L61.4 45 L61 46.4 L39 46.4Z', '#4a5a6e')
-    + P('M46.6 50 L53.4 50 L54.6 60 L50 64 L45.4 60Z', '#eef0f2', 'stroke="#2a2c30" stroke-width=".8"')
-    + mirror(P('M38 50 L46.6 50 L45.4 60 L41 62 L38.6 57Z', '#dfe3e7', 'stroke="#2a2c30" stroke-width=".7"'))
-    + R(47, 58, 6, 4, '#2a2c30', 'rx="1"') + [48.6, 50, 51.4].map((x) => L(x, 58.6, x, 61.4, '#8a929c', 0.4)).join('')
+    + [[2, 10], [86, 12]].map(([x, w]) => R(x, 0, w, 100, '#3a2616') + [0.3, 0.65].map((k) => L(x + w * k, 0, x + w * k, 100, '#24160a', 0.7)).join('')).join('')
+    // the speeder bike: long nose, steering vanes, seat and engine
+    + L(60, 70, 34, 64, '#9aa1ab', 1.2) + L(60, 74, 34, 70, '#9aa1ab', 1.2) + R(30, 62, 5, 10, '#6a7078', 'rx="1"')
+    + P('M58 66 L94 62 L98 68 L96 76 L60 78Z', '#c8ccd2', 'stroke="#4a5058" stroke-width=".7"') + R(78, 58, 10, 4, '#2a2c30', 'rx="1"') + R(88, 66, 8, 8, '#4a5058', 'rx="1.5"') + glow('#ff8a3a', C(96, 70, 1.6, '#ffb04a'), 2)
+    + shoulders('#141518', { top: 72 })
+    + P('M33 77 C40 73 60 73 67 77 L64 96 L36 96Z', '#f4f6f8', 'stroke="#2a2c30" stroke-width=".8"') + L(50, 77, 50, 96, '#9aa3ad', 0.8)
+    + R(42, 82, 16, 7, '#2a2c30', 'rx="1"') + [44, 47, 50, 53].map((x) => R(x, 84, 2, 3, ['#ff3b3b', '#3bff6a', '#3b8bff', '#c8ccd2'][(x - 44) / 3], 'rx=".3"')).join('')
+    + mirror(P('M6 92 C8 84 16 79 26 78 L30 86 C22 88 16 92 14 98Z', '#f4f6f8', 'stroke="#2a2c30" stroke-width=".7"'))
+    + P('M41 60 L59 60 L60 76 L40 76Z', '#141518')
+    // helmet: rounded dome over a wide brim that dips at the front
+    + P('M37 36 C37 23 43 17 50 17 C57 17 63 23 63 36Z', '#f6f7f8', 'stroke="#2a2c30" stroke-width="1"')
+    + shade('M50 17 C57 17 63 23 63 36 L50 36Z', 0.06) + E(44, 23, 4.4, 1.8, '#fff', 'transform="rotate(-24 44 23)"') + R(48.8, 17.4, 2.4, 18, '#d8dce2')
+    + P('M28 38.6 C30 34.4 38 33.4 50 33.4 C62 33.4 70 34.4 72 38.6 L67 42 C62 40.4 38 40.4 33 42Z', '#eef0f2', 'stroke="#2a2c30" stroke-width="1"')
+    + P('M33 42 C38 40.4 62 40.4 67 42 L64 44 C60 43 40 43 36 44Z', '#5a626c')
+    // narrow face with the black visor band
+    + P('M37 44 L63 44 L61 50 L39 50Z', '#0a0b0e') + P('M38.6 45 L61.4 45 L61 46.4 L39 46.4Z', '#4a5a70')
+    + mirror(P('M37 44 L45.6 50 L44.6 61 L41 63 L38 56Z', '#eceef1', 'stroke="#2a2c30" stroke-width=".7"') + L(39.4, 53, 43.6, 53, '#9aa3ad', 0.5))
+    // the long breather snout down to the round vent
+    + P('M45.6 50 L54.4 50 L55.6 64.6 C55.6 67.6 44.4 67.6 44.4 64.6Z', '#f4f6f8', 'stroke="#2a2c30" stroke-width=".8"') + L(50, 51, 50, 60, '#b8bec6', 0.8)
+    + E(50, 64, 3.4, 2.2, '#2a2c30') + [48.4, 50, 51.6].map((x) => L(x, 62.6, x, 65.4, '#8a929c', 0.4)).join('')
     + blaster(24, 92, -50, '#1c1d21'));
 
   // ---------- Endor optional boss: AT-ST Walker ----------
-  // The chicken walker in profile, striding through the redwoods, chin
-  // guns blazing, with an Ewok peeking out of the ferns.
+  // The scout walker stalking through the forest moon, drawn in full detail:
+  // the boxy armoured head with its viewports, top hatch, side grenade drum
+  // and twin chin blasters, the bird legs with pistons and clawed feet.
+  // Ewoks swing their log trap down from the redwoods.
   add('atst', () => {
-    const [hull, hd] = LG([[0, '#c8ced6'], [0.6, '#8a929c'], [1, '#5a626c']]);
-    return R(0, 0, 100, 100, '#16301c') + hd
-      + R(0, 0, 100, 40, '#4a7a52', 'opacity=".45"') + puffs('#cfe8d0', 0.3, [[50, 30, 50, 16]])
-      // redwood trunks with bark lines, near and far
-      + [[4, 9, '#2a1a10'], [26, 5, '#3a2616'], [80, 6, '#3a2616'], [90, 10, '#2a1a10']].map(([x, w, c]) => R(x, 0, w, 100, c) + [0.3, 0.6].map((k) => L(x + w * k, 0, x + w * k, 100, '#1a0e06', 0.6)).join('')).join('')
-      + R(0, 84, 100, 16, '#1e3a1c') + [[6, 90], [20, 92], [34, 88], [66, 90], [80, 92], [94, 88]].map(([x, y]) => P(`M${x} ${y} q-6 -8 -10 -4 M${x} ${y} q6 -8 10 -4 M${x} ${y} q-2 -10 0 -12`, 'none', 'stroke="#3a6a2a" stroke-width="1.6" stroke-linecap="round"')).join('')
-      // far leg, a step ahead
-      + `<g stroke="#3a4048" stroke-linecap="round" fill="none"><path d="M47 58 L37 72 L31 88" stroke-width="3.6"/></g>` + C(37, 72, 2.6, '#4a5058') + P('M22 88 L38 88 L39 93 L21 93Z', '#3a4048')
-      // near leg, bent back at the knee
-      + `<g stroke="#5a626c" stroke-linecap="round" fill="none"><path d="M53 58 L64 72 L56 88" stroke-width="4.2"/><path d="M55 62 L62 70" stroke="#2a3038" stroke-width="1.2"/></g>` + C(64, 72, 3, '#6a7078') + P('M46 88 L64 88 L66 94 L44 94Z', '#5a626c', 'stroke="#2a3038" stroke-width=".6"')
-      + R(44, 50, 14, 9, '#4a5058', 'rx="1.5"')
-      // the head: wedge nose, viewport slit, hatch, panel lines
-      + P('M16 32 L28 22 L68 20 L76 26 L76 44 L64 51 L28 51 L18 44Z', hull, 'stroke="#2a3038" stroke-width="1"')
-      + R(44, 14, 16, 7, '#8a929c', 'rx="1.5" stroke="#2a3038" stroke-width=".8"') + C(52, 14, 3, '#6a7078')
-      + P('M20 33 L30 26 L46 25 L46 31 L22 37Z', '#0e1216') + glow('#ffb03a', P('M24 32 L31 28 L44 27.6 L44 29.2 L25 33.4Z', '#ffb03a', 'opacity=".75"'), 1.5)
-      + `<path d="M50 22 L50 51 M30 42 L74 40 M64 22 L64 50" stroke="#4a5058" stroke-width=".6" fill="none"/>` + [56, 60].map((x) => C(x, 46, 0.8, '#4a5058')).join('')
-      // side grenade launcher and the twin chin blasters, firing
-      + C(58, 34, 5, '#6a7078', 'stroke="#2a3038" stroke-width=".8"') + C(58, 34, 2, '#2a3038') + R(76, 32, 10, 3.4, '#4a5058')
-      + R(6, 45, 22, 3, '#3a4048') + R(8, 49.4, 20, 2.4, '#3a4048')
-      + glow('#3aff6a', C(6, 46.5, 2.4, '#c8ffd0') + L(-4, 46, 4, 46.4, '#3aff6a', 2) + C(8, 50.6, 1.8, '#c8ffd0'), 3)
-      // an Ewok watching from the ferns
+    const [hull, hd] = LG([[0, '#d8dee4'], [0.5, '#9aa2ac'], [1, '#5a626c']]);
+    const [leg, ld] = LG([[0, '#8a929c'], [1, '#4a525c']], 0, 0, 1, 0);
+    const [sun, sund] = RG([[0, '#fff8d8', 0.55], [1, '#fff8d8', 0]], 0.7, 0.1, 0.6);
+    return R(0, 0, 100, 100, '#14301a') + hd + ld + sund
+      + R(0, 0, 100, 60, '#4a7a52', 'opacity=".5"') + R(0, 0, 100, 100, sun)
+      + [[62, 0, 70, 100], [76, 0, 88, 100]].map(([a, b, c, d]) => P(`M${a} ${b} L${a + 4} ${b} L${c + 6} ${d} L${c - 2} ${d}Z`, '#fff8d8', 'opacity=".08"')).join('')
+      // redwoods with bark, far and near
+      + [[30, 4, '#3a2a1a'], [48, 3, '#3a2a1a'], [4, 11, '#2a1a0c'], [84, 12, '#2a1a0c']].map(([x, w, c]) => R(x, 0, w, 100, c) + [0.25, 0.5, 0.75].map((k) => L(x + w * k, 0, x + w * k + 0.6, 100, '#160c04', 0.6)).join('') + R(x + w * 0.1, 0, w * 0.15, 100, '#5a3e24', 'opacity=".5"')).join('')
+      // the Ewok log trap: two logs swinging in on vines
+      + L(14, 0, 22, 34, '#3a5a2a', 0.8) + L(20, 0, 26, 34, '#3a5a2a', 0.8) + `<g transform="rotate(-12 24 38)">${R(10, 34, 28, 7, '#6a4426', 'rx="3.5"')}${E(10, 37.5, 2, 3.5, '#8a6440')}${L(14, 36, 34, 36, '#4a2e14', 0.5)}</g>`
+      // ground: ferns, fallen branches, mist
+      + R(0, 86, 100, 14, '#1e3a1c') + [[4, 92], [18, 94], [32, 90], [66, 92], [92, 90]].map(([x, y]) => P(`M${x} ${y} q-6 -8 -10 -4 M${x} ${y} q6 -8 10 -4 M${x} ${y} q-2 -10 0 -12`, 'none', 'stroke="#3a6a2a" stroke-width="1.6" stroke-linecap="round"')).join('')
+      + puffs('#d8e8d0', 0.25, [[50, 92, 50, 8]])
+      // far leg, a step forward
+      + `<g stroke-linecap="round" fill="none"><path d="M46 60 L36 74 L30 88" stroke="#2a3038" stroke-width="4.6"/><path d="M46 60 L36 74 L30 88" stroke="#5a626c" stroke-width="2.4"/><path d="M42 62 L35 70" stroke="#2a3038" stroke-width="1.2"/></g>`
+      + C(36, 74, 3, '#4a525c', 'stroke="#2a3038" stroke-width=".6"') + P('M20 88 L37 88 L39 93 L33 93 L31 91 L26 93 L19 93Z', '#3a4048', 'stroke="#2a3038" stroke-width=".6"')
+      // near leg, bent back at the knee, with its piston
+      + `<g stroke-linecap="round" fill="none"><path d="M54 60 L66 74 L58 89" stroke="#2a3038" stroke-width="5.4"/><path d="M54 60 L66 74 L58 89" stroke="${leg}" stroke-width="3.4"/><path d="M57 64 L64 72" stroke="#2a3038" stroke-width="1.4"/><path d="M63 79 L60 86" stroke="#c8ced6" stroke-width=".8"/></g>`
+      + C(66, 74, 3.6, '#6a727c', 'stroke="#2a3038" stroke-width=".7"') + C(66, 74, 1.4, '#3a4048')
+      + P('M46 89 L66 89 L69 95 L62 95 L59 92 L54 95 L45 95Z', '#5a626c', 'stroke="#2a3038" stroke-width=".7"') + L(48, 91, 64, 91, '#8a929c', 0.6)
+      // hip joint and gyro
+      + R(42, 52, 18, 10, '#4a525c', 'rx="2" stroke="#2a3038" stroke-width=".7"') + C(51, 57, 3.6, '#6a727c', 'stroke="#2a3038" stroke-width=".6"') + C(51, 57, 1.2, '#2a3038')
+      // the head
+      + P('M14 30 L26 20 L70 18 L80 24 L80 44 L70 52 L28 52 L16 44Z', hull, 'stroke="#2a3038" stroke-width="1.1" stroke-linejoin="round"')
+      + P('M14 30 L26 20 L44 19.2 L44 34 L16 38Z', '#e8ecf0', 'opacity=".35"') + shade('M16 44 L28 52 L70 52 L80 44 L80 40 L16 40Z', 0.16)
+      // viewports and the hatch
+      + P('M18 32 L28 25 L44 24.4 L44 31 L20 36Z', '#0c1014') + glow('#ffb03a', P('M22 32 L29 27.6 L42 27.2 L42 28.8 L23 33.4Z', '#ffb03a', 'opacity=".7"'), 1.5)
+      + R(44, 12, 18, 7, '#8a929c', 'rx="1.5" stroke="#2a3038" stroke-width=".8"') + R(50, 8, 6, 4, '#6a727c', 'rx="1"') + L(53, 8, 53, 3, '#4a525c', 0.6)
+      // panel lines, rivets and weathering
+      + '<path d="M44 19 L44 52 M62 18.6 L62 52 M16 40 L80 40 M70 18 L70 52 M28 52 L26 44" stroke="#4a525c" stroke-width=".6" fill="none"/>'
+      + [[47, 22], [59, 22], [47, 49], [59, 49], [66, 22], [66, 49], [76, 27], [76, 41]].map(([x, y]) => C(x, y, 0.6, '#4a525c')).join('')
+      + '<path d="M30 44 l3 2 M52 26 l2 3 M72 30 l-1 3" stroke="#3a4048" stroke-width=".6" opacity=".7"/>' + E(58, 46, 6, 1.6, '#6a4a2a', 'opacity=".35"')
+      // side grenade drum and light blaster
+      + C(56, 33, 6, '#7a828c', 'stroke="#2a3038" stroke-width=".9"') + C(56, 33, 3.4, '#5a626c', 'stroke="#2a3038" stroke-width=".6"') + C(56, 33, 1.4, '#1a1e24')
+      + R(80, 30, 12, 3.6, '#4a525c', 'stroke="#2a3038" stroke-width=".6"') + R(90, 31, 6, 1.6, '#2a3038')
+      // the twin chin blasters, firing
+      + R(4, 46, 24, 3.2, '#3a4048', 'stroke="#1a1e24" stroke-width=".5"') + R(6, 50.6, 22, 2.6, '#3a4048', 'stroke="#1a1e24" stroke-width=".5"') + R(24, 44, 8, 10, '#4a525c', 'rx="1"')
+      + glow('#3aff6a', C(4, 47.6, 2.6, '#d8ffe0') + C(6, 51.9, 2, '#d8ffe0'), 3) + bolt(-6, 47.6, 2, 47.6, '#3aff6a')
+      // an Ewok with a spear in the ferns
       + E(86, 88, 6, 5.6, '#6a4a2a') + P('M80 88 C80 80 92 80 92 88 C90 84 82 84 80 88Z', '#a0602a') + C(84, 88.4, 1, '#0c0806') + C(88, 88.4, 1, '#0c0806') + E(86, 91, 2.4, 1.6, '#8a6440')
-      + puffs('#3a3a30', 0.4, [[12, 40, 10, 6]]);
+      + L(93, 96, 97, 74, '#6a4a2a', 0.9) + P('M96.4 74 L98 70 L97.8 75Z', '#c8ccd2')
+      + puffs('#3a3a30', 0.45, [[14, 26, 9, 6], [10, 16, 7, 5]]);
   });
 
   // ---------- Scarif opponent: Shoretrooper ----------
+  // The coastal defender: white helmet with a wide wrap-around visor and a
+  // sand-coloured lower face with breather slots, khaki fatigues under white
+  // chest armour with squad leader blue, palms and an AT-ACT in the surf.
   add('shoretrooper', () => SCENES.scarif()
-    + [[12, 40], [86, 36]].map(([x, y]) => L(x, 74, x + 2, y, '#6a4a2a', 1.6) + P(`M${x + 2} ${y} q-10 2 -14 8 M${x + 2} ${y} q10 2 14 8 M${x + 2} ${y} q-4 -6 -12 -6 M${x + 2} ${y} q4 -6 12 -6`, 'none', 'stroke="#2a7a4a" stroke-width="2.4" stroke-linecap="round"')).join('')
-    + shoulders('#c2a878', { top: 72 }) + P('M34 76 C40 72 60 72 66 76 L64 96 L36 96Z', '#d8c294', 'stroke="#5a4a2a" stroke-width=".8"')
-    + mirror(P('M8 88 C10 82 18 78 26 77 L30 84 C22 86 16 90 14 96Z', '#eceae4', 'stroke="#5a4a2a" stroke-width=".7"'))
-    + R(40, 82, 20, 6, '#8a7a5a', 'rx="1"') + P('M40 62 L60 62 L61 74 L39 74Z', '#2a2620')
-    // white helmet, sand lower half, the long dark visor band and ridged breather
-    + P('M33 44 C33 27 41 20 50 20 C59 20 67 27 67 44 L67 58 C62 66 38 66 33 58Z', '#f4f2ec', 'stroke="#3a3428" stroke-width="1"')
-    + P('M33 50 L67 50 L67 58 C62 66 38 66 33 58Z', '#c8b07a', 'stroke="#3a3428" stroke-width=".8"')
-    + E(42, 26, 6, 2.4, '#fff', 'transform="rotate(-24 42 26)"') + P('M33.4 34 Q50 30 66.6 34 L66.6 36 Q50 32 33.4 36Z', '#c8b07a')
-    + P('M35 39 L65 39 L64 46 L36 46Z', '#0a0b0e') + P('M36.4 40 L63.6 40 L63.3 41.4 L36.7 41.4Z', '#4a6a7e')
-    + P('M43 50 L57 50 L55.6 61 L44.4 61Z', '#3a3428') + [45, 47.5, 50, 52.5, 55].map((x) => L(x, 51, x + (x - 50) * 0.08, 60, '#a89a78', 0.6)).join('')
-    + `<g transform="translate(28 96) rotate(-18)">${R(0, -3, 48, 6, '#2a2620', 'rx="1.5"')}${R(8, -6.4, 18, 3.4, '#4a4436')}${R(42, -1.6, 12, 3.2, '#2a2620')}</g>`);
+    // an AT-ACT wading in the shallows and the Citadel tower
+    + `<g transform="translate(66 40)" fill="#8a929c">${R(0, 0, 22, 9, '#8a929c', 'rx="1.5"')}${R(20, 2, 7, 5, '#8a929c')}${R(1, 9, 16, 5, '#6a727c')}${[3, 7, 13, 17].map((x) => R(x, 14, 1.6, 10, '#7a828c')).join('')}</g>`
+    + P('M6 62 L9 22 L17 22 L20 62Z', '#d8dce2', 'opacity=".8"') + E(13, 20, 6, 2, '#b8bec6')
+    + [[12, 42], [90, 36]].map(([x, y]) => L(x, 76, x + 2, y, '#6a4a2a', 1.6) + P(`M${x + 2} ${y} q-10 2 -14 8 M${x + 2} ${y} q10 2 14 8 M${x + 2} ${y} q-4 -6 -12 -6 M${x + 2} ${y} q4 -6 12 -6`, 'none', 'stroke="#2a7a4a" stroke-width="2.4" stroke-linecap="round"')).join('')
+    // khaki fatigues, white chest and shoulder armour, blue rank markings
+    + shoulders('#c8b48a', { top: 72 }) + mirror(L(30, 78, 36, 100, '#8a7a5a', 1.6))
+    + P('M33 77 C40 73 60 73 67 77 L64 98 L36 98Z', '#f2f0ea', 'stroke="#5a4a2a" stroke-width=".8"') + L(50, 77, 50, 98, '#c8c0aa', 0.8)
+    + mirror(P('M8 90 C10 82 18 78 27 77 L31 85 C23 87 17 91 15 97Z', '#f2f0ea', 'stroke="#5a4a2a" stroke-width=".7"') + R(14, 86, 8, 2.2, '#2a6ac8', 'transform="rotate(-22 18 87)"'))
+    + R(40, 84, 20, 5, '#8a7a5a', 'rx="1"') + [43, 48, 53].map((x) => R(x, 85, 4, 3, '#a8986e', 'rx=".5"')).join('')
+    + P('M41 60 L59 60 L60 76 L40 76Z', '#a8946a')
+    // helmet: white dome, wrap-around black visor, sand lower face, slotted breather
+    + P('M32.6 45 C32.6 27 41 19 50 19 C59 19 67.4 27 67.4 45 L67.4 56 C62 65 38 65 32.6 56Z', '#f6f4ee', 'stroke="#3a3428" stroke-width="1"')
+    + E(42, 25, 6, 2.4, '#fff', 'transform="rotate(-24 42 25)"') + R(48.8, 19.6, 2.4, 14, '#e0dccf')
+    + P('M32.8 47 L67.2 47 L67.4 56 C62 65 38 65 32.6 56Z', '#c8ae7a', 'stroke="#3a3428" stroke-width=".8"')
+    + P('M33 37.4 L67 37.4 L66.4 45 L33.6 45Z', '#08090b') + P('M34.4 38.4 L65.6 38.4 L65.4 40 L34.6 40Z', '#5a7a90', 'opacity=".75"')
+    + mirror(P('M33.6 45 L41 45 L42 52 L35 54Z', '#e8e4d8', 'stroke="#3a3428" stroke-width=".5"'))
+    + P('M42 50 L58 50 L56.4 61 L43.6 61Z', '#3a3428') + [44.4, 46.8, 49.2, 51.6, 54].map((x) => R(x, 51.4, 1.4, 8.4, '#b8a47a', 'rx=".4"')).join('')
+    + `<g transform="translate(26 98) rotate(-18)">${R(0, -3, 48, 6, '#2a2620', 'rx="1.5"')}${R(8, -6.4, 18, 3.4, '#4a4436')}${R(42, -1.6, 12, 3.2, '#2a2620')}${R(18, 3, 5, 7, '#2a2620', 'rx="1"')}</g>`);
 
   // ---------- Scarif optional boss: Director Krennic ----------
-  // On the Citadel platform in his white cape, death troopers at his back,
-  // the Death Star over Scarif firing on the shield gate behind him.
+  // On the Citadel platform in his white cape, two death troopers at his
+  // back, the Death Star over Scarif firing on the shield gate.
   add('krennic', () => {
     const [sky, sd] = LG([[0, '#4aa8d8'], [1, '#bfe8f4']]);
-    return sd + R(0, 0, 100, 100, sky)
-      // the Death Star, big and unmistakable: dish, trench and the beam striking the sea
-      + C(78, 20, 16, '#9aa2ac') + shade('M78 4 A16 16 0 0 1 78 36 A10 16 0 0 0 78 4Z', 0.22) + L(62, 21, 94, 19, '#6a727c', 0.8)
-      + C(72, 13, 4.4, '#7a828c') + C(72, 13, 1.6, '#4a525c') + [[84, 12], [88, 26], [70, 28], [80, 30]].map(([x, y]) => R(x, y, 1.6, 0.8, '#6a727c')).join('')
-      + glow('#7aff6a', L(72, 13, 94, 60, '#c8ffb0', 1.4), 3) + E(94, 60, 12, 3.4, '#e8ffd8', 'opacity=".8"') + E(94, 60, 20, 5, '#ffffff', 'opacity=".25"')
+    const [ds, dsd] = RG([[0, '#c8ced6'], [0.7, '#8a929c'], [1, '#4a525c']], 0.35, 0.35, 0.75);
+    const [dt, dtd] = LG([[0, '#3a3e46'], [0.5, '#1c1e22'], [1, '#0c0d10']], 0, 0, 1, 1);
+    // A death trooper: tall black helmet, bulbous green lenses, ribbed mouth, shoulder armour, rifle.
+    const dtrooper = (x) => `<g transform="translate(${x} 0)">`
+      + P('M-14 100 L-12 74 C-10 66 -4 62 0 62 C4 62 10 66 12 74 L14 100Z', dt, 'stroke="#4a4e56" stroke-width=".5"')
+      + P('M-12 76 C-10 70 -6 68 -2 68 L-3 76Z', '#2a2e36') + P('M12 76 C10 70 6 68 2 68 L3 76Z', '#2a2e36') + R(-6, 78, 12, 5, '#2a2e36', 'rx="1"') + C(-8, 82, 0.8, '#4ade80')
+      + P('M-8.6 50 C-8.6 40 -4 36 0 36 C4 36 8.6 40 8.6 50 L9 60 C6 64 -6 64 -9 60Z', dt, 'stroke="#5a5e66" stroke-width=".6"')
+      + '<path d="M-7 44 Q0 41.4 7 44" stroke="#4a4e56" stroke-width=".7" fill="none"/>' + L(0, 36.6, 0, 43, '#4a4e56', 0.6)
+      + glow('#4ade80', P('M-6.6 46.4 C-6.6 44 -1.6 44 -1.6 46.4 L-2.2 50.6 C-4 51.6 -5.8 50.8 -6.6 46.4Z', '#1a4a2a') + P('M6.6 46.4 C6.6 44 1.6 44 1.6 46.4 L2.2 50.6 C4 51.6 5.8 50.8 6.6 46.4Z', '#1a4a2a'), 1.6)
+      + E(-4.6, 46, 0.9, 0.6, '#c8ffd8', 'opacity=".8"') + E(4.6, 46, 0.9, 0.6, '#c8ffd8', 'opacity=".8"')
+      + P('M-3 53 L3 53 L3.6 60 L-3.6 60Z', '#0a0b0e') + [-2, -0.7, 0.7, 2].map((d) => L(d, 54, d, 59, '#4a4e56', 0.35)).join('')
+      + '</g>';
+    return sd + dsd + dtd + R(0, 0, 100, 100, sky)
+      // the Death Star: shaded sphere, equatorial trench, the dish, surface plating and lights
+      + C(78, 20, 16, ds) + L(62.2, 21.6, 93.8, 18.4, '#5a626c', 1) + L(62.4, 22.6, 93.6, 19.4, '#c8ced6', 0.4)
+      + [[66, 12, 8], [70, 28, 10], [82, 9, 9], [86, 29, 8], [74, 33, 6]].map(([x, y, w]) => L(x, y, x + w, y - 0.6, '#6a727c', 0.4)).join('')
+      + [[67, 16], [84, 14], [88, 24], [76, 27], [70, 25], [90, 16]].map(([x, y]) => R(x, y, 0.8, 0.5, '#e8ecf0', 'opacity=".7"')).join('')
+      + C(71, 12.6, 4.4, '#7a828c', 'stroke="#4a525c" stroke-width=".5"') + C(71, 12.6, 2.8, 'none', 'stroke="#5a626c" stroke-width=".4"') + C(71, 12.6, 1.2, '#4a525c')
+      + glow('#7aff6a', C(71, 12.6, 0.9, '#d8ffc8') + L(71, 12.6, 94, 58, '#c8ffb0', 1.4), 3) + E(94, 58, 12, 3.4, '#e8ffd8', 'opacity=".85"') + E(94, 58, 22, 6, '#ffffff', 'opacity=".25"')
       + R(0, 56, 100, 10, '#2ba3b8') + P('M0 60 Q20 58 40 60 T80 60 T100 60', 'none', 'stroke="#8ad8e8" stroke-width=".6"')
       // the Citadel tower and its dish
       + P('M8 66 L12 20 L22 20 L26 66Z', '#cfd4da', 'stroke="#8a929c" stroke-width=".6"') + R(10, 14, 14, 6, '#b8bec6') + E(17, 12, 9, 2.6, '#9aa2ac') + L(17, 12, 17, 4, '#9aa2ac', 0.8)
       + [28, 36, 44, 52].map((y) => L(13, y, 22 + (y - 28) * 0.06, y, '#8a929c', 0.5)).join('')
       + R(0, 66, 100, 34, '#7a828c') + [70, 78, 88].map((y) => L(0, y, 100, y, '#5a626c', 0.6)).join('')
-      // two death troopers flanking him
-      + mirror(P('M0 100 L2 74 C4 66 12 62 18 62 C24 62 28 68 28 76 L30 100Z', '#16181c') + P('M8 54 C8 44 26 44 26 54 L26 64 C22 68 12 68 8 64Z', '#1f2126')
-        + glow('#4ade80', P('M10.6 55 C10.6 52.6 16 52.6 16 55 L15.4 58.6 C13.4 59.4 11.4 58.6 10.6 55Z', '#1a3a26') + P('M23.4 55 C23.4 52.6 18 52.6 18 55 L18.6 58.6 C20.6 59.4 22.6 58.6 23.4 55Z', '#1a3a26'), 1.5))
+      + dtrooper(14) + dtrooper(86)
       // the white cape and uniform
-      + P('M14 100 C14 82 20 70 32 66 L68 66 C80 70 86 82 86 100Z', '#eceef2', 'stroke="#9aa2ac" stroke-width=".8"')
-      + '<path d="M20 98 Q22 82 32 70 M80 98 Q78 82 68 70 M28 99 Q30 86 36 74 M72 99 Q70 86 64 74" stroke="#b8c0ca" stroke-width=".8" fill="none"/>'
+      + P('M18 100 C18 82 22 70 32 66 L68 66 C78 70 82 82 82 100Z', '#eceef2', 'stroke="#9aa2ac" stroke-width=".8"')
+      + '<path d="M24 98 Q26 82 34 70 M76 98 Q74 82 66 70 M30 99 Q32 86 37 74 M70 99 Q68 86 63 74" stroke="#b8c0ca" stroke-width=".8" fill="none"/>'
       + P('M32 74 C38 70 62 70 68 74 L66 100 L34 100Z', '#f8f8f6', 'stroke="#9aa2ac" stroke-width=".8"')
       + R(34, 80, 10, 4, '#1a1a1e') + [0, 1, 2, 3].map((i) => R(34.6 + i * 2.4, 81, 1.6, 2, ['#3b6fd6', '#c43b2e', '#3b6fd6', '#e0b83a'][i])).join('')
       + R(34, 92, 32, 3, '#2a2a2e') + R(47, 91.4, 6, 4, '#c8ccd2', 'rx=".6"')
@@ -531,40 +609,61 @@
       + neck('#e8c4a4') + head('#e8c4a4', { ry: 14.5 }) + eyes({ iris: '#3a6aa8' }) + brows('#8a7a6a', { angry: true }) + nose() + mouth('smirk', { color: '#8a4a3a' })
       + P('M37 42 C36 30 42 27 46 28 L44 32 C40 33 39 37 38 43Z', '#c8c4be') + P('M63 42 C64 30 58 27 54 28 L56 32 C60 33 61 37 62 43Z', '#c8c4be')
       + '<path d="M43 30 Q50 28 57 30" stroke="#d8b494" stroke-width=".6" fill="none"/>'
-      + blaster(68, 90, -40, '#1a1c20');
+      + blaster(66, 90, -40, '#1a1c20');
   });
 
   // ---------- Geonosis opponent: Geonosian Warrior ----------
+  // A winged Geonosian soldier over the hive spires: long ridged head,
+  // bulging compound eyes, mandibles, thin armoured limbs, veined wings and
+  // the sonic blaster with its green charge.
   add('geonosian_warrior', () => {
-    const [sk, sd] = LG([[0, '#b8783a'], [1, '#6a3a1a']]);
+    const [sk, sd] = LG([[0, '#c8884a'], [0.5, '#9a5a2a'], [1, '#5a2e12']]);
     return SCENES.geonosis() + sd
-      // translucent wings fanned out behind
-      + mirror(P('M42 60 C26 40 8 34 2 40 C6 52 22 62 40 66Z', '#e8d8b8', 'opacity=".45" stroke="#8a6a3a" stroke-width=".6"') + `<path d="M40 63 C26 50 14 44 4 42 M40 64 C28 58 16 56 8 52" stroke="#8a6a3a" stroke-width=".5" fill="none" opacity=".7"/>`)
-      + shoulders('#7a4a22', { top: 74 }) + `<path d="M30 80 Q50 76 70 80 M28 88 Q50 84 72 88" stroke="#4a2a12" stroke-width="1" fill="none"/>`
-      + P('M44 60 L56 60 L57 76 L43 76Z', '#6a3a1a')
-      // long head, bulbous compound eyes, crest ridge and mandibles
-      + P('M36 44 C34 28 42 16 50 14 C58 16 66 28 64 44 C63 54 58 62 50 64 C42 62 37 54 36 44Z', sk, 'stroke="#3a1a08" stroke-width=".9"')
-      + P('M50 14 C48 20 48 30 50 36 C52 30 52 20 50 14Z', '#d8985a') + `<path d="M42 22 Q50 18 58 22 M40 28 Q50 24 60 28" stroke="#4a2a12" stroke-width=".7" fill="none"/>`
-      + mirror(E(42, 42, 5, 6, '#2a1206', 'transform="rotate(-18 42 42)"') + E(41, 40, 2, 2.4, '#8a5a3a', 'opacity=".6"') + C(40.4, 39.4, 0.8, '#fff', 'opacity=".7"')
-        + P('M46 56 C44 60 42 64 44 68 L46.6 62Z', '#4a2a12'))
-      + `<path d="M46 52 Q50 54 54 52" stroke="#3a1a08" stroke-width=".8" fill="none"/>`
-      // the sonic blaster with its green core
-      + `<g transform="translate(66 90) rotate(-30)">${R(0, -4, 22, 8, '#5a3a1a', 'rx="3"')}${C(24, 0, 5, '#3a2410')}${C(24, 0, 2.6, '#7aff8a', 'style="filter:drop-shadow(0 0 2px #7aff8a)"')}</g>`;
+      // the hive spires and droid factory glow
+      + [[8, 28, 8], [20, 40, 6], [80, 30, 7], [92, 44, 6]].map(([x, y, w]) => P(`M${x - w} 80 Q${x - w / 2} ${y + 10} ${x} ${y} Q${x + w / 2} ${y + 10} ${x + w} 80Z`, '#8a4a22', 'opacity=".9"') + C(x, y + 14, 1, '#ffb04a', 'opacity=".7"')).join('')
+      + [[30, 16], [70, 12], [58, 20]].map(([x, y]) => `<g transform="translate(${x} ${y})">${E(0, 0, 3, 1, '#3a1a0a')}${L(-3, -1, -6, -4, '#3a1a0a', 0.5)}${L(3, -1, 6, -4, '#3a1a0a', 0.5)}</g>`).join('')
+      // veined wings fanned behind
+      + mirror(P('M42 64 C28 46 10 38 2 42 C4 54 20 64 40 68Z', '#f4e6c8', 'opacity=".4" stroke="#8a6a3a" stroke-width=".6"') + '<path d="M40 66 C28 54 16 46 4 43 M40 67 C28 61 16 58 6 52 M40 65 C30 50 22 44 12 41" stroke="#8a6a3a" stroke-width=".5" fill="none" opacity=".75"/>')
+      // armoured shoulders and thin arms
+      + shoulders('#6a3a1a', { top: 76 }) + '<path d="M28 82 Q50 77 72 82 M26 90 Q50 85 74 90" stroke="#3a1a08" stroke-width="1" fill="none"/>'
+      + mirror(P('M26 80 L22 92 L25 93 L29 82Z', '#7a4422') + C(23.6, 92.6, 1.6, '#5a2e12'))
+      + P('M45 60 L55 60 L56 78 L44 78Z', '#5a2e12') + [64, 68, 72].map((y) => L(45, y, 55, y, '#3a1a08', 0.6)).join('')
+      // the long ridged head
+      + P('M37 44 C35 30 40 14 50 10 C60 14 65 30 63 44 C62 54 58 62 50 65 C42 62 38 54 37 44Z', sk, 'stroke="#3a1a08" stroke-width=".9"')
+      + P('M50 10 C48 18 47.6 30 50 38 C52.4 30 52 18 50 10Z', '#e0a464') + '<path d="M43 17 Q50 13 57 17 M41 22 Q50 18 59 22 M40 28 Q50 24 60 28 M39 34 Q50 30 61 34" stroke="#4a2410" stroke-width=".7" fill="none"/>'
+      + mirror(E(42.4, 41, 5, 6.4, '#1e0c04', 'transform="rotate(-20 42.4 41)" stroke="#3a1a08" stroke-width=".6"') + E(41.4, 39, 2.2, 2.6, '#7a4a2a', 'opacity=".55"') + C(40.6, 38.2, 0.9, '#ffe0b0', 'opacity=".8"')
+        + P('M46 55 C44 59 42 63 43.6 67.6 L46.6 61Z', '#4a2410') + P('M37.6 46 Q36 50 37.6 54', 'none', 'stroke="#4a2410" stroke-width=".6"'))
+      + '<path d="M46 52 Q50 54.6 54 52" stroke="#2a1006" stroke-width=".9" fill="none"/>'
+      // the sonic blaster, charge glowing in its emitter ring
+      + `<g transform="translate(64 90) rotate(-30)">${R(0, -4, 24, 8, '#6a3e1c', 'rx="3"')}${R(4, -6, 10, 2.4, '#8a5a2a', 'rx="1"')}${C(26, 0, 5.4, '#3a2410')}${C(26, 0, 3.6, 'none', 'stroke="#7aff8a" stroke-width="1"')}${C(26, 0, 2, '#b0ffb8', 'style="filter:drop-shadow(0 0 3px #7aff8a)"')}</g>`;
   });
 
   // ---------- Mustafar opponent: Purge Trooper ----------
+  // The Inquisitorius' Jedi hunter: glossy black armour, the angular helmet
+  // with its crest ridge and wide black faceplate, electrostaff crackling,
+  // Fortress Vader rising over the lava behind.
   add('purge_trooper', () => SCENES.lava()
-    + shoulders('#141416', { top: 72 }) + P('M34 76 C40 72 60 72 66 76 L64 96 L36 96Z', '#1e1e22', 'stroke="#3a3a42" stroke-width=".8"')
-    + mirror(P('M6 90 C8 82 18 77 28 76 L32 84 C22 86 16 92 14 98Z', '#222226', 'stroke="#4a4a52" stroke-width=".7"'))
-    + R(40, 84, 20, 4, '#3a3a42') + P('M40 62 L60 62 L61 74 L39 74Z', '#0a0a0c')
-    // the angular helmet: sloped brow, red-rimmed visor, sharp jaw
-    + P('M34 42 C34 28 41 20 50 20 C59 20 66 28 66 42 L67 54 L60 64 L40 64 L33 54Z', '#1c1c20', 'stroke="#4a4a52" stroke-width="1"')
-    + P('M34.6 40 L50 34 L65.4 40 L64.6 43 L50 37.6 L35.4 43Z', '#3a3a42')
-    + P('M37 44 L50 39.6 L63 44 L61 50 L50 47 L39 50Z', '#060608') + glow('#ff3a2a', P('M38.4 44.6 L50 40.8 L61.6 44.6 L61.2 45.8 L50 42.2 L38.8 45.8Z', '#ff4a3a'), 1.6)
-    + P('M44 52 L56 52 L58 62 L42 62Z', '#2a2a30') + [46, 48.6, 51.4, 54].map((x) => L(x, 53, x + (x - 50) * 0.15, 61, '#5a5a62', 0.6)).join('')
-    + E(42, 26, 5, 2, '#fff', 'opacity=".18" transform="rotate(-24 42 26)"')
-    // the electrostaff crackling across him
-    + L(10, 96, 92, 50, '#2a2a30', 2.4) + glow('#7ab8ff', `<path d="M10 96 L14 92 L12 90 L17 87 M92 50 L88 52 L90 55 L85 56" stroke="#cfe6ff" stroke-width="1.2" fill="none"/>`, 2.5) + R(16, 88, 6, 3, '#4a4a52', 'transform="rotate(-29 19 89.5)"') + R(80, 54, 6, 3, '#4a4a52', 'transform="rotate(-29 83 55.5)"'));
+    // Fortress Vader: the tower and its two prongs
+    + P('M72 70 L76 26 L74 14 L78 22 L80 14 L82 22 L86 14 L84 26 L88 70Z', '#120606') + R(79, 30, 2, 3, '#ff6a2a', 'opacity=".8"')
+    + puffs('#3a2018', 0.6, [[20, 20, 18, 8], [60, 10, 20, 7]]) + embers(91, 18, '#ffb04a')
+    // armour: glossy black plates with silver edges
+    + shoulders('#101012', { top: 72 })
+    + P('M33 77 C40 73 60 73 67 77 L64 98 L36 98Z', '#1c1c20', 'stroke="#6a6a74" stroke-width=".7"') + L(50, 77, 50, 98, '#3a3a42', 0.8)
+    + [83, 89, 95].map((y) => P(`M38 ${y} Q50 ${y + 2.4} 62 ${y}`, 'none', 'stroke="#4a4a54" stroke-width=".7"')).join('')
+    + P('M6 92 C8 82 18 77 29 76 L33 86 C24 88 17 93 15 99Z', '#24242a', 'stroke="#7a7a84" stroke-width=".7"') + P('M8 88 C12 82 20 79 28 78', 'none', 'stroke="#9a9aa4" stroke-width=".6"')
+    + P('M94 92 C92 82 82 77 71 76 L67 86 C76 88 83 93 85 99Z', '#1a1a1e', 'stroke="#6a6a74" stroke-width=".7"')
+    + P('M41 60 L59 60 L60 76 L40 76Z', '#0a0a0c')
+    // the helmet: rounded skull with a centre crest, angled cheeks, wide faceplate
+    + P('M33 44 C33 28 41 19 50 19 C59 19 67 28 67 44 L68 55 L61 64 L39 64 L32 55Z', '#18181c', 'stroke="#6a6a74" stroke-width="1"')
+    + P('M48.4 19.4 L51.6 19.4 L52.4 38 L47.6 38Z', '#3a3a42') + E(42, 26, 5, 2, '#fff', 'opacity=".22" transform="rotate(-24 42 26)"')
+    + mirror(P('M33.4 47 L41 47 L42 58 L37 62 L33.4 55Z', '#26262c', 'stroke="#5a5a64" stroke-width=".5"'))
+    + P('M35 38 C42 35.6 58 35.6 65 38 L62.6 47 L55 49 L50 56 L45 49 L37.4 47Z', '#050506', 'stroke="#7a7a84" stroke-width=".7"')
+    + P('M37 39.4 C43 37.6 49 37.4 49 37.4 L48 40 C43 40 39.4 40.6 37.4 41.4Z', '#4a5260', 'opacity=".7"')
+    + P('M44 56 L56 56 L54.6 62 L45.4 62Z', '#2a2a30') + [46.4, 48.8, 51.2, 53.6].map((x) => L(x, 56.8, x, 61.2, '#6a6a74', 0.5)).join('')
+    // the electrostaff, blue arcs at both ends
+    + L(8, 98, 92, 52, '#2a2a30', 2.6) + L(8, 98, 92, 52, '#5a5a64', 0.6)
+    + glow('#7ab8ff', '<path d="M8 98 L12 93 L9.6 91 L15 88 M92 52 L87.6 54 L90 57 L84.6 58" stroke="#e0f0ff" stroke-width="1.2" fill="none"/>', 3)
+    + R(14, 87, 7, 3.4, '#4a4a52', 'rx="1" transform="rotate(-29 17.5 88.7)"') + R(79, 53, 7, 3.4, '#4a4a52', 'rx="1" transform="rotate(-29 82.5 54.7)"'));
 
   // ---------- Exegol opponent: Knight of Ren ----------
   add('knight_of_ren', () => exegol('#ff3a2a')
@@ -581,17 +680,29 @@
     + `<path d="M42 32 L44 36 M58 30 L55 35 M40 52 L42 50" stroke="#2a262c" stroke-width=".7"/>` + E(44, 31, 4, 1.6, '#9a96a2', 'opacity=".4"'));
 
   // ---------- Coruscant Under Siege opponent: BX Commando Droid ----------
-  add('commando_droid', () => siege()
-    + L(18, 100, 6, 40, '#6a6e76', 1.6) + glow('#ffd23a', L(6, 40, 3, 24, '#e8e0a0', 1.2, 'opacity=".8"'), 1.5)
-    + P('M14 100 C16 86 28 78 40 76 L60 76 C72 78 84 86 86 100Z', '#7a6e5a') + shade('M14 100 C16 86 28 78 40 76 L50 76 L48 100Z', 0.2)
-    + R(46, 60, 8, 18, '#5a5244') + [64, 68, 72].map((y) => L(46, y, 54, y, '#3a342a', 0.8)).join('')
-    + mirror(P('M24 86 L36 80 L38 86 L26 92Z', '#e8e0c8', 'opacity=".85"'))
-    // the bullet-shaped head with its dark face disc and single photoreceptor
-    + P('M37 44 C37 26 43 16 50 16 C57 16 63 26 63 44 C63 54 58 62 50 62 C42 62 37 54 37 44Z', '#a89a7e', 'stroke="#3a342a" stroke-width="1"')
-    + shade('M50 16 C57 16 63 26 63 44 C63 54 58 62 50 62Z', 0.15) + E(44, 24, 4, 2, '#fff', 'opacity=".35" transform="rotate(-24 44 24)"')
-    + P('M43 38 C43 34 57 34 57 38 L56 52 C54 56 46 56 44 52Z', '#1a1814', 'stroke="#3a342a" stroke-width=".8"') + L(50, 45, 50, 54, '#3a342a', 0.8)
-    + glow('#fff4c0', C(50, 41, 1.4, '#fff8e0'), 2) + `<path d="M43 26 L57 26 M41 32 L59 32" stroke="#e8e0c8" stroke-width="1.6" opacity=".85"/>`
-    + blaster(66, 92, -36, '#2a2620'));
+  // The Separatist droid commando from The Clone Wars: small domed head with
+  // a single round photoreceptor, segmented neck, broad armoured shoulders,
+  // tan plating with a commander's white markings, vibrosword raised.
+  add('commando_droid', () => {
+    const [arm, ad] = LG([[0, '#b8a888'], [1, '#6a5e48']]);
+    return siege() + ad
+      // the vibrosword
+      + L(16, 96, 6, 30, '#9aa0a8', 1.8) + L(16, 96, 6, 30, '#e8ecf0', 0.5) + R(14, 92, 6, 3, '#3a342a', 'rx=".8" transform="rotate(-8 17 93.5)"')
+      // broad flat shoulders, thin torso, backpack frame
+      + P('M8 100 L12 82 C14 76 22 72 34 72 L66 72 C78 72 86 76 88 82 L92 100Z', '#2a2620')
+      + mirror(P('M10 84 C12 76 20 72 32 72 L36 80 C26 80 18 84 14 90Z', arm, 'stroke="#2a2620" stroke-width=".8"') + R(16, 78, 10, 2.4, '#ece6d4', 'transform="rotate(-14 21 79)"'))
+      + P('M38 76 L62 76 L60 100 L40 100Z', arm, 'stroke="#2a2620" stroke-width=".8"') + [82, 88, 94].map((y) => L(41, y, 59, y, '#4a4234', 0.7)).join('') + R(44, 78, 12, 2.6, '#ece6d4')
+      // the segmented neck
+      + R(46.4, 56, 7.2, 18, '#4a4234') + [59, 62, 65, 68, 71].map((y) => R(45.6, y, 8.8, 1.6, '#7a6e58', 'rx=".6"')).join('')
+      // the domed head with its round photoreceptor
+      + P('M38 42 C38 26 44 18 50 18 C56 18 62 26 62 42 C62 52 57 58 50 58 C43 58 38 52 38 42Z', arm, 'stroke="#2a2620" stroke-width="1"')
+      + shade('M50 18 C56 18 62 26 62 42 C62 52 57 58 50 58Z', 0.15) + E(44, 25, 3.6, 1.8, '#fff', 'opacity=".4" transform="rotate(-24 44 25)"')
+      + P('M44.6 21 C46 19.4 54 19.4 55.4 21 L54.6 32 L45.4 32Z', '#ece6d4', 'opacity=".95"')
+      + C(50, 43, 7.4, '#2a2620') + C(50, 43, 5.8, '#0a0908') + C(50, 43, 5.8, 'none', 'stroke="#5a5040" stroke-width=".6"')
+      + glow('#fff4c0', C(50, 43, 1.9, '#fff8e0'), 2.5) + C(50, 43, 3.4, 'none', 'stroke="#c8a04a" stroke-width=".5" opacity=".7"')
+      + mirror(L(40, 50, 44, 54, '#4a4234', 0.7))
+      + blaster(68, 94, -36, '#2a2620');
+  });
 
   // ================= Boss versions of existing cards =================
 
@@ -621,19 +732,37 @@
   });
 
   // ---------- Geonosis optional boss: Jango Fett, arena ----------
+  // Jango in the Petranaki arena: scuffed blue-silver armour, the helmet's
+  // rangefinder, the Z-6 jetpack with its missile, twin WESTARs blazing.
+  // Behind him the crowd of Geonosians and the execution pillars with
+  // Obi-Wan, Anakin and Padmé chained up.
   add('jango_arena', () => {
-    const [hm, hmd] = LG([[0, '#c8d4dc'], [0.5, '#7a8a98'], [1, '#3a4450']]);
-    return arena() + hmd
+    const [hm, hmd] = LG([[0, '#d8e2ea'], [0.5, '#8a9aa8'], [1, '#3a4450']]);
+    const [arm, ad] = LG([[0, '#6a7c8e'], [1, '#3a4656']]);
+    // A chained prisoner on a pillar: tiny figure, arms up.
+    const prisoner = (x, c, hair) => R(x - 3, 40, 6, 44, '#7a3a1a') + R(x - 4, 38, 8, 3, '#5a2a10')
+      + L(x - 2, 46, x - 4, 42, c, 1) + L(x + 2, 46, x + 4, 42, c, 1) + R(x - 2, 46, 4, 8, c, 'rx="1"') + C(x, 44.4, 1.6, '#e8c4a0') + E(x, 43.4, 1.7, 1, hair);
+    return arena() + hmd + ad
+      // the crowd packed into the stands
+      + [33, 37, 41].map((y, r) => Array.from({ length: 30 }, (_, i) => E(i * 3.4 + (r % 2) * 1.7, y, 1.1, 1.5, ['#5a2410', '#6a3418', '#4a1e0c'][(i + r) % 3])).join('')).join('')
+      + prisoner(10, '#c8b48a', '#a0703a') + prisoner(90, '#2a2a30', '#5a3a1a') + prisoner(30, '#f2f2f2', '#3a2010')
       // jetpack flames roaring down from behind his shoulders
-      + mirror(glow('#ffb03a', P('M22 64 C18 76 20 88 26 100 C28 90 32 82 30 64Z', '#ffd27a', 'opacity=".85"') + P('M24 66 C22 76 24 86 27 94 C28 86 30 78 29 66Z', '#fff4d0'), 4) + R(20, 56, 10, 10, '#6a7a8a', 'rx="2"'))
-      + bolt(18, 76, 0, 66, '#ff3a2a') + bolt(82, 76, 100, 70, '#ff3a2a')
+      + mirror(glow('#ffb03a', P('M22 64 C18 76 20 88 26 100 C28 90 32 82 30 64Z', '#ffd27a', 'opacity=".85"') + P('M24 66 C22 76 24 86 27 94 C28 86 30 78 29 66Z', '#fff4d0'), 4) + R(20, 52, 10, 14, '#6a7a8a', 'rx="2" stroke="#2a3440" stroke-width=".6"'))
+      // the Z-6's missile rising behind his helmet
+      + R(45, 4, 10, 16, '#6a7a8a', 'rx="1.5" stroke="#2a3440" stroke-width=".6"') + P('M45 4 L50 -2 L55 4Z', '#b8c4cc') + R(45, 14, 10, 2, '#c43a2a')
+      + bolt(18, 76, 0, 66, '#ff3a2a') + bolt(82, 76, 100, 70, '#ff3a2a') + bolt(14, 70, 0, 54, '#ff3a2a')
       + blaster(16, 80, -160, '#3a3d44') + blaster(84, 80, -20, '#3a3d44')
-      + P('M2 100 C4 80 22 70 50 70 C78 70 96 80 98 100Z', '#4a5a6a') + P('M34 72 L66 72 L62 96 L38 96Z', '#8a98a8') + R(36, 88, 28, 4, '#2a2d33')
-      + `<path d="M34 72 L30 100 M66 72 L70 100" stroke="#2a3440" stroke-width="1" fill="none"/>`
+      // armour: chest plates, shoulder bells, belt with holsters, leather straps
+      + P('M2 100 C4 80 22 70 50 70 C78 70 96 80 98 100Z', '#4a5a6a')
+      + mirror(P('M8 92 C10 82 18 76 28 75 L32 84 C24 86 18 90 16 96Z', arm, 'stroke="#1a2230" stroke-width=".7"') + '<path d="M12 88 L14 84 M20 82 l2 2" stroke="#9aa8b4" stroke-width=".5"/>')
+      + P('M34 72 L66 72 L63 92 L37 92Z', arm, 'stroke="#1a2230" stroke-width=".8"') + L(50, 72, 50, 92, '#2a3440', 0.8) + '<path d="M38 78 l3 1 M58 84 l-2 2 M44 88 l2 -1" stroke="#c8d4dc" stroke-width=".5" opacity=".7"/>'
+      + R(34, 92, 32, 4, '#3a2a1a') + mirror(R(34, 93, 6, 7, '#2a1e12', 'rx="1"')) + L(36, 72, 62, 92, '#5a3a20', 1.2)
+      // the helmet: T visor, dents, rangefinder stalk
       + P('M34 46 C34 26 42 18 50 18 C58 18 66 26 66 46 L65 60 C61 66 39 66 35 60Z', hm, 'stroke="#1a2028" stroke-width=".9"')
       + P('M38 36 H62 V42 H54 V58 H46 V42 H38Z', '#0a0c10') + P('M36 26 C42 22 58 22 64 26 L64 30 C58 26 42 26 36 30Z', '#4a6a8a')
-      + R(64, 34, 4, 14, '#5a6a7a', 'rx="1"') + E(43, 24, 5, 2, '#fff', 'opacity=".35"')
-      + `<path d="M40 52 L44 54 M60 52 L56 54" stroke="#2a3440" stroke-width=".8"/>`;
+      + E(43, 24, 5, 2, '#fff', 'opacity=".4"') + '<path d="M58 30 l2 2 M40 50 l2 1 M60 52 l-1.6 1.4" stroke="#3a4450" stroke-width=".6"/>' + C(57, 48, 1, '#5a6a7a')
+      + mirror('<path d="M40 52 L44 54" stroke="#2a3440" stroke-width=".8"/>')
+      + R(64, 32, 4, 16, '#5a6a7a', 'rx="1" stroke="#1a2028" stroke-width=".5"') + L(66, 32, 68, 18, '#5a6a7a', 1.4) + R(66, 14, 4, 6, '#3a4450', 'rx="1"') + C(68, 16, 0.8, '#ff3a2a');
   });
 
   // ---------- Exegol optional boss: Emperor Reborn ----------
@@ -650,7 +779,12 @@
       + '<g stroke-linecap="round" fill="none"><path d="M70 0 C70 10 62 14 56 18" stroke="#2a2830" stroke-width="5"/><path d="M70 0 C70 10 62 14 56 18" stroke="#5a5664" stroke-width="1.2"/><path d="M56 18 C48 20 40 22 34 30" stroke="#2a2830" stroke-width="3.6"/><path d="M56 18 C62 22 66 26 68 32" stroke="#2a2830" stroke-width="3.6"/></g>'
       + C(56, 18, 3.6, '#3a3640') + glow('#b58cff', C(56, 18, 1.4, '#d8c8ff'), 2)
       + P('M16 100 L22 58 C24 30 38 18 50 18 C62 18 76 30 78 58 L84 100Z', '#0e0c12') + shade('M50 18 C38 18 24 30 22 58 L16 100 L40 100 L36 60Z', 0.3)
+      // layered robes: outer cloak, inner robe, folds, embroidered trim and wide sleeves
+      + P('M30 100 L34 66 C38 62 62 62 66 66 L70 100Z', '#16121c') + P('M42 64 L50 100 L58 64Z', '#221a2c')
+      + '<path d="M22 100 C24 86 26 74 30 64 M78 100 C76 86 74 74 70 64 M27 100 C28 88 30 78 33 68 M73 100 C72 88 70 78 67 68 M38 100 L40 70 M62 100 L60 70" stroke="#2a2434" stroke-width="1" fill="none"/>'
+      + '<path d="M34 66 L42 100 M66 66 L58 100" stroke="#6a4a9a" stroke-width=".8" fill="none" opacity=".7"/><path d="M35.6 74 l1.2 1.2 l-1.2 1.2 M37.4 84 l1.2 1.2 l-1.2 1.2 M64.4 74 l-1.2 1.2 l1.2 1.2 M62.6 84 l-1.2 1.2 l1.2 1.2" stroke="#8a6aba" stroke-width=".5" fill="none" opacity=".7"/>'
       + R(28, 64, 44, 4, '#2a2830', 'rx="1.5"') + mirror(C(32, 66, 1.4, '#5a5664'))
+      + mirror(P('M8 100 L14 82 C18 74 28 76 34 86 L32 100Z', '#120e18') + P('M24 84 C28 82 33 84 35 88 L31 92 C29 89 26 88 23 89Z', '#2a2236') + '<path d="M12 96 L16 84 M18 98 L21 86" stroke="#2a2434" stroke-width=".9"/>' + '<path d="M24 84 C28 82 33 84 35 88" stroke="#6a4a9a" stroke-width=".7" fill="none"/>')
       // the deep hood framing his face, its rim catching the lightning
       + P('M28 70 C24 44 34 22 50 21 C66 22 76 44 72 70 C68 62 62 58 60 50 C58 40 54 36 50 36 C46 36 42 40 40 50 C38 58 32 62 28 70Z', '#1a1620')
       + '<path d="M29 66 C27 44 36 25 50 24 C64 25 73 44 71 66" stroke="#5a4a7a" stroke-width="1" fill="none" opacity=".8"/><path d="M40 30 Q50 26 60 30" stroke="#2a2434" stroke-width="1.2" fill="none"/>'
@@ -661,55 +795,77 @@
   });
 
   // ---------- Coruscant Under Siege optional boss: General Grievous, Warlord ----------
-  // All four arms out, a lightsaber in each, cape flaring, the Invisible
-  // Hand burning over Coruscant behind him.
-  add('grievous_warlord', () => siege()
-    // the Invisible Hand: long hull, spine of towers, engines aglow
-    + P('M2 26 L60 20 L74 24 L60 28 L2 30Z', '#2a1a1a', 'stroke="#4a2a24" stroke-width=".6"') + [10, 20, 30, 40].map((x) => R(x, 14 + (x % 20) / 4, 3, 7, '#2a1a1a')).join('') + glow('#5fd8ff', C(2, 28, 1.4, '#9fe8ff'), 2)
-    + glow('#ff7a2a', P('M50 22 Q52 18 54 22Z', '#ffa040'), 2)
-    + `<g fill="none" stroke-linecap="round" opacity=".45"><path d="M6 52 A44 44 0 0 1 28 12" stroke="#46e070" stroke-width="3"/><path d="M94 52 A44 44 0 0 0 72 12" stroke="#3d8bff" stroke-width="3"/></g>`
-    // the cape
-    + P('M26 62 C14 72 6 86 4 100 L96 100 C94 86 86 72 74 62 L64 70 L36 70Z', '#3a3a42') + '<path d="M14 98 Q18 84 28 70 M86 98 Q82 84 72 70 M24 99 Q26 88 34 76 M76 99 Q74 88 66 76" stroke="#55555e" stroke-width="1" fill="none"/>'
-    // four mechanical arms reaching out to the four hilts
-    + mirror(`<g stroke-linecap="round" fill="none"><path d="M36 74 L24 66 L14 52" stroke="#b8bcc4" stroke-width="2.6"/><path d="M36 80 L22 84 L14 90" stroke="#9aa0a8" stroke-width="2.4"/></g>` + C(24, 66, 1.8, '#6a7078') + C(22, 84, 1.8, '#6a7078'))
-    + saber(14, 52, 4, 14, '#3d8bff') + saber(86, 52, 96, 14, '#46e070') + saber(14, 90, 2, 66, '#46e070') + saber(86, 90, 98, 66, '#3d8bff')
-    // torso: the armoured shell over the gut sack, the ribs below
-    + P('M36 70 C40 66 60 66 64 70 L62 86 L38 86Z', '#d9d2bf', 'stroke="#5a5444" stroke-width=".7"') + E(50, 78, 6, 5, '#6a3a3a', 'opacity=".75"')
-    + P('M40 86 L60 86 L58 100 L42 100Z', '#4a4e54') + [89, 93, 97].map((y) => L(42, y, 58, y, '#8a9098', 1)).join('')
-    + R(46, 58, 8, 10, '#6a7078') + [60, 63, 66].map((y) => L(46, y, 54, y, '#3a3e44', 0.7)).join('')
-    // the bone-white mask: high crest, slanted sockets, yellow reptile eyes, grill mouth
-    + P('M41 22 C41 13 59 13 59 22 L63 32 L65 46 L59 58 L54 62 L46 62 L41 58 L35 46 L37 32Z', '#e8e2d0', 'stroke="#5a5444" stroke-width=".8"')
-    + shade('M50 13 C55 13 59 16 59 22 L63 32 L65 46 L59 58 L54 62 L50 62Z', 0.1)
-    + '<path d="M45 15 L46 26 M55 15 L54 26 M50 13 L50 28" stroke="#b8b0a0" stroke-width=".8" fill="none"/>'
-    + mirror(P('M38.6 34 L48 38 L47 45 L40 43Z', '#1a1810') + P('M37 46 L44 48 L45 56 L41 56Z', '#cfc8b4', 'stroke="#8a826e" stroke-width=".5"'))
-    + glowEyes(43.6, 56.4, 41, '#ffd23f', 1.6) + C(43.6, 41, 0.5, '#5a2a00') + C(56.4, 41, 0.5, '#5a2a00')
-    + P('M45 48 L55 48 L54 60 L46 60Z', '#3a3830') + [47, 49, 51, 53].map((x) => L(x, 49, x, 59, '#7a7868', 0.6)).join(''));
+  // The revised Grievous (the 2.2 drawing) brought down to the burning
+  // streets of Coruscant: the Invisible Hand overhead, droid landers
+  // descending, a Senate dome on fire and B2s marching through the smoke.
+  add('grievous_warlord', () => {
+    const fig = root.Art22 && root.Art22.grievousFigure ? root.Art22.grievousFigure() : '';
+    return siege()
+      // the Invisible Hand's long hull and spine of towers, engines glowing
+      + P('M2 22 L62 16 L76 20 L62 24 L2 26Z', '#2a1a1a', 'stroke="#4a2a24" stroke-width=".6"') + [10, 20, 30, 40, 50].map((x) => R(x, 10 + (x % 20) / 4, 3, 7, '#2a1a1a')).join('') + glow('#5fd8ff', C(2, 24, 1.4, '#9fe8ff'), 2)
+      // a burning Senate dome and marching B2s at street level
+      + E(84, 62, 14, 7, '#2a1a1e') + glow('#ff7a2a', P('M80 58 Q82 50 84 56 Q86 48 88 56Z', '#ffa040'), 3)
+      + [[6, 64], [14, 66], [88, 66]].map(([x, y]) => `<g transform="translate(${x} ${y})">${R(-2, -6, 4, 6, '#1a1214', 'rx="1"')}${R(-1, -8, 2, 2, '#1a1214')}${L(-1, 0, -1.4, 4, '#1a1214', 1)}${L(1, 0, 1.4, 4, '#1a1214', 1)}</g>`).join('')
+      + R(0, 66, 100, 34, '#140a0c', 'opacity=".55"') + fig;
+  });
 
-  // ---------- Idea card: The Bendu (absorbs damage, stores it, unleashes it) ----------
-  // The ancient Force being on Atollon, the "one in the middle": blue and red
-  // energy pouring into him from both sides and gathering in his chest.
+  // ---------- The Bendu (Star Wars Rebels): Mythic, reward for Liberator of the Galaxy ----------
+  // The ancient Force wielder of Atollon as he looks in Rebels: a huge
+  // grey-blue beast lying on the rocks, stony hide streaked lighter, a
+  // ridge of rocky spines down his back, two great horns curving forward
+  // and down past his long face, glowing blue eyes. Light and dark energy
+  // pour into him and gather in his chest: he soaks up what hits him.
   add('bendu', () => {
-    const [sky, sd] = LG([[0, '#2a1a3a'], [0.55, '#7a3a4a'], [1, '#e88a4a']]);
-    const [hide, hd] = LG([[0, '#8a8478'], [1, '#4a463e']]);
+    const [sky, sd] = LG([[0, '#5a6a7a'], [0.6, '#9aa8b0'], [1, '#d8d0c0']]);
+    const [hide, hd] = LG([[0, '#9aa8b4'], [0.5, '#6a7884'], [1, '#3e4852']]);
     const [core, cd] = RG([[0, '#ffffff'], [0.35, '#c8b0ff', 0.9], [1, '#7a4dff', 0]]);
     return sd + hd + cd + R(0, 0, 100, 100, sky)
-      + [[6, 40, 6], [16, 52, 4], [84, 44, 6], [94, 56, 4]].map(([x, y, w]) => P(`M${x - w} 80 L${x - 1} ${y} L${x + 1} ${y - 3} L${x + w} 80Z`, '#2a1820')).join('')
-      + R(0, 78, 100, 22, '#5a3424') + P('M0 82 Q30 78 60 82 T100 80 V100 H0Z', '#4a2a1c')
-      // light and dark energy streaming into him from both sides
-      + glow('#5aa8ff', '<path d="M0 30 C16 34 24 50 40 66" stroke="#9fd0ff" stroke-width="2" fill="none"/><path d="M0 48 C14 52 26 60 40 70" stroke="#5aa8ff" stroke-width="1.2" fill="none" opacity=".8"/>', 3)
-      + glow('#ff3a3a', '<path d="M100 30 C84 34 76 50 60 66" stroke="#ff9a9a" stroke-width="2" fill="none"/><path d="M100 48 C86 52 74 60 60 70" stroke="#ff4a4a" stroke-width="1.2" fill="none" opacity=".8"/>', 3)
-      // the great body, a hill of stony fur
-      + shag(50, 92, 44, 34, 20, 0.07, hide, 'stroke="#2a2620" stroke-width=".6"')
-      + '<path d="M18 84 L22 80 L24 86 M30 76 L34 72 L36 78 M64 76 L68 72 L70 78 M76 84 L80 80 L82 86" stroke="#a8a294" stroke-width=".8" fill="none"/>'
-      + C(50, 74, 12, core) + glow('#c8b0ff', C(50, 74, 3, '#ffffff'), 4)
-      // the head: long face, deep-set glowing eyes, a heavy beard
-      + shag(50, 44, 18, 20, 14, 0.1, hide, 'stroke="#2a2620" stroke-width=".6"')
-      // the two huge horns sweeping out and down
-      + mirror('<path d="M38 30 C28 18 12 18 8 30 C6 38 12 46 18 44" stroke="#3a342c" stroke-width="5.4" fill="none" stroke-linecap="round"/><path d="M38 30 C28 18 12 18 8 30" stroke="#b8ae9a" stroke-width="1.6" fill="none" stroke-linecap="round"/>')
-      + P('M40 40 C40 32 60 32 60 40 L58 58 C56 64 44 64 42 58Z', '#6a6458') + shade('M50 32 C55 32 60 34 60 40 L58 58 C56 64 50 64 50 64Z', 0.15)
-      + mirror('<path d="M41 41.4 Q44.6 39.2 48 41.4" stroke="#2a2620" stroke-width="1.6" fill="none" stroke-linecap="round"/>')
-      + glowEyes(44.6, 55.4, 44, '#8ad8ff', 1.3) + P('M48 50 L50 53 L52 50Z', '#2a2620')
-      + shag(50, 64, 9, 7, 9, 0.25, '#8a8478', 'stroke="#2a2620" stroke-width=".5"');
+      // Atollon: dusty grey ground and the spiky krykna-rock spires
+      + [[6, 34, 5], [14, 48, 3], [24, 40, 4], [78, 38, 4], [88, 30, 6], [96, 46, 3]].map(([x, y, w]) => P(`M${x - w} 82 L${x - 1} ${y} L${x} ${y - 4} L${x + 1} ${y} L${x + w} 82Z`, '#4a525a') + L(x, y - 4, x - w * 0.6, 82, '#6a747c', 0.5)).join('')
+      + R(0, 78, 100, 22, '#7a7e7a') + P('M0 82 Q30 78 60 82 T100 80 V100 H0Z', '#5e625e')
+      // light and dark streaming into him from both sides
+      + glow('#5aa8ff', '<path d="M0 26 C16 30 26 48 40 66" stroke="#cfe8ff" stroke-width="2" fill="none"/><path d="M0 44 C14 48 26 58 40 70" stroke="#5aa8ff" stroke-width="1.2" fill="none" opacity=".8"/>', 3)
+      + glow('#ff3a3a', '<path d="M100 26 C84 30 74 48 60 66" stroke="#ffc0c0" stroke-width="2" fill="none"/><path d="M100 44 C86 48 74 58 60 70" stroke="#ff4a4a" stroke-width="1.2" fill="none" opacity=".8"/>', 3)
+      // the great body lying on the rocks, rocky spines along the back
+      + P('M2 100 C2 80 14 66 30 60 C40 56 60 56 70 60 C86 66 98 80 98 100Z', hide, 'stroke="#2a3038" stroke-width=".7"')
+      + mirror([[24, 62, 5], [16, 68, 4], [10, 76, 3.6]].map(([x, y, h]) => P(`M${x - 3} ${y + 2} L${x} ${y - h} L${x + 3} ${y + 1}Z`, '#5a646e', 'stroke="#2a3038" stroke-width=".5"')).join(''))
+      + '<path d="M14 88 Q22 82 30 86 M20 96 Q28 90 36 94 M70 86 Q78 82 86 88 M64 94 Q72 90 80 96" stroke="#c8d2da" stroke-width="1.2" fill="none" opacity=".5"/>'
+      + C(50, 80, 12, core) + glow('#c8b0ff', C(50, 80, 3, '#ffffff'), 4)
+      // the long face and heavy brow
+      + P('M38 38 C38 26 44 22 50 22 C56 22 62 26 62 38 L60 60 C58 68 54 72 50 72 C46 72 42 68 40 60Z', hide, 'stroke="#2a3038" stroke-width=".8"')
+      + shade('M50 22 C56 22 62 26 62 38 L60 60 C58 68 54 72 50 72Z', 0.14)
+      + '<path d="M44 26 L46 34 M56 26 L54 34 M50 23 L50 32" stroke="#c8d2da" stroke-width="1" fill="none" opacity=".55"/>'
+      + mirror('<path d="M39 41 Q43.6 37.6 48 40.6" stroke="#2a3038" stroke-width="2" fill="none" stroke-linecap="round"/>')
+      + glowEyes(44.4, 55.6, 43.4, '#8ad8ff', 1.3)
+      + E(50, 63, 7, 6, '#5a646e') + mirror(E(47.4, 63, 1.2, 1.8, '#1a1e24')) + '<path d="M45 69 Q50 71.4 55 69" stroke="#2a3038" stroke-width=".8" fill="none"/>'
+      // the two great horns: out from the top of the head, curving forward and down past the face
+      + mirror('<path d="M41 28 C32 18 20 18 18 30 C16 42 24 54 34 56" stroke="#2a2a28" stroke-width="6" fill="none" stroke-linecap="round"/><path d="M41 28 C32 18 20 18 18 30 C16 42 24 54 34 56" stroke="#c8c0a8" stroke-width="3.6" fill="none" stroke-linecap="round"/><path d="M38 25 C30 20 22 21 20.4 30" stroke="#f0ead8" stroke-width="1" fill="none" stroke-linecap="round"/><path d="M22 34 l2 .6 M21 40 l2 .4 M23 46 l2 0" stroke="#8a8270" stroke-width=".6"/>');
+  });
+
+  // ---------- Exegol opponent (2.2 card, more detail): Sith Trooper ----------
+  // A Sith Eternal trooper in red: the angular helmet with its black visor
+  // and side vents, red armour with black joints. Behind him the Citadel's
+  // hooded statues, a Xyston Star Destroyer with its planet-killer glowing
+  // under the hull, and the Final Order's banners.
+  add('sith_trooper', () => {
+    const [red, rd] = LG([[0, '#e02a36'], [0.5, '#b0161f'], [1, '#6a0a10']]);
+    return exegol('#a8b8ff') + rd
+      // a Xyston Star Destroyer overhead, its planet-killer cannon glowing red
+      + P('M8 14 L92 8 L50 30Z', '#1a1822', 'stroke="#3a3648" stroke-width=".6"') + R(46, 4, 8, 6, '#1a1822') + glow('#ff2a3a', E(50, 26, 4, 1.6, '#ff4a4a'), 3)
+      // hooded statues and Sith Eternal banners
+      + mirror(P('M2 84 L4 50 C4 42 8 38 12 38 C16 38 20 42 20 50 L22 84Z', '#16141e') + P('M8 46 C8 43 16 43 16 46 L15 50 L9 50Z', '#08060a') + R(24, 30, 6, 30, '#6a0a10') + P('M24 60 L27 56 L30 60Z', '#0a080e') + C(27, 40, 1.6, 'none', 'stroke="#d8c060" stroke-width=".5"'))
+      // body: red plates over the black bodysuit
+      + P('M18 100 L22 78 C24 70 36 66 50 66 C64 66 76 70 78 78 L82 100Z', '#120c0e')
+      + mirror(P('M20 86 C22 76 30 70 40 69 L42 80 L24 84Z', red, 'stroke="#2a0406" stroke-width=".6"') + L(24, 82, 38, 76, '#ff8a8a', 0.5, 'opacity=".5"'))
+      + P('M40 72 L60 72 L58 88 L50 92 L42 88Z', red, 'stroke="#2a0406" stroke-width=".6"') + L(50, 72, 50, 92, '#6a0a10', 0.6) + R(44, 94, 12, 4, '#1a1012')
+      + P('M44 62 L56 62 L57 70 L43 70Z', '#0c0608')
+      // the helmet: angular crown, black visor, ribbed side vents, chin grille
+      + P('M33 40 C33 22 67 22 67 40 L68 52 L61 62 L39 62 L32 52Z', red, 'stroke="#2a0406" stroke-width=".9"')
+      + shade('M50 22 C59 22 67 30 67 40 L68 52 L61 62 L50 62Z', 0.15) + P('M38 28 C43 24 57 24 62 28', 'none', 'stroke="#ff8a8a" stroke-width="1.1" opacity=".6"')
+      + P('M35 38 L65 38 L60 46 L55 48 L55 58 L45 58 L45 48 L40 46Z', '#0c0406') + P('M37 39 L48 39 L44 43Z', '#4a3a5a', 'opacity=".6"')
+      + mirror([50, 53, 56].map((y) => L(34.4, y, 40, y + 1, '#5a0a10', 0.8)).join('') + C(34.4, 46, 1.4, '#6a0a10', 'stroke="#2a0406" stroke-width=".4"'))
+      + R(45.6, 58.6, 8.8, 3, '#3a0408', 'rx=".6"') + [47, 48.8, 50.6, 52.4].map((x) => L(x, 59, x, 61.2, '#c8303a', 0.4)).join('')
+      + `<g transform="translate(60 92) rotate(-28)">${R(-2, -2.6, 30, 5.2, '#1a1214', 'rx="1.5"')}${R(24, -1.4, 10, 2.8, '#1a1214')}${R(4, -5.6, 12, 3, '#3a2a2e', 'rx="1"')}</g>`;
   });
 
   // ================= Legendary badge: Liberator of the Galaxy =================

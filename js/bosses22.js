@@ -388,6 +388,18 @@
     + P('M30 72 C37.6 67.4 62.4 67.4 70 72', 'none', `stroke="${BONE_D}" stroke-width=".6"`) + L(35, 73.4, 41, 71.6, '#5a5040', 0.6) + L(59, 71.6, 65, 73.4, '#5a5040', 0.6);
 
   // General Grievous on the bridge of the Invisible Hand, the Coruscant battle burning outside.
+  // The figure on its own, so the 2.4 boss version can stand him in another scene.
+  const grievousFigure = () => capeBack() + ribcage()
+    + limb([38, 80], [30, 92], [28, 86]) + limb([62, 80], [70, 92], [72, 86])
+    + spin(28, 86, 16, 98, '#46e070', 1) + spin(72, 86, 84, 98, '#3d8bff', -1)
+    + saber(28, 86, 16, 98, '#46e070') + saber(72, 86, 84, 98, '#3d8bff') + hand(28, 86, 16, 98) + hand(72, 86, 84, 98)
+    + limb([30, 72], [21, 62], [22, 46]) + limb([70, 72], [79, 62], [78, 46])
+    + drapes() + collar()
+    + spin(22, 46, 15, 6, '#3d8bff', 1) + spin(78, 46, 85, 6, '#46e070', -1)
+    + saber(22, 46, 15, 6, '#3d8bff') + saber(78, 46, 85, 6, '#46e070') + hand(22, 46, 15, 6) + hand(78, 46, 85, 6)
+    + head()
+    + P('M63 30 L63 41 L58.2 47.6 L57.2 58', 'none', 'stroke="#ff8a4a" stroke-width=".6" opacity=".75"');
+  root.Art22 = Object.assign(root.Art22 || {}, { grievousFigure });
   add('grievous_22', () => R(0, 0, 100, 100, '#101218')
     + P('M6 4 L94 4 L88 56 L12 56Z', '#1a0e14') + E(50, 70, 60, 26, '#ff6a2a', 'opacity=".25"')
     + C(50, 120, 66, '#1a1018') + C(50, 120, 66, 'none', 'stroke="#ffaa5a" stroke-width="1" opacity=".5"')
@@ -398,17 +410,7 @@
     + P('M6 4 L94 4 L88 56 L12 56Z', 'none', 'stroke="#3a3e48" stroke-width="2.4"') + L(28, 4, 30, 56, '#3a3e48', 1.6) + L(72, 4, 70, 56, '#3a3e48', 1.6) + L(9, 30, 91, 30, '#3a3e48', 1.2)
     + R(0, 56, 100, 44, '#1a1c22') + R(0, 56, 100, 2, '#ff5a2a', 'opacity=".35"')
     + [[6, 62], [12, 64], [86, 62], [92, 64]].map(([x, y], i) => R(x, y, 3, 1.2, i % 2 ? '#ff4a3a' : '#ffb03a', 'opacity=".8"')).join('')
-    // the cape hangs behind him, then the rib cage, the lower arms, the drape over his shoulders, the collar
-    + capeBack() + ribcage()
-    + limb([38, 80], [30, 92], [28, 86]) + limb([62, 80], [70, 92], [72, 86])
-    + spin(28, 86, 16, 98, '#46e070', 1) + spin(72, 86, 84, 98, '#3d8bff', -1)
-    + saber(28, 86, 16, 98, '#46e070') + saber(72, 86, 84, 98, '#3d8bff') + hand(28, 86, 16, 98) + hand(72, 86, 84, 98)
-    + limb([30, 72], [21, 62], [22, 46]) + limb([70, 72], [79, 62], [78, 46])
-    + drapes() + collar()
-    + spin(22, 46, 15, 6, '#3d8bff', 1) + spin(78, 46, 85, 6, '#46e070', -1)
-    + saber(22, 46, 15, 6, '#3d8bff') + saber(78, 46, 85, 6, '#46e070') + hand(22, 46, 15, 6) + hand(78, 46, 85, 6)
-    + head()
-    + P('M63 30 L63 41 L58.2 47.6 L57.2 58', 'none', 'stroke="#ff8a4a" stroke-width=".6" opacity=".75"'));
+    + grievousFigure());
   }
 
   // Sith Trooper: the Legion's rank and file.
