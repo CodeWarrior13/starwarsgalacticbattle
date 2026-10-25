@@ -225,8 +225,8 @@
       + clouds(70, '#ffd8b0', '#e8a080', 0.6, 1, 10, 0.8) + cloudCity(116, 46, 2.2)
       + cloudCar(84, 66, 0.9, -24) + cloudCar(96, 72, 0.7, -20) + bolt(89, 63, 70, 48, '#ff4a2a')
       + clouds(78, '#ffe8c8', '#f0b090', 1, 3, 10, 1.1)
-      + (kit.tie ? kit.tie(16, 22, 1.7) + kit.tie(22, 52, 1.4) : '') + bolt(25, 23, 38, 28, '#3aff6a') + bolt(29, 51, 40, 46, '#3aff6a')
-      + slave1(48, 34, 1.4, -24) + bolt(56, 49, 92, 40, '#ff4a2a') + bolt(53, 50, 86, 46, '#ff4a2a') + glow(92, 40, 2, '#ffb070', 0.5) + glow(86, 46, 1.6, '#ffb070', 0.4)
+      + (kit.tie ? kit.tie(16, 20, 1.6) + kit.tie(26, 54, 1.3) : '') + bolt(24, 21, 40, 24, '#3aff6a') + bolt(33, 53, 46, 48, '#3aff6a')
+      + slave1(54, 30, 1.05, -4) + bolt(52.6, 42.6, 84, 44, '#ff4a2a') + bolt(56, 42.4, 90, 40, '#ff4a2a') + glow(90, 40, 2, '#ffb070', 0.5) + glow(84, 44, 1.6, '#ffb070', 0.4)
       + clouds(88, '#fff0d8', '#f4c0a0', 1, 5, 10, 1.3),
 
     // 2 · Wing Guard Patrol: high on Cloud City's walkways at sunset. Domed
@@ -281,10 +281,10 @@
     cloud_car_chase: () => fill([[0, '#7a5a8a'], [0.5, '#f0a07a'], [1, '#ffd8a8']])
       + clouds(30, '#ffd8b8', '#e0a088', 0.5, 7, 8, 1.6) + E(80, 50, 60, 18, '#ffe8c8', 'opacity=".5"')
       + cloudTower(10, 92, 96, 30, '#ffe0c0', '#e8a888') + cloudTower(152, 92, 100, 28, '#ffd8b8', '#e0a080')
-      + tie(130, 22, 1.2, 0, true) + bolt(124, 26, 112, 30, '#3aff6a')
-      + slave1(110, 34, 1.15, -6)
-      + hounds(72, 44, 1.5, 6)
-      + cloudCar(34, 64, 1.5, -18) + cloudCar(22, 76, 1.2, -14) + bolt(45, 59, 58, 52, '#ff4a2a') + bolt(31, 72, 50, 58, '#ff4a2a') + glow(58, 51, 1.6, '#ffb070', 0.5)
+      + tie(136, 20, 1.05, 0, true) + bolt(131, 23, 112, 27, '#3aff6a')
+      + hounds(68, 32, 1.2, 4)
+      + slave1(118, 50, 0.95, 4) + bolt(116, 61, 96, 64, '#ff4a2a') + bolt(120, 61, 100, 68, '#ff4a2a')
+      + cloudCar(32, 58, 1.3, -24) + cloudCar(14, 70, 1, -20) + bolt(40, 54.5, 56, 40, '#ff4a2a') + bolt(20, 67.7, 50, 44, '#ff4a2a') + glow(56, 39.6, 1.6, '#ffb070', 0.5)
       + cloudTower(110, 96, 30, 18, '#ffe8c8', '#f0b090') + clouds(86, '#fff0d8', '#f4c0a0', 1, 8, 10, 1.3),
 
     // 6 · Ugnaught Tunnels: the city's industrial guts. Ribbed arches, a
