@@ -533,6 +533,7 @@
             <span class="stage-info"><span>Lv ${stg.level} · ${enc.stars}★</span><span>⚡ ${fmt(enemyPower)}</span>${cur('credits', r.credits)}${state !== 'cleared' ? `<span class="first-clear">${cur('crystals', r.firstClearCrystals + (finale ? D.PLANET_CLEAR_KYBER : 0))}${finale ? cur('aurodium', D.PLANET_CLEAR_AURODIUM) : ''}</span>` : ''}</span>
           </span>
           <span class="mini-row">${enc.enemies.map((id) => miniPortrait(D.UNIT_MAP[id])).join('')}</span>
+          ${state === 'cleared' && root.QoL24 && root.QoL24.on() && Player.state.account.level >= 15 ? '<span class="replay3" role="button" tabindex="0" data-replay3 title="Play this stage 3 times on Auto">Replay ×3</span>' : ''}
         </button>`;
       });
       const bossRows = (filter === 'all' || filter === 'boss') ? bosses.map((enc, k) => {
@@ -566,6 +567,7 @@
       const f = e.target.closest('[data-filter]');
       if (f) { filter = f.dataset.filter; return renderList(); }
       const st = e.target.closest('[data-stage]');
+      if (st && !st.disabled && e.target.closest('[data-replay3]')) { close(); return root.QoL24.replay3({ type: 'stage', planet: p.id, stage: Number(st.dataset.stage) }); }
       if (st && !st.disabled) { close(); return App.go('squad', { type: 'stage', planet: p.id, stage: Number(st.dataset.stage) }); }
       const b = e.target.closest('[data-boss]');
       if (b && !b.disabled) { close(); App.go('squad', { type: 'boss', boss: b.dataset.boss }); }
@@ -1552,6 +1554,17 @@
       </div>`;
     }
 
+    // 2.4: a maxed card's spare shards sell for credits (Kyber for secret cards).
+    function sellHtml() {
+      const o = root.QoL24 && root.QoL24.sellOffer(id);
+      if (!o) return '';
+      return `<div class="upgrade sell-shards">
+          <b>${fmt(Player.unit(id).shards)} spare shards</b>
+          <span class="muted">This card is fully maxed, so its extra shards can be sold.</span>
+          <button class="btn btn-gold" type="button" data-sell-shards>Sell ${fmt(o.shards)} for ${o.kyber ? cur('crystals', o.kyber) : cur('credits', o.credits)}</button>
+        </div>`;
+    }
+
     function upgradePage() {
       const owned = Player.owns(id);
       if (!owned) {
@@ -1581,6 +1594,7 @@
             : `<button class="btn btn-gold" type="button" data-star-aur ${Player.state.aurodium < starAur ? 'disabled' : ''}>Promote to ${u.stars + 1}★ · ${cur('aurodium', starAur)}</button>
           <span class="muted small">${u.shards ? `Uses your ${u.shards} shards; ingots cover the missing ${starNeed - u.shards}.` : 'No shards yet: ingots cover the whole promotion.'} Ingots come from bosses, new tower boss floors and the daily streak.</span>`}
         </div>
+        ${sellHtml()}
       </div>`;
     }
 
@@ -1715,6 +1729,14 @@
       if (e.target.closest('[data-level]') && Player.levelUp(id)) say('level', `Level ${Player.unit(id).level}!`);
       else if (e.target.closest('[data-star]') && Player.starUp(id)) say('star', `Promoted to ${Player.unit(id).stars}★!`);
       else if (e.target.closest('[data-star-aur]') && Player.starUpAurodium(id)) say('star', `Promoted to ${Player.unit(id).stars}★!`);
+      else if (e.target.closest('[data-sell-shards]') && root.QoL24) {
+        const o = root.QoL24.sell(id);
+        if (!o) return;
+        toast(`Sold ${fmt(o.shards)} shards for ${o.kyber ? `${fmt(o.kyber)} Kyber` : `${fmt(o.credits)} credits`}.`);
+        render();
+        updateWallet();
+        return;
+      }
       else return;
       if (root.Sound) root.Sound.play('rankup');
       render();

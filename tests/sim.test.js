@@ -890,6 +890,24 @@ test('2.4 Liberation: off until 2.4; then 10-stage worlds, 22 bosses, new cards 
     const a2 = atst.hp; b.applyDamage(atst, 100, false, []);
     assert.strictEqual(a2 - atst.hp, 70, 'armour takes 30% off');
   }
+  // Quality of life: spare shards of a maxed card sell by rarity; secret cards for Kyber.
+  const Q = globalThis.QoL24;
+  Player.grantCard('bendu', false);
+  const bu = Player.unit('bendu');
+  bu.shards = 10;
+  assert.strictEqual(Q.sellOffer('bendu'), null, 'not maxed yet');
+  bu.level = D.MAX_LEVEL; bu.stars = D.MAX_STARS;
+  const cr = Player.state.credits;
+  assert.deepStrictEqual(Q.sell('bendu'), { shards: 10, kyber: 0, credits: 2500 });
+  assert.strictEqual(Player.state.credits - cr, 2500);
+  assert.strictEqual(bu.shards, 0);
+  Player.grantCard('darth_bane', false);
+  const db = Player.unit('darth_bane');
+  db.level = D.MAX_LEVEL; db.stars = D.MAX_STARS; db.shards = 9;
+  const ky = Player.state.crystals;
+  assert.strictEqual(Q.sell('darth_bane').kyber, 2);
+  assert.strictEqual(Player.state.crystals - ky, 2);
+  assert.strictEqual(db.shards, 1, 'leftover shards stay');
 });
 
 console.log(`\n${passed} tests passed`);
