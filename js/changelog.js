@@ -15,7 +15,33 @@
   const LAUNCH_22 = root.__v22Test != null ? root.__v22Test : Date.UTC(2026, 9, 28, 12, 5, 0);
   // Update 2.3 goes live at 7:05 a.m. Central on November 11, 2026 (after DST ends).
   const LAUNCH_23 = root.__v23Test != null ? root.__v23Test : Date.UTC(2026, 10, 11, 13, 5, 0);
+  // Update 2.4 has no date yet, so its entry stays hidden. When the date is set,
+  // put the same time here as RELEASE24 in js/liberation24.js and fill in `date`.
+  const LAUNCH_24 = root.__v24Test != null ? root.__v24Test : null;
   const ALL_UPDATES = [
+    {
+      v: '2.4', date: 'Date to be set', title: 'Liberation', from: LAUNCH_24 == null ? Infinity : LAUNCH_24,
+      items: [
+        'NEW|Liberate the galaxy: every world now has 10 stages with its own cast of enemies, a main boss that liberates it and an optional boss on the side. A world counts as liberated once its main boss falls.',
+        'NEW|11 new bosses: the Wampa on Hoth, the Cave\'s Vision on Dagobah, Carbonite Chamber Vader and Bossk with the Hound\'s Tooth on Bespin, the AT-ST Walker on Endor, Director Krennic on Scarif, Darth Sidious and Commander Cody on Coruscant, Jango Fett in the Geonosis arena, Emperor Reborn on Exegol and General Grievous, Warlord at the Siege of Coruscant. Each fights with its own tricks.',
+        'NEW|Optional bosses: your first win opens a free Holocron (Jedi for the light side, Sith for the dark), and every win after that pays 1,500 credits and 1 Aurodium.',
+        'NEW|Liberator of the Galaxy badge: beat all 22 bosses, main and optional, to earn the Bendu (Mythic), an ancient Force wielder who stores the damage he takes and gives it all back with his ultimate.',
+        'NEW|10 new cards to face in the new stages, and to find in crates: Gamorrean Guard, Snowtrooper, Cloud City Wing Guard, Scout Trooper, Shoretrooper, Clone Force 66 Trooper, Geonosian Warrior, Purge Trooper, Knight of Ren and BX Commando Droid.',
+        'NEW|HoloNet raid: the Xyston Star Destroyer rises from the storms of Exegol, the first fleet raid. Bring your fleet and an ally fleet against 5,600,000 health, two Sith TIE Daggers and Sith Star Destroyer escorts.',
+        'NEW|Axial Superlaser: the Xyston locks onto your strongest ship, warns you, then fires on its next turn for massive damage, and charges again every 4 turns. A locked ship with Defense Up takes half the blast.',
+        'NEW|Sith Fleet: a new Sith Star Destroyer escort rises from the storm every 3 turns, and escorts can Taunt to screen the flagship. At half health the Final Order begins: every waiting destroyer rises at once and the whole fleet gains Offense Up. Its ultimate, Sith Armada, hits your whole fleet and Burns it.',
+        'NEW|HoloNet raid: the Invisible Hand, General Grievous\'s flagship burning above Coruscant. A fresh wave of Droid Tri-Fighters launches every 2 turns, and below half health a Hull Breach makes it lose health every turn but hit much harder. Its ultimate, All Batteries, hits your whole fleet with Defense Down.',
+        'IMPROVED|The weekly raid now rotates through six bosses, starting with the first full week after the update.',
+        'NEW|Replay ×3 (level 15): cleared stages get a button that plays the battle three times on Auto.',
+        'NEW|The results screen shows what you\'ve earned this play session and about how much that is an hour.',
+        'NEW|Sell spare shards: once a card is at top level and top stars, its extra shards sell for credits (Kyber for Secret cards).',
+        'IMPROVED|The Hoth Star Destroyer has a new, detailed portrait.',
+        'BALANCE|Levelling a card from 31 up to 35 costs a quarter more.',
+        'IMPROVED|Coruscant Under Siege gets tougher levels and BX Commando Droids in its ranks.',
+        'BALANCE|Replaying a stage you\'ve already beaten pays 60% of its rewards.',
+        'IMPROVED|Already finished a world before 2.4? You keep every stage you beat, your squad slots and the next worlds open. Go back for the new stages and the boss to liberate it.',
+      ],
+    },
     {
       v: '2.3', date: 'November 11, 2026', title: 'The Hutt\'s Vault', from: LAUNCH_23,
       items: [
