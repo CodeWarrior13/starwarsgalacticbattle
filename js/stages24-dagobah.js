@@ -72,19 +72,24 @@
   // crown of horns, armour and pauldrons, bare tattooed arms, and his red
   // double-bladed lightsaber pike.
   const savage = (x, y, s, f = 1) => g(x, y, s, f,
-    E(0, 0.2, 5, 0.7, '#000', 'opacity=".3"')
-    + R(-2.8, -5.4, 2.2, 5, '#2a2a30', 'rx=".4"') + R(0.6, -5.4, 2.2, 5, '#24242a', 'rx=".4"') + R(-3, -0.8, 2.6, 0.9, '#1a1a1e') + R(0.4, -0.8, 2.6, 0.9, '#1a1a1e')
-    + P('M-3.4 -6.4 L-4 -2 L4 -2 L3.4 -6.4Z', '#3a2a22', 'stroke="#1a1410" stroke-width=".2"') + L(0, -6.2, 0, -2.2, '#1a1410', 0.3)
-    + P('M-4.4 -12.6 L-3.4 -6.2 L3.4 -6.2 L4.4 -12.6 C2.6 -13.6 -2.6 -13.6 -4.4 -12.6Z', '#4a3a32', 'stroke="#1a1410" stroke-width=".25"') + P('M-2.4 -12.4 L-2 -7 M2.4 -12.4 L2 -7 M-3.4 -10 L3.4 -10', 'none', 'stroke="#2a201a" stroke-width=".3"') + R(-3.6, -7, 7.2, 0.9, '#2a201a') + R(-0.6, -7.1, 1.2, 1.1, '#8a7a5a')
-    + E(-4.4, -12.2, 1.8, 1.2, '#5a5a62', 'stroke="#2a2a30" stroke-width=".2"') + E(4.4, -12.2, 1.8, 1.2, '#4e4e56', 'stroke="#2a2a30" stroke-width=".2"')
-    + P('M-4.8 -12 C-6.2 -10 -6.6 -8 -6.2 -5.6 L-4.9 -5.6 C-5.1 -7.6 -4.8 -9.6 -3.8 -11Z', '#d8a03a', 'stroke="#8a6020" stroke-width=".15"') + P('M-5.9 -10.2 l1.2 .5 M-6.2 -8.6 l1.3 .3 M-6.1 -7 l1.2 .2', 'none', 'stroke="#1a1010" stroke-width=".3"') + C(-5.6, -5.2, 0.75, '#c8902e')
-    + P('M3.8 -12.6 C5.6 -12 6.6 -10 7 -8.4 L5.8 -7.8 C5.6 -9.4 4.8 -10.6 3.6 -11Z', '#d8a03a', 'stroke="#8a6020" stroke-width=".15"') + P('M5 -11.6 l.6 -.8 M5.8 -10.4 l.7 -.6 M6.3 -9.2 l.7 -.4', 'none', 'stroke="#1a1010" stroke-width=".3"')
-    + P('M-1.4 -13.2 L1.4 -13.2 L1.1 -12.4 L-1.1 -12.4Z', '#c8902e')
-    + E(0, -14.8, 1.7, 2, '#e0aa3e', 'stroke="#8a6020" stroke-width=".2"') + P('M-1 -16.2 L-0.4 -14 M1 -16.2 L0.4 -14 M-1.5 -14.6 L-0.7 -13.4 M1.5 -14.6 L0.7 -13.4 M0 -16.6 L0 -15.4 M-0.6 -13.2 L0.6 -13.2', 'none', 'stroke="#1a1010" stroke-width=".35"')
-    + E(-0.65, -15, 0.35, 0.22, '#ffe85a') + E(0.65, -15, 0.35, 0.22, '#ffe85a') + C(-0.65, -15, 0.12, '#1a0a0a') + C(0.65, -15, 0.12, '#1a0a0a')
-    + [-1.3, -0.85, -0.4, 0.05, 0.5, 0.95, 1.35].map((hx) => { const by = -16.3 + hx * hx * 0.5; return P(`M${hx - 0.18} ${by} L${hx * 1.1} ${by - 0.9} L${hx + 0.18} ${by}Z`, '#ece2c8', 'stroke="#8a7a5a" stroke-width=".1"'); }).join('')
-    + P('M0 -15 L-0.15 -14.1 L0.15 -14.1Z', '#c8902e') + P('M-0.5 -13.5 Q0 -13.3 0.5 -13.5', 'none', 'stroke="#5a2a10" stroke-width=".22"') + L(5.6, -8, 7.4, -8.6, '#8a8a92', 0.01) + C(6.5, -8.1, 0.75, '#c8902e')
-    + L(5.4, -11, 8.2, -5, '#8a8a92', 0.7) + L(8.2, -5, 11.6, 2.2, '#ff2a1a', 1.2) + L(8.2, -5, 11.6, 2.2, '#ffd8d0', 0.4) + L(5.4, -11, 2.2, -17.8, '#ff2a1a', 1.2) + L(5.4, -11, 2.2, -17.8, '#ffd8d0', 0.4) + glow(5.4, -11, 1.2, '#ff2a1a', 0.3));
+    E(0, 0.2, 4.4, 0.7, '#000', 'opacity=".3"')
+    + R(-2.4, -5.4, 1.9, 5, '#2a2a30', 'rx=".4"') + R(0.5, -5.4, 1.9, 5, '#24242a', 'rx=".4"') + R(-2.6, -0.8, 2.3, 0.9, '#1a1a1e') + R(0.3, -0.8, 2.3, 0.9, '#1a1a1e') + L(-1.45, -3.6, -1.45, -1.4, '#3a3a42', 0.25) + L(1.45, -3.6, 1.45, -1.4, '#3a3a42', 0.25)
+    + P('M-3 -6.4 L-3.5 -2 L3.5 -2 L3 -6.4Z', '#3a2a22', 'stroke="#1a1410" stroke-width=".2"') + L(0, -6.2, 0, -2.2, '#1a1410', 0.3) + P('M-2.2 -6 L-2.6 -2.2 M2.2 -6 L2.6 -2.2', 'none', 'stroke="#2a201a" stroke-width=".2"')
+    + P('M-3.6 -12.6 L-2.8 -6.2 L2.8 -6.2 L3.6 -12.6 C2.2 -13.4 -2.2 -13.4 -3.6 -12.6Z', '#4a3a32', 'stroke="#1a1410" stroke-width=".25"') + P('M-2 -12.4 L-1.7 -7 M2 -12.4 L1.7 -7 M-2.9 -10 L2.9 -10 M-2.7 -8.6 L2.7 -8.6', 'none', 'stroke="#2a201a" stroke-width=".25"') + R(-3, -7, 6, 0.9, '#2a201a') + R(-0.6, -7.1, 1.2, 1.1, '#8a7a5a') + P('M-1.2 -12.6 L0 -11.4 L1.2 -12.6', 'none', 'stroke="#c8902e" stroke-width=".3"')
+    + E(-3.7, -12.3, 1.4, 1, '#5a5a62', 'stroke="#2a2a30" stroke-width=".2"') + E(3.7, -12.3, 1.4, 1, '#4e4e56', 'stroke="#2a2a30" stroke-width=".2"') + P('M-4.6 -12.4 L-2.8 -12.4 M3 -12.4 L4.6 -12.4', 'none', 'stroke="#7a7a84" stroke-width=".2"')
+    // his left arm hanging: muscled upper arm with tattoo bands, the elbow, a leather bracer, the hand
+    + P('M-4.2 -12 C-5.2 -11.2 -5.5 -10 -5.3 -8.8 L-4.2 -8.7 C-4.2 -9.8 -3.9 -10.8 -3.3 -11.4Z', '#d8a03a', 'stroke="#8a6020" stroke-width=".15"') + P('M-5.1 -11 L-3.8 -10.6 M-5.4 -9.8 L-4.1 -9.5', 'none', 'stroke="#1a1010" stroke-width=".3"') + P('M-4.8 -10.6 Q-4.6 -10 -4.7 -9.4', 'none', 'stroke="#f0c060" stroke-width=".2"')
+    + P('M-5.3 -8.8 L-5.5 -6.2 L-4.3 -6.1 L-4.2 -8.7Z', '#3a2a22', 'stroke="#1a1410" stroke-width=".15"') + P('M-5.4 -8 L-4.2 -7.9 M-5.45 -7.1 L-4.25 -7', 'none', 'stroke="#5a4a3a" stroke-width=".18"') + P('M-5.5 -6.2 C-5.8 -5.4 -5.2 -4.8 -4.6 -5 C-4.1 -5.2 -4.1 -5.8 -4.3 -6.1Z', '#d8a03a', 'stroke="#8a6020" stroke-width=".12"')
+    // his right arm reaching to the pike: upper arm, bracer, the hand on the hilt
+    + P('M3.4 -12.4 C4.6 -12 5.4 -11.2 5.6 -10.2 L4.6 -9.8 C4.4 -10.6 3.8 -11.2 3 -11.4Z', '#d8a03a', 'stroke="#8a6020" stroke-width=".15"') + P('M4.2 -12 L4 -11 M5 -11.4 L4.6 -10.4', 'none', 'stroke="#1a1010" stroke-width=".3"')
+    + P('M5.6 -10.2 L6.6 -9 L5.8 -8.4 L4.6 -9.8Z', '#3a2a22', 'stroke="#1a1410" stroke-width=".15"')
+    + P('M1.4 -13.2 L-1.4 -13.2 L-1.1 -12.4 L1.1 -12.4Z', '#c8902e')
+    + E(0, -14.8, 1.6, 1.95, '#e0aa3e', 'stroke="#8a6020" stroke-width=".2"') + P('M-1 -16.2 L-0.4 -14 M1 -16.2 L0.4 -14 M-1.4 -14.6 L-0.7 -13.4 M1.4 -14.6 L0.7 -13.4 M0 -16.6 L0 -15.4 M-0.6 -13.2 L0.6 -13.2', 'none', 'stroke="#1a1010" stroke-width=".35"')
+    + E(-0.62, -15, 0.34, 0.22, '#ffe85a') + E(0.62, -15, 0.34, 0.22, '#ffe85a') + C(-0.62, -15, 0.12, '#1a0a0a') + C(0.62, -15, 0.12, '#1a0a0a')
+    + [-1.25, -0.82, -0.4, 0.04, 0.48, 0.9, 1.3].map((hx) => { const by = -16.25 + hx * hx * 0.5; return P(`M${hx - 0.17} ${by} L${hx * 1.1} ${by - 0.85} L${hx + 0.17} ${by}Z`, '#ece2c8', 'stroke="#8a7a5a" stroke-width=".1"'); }).join('')
+    + P('M0 -15 L-0.15 -14.1 L0.15 -14.1Z', '#c8902e') + P('M-0.5 -13.5 Q0 -13.3 0.5 -13.5', 'none', 'stroke="#5a2a10" stroke-width=".22"')
+    + L(5.4, -11, 8.2, -5, '#8a8a92', 0.7) + [0.25, 0.5, 0.75].map((t) => C(5.4 + 2.8 * t, -11 + 6 * t, 0.42, '#5a5a62')).join('') + L(8.2, -5, 11.6, 2.2, '#ff2a1a', 1.2) + L(8.2, -5, 11.6, 2.2, '#ffd8d0', 0.4) + L(5.4, -11, 2.2, -17.8, '#ff2a1a', 1.2) + L(5.4, -11, 2.2, -17.8, '#ffd8d0', 0.4) + glow(5.4, -11, 1.2, '#ff2a1a', 0.3)
+    + P('M6 -9.4 C6.6 -9.6 7 -9 6.8 -8.4 C6.6 -8 6 -8 5.8 -8.4Z', '#d8a03a', 'stroke="#8a6020" stroke-width=".12"'));
   // Asajj Ventress: bald and pale with faint markings, the dark layered
   // outfit with its sash and skirt panels, and the two curved-hilt red sabers.
   const ventress = (x, y, s, f = 1, pose = 0) => g(x, y, s, f,
@@ -124,15 +129,37 @@
     + E(0, -3.7, 1.05, 0.95, '#a2c07a', 'stroke="#6a8a4a" stroke-width=".12"') + E(-0.42, -3.75, 0.32, 0.3, '#14100c') + E(0.42, -3.75, 0.32, 0.3, '#14100c') + C(-0.34, -3.86, 0.09, '#ffffff') + C(0.5, -3.86, 0.09, '#ffffff') + P('M-0.12 -3.3 Q0 -3.2 0.12 -3.3', 'none', 'stroke="#6a8a4a" stroke-width=".1"'));
   // Kylo Ren: the black layered robes and cape, hood and cowl, the black
   // helmet with its silver-trimmed visor, and the crackling crossguard saber.
-  const kylo = (x, y, s, f = 1) => g(x, y, s, f,
-    E(0, 0.2, 4.4, 0.6, '#000', 'opacity=".35"')
-    + P('M-3 -11 C-4.6 -7 -5.4 -3 -5.6 0 L5.2 0 C5 -3 4.4 -7 3 -11Z', '#141418', 'stroke="#050508" stroke-width=".25"') + P('M-1 -10 L-1.6 0 M1.2 -10 L1.8 0 M-3 -6 L-3.8 0 M3 -6 L3.6 0', 'none', 'stroke="#26262c" stroke-width=".3"')
-    + P('M-2.4 -11.4 L-2 -6 L2 -6 L2.4 -11.4 C1.2 -12 -1.2 -12 -2.4 -11.4Z', '#1c1c22') + R(-2.2, -7, 4.4, 0.8, '#2a2a30') + R(-0.5, -7.1, 1, 1, '#8a8a92')
-    + P('M-2.8 -11.2 C-3.4 -12.8 -2.6 -14.4 -1.6 -14.6 L1.6 -14.6 C2.6 -14.4 3.4 -12.8 2.8 -11.2 C1.4 -12 -1.4 -12 -2.8 -11.2Z', '#0e0e12')
-    + P('M-1.4 -14.4 C-1.6 -16.6 1.6 -16.6 1.4 -14.4 L1.5 -12.6 L-1.5 -12.6Z', '#141418', 'stroke="#3a3a42" stroke-width=".15"') + P('M-1.3 -14.6 L1.3 -14.6 M0 -14.6 L0 -12.8', 'none', 'stroke="#b8bcc4" stroke-width=".25"') + P('M-1.2 -15 L1.2 -15', 'none', 'stroke="#d8dce4" stroke-width=".2"')
-    + L(2.2, -10.4, 3.6, -8, '#141418', 0.9) + R(3.2, -8.6, 1.2, 1.6, '#4a4a52') + L(2.4, -8, 5, -8, '#ff3a1a', 0.5) + L(2.4, -8, 5, -8, '#ffd8c8', 0.18)
-    + P('M3.8 -8.6 L4.4 -12 L3.6 -14.6 L4.6 -17 L4 -20.6', 'none', 'stroke="#ff2a10" stroke-width="1.2" stroke-linejoin="round"') + P('M3.8 -8.6 L4.4 -12 L3.6 -14.6 L4.6 -17 L4 -20.6', 'none', 'stroke="#ffe0d0" stroke-width=".35"') + glow(4.1, -14, 1.6, '#ff2a10', 0.25)
-    + [[4.6, -11], [3.4, -15.6], [4.8, -18.4]].map(([px, py]) => P(`M${px} ${py} l.8 -.4 l-.2 .8`, 'none', 'stroke="#ff8a6a" stroke-width=".2"')).join(''));
+  // Kylo's crossguard saber: the hilt with its vents, the two short quillon
+  // blades out to the sides, and the long unstable blade with ragged,
+  // crackling edges and a hot core. (hx, hy) = the emitter; ang = tilt.
+  const crossSaber = (hx, hy, len, ang = 0) => {
+    const n = 12; const pts = [];
+    for (let k = 0; k <= n; k++) { const yy = -0.5 - (len * k) / n; const j = 0.5 + ((k * 7) % 4) * 0.12; pts.push([j * (k === n ? 0.4 : 1), yy]); }
+    const right = pts.map(([px, py]) => `${px.toFixed(2)} ${py.toFixed(2)}`); const left = pts.slice().reverse().map(([px, py], k) => `${(-px - ((k * 5) % 3) * 0.08).toFixed(2)} ${py.toFixed(2)}`);
+    const quill = (sd) => `<line x1="${sd * 0.6}" y1="-0.3" x2="${sd * 2.4}" y2="-0.3" stroke="#ff2a10" stroke-width="2" opacity=".25" stroke-linecap="round"/>` + P(`M${sd * 0.6} -0.65 L${sd * 2.2} -0.75 L${sd * 2.5} -0.3 L${sd * 2.2} 0.15 L${sd * 0.6} 0.05Z`, '#ff2a10') + L(sd * 0.7, -0.3, sd * 2.2, -0.3, '#fff0e8', 0.22);
+    return `<g transform="translate(${hx} ${hy}) rotate(${ang})">`
+      + `<line x1="0" y1="-0.5" x2="0" y2="${-len}" stroke="#ff2a10" stroke-width="3.4" opacity=".18" stroke-linecap="round"/><line x1="0" y1="-0.5" x2="0" y2="${-len}" stroke="#ff2a10" stroke-width="2" opacity=".3" stroke-linecap="round"/>`
+      + P(`M${right.join(' L')} L${left.join(' L')}Z`, '#ff2a10') + P(`M0.18 -0.6 L0.28 ${(-len * 0.5).toFixed(1)} L0.1 ${(-len + 0.4).toFixed(1)} L-0.12 ${(-len * 0.5).toFixed(1)} L-0.2 -0.6Z`, '#fff0e8')
+      + quill(-1) + quill(1)
+      + [[0.7, -2.6, 1], [-0.7, -5.2, -1], [0.8, -7.6, 1], [-0.7, -9.6, -1]].map(([px, py, sd]) => P(`M${px} ${py} l${sd * 0.7} -.3 l${-sd * 0.2} .7`, 'none', 'stroke="#ffb08a" stroke-width=".18"')).join('')
+      + R(-0.5, -0.6, 1, 0.9, '#5a5a62') + R(-0.45, 0.3, 0.9, 2.4, '#2a2a30') + [0.8, 1.4, 2].map((yy) => L(-0.45, yy, 0.45, yy, '#6a6a72', 0.15)).join('') + R(-0.55, 2.6, 1.1, 0.4, '#4a4a52')
+      + `</g>`;
+  };
+  // Kylo Ren: the long black cape, the ribbed tunic with its belt and silver
+  // buckle, gloved hands, the hood and cowl round the black helmet with its
+  // silver-trimmed brow, visor and cheek lines, and the crossguard saber.
+  const kylo = (x, y, s, f = 1, ang = 6) => g(x, y, s, f,
+    E(0, 0.2, 4.6, 0.6, '#000', 'opacity=".35"')
+    + P('M-3.4 -11.6 C-5.4 -7 -6.2 -3 -6.4 0 L6 0 C5.8 -3 5 -7 3.4 -11.6Z', '#0a0a0e', 'stroke="#000" stroke-width=".2"') + P('M-4.6 -6 L-5.4 0 M4.4 -6 L5 0', 'none', 'stroke="#1c1c22" stroke-width=".3"')
+    + P('M-2.4 -11.2 C-3 -7 -3.5 -3 -3.8 0 L3.8 0 C3.5 -3 3 -7 2.4 -11.2Z', '#18181e', 'stroke="#050508" stroke-width=".2"') + [-10.6, -10, -9.4, -8.8, -8.2, -7.6].map((yy) => L(-2.3, yy, 2.3, yy, '#26262e', 0.15)).join('')
+    + P('M-0.6 -6.2 L-1.2 0 M0.7 -6.2 L1.3 0 M-2.2 -5 L-3 0 M2.2 -5 L3 0', 'none', 'stroke="#26262e" stroke-width=".3"')
+    + R(-2.4, -7.1, 4.8, 0.9, '#2a2a30') + R(-0.7, -7.25, 1.4, 1.2, '#a8acb4', 'stroke="#5a5a62" stroke-width=".1"') + L(-0.3, -7.1, -0.3, -6.2, '#5a5a62', 0.12) + L(0.3, -7.1, 0.3, -6.2, '#5a5a62', 0.12)
+    + P('M-2.4 -10.8 L-3.6 -6.6 L-2.8 -6.3 L-1.8 -10Z', '#141418') + C(-3.25, -6.1, 0.55, '#08080a')
+    + P('M-3 -11.2 C-3.8 -12.8 -3.2 -14.8 -2.1 -15.5 C-0.8 -16.2 0.8 -16.2 2.1 -15.5 C3.2 -14.8 3.8 -12.8 3 -11.2 C1.4 -12 -1.4 -12 -3 -11.2Z', '#0e0e12') + P('M-2.6 -11.6 C-1.4 -10.6 1.4 -10.6 2.6 -11.6', 'none', 'stroke="#1c1c22" stroke-width=".4"')
+    + P('M-1.45 -14.2 C-1.6 -16.5 1.6 -16.5 1.45 -14.2 L1.6 -12.5 C0.8 -12.1 -0.8 -12.1 -1.6 -12.5Z', '#17171c', 'stroke="#3a3a42" stroke-width=".12"') + P('M-1 -15.8 Q0 -16.3 1 -15.8', 'none', 'stroke="#4a4a54" stroke-width=".2"')
+    + R(-1.25, -14.55, 2.5, 0.4, '#000') + P('M-1.45 -14.6 Q0 -14.85 1.45 -14.6', 'none', 'stroke="#c8ccd4" stroke-width=".22"') + L(0, -14.2, 0, -12.9, '#c8ccd4', 0.2) + P('M-1.3 -14.3 L-1.15 -12.7 M1.3 -14.3 L1.15 -12.7', 'none', 'stroke="#a8acb4" stroke-width=".16"') + P('M-0.5 -12.7 L0.5 -12.7 M-0.4 -12.45 L0.4 -12.45', 'none', 'stroke="#5a5a62" stroke-width=".1"')
+    + P('M2.2 -10.8 L3.9 -9.3 L3.4 -8.5 L1.8 -9.8Z', '#141418') + C(3.9, -8.7, 0.6, '#08080a')
+    + crossSaber(3.9, -9.4, 13, ang));
   // Mother Talzin: the tall red-and-black robes flaring to the ground, the
   // ruff collar, pale face with her markings, the great spiked headdress
   // fanning up behind her head, and green magick blazing in both hands.
@@ -170,9 +197,21 @@
     + (glowOn ? [-2.4, 2.2].map((yy) => glow(-16.2, yy, 1, '#ff7a4a', 0.45) + E(-15.8, yy, 0.4, 0.9, '#ffd0a8')).join('') : ''), a);
   // A TIE Interceptor, front-on: the ball cockpit with its spoked window, the
   // pylons and the dagger-tipped wings with cannons at the tips.
-  const interceptor = (x, y, s, a = 0) => g(x, y, s, 1,
-    [-1, 1].map((sd) => P(`M${sd * 4.4} 0 L${sd * 6.8} -9.6 L${sd * 8.2} -10 L${sd * 6.8} -4 L${sd * 8.8} -1.6 L${sd * 8.8} 1.6 L${sd * 6.8} 4 L${sd * 8.2} 10 L${sd * 6.8} 9.6Z`, '#3a3e46', 'stroke="#1a1e24" stroke-width=".3"') + P(`M${sd * 5.2} 0 L${sd * 6.8} -7.4 M${sd * 5.2} 0 L${sd * 6.8} 7.4 M${sd * 5.6} -2 L${sd * 8} -1 M${sd * 5.6} 2 L${sd * 8} 1`, 'none', 'stroke="#5a5e66" stroke-width=".25"') + C(sd * 8, -9.8, 0.35, '#ff5a3a') + C(sd * 8, 9.8, 0.35, '#ff5a3a')).join('')
-    + L(-4.4, 0, 4.4, 0, '#5a5e66', 1) + C(0, 0, 2, '#6a6e76', 'stroke="#2a2e36" stroke-width=".25"') + C(0, 0, 1.15, '#14181e') + Array.from({ length: 8 }, (_, k) => { const an = (k / 8) * Math.PI * 2; return L(0, 0, (Math.cos(an) * 1.1).toFixed(2), (Math.sin(an) * 1.1).toFixed(2), '#4a4e56', 0.15); }).join('') + C(-0.4, -0.4, 0.3, '#5a7aa8', 'opacity=".7"'), a);
+  // A TIE Interceptor, front-on: the ball cockpit with its spoked window and
+  // shading, the pylons with their joints, and the bent dagger wings with
+  // frames, solar panels and the four wingtip cannons. fire lights the guns.
+  const interceptor = (x, y, s, a = 0, fire = false) => g(x, y, s, 1,
+    [-1, 1].map((sd) => {
+      const o = `M${sd * 4.6} -0.9 L${sd * 6.6} -10.4 L${sd * 8.6} -10.8 L${sd * 7.4} -4.4 L${sd * 9.2} -2 L${sd * 9.2} 2 L${sd * 7.4} 4.4 L${sd * 8.6} 10.8 L${sd * 6.6} 10.4 L${sd * 4.6} 0.9Z`;
+      const i = `M${sd * 5.3} -1 L${sd * 6.9} -9.2 L${sd * 7.8} -9.4 L${sd * 6.8} -4.2 L${sd * 8.5} -1.8 L${sd * 8.5} 1.8 L${sd * 6.8} 4.2 L${sd * 7.8} 9.4 L${sd * 6.9} 9.2 L${sd * 5.3} 1Z`;
+      return P(o, '#20232a', 'stroke="#0c0e12" stroke-width=".3"') + P(i, '#3e4450', 'stroke="#14161a" stroke-width=".15"')
+        + P(`M${sd * 5.6} 0 L${sd * 7.2} -8 M${sd * 5.6} 0 L${sd * 7.2} 8 M${sd * 5.6} 0 L${sd * 8.4} -1.4 M${sd * 5.6} 0 L${sd * 8.4} 1.4 M${sd * 6.2} -3 L${sd * 6.9} -4.4 M${sd * 6.2} 3 L${sd * 6.9} 4.4`, 'none', 'stroke="#16181e" stroke-width=".22"')
+        + P(`M${sd * 6.9} -9.2 L${sd * 7.8} -9.4 L${sd * 6.8} -4.2Z`, '#5a6270', 'opacity=".6"') + R(sd * 5.6 - 0.5, -0.6, 1, 1.2, '#2a2e36')
+        + [[8.6, -10.8], [8.6, 10.8]].map(([cx, cy]) => L(sd * cx, cy, sd * cx, cy + (cy < 0 ? -1.2 : 1.2), '#2a2e36', 0.45) + (fire ? glow(sd * cx, cy + (cy < 0 ? -1.4 : 1.4), 0.6, '#5aff6a', 0.7) + C(sd * cx, cy + (cy < 0 ? -1.4 : 1.4), 0.4, '#d8ffd0') : C(sd * cx, cy + (cy < 0 ? -1.3 : 1.3), 0.25, '#ff5a3a'))).join('');
+    }).join('')
+    + R(-4.6, -0.7, 9.2, 1.4, '#4a505a', 'stroke="#1a1c22" stroke-width=".2"') + [-3.6, 3.6].map((px) => R(px - 0.5, -0.9, 1, 1.8, '#2e323a')).join('')
+    + C(0, 0, 2.4, '#7a808a', 'stroke="#2a2e36" stroke-width=".25"') + P('M1.7 -1.7 A2.4 2.4 0 0 1 -1.7 1.7 A2.6 2.6 0 0 0 1.7 -1.7Z', '#4a505a', 'opacity=".7"') + C(0, 0, 1.75, '#3a3e46')
+    + C(0, 0, 1.35, '#0c1016') + Array.from({ length: 8 }, (_, k) => { const an = (k / 8) * Math.PI * 2; return L((Math.cos(an) * 0.35).toFixed(2), (Math.sin(an) * 0.35).toFixed(2), (Math.cos(an) * 1.35).toFixed(2), (Math.sin(an) * 1.35).toFixed(2), '#8a909a', 0.16); }).join('') + C(0, 0, 0.35, '#8a909a') + C(-0.5, -0.5, 0.35, '#7aa0d0', 'opacity=".6"') + P('M-1.6 -0.8 A1.8 1.8 0 0 1 -0.6 -1.7', 'none', 'stroke="#c8ccd4" stroke-width=".25" opacity=".7"'), a);
   const bolt = (x1, y1, x2, y2, c) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="1.6" stroke-linecap="round" opacity=".35"/><line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#ffffff" stroke-width=".5" stroke-linecap="round"/>`;
   // Yoda's hut: the mud dome and its smaller annex, round windows glowing
   // warm, the door, the chimney pipe with smoke, roots wrapped around it.
@@ -199,7 +238,7 @@
       + treeline(64, '#4a5a4a', 0.55, 1) + fog(58, 0.35, '#c8d4bc', 1) + treeline(70, '#33402e', 0.8, 4) + fog(66, 0.4, '#b8c8ac', 2)
       + bog(70, '#4a5a44', '#18221a', 1) + E(118, 74, 26, 2.4, '#e8e4c8', 'opacity=".22"') + P('M96 76 L140 76 M104 79 L132 79', 'none', 'stroke="#f0ecd0" stroke-width=".4" opacity=".4"')
       + refl(70, xwing(70, 54, 1.6, 10, true, false), 0.18)
-      + interceptor(26, 30, 1.1, -12) + interceptor(46, 18, 0.75, -8) + bolt(32, 34, 58, 42, '#3aff6a') + bolt(50, 21, 64, 36, '#3aff6a')
+      + bolt(36, 20, 58, 38, '#3aff6a') + bolt(18, 44, 52, 50, '#3aff6a') + bolt(52, 10, 66, 32, '#3aff6a') + interceptor(26, 32, 1.1, -12, true) + interceptor(48, 18, 0.75, -8, true)
       + xwing(72, 46, 1.6, 10, true) + E(70, 60, 16, 3, '#c8d4bc', 'opacity=".3"') + P('M88 70 Q96 66 104 70 M60 71 Q66 68 72 71', 'none', 'stroke="#c8d8c0" stroke-width=".8" opacity=".5"')
       + tree(10, 88, 80, 6, '#2a2c20', '#121410', '#4a5e30', 2) + tree(152, 90, 70, -8, '#2e3022', '#121410', '#4a5e30', 5)
       + pads([[40, 82, 2.4], [52, 86, 3], [100, 84, 2.2], [118, 88, 3.2]]) + reeds(28, 90, 9, 12) + reeds(132, 90, 8, 10) + fog(84, 0.25, '#c8d4bc', 3) + motes(14, 1, '#e8ff9a', 0.7, 40, 86),
@@ -279,8 +318,9 @@
       + `<clipPath id="dg-pl"><circle cx="30" cy="104" r="64"/></clipPath><g clip-path="url(#dg-pl)">${Array.from({ length: 16 }, (_, k) => { const cx = -24 + ((k * 37) % 110); const cy = 44 + ((k * 23) % 50); return E(cx, cy, 6 + (k % 4) * 3, 1.6 + (k % 3), k % 3 === 0 ? '#2a4a2a' : '#e0ecd8', `opacity="${k % 3 === 0 ? 0.5 : 0.35}" transform="rotate(${-12 + (k % 5) * 5} ${cx} ${cy})"`); }).join('')}${Array.from({ length: 6 }, (_, k) => P(`M${-20 + k * 16} ${50 + k * 6} q6 -3 12 0 t12 0`, 'none', 'stroke="#f0f6e8" stroke-width=".8" opacity=".35"')).join('')}</g>`
       + (() => { const [sh, sd] = LG([[0, '#000', 0], [1, '#000', 0.6]], 0, 0, 1, 1); return sd + C(30, 104, 64, sh); })() + C(30, 104, 64, 'none', 'stroke="#b8e0a8" stroke-width="1.6" opacity=".35"') + C(30, 104, 66, 'none', 'stroke="#8ad0a8" stroke-width="1" opacity=".15"')
       + (kit.isd ? kit.isd(122, 22, 2.1, '#7a828c') + kit.isd(152, 48, 0.9, '#5a626c') : '')
-      + interceptor(108, 52, 1.2, -10) + interceptor(124, 62, 1, -10) + interceptor(96, 66, 0.9, -10) + bolt(102, 56, 72, 64, '#3aff6a') + bolt(118, 64, 80, 70, '#3aff6a') + bolt(92, 70, 70, 72, '#3aff6a')
-      + xwing(58, 70, 1.3, 22, false, true) + bolt(70, 76, 90, 82, '#ff4a2a'),
+      + bolt(99, 42, 70, 56, '#3aff6a') + bolt(97, 63, 72, 66, '#3aff6a') + bolt(116, 52, 84, 60, '#3aff6a') + bolt(88, 58, 64, 66, '#3aff6a') + bolt(89, 78, 66, 74, '#3aff6a')
+      + interceptor(108, 52, 1.2, -6, true) + interceptor(124, 64, 1, -6, true) + interceptor(96, 68, 0.9, -6, true)
+      + `<g transform="translate(116 0) scale(-1 1)">${xwing(58, 66, 1.3, 16, false, true)}</g>`,
 
     // 7 · Brothers of Dathomir: the swamp turns crimson. Ancient Nightsister
     // ruins rise from the water, stone arches and standing stones carved
@@ -307,8 +347,18 @@
       + P('M2 90 C16 84 28 78 36 68 C44 56 48 40 54 26 C58 14 56 4 50 -2 L70 -2 C70 6 74 12 80 12 C86 12 90 6 90 -2 L112 -2 C104 6 102 14 106 26 C112 40 116 56 124 68 C132 78 144 84 158 90Z', '#16140e') + P('M80 12 C86 12 90 6 90 -2 L112 -2 C104 6 102 14 106 26 C112 40 116 56 124 68 C132 78 144 84 158 90 L112 90 C110 60 100 30 80 12Z', '#0a0a06', 'opacity=".7"')
       + [0, 1, 2, 3, 4, 5, 6, 7, 8].map((k) => P(`M${36 + k * 11} 90 C${40 + k * 10} 64 ${48 + k * 8} 36 ${56 + k * 6} 8`, 'none', 'stroke="#2a281e" stroke-width=".7" opacity=".7"')).join('')
       + [[60, 30, 3, 4], [98, 24, 2.6, 3.6], [42, 66, 3.4, 2.4], [120, 64, 3, 2.2], [104, 40, 2, 3]].map(([kx, ky, rx, ry]) => E(kx, ky, rx, ry, '#0a0a06') + E(kx, ky, rx, ry, 'none', 'stroke="#2a281e" stroke-width=".6"')).join('')
-      + P('M50 84 C48 64 60 44 80 42 C100 44 112 64 110 84Z', '#020404') + (() => { const [cg, cd] = LG([[0, '#ff2a10', 0.12], [1, '#020404', 0]], 0.5, 0.6, 0.5, 0); return cd + P('M50 84 C48 64 60 44 80 42 C100 44 112 64 110 84Z', cg); })()
-      + kylo(80, 78, 2.3, 1) + glow(84, 50, 6, '#ff2a10', 0.1)
+      + P('M50 84 C48 64 60 44 80 42 C100 44 112 64 110 84Z', '#000000')
+      + `<clipPath id="dg-cave"><path d="M50 84 C48 64 60 44 80 42 C100 44 112 64 110 84Z"/></clipPath><g clip-path="url(#dg-cave)">`
+      + (() => { const [cg, cd] = LG([[0, '#3a0604', 0.9], [0.55, '#140202', 0.6], [1, '#000', 0]], 0.5, 1, 0.5, 0); return cd + R(48, 40, 64, 46, cg); })()
+      + P('M56 84 C58 70 62 60 70 54 M104 84 C102 70 98 60 90 54 M62 50 C70 46 90 46 98 50', 'none', 'stroke="#2a0806" stroke-width="2.4" opacity=".8"') + P('M58 80 C60 68 66 58 74 52 M102 80 C100 68 94 58 86 52', 'none', 'stroke="#5a1008" stroke-width=".5" opacity=".7"')
+      + [[60, 60], [100, 58], [66, 72], [96, 74], [72, 50], [90, 50]].map(([px, py], k) => E(px, py, 6 + (k % 3) * 2, 1.6, '#2a0a10', 'opacity=".55"')).join('')
+      + glow(88, 62, 10, '#ff2a10', 0.2) + kylo(76, 84, 1.95, 1, 48)
+      + P('M70 80 L68.6 52 L72 46 L80 44 L88 46 L91.4 52 L90 80', 'none', 'stroke="#ff4a2a" stroke-width=".35" opacity=".0"')
+      + E(80, 82, 18, 2.2, '#ff2a10', 'opacity=".22"') + P('M66 82 L74 82 M86 82 L96 82', 'none', 'stroke="#ff6a4a" stroke-width=".4" opacity=".5"')
+      + Array.from({ length: 7 }, (_, k) => P(`M${48 + k * 10} 86 C${52 + k * 10} ${80 - (k % 3) * 2} ${58 + k * 10} ${84} ${62 + k * 10} ${78 - (k % 2) * 3}`, 'none', 'stroke="#0a0408" stroke-width="2.6" opacity=".7"')).join('')
+      + `</g>`
+      + [[-1, 0], [1, 0], [-1, 1], [1, 1], [-1, 2], [1, 2]].map(([sd, k]) => P(`M${80 + sd * (14 + k * 6)} ${44 + k * 4} q${sd * -1} ${4 + k} ${sd * 0.8} ${6 + k * 2} q${sd * -0.6} 2 ${sd * -1.6} 3`, 'none', 'stroke="#16140e" stroke-width="1.4" stroke-linecap="round"')).join('')
+      + [[60, 86], [96, 88], [130, 84], [30, 86]].map(([px, py], k) => P(`M${px - 14} ${py} C${px - 6} ${py - 4 - k} ${px + 6} ${py - 4} ${px + 16} ${py - 1}`, 'none', 'stroke="#2a1a2a" stroke-width="2.4" opacity=".45"')).join('')
       + [[-1, 0], [1, 0], [-1, 1], [1, 1]].map(([sd, k]) => P(`M${80 + sd * (28 + k * 6)} ${84 - k * 20} C${80 + sd * (36 + k * 8)} ${86} ${80 + sd * (48 + k * 10)} ${82} ${80 + sd * (60 + k * 8)} ${88}`, 'none', 'stroke="#16140e" stroke-width="5" stroke-linecap="round"')).join('')
       + P('M50 84 C48 64 60 44 80 42 C100 44 112 64 110 84', 'none', 'stroke="#2a2a1e" stroke-width="2"')
       + Array.from({ length: 12 }, (_, m) => P(`M${54 + m * 4.6} ${44 + Math.abs(m - 5.5) * 2.4} q${(m % 2) * 0.8 - 0.4} 6 0 ${8 + (m * 7 % 5) * 2.6}`, 'none', 'stroke="#2e3e22" stroke-width=".6" opacity=".9"')).join('')
@@ -343,8 +393,8 @@
       + P('M54 68 C52 54 58 46 62 30 C64 20 70 14 80 14 C90 14 96 20 98 30 C102 46 108 54 106 68Z', '#16140e') + [0, 1, 2, 3].map((k) => P(`M${60 + k * 12} 68 C${62 + k * 12} 54 ${66 + k * 8} 40 ${70 + k * 6} 20`, 'none', 'stroke="#2a281e" stroke-width=".6" opacity=".7"')).join('')
       + [[-1, 0], [1, 0], [-1, 1], [1, 1]].map(([sd, k]) => P(`M${80 + sd * (20 + k * 4)} ${68 - k * 6} C${80 + sd * (30 + k * 6)} ${68} ${80 + sd * (40 + k * 8)} ${70} ${80 + sd * (50 + k * 6)} ${74}`, 'none', 'stroke="#16140e" stroke-width="4" stroke-linecap="round"')).join('')
       + bog(70, '#22302a', '#060a08', 10)
-      + refl(70, talzin(80, 62, 2.2, 1) + kylo(50, 70, 2.3, 1) + ventress(112, 70, 2.3, 1, 0), 0.22)
-      + P('M66 62 L94 62 L98 66 L62 66Z', '#2a281e') + talzin(80, 62, 2.2, 1) + kylo(50, 70, 2.3, 1) + ventress(112, 70, 2.3, 1, 0)
+      + refl(70, talzin(80, 62, 2.2, 1) + kylo(50, 70, 2.3, 1, -14) + ventress(112, 70, 2.3, 1, 0), 0.22)
+      + P('M66 62 L94 62 L98 66 L62 66Z', '#2a281e') + talzin(80, 62, 2.2, 1) + kylo(50, 70, 2.3, 1, -14) + ventress(112, 70, 2.3, 1, 0)
       + sister(24, 80, 2, 1) + sister(138, 80, 2, -1) + reeds(24, 82, 8, 8, '#22301a') + reeds(138, 82, 8, 8, '#22301a')
       + tree(4, 92, 84, 6, '#1a1e16', '#080a06', '#2e4226', 17) + tree(156, 92, 84, -6, '#1a1e16', '#080a06', '#2e4226', 18)
       + fog(82, 0.3, '#7a9a8a', 20) + motes(16, 10, '#9aff8a', 0.7, 16, 84),
