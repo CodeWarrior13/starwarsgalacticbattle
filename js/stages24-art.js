@@ -332,14 +332,29 @@
         // the hull, shorter and taller: top face and near side
         + P('M35.5 50 L102.5 22 L113.5 34 L44.5 58Z', hull, 'stroke="#4e525a" stroke-width=".6"')
         + P('M44.5 58 L113.5 34 L113.5 52 L44.5 72Z', side, 'stroke="#3e424a" stroke-width=".6"')
-        // panel grid on top and side, hatches, vents
-        + [[48, 44.6, 54, 51.6], [60, 39.6, 66, 46.6], [72, 34.6, 78, 41.6], [84, 29.6, 90, 36.6], [96, 24.6, 102, 31.4]].map(([a1, b1, c1, d1]) => L(a1, b1, c1, d1, '#7e828a', 0.45)).join('') + L(40, 53.8, 108, 28, '#7e828a', 0.45)
-        + [54, 64, 74, 84, 94, 104].map((x) => { const t = 58 - (x - 44.5) * 0.3478; return L(x, t, x, t + 14 - (x - 44.5) * 0.058, '#4e525a', 0.45); }).join('') + L(44.5, 65, 113.5, 43, '#4e525a', 0.45) + L(44.5, 68.4, 113.5, 47.6, '#4e525a', 0.3)
-        + [[52, 64.4], [80, 55], [104, 46.6]].map(([x, y]) => R(x, y, 5, 3, '#7a7e86', `transform="rotate(-19 ${x} ${y})" stroke="#3e424a" stroke-width=".3"`) + [1, 2, 3, 4].map((k) => L(x + k, y + 0.4, x + k - 0.3, y + 2.6, '#4e525a', 0.25)).join('')).join('')
-        + R(60, 63, 10, 7, '#8a8e96', 'transform="rotate(-19 60 63)" stroke="#3e424a" stroke-width=".4"') + L(61.6, 64.6, 69, 62, '#4e525a', 0.3)
-        // the rust markings streaked down the silver hull
-        + P('M66 58 L70.4 56.6 L62 72.4 L57.6 73.6Z M75 55 L78.6 53.8 L71 68.6 L67.6 69.6Z M83 52.4 L85.8 51.4 L79.6 63.8 L77 64.6Z', '#8a3e22', 'opacity=".6"')
-        + P('M92 48 L95 47 L91 55 L88.6 55.8Z M50 62 L53 61 L49 69 L46.6 69.8Z', '#7a4a2a', 'opacity=".45"') + P('M60 46 L72 41 L74 43 L62 48Z', '#7a4a2a', 'opacity=".35"')
+        // the rounded tail section, so the back closes off smoothly, with its exhaust ports
+        + P('M102.5 22 C110 19.4 118.6 23.6 120.6 30.4 L121.4 43.6 C121 49.6 117.4 52.8 113.5 52 L113.5 34Z', side, 'stroke="#3e424a" stroke-width=".6"')
+        + P('M102.5 22 C110 19.4 118.6 23.6 120.6 30.4 L113.5 34Z', hull, 'stroke="#4e525a" stroke-width=".5"') + P('M113.5 34 L120.6 30.4 L121.4 43.6 C121 49.6 117.4 52.8 113.5 52Z', '#000', 'opacity=".15"')
+        + [[116.4, 38.4], [116.6, 44.6]].map(([x, y]) => E(x, y, 1.6, 2.2, '#2a2e36', 'stroke="#5e626a" stroke-width=".4"') + E(x, y, 0.8, 1.2, '#4e525a')).join('') + P('M114 35.4 C116.6 34 119 33 120.4 32', 'none', 'stroke="#7e828a" stroke-width=".4"')
+        // detail on the top face, clipped to it so nothing runs off the hull
+        + `<g clip-path="url(#rc-top)"><clipPath id="rc-top"><path d="M35.5 50 L102.5 22 L113.5 34 L44.5 58Z"/></clipPath>`
+          + [[48, 44.6, 54, 51.6], [60, 39.6, 66, 46.6], [72, 34.6, 78, 41.6], [84, 29.6, 90, 36.6], [96, 24.6, 102, 31.4]].map(([a1, b1, c1, d1]) => L(a1, b1, c1, d1, '#7e828a', 0.45)).join('') + L(40, 53.8, 108, 28, '#7e828a', 0.45)
+          + [[62, 46.4], [88, 36]].map(([x, y]) => R(x, y, 6, 3, '#9a9ea6', `transform="rotate(-23 ${x} ${y})" stroke="#5e626a" stroke-width=".3"`)).join('') + C(106, 29.4, 1, '#6e727a') + L(106, 29.4, 106, 25.6, '#4e525a', 0.4)
+          + Array.from({ length: 12 }, (_, k) => C(40 + k * 5.8, 53.4 - k * 2.42, 0.25, '#5e626a')).join('')
+        + '</g>'
+        // detail on the near side, clipped to it: panel grid, vents, a hatch, the boarding ramp, rust and the Mudhorn signet
+        + `<g clip-path="url(#rc-side)"><clipPath id="rc-side"><path d="M44.5 58 L113.5 34 L113.5 52 L44.5 72Z"/></clipPath>`
+          + [54, 64, 74, 84, 94, 104].map((x) => { const t = 58 - (x - 44.5) * 0.3478; return L(x, t, x, t + 16, '#4e525a', 0.45); }).join('') + L(44.5, 65, 113.5, 43, '#4e525a', 0.45) + L(44.5, 68.4, 113.5, 47.6, '#4e525a', 0.3)
+          + [[52, 64.4], [80, 55], [104, 46.6]].map(([x, y]) => R(x, y, 5, 3, '#7a7e86', `transform="rotate(-19 ${x} ${y})" stroke="#3e424a" stroke-width=".3"`) + [1, 2, 3, 4].map((k) => L(x + k, y + 0.4, x + k - 0.3, y + 2.6, '#4e525a', 0.25)).join('')).join('')
+          + R(60, 63, 10, 7, '#8a8e96', 'transform="rotate(-19 60 63)" stroke="#3e424a" stroke-width=".4"') + L(61.6, 64.6, 69, 62, '#4e525a', 0.3)
+          + P('M92 50.6 L104 46.4 L104 53 L92 57.2Z', '#6e727a', 'stroke="#3e424a" stroke-width=".4"') + [94, 97, 100, 103].map((x) => L(x, 50 - (x - 92) * 0.35 + 1, x, 56.6 - (x - 92) * 0.35, '#4e525a', 0.3)).join('')
+          + Array.from({ length: 14 }, (_, k) => C(47 + k * 4.8, 70.4 - k * 1.39, 0.25, '#3e424a')).join('') + Array.from({ length: 14 }, (_, k) => C(47 + k * 4.8, 59.4 - k * 1.67, 0.22, '#c8ccd2')).join('')
+          + P('M66 58 L70.4 56.6 L64 70 L59.6 71.4Z M75 55 L78.6 53.8 L72 66.6 L68.6 67.6Z M83 52.4 L85.8 51.4 L80.6 62.4 L78 63.2Z', '#8a3e22', 'opacity=".6"')
+          + P('M92 48 L95 47 L91 55 L88.6 55.8Z M50 62 L53 61 L49 69 L46.6 69.8Z M108 42 L111 41 L109 47 L106.6 47.8Z', '#7a4a2a', 'opacity=".45"')
+          // the Mudhorn signet, painted big on the hull up near the front
+          + `<g transform="translate(47.6 56.4) skewY(-19) scale(1.45)">${P('M0 7 C0 4.4 1.6 2.6 4.2 2.8 C4.8 1.2 6 0.2 7.8 -0.6 C7.2 0.8 7.2 2 7.6 3 C9.4 3.4 10.6 5 10.6 7 L9.2 8.4 L7.6 7.8 L6.4 9 L4.4 8.2 L2.6 9 L1 8.2Z', '#2a2e36', 'opacity=".85"')}${C(8.2, 4.6, 0.4, '#8a8e96')}</g>`
+        + '</g>'
+        + L(31, 62.3, 117, 32.5, '#d8dce2', 0.4, 'opacity=".6"')
         // the crest: the raised dorsal ridge running back along the top
         + P('M46 47.4 L98 25.6 L104 28.6 L52 50.6Z', '#c8ccd2', 'stroke="#5e626a" stroke-width=".5"') + P('M46 47.4 L98 25.6 L98 22.6 L46 44.4Z', '#e2e6ea', 'stroke="#5e626a" stroke-width=".5"') + P('M98 25.6 L104 28.6 L104 25.6 L98 22.6Z', '#8a8e96')
         + [56, 66, 76, 86].map((x) => { const t = 44.4 - (x - 46) * 0.419; return L(x, t, x, t + 3, '#6e727a', 0.4); }).join('') + L(48, 44.6, 97, 24, '#ffffff', 0.4, 'opacity=".7"')
@@ -348,13 +363,19 @@
         + P('M36 50 C26 50 19 56 19 63.4 C19 70.4 25.6 74.6 34 74.4 L44.5 72 L44.5 58Z', hull, 'stroke="#3e424a" stroke-width=".7"') + P('M36 50 C26 50 19 56 19 63.4 L30 62Z', '#ffffff', 'opacity=".18"')
         + P('M22 58.4 C26 53.4 32 52 37.6 52.6 L38 55.4 C32.6 55 27.2 56.4 23.6 60.4Z', '#1e2a36', 'stroke="#0e141a" stroke-width=".3"') + [27, 31, 35].map((x) => L(x, 53, x + 0.6, 56, '#5e626a', 0.5)).join('')
         + [22, 25, 28, 31].map((x) => L(x, 62 + (x - 22) * 0.1, x + 0.4, 72 - (x - 22) * 0.2, '#4e525a', 0.6)).join('') + P('M21 66 Q30 64 40 66', 'none', 'stroke="#4e525a" stroke-width=".5"') + C(26.6, 67.6, 1.4, '#5e626a', 'stroke="#3e424a" stroke-width=".3"')
+        // the nose in more detail: the framed front plate, the darker chin, panel seams and a running light
+        + P('M19.4 64 C19.6 70 25.6 74.6 34 74.4 L44.5 72 L44.5 68 C38 70 30 70.6 24.6 68.6 C22 67.4 20.4 65.8 19.4 64Z', '#6e727a', 'opacity=".55"')
+        + P('M20.4 60.4 Q29 58.6 38.6 59.4 M20.6 70 Q29 71.6 38 70.8', 'none', 'stroke="#3e424a" stroke-width=".6"') + P('M36 50.4 C31 51 26.4 53 23.4 56.4', 'none', 'stroke="#eef2f6" stroke-width=".5" opacity=".7"')
+        + R(35.4, 61, 6, 7.4, '#8a8e96', 'rx=".6" stroke="#3e424a" stroke-width=".4"') + [62.6, 64.4, 66.2].map((y) => L(36.2, y, 40.6, y, '#4e525a', 0.35)).join('')
+        + C(21.4, 63.4, 0.7, '#ff6a3a') + C(21.4, 63.4, 1.8, '#ff6a3a', 'opacity=".25"') + [[30, 57.4], [34, 57], [24, 66], [32, 72.6]].map(([x, y]) => C(x, y, 0.3, '#3e424a')).join('')
         // twin nose cannons
         + L(30, 56, 12, 59, '#3e424a', 1.2) + L(34, 71, 16, 75, '#3e424a', 1.2) + C(12, 59, 0.8, '#5e626a') + C(16, 75, 0.8, '#5e626a') + R(28, 55, 4, 2.2, '#5e626a', 'transform="rotate(-10 30 56)"') + R(32, 70, 4, 2.2, '#5e626a', 'transform="rotate(-12 34 71)"')
         // the near engine on its pylon
         + P('M94 50 L102 53 L104 59 L96 57Z', '#6e727a', 'stroke="#3e424a" stroke-width=".4"') + engine(98, 61, 128, 52, 11)
         + P('M112 49 L118 47 L117 53 L111 55Z', '#8a3e22', 'opacity=".45"')
         // pit droids at work: hose, crate, workbench
-        + [[30, 84], [138, 82], [126, 86]].map(([x, y]) => `<g transform="translate(${x} ${y}) scale(1.1)">${E(0, -6, 2.4, 1.6, '#c86a2a')}${C(0, -6, 0.8, '#1a1a1a')}${L(-1, -4.6, -1.6, 0, '#5a5a5a', 0.6)}${L(1, -4.6, 1.6, 0, '#5a5a5a', 0.6)}${L(0, -5, 2.6, -3, '#5a5a5a', 0.5)}</g>`).join('')
+        // pit droids (Peli's crew): orange cap heads with the big single lens, white stripes, spindly limbs
+        + [[30, 84, 1.3, 1], [138, 82, 1.2, -1], [126, 86, 1.3, 1], [150, 86, 1.1, -1], [86, 86, 1.2, 1], [60, 88, 1.1, -1]].map(([x, y, sc, f]) => `<g transform="translate(${x} ${y}) scale(${sc * f} ${sc})">${E(0, 0.4, 3, 0.6, '#000', 'opacity=".2"')}${L(-1.2, -4, -2.2, 0, '#6a6a6a', 0.6)}${L(1.2, -4, 2.2, 0, '#6a6a6a', 0.6)}${E(-2.2, 0, 0.8, 0.3, '#5a5a5a')}${E(2.2, 0, 0.8, 0.3, '#5a5a5a')}${R(-0.8, -6, 1.6, 2.4, '#7a7a7a')}${L(0.6, -5.4, 3, -4, '#6a6a6a', 0.5)}${L(3, -4, 4, -5.4, '#6a6a6a', 0.4)}${P('M-2.8 -6 C-2.8 -9.4 2.8 -9.4 2.8 -6Z', '#d8702a', 'stroke="#7a3a10" stroke-width=".3"')}${R(-2.8, -6.6, 5.6, 0.5, '#f0e8d8')}${C(0.4, -7.4, 1.1, '#1a1a1e', 'stroke="#8a8a8a" stroke-width=".25"')}${C(0.1, -7.7, 0.35, '#8ab0ff')}</g>`).join('')
         + R(144, 74, 12, 2, '#7a5a3a') + L(146, 76, 146, 82, '#5a4028', 0.6) + L(154, 76, 154, 82, '#5a4028', 0.6) + R(147, 71, 3, 3, '#5a5e66')
         + R(8, 78, 7, 5, '#7a5a3a', 'stroke="#4a3420" stroke-width=".4"') + L(8, 80.6, 15, 80.6, '#4a3420', 0.4) + P('M28 86 Q50 92 70 80', 'none', 'stroke="#3a3a40" stroke-width=".7"');
     },

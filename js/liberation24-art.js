@@ -598,6 +598,18 @@
         // the long white snout and the dark vent at its foot
         + P('M47.2 38.2 L52.8 38.2 L53.8 55.4 L55 60.4 C53.4 62.8 46.6 62.8 45 60.4 L46.2 55.4Z', '#f6f8fa', 'stroke="#2a2c30" stroke-width=".6"') + P('M50 38.6 L50 55', 'none', 'stroke="#c8ced6" stroke-width=".6"') + P('M52.8 38.2 L53.8 55.4 L55 60.4 C54 61.8 52 62.4 50 62.6 L50 38.2Z', '#000', 'opacity=".07"')
         + R(46.8, 56.2, 6.4, 4.6, '#2a2c30', 'rx="1.2"') + [[47.8, 57.2], [49.4, 57.2], [51, 57.2], [47.8, 58.8], [49.4, 58.8], [51, 58.8]].map(([x, y]) => R(x, y, 1.2, 1, '#8a929c')).join(''); })()
+      // the helmet's line work, as in your picture: dome seams, the brim's edges,
+      // the lens frames, the snout's edges, the cheek lines and the jaw rim
+      + '<g transform="translate(50 0) scale(1.12 1) translate(-50 0)" fill="none" stroke-linecap="round">'
+        + P('M42.4 17.6 C39 21 37 27 36.4 33 M57.6 17.6 C61 21 63 27 63.6 33', 'none', 'stroke="#9aa2ac" stroke-width=".6"')
+        + P('M46 15.4 C44.6 20 44 26 44.2 32 M54 15.4 C55.4 20 56 26 55.8 32', 'none', 'stroke="#c8ced6" stroke-width=".45"')
+        + P('M33.8 33.4 C42 31.2 58 31.2 66.2 33.4', 'none', 'stroke="#2a2c30" stroke-width=".9"') + P('M34.4 35.6 C42 33.6 58 33.6 65.6 35.6', 'none', 'stroke="#b8bec6" stroke-width=".5"')
+        + P('M35 38.4 L47.6 38 L47.2 45.8 L42.8 49 L35.6 46.2Z M65 38.4 L52.4 38 L52.8 45.8 L57.2 49 L64.4 46.2Z', 'none', 'stroke="#7a828c" stroke-width=".6"')
+        + P('M46.6 38.4 L45.6 55.2 L44.4 60.4 M53.4 38.4 L54.4 55.2 L55.6 60.4', 'none', 'stroke="#5a626c" stroke-width=".6"')
+        + P('M42.8 49 L45.2 53.6 M57.2 49 L54.8 53.6 M38.6 48.6 L41.4 56.6 M61.4 48.6 L58.6 56.6', 'none', 'stroke="#8a929c" stroke-width=".55"')
+        + P('M34.4 54.4 C34.6 59 38 62.4 42.4 62.6 L57.6 62.6 C62 62.4 65.4 59 65.6 54.4', 'none', 'stroke="#5a626c" stroke-width=".7"') + P('M36 55 C36.6 58.6 39.4 61 42.6 61.2 M64 55 C63.4 58.6 60.6 61 57.4 61.2', 'none', 'stroke="#c8ced6" stroke-width=".45"')
+        + P('M47.6 55.6 L52.4 55.6', 'none', 'stroke="#5a626c" stroke-width=".5"')
+      + '</g>'
       + '</g>'
       // hold-out blaster in his black glove
       + `<g transform="translate(80 92) rotate(-30)">${R(-2, -2, 14, 4, '#141518', 'rx="1"')}${R(10, -1.2, 5, 2.4, '#141518')}${R(0, 1.6, 3.4, 5, '#141518', 'rx=".8"')}</g>` + E(80, 94, 3.6, 3, '#0c0d10');
