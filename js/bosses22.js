@@ -2,8 +2,8 @@
 // Geonosis, Mustafar, Exegol, Battle of Coruscant), each with its own battle
 // mechanics, plus new art for the Hoth Star Destroyer and General Grievous.
 // Everything stays switched off until 2.2 (see Update22 in js/friends.js).
-// The Xyston Star Destroyer and the Invisible Hand are drawn here too, saved
-// for a future raid or boss battle; nothing uses them yet.
+// The Xyston Star Destroyer is drawn here too, saved for a future raid or boss
+// battle; nothing uses it yet. (The Invisible Hand became a 2.4 raid in js/holonet.js.)
 (function (root) {
   'use strict';
   const D = root.GameData;
@@ -245,25 +245,6 @@
     + P('M42 58 L58 58 L59 68 L41 68Z', '#3a3644') + R(44, 53, 12, 6, '#46404e') + R(46, 49, 8, 5, '#524a5a') + R(44, 52, 12, 1, '#ff3a4a', 'opacity=".5"') + C(45, 48.4, 1.3, '#5a5466') + C(55, 48.4, 1.3, '#5a5466')
     + `<g ${glow('#ff3a3a', 2)}>${[30, 40, 50, 60, 70].map((x) => C(x, 75, 1, '#ff6a5a')).join('')}</g>`
     + [[10, 86, 24], [36, 90, 22], [64, 88, 26], [90, 90, 22], [24, 98, 26], [76, 99, 28]].map(([x, y, r]) => E(x, y, r, r * 0.35, '#141220')).join('') + [[30, 84, 14], [70, 84, 16]].map(([x, y, r]) => E(x, y, r, r * 0.25, '#2a2440', 'opacity=".7"')).join('') + E(50, 80, 20, 4, '#ff2a3a', 'opacity=".08"'));
-
-  // ---------- SAVED FOR LATER (raids): the Invisible Hand, burning over Coruscant ----------
-  add('invisible_hand_22', () => R(0, 0, 100, 100, '#080a14') + stars(30, 31, 50)
-    // Coruscant: the night side, city lights, atmosphere
-    + C(50, 150, 82, '#140c10') + C(50, 150, 82, 'none', 'stroke="#ffb86a" stroke-width="1.4" opacity=".5"') + C(50, 150, 84, 'none', 'stroke="#4a8aff" stroke-width="2.4" opacity=".2"')
-    + Array.from({ length: 70 }, (_, k) => { const a = (k * 37) % 100; const b = 74 + ((k * 13) % 24); const dx = a - 50; const dy = b - 150; return Math.hypot(dx, dy) < 81 ? C(a, b, 0.35 + (k % 3) * 0.15, '#ffc87a', `opacity="${0.4 + (k % 4) * 0.12}"`) : ''; }).join('')
-    // Republic Venators and the crossfire
-    + [[14, 22, 0.55], [86, 18, 0.5], [90, 46, 0.4]].map(([x, y, s]) => `<g transform="translate(${x} ${y}) rotate(90) scale(${s})">${P('M0 -14 L8 10 L0 8 L-8 10Z', '#c8ccd4')}${P('M0 -12 L3 4 L-3 4Z', '#b83a2a', 'opacity=".8"')}</g>`).join('')
-    + bolt(18, 26, 40, 40, '#4ab8ff') + bolt(84, 22, 66, 38, '#4ab8ff') + bolt(46, 46, 26, 60, '#ff3a3a') + bolt(70, 44, 90, 56, '#ff3a3a') + bolt(10, 40, 30, 50, '#4ab8ff')
-    + fighters([[30, 30, 0.6], [74, 30, 0.5], [22, 56, 0.6], [80, 60, 0.5], [60, 22, 0.5]], '#c8ccd4')
-    // the Invisible Hand: long hull, nose left, tall tower
-    + P('M8 50 L22 46 L80 44 L92 46 L94 52 L80 56 L22 56 L8 54Z', '#6a7080') + P('M8 50 L22 46 L80 44 L92 46 L80 49 L22 50Z', '#8a909e') + P('M22 56 L80 56 L94 52 L80 53 L22 53Z', '#4a4e5a')
-    + P('M54 45 L58 24 L66 22 L68 44Z', '#6a7080') + P('M58 24 L66 22 L68 44 L62 44Z', '#4e5260') + R(56, 20, 12, 5, '#7a808e', 'rx="1"') + R(57, 21, 10, 1.4, '#ffcf7a', 'opacity=".6"')
-    + P('M58 56 L62 66 L66 66 L68 56Z', '#5a5e6a')
-    + [26, 34, 42, 50, 72, 80].map((x) => R(x, 49, 4, 2, '#3a3e4a')).join('') + [28, 40, 52, 76].map((x) => C(x, 47.4, 0.5, '#ffd08a')).join('')
-    + `<g ${glow('#6ab8ff', 2)}>${[48, 50.6, 53.2].map((y) => C(94.6, y, 1.2, '#bfe8ff')).join('')}</g>`
-    // battle damage: fires and smoke
-    + `<g ${glow('#ff8a2a', 3)}>${C(36, 46, 1.8, '#ffb03a')}${C(74, 55, 1.6, '#ffb03a')}${C(46, 54, 1.2, '#ffd08a')}</g>`
-    + P('M36 45 C34 40 36 34 32 28', 'none', 'stroke="#3a3a40" stroke-width="2.4" opacity=".55" stroke-linecap="round"') + P('M74 54 C78 60 76 66 80 72', 'none', 'stroke="#3a3a40" stroke-width="2" opacity=".5" stroke-linecap="round"'));
 
   // ---------- REWORK: Imperial Star Destroyer over Hoth ----------
   add('star_destroyer_22', () => R(0, 0, 100, 100, '#03050b') + E(30, 20, 36, 22, '#1a2a5a', 'opacity=".35"') + stars(90, 21, 100, 0.15)
