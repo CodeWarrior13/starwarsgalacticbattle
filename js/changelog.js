@@ -96,6 +96,7 @@
         'IMPROVED|The Hoth Star Destroyer boss has new art.',
         'IMPROVED|Big performance boost: smoother menus and battles on all devices.',
         'FIXED|Some ultimates weren\'t playing their animations; Performance mode now keeps every card\'s own ultimate.',
+        'FIXED|On phones, a friend\'s "Last online" tag no longer runs off the edge of their profile; long ones wrap onto a second line.',
         'IMPROVED|Removing test code.',
       ],
     },
