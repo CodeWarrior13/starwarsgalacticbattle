@@ -73,6 +73,80 @@
     + P('M-2 -11 L2 -11 L1.6 -7 L-1.6 -7Z', '#e8c050', 'stroke="#9a7020" stroke-width=".25"') + P('M-1.2 -10.6 L1.2 -10.6 L0.9 -8.6 L-0.9 -8.6Z', '#f4d870', 'opacity=".6"')
     + L(-2, -10.6, -3, -7.2, '#d8b040', 0.9) + L(2, -10.6, 2.8, -7.2, '#c8a038', 0.9) + R(-0.5, -12, 1, 1, '#c8a038') + C(0, -13.4, 1.7, '#e8c050', 'stroke="#9a7020" stroke-width=".25"') + C(-0.6, -13.6, 0.38, '#ffe8a0') + C(0.6, -13.6, 0.38, '#ffe8a0') + R(-0.4, -12.7, 0.8, 0.5, '#9a7020'));
 
+  // The wampa standing in its cave mouth, facing left: shaggy white fur with
+  // tufted edges, hunched head with curled ram horns, grey muzzle, open jaw
+  // with fangs, glinting yellow eyes, one long arm reaching out with black
+  // claws, the other hanging. (x, y) = feet.
+  const wampa = (x, y, s) => {
+    const tuft = (pts) => P(`M${pts.map(([a, b], i) => `${a} ${b}` + (i < pts.length - 1 ? ` L${((a + pts[i + 1][0]) / 2 + (b - pts[i + 1][1]) * 0.35).toFixed(2)} ${((b + pts[i + 1][1]) / 2 + (pts[i + 1][0] - a) * 0.35).toFixed(2)}` : '')).join(' L')}`, 'none', 'stroke="#c4ccd8" stroke-width=".35" stroke-linejoin="round"');
+    const claws = (cx, cy, dir) => [-1, 0, 1].map((k) => P(`M${cx + k * 0.9} ${cy} q${dir * 0.9} 1 ${dir * 0.4} 2.2`, 'none', 'stroke="#1a1a20" stroke-width=".55" stroke-linecap="round"')).join('');
+    const fur = (pts) => pts.map(([a, b]) => P(`M${a - 0.5} ${b - 0.6} L${a} ${b} L${a + 0.5} ${b - 0.6}`, 'none', 'stroke="#aab4c4" stroke-width=".25"')).join('');
+    return g(x, y, s, 1,
+      E(0, 0.4, 13, 1.4, '#000', 'opacity=".3"')
+      // far (right) arm hanging, legs
+      + P('M7.6 -21 C11 -18 12.4 -12 11.6 -6.4 L9.2 -6.6 C9.2 -11.4 8.4 -15.6 6.6 -18Z', '#c8d0dc') + claws(10.4, -6.6, 1)
+      + P('M-6.4 -11 C-8.4 -6 -8.2 -2.2 -7.4 0 L-2.4 0 C-2.4 -3.6 -1.6 -7.6 -1.4 -11Z', '#dfe4ec') + P('M1.4 -11 C1.6 -7.6 2.4 -3.6 2.4 0 L7.2 0 C8 -2.4 8.2 -6 6.4 -11Z', '#cfd6e0')
+      + [[-6.8, 0], [-4.8, 0], [-3, 0], [3, 0], [4.8, 0], [6.6, 0]].map(([a, b]) => P(`M${a} ${b} l.3 1`, 'none', 'stroke="#1a1a20" stroke-width=".5" stroke-linecap="round"')).join('')
+      // the body: broad hunched shoulders, shaggy edges
+      + P('M-9.4 -12 C-11.4 -18 -9.6 -23.4 -4.4 -25.4 L4.4 -25.4 C9.6 -23.4 11.4 -18 9.4 -12 C6 -9 -6 -9 -9.4 -12Z', '#e8ecf2', 'stroke="#9aa6b8" stroke-width=".3"')
+      + P('M2 -25 C9 -23 11 -18 9.4 -12 C7 -10.4 4 -9.6 1 -9.6 C4 -14 4 -20 2 -25Z', '#b8c2d0', 'opacity=".6"')
+      + tuft([[-9.4, -12], [-10.6, -15.6], [-10.6, -19.4], [-8.4, -23], [-4.4, -25.4]]) + tuft([[4.4, -25.4], [8.4, -23], [10.6, -19.4], [10.6, -15.6], [9.4, -12]])
+      + tuft([[-6.4, -10.2], [-2, -9.4], [2, -9.4], [6.4, -10.2]])
+      + fur([[-6, -20], [-3, -18], [-7, -15], [-4, -13], [0, -16], [2, -20], [5, -17], [3, -13], [6, -14], [-1, -12], [-5, -22], [7, -21]])
+      + fur([[-5, -7], [-4, -3], [4, -6], [5, -2]])
+      // the reaching arm, clawed hand open toward the rider
+      + P('M-7.6 -22 C-12.6 -21 -16.6 -17.6 -19.2 -13 L-16.8 -11.8 C-14.8 -15 -11.8 -17.6 -7.6 -17.4Z', '#eef1f6', 'stroke="#9aa6b8" stroke-width=".3"')
+      + tuft([[-8, -17.4], [-12, -16.6], [-16.8, -11.8]]) + fur([[-11, -19.4], [-14, -17], [-16, -14.4]])
+      + E(-18.4, -12, 1.8, 1.4, '#9aa0aa') + claws(-19.6, -11.6, -1)
+      // the head, low between the shoulders: horns, brow, muzzle, jaw and fangs, eyes
+      + P('M-4.6 -25 C-4.8 -29.4 2.8 -29.8 3 -25.4 C3 -22.4 1.6 -20.6 -0.8 -20.6 C-3.2 -20.6 -4.6 -22.4 -4.6 -25Z', '#f2f4f8', 'stroke="#9aa6b8" stroke-width=".3"')
+      + tuft([[-4.6, -25.4], [-3.6, -28.4], [-0.8, -29.4], [2, -28.6], [3, -25.6]])
+      + P('M-4.2 -26.6 C-7.6 -27.8 -8.8 -23.8 -6.6 -22.2 C-5.4 -21.4 -4.4 -22.6 -5 -23.4', 'none', 'stroke="#a89878" stroke-width="1.3" stroke-linecap="round"') + P('M-4.2 -26.6 C-7.6 -27.8 -8.8 -23.8 -6.6 -22.2', 'none', 'stroke="#d8c8a4" stroke-width=".35"')
+      + P('M2.6 -26.8 C6 -28 7.2 -24 5 -22.4 C3.8 -21.6 2.8 -22.8 3.4 -23.6', 'none', 'stroke="#8a7a5e" stroke-width="1.3" stroke-linecap="round"')
+      + P('M-3.4 -25.8 Q-0.8 -26.8 1.8 -25.8', 'none', 'stroke="#8a94a4" stroke-width=".6"')
+      + P('M-3 -24.6 C-3 -21.4 1.4 -21.4 1.4 -24.6 C0.6 -23.6 -2.2 -23.6 -3 -24.6Z', '#8a909c') + E(-0.8, -22.6, 1.5, 0.8, '#3a1014') + P('M-2 -23.2 l.3 .8 l.3 -.8 M0.2 -23.2 l.3 .8 l.3 -.8 M-1.4 -21.9 l.3 -.6 l.3 .6', '#f4f0e4')
+      + E(-2.1, -25.2, 0.55, 0.35, '#ffd23a') + E(0.5, -25.2, 0.55, 0.35, '#ffd23a') + glow(-0.8, -25.2, 0.5, '#ffd23a', 0.35) + C(-2.2, -25.3, 0.15, '#1a1008') + C(0.4, -25.3, 0.15, '#1a1008')
+      // rim light from the open snow on the left
+      + P('M-9.4 -12 C-11.4 -18 -9.6 -23.4 -4.4 -25.4', 'none', 'stroke="#ffffff" stroke-width=".5" opacity=".8"') + P('M-7.6 -22 C-12.6 -21 -16.6 -17.6 -19.2 -13', 'none', 'stroke="#ffffff" stroke-width=".4" opacity=".8"'));
+  };
+  // Luke on his tauntaun, riding right: the bipedal tauntaun with its
+  // powerful hind legs, long neck, curled horns, small forelimbs, tail and
+  // saddle blanket with packs; Luke in his Hoth gear (tan snow coat, belt,
+  // cap with ear flaps and goggles, scarf, gloves on the reins). (x, y) = feet.
+  const tauntaun = (x, y, s) => g(x, y, s, 1,
+    E(0, 0.4, 11, 1.2, '#000', 'opacity=".18"')
+    // far leg, tail
+    + P('M1 -12 C3 -9 3 -6 2 -4 L4.6 -0.8 L6.4 -0.6 L6.2 0.2 L2.6 0.2 L0 -3.4 C-1 -5.6 -1.4 -9 -1 -11Z', '#a89a84', 'stroke="#6a5c48" stroke-width=".25"')
+    + P('M-8 -15 C-12 -13 -15 -9 -17.4 -3.6 C-17.6 -2.8 -16.8 -2.6 -16.4 -3.2 C-14 -7.4 -11 -10.6 -7 -12Z', '#c8bca6', 'stroke="#7a6c56" stroke-width=".25"')
+    // the body
+    + P('M-9 -15 C-9.4 -21 -1 -23.6 4.4 -20.6 C7.8 -18.6 8 -13 5.4 -10.4 C2.4 -7.8 -5.4 -8 -8.4 -11.4Z', '#d4cab6', 'stroke="#7a6c56" stroke-width=".3"')
+    + P('M-7.6 -11 C-4 -8.6 2 -8.6 5.4 -10.4 C3 -10 -3 -9.6 -7.6 -11Z', '#ece4d4') + P('M-8 -17 C-4 -20 2 -20.6 6 -18.4', 'none', 'stroke="#a89880" stroke-width=".35"')
+    + [[-6, -14], [-3, -12.6], [0, -14.6], [3, -12.4], [-4.6, -17], [2, -17.4]].map(([a, b]) => P(`M${a} ${b} l.6 .6 l.6 -.6`, 'none', 'stroke="#a89880" stroke-width=".25"')).join('')
+    // the neck and head, horns curling back
+    + P('M3 -19.6 C5 -24.4 7 -27.4 9 -29.4 L12 -28.4 C10.4 -25.6 8.6 -20.6 7.2 -15Z', '#d4cab6', 'stroke="#7a6c56" stroke-width=".3"') + P('M8.4 -26 C7 -23 6.2 -20 5.8 -17', 'none', 'stroke="#ece4d4" stroke-width="1"')
+    + P('M8 -30 C8.6 -33.2 12.8 -33.4 15 -31.4 L18.2 -29.6 C18.8 -28.6 17.8 -27.6 16.2 -27.8 L11.4 -27 C9.2 -26.8 7.8 -28.2 8 -30Z', '#d8cebc', 'stroke="#7a6c56" stroke-width=".3"')
+    + P('M16 -28 L18 -28.6', 'none', 'stroke="#5a4a38" stroke-width=".3"') + C(17.4, -29.6, 0.25, '#3a2a1a') + C(12.8, -30.6, 0.5, '#1a1008') + C(12.9, -30.8, 0.15, '#ffffff')
+    + P('M10 -32.2 C7.2 -35.2 4.2 -32.8 5.8 -30.4 C6.8 -29 8.6 -30 8 -31.2', 'none', 'stroke="#8a7a62" stroke-width="1.1" stroke-linecap="round"') + P('M11 -32.6 C9.6 -36 6.4 -35.4 6.6 -33.4', 'none', 'stroke="#b8a888" stroke-width=".9" stroke-linecap="round"')
+    // small forelimbs
+    + P('M5 -13.4 L7.4 -11.2 L8.6 -11.6 M7.4 -11.2 L7.8 -10', 'none', 'stroke="#b8ac96" stroke-width=".7" stroke-linecap="round"')
+    // near hind leg: big thigh, shin, splayed foot
+    + P('M-6.4 -15 C-9 -11 -7.4 -6.6 -4.4 -6 L-3 -2.4 L-1 0 L1.4 0 L1.4 -0.8 L-0.4 -1.2 L-1.6 -4.6 C0 -6.6 0.6 -10.6 -1 -13.4Z', '#c8bca6', 'stroke="#7a6c56" stroke-width=".3"')
+    + P('M-6 -12 C-5 -9 -3.4 -7.6 -1.4 -7.6', 'none', 'stroke="#a89880" stroke-width=".3"')
+    // saddle blanket, saddle, packs
+    + P('M-6.6 -20.6 C-3.6 -22.4 1.2 -22.4 3.4 -21 L3.6 -16.4 C0.6 -15.4 -3.6 -15.4 -6.4 -16.6Z', '#8a3a2a', 'stroke="#4a1a12" stroke-width=".3"') + P('M-6.4 -17.4 C-3.6 -16.2 0.6 -16.2 3.6 -17.2', 'none', 'stroke="#d8b860" stroke-width=".4"')
+    + P('M-4.6 -21.4 C-2 -22.6 1 -22.6 2.4 -21.6 L2 -20 L-4.2 -20Z', '#5a3a22') + R(-8.4, -20, 3, 3.4, '#6a6040', 'rx=".6" stroke="#3a3020" stroke-width=".25"') + L(-8.4, -18.4, -5.4, -18.4, '#3a3020', 0.3)
+    // Luke: leg over the side, boot in the stirrup
+    + P('M-2 -21.6 L2.4 -19.6 L2 -14.6 L0.6 -14.6 L0.6 -18.4 L-2.6 -19.4Z', '#b8a47e', 'stroke="#6a5a3a" stroke-width=".25"') + R(0, -15, 2.8, 1.4, '#3a3028', 'rx=".4"') + L(1.4, -20, 1.4, -15, '#4a3a28', 0.3)
+    // coat, belt, arm on the reins
+    + P('M-3.6 -21 L-3.2 -28.6 C-3 -30.4 1.2 -30.6 1.6 -28.6 L2 -21Z', '#cbb68a', 'stroke="#6a5a3a" stroke-width=".3"') + P('M-3.4 -27 L1.8 -27', 'none', 'stroke="#a8946a" stroke-width=".3"')
+    + R(-3.5, -22.6, 5.4, 0.9, '#4a3a2a') + R(-1.2, -22.6, 1, 0.9, '#b8b8c0') + R(1.4, -22.4, 1, 1.8, '#2a2a2e', 'rx=".3"')
+    + P('M0.8 -28.4 C2.6 -27 3.6 -25.8 4.6 -24.6', 'none', 'stroke="#cbb68a" stroke-width="1.4" stroke-linecap="round"') + C(4.8, -24.4, 0.65, '#4a3a2a')
+    + P('M5 -24.4 C9 -25.2 12 -26.4 14.4 -27.8', 'none', 'stroke="#3a2a1a" stroke-width=".3"')
+    // scarf, head, cap with ear flaps and goggles
+    + P('M-2.8 -29.6 C-1.6 -30.6 0.6 -30.6 1.4 -29.6 L1 -28.8 C0 -29.4 -1.8 -29.4 -2.6 -28.8Z', '#e8e0cc') + P('M-2.4 -29 L-3.8 -26.6 L-3 -26.4 L-1.8 -28.6Z', '#e8e0cc')
+    + C(-0.6, -31.8, 1.7, '#e8c4a0') + P('M-2.4 -32 C-2.6 -34.8 1.4 -34.8 1.2 -32 L1.4 -30.4 L0.6 -30.6 L0.6 -32 L-1.8 -32 L-1.8 -30.4 L-2.6 -30.6Z', '#d8ccb0', 'stroke="#8a7a5a" stroke-width=".25"')
+    + R(-2.6, -33.4, 4, 0.8, '#3a3028') + E(0.6, -33, 0.7, 0.55, '#6a8aa8', 'stroke="#2a2a2a" stroke-width=".2"') + C(0.3, -31.6, 0.2, '#2a1a10') + P('M-0.4 -30.6 Q0 -30.3 0.4 -30.6', 'none', 'stroke="#8a5a40" stroke-width=".2"'));
+
   // ---------- Machines ----------
   // An AT-AT walking left: armoured body with panels and rivets, segmented
   // neck, the wedge head with its viewports and chin and cheek guns, four
@@ -130,18 +204,36 @@
   // its plating rings and radial panels, the twin forward mandibles with the
   // gap between, the cockpit tube offset to the right side, the top turret,
   // the radar dish, the airlock bumps, and the blue engine band at the back.
-  const falcon = (x, y, s, a = 0) => g(x, y, s, 1,
-    P('M8.4 -5.6 L18.6 -4.8 C19.6 -4.6 19.8 -3.6 19 -3.2 L9.6 -1.4Z M8.4 5.6 L18.6 4.8 C19.6 4.6 19.8 3.6 19 3.2 L9.6 1.4Z', '#c8c4ba', 'stroke="#5e5a52" stroke-width=".35"')
-    + L(10, -3.6, 18, -3.8, '#8a867c', 0.3) + L(10, 3.6, 18, 3.8, '#8a867c', 0.3) + R(16, -4.6, 2, 1, '#8a867c', 'opacity=".6"') + R(16, 3.6, 2, 1, '#8a867c', 'opacity=".6"')
-    + C(0, 0, 10.4, '#d2cec4', 'stroke="#5e5a52" stroke-width=".45"') + C(0, 0, 10.4, 'none', 'stroke="#ffffff" stroke-width=".4" opacity=".5"')
-    + C(0, 0, 7.6, 'none', 'stroke="#9a968c" stroke-width=".35"') + C(0, 0, 4.2, 'none', 'stroke="#9a968c" stroke-width=".35"')
-    + Array.from({ length: 16 }, (_, k) => { const an = (k / 16) * Math.PI * 2; return L((Math.cos(an) * 4.2).toFixed(2), (Math.sin(an) * 4.2).toFixed(2), (Math.cos(an) * 10.2).toFixed(2), (Math.sin(an) * 10.2).toFixed(2), '#a8a49a', 0.25); }).join('')
-    + [[-6, -4, 3, 1.6], [-7.4, 2.4, 2.4, 1.6], [2, -8, 2.6, 1.2], [3.6, 6.4, 2.2, 1.2], [-3, 6.4, 2, 1.4], [5, -3.4, 2.2, 1.2]].map(([px, py, w, h]) => R(px, py, w, h, '#8a867c', 'opacity=".65" stroke="#5e5a52" stroke-width=".15"')).join('')
-    + P('M5.6 7.4 L11 10.6 L12 9.6 L7.2 6.2Z', '#c4c0b6', 'stroke="#5e5a52" stroke-width=".3"') + C(11.8, 10.6, 1.8, '#bab6ac', 'stroke="#5e5a52" stroke-width=".3"') + P('M10.6 9.6 Q11.8 8.6 13 9.6', 'none', 'stroke="#2a3a4a" stroke-width=".6"')
-    + C(0, 0, 2.4, '#bcb8ae', 'stroke="#5e5a52" stroke-width=".3"') + C(0, 0, 1.2, '#4a5a6a') + L(-0.6, 0, 0.6, 0, '#2a2a30', 0.3)
-    + E(-2.8, -6.4, 1.8, 1.2, '#e2ded4', 'stroke="#5e5a52" stroke-width=".25"') + L(-2.8, -6.4, -2.8, -7.8, '#5e5a52', 0.25)
-    + R(-1, -10.8, 2, 1, '#9a968c') + R(-1, 9.8, 2, 1, '#9a968c')
-    + P('M-6.6 -8 A10.4 10.4 0 0 0 -6.6 8', 'none', 'stroke="#8ad8ff" stroke-width="1.4"') + P('M-6.6 -8 A10.4 10.4 0 0 0 -6.6 8', 'none', 'stroke="#e8f8ff" stroke-width=".5"') + glow(-10.4, 0, 2, '#8ad8ff', 0.35), a);
+  const falcon = (x, y, s, a = 0) => {
+    const [hg, hd] = LG([[0, '#e6e2d8'], [0.55, '#cfcbc1'], [1, '#a29e94']], 0, 0, 1, 1);
+    const sector = (r1, r2, a1, a2) => { const p = (r, an) => `${(Math.cos((an * Math.PI) / 180) * r).toFixed(2)} ${(Math.sin((an * Math.PI) / 180) * r).toFixed(2)}`; return `M${p(r1, a1)} L${p(r2, a1)} A${r2} ${r2} 0 0 1 ${p(r2, a2)} L${p(r1, a2)} A${r1} ${r1} 0 0 0 ${p(r1, a1)}Z`; };
+    return g(x, y, s, 1, hd
+      // the twin mandibles with the loading gap and forward hold between them
+      + P('M7.6 -1.8 L12.4 -1.4 L12.4 1.4 L7.6 1.8Z', '#7a766c', 'stroke="#4e4a42" stroke-width=".25"')
+      + P('M8.2 -5.8 L18.4 -5 C19.6 -4.8 19.8 -3.4 18.8 -3 L12.6 -1.6 L9 -1.4Z M8.2 5.8 L18.4 5 C19.6 4.8 19.8 3.4 18.8 3 L12.6 1.6 L9 1.4Z', '#d0ccc2', 'stroke="#5e5a52" stroke-width=".35"')
+      + P('M9 -5.2 L18 -4.5 M9 5.2 L18 4.5', 'none', 'stroke="#ffffff" stroke-width=".3" opacity=".6"')
+      + L(10, -3.4, 18, -3.8, '#8a867c', 0.3) + L(10, 3.4, 18, 3.8, '#8a867c', 0.3) + [12, 14.4, 16.6].map((px) => L(px, -4.6, px, -2.2, '#9a968c', 0.2) + L(px, 4.6, px, 2.2, '#9a968c', 0.2)).join('')
+      + R(16.4, -4.7, 2, 1, '#8a867c', 'opacity=".7"') + R(16.4, 3.7, 2, 1, '#8a867c', 'opacity=".7"') + R(13, -3.2, 1.6, 0.8, '#6a665e') + R(13, 2.4, 1.6, 0.8, '#6a665e')
+      // the hull disc: shading, plating rings, radial panels, recessed trenches
+      + C(0, 0, 10.4, hg, 'stroke="#5e5a52" stroke-width=".45"') + P('M-9.6 -4 A10.4 10.4 0 0 1 4 -9.6', 'none', 'stroke="#ffffff" stroke-width=".5" opacity=".6"')
+      + C(0, 0, 7.6, 'none', 'stroke="#9a968c" stroke-width=".35"') + C(0, 0, 4.2, 'none', 'stroke="#9a968c" stroke-width=".35"') + C(0, 0, 9.4, 'none', 'stroke="#b8b4aa" stroke-width=".2"')
+      + Array.from({ length: 20 }, (_, k) => { const an = (k / 20) * Math.PI * 2; return L((Math.cos(an) * 4.2).toFixed(2), (Math.sin(an) * 4.2).toFixed(2), (Math.cos(an) * 10.2).toFixed(2), (Math.sin(an) * 10.2).toFixed(2), '#a8a49a', 0.22); }).join('')
+      + [[4.6, 9.6, 128, 146], [4.6, 9.6, 212, 230], [4.4, 7.4, 296, 318], [4.4, 7.4, 34, 52], [7.8, 10, 160, 196]].map(([r1, r2, a1, a2]) => P(sector(r1, r2, a1, a2), '#7e7a70', 'opacity=".75" stroke="#5e5a52" stroke-width=".15"')).join('')
+      + [[-6.2, -4.2, 3, 1.6], [-7.4, 2.6, 2.4, 1.6], [2, -8, 2.6, 1.2], [3.6, 5.6, 2.2, 1.2], [-3.4, 6.4, 2, 1.4], [5, -3.4, 2.2, 1.2], [-8.6, -1, 1.4, 2]].map(([px, py, w, h]) => R(px, py, w, h, '#8a867c', 'opacity=".7" stroke="#5e5a52" stroke-width=".15"')).join('')
+      + [[-5, -1.6], [-4.4, 1.8], [1.6, -5.6], [6, 1], [-1.6, 5]].map(([px, py]) => R(px, py, 0.8, 0.8, '#5e5a52', 'opacity=".7"')).join('')
+      // side airlocks
+      + P('M-1.4 -10.2 L-1.2 -11.2 L1.2 -11.2 L1.4 -10.2Z M-1.4 10.2 L-1.2 11.2 L1.2 11.2 L1.4 10.2Z', '#a8a49a', 'stroke="#5e5a52" stroke-width=".25"')
+      // the cockpit tube along the starboard edge, the cockpit with its window frames
+      + P('M3.4 6.8 L11.4 7.2 L11.4 9.8 L4.4 9.6Z', '#c8c4ba', 'stroke="#5e5a52" stroke-width=".3"') + [5.4, 7.4, 9.4].map((px) => L(px, 7, px, 9.7, '#8a867c', 0.25)).join('') + L(4, 8.4, 11.4, 8.5, '#ffffff', 0.25)
+      + C(12.2, 8.5, 2, '#d0ccc2', 'stroke="#5e5a52" stroke-width=".3"') + P('M13 6.9 A2 2 0 0 1 13 10.1 L12.6 9.4 A1.2 1.2 0 0 0 12.6 7.6Z', '#2a3a4a') + P('M13.6 7.4 L12.8 8 M14 8.5 L13 8.5 M13.6 9.6 L12.8 9', 'none', 'stroke="#c8c4ba" stroke-width=".25"') + C(12.6, 7.8, 0.25, '#ffffff', 'opacity=".7"')
+      // the quad laser turret at the centre
+      + C(0, 0, 2.4, '#bcb8ae', 'stroke="#5e5a52" stroke-width=".3"') + C(0, 0, 1.3, '#4a5a6a') + C(-0.3, -0.3, 0.4, '#8ab0d0', 'opacity=".7"') + P('M0.8 -0.9 L3.2 -2 M0.9 -0.4 L3.4 -1.4', 'none', 'stroke="#3a3a40" stroke-width=".35"')
+      // the radar dish
+      + L(-2.8, -6.4, -2.8, -7.6, '#5e5a52', 0.3) + E(-2.8, -6.6, 1.9, 1.3, '#e8e4da', 'stroke="#5e5a52" stroke-width=".25"') + E(-2.8, -6.6, 0.9, 0.6, '#b8b4aa') + C(-2.8, -6.6, 0.25, '#5e5a52')
+      // the engine band at the back
+      + P('M-6.6 -8 A10.4 10.4 0 0 0 -6.6 8', 'none', 'stroke="#5e6a7a" stroke-width="1.8"') + P('M-6.6 -8 A10.4 10.4 0 0 0 -6.6 8', 'none', 'stroke="#8ad8ff" stroke-width="1.3"') + P('M-6.6 -8 A10.4 10.4 0 0 0 -6.6 8', 'none', 'stroke="#e8f8ff" stroke-width=".5"')
+      + [-6, -3, 0, 3, 6].map((yy) => { const xx = -Math.sqrt(10.4 * 10.4 - yy * yy); return L(xx + 0.7, yy, xx - 0.7, yy, '#5e6a7a', 0.25); }).join('') + glow(-10.6, 0, 2, '#8ad8ff', 0.35), a);
+  };
   // The Falcon side-on (for the hangar): the flat saucer, the mandibles, the
   // cockpit tube jutting out front-right, the dish and turret on top,
   // landing legs, the ramp down and the engine glow at the back.
@@ -294,13 +386,13 @@
       + P('M106 30 L160 22 L160 80 L102 80 C100 64 102 44 106 30Z', '#9ab0cc') + P('M106 30 L120 34 L116 60 L104 66Z', '#7a92b4', 'opacity=".7"') + P('M110 36 L124 40 M108 48 L120 50 M150 30 L156 46', 'none', 'stroke="#e8f2ff" stroke-width=".6"')
       + (() => { const [cv, cd] = LG([[0, '#0e1424'], [0.6, '#1e2a44'], [1, '#2a3a5a']]); return cd + P('M118 74 C116 54 128 42 140 42 C152 42 160 54 160 60 L160 74Z', cv); })()
       + P('M122 70 C121 58 130 48 140 48 C150 48 158 56 160 62', 'none', 'stroke="#5a7aa8" stroke-width=".8" opacity=".6"') + [[128, 60], [150, 56], [136, 66], [154, 66]].map(([x, y]) => P(`M${x} ${y} l1 -3 l1 3Z`, '#6a9ad8', 'opacity=".5"')).join('')
-      // the wampa, huge, half in shadow: the white shaggy bulk, horns, glinting eyes, a clawed arm reaching out
-      + `<g transform="translate(144 74) scale(2.4)" opacity=".7">${E(0, -7, 6, 7.4, '#cfd6e0', 'opacity=".55"')}${E(2, -8, 4, 5, '#0e1424', 'opacity=".4"')}${C(-0.4, -15.6, 3.4, '#dfe4ec', 'opacity=".7"')}${P('M-2.6 -17.6 C-4.4 -19 -5 -16.6 -3.4 -15.6 M2 -17.8 C3.8 -19.2 4.4 -16.8 2.8 -15.8', 'none', 'stroke="#b8a888" stroke-width=".8"')}${E(-1.6, -15.6, 0.6, 0.35, '#ffd23a')}${E(0.8, -15.6, 0.6, 0.35, '#ffd23a')}${glow(-0.4, -15.6, 0.6, '#ffd23a', 0.4)}${P('M-2 -13.6 Q-0.4 -12.6 1.2 -13.6', 'none', 'stroke="#5a1a1a" stroke-width=".5"')}${P('M-4.6 -10 C-8 -9 -11 -6 -12 -3 L-10.6 -2.4 C-9.6 -5 -7 -7.4 -4.4 -8Z', '#d8dee6', 'opacity=".85"')}${P('M-12 -3 l-1 1.6 M-11.2 -2.6 l-.4 1.8 M-10.4 -2.4 l.2 1.8', 'none', 'stroke="#3a3a40" stroke-width=".4"')}${[-6, -4, -2].map((yy) => P(`M-5 ${yy} l-.6 1 M-3 ${yy - 1} l-.4 1`, 'none', 'stroke="#aab4c2" stroke-width=".3"')).join('')}</g>`
-      + (() => { const [sh, sd] = LG([[0, '#0a0e1a', 0.8], [0.6, '#0a0e1a', 0.6], [1, '#0a0e1a', 0.45]], 0, 0, 1, 0); return sd + P('M120 74 C118 54 128 44 140 44 C152 44 160 54 160 60 L160 74Z', sh); })()
+      // the wampa in the cave mouth, in the gloom, one clawed arm reaching out
+      + wampa(143, 78.5, 1.05)
+      + (() => { const [sh, sd] = LG([[0, '#0a0e1a', 0.12], [0.5, '#0a0e1a', 0.3], [1, '#0a0e1a', 0.55]], 0, 0, 1, 0); return sd + P('M120 74 C118 54 128 44 140 44 C152 44 160 54 160 60 L160 74Z', sh); })()
       + Array.from({ length: 14 }, (_, k) => { const x = 119 + k * 2.9; const y = 52 - Math.sin((k / 13) * Math.PI) * 9.6 + (k > 9 ? (k - 9) * 1.2 : 0); const h = 3 + ((k * 7) % 5) * 1.3; return P(`M${(x - 0.9).toFixed(1)} ${y.toFixed(1)} L${x.toFixed(1)} ${(y + h).toFixed(1)} L${(x + 0.9).toFixed(1)} ${y.toFixed(1)}Z`, '#e4f2ff', 'opacity=".92" stroke="#9ac0e8" stroke-width=".2"') + L(x - 0.3, y + 0.4, x - 0.1, y + h * 0.7, '#ffffff', 0.25); }).join('')
       // the snow, the tracks, and Luke on his tauntaun
       + drifts(72, '#e8eef6', '#b8c8dc') + P('M0 70 Q30 64 60 70', 'none', 'stroke="#ffffff" stroke-width="4" opacity=".35"')
-      + `<g transform="translate(66 76) scale(1.7)">${E(0, 0.6, 7, 1, '#000', 'opacity=".15"')}${P('M-6 -4 C-6 -8 2 -9 4 -7 L7 -10 C8.4 -11 9.6 -10 9 -8.6 L6 -5 C6 -2 3 0 0 0 L-4 0 C-7 0 -8 -2 -6 -4Z', '#d8ccb8', 'stroke="#8a7a62" stroke-width=".3"')}${P('M-5 -3 Q-2 -1 2 -2', 'none', 'stroke="#b8a890" stroke-width=".3"')}${P('M8.6 -10.4 L10 -12.6 M7.6 -10.6 L8.4 -13', 'none', 'stroke="#c8b8a0" stroke-width=".6"')}${C(8.4, -9.4, 0.25, '#1a1008')}${L(-3, 0, -4, 4, '#b8a890', 0.9)}${L(2, 0, 3, 4, '#b8a890', 0.9)}${P('M-7 -2 Q-10 0 -11 3', 'none', 'stroke="#c8b8a0" stroke-width=".7"')}${P('M-3.4 -7.4 L-5.4 -8 L-6.6 -12 L-4 -12Z', '#5a6a8a')}${P('M-2.4 -9 L0 -12 L-1 -16 L-3.6 -14Z', '#c8b896', 'stroke="#7a6a4a" stroke-width=".2"')}${L(-0.4, -12, 1.6, -9.4, '#c8b896', 0.7)}${C(-2, -16.6, 1.4, '#d8b896')}${P('M-3.4 -17 C-3.4 -18.6 -0.6 -18.6 -0.6 -17Z', '#e6dcc8')}${R(-3, -17.2, 2, 0.6, '#2a3040')}</g>`
+      + tauntaun(60, 80, 1.25)
       + Array.from({ length: 10 }, (_, k) => E(16 + k * 5.4, 84 - k * 0.6, 1, 0.5, '#aabcd0') + E(18.4 + k * 5.4, 85 - k * 0.6, 1, 0.5, '#aabcd0')).join('') + flakes(80, 6),
 
     // 7 · Hangar Breach: Echo Base's main hangar, clear and wide. The ribbed
@@ -355,10 +447,10 @@
       + (() => { const [gr, d] = LG([[0, '#f6fafe'], [0.55, '#c4d4e4'], [1, '#6a7e98']], 0, 0, 1, 1); return d + C(40, 150, 96, gr); })() + P('M-40 80 Q40 50 130 82', 'none', 'stroke="#ffffff" stroke-width="1.4" opacity=".4"') + P('M-10 84 Q30 70 70 76 M60 72 Q90 66 120 80', 'none', 'stroke="#aabcd0" stroke-width="1" opacity=".6"')
       + isd(118, 18, 2, '#7a828c') + isd(52, 12, 1.1, '#6a727c') + isd(150, 40, 1, '#5a626c')
       + [0, 1].map((k) => P(`M${30 + k * 8} 70 Q${70 + k * 6} ${44 - k * 4} ${108 - k * 2} ${20 + k * 2}`, 'none', `stroke="${k ? '#e8f6ff' : '#9fd8ff'}" stroke-width="${k ? 1 : 2.8}" opacity="${k ? 0.95 : 0.4}"`)).join('') + blast(108, 20, 3.4) + glow(108, 20, 3, '#9fd8ff', 0.5)
-      + transport(52, 62, 1.5, -32) + transport(78, 46, 1.2, -32) + transport(100, 30, 0.9, -32)
-      + P('M36 72 L46 66 M62 56 L72 50 M86 40 L94 35', 'none', 'stroke="#9fd8ff" stroke-width=".6" opacity=".6"')
-      + [[66, 60], [88, 44], [110, 28], [46, 50]].map(([x, y]) => `<g transform="translate(${x} ${y}) rotate(-32) scale(1.1)">${P('M-7 0 L6 -0.8 L9 0 L6 0.8Z', '#e4e2dc', 'stroke="#7a786e" stroke-width=".3"')}${P('M-3 0 L-6 -5 L-4.6 -5 L0 -0.4Z M-3 0 L-6 5 L-4.6 5 L0 0.4Z', '#d8d6ce')}${L(-6, -5, 2, -5, '#7a786e', 0.4)}${L(-6, 5, 2, 5, '#7a786e', 0.4)}${R(-1, -0.6, 2, 1.2, '#c8402a')}${C(-7.4, 0, 0.7, '#ff8a6a')}</g>`).join('')
-      + falcon(132, 64, 1.5, -24) + tie(30, 30, 0.8) + tie(40, 22, 0.6) + tie(140, 30, 0.7) + bolt(32, 30, 50, 40, '#3aff6a') + bolt(118, 52, 132, 44, '#ff4a2a'),
+      + transport(36, 70, 1.3, -32) + transport(74, 44, 1.02, -32) + transport(106, 24, 0.78, -32)
+      + P('M14 84 L22 79 M56 58 L62 54 M92 34 L97 31', 'none', 'stroke="#9fd8ff" stroke-width=".6" opacity=".6"')
+      + [[58, 66], [92, 46], [120, 30], [28, 54]].map(([x, y]) => `<g transform="translate(${x} ${y}) rotate(-32) scale(1.1)">${P('M-7 0 L6 -0.8 L9 0 L6 0.8Z', '#e4e2dc', 'stroke="#7a786e" stroke-width=".3"')}${P('M-3 0 L-6 -5 L-4.6 -5 L0 -0.4Z M-3 0 L-6 5 L-4.6 5 L0 0.4Z', '#d8d6ce')}${L(-6, -5, 2, -5, '#7a786e', 0.4)}${L(-6, 5, 2, 5, '#7a786e', 0.4)}${R(-1, -0.6, 2, 1.2, '#c8402a')}${C(-7.4, 0, 0.7, '#ff8a6a')}</g>`).join('')
+      + falcon(128, 66, 1.45, -24) + tie(30, 30, 0.8) + tie(40, 22, 0.6) + tie(140, 30, 0.7) + bolt(32, 30, 50, 40, '#3aff6a') + bolt(118, 52, 132, 44, '#ff4a2a'),
 
     // 10 · Vader Arrives: a wrecked Echo Base corridor lit red by the emergency
     // lights: ribbed ice walls with panels, pipes and frost, ice and debris on
