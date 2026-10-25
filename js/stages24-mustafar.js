@@ -71,22 +71,30 @@
     + (rail ? L(0, y - 4, 160, y - 4, '#3a3a42', 0.5) + L(0, y - 2, 160, y - 2, '#2a2a30', 0.3) + Array.from({ length: 11 }, (_, k) => L(k * 16, y, k * 16, y - 4, '#3a3a42', 0.45)).join('') + L(0, y - 4.2, 160, y - 4.2, '#ff8a3a', 0.15, 'opacity=".5"') : '');
 
   // ---------- Buildings and machines ----------
-  // Darth Vader's fortress: the black tower on its rock above the lava, the
-  // wide lower block, the slender shaft with its seams and red lights, a
-  // landing platform, and the forked crown with the glow between its
-  // prongs. Lava pours from cracks in the rock below.
+  // Darth Vader's fortress: the black tower on its rock above the lava. The
+  // rock pedestal split with glowing cracks and pouring lava, flanking
+  // buttresses, the wide lower block with its lit gate and window rows, the
+  // slender shaft with side fins, panel bands, a mid collar and red lights,
+  // a landing platform, and the forked crown joined by a bridge, the
+  // chamber between its prongs glowing and antennas at the tips.
   const castle = (x, base, s) => g(x, base, s, 1,
-    P('M-16 0 L-13 -6 L-11 -9 L-9 -14 L9 -14 L11 -9 L13 -5 L16 0Z', '#1a1214', 'stroke="#ff6a2a" stroke-width=".25" stroke-opacity=".45"')
-    + P('M-10 -10 L-6 -8 L-8 -4 L-4 -2 M6 -12 L8 -8 L5 -5 L9 -2 M-2 -13 L0 -9 L-1 -5', 'none', 'stroke="#ff8a3a" stroke-width=".35" opacity=".85"') + glow(-6, -6, 1.6, '#ff6a1a', 0.3) + glow(7, -7, 1.4, '#ff6a1a', 0.3)
-    + P('M-9 -14 L-6.6 -26 L6.6 -26 L9 -14Z', '#121216', 'stroke="#2a2a32" stroke-width=".2"') + P('M0 -14 L0 -26 L6.6 -26 L9 -14Z', '#000', 'opacity=".3"')
-    + [-16.4, -19.4, -22.4].map((yy, k) => Array.from({ length: 5 - k }, (_, m) => R(f2(-6 + k + m * (12 - 2 * k) / (5 - k)), yy, 1.2, 0.5, '#ff6a3a', 'opacity=".75"')).join('')).join('')
-    + P('M-6.6 -26 L-5 -28 L5 -28 L6.6 -26Z', '#1e1e24')
-    + P('M-3.4 -28 L-2.4 -58 L2.4 -58 L3.4 -28Z', '#141418', 'stroke="#2a2a32" stroke-width=".2"') + P('M0.4 -28 L0.3 -58 L2.4 -58 L3.4 -28Z', '#000', 'opacity=".35"')
-    + [-34, -40, -46, -52].map((yy) => L(-3.2 + (yy + 28) * -0.033, yy, 3.2 - (yy + 28) * -0.033, yy, '#2a2a32', 0.2)).join('') + [-37, -44, -50].map((yy) => C(-1, yy, 0.25, '#ff3a2a') + C(1.2, yy + 2, 0.22, '#ff3a2a')).join('')
-    + P('M3 -34 L12 -33.4 L12 -32.4 L3 -31.8Z', '#1e1e24', 'stroke="#2a2a32" stroke-width=".15"') + [5, 8, 11].map((px) => C(px, -33.4, 0.2, '#ffd27a')).join('') + L(12, -33.4, 12, -31, '#2a2a32', 0.3)
-    + P('M-2.4 -58 L-4.6 -72 L-3 -72.4 L-0.6 -62 L0.6 -62 L3 -72.4 L4.6 -72 L2.4 -58Z', '#141418', 'stroke="#2a2a32" stroke-width=".2"') + P('M0.6 -62 L3 -72.4 L4.6 -72 L2.4 -58Z', '#000', 'opacity=".3"')
-    + P('M-0.6 -62 L0.6 -62 L1.6 -66 L-1.6 -66Z', '#ff5a2a', 'opacity=".8"') + glow(0, -65, 1.6, '#ff5a2a', 0.4)
-    + P('M-9 -14 L-6.6 -26 M-3.4 -28 L-2.4 -58 L-4.6 -72', 'none', 'stroke="#ff7a3a" stroke-width=".25" opacity=".55"'));
+    P('M-18 0 L-15 -5 L-13 -8 L-12 -11 L-9.4 -14 L9.4 -14 L12 -10 L14 -6 L18 0Z', '#1a1214', 'stroke="#ff6a2a" stroke-width=".25" stroke-opacity=".45"') + P('M2 -14 L9.4 -14 L12 -10 L14 -6 L18 0 L4 0Z', '#000', 'opacity=".25"')
+    + P('M-12 -11 L-8 -10 L-10 -6 L-6 -4 L-9 0 M-4 -14 L-3 -9 L-5 -5 L-3 0 M6 -14 L8 -9 L6 -5 L9 -2 L8 0 M12 -10 L10 -6 L13 -3', 'none', 'stroke="#ff8a3a" stroke-width=".4" opacity=".85"') + [[-8, -8], [-4, -7], [7, -7], [11, -5]].map(([cx, cy]) => glow(cx, cy, 1, '#ff6a1a', 0.3)).join('')
+    + P('M-10 -6 C-11.6 -4.6 -12.6 -2.6 -13 0 L-11.6 0 C-11.4 -2.2 -10.8 -4 -9.6 -5.4Z M9.4 -5.2 C10.6 -3.8 11.4 -2 11.6 0 L12.8 0 C12.4 -2.4 11.4 -4.4 10 -5.8Z', '#ffa03a', 'opacity=".9"')
+    + P('M-9.4 -14 L-14 -14 L-11 -21 L-7.6 -21Z M9.4 -14 L14 -14 L11 -21 L7.6 -21Z', '#101014', 'stroke="#2a2a32" stroke-width=".2"') + L(-11.6, -17, -9, -17, '#ff5a2a', 0.3, 'opacity=".7"') + L(9, -17, 11.6, -17, '#ff5a2a', 0.3, 'opacity=".7"')
+    + P('M-9 -14 L-6.6 -27 L6.6 -27 L9 -14Z', '#121216', 'stroke="#2a2a32" stroke-width=".2"') + P('M0 -14 L0 -27 L6.6 -27 L9 -14Z', '#000', 'opacity=".3"')
+    + [-19.6, -22.4, -25].map((yy, k) => Array.from({ length: 6 - k }, (_, m) => R(f2(-6.4 + k * 0.8 + m * (12.8 - 1.6 * k) / (6 - k)), yy, 1, 0.5, '#ff6a3a', 'opacity=".8"')).join('')).join('')
+    + R(-1.6, -17.6, 3.2, 3.6, '#ff5a2a', 'opacity=".85"') + L(0, -17.6, 0, -14, '#121216', 0.3) + glow(0, -15.6, 1.2, '#ff5a2a', 0.35) + R(-2.2, -18.2, 4.4, 0.6, '#1e1e24')
+    + P('M-7.4 -27 L-5.4 -29.4 L5.4 -29.4 L7.4 -27Z', '#1e1e24', 'stroke="#2a2a32" stroke-width=".15"')
+    + P('M-3.2 -29.4 L-4.8 -33 L-3.6 -56 L-2.6 -56Z M3.2 -29.4 L4.8 -33 L3.6 -56 L2.6 -56Z', '#0c0c10', 'stroke="#22222a" stroke-width=".15"')
+    + P('M-3.2 -29.4 L-2.4 -60 L2.4 -60 L3.2 -29.4Z', '#141418', 'stroke="#2a2a32" stroke-width=".2"') + P('M0.4 -29.4 L0.3 -60 L2.4 -60 L3.2 -29.4Z', '#000', 'opacity=".35"')
+    + Array.from({ length: 10 }, (_, k) => { const yy = -32 - k * 2.8; const hw = f2(3.2 - (yy + 29.4) * -0.0262); return L(-hw, yy, hw, yy, '#2a2a32', 0.2); }).join('') + [-35, -41, -48, -53].map((yy) => C(-1, yy, 0.25, '#ff3a2a') + C(1.1, yy + 2.4, 0.22, '#ff3a2a')).join('')
+    + R(-3.8, -45.8, 7.6, 1.4, '#1e1e24', 'stroke="#2a2a32" stroke-width=".15"') + [-2.6, -0.8, 1, 2.8].map((px) => C(px, -45.1, 0.18, '#ffd27a')).join('')
+    + P('M3 -37 L13 -36.4 L13 -35.2 L3 -34.6Z', '#1e1e24', 'stroke="#2a2a32" stroke-width=".15"') + [5, 8, 11].map((px) => C(px, -36.2, 0.2, '#ffd27a')).join('') + L(13, -36.4, 13, -33, '#2a2a32', 0.3) + L(4, -34.6, 6, -31, '#1e1e24', 0.4)
+    + P('M-2.4 -60 L-5 -75 L-3.4 -75.6 L-0.8 -64 L0.8 -64 L3.4 -75.6 L5 -75 L2.4 -60Z', '#141418', 'stroke="#2a2a32" stroke-width=".2"') + P('M0.8 -64 L3.4 -75.6 L5 -75 L2.4 -60Z', '#000', 'opacity=".3"')
+    + P('M-0.8 -64 L0.8 -64 L2.4 -70.6 L-2.4 -70.6Z', '#ff5a2a', 'opacity=".85"') + P('M-0.4 -64.6 L0.4 -64.6 L1.2 -69.6 L-1.2 -69.6Z', '#ffc87a', 'opacity=".7"') + glow(0, -67.4, 1.6, '#ff5a2a', 0.45)
+    + R(-3.8, -71.6, 7.6, 1.1, '#141418', 'stroke="#2a2a32" stroke-width=".15"') + L(-4.2, -75.4, -4.6, -79.4, '#2a2a32', 0.3) + L(4.2, -75.4, 4.6, -79.4, '#2a2a32', 0.3) + C(-4.6, -79.6, 0.3, '#ff3a2a') + C(4.6, -79.6, 0.3, '#ff3a2a')
+    + P('M-14 -14 L-11 -21 M-9 -14 L-6.6 -27 M-4.8 -33 L-3.6 -56 M-2.4 -60 L-5 -75', 'none', 'stroke="#ff7a3a" stroke-width=".25" opacity=".6"'));
   // A mining collector rising from the lava: the black mast, the head with
   // its lit band, and the boom dipping its glowing scoop into the flow.
   const collector = (x, base, s) => g(x, base, s, 1,
@@ -105,36 +113,62 @@
     + P('M0 -30 L14 -34 L20 -32.4', 'none', 'stroke="#ff7a3a" stroke-width=".25" opacity=".5"'));
 
   // ---------- Ships ----------
-  // A TIE Interceptor in profile, nose right: the dagger wing with its frame
-  // and panels behind the ball cockpit, the round forward viewport, and the
-  // cannons at the wingtips.
-  const TIGUNS = [[3.8, -11], [3.8, 11]];
+  // A TIE wing seen at an angle: the wing face drawn flat and squeezed
+  // across (kx) to turn it away from the viewer, forward to the right. A
+  // heavy frame, faceted solar panels lit from above, spars from the hub to
+  // every corner, the hub plate; fold marks where the wing bends.
+  const tieWing = (cx, kx, ks, pts, far = false, fold = 0) => {
+    const inner = pts.map(([px, py]) => [f2(px * 0.84 + 0.1), f2(py * 0.86)]);
+    const lit = far ? ['#2e333c', '#282c34'] : ['#465060', '#3a4250'];
+    return `<g transform="translate(${cx} 0) scale(${f2(kx * ks)} ${ks})">`
+      + P(`M${pts.map((q) => q.join(' ')).join(' L')}Z`, far ? '#121418' : '#1a1d24', 'stroke="#07080a" stroke-width=".6"')
+      + inner.map((q, i) => { const nq = inner[(i + 1) % inner.length]; const top = q[1] + nq[1] < 0; return P(`M0.6 0 L${q.join(' ')} L${nq.join(' ')}Z`, top ? lit[0] : lit[1]); }).join('')
+      + inner.map((q) => `M0.6 0 L${q.join(' ')}`).map((d) => P(d, 'none', 'stroke="#14161c" stroke-width=".35"')).join('') + P(`M${inner.map((q) => q.join(' ')).join(' L')}Z`, 'none', 'stroke="#14161c" stroke-width=".3"')
+      + (fold ? L(-6, -fold, 5, -fold, '#0c0e12', 0.45) + L(-6, fold, 5, fold, '#0c0e12', 0.45) + P(`M${inner.filter((q) => q[1] < -fold).map((q) => q.join(' ')).join(' L')} L4 ${-fold} L-5 ${-fold}Z M${inner.filter((q) => q[1] > fold).map((q) => q.join(' ')).join(' L')} L-5 ${fold} L4 ${fold}Z`, '#000', 'opacity=".22"') : '')
+      + C(0.6, 0, 1.3, far ? '#22262e' : '#2e333c', 'stroke="#0c0e12" stroke-width=".25"') + C(0.6, 0, 0.5, '#5a606a')
+      + (far ? '' : P(`M${pts[1].join(' ')} L${pts[2].join(' ')} L${pts[3].join(' ')}`, 'none', 'stroke="#7a8494" stroke-width=".3" opacity=".6"')) + '</g>';
+  };
+  // A TIE cockpit ball, nose right and turned a little toward the viewer:
+  // shaded hull, meridian seam, top hatch, and the big spoked front window.
+  const tieBall = (r) => C(0, 0, r, '#7a808a', 'stroke="#22252c" stroke-width=".3"') + P(`M${f2(-r * 0.2)} ${-r} A${r} ${r} 0 0 0 ${f2(-r * 0.2)} ${r} A${f2(r * 0.7)} ${r} 0 0 1 ${f2(-r * 0.2)} ${-r}Z`, '#4a4f58', 'opacity=".7"') + E(f2(-r * 0.15), 0, f2(r * 0.4), r, 'none', 'stroke="#4a4e58" stroke-width=".18"') + E(f2(-r * 0.35), f2(-r * 0.45), f2(r * 0.4), f2(r * 0.25), '#d8dce2', 'opacity=".35"') + E(f2(-r * 0.25), f2(-r * 0.86), f2(r * 0.34), f2(r * 0.12), '#4a4e58')
+    + E(f2(r * 0.45), 0, f2(r * 0.5), f2(r * 0.7), '#0a0e14', 'stroke="#3a3e46" stroke-width=".4"') + Array.from({ length: 8 }, (_, k) => { const an = (k / 8) * Math.PI * 2; return L(f2(r * 0.45 + Math.cos(an) * r * 0.12), f2(Math.sin(an) * r * 0.17), f2(r * 0.45 + Math.cos(an) * r * 0.48), f2(Math.sin(an) * r * 0.68), '#5a606a', 0.18); }).join('') + E(f2(r * 0.45), 0, f2(r * 0.14), f2(r * 0.2), '#5a606a') + P(`M${f2(r * 0.2)} ${f2(-r * 0.5)} Q${f2(r * 0.5)} ${f2(-r * 0.66)} ${f2(r * 0.7)} ${f2(-r * 0.3)}`, 'none', 'stroke="#aac4dc" stroke-width=".2" opacity=".6"');
+  // A TIE Interceptor in three-quarter view, nose right: the far dagger wing
+  // behind, the ball cockpit and its pylons, the near dagger wing in front,
+  // and the laser cannons on its wingtips.
+  const INTW = [[-1.4, -2.2], [-3.4, -5], [-2, -11], [4.6, -11.8], [2.4, -4.6], [5, -1.8], [5, 1.8], [2.4, 4.6], [4.6, 11.8], [-2, 11], [-3.4, 5], [-1.4, 2.2]];
+  const TIGUNS = [[-1.4, -11.8], [-1.4, 11.8]];
   const tieInt = (x, y, s, a = 0) => g(x, y, s, 1,
-    P('M-2.4 -10.8 L1.2 -11.2 L2.4 -5 L4.6 -2.2 L4.6 2.2 L2.4 5 L1.2 11.2 L-2.4 10.8 L-1 4.4 L-3.6 1.8 L-3.6 -1.8 L-1 -4.4Z', '#20232a', 'stroke="#0c0e12" stroke-width=".3"')
-    + P('M-1.6 -9.6 L0.6 -9.8 L1.6 -4.8 L3.6 -2 L3.6 2 L1.6 4.8 L0.6 9.8 L-1.6 9.6 L-0.4 4.2 L-2.8 1.6 L-2.8 -1.6 L-0.4 -4.2Z', '#3e4450', 'stroke="#14161a" stroke-width=".15"')
-    + P('M0 0 L0.6 -9.4 M0 0 L0.6 9.4 M0 0 L3.4 -1.6 M0 0 L3.4 1.6 M0 0 L-2.6 -1.4 M0 0 L-2.6 1.4 M0 0 L-0.8 -4.6 M0 0 L-0.8 4.6', 'none', 'stroke="#16181e" stroke-width=".22"') + P('M-1.6 -9.6 L0.6 -9.8 L0.4 -6Z', '#5a6270', 'opacity=".5"')
-    + L(1.2, -11.2, 3.8, -11, '#2a2e36', 0.5) + L(1.2, 11.2, 3.8, 11, '#2a2e36', 0.5)
-    + C(0.4, 0, 3, '#6a707a', 'stroke="#2a2e36" stroke-width=".3"') + P('M2.4 -1.8 A3 3 0 0 1 2.4 1.8 A2 3 0 0 0 2.4 -1.8Z', '#3e434c', 'opacity=".6"') + C(-0.4, -0.6, 1, '#8a909a', 'opacity=".5"')
-    + E(2.4, 0, 1, 2, '#0c1016', 'stroke="#4a4e58" stroke-width=".2"') + P('M2.4 -2 L2.4 2 M1.6 -1.4 L3.2 1.4 M3.2 -1.4 L1.6 1.4', 'none', 'stroke="#6a707a" stroke-width=".14"') + C(-2.4, 0, 0.6, '#ff5a3a', 'opacity=".5"'), a);
-  // Darth Vader's TIE Advanced x1 in profile, nose right: the long rear
-  // hull with its engine glow, the bent wing with solar panel lines, the
-  // ball cockpit and the twin cannons under its viewport.
-  const TAGUNS = [[5.6, 1.7], [5.6, 2.7]];
+    tieWing(6.6, 0.38, 0.84, INTW, true) + P('M2.4 -0.6 L6.6 -0.4 L6.6 0.4 L2.4 0.6Z', '#3a3e46')
+    + tieBall(3.1) + C(-2.6, 0.4, 0.5, '#ff5a3a', 'opacity=".5"')
+    + P('M-2.6 -0.9 L-6.2 -0.7 L-6.2 0.7 L-2.6 0.9Z', '#4e545e', 'stroke="#22252c" stroke-width=".2"') + R(-5, -1.2, 1.2, 2.4, '#2e323a') + L(-6, -0.3, -2.8, -0.4, '#7a808a', 0.15)
+    + tieWing(-6.6, 0.55, 1, INTW) + [-11.8, 11.8].map((gy) => R(-4.1, gy - 0.3, 2.8, 0.6, '#2a2e36', 'stroke="#0c0e12" stroke-width=".1"') + C(-1.3, gy, 0.22, '#5aff6a', 'opacity=".7"')).join(''), a);
+  // Darth Vader's TIE Advanced x1 in three-quarter view, nose right: the
+  // long rear hull with its engine glow, the bent wings with fold lines and
+  // panels, the ball cockpit and the twin cannons under its window.
+  const ADVW = [[-4.6, -11], [3.2, -11], [4.6, -6.6], [4.6, 6.6], [3.2, 11], [-4.6, 11], [-5.6, 6.6], [-5.6, -6.6]];
+  const TAGUNS = [[5.4, 1.5], [5.4, 2.5]];
   const tieAdv = (x, y, s, a = 0) => g(x, y, s, 1,
-    P('M-1 -2.2 L-8 -1.6 L-9 0 L-8 1.6 L-1 2.2Z', '#5a606a', 'stroke="#22252c" stroke-width=".2"') + L(-8, 0, -1, 0, '#3a3e46', 0.2) + R(-9.6, -1, 0.8, 2, '#3a3e46') + E(-9.8, 0, 0.4, 0.8, '#ff6a4a') + glow(-10, 0, 0.6, '#ff6a4a', 0.4)
-    + P('M-4.6 -11 L1.6 -11 L2.6 -6 L2.6 6 L1.6 11 L-4.6 11 L-5.6 6 L-5.6 -6Z', '#262a32', 'stroke="#0c0e12" stroke-width=".3"') + P('M-3.8 -10 L0.8 -10 L1.6 -6 L1.6 6 L0.8 10 L-3.8 10 L-4.6 6 L-4.6 -6Z', '#3a404c', 'stroke="#14161a" stroke-width=".15"')
-    + [-2.8, -1.6, -0.4, 0.8].map((px) => L(px, -9.6, px, 9.6, '#1e2026', 0.2)).join('') + L(-4.6, -6, 1.6, -6, '#16181e', 0.3) + L(-4.6, 6, 1.6, 6, '#16181e', 0.3) + P('M-3.8 -10 L0.8 -10 L1.6 -6 L-4.6 -6Z', '#5a6270', 'opacity=".45"')
-    + C(0.6, 0, 3.3, '#6a707a', 'stroke="#2a2e36" stroke-width=".3"') + P('M2.8 -2 A3.3 3.3 0 0 1 2.8 2 A2 3.3 0 0 0 2.8 -2Z', '#3e434c', 'opacity=".6"') + C(-0.2, -0.8, 1.1, '#8a909a', 'opacity=".5"')
-    + E(2.8, -0.4, 1.1, 2, '#0c1016', 'stroke="#4a4e58" stroke-width=".2"') + P('M2.8 -2.4 L2.8 1.6 M2 -1.8 L3.6 1 M3.6 -1.8 L2 1', 'none', 'stroke="#6a707a" stroke-width=".14"')
-    + R(2.8, 1.45, 2.8, 0.5, '#2a2e36') + R(2.8, 2.45, 2.8, 0.5, '#2a2e36'), a);
-  // Obi-Wan's Eta-2 Jedi interceptor parked, seen from above at an angle:
-  // the narrow fuselage, the red wing panels, the cockpit and the astromech.
-  const eta2 = (x, y, s, c = '#c83a2a') => `<g transform="translate(${x} ${y}) scale(${s} ${f2(s * 0.5)})">`
-    + E(0, 3, 15, 5, '#000', 'opacity=".3"')
-    + P('M-3 -1.4 L-7 -10 L4 -10 L1.6 -1.4Z M-3 1.4 L-7 10 L4 10 L1.6 1.4Z', c, 'stroke="#3a1410" stroke-width=".3"') + P('M-5.6 -9 L2.6 -9 L1 -2.4 L-2.6 -2.4Z M-5.6 9 L2.6 9 L1 2.4 L-2.6 2.4Z', '#e8e4dc', 'opacity=".85"') + P('M-4 -9 L-1.8 -2.4 M-1.4 -9 L-0.6 -2.4 M1 -9 L0.4 -2.4 M-4 9 L-1.8 2.4 M-1.4 9 L-0.6 2.4 M1 9 L0.4 2.4', 'none', 'stroke="#8a8478" stroke-width=".2"')
-    + R(-8, -10.6, 4, 1.2, '#3a3a40') + R(-8, 9.4, 4, 1.2, '#3a3a40') + E(-8.2, -10, 0.5, 0.7, '#9ad8ff') + E(-8.2, 10, 0.5, 0.7, '#9ad8ff')
-    + P('M-8 -1.2 L6 -1.6 L12 0 L6 1.6 L-8 1.2Z', '#d8d4cc', 'stroke="#4a4840" stroke-width=".25"') + P('M12 0 L7 -1.4 L7 1.4Z', c) + E(3, 0, 2.2, 1.1, '#2a3a4a', 'stroke="#1a1410" stroke-width=".2"') + E(3.4, -0.3, 1, 0.4, '#aaccdd', 'opacity=".6"') + C(-2.6, -0.2, 0.9, '#c83a2a', 'stroke="#3a3a40" stroke-width=".15"') + C(-2.6, -0.2, 0.4, '#e8e8ec')
-    + '</g>';
+    tieWing(7, 0.36, 0.86, ADVW, true, 6.6) + P('M2.6 -0.6 L7 -0.4 L7 0.4 L2.6 0.6Z', '#3a3e46')
+    + P('M-1 -2 L-11 -1.5 L-12.2 0 L-11 1.5 L-1 2Z', '#5e646e', 'stroke="#22252c" stroke-width=".2"') + P('M-1 -2 L-11 -1.5 L-12.2 0 L-1 0Z', '#8a909a', 'opacity=".4"') + [-4, -6.5, -9].map((px) => L(px, -1.8, px, 1.8, '#3a3e46', 0.15)).join('') + R(-12.8, -1, 0.8, 2, '#2e323a') + E(-13, 0, 0.45, 0.9, '#ff6a4a') + glow(-13.2, 0, 0.7, '#ff6a4a', 0.45)
+    + tieBall(3.4)
+    + R(2.4, 1.25, 3, 0.5, '#2a2e36', 'stroke="#0c0e12" stroke-width=".08"') + R(2.4, 2.25, 3, 0.5, '#2a2e36', 'stroke="#0c0e12" stroke-width=".08"')
+    + P('M-2.8 -1 L-6.6 -0.8 L-6.6 0.8 L-2.8 1Z', '#4e545e', 'stroke="#22252c" stroke-width=".2"') + R(-5.4, -1.3, 1.2, 2.6, '#2e323a')
+    + tieWing(-7, 0.52, 1, ADVW, false, 6.6), a);
+  // Obi-Wan's Delta-7 Jedi starfighter parked on its landing gear, in
+  // three-quarter view: the white wedge with its red nose and wing panels,
+  // the raised cockpit canopy, the astromech in its socket, the twin
+  // engines glowing at the back and cannons on the leading edge.
+  const deltaParked = (x, y, s, c = '#c83a2a', dome = '#c83a2a') => g(x, y, s, 1,
+    E(1, 10.4, 17, 2.4, '#000', 'opacity=".4"')
+    + [[9, 6.8, 3.2], [-6, 9.6, 1.6], [-10, 2.4, 6.6]].map(([lx, ly, h]) => L(lx, ly, lx, f2(ly + h), '#3a3a40', 0.7) + L(lx, ly, f2(lx - 1), f2(ly + h * 0.5), '#3a3a40', 0.35) + E(lx, f2(ly + h), 1.1, 0.35, '#2a2a30')).join('')
+    + P('M16 5 L-6 9 L-6 10.6 L16 6.3Z', '#a8a49a', 'stroke="#4a463e" stroke-width=".2"') + P('M16 5.6 L-6 9.6 L-6 10.2 L16 5.9Z', c, 'opacity=".7"') + P('M-6 9 L-8.4 3.4 L-8.4 4.8 L-6 10.6Z', '#7a766c', 'stroke="#4a463e" stroke-width=".15"')
+    + P('M16 5 L-14 -2 L-8.4 3.4 L-6 9Z', '#ece8e0', 'stroke="#5a564c" stroke-width=".25"')
+    + P('M16 5 L8.6 3.2 L10.6 6.4Z', c) + P('M-14 -2 L-11.6 -1.4 L-7.4 4.1 L-8.4 3.4Z', c, 'opacity=".9"') + P('M-6 9 L-6.8 7.2 L-3.6 7.9 L-3.2 8.4Z', c) + P('M2 1.6 L1 0.8 L-1.6 6.6 L-0.6 7.2Z', c, 'opacity=".75"')
+    + P('M16 5 L-8.4 3.4 M12 4.2 L-10 -0.6 M10 5.8 L-5 8.6 M4 2 L2 8.2 M-4 0 L-5.6 7.6', 'none', 'stroke="#b8b2a4" stroke-width=".15"')
+    + E(4.6, 4.6, 3.2, 1.5, '#1e2a36', 'stroke="#4a463e" stroke-width=".25"') + P('M1.8 4.4 Q4.6 2.6 7.4 4.2', 'none', 'stroke="#aaccdd" stroke-width=".3" opacity=".7"') + L(4.6, 3.1, 4.6, 6.1, '#5a564c', 0.2) + L(2, 5, 7.2, 4.6, '#5a564c', 0.15)
+    + R(-7.6, -0.4, 2.4, 2, '#5a5a62', 'rx=".3"') + C(-6.4, -0.4, 1.3, dome, 'stroke="#3a3a40" stroke-width=".15"') + C(-6.4, -0.4, 0.5, '#e8e8ec') + C(-6.6, -0.7, 0.18, '#3a8aff') + L(-7.4, -0.2, -5.4, -0.2, '#e8e8ec', 0.2)
+    + P('M-12.4 -1.9 L-15.2 -3 L-15.2 -0.6 L-12.4 0.4Z M-9.8 1.4 L-12.6 0.6 L-12.6 3 L-9.8 3.6Z', '#5a5a62', 'stroke="#2a2a30" stroke-width=".15"') + E(-15.2, -1.8, 0.4, 1.1, '#9ad8ff') + E(-12.6, 1.8, 0.4, 1.1, '#9ad8ff') + glow(-15.4, -1.8, 0.7, '#5ab8ff', 0.4) + glow(-12.8, 1.8, 0.7, '#5ab8ff', 0.4)
+    + L(11, 3.4, 15, 4.2, '#3a3a40', 0.4) + L(10, 6.2, 14.2, 5.8, '#3a3a40', 0.4));
 
   // ---------- People ----------
   // A purge trooper: black armour with segmented chest and knee guards, a
@@ -204,15 +238,20 @@
   // ---------- The ten scenes ----------
   const MU = {
     // 1 · Lava Fields (fleet): low over Mustafar's lava plains under an ash
-    // sky. A volcano erupts on the horizon, rivers of lava snake between
-    // black ridges, and Darth Vader's TIE Advanced leads two TIE
+    // sky. Volcanoes erupt on the horizon, lavafalls spill off the ridges
+    // into a river studded with black rocks, glowing streams branch across
+    // the plain into steaming pools spitting molten droplets, and Darth Vader's TIE Advanced leads two TIE
     // Interceptors after a fleeing A-wing, every shot straight from their
     // cannons.
     lava_fields: () => {
       const aw = [124, 22, 1, -14]; const va = [66, 36, 1.25, -13]; const i1 = [38, 52, 1, -19]; const i2 = [96, 54, 0.85, -36];
       return fill(SKY) + clouds(12, 1, 0.7) + clouds(30, 4, 0.45) + volcano(118, 58, 26, 22) + volcano(30, 60, 18, 12, '#24181a')
         + ridge(60, 8, '#1e1416', 2) + lava('M-4 66 C30 62 50 70 80 66 C110 62 130 68 164 64 L164 70 C130 74 110 68 80 72 C50 76 30 68 -4 72Z', 1, 80, 68, 84, 4) + ridge(76, 6, '#160e10', 5)
-        + lava('M20 90 C40 82 60 80 72 76 C80 78 70 84 60 90Z', 2, 50, 84, 20, 5) + lava('M110 90 C116 84 128 80 140 80 C150 82 150 86 144 90Z', 3, 130, 85, 18, 4)
+        + lavafall(22, 55, 66, 2.6) + lavafall(84, 56, 66, 2) + lavafall(146, 55, 65, 3) + volcano(64, 58, 10, 6, '#22181a')
+        + [[18, 68, 2.2], [46, 66.6, 1.6], [104, 67, 2.6], [136, 66, 1.8]].map(([x, y, r]) => P(`M${x - r * 1.6} ${y + 0.6} L${x - r * 0.6} ${y - r * 0.9} L${x + r * 0.5} ${y - r * 0.7} L${x + r * 1.5} ${y + 0.6}Z`, '#140c0e', 'stroke="#ff7a2a" stroke-width=".25" stroke-opacity=".7"')).join('')
+        + [[60, 66, 70, 76], [96, 70, 112, 78], [30, 70, 18, 80]].map(([x1, y1, x2, y2]) => P(`M${x1} ${y1} Q${f2((x1 + x2) / 2 + 3)} ${f2((y1 + y2) / 2)} ${x2} ${y2}`, 'none', 'stroke="#ff8a2a" stroke-width="1" opacity=".85"') + P(`M${x1} ${y1} Q${f2((x1 + x2) / 2 + 3)} ${f2((y1 + y2) / 2)} ${x2} ${y2}`, 'none', 'stroke="#ffe08a" stroke-width=".3"')).join('')
+        + lava('M20 90 C40 82 60 80 72 76 C80 78 70 84 60 90Z', 2, 50, 84, 20, 5) + lava('M110 90 C116 84 128 80 140 80 C150 82 150 86 144 90Z', 3, 130, 85, 18, 4) + lava('M84 90 C88 86 96 84 102 86 C104 88 100 90 98 90Z', 12, 94, 88, 8, 2)
+        + [[40, 86], [126, 84], [90, 72], [10, 74]].map(([x, y]) => C(x, y - 3, 2, '#8a7a74', 'opacity=".2"') + C(x + 1.6, y - 7, 2.8, '#8a7a74', 'opacity=".14"')).join('') + [[52, 82], [134, 83]].map(([x, y]) => Array.from({ length: 6 }, (_, k) => C(f2(x - 2 + k * 0.8), f2(y - 2 - (k % 3) * 1.4), 0.3, k % 2 ? '#ffd27a' : '#ff6a2a')).join('')).join('')
         + awing(aw[0], aw[1], aw[2], aw[3])
         + tieInt(i1[0], i1[1], i1[2], i1[3]) + tieInt(i2[0], i2[1], i2[2], i2[3]) + tieAdv(va[0], va[1], va[2], va[3])
         + gunsAt(va[0], va[1], va[2], va[3], TAGUNS).map((p) => shots(p, fwd(p, va[3], 52), [0.12, 0.42, 0.72], 0.12, GRN)).join('')
@@ -244,22 +283,28 @@
       + purge(46, 86, 2.7, 1, 'rifle') + purge(114, 86, 2.7, -1, 'rifle') + seventhSis(80, 86, 3.1, 1) + ash(36, 3),
 
     // 4 · The Rescue: a landing platform on the facility's edge. Obi-Wan's
-    // red Jedi interceptor sits on the pad with its astromech, the facility
+    // red Delta-7 starfighter stands on the pad with its astromech, the facility
     // and its lavafalls behind; Obi-Wan and Ahsoka stand with sabers lit.
     the_rescue: () => fill(SKY) + clouds(10, 5, 0.6) + ridge(46, 16, '#1e1416', 6) + lavafall(26, 28, 52, 4) + lavafall(138, 30, 52, 5)
       + lava('M-4 50 L164 50 L164 62 L-4 62Z', 6, 80, 56, 80, 5) + facility(104, 62, 1.1) + collector(40, 62, 0.8)
       + E(80, 74, 72, 13, '#1e1c20', 'stroke="#3a3a42" stroke-width=".5"') + E(80, 74, 58, 10, 'none', 'stroke="#c8982a" stroke-width=".4" stroke-dasharray="3 2" opacity=".7"') + Array.from({ length: 14 }, (_, k) => { const t = (k / 14) * Math.PI * 2; return C(f2(80 + Math.cos(t) * 70), f2(74 + Math.sin(t) * 12.6), 0.4, '#ffd27a'); }).join('') + P('M8 76 Q80 90 152 76 L152 90 L8 90Z', '#121014')
-      + eta2(82, 68, 2.4, '#c83a2a')
-      + obiwan(56, 86, 3.1, 1) + ahsoka(108, 86, 3, -1) + ash(30, 4),
+      + deltaParked(84, 58, 1.9, '#c83a2a', '#c83a2a')
+      + obiwan(40, 86, 3.1, 1) + ahsoka(124, 86, 3, -1) + ash(30, 4),
 
     // 5 · Lava River: the river of fire. Lavafalls thunder down behind, the
     // flow surges forward with crust and spray, black rocks break the
-    // surface; the Eighth Brother rides a collector platform with his saber
+    // surface, a wrecked collector boom sinks into it, debris drifts by,
+    // molten droplets burst up and steam rises; the old facility looks down
+    // from the cliffs; the Eighth Brother rides a collector platform with his saber
     // spinning, purge troopers on repulsor skiffs beside him.
     lava_river: () => fill(SKY) + clouds(8, 6, 0.6) + ridge(34, 16, '#1e1416', 7) + lavafall(20, 18, 46, 6) + lavafall(58, 14, 46, 8) + lavafall(104, 16, 46, 7) + lavafall(144, 20, 46, 6)
       + lava('M-4 44 L164 44 L164 90 L-4 90Z', 7, 80, 66, 84, 22)
       + Array.from({ length: 8 }, (_, k) => P(`M${-4 + k * 22} ${52 + (k % 3) * 8} q6 -2.4 12 0`, 'none', 'stroke="#fff4c0" stroke-width=".5" opacity=".6"')).join('') + [[30, 54, 3], [134, 60, 4], [10, 74, 5]].map(([x, y, r]) => P(`M${x - r} ${y} L${x - r * 0.4} ${y - r * 1.2} L${x + r * 0.5} ${y - r} L${x + r} ${y}Z`, '#140c0c', 'stroke="#ff6a2a" stroke-width=".3" stroke-opacity=".6"')).join('')
-      + collector(150, 70, 0.7)
+      + facility(-4, 34, 0.55) + collector(150, 70, 0.7)
+      + P('M96 64 L112 56 L113 57 L98 66Z', '#1e1e24', 'stroke="#ff6a2a" stroke-width=".2" stroke-opacity=".6"') + P('M110 57 L118 50 L119.4 51 L112 58Z', '#1a1a20') + E(104, 64, 6, 1.2, '#fff0a0', 'opacity=".5"')
+      + [[18, 62], [70, 58], [116, 74], [146, 56]].map(([x, y]) => R(x - 2, y - 0.6, 4, 1.2, '#1a1418', 'transform="rotate(-12 ' + x + ' ' + y + ')"') + E(x, y + 0.8, 3, 0.5, '#fff0a0', 'opacity=".5"')).join('')
+      + [[48, 60], [100, 52], [140, 78], [24, 82]].map(([x, y]) => Array.from({ length: 7 }, (_, k) => { const an = ((-160 + k * 22) * Math.PI) / 180; return C(f2(x + Math.cos(an) * (2 + (k % 3))), f2(y + Math.sin(an) * (2.4 + (k % 2) * 1.4)), f2(0.25 + (k % 3) * 0.12), k % 2 ? '#ffe08a' : '#ff7a2a'); }).join('') + glow(x, y, 0.8, '#ffb43a', 0.4)).join('')
+      + [[30, 50], [76, 48], [124, 50]].map(([x, y]) => C(x, y - 2, 3, '#8a7a74', 'opacity=".18"') + C(x + 2, y - 6, 4, '#8a7a74', 'opacity=".12"')).join('')
       + [[40, 82, 18], [124, 82, 18]].map(([x, y, w]) => E(x, y + 1.6, w * 0.6, 1.4, '#ffe08a', 'opacity=".55"') + P(`M${x - w / 2} ${y} L${x + w / 2} ${y} L${x + w / 2 - 1.4} ${y + 1.6} L${x - w / 2 + 1.4} ${y + 1.6}Z`, '#26262c', 'stroke="#0a0a0e" stroke-width=".2"') + R(x - 1.6, y + 1.6, 3.2, 0.8, '#ff8a3a')).join('')
       + P('M60 84 L100 84 L97 88 L63 88Z', '#22222a', 'stroke="#0a0a0e" stroke-width=".25"') + L(60, 84, 100, 84, '#5a5a62', 0.3) + R(66, 88, 28, 1.2, '#ff8a3a', 'opacity=".8"') + E(80, 89, 20, 1.4, '#fff0a0', 'opacity=".55"') + L(62, 80, 62, 84, '#3a3a42', 0.4) + L(98, 80, 98, 84, '#3a3a42', 0.4) + L(62, 80, 98, 80, '#3a3a42', 0.35)
       + purge(40, 82, 2.4, 1, 'rifle') + purge(124, 82, 2.4, -1, 'staff') + eighthBro(80, 84, 3, 1) + ash(36, 5),
@@ -271,7 +316,7 @@
     fortress_skies: () => {
       const aw = [140, 30, 0.95, -8]; const v1 = [92, 40, 1.15, -6]; const i1 = [70, 22, 0.9, 4]; const i2 = [66, 62, 0.95, -18]; const v2 = [112, 66, 0.8, -26];
       return fill(SKY) + clouds(14, 7, 0.65) + volcano(140, 70, 18, 14) + ridge(72, 10, '#1e1416', 8)
-        + lavafall(14, 66, 90, 5) + lavafall(66, 70, 90, 4) + castle(40, 92, 1.15) + lava('M-4 84 L164 84 L164 90 L-4 90Z', 8, 80, 87, 80, 2)
+        + lavafall(14, 66, 90, 5) + lavafall(66, 70, 90, 4) + castle(40, 92, 1.08) + lava('M-4 84 L164 84 L164 90 L-4 90Z', 8, 80, 87, 80, 2)
         + awing(aw[0], aw[1], aw[2], aw[3])
         + tieInt(i1[0], i1[1], i1[2], i1[3]) + tieInt(i2[0], i2[1], i2[2], i2[3]) + tieAdv(v1[0], v1[1], v1[2], v1[3]) + tieAdv(v2[0], v2[1], v2[2], v2[3])
         + [v1, v2].map(([x, y, s, a]) => gunsAt(x, y, s, a, TAGUNS).map((p) => shots(p, fwd(p, a, 40), [0.15, 0.5], 0.13, GRN)).join('')).join('')
@@ -307,7 +352,7 @@
 
     // 9 · Fortress Gate: at the foot of Vader's fortress. The great black
     // gate with its glowing seam and the Imperial crest above, the rock
-    // pedestal, lavafalls on both sides and the causeway over the lava;
+    // pedestal, lavafalls on both sides and the broad railed causeway over the lava;
     // purge troopers, the Seventh Sister and the Eighth Brother hold it.
     fortress_gate: () => fill(SKY) + clouds(8, 9, 0.6)
       + P('M40 0 L120 0 L120 64 L40 64Z', '#121216') + P('M80 0 L120 0 L120 64 L80 64Z', '#000', 'opacity=".25"') + [10, 20, 30, 40, 50].map((yy) => L(40, yy, 120, yy, '#2a2a32', 0.3)).join('') + L(40, 0, 40, 64, '#ff7a3a', 0.4, 'opacity=".5"')
@@ -315,7 +360,7 @@
       + C(80, 12, 3.4, 'none', 'stroke="#c8c8d0" stroke-width=".5"') + C(80, 12, 1.2, '#c8c8d0') + Array.from({ length: 6 }, (_, k) => { const a = (k / 6) * Math.PI * 2; return L(f2(80 + Math.cos(a) * 1.4), f2(12 + Math.sin(a) * 1.4), f2(80 + Math.cos(a) * 3.2), f2(12 + Math.sin(a) * 3.2), '#c8c8d0', 0.45); }).join('')
       + [[48, 30], [112, 30]].map(([x, y]) => R(x - 1.4, y, 2.8, 4, '#2a0a08') + R(x - 1, y + 0.4, 2, 3.2, '#ff3a1a', 'opacity=".8"')).join('')
       + P('M0 40 L40 30 L40 64 L0 64Z', '#1a1012') + P('M160 40 L120 30 L120 64 L160 64Z', '#1a1012') + lavafall(20, 38, 64, 7) + lavafall(140, 38, 64, 7)
-      + lava('M-4 64 L164 64 L164 90 L-4 90Z', 10, 80, 77, 84, 12) + P('M50 64 L110 64 L126 90 L34 90Z', '#18141a', 'stroke="#ff6a2a" stroke-width=".4" stroke-opacity=".6"') + Array.from({ length: 6 }, (_, k) => L(f2(50 - k * 2.6), 64 + k * 4.4, f2(110 + k * 2.6), 64 + k * 4.4, '#0e0c0e', 0.3)).join('')
+      + lava('M-4 64 L164 64 L164 90 L-4 90Z', 10, 80, 77, 84, 12) + P('M42 64 L118 64 L150 90 L10 90Z', '#18141a', 'stroke="#ff6a2a" stroke-width=".4" stroke-opacity=".6"') + Array.from({ length: 6 }, (_, k) => L(f2(42 - k * 5.3), 64 + k * 4.4, f2(118 + k * 5.3), 64 + k * 4.4, '#0e0c0e', 0.3)).join('') + [[42, 64, 10, 90], [118, 64, 150, 90]].map(([x1, y1, x2, y2]) => L(x1, y1 - 2.4, x2, y2 - 4, '#3a3a42', 0.5) + Array.from({ length: 5 }, (_, k) => { const t = k / 4; const px = f2(x1 + (x2 - x1) * t); const py = f2(y1 + (y2 - y1) * t); return L(px, py, px, f2(py - 2.4 - t * 1.6), '#3a3a42', 0.45) + C(px, f2(py - 2.6 - t * 1.6), 0.3, '#ff3a2a'); }).join('')).join('')
       + purge(38, 86, 2.6, 1, 'staff') + purge(122, 86, 2.6, -1, 'rifle') + seventhSis(64, 86, 3, 1) + eighthBro(96, 86, 3, -1) + ash(30, 9),
 
     // 10 · Vader's Wrath: Darth Vader on the fortress platform above the
