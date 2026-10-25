@@ -213,6 +213,11 @@
     + C(0, 0, 2.4, '#7a808a', 'stroke="#2a2e36" stroke-width=".25"') + P('M1.7 -1.7 A2.4 2.4 0 0 1 -1.7 1.7 A2.6 2.6 0 0 0 1.7 -1.7Z', '#4a505a', 'opacity=".7"') + C(0, 0, 1.75, '#3a3e46')
     + C(0, 0, 1.35, '#0c1016') + Array.from({ length: 8 }, (_, k) => { const an = (k / 8) * Math.PI * 2; return L((Math.cos(an) * 0.35).toFixed(2), (Math.sin(an) * 0.35).toFixed(2), (Math.cos(an) * 1.35).toFixed(2), (Math.sin(an) * 1.35).toFixed(2), '#8a909a', 0.16); }).join('') + C(0, 0, 0.35, '#8a909a') + C(-0.5, -0.5, 0.35, '#7aa0d0', 'opacity=".6"') + P('M-1.6 -0.8 A1.8 1.8 0 0 1 -0.6 -1.7', 'none', 'stroke="#c8ccd4" stroke-width=".25" opacity=".7"'), a);
   const bolt = (x1, y1, x2, y2, c) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="1.6" stroke-linecap="round" opacity=".35"/><line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#ffffff" stroke-width=".5" stroke-linecap="round"/>`;
+  // Where an Interceptor's wingtip guns are once it is placed, scaled and
+  // tilted, so its shots can start right at the barrels.
+  const tieGuns = (x, y, s, a) => { const r = (a * Math.PI) / 180; return [[8.6, -12.2], [8.6, 12.2], [-8.6, -12.2], [-8.6, 12.2]].map(([lx, ly]) => [x + s * (lx * Math.cos(r) - ly * Math.sin(r)), y + s * (lx * Math.sin(r) + ly * Math.cos(r))]); };
+  // Short laser bolts in flight from (x1, y1) toward (x2, y2), at fractions ts of the way.
+  const shots = ([x1, y1], [x2, y2], ts, len = 0.12, c = '#3aff6a') => ts.map((t) => { const ax = x1 + (x2 - x1) * t; const ay = y1 + (y2 - y1) * t; return bolt(+ax.toFixed(1), +ay.toFixed(1), +(ax + (x2 - x1) * len).toFixed(1), +(ay + (y2 - y1) * len).toFixed(1), c); }).join('');
   // Yoda's hut: the mud dome and its smaller annex, round windows glowing
   // warm, the door, the chimney pipe with smoke, roots wrapped around it.
   const hut = (x, y, s) => g(x, y, s, 1,
@@ -238,7 +243,7 @@
       + treeline(64, '#4a5a4a', 0.55, 1) + fog(58, 0.35, '#c8d4bc', 1) + treeline(70, '#33402e', 0.8, 4) + fog(66, 0.4, '#b8c8ac', 2)
       + bog(70, '#4a5a44', '#18221a', 1) + E(118, 74, 26, 2.4, '#e8e4c8', 'opacity=".22"') + P('M96 76 L140 76 M104 79 L132 79', 'none', 'stroke="#f0ecd0" stroke-width=".4" opacity=".4"')
       + refl(70, xwing(70, 54, 1.6, 10, true, false), 0.18)
-      + bolt(36, 20, 58, 38, '#3aff6a') + bolt(18, 44, 52, 50, '#3aff6a') + bolt(52, 10, 66, 32, '#3aff6a') + interceptor(26, 32, 1.1, -12, true) + interceptor(48, 18, 0.75, -8, true)
+      + (() => { const a = tieGuns(30, 56, 1, -12); const b = tieGuns(48, 18, 0.75, -8); return shots(a[0], [64, 46], [0, 0.55], 0.22) + shots(a[1], [62, 54], [0.05, 0.6], 0.2) + shots(b[0], [70, 38], [0, 0.5], 0.25) + shots(b[1], [68, 44], [0.06, 0.56], 0.22); })() + interceptor(30, 56, 1, -12, true) + interceptor(48, 18, 0.75, -8, true)
       + xwing(72, 46, 1.6, 10, true) + E(70, 60, 16, 3, '#c8d4bc', 'opacity=".3"') + P('M88 70 Q96 66 104 70 M60 71 Q66 68 72 71', 'none', 'stroke="#c8d8c0" stroke-width=".8" opacity=".5"')
       + tree(10, 88, 80, 6, '#2a2c20', '#121410', '#4a5e30', 2) + tree(152, 90, 70, -8, '#2e3022', '#121410', '#4a5e30', 5)
       + pads([[40, 82, 2.4], [52, 86, 3], [100, 84, 2.2], [118, 88, 3.2]]) + reeds(28, 90, 9, 12) + reeds(132, 90, 8, 10) + fog(84, 0.25, '#c8d4bc', 3) + motes(14, 1, '#e8ff9a', 0.7, 40, 86),
@@ -318,9 +323,9 @@
       + `<clipPath id="dg-pl"><circle cx="30" cy="104" r="64"/></clipPath><g clip-path="url(#dg-pl)">${Array.from({ length: 16 }, (_, k) => { const cx = -24 + ((k * 37) % 110); const cy = 44 + ((k * 23) % 50); return E(cx, cy, 6 + (k % 4) * 3, 1.6 + (k % 3), k % 3 === 0 ? '#2a4a2a' : '#e0ecd8', `opacity="${k % 3 === 0 ? 0.5 : 0.35}" transform="rotate(${-12 + (k % 5) * 5} ${cx} ${cy})"`); }).join('')}${Array.from({ length: 6 }, (_, k) => P(`M${-20 + k * 16} ${50 + k * 6} q6 -3 12 0 t12 0`, 'none', 'stroke="#f0f6e8" stroke-width=".8" opacity=".35"')).join('')}</g>`
       + (() => { const [sh, sd] = LG([[0, '#000', 0], [1, '#000', 0.6]], 0, 0, 1, 1); return sd + C(30, 104, 64, sh); })() + C(30, 104, 64, 'none', 'stroke="#b8e0a8" stroke-width="1.6" opacity=".35"') + C(30, 104, 66, 'none', 'stroke="#8ad0a8" stroke-width="1" opacity=".15"')
       + (kit.isd ? kit.isd(122, 22, 2.1, '#7a828c') + kit.isd(152, 48, 0.9, '#5a626c') : '')
-      + bolt(99, 42, 70, 56, '#3aff6a') + bolt(97, 63, 72, 66, '#3aff6a') + bolt(116, 52, 84, 60, '#3aff6a') + bolt(88, 58, 64, 66, '#3aff6a') + bolt(89, 78, 66, 74, '#3aff6a')
+      + (() => { const t1 = tieGuns(108, 52, 1.2, -6); const t2 = tieGuns(124, 64, 1, -6); const t3 = tieGuns(96, 68, 0.9, -6); return shots(t1[2], [38, 66], [0.08, 0.38, 0.66]) + shots(t1[3], [44, 74], [0.2, 0.52, 0.8]) + shots(t2[2], [42, 60], [0.14, 0.46, 0.74]) + shots(t3[2], [36, 70], [0.1, 0.44, 0.72]) + shots(t3[3], [40, 80], [0.24, 0.58]); })()
       + interceptor(108, 52, 1.2, -6, true) + interceptor(124, 64, 1, -6, true) + interceptor(96, 68, 0.9, -6, true)
-      + `<g transform="translate(116 0) scale(-1 1)">${xwing(58, 66, 1.3, 16, false, true)}</g>`,
+      + `<g transform="translate(116 0) scale(-1 1)">${xwing(78, 70, 1.3, 16, false, true)}</g>`,
 
     // 7 · Brothers of Dathomir: the swamp turns crimson. Ancient Nightsister
     // ruins rise from the water, stone arches and standing stones carved
