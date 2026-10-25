@@ -114,6 +114,104 @@
     + E(44, 44, 3, 1.6, '#f4efe6') + E(56, 44, 3, 1.6, '#f4efe6') + C(44, 44, 1.2, '#4a7aaa') + C(56, 44, 1.2, '#4a7aaa') + brows('#a89888', { y: 40, spread: 6, angry: true, w: 1.4 })
     + P('M48 46 Q47 53 50 55 Q53 53 52 46', 'none', 'stroke="#000" stroke-opacity=".25" stroke-width=".9"') + mouth('frown', { y: 60, color: '#7a4a3e' }));
 
+  // The Invisible Hand (Update 2.4 fleet raid): Grievous's Providence carrier, nose left,
+  // burning over Coruscant's night side while Republic Venators and droid fighters trade fire.
+  add('char', 'cb_invisible', () => {
+    let s = 41;
+    const rnd = () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
+    const glow = (c, b) => `style="filter:drop-shadow(0 0 ${b}px ${c})"`;
+    // Laser bolts are short streaks along the line of fire.
+    const bolts = (x1, y1, x2, y2, c, n = 3) => `<g ${glow(c, 1.2)}>${Array.from({ length: n }, (_, k) => {
+      const a = (k + 0.15) / n, b = a + 0.12;
+      const p = (t) => [(x1 + (x2 - x1) * t).toFixed(1), (y1 + (y2 - y1) * t).toFixed(1)];
+      const [ax, ay] = p(a), [bx, by] = p(b);
+      return L(ax, ay, bx, by, c, 0.9) + L(ax, ay, bx, by, '#fff', 0.3);
+    }).join('')}</g>`;
+    const venator = (x, y, sc, flip) => `<g transform="translate(${x} ${y}) scale(${flip ? -sc : sc} ${sc})">`
+      + P('M16 0 L-10 -5.4 L-13 -1.6 L-13 1.6 L-10 5.4Z', '#d6d8dc') + P('M16 0 L-10 5.4 L-13 1.6 L-13 0Z', '#9a9ea6')
+      + P('M12 0 L-8 -2.6 L-8 2.6Z', '#b8342a', 'opacity=".85"') + R(-9, -4.4, 3, 1.6, '#aeb2ba') + R(-9, 2.8, 3, 1.6, '#8a8e96')
+      + `<g ${glow('#6ab8ff', 1.6)}>${C(-13.4, -1, 0.9, '#bfe8ff')}${C(-13.4, 1, 0.9, '#bfe8ff')}</g></g>`;
+    const vulture = (x, y, sc) => `<g transform="translate(${x} ${y}) scale(${sc})">`
+      + L(-4, -3.4, 4, 3.4, '#b8a47a', 0.9) + L(-4, 3.4, 4, -3.4, '#b8a47a', 0.9) + E(0, 0, 1.8, 1.1, '#8a7a56') + C(-1.6, 0, 0.5, '#ff3a2a') + '</g>';
+    const tri = (x, y, sc, rot) => `<g transform="translate(${x} ${y}) scale(${sc}) rotate(${rot})">`
+      + [0, 120, 240].map((a) => `<g transform="rotate(${a})">${P('M-0.8 -1 L-0.5 -5 L0.5 -5 L0.8 -1Z', '#8a8e98')}${C(0, -5.4, 0.8, '#5a5e68')}</g>`).join('')
+      + C(0, 0, 1.6, '#6a6e78') + `<g ${glow('#ff3a2a', 1)}>${C(0, 0, 0.6, '#ff4a3a')}</g></g>`;
+    const fire = (x, y, r) => `<g ${glow('#ff7a1a', 2.4)}>${C(x, y, r * 1.6, 'url(#cbihFire)')}`
+      + P(`M${x - r * 0.7} ${y} Q${x - r * 0.3} ${y - r * 2.2} ${x + r * 0.6} ${y - r * 2.8} Q${x + r * 0.3} ${y - r * 1.4} ${x + r * 0.8} ${y}Z`, '#ffb030', 'opacity=".9"')
+      + C(x, y, r * 0.5, '#fff2c0') + '</g>';
+    // Smoke trails back and up: the ship is moving left.
+    const smoke = (x, y, n) => Array.from({ length: n }, (_, k) => C((x + k * 2.6).toFixed(1), (y - k * 2.8).toFixed(1), (1.2 + k * 0.75).toFixed(2), k % 2 ? '#26252a' : '#323038', `opacity="${(0.62 - k * 0.07).toFixed(2)}"`)).join('');
+
+    let o = '<defs><linearGradient id="cbihSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#03040a"/><stop offset=".62" stop-color="#0a0c1c"/><stop offset="1" stop-color="#1a1020"/></linearGradient>'
+      + '<radialGradient id="cbihCity" cx=".5" cy="0" r=".9"><stop offset="0" stop-color="#3a2614"/><stop offset=".22" stop-color="#1c1212"/><stop offset="1" stop-color="#07060a"/></radialGradient>'
+      + '<linearGradient id="cbihHull" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b8ae9a"/><stop offset=".45" stop-color="#8a826f"/><stop offset="1" stop-color="#46423a"/></linearGradient>'
+      + '<linearGradient id="cbihTower" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#aaa18c"/><stop offset=".55" stop-color="#7e776a"/><stop offset="1" stop-color="#4e4a42"/></linearGradient>'
+      + '<radialGradient id="cbihFire"><stop offset="0" stop-color="#fff6c8"/><stop offset=".35" stop-color="#ffb030"/><stop offset=".7" stop-color="#ff4a10" stop-opacity=".6"/><stop offset="1" stop-color="#ff2a00" stop-opacity="0"/></radialGradient></defs>'
+      + R(0, 0, 100, 100, 'url(#cbihSky)') + E(78, 20, 34, 18, '#2a1a4a', 'opacity=".3"') + E(16, 30, 26, 14, '#1a2a5a', 'opacity=".3"');
+    for (let k = 0; k < 46; k++) o += C((rnd() * 100).toFixed(1), (rnd() * 64).toFixed(1), (rnd() * 0.35 + 0.12).toFixed(2), '#fff', `opacity="${(rnd() * 0.6 + 0.25).toFixed(2)}"`);
+
+    // Coruscant's night side: one endless city, lit block by block, with skylanes.
+    o += C(50, 182, 112, 'url(#cbihCity)') + C(50, 182, 112, 'none', 'stroke="#ffa050" stroke-width=".7" opacity=".7"') + C(50, 182, 113.6, 'none', 'stroke="#4a8aff" stroke-width="2.6" opacity=".22"');
+    for (let k = 0; k < 260; k++) {
+      const x = rnd() * 100, y = 70 + Math.pow(rnd(), 0.8) * 30;
+      if (Math.hypot(x - 50, y - 182) > 111) continue;
+      const c = ['#ffd08a', '#ffb050', '#fff0c0', '#ffc070', '#9ad0ff'][Math.floor(rnd() * 5)];
+      o += C(x.toFixed(1), y.toFixed(1), (0.14 + rnd() * 0.32).toFixed(2), c, `opacity="${(0.35 + rnd() * 0.6).toFixed(2)}"`);
+    }
+    o += [78, 84, 91].map((y, i) => P(`M-4 ${y + 6} Q50 ${y - 8} 104 ${y + 6}`, 'none', `stroke="#ffc878" stroke-width=".35" stroke-dasharray="${1.4 + i} ${1.2 + i * 0.6}" opacity=".45"`)).join('')
+      + [[22, 86, 7], [62, 82, 9], [84, 92, 6]].map(([x, y, r]) => E(x, y, r, r * 0.3, '#ffb060', 'opacity=".07"')).join('');
+
+    // Republic Venators closing in, and the far crossfire.
+    o += venator(14, 16, 0.9) + venator(26, 34, 0.5) + venator(86, 12, 0.8, true) + venator(90, 32, 0.45, true)
+      + bolts(28, 18, 52, 40, '#4ab8ff') + bolts(32, 34, 40, 46, '#4ab8ff', 2) + bolts(74, 14, 66, 22, '#4ab8ff', 2) + bolts(82, 32, 90, 46, '#4ab8ff', 2)
+      + bolts(44, 42, 20, 22, '#ff3a3a') + bolts(70, 40, 84, 20, '#ff3a3a') + bolts(60, 60, 38, 78, '#ff3a3a', 2)
+      + [[44, 22, 0.5, 20], [78, 26, 0.45, 70]].map(([x, y, sc, r]) => tri(x, y, sc, r)).join('');
+
+    // The Invisible Hand: bulbous prow on the left, long hull, tall command tower, ventral fin.
+    o += P('M62 59 L66 73 L73 73 L75 59Z', '#4e4a42') + P('M66 73 L73 73 L72.4 71.6 L66.4 71.6Z', '#2e2b26')
+      + P('M5 54 C5 47.6 9 44.6 17 43.6 L30 42.8 L76 41.6 L88 43.4 L93 46.4 L93 56.6 L88 58.8 L76 60.6 L30 60.4 L17 60 C9 59.6 5 57.6 5 54Z', 'url(#cbihHull)')
+      + P('M17 43.6 L76 41.6 L80 39.6 L22 40.8Z', '#c8bea8') + P('M30 42.8 L76 41.6 L76 43 L30 44.2Z', '#6e685c', 'opacity=".6"')
+      + P('M17 60 L76 60.6 L88 58.8 L76 57.4 L17 57Z', '#2e2b26')
+      + E(9, 53.6, 2.6, 3.4, '#1a1612') + `<g ${glow('#ffcf7a', 2)}>${E(8.6, 53.6, 1.6, 2.4, '#ffcf7a', 'opacity=".85"')}</g>`
+      + P('M13 46 L26 44.8 L26 46.6 L13 48Z', '#4a6a9a') + P('M13 56.6 L26 57.2 L26 58.4 L13 58Z', '#3a5a8a', 'opacity=".8"');
+    for (let x = 22; x <= 88; x += 5.5) o += L(x, 44, x, 58.4, '#2e2b26', 0.25, 'opacity=".45"');
+    for (let x = 16; x < 86; x += 1.7) {
+      if (rnd() < 0.62) o += C(x.toFixed(1), 48.6, 0.24, '#ffd98a', 'opacity=".85"');
+      if (rnd() < 0.5) o += C((x + 0.8).toFixed(1), 53.2, 0.22, '#ffd98a', 'opacity=".7"');
+    }
+    o += [24, 36, 48, 82].map((x) => R(x, 40.4, 2.2, 1.2, '#5a554a') + L(x + 1.1, 40.4, x - 1.8, 39.2, '#3a3630', 0.5)).join('')
+      // command tower, raked forward, the bridge on top
+      + P('M53 42.4 L58.6 17 L69.4 16 L72.6 41.6Z', 'url(#cbihTower)') + P('M58.6 17 L61 17 L56 42.2 L53 42.4Z', '#c0b6a0', 'opacity=".6"')
+      + R(56.6, 12.4, 16, 5.6, '#9a927e', 'rx="1.4"') + R(56.6, 16.4, 16, 1.6, '#5a554a') + `<g ${glow('#ffd98a', 1.4)}>${R(58, 14, 13, 1.1, '#ffd98a', 'opacity=".9"')}</g>`
+      + L(65, 12.4, 65, 6.4, '#8a826f', 0.5) + L(69, 12.4, 70, 8.6, '#8a826f', 0.4) + [22, 27, 32, 37].map((y) => L(58.4 - (y - 17) * 0.2, y, 70.6 + (y - 17) * 0.12, y, '#4a463c', 0.3)).join('')
+      + [[61, 24], [66, 30], [63, 35], [67, 21]].map(([x, y]) => C(x, y, 0.3, '#ffd98a', 'opacity=".8"')).join('')
+      // engine bank
+      + `<g ${glow('#6ab8ff', 2.4)}>${[47.6, 50.2, 52.8, 55.4].map((y) => E(93.6, y, 1.3, 1.1, '#cfeeff')).join('')}</g>` + R(94, 47, 6, 9, '#6ab8ff', 'opacity=".12"');
+
+    // Battle damage: scorches, fires and smoke trailing back over the hull.
+    const hits = [[30, 47, 1.5], [44, 55.6, 1.2], [63, 26, 1.3], [79, 45.6, 1.6], [86, 56.4, 1.1], [18, 51, 0.9]];
+    o += hits.map(([x, y, r]) => E(x, y, r * 2.2, r * 1.3, '#16120e', 'opacity=".7"')).join('')
+      + smoke(31, 45, 7) + smoke(64, 24, 6) + smoke(80, 44, 7) + smoke(45, 54, 4)
+      + hits.map(([x, y, r]) => fire(x, y, r)).join('')
+      + `<g ${glow('#ffb03a', 3)}>${P(Array.from({ length: 16 }, (_, k) => { const a = (k / 16) * Math.PI * 2, r = k % 2 ? 1.4 : 3.6; return `${k ? 'L' : 'M'}${(88 + Math.cos(a) * r).toFixed(2)} ${(59.4 + Math.sin(a) * r).toFixed(2)}`; }).join(' ') + 'Z', '#ff9a2a', 'opacity=".9"')}${C(88, 59.4, 1.4, '#fff2c0')}</g>`
+      + [[90, 62], [92, 60.4], [85.6, 63], [91, 64.6]].map(([x, y]) => C(x, y, 0.35, '#ffe0a0')).join('');
+
+    // Near fighters and the close crossfire.
+    o += bolts(22, 66, 36, 60, '#ff3a3a', 2) + bolts(8, 30, 14, 42, '#4ab8ff', 2) + bolts(96, 70, 80, 64, '#4ab8ff', 2) + bolts(50, 34, 40, 26, '#ff3a3a', 2)
+      + vulture(20, 68, 0.8) + vulture(40, 30, 0.6) + vulture(96, 74, 0.7) + tri(10, 74, 0.7, 12) + tri(52, 70, 0.55, 48)
+      + R(0, 0, 100, 100, '#ff7a2a', 'opacity=".04"');
+    return o;
+  });
+  // Battle shapes, top-down with the nose up like the other ships.
+  add('ship', 'providence', () => P('M50 4 C58 4 62 10 62 20 L60 86 L56 94 L44 94 L40 86 L38 20 C38 10 42 4 50 4Z', '#9a927e')
+    + shade('M50 4 C42 4 38 10 38 20 L40 86 L44 94 L50 94Z', 0.14) + P('M44 8 C46 6 54 6 56 8 L55 14 L45 14Z', '#ffcf7a', 'opacity=".8"')
+    + R(41, 18, 18, 3, '#4a6a9a') + [30, 42, 54, 66, 78].map((y) => L(39.6, y, 60.4, y, '#5a554a', 0.6)).join('') + L(50, 16, 50, 88, '#5a554a', 0.6)
+    + P('M46 44 L54 44 L55 70 L45 70Z', '#6e685c') + R(44, 52, 12, 6, '#b8ae9a', 'rx="1"') + R(45.6, 53.6, 8.8, 1.2, '#ffd98a', 'opacity=".8"')
+    + [[43, 30], [57, 36], [44, 76], [56, 62]].map(([x, y]) => C(x, y, 2, '#ff8a2a', 'opacity=".75"') + C(x, y, 0.9, '#ffe0a0')).join('')
+    + [43, 47.6, 52.4, 57].map((x) => C(x, 95, 2.2, '#9fdcff', 'class="eng" style="--eng:#6fc8ff"')).join(''));
+  add('ship', 'trifighter', () => [0, 120, 240].map((a) => `<g transform="rotate(${a} 50 50)">${P('M46 46 L47.6 10 L52.4 10 L54 46Z', '#8a8e98')}${shade('M46 46 L47.6 10 L50 10 L50 46Z', 0.15)}${C(50, 9, 4.4, '#5a5e68')}${L(50, 5, 50, 1, '#3a3e48', 1.4)}</g>`).join('')
+    + C(50, 50, 13, '#6a6e78') + C(50, 50, 9, '#4a4e58') + C(50, 50, 4, '#ff3a2a', 'class="eng" style="--eng:#ff3a2a"'));
+
 
   // ---------- Hologram Shop goods (real objects, no crates) ----------
   const plate = (bg) => R(0, 0, 100, 100, bg) + R(0, 0, 100, 100, '#ffffff', 'opacity=".03"') + E(50, 90, 36, 6, '#000', 'opacity=".35"');
@@ -194,6 +292,8 @@
     { id: 'raid_nihilus', name: 'Darth Nihilus', kind: 'character', faction: 'dark', rarity: 'legendary', role: 'attacker', spd: 140, traits: ['sith'], home: 'coruscant', bio: 'Raid boss.' },
     { id: 'raid_sarlacc', name: 'The Sarlacc', kind: 'character', faction: 'dark', rarity: 'legendary', role: 'tank', spd: 70, traits: [], home: 'tatooine', bio: 'Raid boss.' },
     { id: 'raid_snoke', name: 'Supreme Leader Snoke', kind: 'character', faction: 'dark', rarity: 'legendary', role: 'support', spd: 120, traits: ['leader'], home: 'coruscant', bio: 'Raid boss.' },
+    { id: 'raid_invisible', name: 'The Invisible Hand', kind: 'ship', faction: 'dark', rarity: 'legendary', role: 'tank', shape: 'providence', portrait: 'cb_invisible', spd: 96, traits: ['capital'], home: 'coruscant',
+      bio: 'General Grievous\'s Providence-class flagship, holding the kidnapped Chancellor and burning above Coruscant.' },
   ];
   for (const c of NEW) {
     if (D.UNIT_MAP[c.id]) continue;
@@ -710,10 +810,11 @@
     { id: 'hn_husk', name: 'Husk', role: 'attacker', spd: 110, abilities: [ab('Hollow Claw', 0, 'enemy', [dmg(0.9)], 'An empty, hungry strike.')], ultimate: ult('Feed the Master', 'enemy', [dmg(1.6)], 'Tears at one enemy.', '') },
     { id: 'hn_tentacle', name: 'Sarlacc Tentacle', role: 'tank', spd: 90, abilities: [ab('Lash', 0, 'enemy', [dmg(0.8)], 'Whips one enemy.')], ultimate: ult('Constrict', 'enemy', [dmg(1.4), debuff('stun', 1, 0.5)], 'Squeezes one enemy.', '') },
     { id: 'hn_praetorian', name: 'Praetorian Guard', role: 'tank', spd: 128, abilities: [ab('Vibro-Voulge', 0, 'enemy', [dmg(1.0)], 'Precise, crimson strike.'), ab('Guard Stance', 3, 'self', [buff('taunt', 2), buff('defUp', 2)], 'Protects the Supreme Leader.')], ultimate: ult('Bladestorm', 'allEnemies', [dmg(1.0)], 'Spinning blades.', '') },
+    { id: 'hn_trifighter', name: 'Droid Tri-Fighter', kind: 'ship', shape: 'trifighter', role: 'attacker', spd: 150, abilities: [ab('Triple Laser', 0, 'enemy', [dmg(0.9)], 'Three cannons on one ship.')], ultimate: ult('Buzz Missiles', 'enemy', [dmg(1.5), debuff('defDown', 2, 0.5)], 'Buzz droids latch on and tear at the hull.', '') },
   ];
   for (const m of MINIONS) {
     if (D.UNIT_MAP[m.id]) continue;
-    Object.assign(m, { kind: 'character', faction: 'dark', rarity: 'legendary', traits: [], home: 'tatooine', hn: true, minion: true });
+    Object.assign(m, { kind: m.kind || 'character', faction: 'dark', rarity: 'legendary', traits: [], home: 'tatooine', hn: true, minion: true });
     D.UNIT_MAP[m.id] = m;
   }
 
@@ -738,7 +839,17 @@
       slots: ['hn_praetorian', 'hn_praetorian', 'raid_snoke', 'hn_praetorian', 'hn_praetorian'], start: [0, 1, 2, 3, 4],
       mech: [['Praetorian Guard', 'Starts with four Praetorian Guards. A fallen one steps back in every 3 turns.'], ['Bridge the Minds', 'Takes control of a card for a turn and turns it against your squad.'], ['Supreme Will', 'Every 4 turns revives every fallen guard, unless Snoke took an ultimate since his last turn.']],
     },
+    // Update 2.4 (switch in js/liberation24.js): a fleet raid, fought with ships. It joins the
+    // weekly rotation only once 2.4 is on.
+    {
+      id: 'raid_invisible', name: 'The Invisible Hand', sub: 'Battle of Coruscant', planet: 'coruscant', pool: 850000, color: '#ff8a3a', kind: 'ship', v24: true,
+      slots: ['vulture_droid', 'hn_trifighter', 'raid_invisible', 'hn_trifighter', 'vulture_droid'], start: [0, 2, 4],
+      mech: [['Droid Tri-Fighters', 'Every 2 turns the Invisible Hand launches a fresh wave of Droid Tri-Fighters.'], ['Hull Breach', 'Below 50% health the hull burns: it loses health every turn, but hits much harder.']],
+    },
   ];
+  const v24 = () => !!(root.Update24 && root.Update24.on());
+  const raidList = () => RAIDS.filter((r) => !r.v24 || v24());
+  D.STATUS_INFO.breach = { label: 'Hull Breach', icon: '✷', kind: 'mech', desc: 'The hull is burning: loses health every turn, but hits much harder.' };
   // Update 2.2 (switch in js/friends.js, off until the 2.2 date is set): raid bosses get at
   // least 5,000,000 health and hit much harder; their guards hit a bit harder.
   const v22 = () => !!(root.Update22 && root.Update22.on());
@@ -760,6 +871,7 @@
     raid_nihilus: { role: 'attacker', spd: 136, abilities: [ab('Void Strike', 0, 'enemy', [dmg(1.4)], 'A strike that empties the target.'), ab('Drain Life', 3, 'enemy', [dmg(1.8), { ...heal(0.04), on: 'self' }], 'Drinks one enemy\'s life.')], ultimate: ult('Feast on the World', 'allEnemies', [dmg(2.0), { ...heal(0.06), on: 'self' }], 'Tears the life out of every enemy and feeds on it.', '…') },
     raid_sarlacc: { role: 'tank', spd: 70, abilities: [ab('Acid Spray', 0, 'allEnemies', [dmg(0.8), debuff('burn', 2, 0.4)], 'Digestive acid over everyone.'), ab('Quake', 3, 'allEnemies', [dmg(0.6), debuff('stun', 1, 0.3)], 'The pit heaves.')], ultimate: ult('Swallow', 'allEnemies', [dmg(2.0)], 'The beak opens and the whole pit pulls inward.', '') },
     raid_snoke: { role: 'support', spd: 120, abilities: [ab('Force Lightning', 0, 'enemy', [dmg(1.3), debuff('stun', 1, 0.25)], 'Lightning from the throne.'), ab('Supreme Command', 3, 'allAllies', [buff('offUp', 2)], 'His guards strike harder.')], ultimate: ult('Bow Before Me', 'allEnemies', [dmg(1.8), debuff('offDown', 2)], 'Pulls every enemy to its knees.', 'Pathetic.') },
+    raid_invisible: { role: 'tank', spd: 96, abilities: [ab('Turbolaser Broadside', 0, 'enemy', [dmg(1.3)], 'Heavy fire on one ship.'), ab('Vulture Swarm', 3, 'allEnemies', [dmg(0.8), debuff('burn', 2, 0.4)], 'Droid fighters strafe every ship, with a chance to Burn.')], ultimate: ult('All Batteries', 'allEnemies', [dmg(1.9), debuff('defDown', 2)], 'Every gun on the Providence fires: heavy damage and Defense Down to your whole fleet.', 'Roger, roger.') },
   };
   for (const r of RAIDS) {
     const def = D.UNIT_MAP[r.id];
@@ -1098,7 +1210,7 @@
   // ---------- raid ----------
   const WEEK = 7 * 24 * 3600 * 1000;
   const week = () => Math.floor((Date.now() + (S().weekShift || 0) * WEEK) / WEEK);
-  const raidNow = () => RAIDS[week() % RAIDS.length];
+  const raidNow = () => { const list = raidList(); return list[week() % list.length]; };
   function raidTotals() {
     const w = week();
     const boss = raidNow().id;
@@ -1240,6 +1352,22 @@
         if (T % 2 === 0) {
           const f = free(this).filter((u) => !u.statuses.mind);
           if (f.length > 1) { const t = pick(this, f); t.statuses.mind = 2; ev.push({ type: 'status', uid: t.uid, status: 'mind', turns: 1 }, { type: 'log', text: `Snoke reaches into ${t.def.name}'s mind…`, side: 'enemy' }); }
+        }
+      } else if (unit.def.raid === 'raid_invisible') {
+        // Droid Tri-Fighters: every fallen or waiting tri-fighter launches together.
+        const wave = waiting.filter((u) => u.id === 'hn_trifighter');
+        if (T % 2 === 0 && wave.length) { for (const u of wave) spawn(this, u, ev); ev.push({ type: 'log', text: 'The Invisible Hand launches a wave of Droid Tri-Fighters!', side: 'enemy' }); }
+        // Hull Breach: below half health it burns every turn but hits much harder.
+        if (unit.enraged) {
+          if (!R.breach) {
+            R.breach = true;
+            unit.atk = Math.round(unit.atk * 1.5);
+            unit.statuses.breach = 99;
+            ev.push({ type: 'status', uid: unit.uid, status: 'breach', turns: 99 }, { type: 'log', text: 'Hull Breach! The Invisible Hand is burning, and every gun is firing at once.', side: 'enemy' });
+          }
+          const burn = Math.min(unit.hp - 1, Math.round(unit.maxHp * 0.003));
+          ev.push({ type: 'hnfx', fx: 'breach', uid: unit.uid });
+          if (burn > 0) this.applyDamage(unit, burn, false, ev, 'hazard');
         }
       }
       // Free anyone held once their captors are gone.
@@ -2268,14 +2396,19 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
 
   // ---------- raid ----------
   let allyPick = null;
-  function allies() {
-    const out = HN.Net.arena.filter((a) => a.uid !== HN.Net.me && Array.isArray(a.ground) && a.ground.length && a.ground.every((e) => D.UNIT_MAP[e.id])).slice(0, 5)
-      .map((a) => ({ id: `p:${a.uid}`, name: HN.Net.name(a.uid), real: true, squad: a.ground }));
+  // A fleet raid (the boss is a ship) is fought with ships: yours and your ally's.
+  const raidKind = (r) => r.kind || 'character';
+  function allies(kind = 'character') {
+    const side = kind === 'ship' ? 'fleet' : 'ground';
+    const out = HN.Net.arena.filter((a) => a.uid !== HN.Net.me && Array.isArray(a[side]) && a[side].length && a[side].every((e) => D.UNIT_MAP[e.id])).slice(0, 5)
+      .map((a) => ({ id: `p:${a.uid}`, name: HN.Net.name(a.uid), real: true, squad: a[side] }));
     const r = HN.rng(HN.week() * 31 + (S().allySeed || 0) * 7919 + 7);
-    const mine = HN.squadEntries('character');
+    const mine = HN.squadEntries(kind);
     const lvl = Math.max(1, Math.round(HN.avgLevel(mine)));
-    const avail = D.UNITS.filter((u) => u.kind === 'character' && !u.exclusive && !u.boss && !mine.some((e) => e.id === u.id));
-    const crews = ['Mandalorian mercenaries', 'Rebel strike team', 'Bounty hunter crew', 'Clone veterans', 'Smuggler\'s gang', 'Jedi survivors', 'Inquisitor cell', 'Hutt enforcers', 'Partisan cell', 'Imperial deserters'];
+    const avail = D.UNITS.filter((u) => u.kind === kind && !u.exclusive && !u.boss && !mine.some((e) => e.id === u.id));
+    const crews = kind === 'ship'
+      ? ['Republic Venator wing', 'Shadow Squadron', 'Rebel strike wing', 'Smuggler convoy', 'Mandalorian patrol', 'Clone starfighter corps', 'Rogue Squadron', 'Hutt gunboats', 'Partisan raiders', 'Imperial deserters']
+      : ['Mandalorian mercenaries', 'Rebel strike team', 'Bounty hunter crew', 'Clone veterans', 'Smuggler\'s gang', 'Jedi survivors', 'Inquisitor cell', 'Hutt enforcers', 'Partisan cell', 'Imperial deserters'];
     const names = crews.slice().sort(() => r() - 0.5);
     for (let k = 0; out.length < 3 && k < 3; k++) {
       const picks = [];
@@ -2290,19 +2423,20 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const t = HN.raidTotals();
     const h = S();
     const rec = h.raids[`${HN.week()}:${r.id}`];
-    const al = allies();
+    const kind = raidKind(r);
+    const al = allies(kind);
     if (!allyPick || !al.some((a) => a.id === allyPick)) allyPick = al[0] && al[0].id;
-    const ids = HN.squad('character');
+    const ids = HN.squad(kind);
     return `${head('RAID', `Week ${HN.week() % 100} · bosses rotate every week`, true)}
       <div class="hn-raid-hero" style="--rc:${r.color}">
         <div class="art">${root.Art.unitArt(D.UNIT_MAP[r.id])}</div>
-        <div><h2>${esc(r.name)}</h2><p class="muted" style="margin:2px 0 8px">${esc(r.sub)} · 10 cards against him</p>
+        <div><h2>${esc(r.name)}</h2><p class="muted" style="margin:2px 0 8px">${esc(r.sub)} · ${kind === 'ship' ? 'fleet raid: 10 ships against it' : '10 cards against him'}</p>
           <div class="hn-hp"><i style="width:${(t.left / t.pool) * 100}%"></i><span>${t.fallen ? 'DEFEATED' : `${fmt(t.left)} / ${fmt(t.pool)}`}</span></div>
           <ul>${r.mech.map(([n, d]) => `<li><b>${esc(n)}</b>${esc(d)}</li>`).join('')}</ul></div>
       </div>
       ${t.fallen ? `<div class="hn-free"><span class="grow"><b>${esc(r.name)} has fallen!</b> ${rec && rec.dmg ? (rec.claimed ? 'Rewards claimed. A new boss arrives next week.' : 'You helped: claim your rewards.') : 'You didn\'t land a hit this week.'}</span>${rec && rec.dmg && !rec.claimed ? '<button type="button" class="hn-btn gold" data-hn="claim">Claim</button>' : ''}</div>` : ''}
       <div class="hn-sec"><h3>Damage this week</h3><div class="hn-board">${t.rows.slice(0, 8).map((x, i) => `<div class="${x.name === 'You' ? 'me' : ''}"><span>${i + 1}. ${esc(x.name)}</span><b>${fmt(x.dmg)}</b></div>`).join('')}</div><p class="muted small" style="margin:0">Top damage when the boss falls earns Krrsantan. Everyone who hit it gets 500 Beskar and an Elite bounty puck, with a chance at Aurra Sing or the Fang Fighter.</p></div>
-      ${squadBox(ids, 'character', HN.squadPower(HN.squadEntries('character')), 'Your 5')}
+      ${squadBox(ids, kind, HN.squadPower(HN.squadEntries(kind)), kind === 'ship' ? 'Your 5 ships' : 'Your 5')}
       <div class="hn-sec"><h3>Fight alongside</h3><div class="hn-allies">${al.map((a) => `<button type="button" class="hn-ally ${a.id === allyPick ? 'on' : ''}" data-hn="ally" data-id="${a.id}"><b>${esc(a.name)} ${a.real ? '<span class="hn-chip">player</span>' : ''}</b><div class="minis">${a.squad.map((e) => mini(e.id)).join('')}</div></button>`).join('')}</div></div>
       <button type="button" class="hn-btn gold" data-hn="raidgo" style="justify-self:center;padding:12px 28px" ${t.fallen || !ids.length ? 'disabled' : ''}>${t.fallen ? 'Boss defeated' : 'Start raid'}</button>`;
   };
@@ -2527,16 +2661,18 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   function startRaid() {
     const r = HN.raidNow();
     const t = HN.raidTotals();
-    const mine = HN.squadEntries('character');
-    if (!mine.length) return toast('Pick a squad first.');
-    const ally = allies().find((a) => a.id === allyPick) || allies()[0];
+    const kind = raidKind(r);
+    const mine = HN.squadEntries(kind);
+    if (!mine.length) return toast(kind === 'ship' ? 'Pick a fleet first.' : 'Pick a squad first.');
+    const al = allies(kind);
+    const ally = al.find((a) => a.id === allyPick) || al[0];
     const used = new Set(mine.map((e) => e.id));
     const allyEntries = ally.squad.filter((e) => !used.has(e.id)).map((e) => ({ ...e }));
     const lvl = Math.max(1, Math.round(HN.avgLevel(mine)));
     const enemies = r.slots.map((id) => ({ id, level: id === r.id ? lvl + 4 : lvl, stars: id === r.id ? 7 : 3 }));
     HNB.back = { view: 'raid' };
     hnStart({ type: 'hn', hn: 'raid', boss: r.id }, [...mine, ...allyEntries], enemies, {
-      name: `Raid · ${r.name}`, kind: 'character', planet: r.planet, raid: true, boss: r.id,
+      name: `Raid · ${r.name}`, kind, planet: r.planet, raid: true, boss: r.id,
       intro: `${allyEntries.length ? `${ally.name} fights beside you. ` : ''}Deal as much damage as you can: every hit counts toward the shared health bar.`,
       setup(b) {
         b.hnRaid = { boss: r.id, turn: 0, limit: 100 };
@@ -2693,6 +2829,11 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       sound('coins');
       return this.wait(600);
     }
+    if (ev.fx === 'breach') {
+      ring(this, ev.uid, '#ff8a3a');
+      if (this.shake && !lite) this.shake();
+      return this.wait(300);
+    }
     if (['grab', 'drop', 'digest', 'mind'].includes(ev.fx)) {
       const c = this.cards[ev.uid];
       ring(this, ev.uid, ev.fx === 'mind' ? '#ff3a3a' : ev.fx === 'digest' ? '#ffb05a' : '#c88a5a');
@@ -2708,6 +2849,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     raid_nihilus: (c) => ({ d: 2600, veil: 'radial-gradient(circle at 50% 45%, rgba(60,10,90,.7), rgba(4,0,8,.97))', extra: Array.from({ length: 10 }, (_, k) => `<i class="stream" style="--t:${0.3 + (k % 5) * 0.12}s;transform:rotate(${k * 36 + 18}deg) scaleX(-1)"></i>`).join(''), title: 'FEAST ON THE WORLD', sub: 'Nihilus hungers' }),
     raid_sarlacc: (c) => ({ d: 2400, veil: 'radial-gradient(circle at 50% 60%, rgba(30,12,4,.9), rgba(210,160,90,.85))', extra: '<i class="teeth"></i>', title: 'SWALLOW', sub: 'The pit pulls everything in', shake: true }),
     raid_snoke: (c) => ({ d: 2600, veil: 'radial-gradient(circle at 50% 40%, rgba(90,0,0,.6), rgba(6,0,0,.96))', extra: '<i class="curtain l"></i><i class="curtain r"></i>' + Array.from({ length: 8 }, (_, k) => `<i class="bolt" style="--t:${0.5 + (k % 4) * 0.18}s;transform:rotate(${-70 + k * 20}deg)"></i>`).join(''), title: 'BOW BEFORE ME', sub: 'Supreme Leader Snoke' }),
+    raid_invisible: (c) => ({ d: 2400, veil: 'radial-gradient(circle at 50% 45%, rgba(255,138,58,.45), rgba(4,6,18,.96))', extra: Array.from({ length: 8 }, (_, k) => `<i class="bolt" style="--t:${0.4 + (k % 4) * 0.15}s;transform:rotate(${-80 + k * 22}deg)"></i>`).join(''), title: 'ALL BATTERIES', sub: 'The Invisible Hand opens fire', shake: true }),
   };
   const baseSuper = BUI.superMove;
   BUI.superMove = async function (anim, actor, targets, ev) {
@@ -2719,7 +2861,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const d = lite ? 1200 : spec.d;
     const node = el(`<div class="hn-cine ${lite ? 'lite' : ''}" style="--d:${d}ms;--c:${r.color}"><div class="veil" style="background:${spec.veil}"></div>${lite ? '' : spec.extra}<div class="boss">${root.Art.unitArt(actor.def)}</div><div class="title"><small>${esc(r.name)}</small>${esc(spec.title)}</div></div>`);
     document.body.appendChild(node);
-    sound(actor.def.raid === 'raid_snoke' ? 'lightning' : actor.def.raid === 'raid_sarlacc' ? 'explosion' : 'reveal_legendary');
+    sound(actor.def.raid === 'raid_snoke' ? 'lightning' : ['raid_sarlacc', 'raid_invisible'].includes(actor.def.raid) ? 'explosion' : 'reveal_legendary');
     if (spec.shake && this.shake) setTimeout(() => this.shake(), d * 0.5);
     await new Promise((res) => setTimeout(res, d / Math.max(1, this.speed > 1 ? this.speed * 0.7 : 1)));
     node.remove();
