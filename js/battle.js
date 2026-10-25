@@ -217,7 +217,8 @@
       const events = [{ type: 'turn', uid: unit.uid }];
       unit.healTaken = 0;
       if (unit.statuses.burn) {
-        const amount = Math.max(1, Math.round(unit.maxHp * 0.08));
+        // Raid bosses have millions of health, so Burn takes 1% a turn from them instead of 8%.
+        const amount = Math.max(1, Math.round(unit.maxHp * (unit.boss && unit.def.raid ? 0.01 : 0.08)));
         this.applyDamage(unit, amount, false, events, 'burn');
       }
       // Overtime: a fight that drags on (two sides out-healing each other)
