@@ -114,92 +114,130 @@
     + E(44, 44, 3, 1.6, '#f4efe6') + E(56, 44, 3, 1.6, '#f4efe6') + C(44, 44, 1.2, '#4a7aaa') + C(56, 44, 1.2, '#4a7aaa') + brows('#a89888', { y: 40, spread: 6, angry: true, w: 1.4 })
     + P('M48 46 Q47 53 50 55 Q53 53 52 46', 'none', 'stroke="#000" stroke-opacity=".25" stroke-width=".9"') + mouth('frown', { y: 60, color: '#7a4a3e' }));
 
-  // The Invisible Hand (Update 2.4 fleet raid): Grievous's Providence carrier, nose left,
-  // burning over Coruscant's night side while Republic Venators and droid fighters trade fire.
+  // The Invisible Hand (Update 2.4 fleet raid): Grievous's Providence carrier, nose left, burning
+  // over Coruscant's night side. Venators, ARC-170s and Jedi interceptors fight Vulture droids and
+  // Tri-Fighters; every shot runs from a gun to a real target.
   add('char', 'cb_invisible', () => {
-    let s = 41;
+    let s = 31;
     const rnd = () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
+    const f = (n) => Number(n).toFixed(2);
     const glow = (c, b) => `style="filter:drop-shadow(0 0 ${b}px ${c})"`;
-    // Laser bolts are short streaks along the line of fire.
-    const bolts = (x1, y1, x2, y2, c, n = 3) => `<g ${glow(c, 1.2)}>${Array.from({ length: n }, (_, k) => {
-      const a = (k + 0.15) / n, b = a + 0.12;
-      const p = (t) => [(x1 + (x2 - x1) * t).toFixed(1), (y1 + (y2 - y1) * t).toFixed(1)];
-      const [ax, ay] = p(a), [bx, by] = p(b);
-      return L(ax, ay, bx, by, c, 0.9) + L(ax, ay, bx, by, '#fff', 0.3);
-    }).join('')}</g>`;
-    const venator = (x, y, sc, flip) => `<g transform="translate(${x} ${y}) scale(${flip ? -sc : sc} ${sc})">`
-      + P('M16 0 L-10 -5.4 L-13 -1.6 L-13 1.6 L-10 5.4Z', '#d6d8dc') + P('M16 0 L-10 5.4 L-13 1.6 L-13 0Z', '#9a9ea6')
-      + P('M12 0 L-8 -2.6 L-8 2.6Z', '#b8342a', 'opacity=".85"') + R(-9, -4.4, 3, 1.6, '#aeb2ba') + R(-9, 2.8, 3, 1.6, '#8a8e96')
-      + `<g ${glow('#6ab8ff', 1.6)}>${C(-13.4, -1, 0.9, '#bfe8ff')}${C(-13.4, 1, 0.9, '#bfe8ff')}</g></g>`;
-    const vulture = (x, y, sc) => `<g transform="translate(${x} ${y}) scale(${sc})">`
-      + L(-4, -3.4, 4, 3.4, '#b8a47a', 0.9) + L(-4, 3.4, 4, -3.4, '#b8a47a', 0.9) + E(0, 0, 1.8, 1.1, '#8a7a56') + C(-1.6, 0, 0.5, '#ff3a2a') + '</g>';
-    const tri = (x, y, sc, rot) => `<g transform="translate(${x} ${y}) scale(${sc}) rotate(${rot})">`
-      + [0, 120, 240].map((a) => `<g transform="rotate(${a})">${P('M-0.8 -1 L-0.5 -5 L0.5 -5 L0.8 -1Z', '#8a8e98')}${C(0, -5.4, 0.8, '#5a5e68')}</g>`).join('')
-      + C(0, 0, 1.6, '#6a6e78') + `<g ${glow('#ff3a2a', 1)}>${C(0, 0, 0.6, '#ff4a3a')}</g></g>`;
-    const fire = (x, y, r) => `<g ${glow('#ff7a1a', 2.4)}>${C(x, y, r * 1.6, 'url(#cbihFire)')}`
-      + P(`M${x - r * 0.7} ${y} Q${x - r * 0.3} ${y - r * 2.2} ${x + r * 0.6} ${y - r * 2.8} Q${x + r * 0.3} ${y - r * 1.4} ${x + r * 0.8} ${y}Z`, '#ffb030', 'opacity=".9"')
+    // A ship at (x, y), scaled, turned to `rot` degrees; its nose points along +x.
+    const at = (x, y, sc, rot, body) => (Math.abs(rot) === 180 ? `<g transform="translate(${f(x)} ${f(y)}) scale(${f(-sc)} ${f(sc)})">${body}</g>` : `<g transform="translate(${f(x)} ${f(y)}) rotate(${f(rot)}) scale(${f(sc)})">${body}</g>`);
+    const nose = (x, y, sc, rot, len) => { const a = (rot * Math.PI) / 180; return [x + Math.cos(a) * len * sc, y + Math.sin(a) * len * sc]; };
+    // Fire from a gun to a target: short bolts lined up along the line of fire, a flash where it lands.
+    const shot = ([x1, y1], [x2, y2], c, n = 2, hit = true) => {
+      const d = Math.hypot(x2 - x1, y2 - y1), ux = (x2 - x1) / d, uy = (y2 - y1) / d, len = Math.min(3.4, d * 0.2), px = -uy * 0.45, py = ux * 0.45;
+      let o = `<g ${glow(c, 1.1)}>`;
+      for (let k = 0; k < n; k++) {
+        const t = n === 1 ? 0.5 : 0.25 + (0.5 * k) / (n - 1);
+        const ax = x1 + (x2 - x1) * t, ay = y1 + (y2 - y1) * t;
+        for (const sd of [-1, 1]) {
+          const a = [ax + px * sd, ay + py * sd], b = [a[0] + ux * len, a[1] + uy * len];
+          o += L(f(a[0]), f(a[1]), f(b[0]), f(b[1]), c, 0.6) + L(f(a[0]), f(a[1]), f(b[0]), f(b[1]), '#fff', 0.22);
+        }
+      }
+      if (hit) o += C(f(x2), f(y2), 0.9, c, 'opacity=".5"') + C(f(x2), f(y2), 0.35, '#fff');
+      return o + '</g>';
+    };
+
+    // ---------- the good guys ----------
+    const venator = () => P('M15 0 L-11 -5.8 L-14.4 -2.2 L-14.4 2.2 L-11 5.8Z', '#d8dade') + P('M15 0 L-11 5.8 L-14.4 2.2 L-14.4 0Z', '#9ea2aa')
+      + P('M12.6 0 L-9 -2.7 L-9 2.7Z', '#b8342a') + L(12, 0, -10, 0, '#7a1e18', 0.35)
+      + [-6, -2, 2, 6].map((x) => L(x, -(15 - x) * 0.2, x, (15 - x) * 0.2, '#7e828a', 0.18)).join('')
+      + R(-10.4, -4.8, 3.4, 1.8, '#b4b8c0') + R(-10.4, 3, 3.4, 1.8, '#8a8e96') + C(-8.6, -5.4, 0.7, '#c8ccd2') + C(-8.6, 5.4, 0.7, '#9ea2aa')
+      + [[4, -2.4], [0, -3.4], [-4, -4.4], [4, 2.4], [0, 3.4], [-4, 4.4]].map(([x, y]) => C(x, y, 0.32, '#5a5e66')).join('')
+      + `<g ${glow('#6ab8ff', 1.6)}>${[-1.6, 0, 1.6].map((y) => C(-14.8, y, y ? 0.75 : 1, '#cfeeff')).join('')}</g>`;
+    const arc170 = () => P('M7 0 L2 -0.9 L-6 -0.9 L-6 0.9 L2 0.9Z', '#e4e2da') + C(4.6, 0, 0.55, '#2a3a52')
+      + P('M1 -0.9 L-3.6 -6 L-5.6 -6 L-4.4 -0.9Z', '#d2d0c8') + P('M1 0.9 L-3.6 6 L-5.6 6 L-4.4 0.9Z', '#b8b6ae')
+      + R(-4.4, -5.4, 2.2, 0.6, '#b8342a') + R(-4.4, 4.8, 2.2, 0.6, '#b8342a') + L(-3.6, -6, 0.8, -6, '#9a9890', 0.4) + L(-3.6, 6, 0.8, 6, '#9a9890', 0.4)
+      + `<g ${glow('#ffb080', 1)}>${C(-6.2, -0.5, 0.4, '#ffd0a0')}${C(-6.2, 0.5, 0.4, '#ffd0a0')}</g>`;
+    const eta2 = (paint) => P('M4.6 0 L1.4 -1 L-2.4 -1 L-2.4 1 L1.4 1Z', paint) + C(2.4, 0, 0.6, '#1a2638')
+      + P('M0.6 -1 L-1.6 -1 L-2.4 -5 L0 -5Z', paint) + P('M0.6 1 L-1.6 1 L-2.4 5 L0 5Z', paint)
+      + R(-2.2, -4.6, 2, 2.6, '#2a2e36', 'opacity=".85"') + R(-2.2, 2, 2, 2.6, '#2a2e36', 'opacity=".85"')
+      + `<g ${glow('#6ab8ff', 1)}>${C(-2.8, -0.5, 0.35, '#bfe8ff')}${C(-2.8, 0.5, 0.35, '#bfe8ff')}</g>`;
+
+    // ---------- the droids ----------
+    const vulture = () => P('M6.4 0 L3 -0.7 L-4 -0.6 L-4 0.6 L3 0.7Z', '#c9ad7c') + C(5.2, 0, 0.45, '#ff3a2a')
+      + [[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([a, b]) => P(`M${a < 0 ? -2.6 : 1} ${b * 0.6} L${a < 0 ? -4.6 : -0.2} ${b * 5.2} L${a < 0 ? -3.4 : 1} ${b * 5.4} L${a < 0 ? -1.2 : 2.4} ${b * 0.6}Z`, b < 0 ? '#bfa272' : '#8a7450')).join('')
+      + [[-4, -5.3], [0.4, -5.3], [-4, 5.3], [0.4, 5.3]].map(([x, y]) => C(x, y, 0.45, '#5a4a30')).join('');
+    const tri = () => [0, 120, 240].map((a) => `<g transform="rotate(${a})">${P('M-0.7 -1.1 L-0.45 -5 L0.45 -5 L0.7 -1.1Z', a ? '#7e828c' : '#9a9ea8')}${C(0, -5.3, 0.75, '#5a5e68')}${L(0, -6, 0, -6.9, '#3a3e48', 0.4)}</g>`).join('')
+      + C(0, 0, 1.7, '#6a6e78') + C(0, 0, 1.2, '#4a4e58') + `<g ${glow('#ff3a2a', 1)}>${C(0, 0, 0.55, '#ff4a3a')}</g>`;
+
+    // ---------- background ----------
+    let o = '<defs><linearGradient id="cbiSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#04050c"/><stop offset=".6" stop-color="#0a0d1e"/><stop offset="1" stop-color="#140e1c"/></linearGradient>'
+      + '<radialGradient id="cbiCity" cx=".5" cy="0" r=".75"><stop offset="0" stop-color="#3a2614"/><stop offset=".28" stop-color="#1e1412"/><stop offset="1" stop-color="#08060a"/></radialGradient>'
+      + '<linearGradient id="cbiHull" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9aa0ae"/><stop offset=".5" stop-color="#6a7080"/><stop offset="1" stop-color="#3e424e"/></linearGradient>'
+      + '<linearGradient id="cbiTower" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8a909e"/><stop offset="1" stop-color="#464a56"/></linearGradient>'
+      + '<radialGradient id="cbiFire"><stop offset="0" stop-color="#fff6c8"/><stop offset=".35" stop-color="#ffb030"/><stop offset=".7" stop-color="#ff4a10" stop-opacity=".6"/><stop offset="1" stop-color="#ff2a00" stop-opacity="0"/></radialGradient></defs>'
+      + R(0, 0, 100, 100, 'url(#cbiSky)') + E(24, 18, 30, 14, '#2a1a5a', 'opacity=".28"') + E(80, 30, 26, 12, '#1a3a6a', 'opacity=".25"') + E(56, 8, 22, 6, '#4a2a6a', 'opacity=".18"');
+    for (let k = 0; k < 90; k++) o += C(f(rnd() * 100), f(rnd() * 70), f(rnd() * 0.32 + 0.1), k % 9 ? '#fff' : '#cfe4ff', `opacity="${f(rnd() * 0.6 + 0.25)}"`);
+    o += [[8, 8], [70, 6], [44, 18], [96, 38]].map(([x, y]) => `<g ${glow('#cfe4ff', 1.4)}>${C(x, y, 0.5, '#fff')}${L(x - 1.6, y, x + 1.6, y, '#fff', 0.15)}${L(x, y - 1.6, x, y + 1.6, '#fff', 0.15)}</g>`).join('');
+
+    // Coruscant's night side: the glow of a planet-wide city, skylanes and the atmosphere.
+    o += C(50, 150, 82, 'url(#cbiCity)') + C(50, 150, 82, 'none', 'stroke="#ffb86a" stroke-width="1" opacity=".6"') + C(50, 150, 83.6, 'none', 'stroke="#4a8aff" stroke-width="2.8" opacity=".2"') + C(50, 150, 86, 'none', 'stroke="#4a8aff" stroke-width="2" opacity=".07"');
+    const blocks = [[18, 82], [36, 76], [58, 74], [76, 80], [88, 90], [8, 94], [48, 88], [28, 92], [66, 92]];
+    for (let k = 0; k < 300; k++) {
+      const [bx, by] = blocks[k % blocks.length];
+      const x = bx + (rnd() - 0.5) * 18, y = by + (rnd() - 0.5) * 9;
+      if (Math.hypot(x - 50, y - 150) > 81) continue;
+      o += C(f(x), f(y), f(0.12 + rnd() * 0.28), ['#ffd08a', '#ffb050', '#fff0c0', '#ffc070', '#9ad0ff'][k % 5], `opacity="${f(0.35 + rnd() * 0.6)}"`);
+    }
+    o += [74, 82, 90].map((y, i) => P(`M-4 ${y + 6} Q50 ${y - 7} 104 ${y + 6}`, 'none', `stroke="#ffc878" stroke-width=".3" stroke-dasharray="${1.2 + i} ${1 + i * 0.6}" opacity=".4"`)).join('');
+
+    // ---------- the Republic fleet ----------
+    const V = [[14, 22, 0.55, 0], [32, 11, 0.3, 4], [86, 18, 0.5, 180], [90, 42, 0.4, 180]];
+    o += V.map(([x, y, sc, rot]) => at(x, y, sc, rot, venator())).join('');
+
+    // ---------- the Invisible Hand ----------
+    o += P('M58 56 L62 66.4 L66.4 66.4 L68 56Z', '#565a66') + P('M62 66.4 L66.4 66.4 L66 65 L62.4 65Z', '#30333c') + L(60, 58, 63, 65, '#3e424c', 0.3)
+      + P('M7 51 C7 47.6 11 46.4 22 45.8 L80 44 L92 46 L94 52 L92 54.6 L80 56.4 L22 56.4 C11 56 7 54.6 7 51Z', 'url(#cbiHull)')
+      + P('M14 46.6 L22 45.8 L80 44 L92 46 L80 47.4 L22 48.6Z', '#a8aebb') + P('M22 56.4 L80 56.4 L92 54.6 L80 54 L22 54.4Z', '#2e3038')
+      + E(9.4, 51.2, 1.9, 2.6, '#1a1c22') + `<g ${glow('#ffcf7a', 1.6)}>${E(9.2, 51.2, 1.1, 1.8, '#ffcf7a', 'opacity=".85"')}</g>`
+      + P('M13 47.6 L24 47 L24 48.4 L13 49Z', '#3a5a8a') + P('M13 53.6 L24 54 L24 55 L13 54.8Z', '#3a5a8a', 'opacity=".8"');
+    for (let x = 26; x <= 88; x += 5) o += L(x, 46, x, 55.6, '#2e3038', 0.22, 'opacity=".5"');
+    for (let x = 16; x < 88; x += 1.6) {
+      if (rnd() < 0.6) o += C(f(x), 49.6, 0.22, '#ffd98a', 'opacity=".85"');
+      if (rnd() < 0.45) o += C(f(x + 0.8), 52.6, 0.2, '#ffd98a', 'opacity=".65"');
+    }
+    const guns = [[30, 45.4], [46, 44.9], [74, 44.2], [86, 45.2]];
+    o += guns.map(([x, y]) => R(x - 1, y - 0.6, 2, 1, '#4a4e5a') + C(x, y - 0.6, 0.6, '#5a5e6a')).join('')
+      + P('M54 45 L58 24 L66 22 L68 44Z', 'url(#cbiTower)') + P('M58 24 L60 23.6 L56 44.8 L54 45Z', '#a8aebb', 'opacity=".6"')
+      + [28, 32, 36, 40].map((y) => L(58 - (y - 24) * 0.19, y, 66.4 + (y - 22) * 0.07, y, '#3e424c', 0.25)).join('')
+      + [[60, 28], [63, 33], [61, 38], [64, 26]].map(([x, y]) => C(x, y, 0.28, '#ffd98a', 'opacity=".8"')).join('')
+      + R(56, 19.6, 12, 5, '#7a808e', 'rx="1"') + R(56, 23, 12, 1.4, '#4e5260') + `<g ${glow('#ffcf7a', 1.2)}>${R(57, 20.8, 10, 1.2, '#ffcf7a', 'opacity=".9"')}</g>`
+      + L(62, 19.6, 62, 14.4, '#7a808e', 0.45) + L(65.4, 19.6, 66.4, 16, '#7a808e', 0.35)
+      + `<g ${glow('#6ab8ff', 2.2)}>${[47.6, 50.2, 52.8].map((y) => E(94.4, y, 1.1, 1, '#cfeeff')).join('')}</g>` + R(95, 47, 5, 7, '#6ab8ff', 'opacity=".12"');
+
+    // ---------- fighters, each firing at something real ----------
+    const F = {
+      arcA: [22, 63, 0.75, -24], vultA: [12, 68, 0.7, -24],
+      triA: [32, 32, 0.6, 210], arcB: [44, 35, 0.7, 200],
+      yellow: [16, 40, 0.7, 14], red: [12, 36, 0.65, 14],
+      vultB: [76, 31, 0.65, 160], triB: [83, 63, 0.6, 200], arcC: [94, 66, 0.7, 196], vultC: [50, 66, 0.6, 150],
+    };
+    const N = (k, len) => nose(F[k][0], F[k][1], F[k][2], F[k][3], len);
+    const vBow = (i) => nose(V[i][0], V[i][1], V[i][2], V[i][3], 13);
+    // capital ships trade broadsides
+    o += shot(vBow(0), [38, 46.2], '#4ab8ff') + shot(vBow(1), [60, 21], '#4ab8ff', 1) + shot(vBow(2), [66, 26], '#4ab8ff') + shot(vBow(3), [84, 47.4], '#4ab8ff', 1)
+      + shot([guns[0][0], guns[0][1] - 1], [16, 24], '#ff3a3a') + shot([guns[2][0], guns[2][1] - 1], [84, 20], '#ff3a3a') + shot([guns[3][0], guns[3][1] - 1], [88, 41], '#ff3a3a', 1)
+      // dogfights, at close range
+      + shot(N('vultA', 6.4), N('arcA', -5), '#ff3a3a', 1) + shot(N('arcB', 7), N('triA', 0), '#4ab8ff', 1)
+      + shot(N('vultB', 6.4), [86, 21], '#ff3a3a', 1) + shot(N('arcC', 7), N('triB', 0), '#4ab8ff', 1) + shot(N('yellow', 4.6), [22, 46.4], '#4ab8ff', 1);
+    o += at(...F.arcA, arc170()) + at(...F.vultA, vulture()) + at(...F.triA, tri()) + at(...F.arcB, arc170())
+      + at(...F.yellow, eta2('#e8c030')) + at(...F.red, eta2('#c8402a'))
+      + at(...F.vultB, vulture()) + at(...F.triB, tri()) + at(...F.arcC, arc170()) + at(...F.vultC, vulture());
+
+    // ---------- battle damage ----------
+    const fire = (x, y, r) => `<g ${glow('#ff7a1a', 2.4)}>${C(x, y, r * 1.6, 'url(#cbiFire)')}`
+      + P(`M${f(x - r * 0.7)} ${y} Q${f(x - r * 0.3)} ${f(y - r * 2.2)} ${f(x + r * 0.6)} ${f(y - r * 2.8)} Q${f(x + r * 0.3)} ${f(y - r * 1.4)} ${f(x + r * 0.8)} ${y}Z`, '#ffb030', 'opacity=".9"')
       + C(x, y, r * 0.5, '#fff2c0') + '</g>';
-    // Smoke trails back and up: the ship is moving left.
-    const smoke = (x, y, n) => Array.from({ length: n }, (_, k) => C((x + k * 2.6).toFixed(1), (y - k * 2.8).toFixed(1), (1.2 + k * 0.75).toFixed(2), k % 2 ? '#26252a' : '#323038', `opacity="${(0.62 - k * 0.07).toFixed(2)}"`)).join('');
-
-    let o = '<defs><linearGradient id="cbihSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#03040a"/><stop offset=".62" stop-color="#0a0c1c"/><stop offset="1" stop-color="#1a1020"/></linearGradient>'
-      + '<radialGradient id="cbihCity" cx=".5" cy="0" r=".9"><stop offset="0" stop-color="#3a2614"/><stop offset=".22" stop-color="#1c1212"/><stop offset="1" stop-color="#07060a"/></radialGradient>'
-      + '<linearGradient id="cbihHull" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b8ae9a"/><stop offset=".45" stop-color="#8a826f"/><stop offset="1" stop-color="#46423a"/></linearGradient>'
-      + '<linearGradient id="cbihTower" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#aaa18c"/><stop offset=".55" stop-color="#7e776a"/><stop offset="1" stop-color="#4e4a42"/></linearGradient>'
-      + '<radialGradient id="cbihFire"><stop offset="0" stop-color="#fff6c8"/><stop offset=".35" stop-color="#ffb030"/><stop offset=".7" stop-color="#ff4a10" stop-opacity=".6"/><stop offset="1" stop-color="#ff2a00" stop-opacity="0"/></radialGradient></defs>'
-      + R(0, 0, 100, 100, 'url(#cbihSky)') + E(78, 20, 34, 18, '#2a1a4a', 'opacity=".3"') + E(16, 30, 26, 14, '#1a2a5a', 'opacity=".3"');
-    for (let k = 0; k < 46; k++) o += C((rnd() * 100).toFixed(1), (rnd() * 64).toFixed(1), (rnd() * 0.35 + 0.12).toFixed(2), '#fff', `opacity="${(rnd() * 0.6 + 0.25).toFixed(2)}"`);
-
-    // Coruscant's night side: one endless city, lit block by block, with skylanes.
-    o += C(50, 182, 112, 'url(#cbihCity)') + C(50, 182, 112, 'none', 'stroke="#ffa050" stroke-width=".7" opacity=".7"') + C(50, 182, 113.6, 'none', 'stroke="#4a8aff" stroke-width="2.6" opacity=".22"');
-    for (let k = 0; k < 260; k++) {
-      const x = rnd() * 100, y = 70 + Math.pow(rnd(), 0.8) * 30;
-      if (Math.hypot(x - 50, y - 182) > 111) continue;
-      const c = ['#ffd08a', '#ffb050', '#fff0c0', '#ffc070', '#9ad0ff'][Math.floor(rnd() * 5)];
-      o += C(x.toFixed(1), y.toFixed(1), (0.14 + rnd() * 0.32).toFixed(2), c, `opacity="${(0.35 + rnd() * 0.6).toFixed(2)}"`);
-    }
-    o += [78, 84, 91].map((y, i) => P(`M-4 ${y + 6} Q50 ${y - 8} 104 ${y + 6}`, 'none', `stroke="#ffc878" stroke-width=".35" stroke-dasharray="${1.4 + i} ${1.2 + i * 0.6}" opacity=".45"`)).join('')
-      + [[22, 86, 7], [62, 82, 9], [84, 92, 6]].map(([x, y, r]) => E(x, y, r, r * 0.3, '#ffb060', 'opacity=".07"')).join('');
-
-    // Republic Venators closing in, and the far crossfire.
-    o += venator(14, 16, 0.9) + venator(26, 34, 0.5) + venator(86, 12, 0.8, true) + venator(90, 32, 0.45, true)
-      + bolts(28, 18, 52, 40, '#4ab8ff') + bolts(32, 34, 40, 46, '#4ab8ff', 2) + bolts(74, 14, 66, 22, '#4ab8ff', 2) + bolts(82, 32, 90, 46, '#4ab8ff', 2)
-      + bolts(44, 42, 20, 22, '#ff3a3a') + bolts(70, 40, 84, 20, '#ff3a3a') + bolts(60, 60, 38, 78, '#ff3a3a', 2)
-      + [[44, 22, 0.5, 20], [78, 26, 0.45, 70]].map(([x, y, sc, r]) => tri(x, y, sc, r)).join('');
-
-    // The Invisible Hand: bulbous prow on the left, long hull, tall command tower, ventral fin.
-    o += P('M62 59 L66 73 L73 73 L75 59Z', '#4e4a42') + P('M66 73 L73 73 L72.4 71.6 L66.4 71.6Z', '#2e2b26')
-      + P('M5 54 C5 47.6 9 44.6 17 43.6 L30 42.8 L76 41.6 L88 43.4 L93 46.4 L93 56.6 L88 58.8 L76 60.6 L30 60.4 L17 60 C9 59.6 5 57.6 5 54Z', 'url(#cbihHull)')
-      + P('M17 43.6 L76 41.6 L80 39.6 L22 40.8Z', '#c8bea8') + P('M30 42.8 L76 41.6 L76 43 L30 44.2Z', '#6e685c', 'opacity=".6"')
-      + P('M17 60 L76 60.6 L88 58.8 L76 57.4 L17 57Z', '#2e2b26')
-      + E(9, 53.6, 2.6, 3.4, '#1a1612') + `<g ${glow('#ffcf7a', 2)}>${E(8.6, 53.6, 1.6, 2.4, '#ffcf7a', 'opacity=".85"')}</g>`
-      + P('M13 46 L26 44.8 L26 46.6 L13 48Z', '#4a6a9a') + P('M13 56.6 L26 57.2 L26 58.4 L13 58Z', '#3a5a8a', 'opacity=".8"');
-    for (let x = 22; x <= 88; x += 5.5) o += L(x, 44, x, 58.4, '#2e2b26', 0.25, 'opacity=".45"');
-    for (let x = 16; x < 86; x += 1.7) {
-      if (rnd() < 0.62) o += C(x.toFixed(1), 48.6, 0.24, '#ffd98a', 'opacity=".85"');
-      if (rnd() < 0.5) o += C((x + 0.8).toFixed(1), 53.2, 0.22, '#ffd98a', 'opacity=".7"');
-    }
-    o += [24, 36, 48, 82].map((x) => R(x, 40.4, 2.2, 1.2, '#5a554a') + L(x + 1.1, 40.4, x - 1.8, 39.2, '#3a3630', 0.5)).join('')
-      // command tower, raked forward, the bridge on top
-      + P('M53 42.4 L58.6 17 L69.4 16 L72.6 41.6Z', 'url(#cbihTower)') + P('M58.6 17 L61 17 L56 42.2 L53 42.4Z', '#c0b6a0', 'opacity=".6"')
-      + R(56.6, 12.4, 16, 5.6, '#9a927e', 'rx="1.4"') + R(56.6, 16.4, 16, 1.6, '#5a554a') + `<g ${glow('#ffd98a', 1.4)}>${R(58, 14, 13, 1.1, '#ffd98a', 'opacity=".9"')}</g>`
-      + L(65, 12.4, 65, 6.4, '#8a826f', 0.5) + L(69, 12.4, 70, 8.6, '#8a826f', 0.4) + [22, 27, 32, 37].map((y) => L(58.4 - (y - 17) * 0.2, y, 70.6 + (y - 17) * 0.12, y, '#4a463c', 0.3)).join('')
-      + [[61, 24], [66, 30], [63, 35], [67, 21]].map(([x, y]) => C(x, y, 0.3, '#ffd98a', 'opacity=".8"')).join('')
-      // engine bank
-      + `<g ${glow('#6ab8ff', 2.4)}>${[47.6, 50.2, 52.8, 55.4].map((y) => E(93.6, y, 1.3, 1.1, '#cfeeff')).join('')}</g>` + R(94, 47, 6, 9, '#6ab8ff', 'opacity=".12"');
-
-    // Battle damage: scorches, fires and smoke trailing back over the hull.
-    const hits = [[30, 47, 1.5], [44, 55.6, 1.2], [63, 26, 1.3], [79, 45.6, 1.6], [86, 56.4, 1.1], [18, 51, 0.9]];
-    o += hits.map(([x, y, r]) => E(x, y, r * 2.2, r * 1.3, '#16120e', 'opacity=".7"')).join('')
-      + smoke(31, 45, 7) + smoke(64, 24, 6) + smoke(80, 44, 7) + smoke(45, 54, 4)
+    const smoke = (x, y, n, dx, dy) => Array.from({ length: n }, (_, k) => C(f(x + k * dx), f(y + k * dy), f(1 + k * 0.6), k % 2 ? '#26262c' : '#34343c', `opacity="${f(0.6 - k * 0.07)}"`)).join('');
+    const hits = [[36, 46.2, 1.4], [74, 55.4, 1.2], [46, 54.2, 1], [62, 30, 1.1], [86, 47.6, 1]];
+    o += hits.map(([x, y, r]) => E(x, y, r * 2.2, r * 1.2, '#14141a', 'opacity=".7"')).join('')
+      + smoke(36, 44.4, 7, 0.8, -2.6) + smoke(62, 28.6, 5, 1.6, -2) + smoke(74, 57, 6, 1.6, 2.4) + smoke(86, 46, 5, 1.8, -1.8)
       + hits.map(([x, y, r]) => fire(x, y, r)).join('')
-      + `<g ${glow('#ffb03a', 3)}>${P(Array.from({ length: 16 }, (_, k) => { const a = (k / 16) * Math.PI * 2, r = k % 2 ? 1.4 : 3.6; return `${k ? 'L' : 'M'}${(88 + Math.cos(a) * r).toFixed(2)} ${(59.4 + Math.sin(a) * r).toFixed(2)}`; }).join(' ') + 'Z', '#ff9a2a', 'opacity=".9"')}${C(88, 59.4, 1.4, '#fff2c0')}</g>`
-      + [[90, 62], [92, 60.4], [85.6, 63], [91, 64.6]].map(([x, y]) => C(x, y, 0.35, '#ffe0a0')).join('');
-
-    // Near fighters and the close crossfire.
-    o += bolts(22, 66, 36, 60, '#ff3a3a', 2) + bolts(8, 30, 14, 42, '#4ab8ff', 2) + bolts(96, 70, 80, 64, '#4ab8ff', 2) + bolts(50, 34, 40, 26, '#ff3a3a', 2)
-      + vulture(20, 68, 0.8) + vulture(40, 30, 0.6) + vulture(96, 74, 0.7) + tri(10, 74, 0.7, 12) + tri(52, 70, 0.55, 48)
-      + R(0, 0, 100, 100, '#ff7a2a', 'opacity=".04"');
+      + [[90, 58.4], [92.4, 57], [88, 60.2], [93.4, 60]].map(([x, y]) => C(x, y, 0.3, '#ffe0a0')).join('');
     return o;
   });
   // Battle shapes, top-down with the nose up like the other ships.
