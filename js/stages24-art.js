@@ -495,7 +495,7 @@
   };
   const TATOOINE = ['mos_eisley', 'jundland', 'beggars', 'sandcrawler', 'cantina', 'jabbas_gate', 'dune_sea_orbit', 'mando_bounty', 'hunters_den', 'jabbas_palace'];
   // Worlds whose scenes are approved and shown in battle (2.4 test only).
-  const LIVE = ['tatooine', 'hoth', 'dagobah', 'bespin', 'endor', 'scarif'];
+  const LIVE = ['tatooine', 'hoth', 'dagobah', 'bespin', 'endor', 'scarif', 'coruscant'];
   const worlds = { tatooine: TATOOINE };
   const render = (id) => (S[id] ? svg(S[id]()) : '');
   const forStage = (params) => {
