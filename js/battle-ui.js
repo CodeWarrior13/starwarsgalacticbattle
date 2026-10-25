@@ -225,7 +225,10 @@
       screen.appendChild(view);
       window.scrollTo({ top: 0 });
       $$('.main-nav button').forEach((btn) => btn.classList.toggle('active', btn.dataset.nav === 'home'));
-      this.env = new root.Env($('[data-env]', view), this.planetId || 'tatooine', ships ? 'space' : 'ground');
+      // 2.4: approved worlds show the stage's own scene behind the battle.
+      const scene = root.StageArt24 && root.StageArt24.forStage ? root.StageArt24.forStage(this.params) : '';
+      if (scene) this.field.insertAdjacentHTML('afterbegin', `<div class="stage-scene">${scene}</div>`);
+      this.env = new root.Env($('[data-env]', view), this.planetId || 'tatooine', ships ? 'space' : 'ground', scene ? { overlay: true } : undefined);
       this.updateAll();
       this.renderActions(null);
     },

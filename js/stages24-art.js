@@ -494,5 +494,14 @@
 
   };
   const TATOOINE = ['mos_eisley', 'jundland', 'beggars', 'sandcrawler', 'cantina', 'jabbas_gate', 'dune_sea_orbit', 'mando_bounty', 'hunters_den', 'jabbas_palace'];
-  root.StageArt24 = { scenes: S, svg, worlds: { tatooine: TATOOINE }, render: (id) => (S[id] ? svg(S[id]()) : '') };
+  // Worlds whose scenes are approved and shown in battle (2.4 test only).
+  const LIVE = ['tatooine'];
+  const worlds = { tatooine: TATOOINE };
+  const render = (id) => (S[id] ? svg(S[id]()) : '');
+  const forStage = (params) => {
+    if (!params || params.type !== 'stage' || !(root.Update24 && root.Update24.on()) || !LIVE.includes(params.planet)) return '';
+    const list = worlds[params.planet];
+    return list && list[params.stage] ? render(list[params.stage]) : '';
+  };
+  root.StageArt24 = { scenes: S, svg, worlds, live: LIVE, render, forStage };
 })(typeof window !== 'undefined' ? window : globalThis);
