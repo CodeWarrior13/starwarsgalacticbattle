@@ -372,6 +372,7 @@
       + P('M10 90 L22 74 L138 74 L150 90Z', '#16141a', 'stroke="#3a3a42" stroke-width=".4"') + L(22, 74, 138, 74, '#ff7a3a', 0.4, 'opacity=".6"') + Array.from({ length: 6 }, (_, k) => L(f2(22 - k * 2.4), 74 + k * 3, f2(138 + k * 2.4), 74 + k * 3, '#0e0c0e', 0.3)).join('') + [30, 50, 110, 130].map((px) => C(px, 75, 0.4, '#ff3a2a')).join('')
       + purge(40, 86, 2.6, 1, 'staff') + purge(124, 86, 2.6, -1, 'staff') + vaderFull(80, 88, 3.6, 1) + ash(40, 10),
   };
+  Object.assign(SA.kit = SA.kit || {}, { tieBall, tieWing, tieInt, tieAdv, TIGUNS, TAGUNS, vaderFull });
   Object.assign(SA.scenes, MU);
   SA.worlds.mustafar = ['lava_fields', 'purge_patrol', 'mining_facility', 'the_rescue', 'lava_river', 'fortress_skies', 'the_inquisitorius', 'the_old_sith', 'fortress_gate', 'vaders_wrath'];
 })(typeof window !== 'undefined' ? window : globalThis);
