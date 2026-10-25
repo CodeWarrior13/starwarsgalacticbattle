@@ -404,6 +404,8 @@
       + tree(4, 92, 84, 6, '#1a1e16', '#080a06', '#2e4226', 17) + tree(156, 92, 84, -6, '#1a1e16', '#080a06', '#2e4226', 18)
       + fog(82, 0.3, '#7a9a8a', 20) + motes(16, 10, '#9aff8a', 0.7, 16, 84),
   };
+  // Shared with the later worlds' scene files.
+  Object.assign(SA.kit = SA.kit || {}, { interceptor, r2, xwing });
   Object.assign(SA.scenes, D);
   SA.worlds.dagobah = ['swamp_landing', 'mist_witches', 'gnarltree_hollow', 'yodas_test', 'bog_ambush', 'orbital_blockade', 'brothers_of_dathomir', 'cave_of_evil', 'mothers_call', 'trial_of_the_force'];
 })(typeof window !== 'undefined' ? window : globalThis);

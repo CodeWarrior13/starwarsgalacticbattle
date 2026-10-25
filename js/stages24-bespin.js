@@ -378,6 +378,8 @@
       + R(140, 62, 16, 9, '#2a1a16', 'stroke="#6a3a2e" stroke-width=".4"') + [142, 145, 148, 151].map((px, k) => R(px, 64, 2, 1.2, ['#ff3a2a', '#3aff6a', '#ffcf3a', '#3a8aff'][k])).join('') + R(142, 67, 12, 2.4, '#5ad8ff', 'opacity=".45"')
       + boba(38, 86, 2.9, 1, false) + ig88(122, 86, 2.9, -1) + trooper(16, 88, 2.7, 1) + trooper(146, 88, 2.7, -1),
   };
+  // Shared with the later worlds' scene files.
+  Object.assign(SA.kit = SA.kit || {}, { trooper, tie34: tie });
   Object.assign(SA.scenes, B);
   SA.worlds.bespin = ['cloud_city_approach', 'wing_guard_patrol', 'tibanna_refinery', 'landos_welcome', 'cloud_car_chase', 'ugnaught_tunnels', 'dinner_guests', 'bounty_hunters_deal', 'escape_gas_giant', 'freezing_chamber'];
 })(typeof window !== 'undefined' ? window : globalThis);
