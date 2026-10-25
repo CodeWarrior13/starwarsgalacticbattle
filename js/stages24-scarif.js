@@ -254,7 +254,13 @@
       + [-1, 1].map((sd) => Array.from({ length: 9 }, (_, k) => { const x1 = 80 + sd * (5 + k * 9); const x2 = 80 + sd * (9 + k * 12); const t1 = 30 - k * 3.6; const b1 = 56 + k * 4.4; return P(`M${x1} ${t1} L${x2} ${t1 - 3.6} L${x2} ${b1 + 4.4} L${x1} ${b1}Z`, k % 2 ? '#1a2a3e' : '#22344a', 'stroke="#3a5a7a" stroke-width=".2"') + Array.from({ length: 10 }, (_, m) => { const yy1 = t1 + ((b1 - t1) * (m + 0.5)) / 10; const yy2 = t1 - 3.6 + ((b1 + 4.4 - t1 + 3.6) * (m + 0.5)) / 10; return L(x1, yy1, x2, yy2, '#2e4a66', 0.25) + Array.from({ length: 4 }, (_, q) => { const t = (q + 0.5) / 4; return R(x1 + (x2 - x1) * t - 0.4, yy1 + (yy2 - yy1) * t - 0.9, 0.8, 0.9, '#4a6a8a', 'opacity=".8"'); }).join('') + C(x1 + (x2 - x1) * 0.9, yy1 + (yy2 - yy1) * 0.9, 0.25, m % 3 ? '#5ad8ff' : '#c8f8ff'); }).join(''); }).join('')).join('')
       + [22, 40].map((yy) => P(`M0 ${yy - 6} L160 ${yy - 6} L160 ${yy - 4.6} L0 ${yy - 4.6}Z`, '#1a2a3a', 'stroke="#3a5a7a" stroke-width=".2"') + Array.from({ length: 33 }, (_, k) => L(k * 5, yy - 6, k * 5, yy - 9, '#3a5a7a', 0.2)).join('') + L(0, yy - 9, 160, yy - 9, '#3a5a7a', 0.3)).join('')
       + R(74, 24, 12, 36, '#0a1420', 'stroke="#3a5a7a" stroke-width=".3"') + Array.from({ length: 6 }, (_, k) => R(75.6, 27 + k * 5, 8.8, 3, '#14243a') + C(84, 28.5 + k * 5, 0.3, '#5ad8ff')).join('') + glow(80, 40, 6, '#5ad8ff', 0.12)
-      + L(0, 6, 160, 6, '#4a6a8a', 0.9) + P('M58 6 L58 18 L54 22 M58 18 L62 22', 'none', 'stroke="#6a8aaa" stroke-width=".8"') + R(55, 5, 6, 2.4, '#4a6a8a') + R(56.4, 21, 3.2, 2, '#3a5a7a')
+      + R(0, 4.6, 160, 2.4, '#2a4a6a', 'stroke="#4a6a8a" stroke-width=".3"') + Array.from({ length: 32 }, (_, k) => L(k * 5, 4.6, k * 5, 7, '#4a6a8a', 0.2)).join('')
+      + R(52, 3.6, 12, 4.4, '#3a5a7a', 'rx=".6" stroke="#6a8aaa" stroke-width=".3"') + [54, 62].map((px) => C(px, 5.8, 1, '#1a2a3a', 'stroke="#6a8aaa" stroke-width=".2"')).join('') + C(58, 5.8, 0.4, '#ffcf3a')
+      + P('M57 8 L56 15 L59 15 L60 8Z', '#4a6a8a', 'stroke="#6a8aaa" stroke-width=".25"') + C(57.6, 15.6, 1.4, '#3a5a7a', 'stroke="#6a8aaa" stroke-width=".25"') + C(57.6, 15.6, 0.5, '#8aaaca') + P('M57 16.4 L54.4 21 L57 21.6 L59 16.6Z', '#4a6a8a', 'stroke="#6a8aaa" stroke-width=".25"') + P('M52.8 8 Q54 12 56.6 14 M62 8 Q61 12 59.4 13', 'none', 'stroke="#1a2a3a" stroke-width=".5"')
+      + R(52.4, 21, 7, 2.6, '#3a5a7a', 'rx=".4" stroke="#6a8aaa" stroke-width=".25"') + C(56, 22.3, 0.35, '#5ad8ff')
+      + P('M53.4 23.4 C51.6 24.6 51.4 27.2 53 28.6 L53.8 27.8 C52.8 26.8 53 25.2 54.4 24.2Z M58 23.4 C59.8 24.6 60 27.2 58.4 28.6 L57.6 27.8 C58.6 26.8 58.4 25.2 57 24.2Z M55.6 23.6 L55.4 28.4 L56.6 28.4 L56.4 23.6Z', '#5a7a9a', 'stroke="#2a4a6a" stroke-width=".2"')
+      + R(53.4, 25.4, 4.6, 2.8, '#1a2a3a', 'stroke="#5ad8ff" stroke-width=".2"') + R(54, 26, 3.4, 0.6, '#5ad8ff', 'opacity=".7"') + R(54, 27, 2, 0.4, '#5ad8ff', 'opacity=".5"') + glow(55.7, 26.8, 1.2, '#5ad8ff', 0.2)
+      + [[14, 8], [40, 8], [104, 8], [140, 8]].map(([x, y]) => P(`M${x} ${y} q1 6 0 12 q-1 4 1 8`, 'none', 'stroke="#1a2a3a" stroke-width=".5"')).join('') + [[30, 62], [130, 62]].map(([x, y]) => R(x - 5, y, 10, 2.4, '#14243a', 'stroke="#3a5a7a" stroke-width=".2"') + R(x - 4, y + 0.6, 8, 1, '#5ad8ff', 'opacity=".4"')).join('') + Array.from({ length: 12 }, (_, k) => C(10 + k * 13, 88, 0.4, '#5ad8ff', 'opacity=".6"')).join('')
       + P('M0 66 L160 66 L160 90 L0 90Z', '#0e1824') + Array.from({ length: 13 }, (_, k) => L(80, 60, -60 + k * 23, 90, '#1e2e40', 0.3)).join('') + Array.from({ length: 5 }, (_, k) => L(0, 68 + k * 4.6, 160, 68 + k * 4.6, '#1e2e40', 0.25)).join('')
       + R(102, 60, 10, 8, '#1a2a3a', 'stroke="#3a5a7a" stroke-width=".3"') + R(103, 61, 8, 3, '#5ad8ff', 'opacity=".6"') + [104, 106, 108].map((px, k) => R(px, 65, 1.2, 0.8, ['#3aff6a', '#ffcf3a', '#ff3a2a'][k])).join('')
       + E(80, 74, 80, 6, '#5ad8ff', 'opacity=".05"')
@@ -279,12 +285,12 @@
     // trading fire with them; X-wings and a U-wing break through TIE
     // Interceptors, every bolt from its guns.
     orbital_battle: () => R(0, 0, 160, 90, '#03060e') + starfield(80, 13)
-      + scarifPlanet(80, 186, 116) + shieldShell(80, 186, 122) + shellGate(96, 66, 0.85)
+      + scarifPlanet(80, 186, 116) + shieldShell(80, 186, 122) + shellGate(80, 64, 0.9)
       + (kit.isd ? kit.isd(118, 20, 1.3, '#7a828c') + kit.isd(146, 42, 0.9, '#6a727c') : '') + glow(110, 22, 3, '#ffb070', 0.5) + smoke(110, 20, 8, 0.4)
-      + monCal(32, 18, 0.95, 8) + bolt(54, 20, 98, 20, '#ff4a2a') + bolt(52, 24, 132, 40, '#ff4a2a') + bolt(104, 26, 60, 22, '#3aff6a')
-      + (kit.xwing ? kit.xwing(40, 50, 0.6, -10, false, true) + kit.xwing(70, 40, 0.55, -14, false, true) : '') + uwing(22, 64, 0.75, -10)
-      + (kit.interceptor ? kit.interceptor(108, 52, 0.6, 6) + kit.interceptor(130, 64, 0.55, 6) : '')
-      + shots([50, 49], [106, 52], [0.15, 0.55], 0.1, '#ff4a2a') + shots([79, 38], [128, 62], [0.2, 0.6], 0.1, '#ff4a2a') + (() => { const t = gunsAt(108, 52, 0.6, 6, TIEGUNS); return shots(t[2], [48, 50], [0.2, 0.6], 0.12); })(),
+      + monCal(30, 18, 0.95, 4) + (() => { const mc = [[54, 17], [54, 20.4]]; return mc.map((m) => shots(m, [100, 22], [0.12, 0.42, 0.72], 0.1, '#ff4a2a')).join('') + [[104, 26], [108, 27.6]].map((q) => shots(q, [52, 22], [0.15, 0.45, 0.75], 0.08, '#3aff6a')).join(''); })()
+      + (kit.xwing ? kit.xwing(32, 50, 0.6, 2, false, true) + kit.xwing(36, 70, 0.55, -2, false, true) : '') + uwing(18, 34, 0.7, 4)
+      + (kit.interceptor ? kit.interceptor(122, 52, 0.6, 0) + kit.interceptor(130, 72, 0.55, 0) : '')
+      + (() => { const XW = [[13, -9.8], [11.6, 8.7]]; const x1 = gunsAt(32, 50, 0.6, 2, XW); const x2 = gunsAt(36, 70, 0.55, -2, XW); const t1 = gunsAt(122, 52, 0.6, 0, TIEGUNS); return x1.map((g0) => shots(g0, [g0[0] + 80, g0[1] + 2.8], [0.2, 0.5, 0.8], 0.08, '#ff4a2a')).join('') + x2.map((g0) => shots(g0, [g0[0] + 84, g0[1] - 2.8], [0.25, 0.55, 0.85], 0.08, '#ff4a2a')).join('') + [t1[2], t1[3]].map((g0) => shots(g0, [g0[0] - 80, g0[1] - 2], [0.2, 0.5, 0.8], 0.08)).join(''); })(),
 
     the_hallway: () => fill([[0, '#1a1418'], [0.5, '#2a2026'], [1, '#100c0e']])
       + P('M0 0 L56 28 L104 28 L160 0Z', '#2a2428') + P('M0 90 L56 62 L104 62 L160 90Z', '#1e181c') + P('M0 0 L56 28 L56 62 L0 90Z', '#3a3236') + P('M160 0 L104 28 L104 62 L160 90Z', '#342c30')
