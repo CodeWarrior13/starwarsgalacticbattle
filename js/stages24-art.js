@@ -148,40 +148,52 @@
       + `<g transform="translate(89 77) scale(1.25)">${L(-0.9, -6, -1.2, 0, '#d0a038', 1.1)}${L(0.9, -6, 1.3, 0, '#c09030', 1.1)}${R(-1.9, -0.4, 1.6, 0.6, '#b08028')}${R(0.5, -0.4, 1.6, 0.6, '#b08028')}${R(-1.5, -7.4, 3, 1.4, '#5a5a5e')}${[-1, 0, 1].map((x) => L(x * 0.8, -7.4, x * 0.8, -6, '#d04a2a', 0.25)).join('')}${P('M-2 -11.4 L2 -11.4 L1.6 -7.4 L-1.6 -7.4Z', '#e8c050', 'stroke="#9a7020" stroke-width=".25"')}${P('M-1.2 -11 L1.2 -11 L0.9 -9 L-0.9 -9Z', '#f4d870', 'opacity=".6"')}${L(-2, -11, -3, -7.6, '#d8b040', 0.9)}${L(2, -11, 2.8, -7.6, '#c8a038', 0.9)}${R(-0.5, -12.4, 1, 1, '#c8a038')}${C(0, -13.8, 1.7, '#e8c050', 'stroke="#9a7020" stroke-width=".25"')}${C(-0.6, -14, 0.38, '#ffe8a0')}${C(0.6, -14, 0.38, '#ffe8a0')}${R(-0.4, -13.1, 0.8, 0.5, '#9a7020')}</g>`
       + P('M0 78 Q50 72 100 78 T160 76 L160 90 L0 90Z', '#c88a4e') + ripples(80, 88, '#a06a36', 3, 0.3) + E(80, 74, 50, 2, '#000', 'opacity=".1"'),
 
-    // 5 · Chalmun's Cantina, from the photo's angle: standing back in the dark
-    // under the cave-like ceiling, looking at the long curved bar. The bar glows
-    // behind it with copper and glass dispensers and little hanging lamps, and
-    // the patrons stand along it in silhouette.
+    // 5 · Chalmun's Cantina: the round bar in the middle (the view you liked),
+    // now lit like the film: the bar glowing from inside with its chrome
+    // dispenser column, copper and glass tanks, bottles and hanging cone lamps,
+    // the cream counter with patrons on stools, the bartender behind it, the
+    // Bith band on the bandstand, booths in the arched alcoves, smoke and gloom.
     cantina: () => {
-      // a patron seen from behind, in silhouette with a rim of bar light
-      const fig = (x, h, kind, c = '#1a120c') => {
-        const top = 90 - h; const sh = top + h * 0.2; const w = h * 0.17;
-        let head = C(x, top + h * 0.09, h * 0.085, c);
-        if (kind === 'hood') head = P(`M${x - h * 0.1} ${sh} C${x - h * 0.1} ${top + h * 0.02} ${x + h * 0.1} ${top + h * 0.02} ${x + h * 0.1} ${sh}Z`, c);
-        if (kind === 'bith') head = E(x, top + h * 0.06, h * 0.11, h * 0.1, c);
-        if (kind === 'tall') head = P(`M${x - h * 0.07} ${sh} L${x} ${top - h * 0.12} L${x + h * 0.07} ${sh}Z`, c);
-        if (kind === 'bun') head = C(x, top + h * 0.09, h * 0.08, c) + C(x, top + h * 0.01, h * 0.05, c);
-        if (kind === 'hat') head = C(x, top + h * 0.1, h * 0.075, c) + E(x, top + h * 0.05, h * 0.13, h * 0.025, c);
-        return head + P(`M${x - w} ${sh} C${x - w * 1.3} ${sh + h * 0.1} ${x - w * 1.1} ${top + h * 0.6} ${x - w * 0.9} 90 L${x + w * 0.9} 90 C${x + w * 1.1} ${top + h * 0.6} ${x + w * 1.3} ${sh + h * 0.1} ${x + w} ${sh}Z`, c)
-          + P(`M${x - w} ${sh} C${x - w * 1.3} ${sh + h * 0.1} ${x - w * 1.1} ${top + h * 0.5} ${x - w * 0.95} ${top + h * 0.75}`, 'none', 'stroke="#d89848" stroke-width=".35" opacity=".55"');
+      const [glowBar, gb] = LG([[0, '#fff4d0'], [0.6, '#f0c47a'], [1, '#b8782e']]);
+      const [counter, cb] = LG([[0, '#fff6e2'], [0.5, '#e4d4b4'], [1, '#a8987a']]);
+      // a patron on a stool, seen from behind: clothes, head, a rim of bar light
+      const patron = (x, y, body, head, kind) => {
+        let h = C(x, y - 10.4, 2.4, head);
+        if (kind === 'greedo') h = E(x, y - 10.6, 2.6, 2.8, head) + L(x - 1.4, y - 13, x - 2, y - 14.4, head, 0.6) + L(x + 1.4, y - 13, x + 2, y - 14.4, head, 0.6) + P(`M${x + 2} ${y - 10} l1.8 .6 l-1.8 .8Z`, head);
+        if (kind === 'walrus') h = C(x, y - 10.6, 2.6, head) + P(`M${x + 1.6} ${y - 9.6} l2.4 1.4 l-2.2 .6Z`, '#e8e0c8');
+        if (kind === 'hair') h = C(x, y - 10.4, 2.4, head) + P(`M${x - 2.4} ${y - 10.6} C${x - 2.4} ${y - 14} ${x + 2.4} ${y - 14} ${x + 2.4} ${y - 10.6} L${x + 2} ${y - 9} L${x - 2} ${y - 9}Z`, '#2a1a10');
+        if (kind === 'hood') h = P(`M${x - 2.8} ${y - 8} C${x - 3} ${y - 14} ${x + 3} ${y - 14} ${x + 2.8} ${y - 8}Z`, head);
+        return R(x - 0.6, y, 1.2, 6, '#2a1a10') + E(x, y, 2.8, 0.8, '#6a4a30') + P(`M${x - 3.4} ${y} C${x - 3.8} ${y - 4} ${x - 3.2} ${y - 7.4} ${x - 2} ${y - 8.4} L${x + 2} ${y - 8.4} C${x + 3.2} ${y - 7.4} ${x + 3.8} ${y - 4} ${x + 3.4} ${y}Z`, body) + h
+          + P(`M${x - 2} ${y - 8.4} C${x - 3.2} ${y - 7.4} ${x - 3.8} ${y - 4} ${x - 3.4} ${y}`, 'none', 'stroke="#ffcf80" stroke-width=".35" opacity=".6"');
       };
-      return R(0, 0, 160, 90, '#100804')
-        // the bright bar back, shelves and dispensers
-        + (() => { const [g, d] = LG([[0, '#fff4d0'], [0.5, '#f4cc80'], [1, '#c8883a']]); return d + P('M16 34 Q80 22 144 34 L144 60 L16 60Z', g); })()
-        + [36, 42, 48].map((y) => L(18, y + (y === 36 ? 1 : 0), 142, y, '#a86a2a', 0.5, 'opacity=".7"')).join('')
-        + [[30, 40, 3.4, 12], [44, 38, 3, 14], [58, 37, 3.6, 15], [74, 36, 3, 16], [90, 36, 3.4, 16], [106, 37, 3, 15], [120, 38, 3.6, 13], [132, 40, 2.6, 11]].map(([x, y, r, h], k) => R(x - r, y, r * 2, h, k % 2 ? '#c8803a' : '#d89a4a', 'rx="1"') + P(`M${x - r} ${y} C${x - r} ${y - r} ${x + r} ${y - r} ${x + r} ${y}Z`, '#e8b468') + R(x - r * 0.6, y + 1, r * 0.4, h - 2, '#fff2c0', 'opacity=".55"') + L(x - r, y + h * 0.4, x + r, y + h * 0.4, '#8a5a24', 0.5)).join('')
-        + Array.from({ length: 22 }, (_, k) => { const x = 22 + k * 5.6; return R(x, 45.4, 1, 2.6, ['#6a9a6a', '#9a5a3a', '#5a7aa8', '#c8a050'][k % 4], 'opacity=".8"'); }).join('')
-        + [34, 48, 62, 76, 90, 104, 118, 130].map((x) => L(x, 24, x, 29.4, '#3a2410', 0.35) + P(`M${x - 2} 29.4 L${x + 2} 29.4 L${x + 1.2} 31.6 L${x - 1.2} 31.6Z`, '#f0dca8') + C(x, 32.4, 4, '#fff0c0', 'opacity=".2"')).join('')
-        // the dark cave-like ceiling sweeping over the top, and the walls closing in at the sides
-        + P('M0 0 L160 0 L160 38 Q150 28 128 25 Q80 18 32 25 Q10 28 0 38Z', '#1c120a') + P('M0 38 Q10 28 32 25 Q80 18 128 25 Q150 28 160 38', 'none', 'stroke="#6a4a2a" stroke-width=".8" opacity=".7"')
-        + P('M8 6 Q40 2 70 8 M90 6 Q120 2 152 8 M20 14 Q60 10 100 14', 'none', 'stroke="#2e2014" stroke-width="1.2"')
-        + P('M0 38 Q8 40 14 60 L14 90 L0 90Z', '#0c0604') + P('M160 38 Q152 40 146 60 L146 90 L160 90Z', '#0c0604')
-        // the long curved bar counter, cream-white and lit from behind
-        + P('M14 60 Q80 52 146 60 L146 74 Q80 66 14 74Z', '#e8dcc2') + P('M14 60 Q80 52 146 60 L146 62 Q80 54 14 62Z', '#fff8e8') + P('M14 68 Q80 60 146 68 L146 74 Q80 66 14 74Z', '#b8a88a', 'opacity=".6"')
-        + [[56, 56.6], [62, 56], [98, 55.6], [104, 56.2], [120, 57]].map(([x, y]) => R(x - 0.8, y - 2.4, 1.6, 2.4, '#bfe0f0', 'opacity=".7"')).join('')
-        // the patrons along the bar, in silhouette
-        + fig(8, 40, 'hood') + fig(24, 32, 'head', '#24180e') + fig(36, 34, 'bun') + fig(58, 30, 'hat', '#20160c') + fig(70, 33, 'head') + fig(92, 38, 'tall') + fig(106, 30, 'bith', '#22160e') + fig(120, 34, 'head') + fig(134, 31, 'hood', '#20160c') + fig(152, 42, 'head')
-        + E(78, 90, 80, 4, '#000', 'opacity=".5"');
+      return fill([[0, '#1e130c'], [0.6, '#2c1c12'], [1, '#140c08']]) + gb + cb
+        // the curved back wall with its ribs, and the arched alcove booths
+        + P('M0 0 L160 0 L160 50 Q80 36 0 50Z', '#3e281a') + [20, 46, 70, 90, 114, 140].map((x) => P(`M${x} 0 Q${x + (x < 80 ? 4 : -4)} 20 ${x + (x < 80 ? 2 : -2)} ${44 - Math.abs(80 - x) * 0.1}`, 'none', 'stroke="#2a1a10" stroke-width="1.6"')).join('')
+        + [12, 34, 126, 148].map((x) => P(`M${x - 9} 52 L${x - 9} 33 C${x - 9} 25 ${x + 9} 25 ${x + 9} 33 L${x + 9} 52Z`, '#160c06', 'stroke="#6a4a30" stroke-width=".8"') + E(x, 46, 6.4, 2, '#5a3a24') + R(x - 0.8, 46, 1.6, 6, '#3a2414')
+          + C(x, 30, 1.4, '#ffb060', 'opacity=".8"') + C(x, 30, 6, '#ffb060', 'opacity=".12"')
+          + C(x - 4, 40, 1.6, ['#5a7a5a', '#6a4a6a', '#4a5a7a', '#7a5a3a'][(x / 2) % 4]) + E(x - 4, 44, 2.2, 2.8, '#3a2e3e') + C(x + 4, 40, 1.6, '#8a6a4a') + E(x + 4, 44, 2.2, 2.8, '#4a3a2a') + R(x - 1, 44.4, 2, 1.4, '#c8a050', 'opacity=".7"')).join('')
+        // the bandstand and the Bith band: big domed heads, dark eyes, horns and keys
+        + P('M58 36 L102 36 L99 42 L61 42Z', '#5a3a24', 'stroke="#2a1a10" stroke-width=".5"') + R(60, 41.6, 40, 1.2, '#3a2414')
+        + [65, 72.5, 80, 87.5, 95].map((x, k) => E(x, 32, 1.8, 3.8, '#4a3a3a') + E(x, 26.4, 2.8, 3, '#d8b8a0') + E(x, 25.4, 2.4, 1.6, '#e8c8b0') + C(x - 1, 27, 0.6, '#0a0606') + C(x + 1, 27, 0.6, '#0a0606') + (k === 2 ? R(x - 3, 30, 6, 2, '#3a3a40') : L(x + 1.2, 29.6, x + 3.4, 33.4, k % 2 ? '#d8b050' : '#a8a8b0', 0.8) + C(x + 3.4, 33.4, 0.8, k % 2 ? '#d8b050' : '#a8a8b0'))).join('')
+        + [64, 96].map((x) => C(x, 20, 1.4, '#ffd08a') + P(`M${x} 21 L${x - 6} 36 L${x + 6} 36Z`, '#ffe0a0', 'opacity=".08"')).join('')
+        // the bar's lit interior: the glow, dispenser column, copper and glass tanks, bottles
+        + E(80, 60, 42, 10, glowBar)
+        + R(74, 38, 12, 22, '#8a8e96', 'stroke="#c8ccd2" stroke-width=".5"') + R(75.4, 38, 2.4, 22, '#e8ecf0', 'opacity=".5"') + [42, 46, 50, 54].map((y) => R(74, y, 12, 0.8, '#5a5e66')).join('') + E(80, 38, 6, 1.6, '#c8ccd2') + [76, 80, 84].map((x) => L(x, 56, x, 58.4, '#3a3a40', 0.6)).join('')
+        + [[56, 52, 3, 7], [64, 49, 2.6, 9], [96, 49, 2.6, 9], [104, 52, 3, 7]].map(([x, y, r, h], k) => R(x - r, y, r * 2, h, k % 2 ? '#c8803a' : '#d89a4a', 'rx="1"') + P(`M${x - r} ${y} C${x - r} ${y - r} ${x + r} ${y - r} ${x + r} ${y}Z`, '#e8b468') + R(x - r * 0.6, y + 1, r * 0.4, h - 2, '#fff2c0', 'opacity=".6"')).join('')
+        + Array.from({ length: 14 }, (_, k) => { const x = 50 + k * 4.6; return R(x, 55, 1, 2.4, ['#6a9a6a', '#9a5a3a', '#5a7aa8', '#c8a050'][k % 4], 'opacity=".85"'); }).join('')
+        // the bartender behind the counter
+        + E(90, 55, 3.4, 4, '#5a4a3a') + C(90, 49.6, 2.4, '#d8a888') + P('M87.6 49 C87.6 46.4 92.4 46.4 92.4 49Z', '#4a3420') + R(87, 54, 6, 3, '#e8e0d0', 'opacity=".8"')
+        // hanging cone lamps over the ring
+        + [44, 56, 68, 80, 92, 104, 116].map((x, k) => { const y = 42 + Math.abs(80 - x) * 0.06; return L(x, 0, x, y - 3, '#2a1a10', 0.35) + P(`M${x - 2} ${y - 3} L${x + 2} ${y - 3} L${x + 1.2} ${y - 0.6} L${x - 1.2} ${y - 0.6}Z`, '#f0dca8') + C(x, y + 2, 5, '#fff0c0', 'opacity=".14"'); }).join('')
+        // the round cream counter, its top lip and shadowed front
+        + P('M34 60 C34 52 126 52 126 60 C126 70 34 70 34 60Z M44 60 C44 56 116 56 116 60 C116 65 44 65 44 60Z', counter, 'fill-rule="evenodd" stroke="#8a7a5e" stroke-width=".6"')
+        + P('M34 60 C34 70 126 70 126 60 L126 66 C126 77 34 77 34 66Z', '#cdbd9c', 'stroke="#8a7a5e" stroke-width=".6"') + P('M34 66 C34 77 126 77 126 66 L126 68 C126 79 34 79 34 68Z', '#000', 'opacity=".25"')
+        + [[52, 57.4], [60, 56.4], [100, 56.4], [108, 57.4], [70, 56]].map(([x, y]) => R(x - 0.8, y - 2.4, 1.6, 2.4, '#bfe0f0', 'opacity=".75"')).join('')
+        // patrons on their stools around the bar, backs to us
+        + patron(40, 74, '#4a5a3a', '#5a8a4a', 'greedo') + patron(52, 77, '#e8e0cc', '#d8a888', 'hair') + patron(66, 78.6, '#3a2a2a', '#7a6a5a', 'walrus') + patron(94, 78.6, '#5a3a4a', '#c8a088', 'hair') + patron(108, 77, '#3a3e4a', '#3a3e4a', 'hood') + patron(120, 74, '#6a4a2a', '#b8987a', 'head')
+        // smoke and the floor
+        + [[50, 30, 40, 4], [120, 24, 30, 3], [80, 14, 50, 3]].map(([x, y, rx, ry]) => E(x, y, rx, ry, '#c8b8a0', 'opacity=".06"')).join('')
+        + R(0, 82, 160, 8, '#120a06') + [0, 20, 40, 60, 80, 100, 120, 140].map((x) => L(x, 82, x + 8, 90, '#2a1a10', 0.5)).join('') + R(0, 0, 160, 90, 'none', 'stroke="#000" stroke-width="10" opacity=".35"');
     },
 
     // 6 · Jabba's Gate, from the photo: the palace on its rocky ridge under a
@@ -210,6 +222,16 @@
         // the rock mass in front with the dark gate tunnel
         + P('M40 62 C46 54 56 52 66 54 L100 54 C108 56 116 60 120 66 L120 76 L40 76Z', '#b49a76') + [60, 64, 68, 72].map((y) => P(`M42 ${y} Q80 ${y - 3} 118 ${y}`, 'none', 'stroke="#7a6248" stroke-width=".5" opacity=".7"')).join('')
         + P('M64 76 L64 68 C64 60 80 60 80 68 L80 76Z', '#120c08') + P('M62.4 76 L62.4 67.6 C62.4 58.4 81.6 58.4 81.6 67.6 L81.6 76', 'none', 'stroke="#6a5642" stroke-width="1.4"') + [[63, 66], [65, 61.6], [70, 59.4], [74, 59.4], [79, 61.6], [81, 66]].map(([x, y]) => C(x, y, 0.9, '#8a7456')).join('')
+        // deep in the tunnel: the round iron door, studded, with the eye droid on its stalk
+        + C(72, 70.6, 4.6, '#3a3028', 'stroke="#6a5a4a" stroke-width=".6"') + [-2.4, 0, 2.4].map((dx) => L(72 + dx, 66.4, 72 + dx, 74.8, '#1e1610', 0.5)).join('') + [[69, 68], [75, 68], [69, 73], [75, 73]].map(([x, y]) => C(x, y, 0.4, '#8a7a6a')).join('')
+        + P('M76 66 Q79 65 79 68', 'none', 'stroke="#6a6a70" stroke-width=".5"') + C(79, 68.6, 1, '#7a7a80') + C(79.3, 68.6, 0.4, '#ff3a2a')
+        // Gamorrean guards at the tunnel mouth: pig snouts, horned leather caps, armour, axes
+        + [[58, 78, 1], [86, 78, -1]].map(([x, y, f]) => `<g transform="translate(${x} ${y}) scale(${f * 1.15} 1.15)">${E(0, -5, 4, 5.2, '#5a6a3a', 'stroke="#2a3418" stroke-width=".4"')}${P('M-3.6 -6 L3.6 -6 L3.4 -1.6 L-3.4 -1.6Z', '#5a4030', 'stroke="#2a1a0e" stroke-width=".3"')}${R(-3.8, -2.4, 7.6, 1.4, '#3a2a1a')}${L(-1.6, -0.4, -1.8, 3, '#4a5a2a', 1.6)}${L(1.6, -0.4, 1.8, 3, '#4a5a2a', 1.6)}${C(0, -11.4, 3, '#6a7a44', 'stroke="#2a3418" stroke-width=".4"')}${E(-1.2, -10.6, 1.6, 1.2, '#8a9a5a')}${C(-1.8, -10.8, 0.3, '#1a1008')}${C(-0.6, -10.8, 0.3, '#1a1008')}${C(-2.2, -12.4, 0.45, '#1a1008')}${P('M-1.6 -9.4 L-1.2 -8.4 L-0.8 -9.4Z', '#e8e0c8')}${P('M-3 -12.6 C-3 -15.6 3 -15.6 3 -12.6Z', '#4a3424')}${P('M2.6 -14 L4.6 -16 L3.4 -13Z M-2.6 -14 L-4.4 -15.6 L-3.2 -13Z', '#c8b89a')}${L(4, -14, 4.6, 3, '#5a4030', 0.7)}${P('M4.4 -15 L8 -12.6 L4.6 -10.6Z', '#9a9aa0', 'stroke="#5a5a60" stroke-width=".3"')}</g>`).join('')
+        // stone courses and weathering on the palace
+        + [25, 31, 37, 43, 49].map((y, k) => Array.from({ length: 4 }, (_, i) => L(58 + 4 * i + (k % 2) * 2, y - 3, 58 + 4 * i + (k % 2) * 2, y, '#9a8666', 0.3)).join('')).join('')
+        + [35, 41, 47, 53].map((y, k) => Array.from({ length: 9 }, (_, i) => L(78 + 4.4 * i + (k % 2) * 2.2, y - 3, 78 + 4.4 * i + (k % 2) * 2.2, y, '#9a8666', 0.3)).join('')).join('')
+        + [[63, 22, 14], [70, 24, 10], [90, 33, 12], [104, 34, 14]].map(([x, y, h]) => P(`M${x} ${y} L${x + 1} ${y} L${x + 0.6} ${y + h} L${x + 0.2} ${y + h}Z`, '#7a6648', 'opacity=".35"')).join('')
+        + [[46, 62, 8], [110, 64, 10], [30, 72, 6], [130, 74, 8]].map(([x, y, w]) => P(`M${x} ${y} l${w * 0.4} ${w * 0.3} l${w * 0.3} -${w * 0.2} l${w * 0.3} ${w * 0.4}`, 'none', 'stroke="#6a5240" stroke-width=".4"')).join('')
         // the path up to the gate, with C-3PO and R2-D2 walking up it
         + P('M64 76 L80 76 L118 90 L74 90Z', '#d8c4a0') + ripples(78, 88, '#a89070', 3, 0.3)
         + `<g transform="translate(98 83) scale(.9)">${L(-0.8, -5, -1, 0, '#d0a038', 0.9)}${L(0.8, -5, 1.2, 0, '#c09030', 0.9)}${P('M-1.6 -9.6 L1.6 -9.6 L1.3 -6 L-1.3 -6Z', '#e8c050')}${C(0, -11, 1.3, '#e8c050')}${C(-0.4, -11.2, 0.3, '#fff2b0')}${C(0.4, -11.2, 0.3, '#fff2b0')}${C(-0.5, -10.6, 0.8, '#fffbe0', 'opacity=".7"')}</g>`
@@ -230,11 +252,10 @@
       return fill([[0, '#c8783e'], [0.4, '#eab070'], [1, '#f6d8a4']]) + suns(24, 12, 0.8)
         + P('M0 32 Q40 28 80 32 T160 30 L160 90 L0 90Z', '#e0a868') + dune(48, 6, '#d89a5a', '#b07038') + dune(68, 7, '#cc8c4e', '#9a5c2c')
         + ripples(36, 46, '#b07a44', 3, 0.3) + ripples(72, 88, '#9a6232', 5, 0.25) + haze('#f0d0a0', [[40, 26, 26, 3], [130, 24, 24, 3]])
-        // the Great Pit of Carkoon and the Sarlacc
-        + E(80, 80, 34, 9, '#b0703e') + E(80, 80.6, 27, 7, '#8a5028') + E(80, 81.2, 22, 5.6, '#3a1a10') + E(80, 82, 15, 3.6, '#5a1a14')
-        + Array.from({ length: 16 }, (_, k) => { const a = Math.PI * (k / 15); const tx = 80 - Math.cos(a) * 20; const ty = 81 - Math.sin(a) * 4.4; return P(`M${(tx - 1).toFixed(1)} ${ty.toFixed(1)} L${tx.toFixed(1)} ${(ty - 2.6).toFixed(1)} L${(tx + 1).toFixed(1)} ${ty.toFixed(1)}Z`, '#f0e6c8'); }).join('')
-        + C(80, 83, 3, '#ff8a5a') + C(80, 83, 1.4, '#ffd0a0') + P('M77 83 L80 80.4 L83 83 L80 84.6Z', '#e8c8a0', 'opacity=".8"')
-        + [[-1, 12, 2.2], [1, 14, 2], [-1, 20, 1.6], [1, 18, 1.4]].map(([s, h, w], k) => P(`M${80 + s * (8 + k * 2)} 82 C${80 + s * (12 + k * 2)} ${82 - h} ${80 + s * (18 + k * 2)} ${78 - h} ${80 + s * (22 + k)} ${82 - h * 0.7}`, 'none', `stroke="#7a3a2a" stroke-width="${w}" stroke-linecap="round"`)).join('')
+        // the Great Pit of Carkoon: the sand funnel with the Sarlacc's beak and short tentacles
+        + E(80, 80, 32, 8.4, '#b0703e') + E(80, 80.8, 25, 6.4, '#9a5a2e') + E(80, 81.6, 17, 4.4, '#7a4220') + E(80, 82.4, 10, 2.6, '#4a2410') + E(80, 83, 5, 1.4, '#2a1008')
+        + ripples(74, 86, '#8a5028', 3, 0.25) + P('M76 83 L80 80.6 L84 83 L80 84.4Z', '#d8b08a') + C(80, 83, 0.8, '#ff9a6a')
+        + [[-5, -1, -9, -4], [5, -1, 9, -5], [-2.6, 0, -5, -6], [2.6, 0, 4.6, -6]].map(([a, b, c, d]) => P(`M${80 + a} ${83 + b} Q${80 + (a + c) / 2} ${83 + d - 2} ${80 + c} ${83 + d}`, 'none', 'stroke="#7a3a2a" stroke-width="1" stroke-linecap="round"')).join('')
         // the sail barge's shadow on the sand, then the barge itself
         + E(80, 66, 46, 3, '#000', 'opacity=".16"')
         + `<g transform="translate(80 44) scale(1.3)">`
@@ -248,6 +269,11 @@
           + P('M-8 -30 L-26 -6 L-8 -6Z', '#dcd0b4', 'stroke="#a89878" stroke-width=".3"') + L(-8, -30, -8, -4, '#5a4028', 0.5)
           + [[-6, -34], [-8, -30]].map(([x, y]) => P(`M${x} ${y} L${x + 3} ${y - 1} L${x} ${y - 2}Z`, '#b8322a')).join('') + [[-20, -6], [8, -6], [14, -6]].map(([x, y]) => P(`M${x} ${y} L${x + 1.6} ${y + 3} L${x - 0.4} ${y + 3}Z`, '#b8322a', 'opacity=".85"')).join('')
           + [[-18, -7], [-12, -7], [2, -7], [10, -7]].map(([x, y]) => C(x, y, 0.7, '#3a2a1a')).join('')
+          // hull plating, the bow ram, a striped deck awning and crew at the rail
+          + [6.6, 9].map((y) => L(-36, y, 35, y - 0.6, '#7a5a3a', 0.35)).join('') + P('M36 -0.4 L44 -1 L38 3Z', '#8a6a46', 'stroke="#5a4028" stroke-width=".4"')
+          + P('M-24 -6 L16 -6 L18 -9 L-26 -9Z', '#d8c8a8', 'stroke="#a89878" stroke-width=".3"') + Array.from({ length: 8 }, (_, k) => P(`M${-24 + k * 5} -6 L${-21.6 + k * 5} -6 L${-23.4 + k * 5} -9 L${-25.8 + k * 5} -9Z`, '#b8322a', 'opacity=".7"')).join('')
+          + [[-22, -10], [-16, -10], [-4, -10], [6, -10], [12, -10]].map(([x, y]) => C(x, y, 0.6, '#3a2a1a') + R(x - 0.5, y + 0.6, 1, 1.6, '#4a3a2a')).join('')
+          + [[-30, 1.6], [-14, 1.6], [6, 1.6], [24, 1.6]].map(([x, y]) => R(x, y, 4, 1, '#c8a878', 'opacity=".6"')).join('')
           + E(-22, 12.4, 4, 0.9, '#ffd8a0', 'opacity=".6"') + E(4, 12, 4, 0.9, '#ffd8a0', 'opacity=".6"') + E(26, 10.6, 3, 0.8, '#ffd8a0', 'opacity=".6"')
         + '</g>'
         // two skiffs in front of the barge, over the pit
@@ -277,25 +303,35 @@
         + [[30, 36], [70, 26], [90, 26], [130, 36]].map(([x, y]) => R(x, y, 5, 2.4, '#4a3018', 'rx=".4"') + [1, 2, 3, 4].map((k) => L(x + k, y + 0.4, x + k, y + 2, '#8a6a48', 0.3)).join('')).join('')
         + P('M28 42 L28 60 M30 42 L30 60 M130 42 L130 60', 'none', 'stroke="#8a7458" stroke-width=".9"') + [[24, 34, 8, 10], [84, 30, 10, 14], [140, 38, 8, 10]].map(([x, y, w, h]) => R(x, y, w, h, '#8a6a48', 'opacity=".18"')).join('')
         + P('M0 30 Q12 40 22 28 M56 18 Q66 28 74 16 M96 16 Q106 26 116 18 M140 26 Q150 36 160 30', 'none', 'stroke="#b8322a" stroke-width=".8"')
+        // wall detail: block courses, a catwalk under the rim, pipes, lamps, stains, a fuel tank and cables
+        + [36, 40, 50, 54, 58].map((y) => P(`M0 ${y + 4} Q80 ${y - 12} 160 ${y + 4}`, 'none', 'stroke="#b08c62" stroke-width=".35" opacity=".8"')).join('')
+        + Array.from({ length: 30 }, (_, k) => { const x = 3 + k * 5.4; const t = 52 - Math.sin((x / 160) * Math.PI) * 14; return L(x, t, x, t + 4, '#a07a52', 0.3); }).join('')
+        + P('M0 34 Q80 14 160 34 L160 35.6 Q80 15.6 0 35.6Z', '#8a6a48') + Array.from({ length: 20 }, (_, k) => { const x = 4 + k * 8; const t = 35 - Math.sin((x / 160) * Math.PI) * 20; return L(x, t, x, t + 2.4, '#6a4a30', 0.4); }).join('')
+        + P('M0 40 Q80 24 160 40', 'none', 'stroke="#7a6a5a" stroke-width="1.1"') + P('M0 41.4 Q80 25.4 160 41.4', 'none', 'stroke="#5a4a3a" stroke-width=".6"')
+        + [[18, 38], [52, 30], [108, 30], [142, 38]].map(([x, y]) => R(x - 1, y, 2, 1.4, '#3a2a1a') + C(x, y + 2, 0.9, '#ffe0a0') + C(x, y + 2, 4, '#ffd08a', 'opacity=".16"')).join('')
+        + [[36, 40, 3, 18], [124, 40, 3, 18], [80, 22, 4, 10]].map(([x, y, w, h]) => P(`M${x} ${y} L${x + w} ${y} L${x + w * 0.8} ${y + h} L${x + w * 0.2} ${y + h}Z`, '#6a4a2a', 'opacity=".2"')).join('')
+        + R(64, 50, 10, 12, '#9a9ea6', 'rx="4" stroke="#5e626a" stroke-width=".5"') + R(65, 52, 2, 8, '#d8dce2', 'opacity=".6"') + L(64, 55, 74, 55, '#5e626a', 0.4) + P('M74 58 Q84 64 90 62', 'none', 'stroke="#2a2a30" stroke-width=".8"')
+        + P('M8 30 Q14 36 22 30 M138 30 Q146 36 152 31', 'none', 'stroke="#3a3a40" stroke-width=".5"')
         // the bay floor with its scorch rings
         + P('M0 62 L160 62 L160 90 L0 90Z', '#d8ae7a') + E(80, 76, 60, 9, '#b88a5a', 'opacity=".45"') + E(80, 76, 36, 5, '#8a6a4a', 'opacity=".3"') + [[20, 82], [140, 84]].map(([x, y]) => L(x - 10, y, x + 10, y, '#b8945e', 0.6)).join('')
         // the ship's shadow, the far engine on its pylon (behind the hull)
-        + P('M30 78 L112 60 L134 64 L50 84Z', '#000', 'opacity=".2"')
-        + P('M90 37 L94 34 L98 33 L95 37Z', '#6e727a') + engine(80, 32, 102, 26, 6)
+        + P('M24 80 L110 56 L140 64 L46 88Z', '#000', 'opacity=".22"')
+        + P('M82 31 L88 27 L92 27 L88 32Z', '#6e727a', 'stroke="#3e424a" stroke-width=".4"') + engine(70, 26, 98, 18, 9)
         // landing struts
-        + [[46, 68, 77], [72, 60, 71], [100, 52, 64], [116, 50, 61]].map(([x, y0, y1]) => L(x, y0, x, y1, '#3e424a', 1.2) + E(x, y1, 2.4, 0.8, '#3e424a')).join('')
-        // the hull: top face, near side face, the raised spine and panels
-        + P('M31.5 56.2 L111.5 28 L120.5 38 L36.5 61.8Z', hull, 'stroke="#4e525a" stroke-width=".6"')
-        + P('M36.5 61.8 L120.5 38 L120.5 53 L36.5 70.8Z', side, 'stroke="#3e424a" stroke-width=".6"')
-        + P('M50 51.4 L98 34.6 L104 38 L56 55Z', '#c8ccd2', 'stroke="#6e727a" stroke-width=".4"') + P('M58 52.2 L94 39.6 L96.6 41.2 L60.6 53.8Z', '#9a9ea6')
-        + [[44, 55, 46, 59.6], [66, 48, 69, 53], [84, 42, 88, 47], [104, 36, 108, 41]].map(([a, b, c, d]) => L(a, b, c, d, '#6e727a', 0.4)).join('') + L(34, 59, 116, 33, '#eef2f6', 0.4, 'opacity=".7"')
-        + [48, 60, 72, 84, 96, 108].map((x) => { const t = 61.8 - (x - 36.5) * 0.283; return L(x, t, x, t + 9 - (x - 36.5) * 0.071, '#4e525a', 0.4); }).join('') + L(36.5, 66.3, 120.5, 45.5, '#4e525a', 0.4) + [[52, 60], [80, 52], [108, 44]].map(([x, y]) => R(x, y, 4, 2.4, '#7a7e86', 'transform="rotate(-16 ' + x + ' ' + y + ')" stroke="#3e424a" stroke-width=".3"')).join('')
-        + P('M66 56 L70 55 L64 67 L60 68Z M74 54 L77 53 L72 64 L69 65Z', '#8a4a2a', 'opacity=".55"') + R(86, 50, 10, 3, '#4e525a', 'transform="rotate(-15 91 51)"')
+        + [[40, 72, 82], [66, 62, 75], [96, 52, 68], [112, 48, 63]].map(([x, y0, y1]) => L(x, y0, x, y1, '#3e424a', 1.4) + L(x - 1.6, y1 - 3, x, y1 - 6, '#3e424a', 0.6) + E(x, y1, 2.8, 0.9, '#3e424a')).join('')
+        // the hull: top face, near side face, the raised spine, hatches and panels
+        + P('M25 55.7 L107 21.5 L117 32.5 L31 62.3Z', hull, 'stroke="#4e525a" stroke-width=".6"')
+        + P('M31 62.3 L117 32.5 L117 49.5 L31 73.3Z', side, 'stroke="#3e424a" stroke-width=".6"')
+        + P('M44 50 L96 28.6 L103 32 L51 54Z', '#c8ccd2', 'stroke="#6e727a" stroke-width=".4"') + P('M52 50.6 L92 34 L95 35.6 L55 52.4Z', '#9a9ea6') + R(64, 42, 8, 3, '#7e828a', 'transform="rotate(-22 68 43.5)" stroke="#4e525a" stroke-width=".3"')
+        + [[38, 54.4, 41, 59], [58, 46, 61.6, 51], [78, 37.6, 82, 42.6], [100, 28.6, 104, 33.4]].map(([a, b, c, d]) => L(a, b, c, d, '#6e727a', 0.45)).join('') + L(27, 57.6, 110, 23, '#eef2f6', 0.45, 'opacity=".7"')
+        + [42, 54, 66, 78, 90, 102].map((x) => { const t = 62.3 - (x - 31) * 0.3465; return L(x, t, x, t + 11 - (x - 31) * 0.069, '#4e525a', 0.45); }).join('') + L(31, 67.8, 117, 41, '#4e525a', 0.45)
+        + [[46, 62], [72, 53], [100, 43]].map(([x, y]) => R(x, y, 5, 3, '#7a7e86', `transform="rotate(-19 ${x} ${y})" stroke="#3e424a" stroke-width=".3"`)).join('') + R(56, 63, 9, 6, '#8a8e96', 'transform="rotate(-19 56 63)" stroke="#3e424a" stroke-width=".4"')
+        + P('M62 58 L66 57 L58 71 L54 72Z M71 55 L74 54 L67 67 L64 68Z', '#8a4a2a', 'opacity=".55"') + P('M88 49 L91 48 L86 58 L84 59Z', '#8a4a2a', 'opacity=".4"') + R(84, 46, 10, 3, '#4e525a', 'transform="rotate(-19 89 47)"')
         // the rounded nose with its cockpit slits and twin cannons
-        + `<g transform="rotate(-18 34 63)">${E(34, 63.5, 5, 8, hull, 'stroke="#4e525a" stroke-width=".6"')}${[60, 62.4, 64.8].map((y) => P(`M31.6 ${y} Q34 ${y - 0.8} 36.4 ${y}`, 'none', 'stroke="#1e2a36" stroke-width=".7"')).join('')}${E(33, 60, 1.2, 2, '#ffffff', 'opacity=".35"')}</g>`
-        + L(32, 59.6, 20, 62.6, '#3e424a', 0.9) + L(35, 66.6, 23, 70, '#3e424a', 0.9) + C(20, 62.6, 0.6, '#5e626a') + C(23, 70, 0.6, '#5e626a')
+        + `<g transform="rotate(-20 28 64)">${E(28, 64, 6.4, 10, hull, 'stroke="#4e525a" stroke-width=".7"')}${[59, 62, 65, 68].map((y) => P(`M24.4 ${y} Q28 ${y - 1.2} 31.6 ${y}`, 'none', 'stroke="#1e2a36" stroke-width=".8"')).join('')}${E(26.4, 59, 1.6, 3, '#ffffff', 'opacity=".35"')}${L(22, 64, 34, 64, '#6e727a', 0.4)}</g>`
+        + L(26, 58, 12, 61, '#3e424a', 1.1) + L(30, 70, 15, 74, '#3e424a', 1.1) + C(12, 61, 0.7, '#5e626a') + C(15, 74, 0.7, '#5e626a') + R(24, 57, 4, 2, '#5e626a', 'transform="rotate(-12 26 58)"') + R(28, 69, 4, 2, '#5e626a', 'transform="rotate(-12 30 70)"')
         // the near engine on its pylon
-        + P('M102 48 L108 52 L110 57 L104 54Z', '#6e727a', 'stroke="#3e424a" stroke-width=".4"') + engine(104, 60, 130, 52, 7)
+        + P('M96 48 L104 51 L106 57 L98 55Z', '#6e727a', 'stroke="#3e424a" stroke-width=".4"') + engine(100, 60, 130, 51, 10)
         // pit droids at work: hose, crate, workbench
         + [[30, 84], [138, 82], [126, 86]].map(([x, y]) => `<g transform="translate(${x} ${y}) scale(1.1)">${E(0, -6, 2.4, 1.6, '#c86a2a')}${C(0, -6, 0.8, '#1a1a1a')}${L(-1, -4.6, -1.6, 0, '#5a5a5a', 0.6)}${L(1, -4.6, 1.6, 0, '#5a5a5a', 0.6)}${L(0, -5, 2.6, -3, '#5a5a5a', 0.5)}</g>`).join('')
         + R(144, 74, 12, 2, '#7a5a3a') + L(146, 76, 146, 82, '#5a4028', 0.6) + L(154, 76, 154, 82, '#5a4028', 0.6) + R(147, 71, 3, 3, '#5a5e66')
@@ -336,55 +372,73 @@
         // Cad Bane in his wide-brimmed hat, and IG-88 standing tall
         + E(46, 70, 6, 10, '#3a3e48') + P('M40 62 L52 62 L54 80 L38 80Z', '#4a3a2a') + C(46, 56, 3.4, '#3a6a8a') + C(44.8, 55.6, 0.6, '#ff3a2a') + C(47.2, 55.6, 0.6, '#ff3a2a') + E(46, 52.6, 7, 1.4, '#3a2a1e') + P('M42.6 52.6 C42.6 48 49.4 48 49.4 52.6Z', '#4a3424') + L(42, 59, 40, 61, '#b8a888', 0.6) + L(50, 59, 52, 61, '#b8a888', 0.6)
         + R(104, 58, 6, 22, '#4a4e56') + R(103, 62, 8, 1.4, '#6a6e76') + L(104, 64, 100, 74, '#4a4e56', 1.4) + L(110, 64, 114, 72, '#4a4e56', 1.4) + R(105.4, 48, 3.2, 10, '#4a4e56') + R(103.4, 44, 7.2, 4.4, '#5a5e66', 'rx="1"') + C(105.4, 46.2, 0.6, '#ff3a2a') + C(108.6, 46.2, 0.6, '#ff3a2a') + L(114, 72, 118, 56, '#1a1a1e', 0.9)
+        // more of the den: a hanging cloth, cracks, a wall map, chains, bottles, dust in the door light, a sleeping hound
+        + P('M118 4 L126 4 L125 26 Q122 24 119 27Z', '#6a2a1e', 'opacity=".85"') + L(118, 4, 126, 4, '#3a1a10', 0.8)
+        + P('M30 40 l3 3 l-1 3 l3 2 M98 42 l-2 4 l2 2 M140 8 l2 3 l-1 2', 'none', 'stroke="#140c08" stroke-width=".5"')
+        + R(4, 42, 18, 12, '#2a3a4a', 'stroke="#5a4028" stroke-width=".6"') + P('M6 50 Q10 44 14 48 T20 46', 'none', 'stroke="#6ac8ff" stroke-width=".5" opacity=".8"') + C(15, 47, 0.8, '#ff4a2a')
+        + P('M92 0 Q94 10 92 18 M96 0 Q98 8 96 14', 'none', 'stroke="#4a4a50" stroke-width=".6"') + [[94, 18], [96, 14]].map(([x, y]) => C(x, y + 1, 0.9, 'none', 'stroke="#4a4a50" stroke-width=".5"')).join('')
+        + [[96, 22], [99, 22.4], [102, 22]].map(([x, y], k) => R(x, y, 1.4, 3, ['#6a9a6a', '#9a5a3a', '#c8a050'][k], 'opacity=".9"')).join('')
+        + [[132, 40], [136, 46], [140, 34], [134, 52], [142, 48]].map(([x, y]) => C(x, y, 0.35, '#fff4d8', 'opacity=".6"')).join('')
+        + E(26, 79, 7, 2.4, '#5a4a3a') + C(20.6, 78, 2, '#6a5a4a') + P('M19 76.6 L18 74.6 L20 76Z', '#6a5a4a') + L(32, 79, 35, 78, '#5a4a3a', 0.8)
         + R(0, 80, 160, 10, '#0e0906') + [0, 20, 40, 60, 80, 100, 120, 140].map((x) => L(x, 80, x - 4, 90, '#2a1a10', 0.5)).join('') + P('M0 80 L160 80', 'none', 'stroke="#3a2818" stroke-width=".6"');
     },
 
-    // 10 · Jabba's Palace: the throne room. Jabba in the centre, drawn like
-    // the raid's Jabba (the same face: heavy lids, gold slit eyes, the wide
-    // mouth) and posed like the figure photo: sprawled on his dais with his
-    // arms folded on his belly and his tail curling away to the left. His
-    // hookah, cushions and Salacious Crumb; the dais front with its iron
-    // rings; stone arches, grated windows throwing light through the smoke,
-    // Han in carbonite on the wall, lamps and guards in the gloom.
+    // 10 · Jabba's Palace: the throne room as in the film. A round, smoky
+    // chamber of smooth curved sandstone, lit amber from oil lamps and one
+    // grated skylight. Jabba sprawls in the centre on his dais (the raid's
+    // Jabba face, posed like the figure: arms folded on his belly, tail curled
+    // away, mottled skin), Bib Fortuna at his side, Salacious Crumb cackling,
+    // the hookah, Han in carbonite on the wall, Max Rebo's band to the left,
+    // guards in the alcoves and the rancor trapdoor grate in the floor.
     jabbas_palace: () => {
-      const [skin, skd] = LG([[0, '#9aaa5e'], [0.6, '#7a8a4a'], [1, '#4e5a2e']]);
-      const [back, bkd] = LG([[0, '#6a6a40'], [1, '#3e4026']]);
-      return fill([[0, '#1e130c'], [0.5, '#2e1e12'], [1, '#160e08']]) + skd + bkd
-        // grated windows high up, light shafts through the smoke
-        + [[40, 4], [80, 2], [120, 4]].map(([x, y]) => R(x - 8, y, 16, 8, '#c8a878', 'opacity=".75"') + [x - 4, x, x + 4].map((gx) => L(gx, y, gx, y + 8, '#2a1a10', 0.8)).join('') + L(x - 8, y + 4, x + 8, y + 4, '#2a1a10', 0.6) + P(`M${x - 8} ${y + 8} L${x + 8} ${y + 8} L${x + 18} 70 L${x - 14} 70Z`, '#f0d8a8', 'opacity=".07"')).join('')
-        + [[30, 30, 34, 6], [120, 24, 30, 5], [80, 18, 40, 4]].map(([x, y, rx, ry]) => E(x, y, rx, ry, '#8a7a6a', 'opacity=".09"')).join('')
-        // stone arches and pillars, lamps
-        + [8, 152].map((x) => R(x - 6, 0, 12, 64, '#3e2a1a', 'stroke="#22160c" stroke-width=".5"') + [12, 26, 40, 54].map((y) => L(x - 6, y, x + 6, y, '#2a1a10', 0.5)).join('')).join('')
-        + [[30, 14], [130, 14]].map(([x, w]) => P(`M${x - w} 64 L${x - w} 28 C${x - w} 12 ${x + w} 12 ${x + w} 28 L${x + w} 64Z`, '#120a06', 'stroke="#5a3a26" stroke-width=".9"') + P(`M${x - w + 2} 64 L${x - w + 2} 29 C${x - w + 2} 15 ${x + w - 2} 15 ${x + w - 2} 29`, 'none', 'stroke="#3a2618" stroke-width=".6"')).join('')
-        + [[18, 30], [142, 30], [56, 26], [104, 26]].map(([x, y]) => R(x - 1, y, 2, 4, '#2a180c') + C(x, y - 1.4, 1.6, '#ffc06a') + C(x, y - 1.4, 7, '#ffb04a', 'opacity=".14"')).join('')
-        // guards waiting in the arches
-        + [[26, 62], [134, 62]].map(([x, y]) => E(x, y - 6, 3.4, 6, '#2a2618') + C(x, y - 13, 2.6, '#3a3a22') + L(x + 3, y - 16, x + 3.4, y, '#4a3a2a', 0.6) + P(`M${x + 3} ${y - 17} L${x + 6} ${y - 15} L${x + 3} ${y - 13}Z`, '#6a6a70')).join('')
+      const [skin, skd] = LG([[0, '#a0ac62'], [0.55, '#7e8c4a'], [1, '#4a562a']]);
+      const [wall, wd] = LG([[0, '#3e2a1a'], [0.6, '#5a3c24'], [1, '#2a1a10']]);
+      return fill([[0, '#1a100a'], [0.5, '#2a1a10'], [1, '#120a06']]) + skd + wd
+        // the round chamber: curved sandstone walls with soft ribs and alcoves
+        + P('M0 8 Q80 -2 160 8 L160 64 L0 64Z', wall) + [12, 30, 50, 110, 130, 148].map((x) => P(`M${x} ${6 - Math.sin((x / 160) * Math.PI) * 6} Q${x + (x < 80 ? 2 : -2)} 34 ${x} 64`, 'none', 'stroke="#2a1a0e" stroke-width="1.4" opacity=".7"')).join('')
+        + P('M0 30 Q80 20 160 30', 'none', 'stroke="#6a4a30" stroke-width=".6" opacity=".6"') + P('M0 46 Q80 38 160 46', 'none', 'stroke="#2a1a0e" stroke-width=".8" opacity=".6"')
+        + [[22, 12], [138, 12]].map(([x, w]) => P(`M${x - w / 2} 64 L${x - w / 2} 38 C${x - w / 2} 30 ${x + w / 2} 30 ${x + w / 2} 38 L${x + w / 2} 64Z`, '#0e0804', 'stroke="#6a4a30" stroke-width=".8"')).join('')
+        // the grated skylight over the throne, its shaft of light through the smoke
+        + E(80, 6, 14, 3.4, '#d8b888', 'opacity=".8"') + [-9, -5, -1, 3, 7].map((dx) => L(80 + dx, 3.4, 80 + dx + 1, 8.6, '#2a1a0e', 0.7)).join('')
+        + P('M66 7 L94 7 L112 62 L48 62Z', '#ffe8b8', 'opacity=".07"') + P('M70 7 L90 7 L102 62 L58 62Z', '#ffe8b8', 'opacity=".06"')
+        + [[40, 24, 30, 5], [120, 20, 30, 4], [80, 30, 50, 4]].map(([x, y, rx, ry]) => E(x, y, rx, ry, '#c8b090', 'opacity=".07"')).join('')
+        // oil lamps on the walls
+        + [[8, 28], [44, 22], [116, 22], [152, 28]].map(([x, y]) => R(x - 1.2, y, 2.4, 4, '#2a180c') + C(x, y - 1.4, 1.6, '#ffc06a') + C(x, y - 1.4, 8, '#ffb04a', 'opacity=".14"')).join('')
+        // guards waiting in the alcoves
+        + [[22, 62], [138, 62]].map(([x, y]) => E(x, y - 6, 3.4, 6, '#3a3a22') + C(x, y - 13, 2.6, '#5a6a3a') + E(x - 0.8, y - 12.4, 1.4, 1, '#7a8a4a') + P(`M${x - 2.6} ${y - 14} C${x - 2.6} ${y - 17} ${x + 2.6} ${y - 17} ${x + 2.6} ${y - 14}Z`, '#4a3424') + L(x + 3, y - 18, x + 3.4, y, '#4a3a2a', 0.6) + P(`M${x + 3} ${y - 19} L${x + 6.4} ${y - 16.6} L${x + 3} ${y - 14.4}Z`, '#8a8a90')).join('')
+        // Max Rebo's band: the blue organ player at his keys, a singer beside him
+        + R(30, 54, 14, 6, '#4a4a52', 'rx="1" stroke="#22222a" stroke-width=".4"') + R(31, 52.4, 12, 1.8, '#c8c8d0') + [33, 36, 39, 42].map((x) => R(x, 46, 1.2, 6.4, '#8a8a92')).join('')
+        + E(37, 51, 3.6, 3, '#4a7ab8') + C(37, 47, 2.6, '#5a8ac8') + P('M37 48 C38.4 50 38.6 52 37.6 54', 'none', 'stroke="#4a7ab8" stroke-width="1.2"') + C(36, 46.4, 0.4, '#0a0a10') + C(38, 46.4, 0.4, '#0a0a10')
+        + E(50, 56, 1.8, 5, '#c8a8a0') + C(50, 50, 1.8, '#d8b8b0') + E(50, 48.6, 2.4, 1, '#8a4a5a')
         // Han Solo frozen in carbonite on the wall
-        + R(44, 30, 10, 20, '#5a6470', 'rx="1" stroke="#2a3038" stroke-width=".6"') + R(45.2, 31.2, 7.6, 17.6, '#7a8694') + P('M47 36 C47 33 51 33 51 36 L50.6 38.6 L47.4 38.6Z', '#9aa6b4') + P('M46 40 L47.4 46 M52 40 L50.6 46 M47.4 38.6 L45.8 40 M50.6 38.6 L52.2 40', 'none', 'stroke="#9aa6b4" stroke-width=".8"') + R(45.4, 48, 7.2, 1.2, '#3a4048') + [['#ff4a4a', 46.6], ['#4ade80', 49], ['#ffcf3a', 51.4]].map(([c, x]) => C(x, 48.6, 0.3, c)).join('')
-        // the dais: stone top with cushions, the front with its iron rings
-        + P('M6 60 L154 60 L156 64 L4 64Z', '#6a4a30') + R(4, 64, 152, 18, '#4e3420', 'stroke="#2a1a0e" stroke-width=".6"')
-        + [4, 34, 64, 94, 124].map((x) => L(x, 64, x, 82, '#2a1a0e', 0.7)).join('') + [19, 49, 79, 109, 139].map((x) => C(x, 73, 3, 'none', 'stroke="#2a2a2e" stroke-width="1.4"') + C(x, 73, 1.4, '#3a3a40') + C(x - 0.6, 72.4, 0.5, '#8a8a90', 'opacity=".6"')).join('')
-        + [[26, 59, 8], [44, 58.6, 6], [128, 58.6, 6]].map(([x, y, w]) => E(x, y, w, 2.2, '#7a3424', 'stroke="#4a1a10" stroke-width=".4"')).join('')
-        // Jabba: the tail sweeping away to the left, the great body, the folded arms
-        + P('M44 60 C34 58 24 60 12 61 C8 61 6 59 10 58 C20 55 32 52 46 52 C50 40 64 32 82 32 L104 32 C120 34 128 46 128 56 L128 60Z', skin, 'stroke="#3a4420" stroke-width=".7"')
-        + P('M46 52 C50 40 64 32 82 32 L90 32 C76 36 66 44 62 58 L44 60Z', back, 'opacity=".6"')
-        + [[20, 58.6], [30, 57], [40, 55.6]].map(([x, y]) => P(`M${x} ${y - 2} Q${x + 1.6} ${y} ${x} ${y + 2}`, 'none', 'stroke="#4e5a2e" stroke-width=".6"')).join('')
-        + E(100, 50, 20, 9, '#a8b46a', 'opacity=".55"') + [44, 48, 52, 56].map((y) => P(`M84 ${y} Q100 ${y + 2.6} 118 ${y}`, 'none', 'stroke="#5e6c38" stroke-width=".6" opacity=".8"')).join('')
-        + P('M84 40 C80 44 82 48 90 48 L100 47 C102 45 100 43 96 43 L88 43Z', '#8a9a52', 'stroke="#3a4420" stroke-width=".5"') + P('M118 40 C122 44 120 48 112 48 L102 47 C100 45 102 43 106 43 L114 43Z', '#7a8a4a', 'stroke="#3a4420" stroke-width=".5"')
-        + [[98, 46], [100.4, 45.6], [103, 46]].map(([x, y]) => E(x, y, 1.2, 0.8, '#9aaa5e', 'stroke="#3a4420" stroke-width=".3"')).join('')
+        + R(120, 30, 10, 20, '#5a6470', 'rx="1" stroke="#2a3038" stroke-width=".6"') + R(121.2, 31.2, 7.6, 17.6, '#7a8694') + P('M123 36 C123 33 127 33 127 36 L126.6 38.6 L123.4 38.6Z', '#9aa6b4') + P('M122 40 L123.4 46 M128 40 L126.6 46 M123.4 38.6 L121.8 40 M126.6 38.6 L128.2 40', 'none', 'stroke="#9aa6b4" stroke-width=".8"') + R(121.4, 48, 7.2, 1.2, '#3a4048') + [['#ff4a4a', 122.6], ['#4ade80', 125], ['#ffcf3a', 127.4]].map(([c, x]) => C(x, 48.6, 0.3, c)).join('')
+        // the dais: stone top, cushions, the front with its iron rings
+        + P('M22 60 L138 60 L142 64 L18 64Z', '#6a4a30') + R(18, 64, 124, 14, '#4e3420', 'stroke="#2a1a0e" stroke-width=".6"') + [18, 49, 80, 111].map((x) => L(x, 64, x, 78, '#2a1a0e', 0.7)).join('') + [33.5, 64.5, 95.5, 126.5].map((x) => C(x, 71, 2.8, 'none', 'stroke="#2a2a2e" stroke-width="1.3"') + C(x, 71, 1.2, '#3a3a40') + C(x - 0.6, 70.4, 0.5, '#8a8a90', 'opacity=".6"')).join('')
+        + [[36, 59, 7], [52, 58.6, 6], [118, 58.6, 6]].map(([x, y, w]) => E(x, y, w, 2.2, '#7a3424', 'stroke="#4a1a10" stroke-width=".4"')).join('')
+        // Jabba: tail curling away to the left, the great mottled body, the folded arms
+        + P('M50 60 C42 58 34 60 26 61 C22 61 21 59 24 58 C32 55 42 52 52 52 C56 40 66 33 82 33 L102 33 C116 35 124 46 124 56 L124 60Z', skin, 'stroke="#33401c" stroke-width=".7"')
+        + P('M52 52 C56 40 66 33 82 33 L88 33 C76 37 68 45 64 58 L50 60Z', '#000', 'opacity=".18"')
+        + [[30, 58.6], [37, 57], [44, 55.6], [58, 46], [70, 38], [114, 40], [120, 50]].map(([x, y], k) => E(x, y, 1.6 + (k % 2), 0.9, '#5e6c38', 'opacity=".6"')).join('')
+        + E(100, 50, 18, 8.4, '#b0bc72', 'opacity=".5"') + [44, 47.6, 51.2, 54.8].map((y) => P(`M86 ${y} Q100 ${y + 2.4} 116 ${y}`, 'none', 'stroke="#5e6c38" stroke-width=".55" opacity=".85"')).join('')
+        + P('M86 40 C82 44 84 48 92 48 L100 47 C102 45 100 43 96 43 L90 43Z', '#8a9a52', 'stroke="#33401c" stroke-width=".5"') + P('M116 40 C120 44 118 48 110 48 L102 47 C100 45 102 43 106 43 L112 43Z', '#7a8a4a', 'stroke="#33401c" stroke-width=".5"')
+        + [[98.4, 46], [100.8, 45.6], [103.2, 46]].map(([x, y]) => E(x, y, 1.2, 0.8, '#9aaa5e', 'stroke="#33401c" stroke-width=".3"')).join('') + R(99.4, 44.6, 2.4, 0.8, '#c8a040')
         // his face, as in the raid art
-        + '<g transform="translate(101 26) scale(.36) translate(-50 -47)">'
-          + P('M22 62 C18 34 32 18 50 18 C68 18 82 34 78 62 C74 72 62 76 50 76 C38 76 26 72 22 62Z', '#8a9a52', 'stroke="#3a4420" stroke-width="1.4"') + P('M22 62 C18 34 32 18 50 18 L50 76 C38 76 26 72 22 62Z', '#000', 'opacity=".1"')
-          + E(39, 40, 5.4, 3.6, '#e8b830') + E(61, 40, 5.4, 3.6, '#e8b830') + E(39, 40, 1.4, 3, '#140c06') + E(61, 40, 1.4, 3, '#140c06') + P('M33 36 Q39 33 45 36', 'none', 'stroke="#5e6c38" stroke-width="2.2"') + P('M55 36 Q61 33 67 36', 'none', 'stroke="#5e6c38" stroke-width="2.2"')
-          + P('M32 34 Q39 30 46 34 M54 34 Q61 30 68 34', 'none', 'stroke="#6a7a3e" stroke-width="3" opacity=".7"')
-          + C(46, 48, 1.2, '#3a4420') + C(54, 48, 1.2, '#3a4420') + P('M28 56 Q50 66 72 56 Q50 61 28 56Z', '#4a2a2a') + P('M30 56.5 Q50 64 70 56.5', 'none', 'stroke="#2a1414" stroke-width="1.4"')
-          + P('M26 26 Q50 16 74 26', 'none', 'stroke="#6a7a3e" stroke-width="1.6" opacity=".6"')
+        + '<g transform="translate(100 27) scale(.36) translate(-50 -47)">'
+          + P('M22 62 C18 34 32 18 50 18 C68 18 82 34 78 62 C74 72 62 76 50 76 C38 76 26 72 22 62Z', '#8a9a52', 'stroke="#33401c" stroke-width="1.4"') + P('M22 62 C18 34 32 18 50 18 L50 76 C38 76 26 72 22 62Z', '#000', 'opacity=".1"')
+          + E(39, 40, 5.4, 3.6, '#e8b830') + E(61, 40, 5.4, 3.6, '#e8b830') + E(39, 40, 1.4, 3, '#140c06') + E(61, 40, 1.4, 3, '#140c06') + P('M32 34 Q39 30 46 34 M54 34 Q61 30 68 34', 'none', 'stroke="#6a7a3e" stroke-width="3.4"')
+          + C(46, 48, 1.2, '#33401c') + C(54, 48, 1.2, '#33401c') + P('M28 56 Q50 66 72 56 Q50 61 28 56Z', '#4a2a2a') + P('M30 56.5 Q50 64 70 56.5', 'none', 'stroke="#2a1414" stroke-width="1.4"')
+          + P('M26 26 Q50 16 74 26 M24 30 Q50 22 76 30', 'none', 'stroke="#6a7a3e" stroke-width="1.6" opacity=".6"') + [[30, 46], [70, 46], [34, 64], [66, 64]].map(([x, y]) => E(x, y, 3, 1.4, '#6a7a3e', 'opacity=".5"')).join('')
         + '</g>'
+        // Bib Fortuna at his side: pale, head-tails over his shoulders, dark robe
+        + E(76, 54, 3, 6, '#2a1a2a') + C(76, 46, 2.2, '#d8c8c0') + P('M74.4 45 C72 46 71 50 72 54 M77.6 45 C80 46 80.6 49 80 52', 'none', 'stroke="#d0c0b8" stroke-width="1.4" stroke-linecap="round"') + C(75.2, 45.8, 0.35, '#3a1a1a') + C(76.8, 45.8, 0.35, '#3a1a1a')
         // the hookah beside him, its pipe at his mouth
-        + E(136, 56, 4, 5, '#c8a050', 'opacity=".75" stroke="#8a6a2a" stroke-width=".5"') + E(136, 57, 2.6, 3, '#e8c870', 'opacity=".5"') + R(135.2, 44, 1.6, 8, '#8a6a2a') + C(136, 43, 2, '#a8823a') + P('M136 46 Q124 30 112 31', 'none', 'stroke="#5a4028" stroke-width=".6"')
+        + E(132, 56, 4, 5, '#c8a050', 'opacity=".75" stroke="#8a6a2a" stroke-width=".5"') + E(132, 57, 2.6, 3, '#e8c870', 'opacity=".5"') + R(131.2, 44, 1.6, 8, '#8a6a2a') + C(132, 43, 2, '#a8823a') + P('M132 46 Q122 30 110 32', 'none', 'stroke="#5a4028" stroke-width=".6"')
         // Salacious Crumb cackling on the edge of the dais
-        + `<g transform="translate(112 62) scale(1.2)">${E(0, 0, 2, 1.6, '#c8a07a')}${C(0, -2.4, 1.6, '#d8b08a')}${E(-2.2, -3.2, 1.3, 0.8, '#d8b08a', 'transform="rotate(-20 -2.2 -3.2)"')}${E(2.2, -3.2, 1.3, 0.8, '#d8b08a', 'transform="rotate(20 2.2 -3.2)"')}${P('M-0.8 -1.8 L0.8 -1.8 L0 -0.8Z', '#2a1a0c')}${C(-0.6, -2.8, 0.3, '#1a0f08')}${C(0.6, -2.8, 0.3, '#1a0f08')}${L(-1.4, 1, -2, 3, '#c8a07a', 0.5)}${L(1.4, 1, 2, 3, '#c8a07a', 0.5)}</g>`
-        + R(0, 82, 160, 8, '#1a100a') + [0, 20, 40, 60, 80, 100, 120, 140].map((x) => L(x, 82, x - 4, 90, '#2a1a10', 0.5)).join('');
+        + `<g transform="translate(110 62) scale(1.2)">${E(0, 0, 2, 1.6, '#c8a07a')}${C(0, -2.4, 1.6, '#d8b08a')}${E(-2.2, -3.2, 1.3, 0.8, '#d8b08a', 'transform="rotate(-20 -2.2 -3.2)"')}${E(2.2, -3.2, 1.3, 0.8, '#d8b08a', 'transform="rotate(20 2.2 -3.2)"')}${P('M-0.8 -1.8 L0.8 -1.8 L0 -0.8Z', '#2a1a0c')}${C(-0.6, -2.8, 0.3, '#1a0f08')}${C(0.6, -2.8, 0.3, '#1a0f08')}${L(-1.4, 1, -2, 3, '#c8a07a', 0.5)}${L(1.4, 1, 2, 3, '#c8a07a', 0.5)}</g>`
+        // the floor and the rancor trapdoor grate in front of the dais
+        + R(0, 78, 160, 12, '#2a1a10') + [0, 20, 40, 60, 80, 100, 120, 140].map((x) => L(x, 78, x - 6, 90, '#1e120a', 0.5)).join('')
+        + E(80, 85, 22, 4, '#0e0804', 'stroke="#6a4a30" stroke-width=".9"') + [64, 72, 80, 88, 96].map((x) => L(x, 81.4, x + 0.6, 88.6, '#6a4a30', 0.7)).join('') + L(58, 85, 102, 85, '#6a4a30', 0.7)
+        + R(0, 0, 160, 90, 'none', 'stroke="#000" stroke-width="10" opacity=".35"');
     },
 
   };
