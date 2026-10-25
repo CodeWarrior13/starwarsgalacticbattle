@@ -274,6 +274,7 @@
       + Array.from({ length: 22 }, (_, k) => C((k * 37) % 160, 20 + (k * 23) % 60, 0.35, '#ffb060', 'opacity=".8"')).join('')
       + templeGuard(56, 77, 1.75, 1) + templeGuard(104, 77, 1.75, -1) + secondSis(34, 86, 2.7, 1) + grandInq(80, 88, 3.1, 1) + fifthBro(126, 86, 2.8, -1),
   };
+  Object.assign(SA.kit = SA.kit || {}, { clone, robed, laat, arc170 });
   Object.assign(SA.scenes, CO);
   SA.worlds.coruscant = ['temple_approach', 'skylane_patrol', 'temple_guard', 'the_archives', 'the_inquisitors_arrive', 'gunship_run', 'training_halls', 'the_purge', 'council_chamber', 'order_66'];
 })(typeof window !== 'undefined' ? window : globalThis);
