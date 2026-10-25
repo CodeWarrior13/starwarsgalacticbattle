@@ -471,6 +471,8 @@
       + `<g transform="translate(80 84)">${E(0, 1, 14, 2, '#000', 'opacity=".4"')}${P('M-12 0 C-14 -10 -12 -22 -6 -30 L6 -30 C12 -22 15 -10 13 0Z', '#0a0a0e')}${P('M-6 -30 C-10 -18 -11 -8 -10 0 L-4 0 C-5 -10 -4 -20 -2 -30Z', '#16161c')}${P('M-5 -30 L5 -30 L6 -14 L-6 -14Z', '#1a1a20')}${R(-4, -24, 8, 4, '#2a2a30', 'rx=".6"')}${[-2.4, -0.8, 0.8, 2.4].map((px, k) => R(px - 0.4, -23, 0.8, 1, ['#ff3a2a', '#3aff6a', '#3a8aff', '#ffcf3a'][k])).join('')}${R(-5, -14, 10, 1.6, '#3a3a40')}${C(0, -13.2, 1, '#8a8a90')}${P('M-4 -36 C-4 -42 4 -42 4 -36 L5 -32 L2 -30 L-2 -30 L-5 -32Z', '#0e0e12')}${P('M-4 -36 C-4 -41 4 -41 4 -36Z', '#2a2a32', 'opacity=".6"')}${P('M-3 -35 L-0.6 -35 L-0.8 -33.6 L-3 -34Z M3 -35 L0.6 -35 L0.8 -33.6 L3 -34Z', '#3a3a44')}${P('M-1.2 -32.6 L1.2 -32.6 L0.8 -30.6 L-0.8 -30.6Z', '#5a5a64')}${L(6, -16, 9, -10, '#0a0a0e', 2)}${E(-1, -39.6, 2, 0.8, '#ffffff', 'opacity=".25"')}</g>`
       + flakes(24, 10, '#e8e0e8', 0.5) + R(0, 0, 160, 90, 'none', 'stroke="#000" stroke-width="10" opacity=".35"'),
   };
+  // Shared with the later worlds' scene files.
+  SA.kit = { tie, isd, xwingSide, falcon, threepio };
   Object.assign(SA.scenes, H);
   SA.worlds.hoth = ['echo_perimeter', 'ion_cannon', 'frozen_trenches', 'echo_command', 'asteroid_field', 'wampa_country', 'hangar_breach', 'shield_generator', 'escape_hoth', 'vader_arrives'];
 })(typeof window !== 'undefined' ? window : globalThis);
