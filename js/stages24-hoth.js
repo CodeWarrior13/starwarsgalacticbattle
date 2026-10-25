@@ -472,7 +472,7 @@
       + flakes(24, 10, '#e8e0e8', 0.5) + R(0, 0, 160, 90, 'none', 'stroke="#000" stroke-width="10" opacity=".35"'),
   };
   // Shared with the later worlds' scene files.
-  SA.kit = { tie, isd, xwingSide, falcon, threepio };
+  SA.kit = { tie, isd, xwingSide, falcon, falconSide, threepio };
   Object.assign(SA.scenes, H);
   SA.worlds.hoth = ['echo_perimeter', 'ion_cannon', 'frozen_trenches', 'echo_command', 'asteroid_field', 'wampa_country', 'hangar_breach', 'shield_generator', 'escape_hoth', 'vader_arrives'];
 })(typeof window !== 'undefined' ? window : globalThis);
