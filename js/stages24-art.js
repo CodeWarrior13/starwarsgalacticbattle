@@ -225,13 +225,23 @@
         // deep in the tunnel: the round iron door, studded, with the eye droid on its stalk
         + C(72, 70.6, 4.6, '#3a3028', 'stroke="#6a5a4a" stroke-width=".6"') + [-2.4, 0, 2.4].map((dx) => L(72 + dx, 66.4, 72 + dx, 74.8, '#1e1610', 0.5)).join('') + [[69, 68], [75, 68], [69, 73], [75, 73]].map(([x, y]) => C(x, y, 0.4, '#8a7a6a')).join('')
         + P('M76 66 Q79 65 79 68', 'none', 'stroke="#6a6a70" stroke-width=".5"') + C(79, 68.6, 1, '#7a7a80') + C(79.3, 68.6, 0.4, '#ff3a2a')
-        // Gamorrean guards at the tunnel mouth: pig snouts, horned leather caps, armour, axes
-        + [[58, 78, 1], [86, 78, -1]].map(([x, y, f]) => `<g transform="translate(${x} ${y}) scale(${f * 1.15} 1.15)">${E(0, -5, 4, 5.2, '#5a6a3a', 'stroke="#2a3418" stroke-width=".4"')}${P('M-3.6 -6 L3.6 -6 L3.4 -1.6 L-3.4 -1.6Z', '#5a4030', 'stroke="#2a1a0e" stroke-width=".3"')}${R(-3.8, -2.4, 7.6, 1.4, '#3a2a1a')}${L(-1.6, -0.4, -1.8, 3, '#4a5a2a', 1.6)}${L(1.6, -0.4, 1.8, 3, '#4a5a2a', 1.6)}${C(0, -11.4, 3, '#6a7a44', 'stroke="#2a3418" stroke-width=".4"')}${E(-1.2, -10.6, 1.6, 1.2, '#8a9a5a')}${C(-1.8, -10.8, 0.3, '#1a1008')}${C(-0.6, -10.8, 0.3, '#1a1008')}${C(-2.2, -12.4, 0.45, '#1a1008')}${P('M-1.6 -9.4 L-1.2 -8.4 L-0.8 -9.4Z', '#e8e0c8')}${P('M-3 -12.6 C-3 -15.6 3 -15.6 3 -12.6Z', '#4a3424')}${P('M2.6 -14 L4.6 -16 L3.4 -13Z M-2.6 -14 L-4.4 -15.6 L-3.2 -13Z', '#c8b89a')}${L(4, -14, 4.6, 3, '#5a4030', 0.7)}${P('M4.4 -15 L8 -12.6 L4.6 -10.6Z', '#9a9aa0', 'stroke="#5a5a60" stroke-width=".3"')}</g>`).join('')
         // stone courses and weathering on the palace
         + [25, 31, 37, 43, 49].map((y, k) => Array.from({ length: 4 }, (_, i) => L(58 + 4 * i + (k % 2) * 2, y - 3, 58 + 4 * i + (k % 2) * 2, y, '#9a8666', 0.3)).join('')).join('')
         + [35, 41, 47, 53].map((y, k) => Array.from({ length: 9 }, (_, i) => L(78 + 4.4 * i + (k % 2) * 2.2, y - 3, 78 + 4.4 * i + (k % 2) * 2.2, y, '#9a8666', 0.3)).join('')).join('')
         + [[63, 22, 14], [70, 24, 10], [90, 33, 12], [104, 34, 14]].map(([x, y, h]) => P(`M${x} ${y} L${x + 1} ${y} L${x + 0.6} ${y + h} L${x + 0.2} ${y + h}Z`, '#7a6648', 'opacity=".35"')).join('')
         + [[46, 62, 8], [110, 64, 10], [30, 72, 6], [130, 74, 8]].map(([x, y, w]) => P(`M${x} ${y} l${w * 0.4} ${w * 0.3} l${w * 0.3} -${w * 0.2} l${w * 0.3} ${w * 0.4}`, 'none', 'stroke="#6a5240" stroke-width=".4"')).join('')
+        // the mountainside in detail: wind-grooved rock folds, ledges, crevices and scree
+        + (() => {
+          const fold = (id, d, x0, x1, y0, y1, n, c1, c2) => `<g clip-path="url(#${id})"><clipPath id="${id}"><path d="${d}"/></clipPath>${P(d, c1)}${Array.from({ length: n }, (_, k) => { const y = y0 + ((y1 - y0) * k) / n; const w = (k * 13) % 7; return P(`M${x0} ${y} Q${x0 + (x1 - x0) * 0.25} ${y - 2 - w * 0.3} ${x0 + (x1 - x0) * 0.5} ${y} T${x1} ${y}`, 'none', `stroke="${c2}" stroke-width=".7" opacity=".7"`) + P(`M${x0} ${y + 0.9} Q${x0 + (x1 - x0) * 0.25} ${y - 1.1 - w * 0.3} ${x0 + (x1 - x0) * 0.5} ${y + 0.9} T${x1} ${y + 0.9}`, 'none', 'stroke="#e8d8b8" stroke-width=".4" opacity=".55"'); }).join('')}</g>`;
+          return fold('jg-l', 'M0 62 C8 56 18 54 30 58 C38 60 44 66 46 76 L0 82Z', 0, 46, 56, 80, 12, '#b49c78', '#7a6248')
+            + fold('jg-r', 'M160 60 C150 54 136 54 124 58 C116 62 112 68 112 78 L160 84Z', 112, 160, 54, 82, 12, '#ac9472', '#725a40')
+            + fold('jg-f', 'M0 80 C30 74 50 80 64 84 L64 90 L0 90Z', 0, 64, 76, 90, 6, '#9a8264', '#6a5238')
+            + fold('jg-g', 'M160 82 C134 76 112 80 98 86 L98 90 L160 90Z', 98, 160, 78, 90, 6, '#9a8264', '#6a5238')
+            + P('M18 60 L20 66 L17 72 M34 60 L36 64 M140 58 L137 64 L140 70 M126 62 L128 68', 'none', 'stroke="#4a3626" stroke-width=".7"')
+            + P('M2 58 L14 54 L24 55 L22 57 L4 60Z M136 54 L150 52 L158 54 L148 56Z', '#c8b490', 'opacity=".8"')
+            + [[50, 84, 1.4], [56, 86, 1], [92, 84, 1.2], [104, 86, 1.6], [70, 88, 0.8], [118, 88, 1.2], [30, 86, 1]].map(([x, y, r]) => E(x, y, r * 1.4, r * 0.7, '#7a6248') + E(x - r * 0.3, y - r * 0.2, r * 0.7, r * 0.3, '#c8b490', 'opacity=".7"')).join('')
+            + P('M0 50 L12 46 L20 48 L28 44 L36 47 L44 44 L52 50 L40 52 L20 52Z M110 48 L122 44 L134 46 L146 42 L160 46 L160 52 L120 52Z', '#9a8a74', 'opacity=".55"');
+        })()
         // the path up to the gate, with C-3PO and R2-D2 walking up it
         + P('M64 76 L80 76 L118 90 L74 90Z', '#d8c4a0') + ripples(78, 88, '#a89070', 3, 0.3)
         + `<g transform="translate(98 83) scale(.9)">${L(-0.8, -5, -1, 0, '#d0a038', 0.9)}${L(0.8, -5, 1.2, 0, '#c09030', 0.9)}${P('M-1.6 -9.6 L1.6 -9.6 L1.3 -6 L-1.3 -6Z', '#e8c050')}${C(0, -11, 1.3, '#e8c050')}${C(-0.4, -11.2, 0.3, '#fff2b0')}${C(0.4, -11.2, 0.3, '#fff2b0')}${C(-0.5, -10.6, 0.8, '#fffbe0', 'opacity=".7"')}</g>`
@@ -315,23 +325,34 @@
         // the bay floor with its scorch rings
         + P('M0 62 L160 62 L160 90 L0 90Z', '#d8ae7a') + E(80, 76, 60, 9, '#b88a5a', 'opacity=".45"') + E(80, 76, 36, 5, '#8a6a4a', 'opacity=".3"') + [[20, 82], [140, 84]].map(([x, y]) => L(x - 10, y, x + 10, y, '#b8945e', 0.6)).join('')
         // the ship's shadow, the far engine on its pylon (behind the hull)
-        + P('M24 80 L110 56 L140 64 L46 88Z', '#000', 'opacity=".22"')
-        + P('M82 31 L88 27 L92 27 L88 32Z', '#6e727a', 'stroke="#3e424a" stroke-width=".4"') + engine(70, 26, 98, 18, 9)
+        + P('M22 82 L106 58 L136 66 L44 90Z', '#000', 'opacity=".22"')
+        + P('M84 30 L90 26 L94 27 L89 31Z', '#6e727a', 'stroke="#3e424a" stroke-width=".4"') + engine(74, 25, 100, 17, 9)
         // landing struts
-        + [[40, 72, 82], [66, 62, 75], [96, 52, 68], [112, 48, 63]].map(([x, y0, y1]) => L(x, y0, x, y1, '#3e424a', 1.4) + L(x - 1.6, y1 - 3, x, y1 - 6, '#3e424a', 0.6) + E(x, y1, 2.8, 0.9, '#3e424a')).join('')
-        // the hull: top face, near side face, the raised spine, hatches and panels
-        + P('M25 55.7 L107 21.5 L117 32.5 L31 62.3Z', hull, 'stroke="#4e525a" stroke-width=".6"')
-        + P('M31 62.3 L117 32.5 L117 49.5 L31 73.3Z', side, 'stroke="#3e424a" stroke-width=".6"')
-        + P('M44 50 L96 28.6 L103 32 L51 54Z', '#c8ccd2', 'stroke="#6e727a" stroke-width=".4"') + P('M52 50.6 L92 34 L95 35.6 L55 52.4Z', '#9a9ea6') + R(64, 42, 8, 3, '#7e828a', 'transform="rotate(-22 68 43.5)" stroke="#4e525a" stroke-width=".3"')
-        + [[38, 54.4, 41, 59], [58, 46, 61.6, 51], [78, 37.6, 82, 42.6], [100, 28.6, 104, 33.4]].map(([a, b, c, d]) => L(a, b, c, d, '#6e727a', 0.45)).join('') + L(27, 57.6, 110, 23, '#eef2f6', 0.45, 'opacity=".7"')
-        + [42, 54, 66, 78, 90, 102].map((x) => { const t = 62.3 - (x - 31) * 0.3465; return L(x, t, x, t + 11 - (x - 31) * 0.069, '#4e525a', 0.45); }).join('') + L(31, 67.8, 117, 41, '#4e525a', 0.45)
-        + [[46, 62], [72, 53], [100, 43]].map(([x, y]) => R(x, y, 5, 3, '#7a7e86', `transform="rotate(-19 ${x} ${y})" stroke="#3e424a" stroke-width=".3"`)).join('') + R(56, 63, 9, 6, '#8a8e96', 'transform="rotate(-19 56 63)" stroke="#3e424a" stroke-width=".4"')
-        + P('M62 58 L66 57 L58 71 L54 72Z M71 55 L74 54 L67 67 L64 68Z', '#8a4a2a', 'opacity=".55"') + P('M88 49 L91 48 L86 58 L84 59Z', '#8a4a2a', 'opacity=".4"') + R(84, 46, 10, 3, '#4e525a', 'transform="rotate(-19 89 47)"')
-        // the rounded nose with its cockpit slits and twin cannons
-        + `<g transform="rotate(-20 28 64)">${E(28, 64, 6.4, 10, hull, 'stroke="#4e525a" stroke-width=".7"')}${[59, 62, 65, 68].map((y) => P(`M24.4 ${y} Q28 ${y - 1.2} 31.6 ${y}`, 'none', 'stroke="#1e2a36" stroke-width=".8"')).join('')}${E(26.4, 59, 1.6, 3, '#ffffff', 'opacity=".35"')}${L(22, 64, 34, 64, '#6e727a', 0.4)}</g>`
-        + L(26, 58, 12, 61, '#3e424a', 1.1) + L(30, 70, 15, 74, '#3e424a', 1.1) + C(12, 61, 0.7, '#5e626a') + C(15, 74, 0.7, '#5e626a') + R(24, 57, 4, 2, '#5e626a', 'transform="rotate(-12 26 58)"') + R(28, 69, 4, 2, '#5e626a', 'transform="rotate(-12 30 70)"')
+        + [[44, 72, 82], [70, 64, 76], [98, 54, 69], [110, 50, 64]].map(([x, y0, y1]) => L(x, y0, x, y1, '#3e424a', 1.5) + L(x - 1.8, y1 - 3, x, y1 - 6.4, '#3e424a', 0.6) + E(x, y1, 3, 1, '#3e424a')).join('')
+        // the hull, shorter and taller: top face and near side
+        + P('M35.5 50 L102.5 22 L113.5 34 L44.5 58Z', hull, 'stroke="#4e525a" stroke-width=".6"')
+        + P('M44.5 58 L113.5 34 L113.5 52 L44.5 72Z', side, 'stroke="#3e424a" stroke-width=".6"')
+        // panel grid on top and side, hatches, vents
+        + [[48, 44.6, 54, 51.6], [60, 39.6, 66, 46.6], [72, 34.6, 78, 41.6], [84, 29.6, 90, 36.6], [96, 24.6, 102, 31.4]].map(([a1, b1, c1, d1]) => L(a1, b1, c1, d1, '#7e828a', 0.45)).join('') + L(40, 53.8, 108, 28, '#7e828a', 0.45)
+        + [54, 64, 74, 84, 94, 104].map((x) => { const t = 58 - (x - 44.5) * 0.3478; return L(x, t, x, t + 14 - (x - 44.5) * 0.058, '#4e525a', 0.45); }).join('') + L(44.5, 65, 113.5, 43, '#4e525a', 0.45) + L(44.5, 68.4, 113.5, 47.6, '#4e525a', 0.3)
+        + [[52, 64.4], [80, 55], [104, 46.6]].map(([x, y]) => R(x, y, 5, 3, '#7a7e86', `transform="rotate(-19 ${x} ${y})" stroke="#3e424a" stroke-width=".3"`) + [1, 2, 3, 4].map((k) => L(x + k, y + 0.4, x + k - 0.3, y + 2.6, '#4e525a', 0.25)).join('')).join('')
+        + R(60, 63, 10, 7, '#8a8e96', 'transform="rotate(-19 60 63)" stroke="#3e424a" stroke-width=".4"') + L(61.6, 64.6, 69, 62, '#4e525a', 0.3)
+        // the rust markings streaked down the silver hull
+        + P('M66 58 L70.4 56.6 L62 72.4 L57.6 73.6Z M75 55 L78.6 53.8 L71 68.6 L67.6 69.6Z M83 52.4 L85.8 51.4 L79.6 63.8 L77 64.6Z', '#8a3e22', 'opacity=".6"')
+        + P('M92 48 L95 47 L91 55 L88.6 55.8Z M50 62 L53 61 L49 69 L46.6 69.8Z', '#7a4a2a', 'opacity=".45"') + P('M60 46 L72 41 L74 43 L62 48Z', '#7a4a2a', 'opacity=".35"')
+        // the crest: the raised dorsal ridge running back along the top
+        + P('M46 47.4 L98 25.6 L104 28.6 L52 50.6Z', '#c8ccd2', 'stroke="#5e626a" stroke-width=".5"') + P('M46 47.4 L98 25.6 L98 22.6 L46 44.4Z', '#e2e6ea', 'stroke="#5e626a" stroke-width=".5"') + P('M98 25.6 L104 28.6 L104 25.6 L98 22.6Z', '#8a8e96')
+        + [56, 66, 76, 86].map((x) => { const t = 44.4 - (x - 46) * 0.419; return L(x, t, x, t + 3, '#6e727a', 0.4); }).join('') + L(48, 44.6, 97, 24, '#ffffff', 0.4, 'opacity=".7"')
+        // the front: the rounded cockpit nose with its window band and the slatted front frame
+        + P('M35.5 50 L44.5 58 L44.5 72 L35.5 64Z', '#8a8e96', 'stroke="#3e424a" stroke-width=".5"')
+        + P('M36 50 C26 50 19 56 19 63.4 C19 70.4 25.6 74.6 34 74.4 L44.5 72 L44.5 58Z', hull, 'stroke="#3e424a" stroke-width=".7"') + P('M36 50 C26 50 19 56 19 63.4 L30 62Z', '#ffffff', 'opacity=".18"')
+        + P('M22 58.4 C26 53.4 32 52 37.6 52.6 L38 55.4 C32.6 55 27.2 56.4 23.6 60.4Z', '#1e2a36', 'stroke="#0e141a" stroke-width=".3"') + [27, 31, 35].map((x) => L(x, 53, x + 0.6, 56, '#5e626a', 0.5)).join('')
+        + [22, 25, 28, 31].map((x) => L(x, 62 + (x - 22) * 0.1, x + 0.4, 72 - (x - 22) * 0.2, '#4e525a', 0.6)).join('') + P('M21 66 Q30 64 40 66', 'none', 'stroke="#4e525a" stroke-width=".5"') + C(26.6, 67.6, 1.4, '#5e626a', 'stroke="#3e424a" stroke-width=".3"')
+        // twin nose cannons
+        + L(30, 56, 12, 59, '#3e424a', 1.2) + L(34, 71, 16, 75, '#3e424a', 1.2) + C(12, 59, 0.8, '#5e626a') + C(16, 75, 0.8, '#5e626a') + R(28, 55, 4, 2.2, '#5e626a', 'transform="rotate(-10 30 56)"') + R(32, 70, 4, 2.2, '#5e626a', 'transform="rotate(-12 34 71)"')
         // the near engine on its pylon
-        + P('M96 48 L104 51 L106 57 L98 55Z', '#6e727a', 'stroke="#3e424a" stroke-width=".4"') + engine(100, 60, 130, 51, 10)
+        + P('M94 50 L102 53 L104 59 L96 57Z', '#6e727a', 'stroke="#3e424a" stroke-width=".4"') + engine(98, 61, 128, 52, 11)
+        + P('M112 49 L118 47 L117 53 L111 55Z', '#8a3e22', 'opacity=".45"')
         // pit droids at work: hose, crate, workbench
         + [[30, 84], [138, 82], [126, 86]].map(([x, y]) => `<g transform="translate(${x} ${y}) scale(1.1)">${E(0, -6, 2.4, 1.6, '#c86a2a')}${C(0, -6, 0.8, '#1a1a1a')}${L(-1, -4.6, -1.6, 0, '#5a5a5a', 0.6)}${L(1, -4.6, 1.6, 0, '#5a5a5a', 0.6)}${L(0, -5, 2.6, -3, '#5a5a5a', 0.5)}</g>`).join('')
         + R(144, 74, 12, 2, '#7a5a3a') + L(146, 76, 146, 82, '#5a4028', 0.6) + L(154, 76, 154, 82, '#5a4028', 0.6) + R(147, 71, 3, 3, '#5a5e66')
@@ -415,26 +436,35 @@
         // the dais: stone top, cushions, the front with its iron rings
         + P('M22 60 L138 60 L142 64 L18 64Z', '#6a4a30') + R(18, 64, 124, 14, '#4e3420', 'stroke="#2a1a0e" stroke-width=".6"') + [18, 49, 80, 111].map((x) => L(x, 64, x, 78, '#2a1a0e', 0.7)).join('') + [33.5, 64.5, 95.5, 126.5].map((x) => C(x, 71, 2.8, 'none', 'stroke="#2a2a2e" stroke-width="1.3"') + C(x, 71, 1.2, '#3a3a40') + C(x - 0.6, 70.4, 0.5, '#8a8a90', 'opacity=".6"')).join('')
         + [[36, 59, 7], [52, 58.6, 6], [118, 58.6, 6]].map(([x, y, w]) => E(x, y, w, 2.2, '#7a3424', 'stroke="#4a1a10" stroke-width=".4"')).join('')
-        // Jabba: tail curling away to the left, the great mottled body, the folded arms
-        + P('M50 60 C42 58 34 60 26 61 C22 61 21 59 24 58 C32 55 42 52 52 52 C56 40 66 33 82 33 L102 33 C116 35 124 46 124 56 L124 60Z', skin, 'stroke="#33401c" stroke-width=".7"')
-        + P('M52 52 C56 40 66 33 82 33 L88 33 C76 37 68 45 64 58 L50 60Z', '#000', 'opacity=".18"')
-        + [[30, 58.6], [37, 57], [44, 55.6], [58, 46], [70, 38], [114, 40], [120, 50]].map(([x, y], k) => E(x, y, 1.6 + (k % 2), 0.9, '#5e6c38', 'opacity=".6"')).join('')
-        + E(100, 50, 18, 8.4, '#b0bc72', 'opacity=".5"') + [44, 47.6, 51.2, 54.8].map((y) => P(`M86 ${y} Q100 ${y + 2.4} 116 ${y}`, 'none', 'stroke="#5e6c38" stroke-width=".55" opacity=".85"')).join('')
-        + P('M86 40 C82 44 84 48 92 48 L100 47 C102 45 100 43 96 43 L90 43Z', '#8a9a52', 'stroke="#33401c" stroke-width=".5"') + P('M116 40 C120 44 118 48 110 48 L102 47 C100 45 102 43 106 43 L112 43Z', '#7a8a4a', 'stroke="#33401c" stroke-width=".5"')
-        + [[98.4, 46], [100.8, 45.6], [103.2, 46]].map(([x, y]) => E(x, y, 1.2, 0.8, '#9aaa5e', 'stroke="#33401c" stroke-width=".3"')).join('') + R(99.4, 44.6, 2.4, 0.8, '#c8a040')
-        // his face, as in the raid art
-        + '<g transform="translate(100 27) scale(.36) translate(-50 -47)">'
-          + P('M22 62 C18 34 32 18 50 18 C68 18 82 34 78 62 C74 72 62 76 50 76 C38 76 26 72 22 62Z', '#8a9a52', 'stroke="#33401c" stroke-width="1.4"') + P('M22 62 C18 34 32 18 50 18 L50 76 C38 76 26 72 22 62Z', '#000', 'opacity=".1"')
-          + E(39, 40, 5.4, 3.6, '#e8b830') + E(61, 40, 5.4, 3.6, '#e8b830') + E(39, 40, 1.4, 3, '#140c06') + E(61, 40, 1.4, 3, '#140c06') + P('M32 34 Q39 30 46 34 M54 34 Q61 30 68 34', 'none', 'stroke="#6a7a3e" stroke-width="3.4"')
-          + C(46, 48, 1.2, '#33401c') + C(54, 48, 1.2, '#33401c') + P('M28 56 Q50 66 72 56 Q50 61 28 56Z', '#4a2a2a') + P('M30 56.5 Q50 64 70 56.5', 'none', 'stroke="#2a1414" stroke-width="1.4"')
-          + P('M26 26 Q50 16 74 26 M24 30 Q50 22 76 30', 'none', 'stroke="#6a7a3e" stroke-width="1.6" opacity=".6"') + [[30, 46], [70, 46], [34, 64], [66, 64]].map(([x, y]) => E(x, y, 3, 1.4, '#6a7a3e', 'opacity=".5"')).join('')
-        + '</g>'
-        // Bib Fortuna at his side: pale, head-tails over his shoulders, dark robe
-        + E(76, 54, 3, 6, '#2a1a2a') + C(76, 46, 2.2, '#d8c8c0') + P('M74.4 45 C72 46 71 50 72 54 M77.6 45 C80 46 80.6 49 80 52', 'none', 'stroke="#d0c0b8" stroke-width="1.4" stroke-linecap="round"') + C(75.2, 45.8, 0.35, '#3a1a1a') + C(76.8, 45.8, 0.35, '#3a1a1a')
+        // Jabba: the long ringed tail curling away left, the great mottled body
+        + P('M66 60 C56 57 44 58 32 60 C26 61 22 60 23 57.6 C26 55 34 53 44 52 C54 51 60 48 64 44 C70 36 80 31 92 30 L110 30 C122 32 128 42 128 54 L128 60Z', skin, 'stroke="#33401c" stroke-width=".7"')
+        + P('M64 44 C70 36 80 31 92 30 L96 30 C84 34 76 42 72 56 L66 60 C60 58 56 56 52 55 C58 52 62 48 64 44Z', '#000', 'opacity=".18"')
+        + [28, 34, 40, 46, 52, 58].map((x, k) => { const y = 59.6 - k * 0.9; return P(`M${x} ${y - 2.6 + k * 0.1} Q${x + 1.4} ${y} ${x} ${y + 2.4}`, 'none', 'stroke="#4e5a2a" stroke-width=".6"'); }).join('')
+        + [[34, 58], [44, 55.4], [56, 52], [68, 44], [78, 38], [120, 40], [124, 50], [116, 56], [72, 52]].map(([x, y], k) => E(x, y, 1.4 + (k % 3) * 0.5, 0.8 + (k % 2) * 0.3, '#5a6632', 'opacity=".55"')).join('')
+        // the belly with its folds, the short thick arms folded across it, fat fingers
+        + P('M86 46 C86 40 114 40 114 46 L116 58 L84 58Z', '#b2b874', 'opacity=".6"') + [47.6, 50.6, 53.6, 56.6].map((y) => P(`M85 ${y} Q100 ${y + 2.2} 115 ${y}`, 'none', 'stroke="#5e6c38" stroke-width=".55" opacity=".85"')).join('')
+        + P('M84 38 C79 42 80 48 88 49 L99 48.4 C101 46.6 99.6 44.4 96 44.4 L89 44.6 C88 42 86 40 84 38Z', '#8e9c56', 'stroke="#33401c" stroke-width=".5"') + P('M116 38 C121 42 120 48 112 49 L101 48.4 C99 46.6 100.4 44.4 104 44.4 L111 44.6 C112 42 114 40 116 38Z', '#7e8c4a', 'stroke="#33401c" stroke-width=".5"')
+        + [[97.6, 46.4], [99.6, 45.8], [101.6, 46], [103.4, 46.6]].map(([x, y]) => E(x, y, 1.1, 1.4, '#a0ae64', 'stroke="#33401c" stroke-width=".3"')).join('') + R(98.6, 44.8, 2.6, 0.9, '#d0a840', 'rx=".3"')
+        // the head: wide and heavy, sunk straight into the body
+        + P('M86 34 C84 23 91 17 100 17 C109 17 116 23 114 34 C113.6 40 108.6 44 100 44.6 C91.4 44 86.4 40 86 34Z', skin, 'stroke="#33401c" stroke-width=".7"')
+        + P('M86 34 C84 23 91 17 100 17 L100 44.6 C91.4 44 86.4 40 86 34Z', '#ffffff', 'opacity=".06"') + P('M100 17 C109 17 116 23 114 34 C113.6 40 108.6 44 100 44.6Z', '#000', 'opacity=".12"')
+        + [[91, 22], [107, 21], [96, 19.6], [110, 27], [89, 28]].map(([x, y], k) => E(x, y, 1.2 + (k % 2) * 0.6, 0.7, '#5a6632', 'opacity=".55"')).join('')
+        + P('M92 20.6 Q100 18.6 108 20.6 M90.6 23.4 Q100 21.4 109.4 23.4', 'none', 'stroke="#4e5a2a" stroke-width=".45" opacity=".8"')
+        // heavy brow ridges and half-lidded gold eyes with slit pupils
+        + P('M89.6 27.6 Q94.6 24.6 98.6 27.4 M101.4 27.4 Q105.4 24.6 110.4 27.6', 'none', 'stroke="#6e7a40" stroke-width="2.2" stroke-linecap="round"')
+        + [94.4, 105.6].map((x) => E(x, 29.4, 2.6, 1.7, '#e8a830', 'stroke="#33401c" stroke-width=".4"') + E(x, 29.6, 1.7, 0.45, '#140c06') + P(`M${x - 2.7} 29.2 Q${x} 26.6 ${x + 2.7} 29.2 L${x + 2.6} 28.4 Q${x} 26.2 ${x - 2.6} 28.4Z`, '#7e8c4a') + C(x - 0.8, 29, 0.3, '#fff6d0', 'opacity=".8"')).join('')
+        // nostril slits, the wide mouth, jowls and chins
+        + P('M98.4 33.4 l-.8 1.2 M101.6 33.4 l.8 1.2', 'none', 'stroke="#33401c" stroke-width=".6"')
+        + P('M89 37.4 Q100 41.6 111 37.4 Q100 40.2 89 37.4Z', '#4a2a2a') + P('M89 37.4 Q100 41.6 111 37.4', 'none', 'stroke="#2a1414" stroke-width=".7"') + P('M91 39 Q100 42.6 109 39', 'none', 'stroke="#a0ae64" stroke-width=".4" opacity=".7"')
+        + P('M90 40.6 Q100 45 110 40.6 M92 42.4 Q100 45.8 108 42.4', 'none', 'stroke="#4e5a2a" stroke-width=".45" opacity=".8"')
+        // Bib Fortuna at his side: pale Twi'lek, head-tails draped forward, dark robe, sharp teeth
+        + P('M73 62 L74 50 C74.6 47.6 77.4 47.6 78 50 L79 62Z', '#2a1a2a', 'stroke="#140a14" stroke-width=".4"') + P('M74 50 L72.6 56 M78 50 L79.6 56', 'none', 'stroke="#4a3a4a" stroke-width=".6"')
+        + C(76, 44.6, 2.4, '#e2d4cc', 'stroke="#8a7a72" stroke-width=".3"') + P('M74.2 43.6 C71.4 45 70.4 50 71.4 56 C72 54 72.6 50 74.4 46Z M77.8 43.6 C80.6 45 81.4 49 80.6 53 C80 51 79.4 48 77.6 46Z', '#d8c8c0', 'stroke="#8a7a72" stroke-width=".3"')
+        + C(75.2, 44.2, 0.35, '#3a1a1a') + C(76.8, 44.2, 0.35, '#3a1a1a') + P('M75.2 46 L76.8 46 L76.4 46.8 L75.6 46.8Z', '#f0e8e0') + P('M74 42.6 Q76 41.4 78 42.6', 'none', 'stroke="#8a7a72" stroke-width=".4"')
         // the hookah beside him, its pipe at his mouth
-        + E(132, 56, 4, 5, '#c8a050', 'opacity=".75" stroke="#8a6a2a" stroke-width=".5"') + E(132, 57, 2.6, 3, '#e8c870', 'opacity=".5"') + R(131.2, 44, 1.6, 8, '#8a6a2a') + C(132, 43, 2, '#a8823a') + P('M132 46 Q122 30 110 32', 'none', 'stroke="#5a4028" stroke-width=".6"')
-        // Salacious Crumb cackling on the edge of the dais
-        + `<g transform="translate(110 62) scale(1.2)">${E(0, 0, 2, 1.6, '#c8a07a')}${C(0, -2.4, 1.6, '#d8b08a')}${E(-2.2, -3.2, 1.3, 0.8, '#d8b08a', 'transform="rotate(-20 -2.2 -3.2)"')}${E(2.2, -3.2, 1.3, 0.8, '#d8b08a', 'transform="rotate(20 2.2 -3.2)"')}${P('M-0.8 -1.8 L0.8 -1.8 L0 -0.8Z', '#2a1a0c')}${C(-0.6, -2.8, 0.3, '#1a0f08')}${C(0.6, -2.8, 0.3, '#1a0f08')}${L(-1.4, 1, -2, 3, '#c8a07a', 0.5)}${L(1.4, 1, 2, 3, '#c8a07a', 0.5)}</g>`
+        + E(134, 56, 4, 5, '#c8a050', 'opacity=".75" stroke="#8a6a2a" stroke-width=".5"') + E(134, 57, 2.6, 3, '#e8c870', 'opacity=".5"') + R(133.2, 44, 1.6, 8, '#8a6a2a') + C(134, 43, 2, '#a8823a') + P('M134 46 Q124 32 110 38', 'none', 'stroke="#5a4028" stroke-width=".6"')
+        // Salacious Crumb cackling on the edge of the dais: big pointed ears, hooked beak, hair tuft, skinny limbs
+        + `<g transform="translate(112 62) scale(1.4)">${E(0, 0.4, 1.6, 1.8, '#b89070', 'stroke="#6a4a30" stroke-width=".25"')}${L(-1, 2, -1.8, 3.6, '#b89070', 0.5)}${L(1, 2, 1.8, 3.6, '#b89070', 0.5)}${L(-1.4, -0.2, -2.8, 1.4, '#b89070', 0.45)}${L(1.4, -0.2, 2.8, 1.2, '#b89070', 0.45)}${C(0, -2.6, 1.7, '#c8a07c', 'stroke="#6a4a30" stroke-width=".25"')}${P('M-1.4 -3 L-4.6 -4.6 L-1.6 -2.2Z M1.4 -3 L4.6 -4.6 L1.6 -2.2Z', '#c8a07c', 'stroke="#6a4a30" stroke-width=".25"')}${P('M-0.6 -2.2 L0.6 -2.2 L1.4 -0.8 L0.4 -1.2Z', '#e8c070', 'stroke="#6a4a30" stroke-width=".2"')}${C(-0.7, -3, 0.42, '#fff4d0')}${C(0.7, -3, 0.42, '#fff4d0')}${C(-0.7, -3, 0.2, '#1a0f08')}${C(0.7, -3, 0.2, '#1a0f08')}${P('M-0.6 -4.2 L-0.2 -5.6 L0.2 -4.4 L0.6 -5.4 L0.6 -4.2Z', '#8a6a4a')}</g>`
         // the floor and the rancor trapdoor grate in front of the dais
         + R(0, 78, 160, 12, '#2a1a10') + [0, 20, 40, 60, 80, 100, 120, 140].map((x) => L(x, 78, x - 6, 90, '#1e120a', 0.5)).join('')
         + E(80, 85, 22, 4, '#0e0804', 'stroke="#6a4a30" stroke-width=".9"') + [64, 72, 80, 88, 96].map((x) => L(x, 81.4, x + 0.6, 88.6, '#6a4a30', 0.7)).join('') + L(58, 85, 102, 85, '#6a4a30', 0.7)

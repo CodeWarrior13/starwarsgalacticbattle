@@ -568,48 +568,39 @@
       + L(66, 62, 62, 55, '#1a1612', 1.3) + L(66, 62, 70, 55.6, '#1a1612', 1.3) + L(60, 55, 72, 55.6, '#1a1612', 1.2)
       + R(88, 64, 12, 12, '#2a2420', 'rx="1.4"') + [67, 70, 73].map((y) => L(89, y, 99, y, '#4a3e36', 0.5)).join('') + glow('#ff8a3a', C(99.4, 70, 1.4, '#ffb04a'), 2)
       + '<path d="M64 72 L90 69 M66 75 L88 72.6" stroke="#3a1e0e" stroke-width=".5"/>'
-      // Head to boots, as in the photos: the helmet, black undersuit, the white
-      // chest plate over the boxy belly plate, shoulder bells, bicep plates and
-      // forearm guards, black gloves, the belt with its box, the white hip
-      // plate, white knee plates and tall white boots, the hold-out blaster
-      // tucked in his right boot
-      + E(50, 97.6, 16, 1.6, '#000', 'opacity=".35"')
-      // legs
-      + mirror(P('M42.4 52 L49.4 52 L49.2 70 L43 70Z', '#141518') + P('M43 75 L49 75 L48.8 80 L43.2 80Z', '#141518')
-        + P('M42.6 69.4 C42.6 66.6 49.4 66.6 49.4 69.4 L49.2 75.4 C47.2 76.8 44.8 76.8 42.8 75.4Z', helm, 'stroke="#2a2c30" stroke-width=".5"') + P('M44 71 L48 71', 'none', 'stroke="#9aa3ad" stroke-width=".4"')
-        + P('M42.4 79 L49.6 79 L50 95.2 L41.8 95.2Z', helm, 'stroke="#2a2c30" stroke-width=".5"') + L(43, 82.4, 49.2, 82.4, '#c8ccd2', 0.4) + L(45.8, 80, 45.6, 94.6, '#e8ecef', 0.5) + R(41.4, 95, 9, 2.8, '#1a1c20', 'rx=".7"')
-        + P('M48 52 L49.4 52 L49.2 70 L48 70Z', '#000', 'opacity=".25"'))
-      + R(39.4, 82, 2.8, 7, '#1a1c20', 'rx=".5"') + R(39.8, 79.6, 2, 3, '#2a2c30') + L(42.2, 84, 42.2, 87, '#4a4e56', 0.5)
-      // torso: black undersuit, hip plate, belt, belly box, chest plate
-      + P('M38.4 24 L61.6 24 L60.4 47 L39.6 47Z', '#141518')
-      + P('M45 47 L55 47 L54.2 55 L50 57.4 L45.8 55Z', helm, 'stroke="#2a2c30" stroke-width=".5"') + L(50, 47.6, 50, 56.6, '#c8ccd2', 0.4)
-      + R(39.6, 44.6, 20.8, 3, '#eceef1', 'stroke="#2a2c30" stroke-width=".4"') + R(46.6, 44.1, 6.8, 3.9, '#d8dce0', 'rx=".5" stroke="#2a2c30" stroke-width=".4"') + R(47.8, 45, 4.4, 1.9, '#3a3e44', 'rx=".3"') + mirror(R(40.6, 45.2, 3, 1.8, '#c8ccd2', 'rx=".3"'))
-      + R(40.6, 35, 18.8, 8, helm, 'rx="1.2" stroke="#2a2c30" stroke-width=".5"') + L(41.2, 37.8, 58.8, 37.8, '#9aa3ad', 0.4) + L(41.2, 40.6, 58.8, 40.6, '#9aa3ad', 0.4) + R(47.4, 35.6, 5.2, 1.6, '#c8ccd2', 'rx=".3"') + shade('M50 35 L59.4 35 L59.4 43 L50 43Z', 0.1)
-      + P('M41.2 25 C45 23.6 55 23.6 58.8 25 L58.4 34.4 L41.6 34.4Z', helm, 'stroke="#2a2c30" stroke-width=".5"') + L(50, 24, 50, 34.4, '#9aa3ad', 0.4) + mirror(P('M42.6 26 L48.6 25.2 L48.8 32.8 L43 33.2Z', 'none', 'stroke="#c8ccd2" stroke-width=".4"')) + shade('M50 24 C55 24 57 24.3 58.8 25 L58.4 34.4 L50 34.4Z', 0.1)
-      // arms: shoulder bells, black sleeves, bicep plates, forearm guards, gloves
-      + mirror(L(37.4, 29, 36.2, 40, '#141518', 4.6) + L(36.2, 40, 37.2, 51, '#141518', 4)
-        + P('M34.2 31.6 L39.2 31 L38.8 37.4 L34.4 37.8Z', helm, 'stroke="#2a2c30" stroke-width=".4"') + P('M34.4 42 L38.8 41.6 L38.8 47.4 L35 47.8Z', helm, 'stroke="#2a2c30" stroke-width=".4"')
-        + E(37.4, 52.6, 2.4, 2.8, '#0c0d10') + L(36, 54, 36.4, 55.6, '#0c0d10', 0.9) + L(37.4, 54.6, 37.6, 56, '#0c0d10', 0.9)
-        + P('M33.6 30.6 C33.6 26 37 23.6 42 23.4 L42.6 30.6 C40 30 36.6 30.4 33.6 31.6Z', helm, 'stroke="#2a2c30" stroke-width=".6"') + P('M35 28 C36.6 25.6 38.6 24.6 41 24.4', 'none', 'stroke="#ffffff" stroke-width=".5"'))
-      + R(46.8, 20, 6.4, 5, '#141518')
-      // the helmet
-      + '<g transform="translate(50 2.6) scale(.44) translate(-50 -15.4)">'
-      // the helmet: domed top flaring down behind the cheeks
-      + P('M35.4 37 L34.4 52 C34.4 58.6 38.4 62.6 43 63.4 L57 63.4 C61.6 62.6 65.6 58.6 65.6 52 L64.6 37Z', helm, 'stroke="#2a2c30" stroke-width=".9"')
-      + P('M36 38 L36 25 C36 18.6 42.4 15.4 50 15.4 C57.6 15.4 64 18.6 64 25 L64 38Z', helm, 'stroke="#2a2c30" stroke-width="1"') + E(43.6, 21.4, 4.4, 1.6, '#fff', 'transform="rotate(-18 43.6 21.4)"') + L(50, 16, 50, 34, '#d0d4da', 1.2)
-      + shade('M50 15.4 C57.6 15.4 64 18.6 64 25 L64 38 L65.6 52 C65.6 58.6 61.6 62.6 57 63.4 L50 63.4Z', 0.1)
-      // the brim: a squared peak jutting out over the visor, with its top, front edge and shadow
-      + P('M34.4 35.4 L65.6 35.4 L63.8 39.6 L36.2 39.6Z', '#f4f6f8', 'stroke="#2a2c30" stroke-width=".8"') + P('M36.2 39.6 L63.8 39.6 L63.4 41.2 L36.6 41.2Z', '#aab0b8', 'stroke="#2a2c30" stroke-width=".5"')
-      + L(36, 36.4, 64, 36.4, '#ffffff', 0.5) + shade('M50 35.4 L65.6 35.4 L63.8 39.6 L50 39.6Z', 0.08)
-      // the black visor like a pair of sunglasses, glossy, in the brim's shadow
-      + (() => { const [gl, gd] = LG([[0, '#000000'], [0.45, '#141a26'], [0.55, '#2a3a52'], [1, '#05070a']], 0, 0, 1, 0.4); return gd + P('M37 41.2 L63 41.2 L62.2 47 L56.4 48.2 L54.6 58 L45.4 58 L43.6 48.2 L37.8 47Z', gl, 'stroke="#000" stroke-width=".5"'); })()
-      + P('M37.2 41.2 L62.8 41.2 L62.6 42.8 L37.4 42.8Z', '#000', 'opacity=".55"')
-      + mirror(P('M39.4 44.6 L44.6 43.6 L45 44.6 L39.8 45.8Z', '#8ab0d8', 'opacity=".55"') + P('M40.4 46.6 L42.8 46.2', 'none', 'stroke="#c8e0ff" stroke-width=".4" opacity=".5"'))
-      + P('M48.2 41.2 L51.8 41.2 L52.8 54.6 L47.2 54.6Z', helm, 'stroke="#2a2c30" stroke-width=".5"') + L(50, 38.8, 50, 53, '#b8bec6', 0.5)
-      // the long snout ending in the breather
-      + P('M45.6 53.6 L54.4 53.6 L55.6 60.6 C55 64.4 45 64.4 44.4 60.6Z', helm, 'stroke="#2a2c30" stroke-width=".7"') + E(50, 60.4, 3.4, 2.2, '#1e2024') + [48.4, 50, 51.6].map((x) => L(x, 58.8, x, 62, '#8a929c', 0.4)).join('')
-      + mirror(R(36.6, 49.6, 3.4, 6, '#2a2c30', 'rx=".6"') + [51.4, 53.2].map((y) => L(37, y, 39.6, y, '#6a727c', 0.35)).join(''))
-      + '</g>';
+      // From the photos: black undersuit, the white chest plate over the boxy
+      // belly plate, rounded shoulder bells, white bicep plates on black
+      // sleeves, the belt with its box, and a hold-out blaster in his glove
+      + P('M8 100 C10 84 22 74 38 70 L62 70 C78 74 90 84 92 100Z', '#141518', 'stroke="#000" stroke-width=".5"')
+      + mirror(P('M18 84 C19 77 25 72.6 33 72 L37 79 C31 80 27 83 25 88 C22 88 19 87 18 84Z', helm, 'stroke="#2a2c30" stroke-width=".7"') + P('M20 81 C22 77 26 75 31 74.4', 'none', 'stroke="#ffffff" stroke-width=".6"')
+        + P('M16 92 C16 89 18 88 22 88 L26 89 L25 97 L17 97Z', helm, 'stroke="#2a2c30" stroke-width=".6"') + L(17.6, 92, 25, 92.4, '#9aa3ad', 0.4))
+      + P('M36 70.4 C42 68.6 58 68.6 64 70.4 L63 80.6 L37 80.6Z', helm, 'stroke="#2a2c30" stroke-width=".7"') + L(50, 70, 50, 80.6, '#9aa3ad', 0.6) + mirror(P('M38.6 72 L46 71.2 L46.4 78.6 L39 79Z', 'none', 'stroke="#c8ccd2" stroke-width=".5"'))
+      + R(35, 81.4, 30, 12.4, helm, 'rx="1.6" stroke="#2a2c30" stroke-width=".7"') + L(36, 85.6, 64, 85.6, '#9aa3ad', 0.5) + L(36, 89.6, 64, 89.6, '#9aa3ad', 0.5) + R(46, 82.6, 8, 2.2, '#c8ccd2', 'rx=".4"') + shade('M50 81.4 L65 81.4 L65 93.8 L50 93.8Z', 0.1)
+      + R(30, 94.4, 40, 3.6, '#eceef1', 'stroke="#2a2c30" stroke-width=".5"') + R(45, 94, 10, 4.6, '#d8dce0', 'rx=".6" stroke="#2a2c30" stroke-width=".5"') + R(47, 95.2, 6, 2.2, '#3a3e44', 'rx=".4"')
+      + P('M44 54 L56 54 L58 70 L42 70Z', '#141518')
+      // the helmet, matched to your picture and shaded for depth: the rounded
+      // dome with its ridge, grey ear pieces, the wide brim with its three
+      // slits, the two angled black lenses split by the long white snout, the
+      // cheek plates curving down, and the dark vent at the bottom of the snout
+      + '<g transform="translate(50 0) scale(1.12 1) translate(-50 0)">'
+      + (() => { const [h3, hd3] = LG([[0, '#ffffff'], [0.45, '#eef1f4'], [1, '#a8b0ba']], 0, 0, 1, 0.3); return hd3
+        + mirror(R(31.4, 37.4, 4.4, 10, '#7e848c', 'rx="1.8" stroke="#2a2c30" stroke-width=".5"') + R(32.2, 39, 1.4, 6.8, '#a8aeb6', 'rx=".7"'))
+        + P('M34.6 40 C34.6 22 41.6 14.6 50 14.6 C58.4 14.6 65.4 22 65.4 40 L66.4 54 C66.4 59.4 62.6 62.8 57.6 63.2 L42.4 63.2 C37.4 62.8 33.6 59.4 33.6 54Z', h3, 'stroke="#2a2c30" stroke-width="1"')
+        + E(43, 21.6, 4.6, 2.2, '#ffffff', 'transform="rotate(-24 43 21.6)"') + P('M50 15 L50 32', 'none', 'stroke="#c8ced6" stroke-width="1.4"') + P('M50.6 15.4 L50.6 32', 'none', 'stroke="#ffffff" stroke-width=".5"')
+        + P('M58.4 18 C63 22 65.4 30 65.4 40 L66.4 54 C66.4 59.4 62.6 62.8 57.6 63.2 L56 63.2 C60 60 61.6 54 61 46 Z', '#000', 'opacity=".1"')
+        // the wide brim and its three slits
+        + P('M33.8 33.4 C42 31.2 58 31.2 66.2 33.4 L65.8 38.2 C58 36.2 42 36.2 34.2 38.2Z', '#f4f6f8', 'stroke="#2a2c30" stroke-width=".7"') + P('M34.2 38.2 C42 36.2 58 36.2 65.8 38.2', 'none', 'stroke="#8a929c" stroke-width=".6"')
+        + [47.6, 50, 52.4].map((x) => R(x - 0.5, 33.1, 1, 3.4, '#2a2c30', 'rx=".3"')).join('')
+        // the angled black lenses, in the brim's shadow
+        + mirror(P('M35.6 38.6 L47.2 38.4 L46.8 45.4 L42.6 48.4 L36.2 45.8Z', '#06070a', 'stroke="#000" stroke-width=".4"') + P('M37.6 39.8 L45.4 39.6 L38.6 43.4Z', '#3a4a62', 'opacity=".6"') + L(38.6, 40.4, 41.6, 40.2, '#c8e0ff', 0.4, 'opacity=".7"'))
+        // the cheek plates curving down to the jaw
+        + mirror(P('M37.6 44.8 C38.4 51 40.6 57 45 60.6', 'none', 'stroke="#9aa2ac" stroke-width=".6"') + P('M34.4 47 C35.6 53 38.4 58.4 42.4 62.4', 'none', 'stroke="#b8bec6" stroke-width=".5"'))
+        // the long white snout and the dark vent at its foot
+        + P('M47.2 38.2 L52.8 38.2 L53.8 55.4 L55 60.4 C53.4 62.8 46.6 62.8 45 60.4 L46.2 55.4Z', '#f6f8fa', 'stroke="#2a2c30" stroke-width=".6"') + P('M50 38.6 L50 55', 'none', 'stroke="#c8ced6" stroke-width=".6"') + P('M52.8 38.2 L53.8 55.4 L55 60.4 C54 61.8 52 62.4 50 62.6 L50 38.2Z', '#000', 'opacity=".07"')
+        + R(46.8, 56.2, 6.4, 4.6, '#2a2c30', 'rx="1.2"') + [[47.8, 57.2], [49.4, 57.2], [51, 57.2], [47.8, 58.8], [49.4, 58.8], [51, 58.8]].map(([x, y]) => R(x, y, 1.2, 1, '#8a929c')).join(''); })()
+      + '</g>'
+      // hold-out blaster in his black glove
+      + `<g transform="translate(80 92) rotate(-30)">${R(-2, -2, 14, 4, '#141518', 'rx="1"')}${R(10, -1.2, 5, 2.4, '#141518')}${R(0, 1.6, 3.4, 5, '#141518', 'rx=".8"')}</g>` + E(80, 94, 3.6, 3, '#0c0d10');
   });
 
   // ---------- Endor optional boss: AT-ST Walker ----------
@@ -746,53 +737,37 @@
       + rebel(22, 68, 0.6) + rebel(62, 66, 0.5) + rebel(70, 67, 0.55)
       + [[34, 64, 3], [84, 60, 2.4]].map(([x, y, r]) => glow('#ff8a2a', C(x, y, r, '#ffb04a', 'opacity=".8"') + C(x, y, r * 0.5, '#fff0b0'), 3) + puffs('#4a3a2a', 0.5, [[x, y - r * 1.8, r * 1.8, r * 1.2]])).join('')
       + bolt(84, 64, 72, 62, '#ff3a2a') + bolt(18, 66, 26, 63, '#ff3a2a')
-      // Head to boots, as in the photo: the helmet, sculpted tan chest plate,
-      // tan shoulder plates (the white armband stripe on his right arm), brown
-      // sleeves, tan forearm guards and black gloves, the tan belt with brown
-      // pouches and a satchel, tan thigh plates, baggy brown trousers, tall
-      // sculpted tan shin guards and dark boots; the E-22 held upright
-      + E(50, 97.6, 16, 1.6, '#000', 'opacity=".35"')
-      // trousers, shin guards and boots
-      + mirror(P('M40.6 49 C39.6 60 40.4 70 42 77 L49.4 77 C49.8 68 49.8 58 49.8 49Z', '#3e2e20', 'stroke="#1e160e" stroke-width=".4"') + P('M42 56 Q45 58 48 56 M41.4 64 Q44.6 66 48.4 64', 'none', 'stroke="#2a1e14" stroke-width=".5"')
-        + P('M41.6 74 L49.6 74 L49.2 92.4 L42.4 92.4Z', sand, 'stroke="#4a3a1e" stroke-width=".5"') + P('M41.6 74 L44 74 L44.4 92.4 L42.4 92.4Z', '#fff2cc', 'opacity=".35"') + L(45.8, 75, 45.6, 91.6, '#6a5634', 0.6) + [78, 84, 89].map((y) => L(42.4, y, 49, y, '#8a7650', 0.4)).join('') + P('M40.8 76 L42.4 76 L42.8 84 L41.2 83Z', sandD)
-        + R(41.4, 92.2, 8.8, 5, '#2a2016', 'rx="1"') + L(41.8, 95, 49.8, 95, '#4a3a2a', 0.4))
-      // tan thigh plates over the trousers, and the satchel at his hip
-      + mirror(P('M41.4 48.6 L49.4 48.6 L49 58 L42 57Z', sand, 'stroke="#4a3a1e" stroke-width=".5"') + L(42.4, 52, 48.8, 52, '#8a7650', 0.4))
-      + P('M33.6 46 L40 45.4 L40.6 56 L34.4 56.6Z', '#5a3e26', 'stroke="#2a1a0e" stroke-width=".5"') + L(34, 49, 40.2, 48.6, '#3e2a18', 0.5) + L(40, 45.6, 60, 26, '#4a3424', 0.9)
-      // torso: brown undersuit, chest plate, belt
-      + P('M38.4 25 L61.6 25 L60.6 48 L39.4 48Z', '#4a3826')
-      + P('M40.6 25.6 C44 24.2 56 24.2 59.4 25.6 L59 39 L54.4 42.4 L45.6 42.4 L41 39Z', sand, 'stroke="#4a3a1e" stroke-width=".6"') + shade('M50 24.6 C55 24.6 57.6 25 59.4 25.6 L59 39 L54.4 42.4 L50 42.4Z', 0.14)
-      + R(48.8, 26, 2.4, 13.6, '#a08656', 'stroke="#6a5634" stroke-width=".3"') + mirror(P('M41.8 27 L47.4 26.4 L47.2 33 L42.2 34Z', 'none', 'stroke="#6a5634" stroke-width=".45"') + L(42.4, 36.4, 47.2, 35.6, '#6a5634', 0.45)) + [47, 48.2, 51.8, 53].map((x) => L(x, 37.4, x, 41, '#4a3a1e', 0.45)).join('')
-      + R(39.4, 45, 21.2, 3.4, sandD, 'stroke="#4a3a1e" stroke-width=".4"') + [40.6, 45.6, 50.6, 55.6].map((x) => R(x, 45.5, 3.8, 2.6, '#5a4028', 'rx=".4"')).join('')
-      // arms: tan shoulder plates, brown sleeves, tan forearm guards, black gloves
-      // (his right arm bent up to hold the rifle; the left hanging)
-      + L(37.4, 29, 36, 39.6, '#4a3826', 4.6) + L(36, 39.6, 32.4, 34, '#4a3826', 4) + P('M33.8 30.6 L38.8 30 L38.4 35 L34 35.4Z', '#e8ecef', 'stroke="#8a8f94" stroke-width=".3"')
-      + P('M33.4 36.6 L37.4 38.6 L35.4 42.4 L31.6 40Z', sand, 'stroke="#4a3a1e" stroke-width=".4"')
-      + L(62.6, 29, 64, 40, '#4a3826', 4.6) + L(64, 40, 63.4, 50, '#4a3826', 4) + P('M61.6 41.4 L66 41 L65.8 47.4 L61.8 47.6Z', sand, 'stroke="#4a3a1e" stroke-width=".4"') + E(63.4, 51.4, 2.4, 2.8, '#141518')
-      + mirror(P('M33.4 31 C33.6 26.6 36.6 24.6 41 24.4 L41.6 31 C39 30.6 36 31 33.4 32Z', sand, 'stroke="#4a3a1e" stroke-width=".6"') + P('M34.6 28.6 C36 26.2 38.4 25.2 40.6 25', 'none', 'stroke="#fff2cc" stroke-width=".5"'))
-      // the E-22 held upright beside his head, his glove around the grip
-      + `<g transform="translate(30.4 2) rotate(-3)">${R(-1.6, 0, 3.2, 40, '#141518', 'rx=".8"')}${R(-1.2, -6, 1, 6, '#141518')}${R(0.3, -6, 1, 6, '#141518')}${R(-2.6, 8, 1.6, 9, '#2a2c30', 'rx=".5"')}${R(1.6, 26, 3.2, 5, '#141518', 'rx=".8"')}${R(-1.8, 40, 3.6, 8, '#2a2c30', 'rx=".8"')}${L(0, 2, 0, 38, '#3a3c42', 0.4)}</g>` + E(32, 33.4, 2.6, 2.8, '#141518')
-      + P('M46.4 21 L53.6 21 L54.4 26 L45.6 26Z', '#4a3a28')
-      // the helmet
-      + '<g transform="translate(50 1.8) scale(.42) translate(-50 -19)">'
-      // the helmet: smooth round dome with its highlight and rank dot
-      + P('M34 42 C34 26 41 19 50 19 C59 19 66 26 66 42Z', sand, 'stroke="#4a3a1e" stroke-width="1"')
-      + P('M50 19 C59 19 66 26 66 42 L50 42Z', '#000', 'opacity=".1"') + E(42, 25, 6, 2.4, '#fffaf0', 'opacity=".7" transform="rotate(-24 42 25)"') + C(50, 23.4, 1.4, '#e8642a')
-      + P('M37 30 Q50 26 63 30', 'none', 'stroke="#fff2cc" stroke-width=".5" opacity=".6"')
-      // the sharp flat-topped crest band
-      + P('M32.6 34 L67.4 34 L68 38.6 L32 38.6Z', sandD, 'stroke="#4a3a1e" stroke-width=".8"') + L(33, 34.6, 67, 34.6, '#fff2cc', 0.6) + mirror(P('M32 38.6 L34.6 34 L36 38.6Z', '#8a7046'))
-      // the dark visor band with its centre slot
-      + P('M33 38.6 L67 38.6 L66.4 45.4 L52 45.6 L51.4 52 L48.6 52 L48 45.6 L33.6 45.4Z', '#0b0a07') + P('M34.4 39.6 L65.6 39.6 L65.4 41 L34.6 41Z', '#6a8098', 'opacity=".7"')
-      // jagged faceted cheek plates: stepped edges, a lit facet and a shadowed facet each
-      + mirror(P('M33.6 45.4 L44.4 45.4 L44.8 50 L43 51.4 L44.6 54 L40.6 59 L37.6 58 L36 55.6 L34 55 L33.4 50.6Z', sand, 'stroke="#4a3a1e" stroke-width=".7" stroke-linejoin="miter"')
-        + P('M33.6 45.4 L44.4 45.4 L41 50 L34.6 49Z', '#fff2cc', 'opacity=".45"') + P('M34 55 L36 55.6 L37.6 58 L40.6 59 L39 54.4 L35.6 52.6Z', '#6a5634', 'opacity=".5"')
-        + L(36.4, 49.6, 38.6, 56, '#6a5634', 0.5) + L(41, 50, 42.6, 54.8, '#6a5634', 0.5) + C(35.2, 47, 0.45, '#6a5634'))
-      + shade('M50 45.6 L66.4 45.4 L66.6 52 L59.4 59 L55.6 59 L50 63Z', 0.1)
-      // the rounded chin and slotted breather
-      + P('M40.6 59 L44.6 54 L55.4 54 L59.4 59 C57 63.6 43 63.6 40.6 59Z', sandD, 'stroke="#4a3a1e" stroke-width=".7"')
-      + R(44.6, 54.6, 10.8, 5, '#3a2e1a', 'rx="1"') + [46.4, 48.4, 50.4, 52.4, 54].map((x) => R(x, 55.4, 0.9, 3.4, '#b49a68')).join('') + P('M44 61 Q50 63 56 61', 'none', 'stroke="#fff2cc" stroke-width=".4" opacity=".6"')
-      + '<path d="M38 30 l3 1 M61 48 l-2 2 M57 26 l2 -1 M43 57 l2 1" stroke="#8a7650" stroke-width=".6" opacity=".8"/>'
-      + '</g>';
+      // From the photo: brown fatigues, tan shoulder plates (the white armband
+      // stripe on his right arm), brown sleeves, the sculpted tan chest plate
+      // with its centre channel and vent slits, a tan belt with brown pouches,
+      // and the E-22 held upright at his shoulder
+      + P('M20 100 C21 86 28 77 38 74 L62 74 C72 77 79 86 80 100Z', '#4a3826', 'stroke="#241a10" stroke-width=".6"')
+      + mirror(P('M21 89 C22 81 28 76.6 36 76 L39 84 C32 85.6 27.6 89 26.4 94Z', sand, 'stroke="#4a3a1e" stroke-width=".7"') + P('M22.6 86 C25 81.4 29.6 78.6 34.6 78.2', 'none', 'stroke="#fff2cc" stroke-width=".6"') + L(25.4, 85, 30.6, 82.4, '#6a5634', 0.5) + P('M24 94 L27 94 L27.6 100 L23.4 100Z', '#3e2e1e'))
+      + P('M22.4 88.6 L33.6 82.6 L35 85.4 L23.8 91.4Z', '#e8ecef', 'stroke="#8a8f94" stroke-width=".4"')
+      + P('M37 77 C42 75.2 58 75.2 63 77 L61.6 93 L38.4 93Z', sand, 'stroke="#4a3a1e" stroke-width=".7"') + shade('M50 75.4 C56 75.4 60 76 63 77 L61.6 93 L50 93Z', 0.14)
+      + R(48.4, 77, 3.2, 15, '#a08656', 'stroke="#6a5634" stroke-width=".4"') + mirror(P('M39.4 79 L46.6 78.4 L46.4 85 L40 86Z', 'none', 'stroke="#6a5634" stroke-width=".5"') + L(40.6, 88.4, 46.4, 87.6, '#6a5634', 0.5))
+      + [46.4, 48, 52, 53.6].map((x) => L(x, 88.4, x, 92, '#4a3a1e', 0.5)).join('')
+      + R(36, 93, 28, 4.4, sandD, 'stroke="#4a3a1e" stroke-width=".5"') + [37.6, 44.4, 51.2, 58].map((x) => R(x, 93.6, 4.6, 3.4, '#5a4028', 'rx=".5"')).join('') + R(46.6, 97.4, 6.8, 2.6, '#3e2e1e')
+      // the E-22 held upright beside his head: twin barrels, stock and grip, his glove on it
+      + `<g transform="translate(15 34) rotate(-4)">${R(-2.4, 0, 4.8, 44, '#141518', 'rx="1"')}${R(-1.6, -12, 1.4, 12, '#141518')}${R(0.4, -12, 1.4, 12, '#141518')}${R(-3.4, 10, 2, 10, '#2a2c30', 'rx=".6"')}${R(2.4, 26, 4, 6, '#141518', 'rx="1"')}${R(-2.6, 44, 5.2, 9, '#2a2c30', 'rx="1"')}${L(0, 2, 0, 42, '#3a3c42', 0.5)}</g>`
+      + E(19, 64, 3.6, 3, '#3a2a1a') + P('M19 67 L24 78 L28 76 L23 66Z', '#3e2e1e')
+      // collar: the fabric neck seal the helmet sits on
+      + P('M42 58 L58 58 L60 76 C55 78 45 78 40 76Z', '#4a3a28', 'stroke="#2a2014" stroke-width=".5"') + '<path d="M42.6 66 Q50 68 57.4 66 M42 71.6 Q50 73.4 58 71.6" stroke="#6a5438" stroke-width=".6" fill="none"/>'
+      // the helmet: one solid shape (no gaps): a flat, sharp-cornered top, the
+      // sides straight down, angled cheek planes closing to a rounded chin
+      + P('M37.4 21 L62.6 21 L66.4 25 L66.4 46 L62.4 58 C58.6 63.6 41.4 63.6 37.6 58 L33.6 46 L33.6 25Z', sand, 'stroke="#4a3a1e" stroke-width="1" stroke-linejoin="miter"')
+      + P('M50 21 L62.6 21 L66.4 25 L66.4 46 L62.4 58 C58.6 63.6 54 64 50 64Z', '#000', 'opacity=".1"') + P('M37.4 21 L62.6 21 L60.6 23 L39.4 23Z', '#fff6dc', 'opacity=".7"') + L(50, 21.4, 50, 30, '#8a7046', 0.6) + C(50, 25.4, 1.2, '#e8642a')
+      // the sharp, flat crest band
+      + P('M32.8 30.4 L67.2 30.4 L67.2 35.2 L32.8 35.2Z', sandD, 'stroke="#4a3a1e" stroke-width=".7"') + L(33.2, 31, 66.8, 31, '#fff2cc', 0.6)
+      // the visor: a black band and the slot down the middle
+      + R(35.2, 35.2, 29.6, 6.4, '#0b0a07') + P('M47.4 41.4 L52.6 41.4 L52 51 L48 51Z', '#0b0a07') + R(36.4, 36.2, 27.2, 1.4, '#6a8098', 'opacity=".7"')
+      // flat cheek planes with sharp facet lines
+      + mirror(P('M33.6 41.6 L47.4 41.6 L48 51 L44 55.6 L37.6 58 L34.6 49Z', sand, 'stroke="#4a3a1e" stroke-width=".6" stroke-linejoin="miter"')
+        + P('M33.6 41.6 L47.4 41.6 L41 47.4 L34.4 46.4Z', '#fff2cc', 'opacity=".4"') + P('M34.6 49 L41 47.4 L44 55.6 L37.6 58Z', '#6a5634', 'opacity=".28"')
+        + L(41, 47.4, 44, 55.6, '#4a3a1e', 0.5) + L(41, 47.4, 47.4, 41.6, '#4a3a1e', 0.4) + L(37.2, 44, 38.4, 52.6, '#6a5634', 0.5) + C(35.6, 43.4, 0.4, '#4a3a1e'))
+      // the rounded chin and the slotted breather
+      + P('M41 57.2 L44.6 54 L55.4 54 L59 57.2 C56.6 61.8 43.4 61.8 41 57.2Z', sandD, 'stroke="#4a3a1e" stroke-width=".6"') + R(45, 52.8, 10, 4.6, '#3a2e1a', 'rx=".8"') + [46.6, 48.4, 50.2, 52, 53.6].map((x) => R(x, 53.4, 0.8, 3.4, '#b49a68')).join('')
+      + '<path d="M38 28 l3 1 M61 50 l-2 2 M58 25 l2 -1" stroke="#8a7650" stroke-width=".6" opacity=".8"/>';
   });
 
   // ---------- Scarif optional boss: Director Krennic ----------
