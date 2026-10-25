@@ -121,17 +121,26 @@
     + E(-3.4, -11.6, 1.1, 1, '#3a4050', 'stroke="#22262e" stroke-width=".15"') + E(3.4, -11.6, 1.1, 1, '#3a4050', 'stroke="#22262e" stroke-width=".15"')
     + P('M-3.8 -11 L-4.2 -8.4 L-3.6 -6.6', 'none', 'stroke="#4a5262" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"') + R(-4.4, -7.6, 1.6, 2, '#2a2e38', 'rx=".3"')
     + P('M3.6 -11 L4 -9.4', 'none', 'stroke="#4a5262" stroke-width="1.1" stroke-linecap="round"') + R(3.2, -10.2, 3.6, 1.7, '#3a4050', 'rx=".4" stroke="#22262e" stroke-width=".15"') + R(6.6, -9.9, 0.9, 0.4, '#1a1a1e') + R(6.6, -9.1, 0.9, 0.4, '#1a1a1e') + L(4, -9.4, 6.2, -9.4, '#5a6478', 0.15));
-  // A droideka, deployed: the bronze curved shell and head, tripod legs, twin
-  // blaster arms, and the shimmering bubble of its deflector shield.
+  // A droideka, deployed: the bronze head with its dome and three red eyes
+  // up front, the ribbed shell curving back and down into the tail, long
+  // tripod legs with knee joints and clawed feet, two arms each with twin
+  // blasters, and the shimmering bubble of its deflector shield.
+  const DKGUNS = [[6.5, -7.3], [6.5, -6.5]];
   const droideka = (x, y, s, f = 1, shield = true) => g(x, y, s, f,
-    E(0, 0.2, 3.6, 0.5, '#000', 'opacity=".25"')
-    + P('M-0.8 -5.6 L-3 -2.8 L-3.8 0 M0.4 -5.6 L2 -3 L2.2 0 M0 -5.4 L1 -2.6 L0.6 0', 'none', 'stroke="#4a2e16" stroke-width=".7" stroke-linejoin="round" stroke-linecap="round"') + P('M-0.8 -5.6 L-3 -2.8 L-3.8 0 M0.4 -5.6 L2 -3 L2.2 0', 'none', 'stroke="#b8844a" stroke-width=".3" stroke-linejoin="round"')
-    + C(-3, -2.8, 0.4, '#5a3a1e') + C(2, -3, 0.4, '#5a3a1e') + P('M-4.6 0 L-3 0 L-3.8 -0.6Z M1.4 0 L3 0 L2.2 -0.6Z M0 0 L1.2 0 L0.6 -0.5Z', '#5a3a1e')
-    + P('M-1.6 -5 C-3.2 -6.4 -3.4 -9.4 -1.8 -10.8 C-0.4 -11.8 1.6 -11.4 2.4 -10 C2.8 -9 2.4 -8 1.6 -7.6 L0.4 -5Z', '#9a6a3a', 'stroke="#3a2412" stroke-width=".18"')
-    + P('M-2.4 -6.4 C-3 -8 -2.6 -9.8 -1.4 -10.6 M-1.6 -5.8 C-2.2 -7.4 -2 -9 -1 -9.8 M-0.6 -5.4 C-1.2 -7 -1 -8.4 0 -9.2', 'none', 'stroke="#5a3a1e" stroke-width=".2"') + P('M-1.6 -10.8 C-0.4 -11.6 1.4 -11.2 2.2 -10.2', 'none', 'stroke="#d8a868" stroke-width=".25" opacity=".7"')
-    + P('M0.6 -10.2 C1.6 -10.6 2.8 -10 3 -9.2 L1.6 -8.6Z', '#7a522c', 'stroke="#3a2412" stroke-width=".12"') + C(2.1, -9.5, 0.28, '#1a0e06') + C(1.4, -9.7, 0.22, '#1a0e06') + C(2.05, -9.6, 0.09, '#ff6a3a')
-    + R(0.8, -8.4, 4.4, 0.55, '#5a3a1e') + R(0.8, -7.5, 4.4, 0.55, '#5a3a1e') + R(4.8, -8.5, 0.8, 0.35, '#2a1a0e') + R(4.8, -7.6, 0.8, 0.35, '#2a1a0e') + R(1, -8.7, 1.4, 1.8, '#7a522c', 'rx=".2"')
-    + (shield ? E(0, -5.4, 6.4, 6.8, '#5ac8ff', 'opacity=".14" stroke="#aaeaff" stroke-width=".25"') + P('M-5.2 -9 Q0 -11.4 5.2 -9 M-6.2 -5 Q0 -7.4 6.2 -5 M-5.6 -1.4 Q0 -3.6 5.6 -1.4', 'none', 'stroke="#aaeaff" stroke-width=".12" opacity=".35"') + P('M-3.6 -10.4 C-2.4 -11.6 -1 -12 0.4 -12.1', 'none', 'stroke="#ffffff" stroke-width=".3" opacity=".45"') : ''));
+    E(0, 0.2, 3.8, 0.5, '#000', 'opacity=".25"')
+    + P('M0.6 -6.6 L1.8 -3.2 L1.2 0', 'none', 'stroke="#4a2e16" stroke-width=".75" stroke-linejoin="round" stroke-linecap="round"') + C(1.8, -3.2, 0.4, '#3a2412') + P('M0.4 0 L2 0 L1.2 -0.5Z', '#3a2412')
+    + P('M1 -8.8 L2 -8 L5.6 -8 L5.6 -7.4 L1.8 -7.4Z', '#5a3a1e')
+    + P('M-2.6 -5.2 L-3.8 -2.6 L-4.2 0', 'none', 'stroke="#4a2e16" stroke-width=".85" stroke-linejoin="round" stroke-linecap="round"') + P('M-2.6 -5.2 L-3.8 -2.6 L-4.2 0', 'none', 'stroke="#b8844a" stroke-width=".3" stroke-linejoin="round"') + C(-3.8, -2.6, 0.5, '#5a3a1e', 'stroke="#2a1a0e" stroke-width=".1"') + P('M-5.2 0 L-3.2 0 L-3.8 -0.4 L-4.6 -0.4Z', '#5a3a1e') + L(-5.2, 0, -5.7, 0.25, '#5a3a1e', 0.25)
+    + P('M0.4 -9.6 C-0.6 -11.6 -2.6 -11.8 -3.6 -10.2 C-4.4 -8.8 -4 -6.6 -2.8 -5 L-1.8 -5.4 C-2.8 -6.8 -3 -8.6 -2.4 -9.6 C-1.8 -10.4 -0.8 -10.2 -0.2 -9.2Z', '#9a6a3a', 'stroke="#3a2412" stroke-width=".18"')
+    + [[-0.6, -10.8, -0.9, -9.8], [-1.8, -11.2, -1.8, -10.1], [-3, -10.6, -2.5, -9.6], [-3.7, -9.2, -2.9, -8.6], [-3.9, -7.6, -3, -7.4], [-3.5, -6.1, -2.7, -6.3]].map(([a, b, c, d]) => L(a, b, c, d, '#5a3a1e', 0.22)).join('')
+    + P('M0.2 -10 C-0.8 -11.4 -2.4 -11.6 -3.3 -10.4', 'none', 'stroke="#e0b070" stroke-width=".25" opacity=".7"')
+    + P('M-2.8 -5 C-1.6 -4.6 -0.2 -5.4 0.8 -6.6 L0.2 -7.2 C-0.6 -6.2 -1.6 -5.6 -2.2 -5.6Z', '#7a522c', 'stroke="#3a2412" stroke-width=".14"')
+    + P('M-0.2 -9.6 L2.2 -9.4 L2.6 -7.6 L0.6 -6.4 L-0.4 -7.4Z', '#8a5e32', 'stroke="#3a2412" stroke-width=".15"') + C(1.2, -8.2, 0.35, '#5a3a1e')
+    + P('M1 -6.8 L2.8 -3.2 L2.6 0', 'none', 'stroke="#4a2e16" stroke-width=".85" stroke-linejoin="round" stroke-linecap="round"') + P('M1 -6.8 L2.8 -3.2 L2.6 0', 'none', 'stroke="#c8945a" stroke-width=".3" stroke-linejoin="round"') + C(2.8, -3.2, 0.5, '#5a3a1e', 'stroke="#2a1a0e" stroke-width=".1"') + C(1, -6.8, 0.45, '#5a3a1e') + P('M1.6 0 L3.6 0 L3 -0.4 L2.2 -0.4Z', '#5a3a1e') + L(3.6, 0, 4.1, 0.25, '#5a3a1e', 0.25)
+    + P('M-0.2 -9.8 C0 -11.8 2.2 -12.6 3.8 -11.6 C4.8 -11 4.8 -9.8 4 -9.2 C3 -8.8 1 -8.9 -0.2 -9.8Z', '#a8743e', 'stroke="#3a2412" stroke-width=".18"') + P('M0.4 -11 C1.4 -12 3 -12.2 4 -11.4', 'none', 'stroke="#e8b878" stroke-width=".3" opacity=".75"') + P('M0.6 -10 C1.8 -10.6 3.4 -10.6 4.6 -10', 'none', 'stroke="#5a3a1e" stroke-width=".2"')
+    + P('M2.6 -10.2 L4.6 -10 L4.2 -9.2 L2.8 -9.3Z', '#3a2412') + C(3.3, -9.75, 0.22, '#ff3a2a') + C(4, -9.65, 0.18, '#ff3a2a') + C(3.65, -9.35, 0.14, '#ff3a2a') + C(3.6, -9.6, 0.7, '#ff3a2a', 'opacity=".18"')
+    + P('M1.4 -8 L2.2 -7.2 L2.2 -6.4 L1.2 -6.8Z', '#7a522c', 'stroke="#3a2412" stroke-width=".12"') + R(1.8, -7.6, 4.2, 0.6, '#5a3a1e', 'stroke="#2a1a0e" stroke-width=".08"') + R(1.8, -6.8, 4.2, 0.6, '#5a3a1e', 'stroke="#2a1a0e" stroke-width=".08"') + R(5.8, -7.55, 0.7, 0.5, '#1a0e06') + R(5.8, -6.75, 0.7, 0.5, '#1a0e06') + R(2, -7.8, 1.4, 1.8, '#9a6a3a', 'rx=".25" stroke="#3a2412" stroke-width=".1"') + L(3.6, -7.3, 5.6, -7.3, '#c8945a', 0.12)
+    + (shield ? E(0, -5.6, 6.8, 7.2, '#5ac8ff', 'opacity=".14" stroke="#aaeaff" stroke-width=".25"') + P('M-5.6 -9.4 Q0 -11.8 5.6 -9.4 M-6.6 -5.4 Q0 -7.8 6.6 -5.4 M-6 -1.6 Q0 -3.8 6 -1.6', 'none', 'stroke="#aaeaff" stroke-width=".12" opacity=".35"') + P('M-3.8 -10.8 C-2.6 -12 -1.2 -12.5 0.4 -12.6', 'none', 'stroke="#ffffff" stroke-width=".3" opacity=".45"') : ''));
   // A droideka rolled up into its wheel, bowling across the ground.
   const wheel = (x, y, r) => C(x, y - r, r, '#9a6a3a', 'stroke="#3a2412" stroke-width=".2"') + P(`M${x - r * 0.8} ${y - r * 1.5} Q${x} ${y - r * 0.6} ${x + r * 0.8} ${y - r * 1.5} M${x - r * 0.9} ${y - r * 0.6} Q${x} ${y - r * 1.4} ${x + r * 0.9} ${y - r * 0.6}`, 'none', 'stroke="#5a3a1e" stroke-width=".3"') + P(`M${x - r * 0.6} ${y - r * 1.7} Q${x} ${y - r * 2} ${x + r * 0.6} ${y - r * 1.7}`, 'none', 'stroke="#d8a868" stroke-width=".25" opacity=".7"') + E(x - r * 1.4, y - 0.2, r * 0.8, r * 0.2, '#c8946a', 'opacity=".5"');
   // An IG-100 MagnaGuard: the tall dark droid bodyguard with its cloth head
@@ -169,6 +178,11 @@
     + P('M-1.2 -14 C-1.6 -16 -1 -17.8 0.4 -18 C1.8 -18 2.2 -16.2 1.8 -14.6 C1.4 -13.6 0.8 -13.2 0.2 -13.2 C-0.4 -13.2 -1 -13.4 -1.2 -14Z', '#ece4d0', 'stroke="#3a342c" stroke-width=".18"')
     + P('M-0.6 -17.6 C-0.2 -18.2 1.2 -18.2 1.6 -17.4 L1.4 -16.6 L-0.4 -16.6Z', '#d8d0bc') + P('M-0.6 -16 C-0.4 -16.6 0.4 -16.6 0.4 -15.8 C0.2 -15.4 -0.4 -15.4 -0.6 -16Z M0.8 -15.8 C0.8 -16.6 1.6 -16.6 1.7 -16 C1.6 -15.4 1 -15.4 0.8 -15.8Z', '#2a241c') + E(-0.1, -15.95, 0.24, 0.2, '#e8d83a') + E(1.25, -15.95, 0.24, 0.2, '#e8d83a') + C(-0.1, -15.95, 0.08, '#1a1408') + C(1.25, -15.95, 0.08, '#1a1408')
     + P('M0.6 -15.4 L0.5 -14.4 M-0.2 -14.2 L1.4 -14.2 M0 -13.8 L0 -14.4 M0.4 -13.6 L0.4 -14.4 M0.8 -13.6 L0.8 -14.4 M1.2 -13.8 L1.2 -14.4', 'none', 'stroke="#5a5244" stroke-width=".12"'));
+  // General Grievous as on his boss card: the full detailed figure from the
+  // 2.2 boss art (skull mask, sunken eyes, grille, cape, four spinning
+  // sabers), with the bottom of that card at y. The simple figure above
+  // stands in if the boss art isn't loaded.
+  const grievousBoss = (x, y, s) => (root.Art22 && root.Art22.grievousFigure ? `<g transform="translate(${+(x - 50 * s).toFixed(2)} ${+(y - 100 * s).toFixed(2)}) scale(${s})">${root.Art22.grievousFigure()}</g>` : grievous(x, y - 4, s * 5));
   // Padmé in the arena: white jumpsuit torn at the midriff, hair up in a
   // bun, blaster pistol raised.
   const padme = (x, y, s, f = 1) => g(x, y, s, f,
@@ -239,16 +253,22 @@
     + Array.from({ length: 8 }, (_, k) => R(-8 + k * 3.6, 2.6, 1.6, 0.4, '#ffe8a0', 'opacity=".6"')).join(''));
   // Where an Acclamator's turret barrels end, in the scene's coordinates.
   const accGuns = (x, y, s, f = 1) => ACC_T.map((tx) => [+(x + (tx - 2) * s * f).toFixed(2), +(y + (ACC_TOP(tx) - 0.7) * s).toFixed(2)]);
-  // A Trade Federation core ship: the great sphere lifting off on its
-  // thrusters, banded hull with rows of lights.
-  const coreShip = (x, y, r) => {
+  // A Trade Federation core ship: the great banded sphere with its rows of
+  // lights, standing on the plain on its landing legs with dust kicked up
+  // around it (or, if not grounded, lifting off on its thrusters).
+  const coreShip = (x, y, r, grounded = false) => {
     const [gr, d] = RG([[0, '#e0d4b8'], [0.6, '#a89878'], [1, '#4a4030']], 0.35, 0.3, 0.75);
-    return d + glow(x, y + r * 1.05, r * 0.45, '#ffb85a', 0.4) + P(`M${x - r * 0.5} ${y + r * 0.86} L${x - r * 0.3} ${y + r * 1.4} L${x + r * 0.3} ${y + r * 1.4} L${x + r * 0.5} ${y + r * 0.86}Z`, '#ffd08a', 'opacity=".45"')
+    const f = (v) => +v.toFixed(2);
+    const gy = f(y + r * 1.22);
+    return d + (grounded
+      ? E(x, gy, f(r * 1.25), f(r * 0.17), '#3a1a0e', 'opacity=".55"') + [-0.62, 0.62, 0].map((k) => P(`M${f(x + r * k * 0.75)} ${f(y + r * 0.8)} L${f(x + r * k * 1.08)} ${f(gy - r * 0.04)}`, 'none', `stroke="#3a3226" stroke-width="${f(r * 0.09)}" stroke-linecap="round"`) + L(f(x + r * k * 0.75), f(y + r * 0.8), f(x + r * k * 1.08), f(gy - r * 0.04), '#8a7c60', f(r * 0.025)) + E(f(x + r * k * 1.08), gy, f(r * 0.16), f(r * 0.05), '#3a3226')).join('')
+      : glow(x, y + r * 1.05, r * 0.45, '#ffb85a', 0.4) + P(`M${x - r * 0.5} ${y + r * 0.86} L${x - r * 0.3} ${y + r * 1.4} L${x + r * 0.3} ${y + r * 1.4} L${x + r * 0.5} ${y + r * 0.86}Z`, '#ffd08a', 'opacity=".45"'))
       + C(x, y, r, gr, 'stroke="#3a3226" stroke-width=".25"')
       + [-0.6, -0.3, 0.3, 0.6].map((k) => { const w = r * Math.sqrt(1 - k * k); return P(`M${(x - w).toFixed(2)} ${(y + r * k).toFixed(2)} Q${x} ${(y + r * k + w * 0.18).toFixed(2)} ${(x + w).toFixed(2)} ${(y + r * k).toFixed(2)}`, 'none', 'stroke="#5a4e3c" stroke-width=".3"'); }).join('')
       + P(`M${x - r} ${y} Q${x} ${y + r * 0.2} ${x + r} ${y} L${x + r} ${y + r * 0.1} Q${x} ${y + r * 0.3} ${x - r} ${y + r * 0.1}Z`, '#6a5e48')
       + Array.from({ length: 11 }, (_, k) => { const t = -0.8 + k * 0.16; return C((x + r * t).toFixed(2), (y + r * 0.12 + r * 0.16 * (1 - t * t)).toFixed(2), (r * 0.03).toFixed(2), '#ffe8a0', 'opacity=".85"'); }).join('')
-      + E(x, y - r * 0.92, r * 0.28, r * 0.08, '#8a7c60') + R(x - r * 0.06, y - r * 1.12, r * 0.12, r * 0.2, '#6a5e48');
+      + E(x, y - r * 0.92, r * 0.28, r * 0.08, '#8a7c60') + R(x - r * 0.06, y - r * 1.12, r * 0.12, r * 0.2, '#6a5e48')
+      + (grounded ? P(`M${f(x - r * 0.5)} ${f(y + r * 0.86)} Q${x} ${f(y + r * 1.06)} ${f(x + r * 0.5)} ${f(y + r * 0.86)}`, 'none', 'stroke="#3a3226" stroke-width=".3"') + R(f(x - r * 0.18), f(y + r * 0.9), f(r * 0.36), f(r * 0.12), '#2a241a') + [-1.2, -0.7, 0.8, 1.3].map((k, i) => C(f(x + r * k), f(gy - r * (0.06 + (i % 2) * 0.08)), f(r * (0.14 + (i % 2) * 0.08)), '#c88a5a', 'opacity=".4"')).join('') : '');
   };
   // A Republic AT-TE walker, side on: six legs, the armoured body with its
   // markings and viewports, and the mass-driver cannon on top.
@@ -370,7 +390,9 @@
     // 3 · Droid Foundry: deep in the foundry. Pointed Geonosian arches carved
     // into the rock with the glow of the works behind; smelting ladles on
     // the overhead rail pouring molten metal into the glowing channel;
-    // finished battle droids marching out along the far ledge; assembly arms
+    // droid torsos riding the overhead hook line; welding arms and status
+    // consoles in every arch; pipes down the columns; finished battle
+    // droids marching out along the far ledge; assembly arms
     // welding new droids in showers of sparks; on the catwalk, battle
     // droids, a super battle droid and a Geonosian overseer.
     droid_foundry: () => fill([[0, '#140806'], [0.6, '#3a1408'], [1, '#6a2a0e']])
@@ -379,7 +401,10 @@
       + Array.from({ length: 6 }, (_, k) => gcol(4 + k * 31, 60, 50, 3, '#4a1c0c', '#1a0804')).join('')
       + R(0, 3, 160, 2.4, '#1a1a1e') + L(0, 3, 160, 3, '#4a4a52', 0.3) + Array.from({ length: 9 }, (_, k) => R(k * 20, 0, 1.4, 3.4, '#2a2a30')).join('')
       + ladle(30, 5, 1.6, 38, 36) + ladle(126, 5, 1.4, -34, 41) + ladle(80, 5, 1.1, 0)
+      + R(0, 15, 160, 1.2, '#1a1a1e') + L(0, 15, 160, 15, '#4a4a52', 0.25) + [48, 60, 98, 110, 144].map((hx) => L(hx, 16.2, hx, 20.4, '#3a3a40', 0.3) + R(hx - 0.8, 15.6, 1.6, 0.8, '#3a3a42') + P(`M${hx - 0.5} 20.4 Q${hx} 21.6 ${hx + 0.5} 20.4`, 'none', 'stroke="#6a6a74" stroke-width=".3"') + b1part(hx - 0.6, 27.4, 1.2, 1)).join('')
+      + Array.from({ length: 5 }, (_, k) => { const x0 = 6 + k * 31; return arm(x0 + 3, 57, 0.45, 1) + sparks(x0 + 9, 53, 4) + R(x0 + 18, 50, 4, 6, '#2a2a30', 'stroke="#141418" stroke-width=".15"') + R(x0 + 18.6, 50.8, 2.8, 1.6, '#3aa8ff', 'opacity=".7"') + [0, 1, 2].map((m) => C(x0 + 19 + m, 53.6, 0.25, ['#ff4a3a', '#3aff6a', '#ffd23a'][m])).join(''); }).join('')
       + Array.from({ length: 10 }, (_, k) => b1(8 + k * 15, 61, 0.85, 1)).join('')
+      + Array.from({ length: 6 }, (_, k) => L(4 + k * 31 + 1.4, 20, 4 + k * 31 + 1.4, 58, '#3a3a42', 0.6) + C(4 + k * 31 + 1.4, 40, 0.7, '#6a2a14', 'stroke="#2a2a30" stroke-width=".2"')).join('')
       + molten(62, 6)
       + R(0, 69, 160, 21, '#2a201c') + Array.from({ length: 16 }, (_, k) => L(k * 10, 69, k * 10 - 4, 90, '#1a1410', 0.3)).join('') + Array.from({ length: 4 }, (_, k) => L(0, 73 + k * 4.4, 160, 73 + k * 4.4, '#1a1410', 0.3)).join('')
       + L(0, 70, 160, 70, '#5a5058', 0.6) + Array.from({ length: 11 }, (_, k) => L(k * 16, 70, k * 16, 66, '#4a4048', 0.4)).join('') + L(0, 66, 160, 66, '#6a6068', 0.35)
@@ -403,7 +428,7 @@
       + R(0, 49.6, 160, 22, '#140a08') + E(80, 64, 70, 6, '#ff7a2a', 'opacity=".25"') + Array.from({ length: 7 }, (_, k) => E(12 + k * 23, 62 + (k % 2) * 2, 6, 1.2, '#ffa03a', 'opacity=".5"')).join('') + Array.from({ length: 8 }, (_, k) => R(4 + k * 20, 50, 2.4, 22, '#2a2a30')).join('')
       + belt(0, 160, 72, 5)
       + [[18, 'h'], [140, 'p']].map(([x, t]) => t === 'p' ? b1part(x, 73, 1.6, -1) : R(x - 2.4, 71, 4.8, 2, '#4a5262', 'rx=".5"')).join('')
-      + b2(48, 74, 2.3, 1) + droideka(82, 74, 2.3, -1) + b2(116, 74, 2.3, -1)
+      + b2(48, 74, 2.3, 1) + droideka(82, 74, 2.3, -1, false) + b2(116, 74, 2.3, -1)
       + R(0, 80, 160, 10, '#1a1210') + Array.from({ length: 20 }, (_, k) => R(k * 8, 80, 4, 1.4, k % 2 ? '#1a1a1e' : '#c8982a')).join('') + L(0, 84, 160, 84, '#3a3a42', 1.2) + L(0, 87, 160, 87, '#3a2a24', 1.4),
 
     // 5 · Jedi Starfighters (fleet): in the asteroid ring above Geonosis.
@@ -445,7 +470,7 @@
         + robed(jedi[0][0], jedi[0][1], 1.2, 1, { robe: '#6a4a2e', tunic: '#c8b490', skin: '#e0b898', saber: '#3aff5a', hood: true }) + robed(jedi[1][0], jedi[1][1], 1.2, 1, { robe: '#8a6a4a', tunic: '#d8c8a8', skin: '#8a5a3a', saber: '#3a8aff', ang: 20 })
         + [[44, 68], [54, 66.5], [64, 65.5], [74, 65], [84, 65.5]].map(([x, y]) => droideka(x, y, 1.15, -1)).join('') + b1(94, 65.6, 1, -1) + b1(100, 66, 1, -1)
         + front.map(([x, y, s]) => droideka(x, y, s, -1)).join('') + b2(124, 84, 2.6, -1) + geonosian(146, 86, 2.4, -1)
-        + front.map(([x, y, s], k) => [[5.6, -8.2], [5.6, -7.3]].map(([lx, ly]) => shots([x - lx * s, y + ly * s], [jedi[k][0] + 3, jedi[k][1] - 12], [0.2, 0.55], 0.12, RED)).join('')).join('')
+        + front.map(([x, y, s], k) => DKGUNS.map(([lx, ly]) => shots([x - lx * s, y + ly * s], [jedi[k][0] + 3, jedi[k][1] - 12], [0.2, 0.55], 0.12, RED)).join('')).join('')
         + glow(17, 58, 0.8, '#3aff5a', 0.5) + glow(29.6, 59.6, 0.8, '#3a8aff', 0.5)
         + sonic(146 - 5.1 * 2.4, 86 - 8.85 * 2.4, 34, 60);
     },
@@ -463,11 +488,11 @@
       + (() => { const [gr, d] = LG([[0, '#5a2a14'], [1, '#2a1208']]); return d + R(0, 58, 160, 32, gr); })() + Array.from({ length: 9 }, (_, k) => L(80, 58, -40 + k * 30, 90, '#1a0804', 0.3)).join('') + [6, 12, 20].map((r) => E(80, 76, r * 2.4, r * 0.5, 'none', 'stroke="#8a4428" stroke-width=".4" opacity=".6"')).join('') + L(0, 58, 160, 58, '#6a3018', 0.5)
       + gcol(58, 64, 44, 2.2) + gcol(102, 64, 44, 2.2) + gcol(34, 72, 62, 3.4) + gcol(126, 72, 62, 3.4) + gcol(8, 84, 84, 5) + gcol(152, 84, 84, 5)
       + [[34, 22], [126, 22]].map(([x, y]) => L(x, 0, x, y - 2, '#2a1a10', 0.3) + E(x, y, 1.6, 2, '#5a3018', 'stroke="#2a1008" stroke-width=".2"') + glow(x, y + 1, 1.4, '#ffb85a', 0.4) + C(x, y + 1, 0.8, '#ffe0a0')).join('')
-      + magnaguard(44, 86, 3, 1, -34) + grievous(80, 86, 3.1) + magnaguard(116, 86, 3, -1, -34),
+      + magnaguard(36, 86, 3, 1, -34) + magnaguard(124, 86, 3, -1, -34) + grievousBoss(80, 92, 0.62),
 
     // 9 · Battle of Geonosis (fleet): the Clone Wars begin on the plains.
-    // Acclamators hang in the dusty sky; a Trade Federation core ship
-    // lifts off on its thrusters with more beyond; Republic gunships sweep
+    // Acclamators hang in the dusty sky; Trade Federation core ships
+    // stand on the plain on their landing legs; Republic gunships sweep
     // in while vulture droids dive at them, a Jedi starfighter on one
     // vulture's tail; AT-TEs stride across the plain firing their mass
     // drivers, clone troopers advancing, explosions and smoke all around.
@@ -477,7 +502,7 @@
       return fill([[0, '#5a2a1a'], [0.5, '#c8683a'], [1, '#e8a060']]) + glow(140, 50, 8, '#ffd08a', 0.3)
         + mesas(58, '#a85a3a', 0.6, 2) + [[12, 2.4, 16], [34, 2, 12], [150, 2.6, 18]].map(([x, w, h], k) => spire(x, 60, w, h, '#b8704a', '#8a4a30', 0.2, k)).join('') + R(0, 54, 160, 8, '#e08a54', 'opacity=".35"')
         + acclamator(38, 12, 0.75, 1) + acclamator(92, 6, 0.42, 1)
-        + coreShip(150, 50, 5) + coreShip(98, 54, 3.4) + smoke(118, 56, 16, 0.45, '#8a5a3a', '#b88a64') + coreShip(122, 40, 13)
+        + coreShip(150, 52.4, 5, true) + coreShip(98, 54, 3.4, true) + smoke(106, 58, 16, 0.4, '#8a5a3a', '#b88a64') + coreShip(122, 45.6, 12.5, true)
         + (() => { const [gr, d] = LG([[0, '#b8643a'], [1, '#7a3a1e']]); return d + P('M0 62 Q80 58 160 62 L160 90 L0 90Z', gr); })() + P('M0 62 Q80 58 160 62', 'none', 'stroke="#d88a5a" stroke-width=".5"')
         + [[48, 66, 2], [138, 72, 2.4], [96, 76, 1.8]].map(([x, y, r]) => smoke(x, y, 18, 0.45) + fire(x, y, r)).join('') + [[20, 70], [112, 68], [150, 82]].map(([x, y]) => E(x, y, 3, 0.8, '#5a2a14', 'opacity=".7"')).join('')
         + atte(t1[0], t1[1], t1[2], 1) + atte(t2[0], t2[1], t2[2], 1)
@@ -504,7 +529,7 @@
       + sailer(56, 55, 1.5)
       + P('M0 60 C8 62 14 66 30 64', 'none', 'stroke="#2a2a2e" stroke-width=".9"') + [[2, 60], [10, 62], [2, 66]].map(([x, y]) => R(x, y, 6, 4, '#5a4a3a', 'stroke="#2a1e14" stroke-width=".2"') + L(x, y + 2, x + 6, y + 2, '#2a1e14', 0.2)).join('')
       + geonosian(22, 68, 1.2, 1) + geonosian(98, 67, 1.1, -1)
-      + magnaguard(40, 86, 3, 1, -30) + dooku(80, 86, 3.2, 1) + grievous(116, 86, 3, -1),
+      + magnaguard(40, 86, 3, 1, -30) + dooku(80, 86, 3.2, 1) + grievousBoss(124, 92, 0.56),
   };
   Object.assign(SA.scenes, GE);
   SA.worlds.geonosis = ['orbital_defense', 'hive_spires', 'droid_foundry', 'conveyor_belts', 'jedi_starfighters', 'the_strike_team', 'droideka_wall', 'magnaguard_hall', 'battle_of_geonosis', 'dookus_hangar'];
