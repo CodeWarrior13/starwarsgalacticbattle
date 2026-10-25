@@ -225,7 +225,10 @@
       screen.appendChild(view);
       window.scrollTo({ top: 0 });
       $$('.main-nav button').forEach((btn) => btn.classList.toggle('active', btn.dataset.nav === 'home'));
-      this.env = new root.Env($('[data-env]', view), this.planetId || 'tatooine', ships ? 'space' : 'ground');
+      // 2.4: approved worlds show the stage's own scene behind the battle.
+      const scene = root.StageArt24 && root.StageArt24.forStage ? root.StageArt24.forStage(this.params) : '';
+      if (scene) this.field.insertAdjacentHTML('afterbegin', `<div class="stage-scene">${scene}</div>`);
+      this.env = new root.Env($('[data-env]', view), this.planetId || 'tatooine', ships ? 'space' : 'ground', scene ? { overlay: true } : undefined);
       this.updateAll();
       this.renderActions(null);
     },
@@ -2223,6 +2226,10 @@
           ${p.type === 'secret' ? '<button class="btn btn-primary" type="button" data-r="secret">Return to the Monolith</button>' : isTower ? `<button class="btn" type="button" data-r="tower-exit">Leave tower</button><button class="btn btn-primary" type="button" data-r="tower">${won ? `Climb to floor ${rewards.towerFloor}` : `Restart from floor ${rewards.towerFloor}`}</button>` : nextInPlanet ? '<button class="btn btn-primary" type="button" data-r="next">Next stage</button>' : nextPlanet ? `<button class="btn btn-primary" type="button" data-r="planet">Travel to ${esc(nextPlanet.name)}</button>` : '<button class="btn btn-primary" type="button" data-r="campaign">Continue</button>'}
         </div>`, { small: true, dismissable: false, cls: 'result-modal' });
       if (won) this.spinReel(m.root, rewards);
+      // 2.4: what this play session has earned, and the rate per hour.
+      const rateLine = won && root.QoL24 ? root.QoL24.rateLine() : '';
+      const rw = m.root.querySelector('.rewards[data-rewards]');
+      if (rateLine && rw) rw.insertAdjacentHTML('afterend', `<p class="muted small session-rate" data-rewards hidden>${esc(rateLine)}</p>`);
       if (rewards.levelUps && rewards.levelUps.length) setTimeout(() => this.rankUp(rewards.levelUps[rewards.levelUps.length - 1]), won ? 4400 : 900);
       const curMode = () => (m.root.querySelector('[data-auto-mode].on') || {}).dataset ? m.root.querySelector('[data-auto-mode].on').dataset.autoMode : 'off';
       let countdown = null;

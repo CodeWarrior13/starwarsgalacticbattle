@@ -335,6 +335,9 @@
     ? { credits: 1500, aurodium: firstClear ? 0 : 1, aurodiumMax: firstClear ? 0 : 1, kyber: 0, card: null, holocron: firstClear }
     : baseBossRewards(enc, firstClear));
 
+  // The Hoth Star Destroyer gets its detailed 2.4 portrait.
+  if (D.UNIT_MAP.star_destroyer && root.Art && root.Art.CHARACTER_IDS.includes('star_destroyer_24')) D.UNIT_MAP.star_destroyer.portrait = 'star_destroyer_24';
+
   // ---------- Progress rules ----------
   // Worlds finished before 2.4 stay open (next world, squad slots) even
   // though they now have more stages. Snapshotted once per save.
@@ -408,6 +411,82 @@
     if (enc && enc.main && !out.__lib && this.planetComplete(enc.planet)) out.liberated = D.PLANET_MAP[enc.planet].name;
     return out;
   };
+
+
+  // ---------- Quality of life ----------
+  // 1. The results screen shows what this play session has earned and the
+  //    rate per hour. 2. Cleared stages get a "Replay ×3" button that runs
+  //    the battle three times on Auto. 3. Maxed cards (top level and top
+  //    stars) can sell spare shards: credits by rarity, Kyber for secret cards.
+  const SESSION = { credits: 0, start: 0, battles: 0 };
+  const SHARD_PRICE = { common: 100, rare: 125, epic: 150, legendary: 200, mythic: 250 };
+  const SECRET_PER_KYBER = 4;
+  const qol = {
+    on,
+    session: SESSION,
+    rateLine() {
+      if (!on() || !SESSION.start || !SESSION.credits) return '';
+      const hrs = Math.max((Date.now() - SESSION.start) / 3600000, 1 / 60);
+      const rate = Math.round(SESSION.credits / hrs);
+      return `This session: ${UI.fmt(SESSION.credits)} credits over ${SESSION.battles} battle${SESSION.battles === 1 ? '' : 's'} · about ${UI.fmt(rate)} an hour`;
+    },
+    // What the spare shards of a maxed card sell for, or null.
+    sellOffer(id) {
+      if (!on() || !Player.owns(id)) return null;
+      const u = Player.unit(id);
+      const def = D.UNIT_MAP[id];
+      if (!u || !def || u.level < D.MAX_LEVEL || u.stars < D.MAX_STARS || !u.shards) return null;
+      if (def.rarity === 'secret') {
+        const kyber = Math.floor(u.shards / SECRET_PER_KYBER);
+        return kyber ? { shards: kyber * SECRET_PER_KYBER, kyber, credits: 0 } : null;
+      }
+      return { shards: u.shards, kyber: 0, credits: u.shards * (SHARD_PRICE[def.rarity] || 100) };
+    },
+    sell(id) {
+      const o = qol.sellOffer(id);
+      if (!o) return null;
+      const u = Player.unit(id);
+      u.shards -= o.shards;
+      Player.state.credits += o.credits;
+      Player.state.crystals += o.kyber;
+      Player.save();
+      return o;
+    },
+    // Three battles in a row on Auto, with the squad you last used.
+    replay3(params) {
+      Player.state.autoNext = 'repeat';
+      Player.state.repeatN = 2;
+      Player.state.repeatLeft = 2;
+      Player.save();
+      try {
+        const k = 'swcg-battle-prefs';
+        const pr = JSON.parse(localStorage.getItem(k)) || {};
+        pr.auto = true;
+        localStorage.setItem(k, JSON.stringify(pr));
+      } catch (e) { /* prefs are optional */ }
+      if (root.BattleUI && root.BattleUI.quickStart) root.BattleUI.quickStart(params);
+      else UI.App.go('squad', params);
+    },
+  };
+  const baseComplete2 = Player.completeEncounter;
+  Player.completeEncounter = function (params, won, rng) {
+    const before = this.state.credits;
+    const out = baseComplete2.call(this, params, won, rng);
+    if (on() && params && params.type !== 'tutorial') {
+      if (!SESSION.start || Date.now() - SESSION.last > 30 * 60000) { SESSION.start = Date.now() - 60000; SESSION.credits = 0; SESSION.battles = 0; }
+      SESSION.last = Date.now();
+      SESSION.battles += 1;
+      SESSION.credits += Math.max(0, this.state.credits - before);
+    }
+    return out;
+  };
+  root.QoL24 = qol;
+
+  // ---------- Card levels 31-35 cost more ----------
+  // A quarter more for each level from 31 to 35, so taking a card from level
+  // 1 to 35 costs about 150,000 credits instead of 140,000.
+  const baseLevelCost = D.levelCost;
+  D.levelCost = (level) => (level >= 31 && level <= 34 ? Math.round(baseLevelCost(level) * 1.25) : baseLevelCost(level));
 
   // ---------- Liberator of the Galaxy ----------
   if (H) {

@@ -114,6 +114,142 @@
     + E(44, 44, 3, 1.6, '#f4efe6') + E(56, 44, 3, 1.6, '#f4efe6') + C(44, 44, 1.2, '#4a7aaa') + C(56, 44, 1.2, '#4a7aaa') + brows('#a89888', { y: 40, spread: 6, angry: true, w: 1.4 })
     + P('M48 46 Q47 53 50 55 Q53 53 52 46', 'none', 'stroke="#000" stroke-opacity=".25" stroke-width=".9"') + mouth('frown', { y: 60, color: '#7a4a3e' }));
 
+  // The Invisible Hand (Update 2.4 fleet raid): Grievous's Providence carrier, nose left, burning
+  // over Coruscant's night side. Venators, ARC-170s and Jedi interceptors fight Vulture droids and
+  // Tri-Fighters; every shot runs from a gun to a real target.
+  add('char', 'cb_invisible', () => {
+    let s = 31;
+    const rnd = () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
+    const f = (n) => Number(n).toFixed(2);
+    const glow = (c, b) => `style="filter:drop-shadow(0 0 ${b}px ${c})"`;
+    // A ship at (x, y), scaled, turned to `rot` degrees; its nose points along +x.
+    const at = (x, y, sc, rot, body) => (Math.abs(rot) === 180 ? `<g transform="translate(${f(x)} ${f(y)}) scale(${f(-sc)} ${f(sc)})">${body}</g>` : `<g transform="translate(${f(x)} ${f(y)}) rotate(${f(rot)}) scale(${f(sc)})">${body}</g>`);
+    const nose = (x, y, sc, rot, len) => { const a = (rot * Math.PI) / 180; return [x + Math.cos(a) * len * sc, y + Math.sin(a) * len * sc]; };
+    // Fire from a gun to a target: short bolts lined up along the line of fire, a flash where it lands.
+    const shot = ([x1, y1], [x2, y2], c, n = 2, hit = true) => {
+      const d = Math.hypot(x2 - x1, y2 - y1), ux = (x2 - x1) / d, uy = (y2 - y1) / d, len = Math.min(3.4, d * 0.2), px = -uy * 0.45, py = ux * 0.45;
+      let o = `<g ${glow(c, 1.1)}>`;
+      for (let k = 0; k < n; k++) {
+        const t = n === 1 ? 0.5 : 0.25 + (0.5 * k) / (n - 1);
+        const ax = x1 + (x2 - x1) * t, ay = y1 + (y2 - y1) * t;
+        for (const sd of [-1, 1]) {
+          const a = [ax + px * sd, ay + py * sd], b = [a[0] + ux * len, a[1] + uy * len];
+          o += L(f(a[0]), f(a[1]), f(b[0]), f(b[1]), c, 0.6) + L(f(a[0]), f(a[1]), f(b[0]), f(b[1]), '#fff', 0.22);
+        }
+      }
+      if (hit) o += C(f(x2), f(y2), 0.9, c, 'opacity=".5"') + C(f(x2), f(y2), 0.35, '#fff');
+      return o + '</g>';
+    };
+
+    // ---------- the good guys ----------
+    const venator = () => P('M15 0 L-11 -5.8 L-14.4 -2.2 L-14.4 2.2 L-11 5.8Z', '#d8dade') + P('M15 0 L-11 5.8 L-14.4 2.2 L-14.4 0Z', '#9ea2aa')
+      + P('M12.6 0 L-9 -2.7 L-9 2.7Z', '#b8342a') + L(12, 0, -10, 0, '#7a1e18', 0.35)
+      + [-6, -2, 2, 6].map((x) => L(x, -(15 - x) * 0.2, x, (15 - x) * 0.2, '#7e828a', 0.18)).join('')
+      + R(-10.4, -4.8, 3.4, 1.8, '#b4b8c0') + R(-10.4, 3, 3.4, 1.8, '#8a8e96') + C(-8.6, -5.4, 0.7, '#c8ccd2') + C(-8.6, 5.4, 0.7, '#9ea2aa')
+      + [[4, -2.4], [0, -3.4], [-4, -4.4], [4, 2.4], [0, 3.4], [-4, 4.4]].map(([x, y]) => C(x, y, 0.32, '#5a5e66')).join('')
+      + `<g ${glow('#6ab8ff', 1.6)}>${[-1.6, 0, 1.6].map((y) => C(-14.8, y, y ? 0.75 : 1, '#cfeeff')).join('')}</g>`;
+    const arc170 = () => P('M7 0 L2 -0.9 L-6 -0.9 L-6 0.9 L2 0.9Z', '#e4e2da') + C(4.6, 0, 0.55, '#2a3a52')
+      + P('M1 -0.9 L-3.6 -6 L-5.6 -6 L-4.4 -0.9Z', '#d2d0c8') + P('M1 0.9 L-3.6 6 L-5.6 6 L-4.4 0.9Z', '#b8b6ae')
+      + R(-4.4, -5.4, 2.2, 0.6, '#b8342a') + R(-4.4, 4.8, 2.2, 0.6, '#b8342a') + L(-3.6, -6, 0.8, -6, '#9a9890', 0.4) + L(-3.6, 6, 0.8, 6, '#9a9890', 0.4)
+      + `<g ${glow('#ffb080', 1)}>${C(-6.2, -0.5, 0.4, '#ffd0a0')}${C(-6.2, 0.5, 0.4, '#ffd0a0')}</g>`;
+    const eta2 = (paint) => P('M4.6 0 L1.4 -1 L-2.4 -1 L-2.4 1 L1.4 1Z', paint) + C(2.4, 0, 0.6, '#1a2638')
+      + P('M0.6 -1 L-1.6 -1 L-2.4 -5 L0 -5Z', paint) + P('M0.6 1 L-1.6 1 L-2.4 5 L0 5Z', paint)
+      + R(-2.2, -4.6, 2, 2.6, '#2a2e36', 'opacity=".85"') + R(-2.2, 2, 2, 2.6, '#2a2e36', 'opacity=".85"')
+      + `<g ${glow('#6ab8ff', 1)}>${C(-2.8, -0.5, 0.35, '#bfe8ff')}${C(-2.8, 0.5, 0.35, '#bfe8ff')}</g>`;
+
+    // ---------- the droids ----------
+    const vulture = () => P('M6.4 0 L3 -0.7 L-4 -0.6 L-4 0.6 L3 0.7Z', '#c9ad7c') + C(5.2, 0, 0.45, '#ff3a2a')
+      + [[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([a, b]) => P(`M${a < 0 ? -2.6 : 1} ${b * 0.6} L${a < 0 ? -4.6 : -0.2} ${b * 5.2} L${a < 0 ? -3.4 : 1} ${b * 5.4} L${a < 0 ? -1.2 : 2.4} ${b * 0.6}Z`, b < 0 ? '#bfa272' : '#8a7450')).join('')
+      + [[-4, -5.3], [0.4, -5.3], [-4, 5.3], [0.4, 5.3]].map(([x, y]) => C(x, y, 0.45, '#5a4a30')).join('');
+    const tri = () => [0, 120, 240].map((a) => `<g transform="rotate(${a})">${P('M-0.7 -1.1 L-0.45 -5 L0.45 -5 L0.7 -1.1Z', a ? '#7e828c' : '#9a9ea8')}${C(0, -5.3, 0.75, '#5a5e68')}${L(0, -6, 0, -6.9, '#3a3e48', 0.4)}</g>`).join('')
+      + C(0, 0, 1.7, '#6a6e78') + C(0, 0, 1.2, '#4a4e58') + `<g ${glow('#ff3a2a', 1)}>${C(0, 0, 0.55, '#ff4a3a')}</g>`;
+
+    // ---------- background ----------
+    let o = '<defs><linearGradient id="cbiSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#04050c"/><stop offset=".6" stop-color="#0a0d1e"/><stop offset="1" stop-color="#140e1c"/></linearGradient>'
+      + '<radialGradient id="cbiCity" cx=".5" cy="0" r=".75"><stop offset="0" stop-color="#3a2614"/><stop offset=".28" stop-color="#1e1412"/><stop offset="1" stop-color="#08060a"/></radialGradient>'
+      + '<linearGradient id="cbiHull" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9aa0ae"/><stop offset=".5" stop-color="#6a7080"/><stop offset="1" stop-color="#3e424e"/></linearGradient>'
+      + '<linearGradient id="cbiTower" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8a909e"/><stop offset="1" stop-color="#464a56"/></linearGradient>'
+      + '<radialGradient id="cbiFire"><stop offset="0" stop-color="#fff6c8"/><stop offset=".35" stop-color="#ffb030"/><stop offset=".7" stop-color="#ff4a10" stop-opacity=".6"/><stop offset="1" stop-color="#ff2a00" stop-opacity="0"/></radialGradient></defs>'
+      + R(0, 0, 100, 100, 'url(#cbiSky)') + E(24, 18, 30, 14, '#2a1a5a', 'opacity=".28"') + E(80, 30, 26, 12, '#1a3a6a', 'opacity=".25"') + E(56, 8, 22, 6, '#4a2a6a', 'opacity=".18"');
+    for (let k = 0; k < 90; k++) o += C(f(rnd() * 100), f(rnd() * 70), f(rnd() * 0.32 + 0.1), k % 9 ? '#fff' : '#cfe4ff', `opacity="${f(rnd() * 0.6 + 0.25)}"`);
+    o += [[8, 8], [70, 6], [44, 18], [96, 38]].map(([x, y]) => `<g ${glow('#cfe4ff', 1.4)}>${C(x, y, 0.5, '#fff')}${L(x - 1.6, y, x + 1.6, y, '#fff', 0.15)}${L(x, y - 1.6, x, y + 1.6, '#fff', 0.15)}</g>`).join('');
+
+    // Coruscant's night side: the glow of a planet-wide city, skylanes and the atmosphere.
+    o += C(50, 150, 82, 'url(#cbiCity)') + C(50, 150, 82, 'none', 'stroke="#ffb86a" stroke-width="1" opacity=".6"') + C(50, 150, 83.6, 'none', 'stroke="#4a8aff" stroke-width="2.8" opacity=".2"') + C(50, 150, 86, 'none', 'stroke="#4a8aff" stroke-width="2" opacity=".07"');
+    const blocks = [[18, 82], [36, 76], [58, 74], [76, 80], [88, 90], [8, 94], [48, 88], [28, 92], [66, 92]];
+    for (let k = 0; k < 300; k++) {
+      const [bx, by] = blocks[k % blocks.length];
+      const x = bx + (rnd() - 0.5) * 18, y = by + (rnd() - 0.5) * 9;
+      if (Math.hypot(x - 50, y - 150) > 81) continue;
+      o += C(f(x), f(y), f(0.12 + rnd() * 0.28), ['#ffd08a', '#ffb050', '#fff0c0', '#ffc070', '#9ad0ff'][k % 5], `opacity="${f(0.35 + rnd() * 0.6)}"`);
+    }
+    o += [74, 82, 90].map((y, i) => P(`M-4 ${y + 6} Q50 ${y - 7} 104 ${y + 6}`, 'none', `stroke="#ffc878" stroke-width=".3" stroke-dasharray="${1.2 + i} ${1 + i * 0.6}" opacity=".4"`)).join('');
+
+    // ---------- the Republic fleet ----------
+    const V = [[14, 22, 0.55, 0], [32, 11, 0.3, 4], [86, 18, 0.5, 180], [90, 42, 0.4, 180]];
+    o += V.map(([x, y, sc, rot]) => at(x, y, sc, rot, venator())).join('');
+
+    // ---------- the Invisible Hand ----------
+    o += P('M58 56 L62 66.4 L66.4 66.4 L68 56Z', '#565a66') + P('M62 66.4 L66.4 66.4 L66 65 L62.4 65Z', '#30333c') + L(60, 58, 63, 65, '#3e424c', 0.3)
+      + P('M7 51 C7 47.6 11 46.4 22 45.8 L80 44 L92 46 L94 52 L92 54.6 L80 56.4 L22 56.4 C11 56 7 54.6 7 51Z', 'url(#cbiHull)')
+      + P('M14 46.6 L22 45.8 L80 44 L92 46 L80 47.4 L22 48.6Z', '#a8aebb') + P('M22 56.4 L80 56.4 L92 54.6 L80 54 L22 54.4Z', '#2e3038')
+      + E(9.4, 51.2, 1.9, 2.6, '#1a1c22') + `<g ${glow('#ffcf7a', 1.6)}>${E(9.2, 51.2, 1.1, 1.8, '#ffcf7a', 'opacity=".85"')}</g>`
+      + P('M13 47.6 L24 47 L24 48.4 L13 49Z', '#3a5a8a') + P('M13 53.6 L24 54 L24 55 L13 54.8Z', '#3a5a8a', 'opacity=".8"');
+    for (let x = 26; x <= 88; x += 5) o += L(x, 46, x, 55.6, '#2e3038', 0.22, 'opacity=".5"');
+    for (let x = 16; x < 88; x += 1.6) {
+      if (rnd() < 0.6) o += C(f(x), 49.6, 0.22, '#ffd98a', 'opacity=".85"');
+      if (rnd() < 0.45) o += C(f(x + 0.8), 52.6, 0.2, '#ffd98a', 'opacity=".65"');
+    }
+    const guns = [[30, 45.4], [46, 44.9], [74, 44.2], [86, 45.2]];
+    o += guns.map(([x, y]) => R(x - 1, y - 0.6, 2, 1, '#4a4e5a') + C(x, y - 0.6, 0.6, '#5a5e6a')).join('')
+      + P('M54 45 L58 24 L66 22 L68 44Z', 'url(#cbiTower)') + P('M58 24 L60 23.6 L56 44.8 L54 45Z', '#a8aebb', 'opacity=".6"')
+      + [28, 32, 36, 40].map((y) => L(58 - (y - 24) * 0.19, y, 66.4 + (y - 22) * 0.07, y, '#3e424c', 0.25)).join('')
+      + [[60, 28], [63, 33], [61, 38], [64, 26]].map(([x, y]) => C(x, y, 0.28, '#ffd98a', 'opacity=".8"')).join('')
+      + R(56, 19.6, 12, 5, '#7a808e', 'rx="1"') + R(56, 23, 12, 1.4, '#4e5260') + `<g ${glow('#ffcf7a', 1.2)}>${R(57, 20.8, 10, 1.2, '#ffcf7a', 'opacity=".9"')}</g>`
+      + L(62, 19.6, 62, 14.4, '#7a808e', 0.45) + L(65.4, 19.6, 66.4, 16, '#7a808e', 0.35)
+      + `<g ${glow('#6ab8ff', 2.2)}>${[47.6, 50.2, 52.8].map((y) => E(94.4, y, 1.1, 1, '#cfeeff')).join('')}</g>` + R(95, 47, 5, 7, '#6ab8ff', 'opacity=".12"');
+
+    // ---------- fighters, each firing at something real ----------
+    const F = {
+      arcA: [22, 63, 0.75, -24], vultA: [12, 68, 0.7, -24],
+      triA: [32, 32, 0.6, 210], arcB: [44, 35, 0.7, 200],
+      yellow: [16, 40, 0.7, 14], red: [12, 36, 0.65, 14],
+      vultB: [76, 31, 0.65, 160], triB: [83, 63, 0.6, 200], arcC: [94, 66, 0.7, 196], vultC: [50, 66, 0.6, 150],
+    };
+    const N = (k, len) => nose(F[k][0], F[k][1], F[k][2], F[k][3], len);
+    const vBow = (i) => nose(V[i][0], V[i][1], V[i][2], V[i][3], 13);
+    // capital ships trade broadsides
+    o += shot(vBow(0), [38, 46.2], '#4ab8ff') + shot(vBow(1), [60, 21], '#4ab8ff', 1) + shot(vBow(2), [66, 26], '#4ab8ff') + shot(vBow(3), [84, 47.4], '#4ab8ff', 1)
+      + shot([guns[0][0], guns[0][1] - 1], [16, 24], '#ff3a3a') + shot([guns[2][0], guns[2][1] - 1], [84, 20], '#ff3a3a') + shot([guns[3][0], guns[3][1] - 1], [88, 41], '#ff3a3a', 1)
+      // dogfights, at close range
+      + shot(N('vultA', 6.4), N('arcA', -5), '#ff3a3a', 1) + shot(N('arcB', 7), N('triA', 0), '#4ab8ff', 1)
+      + shot(N('vultB', 6.4), [86, 21], '#ff3a3a', 1) + shot(N('arcC', 7), N('triB', 0), '#4ab8ff', 1) + shot(N('yellow', 4.6), [22, 46.4], '#4ab8ff', 1);
+    o += at(...F.arcA, arc170()) + at(...F.vultA, vulture()) + at(...F.triA, tri()) + at(...F.arcB, arc170())
+      + at(...F.yellow, eta2('#e8c030')) + at(...F.red, eta2('#c8402a'))
+      + at(...F.vultB, vulture()) + at(...F.triB, tri()) + at(...F.arcC, arc170()) + at(...F.vultC, vulture());
+
+    // ---------- battle damage ----------
+    const fire = (x, y, r) => `<g ${glow('#ff7a1a', 2.4)}>${C(x, y, r * 1.6, 'url(#cbiFire)')}`
+      + P(`M${f(x - r * 0.7)} ${y} Q${f(x - r * 0.3)} ${f(y - r * 2.2)} ${f(x + r * 0.6)} ${f(y - r * 2.8)} Q${f(x + r * 0.3)} ${f(y - r * 1.4)} ${f(x + r * 0.8)} ${y}Z`, '#ffb030', 'opacity=".9"')
+      + C(x, y, r * 0.5, '#fff2c0') + '</g>';
+    const smoke = (x, y, n, dx, dy) => Array.from({ length: n }, (_, k) => C(f(x + k * dx), f(y + k * dy), f(1 + k * 0.6), k % 2 ? '#26262c' : '#34343c', `opacity="${f(0.6 - k * 0.07)}"`)).join('');
+    const hits = [[36, 46.2, 1.4], [74, 55.4, 1.2], [46, 54.2, 1], [62, 30, 1.1], [86, 47.6, 1]];
+    o += hits.map(([x, y, r]) => E(x, y, r * 2.2, r * 1.2, '#14141a', 'opacity=".7"')).join('')
+      + smoke(36, 44.4, 7, 0.8, -2.6) + smoke(62, 28.6, 5, 1.6, -2) + smoke(74, 57, 6, 1.6, 2.4) + smoke(86, 46, 5, 1.8, -1.8)
+      + hits.map(([x, y, r]) => fire(x, y, r)).join('')
+      + [[90, 58.4], [92.4, 57], [88, 60.2], [93.4, 60]].map(([x, y]) => C(x, y, 0.3, '#ffe0a0')).join('');
+    return o;
+  });
+  // Battle shapes, top-down with the nose up like the other ships.
+  add('ship', 'providence', () => P('M50 4 C58 4 62 10 62 20 L60 86 L56 94 L44 94 L40 86 L38 20 C38 10 42 4 50 4Z', '#9a927e')
+    + shade('M50 4 C42 4 38 10 38 20 L40 86 L44 94 L50 94Z', 0.14) + P('M44 8 C46 6 54 6 56 8 L55 14 L45 14Z', '#ffcf7a', 'opacity=".8"')
+    + R(41, 18, 18, 3, '#4a6a9a') + [30, 42, 54, 66, 78].map((y) => L(39.6, y, 60.4, y, '#5a554a', 0.6)).join('') + L(50, 16, 50, 88, '#5a554a', 0.6)
+    + P('M46 44 L54 44 L55 70 L45 70Z', '#6e685c') + R(44, 52, 12, 6, '#b8ae9a', 'rx="1"') + R(45.6, 53.6, 8.8, 1.2, '#ffd98a', 'opacity=".8"')
+    + [[43, 30], [57, 36], [44, 76], [56, 62]].map(([x, y]) => C(x, y, 2, '#ff8a2a', 'opacity=".75"') + C(x, y, 0.9, '#ffe0a0')).join('')
+    + [43, 47.6, 52.4, 57].map((x) => C(x, 95, 2.2, '#9fdcff', 'class="eng" style="--eng:#6fc8ff"')).join(''));
+  add('ship', 'trifighter', () => [0, 120, 240].map((a) => `<g transform="rotate(${a} 50 50)">${P('M46 46 L47.6 10 L52.4 10 L54 46Z', '#8a8e98')}${shade('M46 46 L47.6 10 L50 10 L50 46Z', 0.15)}${C(50, 9, 4.4, '#5a5e68')}${L(50, 5, 50, 1, '#3a3e48', 1.4)}</g>`).join('')
+    + C(50, 50, 13, '#6a6e78') + C(50, 50, 9, '#4a4e58') + C(50, 50, 4, '#ff3a2a', 'class="eng" style="--eng:#ff3a2a"'));
+
 
   // ---------- Hologram Shop goods (real objects, no crates) ----------
   const plate = (bg) => R(0, 0, 100, 100, bg) + R(0, 0, 100, 100, '#ffffff', 'opacity=".03"') + E(50, 90, 36, 6, '#000', 'opacity=".35"');
@@ -196,6 +332,8 @@
     { id: 'raid_snoke', name: 'Supreme Leader Snoke', kind: 'character', faction: 'dark', rarity: 'legendary', role: 'support', spd: 120, traits: ['leader'], home: 'coruscant', bio: 'Raid boss.' },
     // Update 2.4: the first fleet raid boss. The card shows the Exegol portrait drawn in bosses22.js.
     { id: 'raid_xyston', name: 'Xyston Star Destroyer', kind: 'ship', faction: 'dark', rarity: 'legendary', role: 'tank', shape: 'xyston', portrait: 'xyston_22', spd: 96, traits: ['capital'], home: 'exegol', bio: 'Raid boss. A Sith Eternal Star Destroyer of the Final Order, built in secret under Exegol, with a planet-killing axial superlaser down its keel.' },
+    { id: 'raid_invisible', name: 'The Invisible Hand', kind: 'ship', faction: 'dark', rarity: 'legendary', role: 'tank', shape: 'providence', portrait: 'cb_invisible', spd: 96, traits: ['capital'], home: 'coruscant',
+      bio: 'General Grievous\'s Providence-class flagship, holding the kidnapped Chancellor and burning above Coruscant.' },
   ];
   for (const c of NEW) {
     if (D.UNIT_MAP[c.id]) continue;
@@ -760,6 +898,7 @@
     { id: 'hn_tie_dagger', name: 'Sith TIE Dagger', kind: 'ship', shape: 'tiedagger', portrait: 'hn_tie_dagger', role: 'attacker', spd: 150, traits: ['fighter'], home: 'exegol',
       abilities: [ab('Twin Laser Cannons', 0, 'enemy', [dmg(0.6, 2)], 'Hits one ship twice.')],
       ultimate: ult('Strafing Run', 'allEnemies', [dmg(1.1)], 'Dives through your whole fleet.', '') },
+    { id: 'hn_trifighter', name: 'Droid Tri-Fighter', kind: 'ship', shape: 'trifighter', role: 'attacker', spd: 150, abilities: [ab('Triple Laser', 0, 'enemy', [dmg(0.9)], 'Three cannons on one ship.')], ultimate: ult('Buzz Missiles', 'enemy', [dmg(1.5), debuff('defDown', 2, 0.5)], 'Buzz droids latch on and tear at the hull.', '') },
   ];
   for (const m of MINIONS) {
     if (D.UNIT_MAP[m.id]) continue;
@@ -795,8 +934,16 @@
       slots: ['hn_sith_destroyer', 'hn_tie_dagger', 'raid_xyston', 'hn_tie_dagger', 'hn_sith_destroyer'], start: [1, 2, 3],
       mech: [['Axial Superlaser', 'Locks onto your strongest ship, then fires on its next turn for massive damage, and charges again every 4 turns. A locked ship with Defense Up takes half the blast.'], ['Sith Fleet', 'A Sith Star Destroyer escort rises from the storm every 3 turns. Escorts can Taunt to screen the flagship.'], ['The Final Order', 'At 50% health every waiting destroyer rises at once and the whole Sith fleet gains Offense Up.']],
     },
+    // Update 2.4 (switch in js/liberation24.js): a fleet raid, fought with ships. It joins the
+    // weekly rotation only once 2.4 is on.
+    {
+      id: 'raid_invisible', name: 'The Invisible Hand', sub: 'Battle of Coruscant', planet: 'coruscant', pool: 850000, color: '#ff8a3a', kind: 'ship', v24: true,
+      slots: ['vulture_droid', 'hn_trifighter', 'raid_invisible', 'hn_trifighter', 'vulture_droid'], start: [0, 2, 4],
+      mech: [['Droid Tri-Fighters', 'Every 2 turns the Invisible Hand launches a fresh wave of Droid Tri-Fighters.'], ['Hull Breach', 'Below 50% health the hull burns: it loses health every turn, but hits much harder.']],
+    },
   ];
   const v24 = () => !!(root.Update24 && root.Update24.on());
+  D.STATUS_INFO.breach = { label: 'Hull Breach', icon: '✷', kind: 'mech', desc: 'The hull is burning: loses health every turn, but hits much harder.' };
   // Update 2.2 (switch in js/friends.js, off until the 2.2 date is set): raid bosses get at
   // least 5,000,000 health and hit much harder; their guards hit a bit harder.
   const v22 = () => !!(root.Update22 && root.Update22.on());
@@ -820,6 +967,7 @@
     raid_sarlacc: { role: 'tank', spd: 70, abilities: [ab('Acid Spray', 0, 'allEnemies', [dmg(0.8), debuff('burn', 2, 0.4)], 'Digestive acid over everyone.'), ab('Quake', 3, 'allEnemies', [dmg(0.6), debuff('stun', 1, 0.3)], 'The pit heaves.')], ultimate: ult('Swallow', 'allEnemies', [dmg(2.0)], 'The beak opens and the whole pit pulls inward.', '') },
     raid_snoke: { role: 'support', spd: 120, abilities: [ab('Force Lightning', 0, 'enemy', [dmg(1.3), debuff('stun', 1, 0.25)], 'Lightning from the throne.'), ab('Supreme Command', 3, 'allAllies', [buff('offUp', 2)], 'His guards strike harder.')], ultimate: ult('Bow Before Me', 'allEnemies', [dmg(1.8), debuff('offDown', 2)], 'Pulls every enemy to its knees.', 'Pathetic.') },
     raid_xyston: { role: 'tank', spd: 96, abilities: [ab('Turbolaser Broadside', 0, 'enemy', [dmg(1.3)], 'A broadside into one ship.'), ab('Exegol\'s Storm', 3, 'allEnemies', [dmg(0.7), debuff('offDown', 2, 0.6)], 'Drags the lightning storm over your fleet: damage and a 60% chance of Offense Down.'), ab('Tractor Lock', 4, 'enemy', [dmg(1.0), debuff('stun', 1), debuff('defDown', 2)], 'Holds one ship in place: damage, Stun and Defense Down.')], ultimate: ult('Sith Armada', 'allEnemies', [dmg(2.0), debuff('burn', 2)], 'Every Star Destroyer in the storm fires at once: heavy damage and Burn on your whole fleet.', 'The Sith Eternal will rise.') },
+    raid_invisible: { role: 'tank', spd: 96, abilities: [ab('Turbolaser Broadside', 0, 'enemy', [dmg(1.3)], 'Heavy fire on one ship.'), ab('Vulture Swarm', 3, 'allEnemies', [dmg(0.8), debuff('burn', 2, 0.4)], 'Droid fighters strafe every ship, with a chance to Burn.')], ultimate: ult('All Batteries', 'allEnemies', [dmg(1.9), debuff('defDown', 2)], 'Every gun on the Providence fires: heavy damage and Defense Down to your whole fleet.', 'Roger, roger.') },
   };
   for (const r of RAIDS) {
     const def = D.UNIT_MAP[r.id];
@@ -1160,7 +1308,7 @@
   const week = () => Math.floor((Date.now() + (S().weekShift || 0) * WEEK) / WEEK);
   // 2.4 raids join the rotation from the first full week after 2.4 ships, so the
   // boss never changes mid-week. Testers (2.4 switched on early) see them now.
-  const raidList = (w) => {
+  const raidList = (w = week()) => {
     const at = root.Update24 && root.Update24.at;
     const ready = v24() && (at == null || Date.now() < at || w > Math.floor(at / WEEK));
     return ready ? RAIDS : RAIDS.filter((r) => !r.v24);
@@ -1337,6 +1485,22 @@
             target.statuses.xylock = 99;
             ev.push({ type: 'status', uid: target.uid, status: 'xylock', turns: 1 }, { type: 'hnfx', fx: 'lock', uid: target.uid }, { type: 'log', text: `⚠ The Xyston's superlaser locks onto ${target.def.name}. It fires next turn!`, side: 'enemy' });
           }
+        }
+      } else if (unit.def.raid === 'raid_invisible') {
+        // Droid Tri-Fighters: every fallen or waiting tri-fighter launches together.
+        const wave = waiting.filter((u) => u.id === 'hn_trifighter');
+        if (T % 2 === 0 && wave.length) { for (const u of wave) spawn(this, u, ev); ev.push({ type: 'log', text: 'The Invisible Hand launches a wave of Droid Tri-Fighters!', side: 'enemy' }); }
+        // Hull Breach: below half health it burns every turn but hits much harder.
+        if (unit.enraged) {
+          if (!R.breach) {
+            R.breach = true;
+            unit.atk = Math.round(unit.atk * 1.5);
+            unit.statuses.breach = 99;
+            ev.push({ type: 'status', uid: unit.uid, status: 'breach', turns: 99 }, { type: 'log', text: 'Hull Breach! The Invisible Hand is burning, and every gun is firing at once.', side: 'enemy' });
+          }
+          const burn = Math.min(unit.hp - 1, Math.round(unit.maxHp * 0.003));
+          ev.push({ type: 'hnfx', fx: 'breach', uid: unit.uid });
+          if (burn > 0) this.applyDamage(unit, burn, false, ev, 'hazard');
         }
       }
       // Free anyone held once their captors are gone.
@@ -2828,6 +2992,11 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       sound('lightning');
       return this.wait(700);
     }
+    if (ev.fx === 'breach') {
+      ring(this, ev.uid, '#ff8a3a');
+      if (this.shake && !lite) this.shake();
+      return this.wait(300);
+    }
     if (['grab', 'drop', 'digest', 'mind'].includes(ev.fx)) {
       const c = this.cards[ev.uid];
       ring(this, ev.uid, ev.fx === 'mind' ? '#ff3a3a' : ev.fx === 'digest' ? '#ffb05a' : '#c88a5a');
@@ -2844,6 +3013,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     raid_sarlacc: (c) => ({ d: 2400, veil: 'radial-gradient(circle at 50% 60%, rgba(30,12,4,.9), rgba(210,160,90,.85))', extra: '<i class="teeth"></i>', title: 'SWALLOW', sub: 'The pit pulls everything in', shake: true }),
     raid_snoke: (c) => ({ d: 2600, veil: 'radial-gradient(circle at 50% 40%, rgba(90,0,0,.6), rgba(6,0,0,.96))', extra: '<i class="curtain l"></i><i class="curtain r"></i>' + Array.from({ length: 8 }, (_, k) => `<i class="bolt" style="--t:${0.5 + (k % 4) * 0.18}s;transform:rotate(${-70 + k * 20}deg)"></i>`).join(''), title: 'BOW BEFORE ME', sub: 'Supreme Leader Snoke' }),
     raid_xyston: (c) => ({ d: 2600, veil: 'radial-gradient(circle at 50% 30%, rgba(70,50,140,.55), rgba(4,2,10,.97))', extra: Array.from({ length: 6 }, (_, k) => `<i class="bolt" style="--c:#c8d0ff;--t:${0.2 + (k % 3) * 0.22}s;transform:rotate(${150 + k * 12}deg)"></i>`).join('') + Array.from({ length: 9 }, (_, k) => `<i class="xy-shot" style="--t:${0.7 + (k % 5) * 0.12}s;left:${8 + k * 10.5}%"></i>`).join(''), title: 'SITH ARMADA', sub: 'Every destroyer in the storm fires', shake: true }),
+    raid_invisible: (c) => ({ d: 2400, veil: 'radial-gradient(circle at 50% 45%, rgba(255,138,58,.45), rgba(4,6,18,.96))', extra: Array.from({ length: 8 }, (_, k) => `<i class="bolt" style="--t:${0.4 + (k % 4) * 0.15}s;transform:rotate(${-80 + k * 22}deg)"></i>`).join(''), title: 'ALL BATTERIES', sub: 'The Invisible Hand opens fire', shake: true }),
   };
   const baseSuper = BUI.superMove;
   BUI.superMove = async function (anim, actor, targets, ev) {
@@ -2855,7 +3025,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const d = lite ? 1200 : spec.d;
     const node = el(`<div class="hn-cine ${lite ? 'lite' : ''}" style="--d:${d}ms;--c:${r.color}"><div class="veil" style="background:${spec.veil}"></div>${lite ? '' : spec.extra}<div class="boss">${root.Art.unitArt(actor.def)}</div><div class="title"><small>${esc(r.name)}</small>${esc(spec.title)}</div></div>`);
     document.body.appendChild(node);
-    sound(actor.def.raid === 'raid_snoke' ? 'lightning' : actor.def.raid === 'raid_sarlacc' || actor.def.raid === 'raid_xyston' ? 'explosion' : 'reveal_legendary');
+    sound(actor.def.raid === 'raid_snoke' ? 'lightning' : ['raid_sarlacc', 'raid_invisible', 'raid_xyston'].includes(actor.def.raid) ? 'explosion' : 'reveal_legendary');
     if (spec.shake && this.shake) setTimeout(() => this.shake(), d * 0.5);
     await new Promise((res) => setTimeout(res, d / Math.max(1, this.speed > 1 ? this.speed * 0.7 : 1)));
     node.remove();
@@ -8260,7 +8430,7 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
   }
   const isOnline = (uid) => { const o = F.online[uid]; return !!(o && Date.now() - o.at < ONLINE_MS); };
   // What they're doing right now, if they share it (Settings can hide it).
-  const doingNow = (uid) => { const o = F.online[uid]; if (!isOnline(uid)) return 'Offline'; const l = o.a && root.FriendActivity ? root.FriendActivity.label(o.a) : ''; return l ? `Online · ${l}` : o.busy ? 'In a battle' : 'Online'; };
+  const doingNow = (uid) => { const o = F.online[uid]; if (!isOnline(uid)) return o && o.at && root.FriendActivity ? root.FriendActivity.lastSeen(o.at, o.a) : 'Offline'; const l = o.a && root.FriendActivity ? root.FriendActivity.label(o.a) : ''; return l ? `Online · ${l}` : o.busy ? 'In a battle' : 'Online'; };
 
   async function add(q, st) {
     const key = nameKey(q);

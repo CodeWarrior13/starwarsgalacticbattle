@@ -1578,6 +1578,8 @@
       const planet = root.GameData && root.GameData.PLANET_MAP[planetId];
       this.theme = this.mode === 'space' ? null : THEMES[planet ? planet.env : 'desert'];
       this.static = !!opts.static;
+      // overlay: a stage scene is drawn behind the canvas, so paint only the effects.
+      this.sceneMode = !!opts.overlay;
       this.g = {};
       this.fx = [];
       this.weatherP = [];
@@ -1819,7 +1821,9 @@
       const h = this.h;
       ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
       const J = { x: this.J.x, y: this.J.y };
-      if (this.mode === 'space') {
+      if (this.sceneMode) {
+        ctx.clearRect(0, 0, w, h);
+      } else if (this.mode === 'space') {
         ctx.fillStyle = '#03050b';
         ctx.fillRect(0, 0, w, h);
         spaceDraw(this, ctx, w, h, this.t, J);
