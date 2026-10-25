@@ -331,6 +331,8 @@
       + [[22, 72, 7, 5], [28, 68, 5, 4], [140, 72, 7, 5]].map(([x, y, w, h]) => R(x - w / 2, y - h / 2, w, h, '#5a5e66', 'stroke="#2a2e36" stroke-width=".3"') + R(x - w / 2, y - h / 2, w, 0.8, '#ffcf3a', 'opacity=".5"') + L(x - w / 2, y, x + w / 2, y, '#3a3e46', 0.2)).join('')
       + deathTrooper(62, 78, 2.6, -1) + deathTrooper(98, 78, 2.6, 1) + scout(36, 84, 2.6, 1) + scout(124, 84, 2.6, -1) + scout(144, 88, 2.7, -1, false) + scout(16, 88, 2.7, 1, false),
   };
+  // Shared with the later worlds' scene files.
+  Object.assign(SA.kit = SA.kit || {}, { deathTrooper, awing, lambda, gunsAt, shots, TIEGUNS });
   Object.assign(SA.scenes, N);
   SA.worlds.endor = ['forest_moon_landing', 'speeder_chase', 'ewok_village', 'bunker_approach', 'droid_rescue', 'imperial_shuttle', 'log_traps', 'bunker_guards', 'fleet_engagement', 'the_shield_generator'];
 })(typeof window !== 'undefined' ? window : globalThis);
