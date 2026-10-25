@@ -364,7 +364,8 @@
 .fp-acts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: min(100%, 440px); margin: 12px auto 4px; } .fp-acts.one { grid-template-columns: minmax(0, 260px); justify-content: center; }
 .fp-acts .btn { padding: 11px 8px; font-size: 14px; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .fp-acts .btn[disabled] { opacity: .45; cursor: not-allowed; }
-.fp-chips span { white-space: nowrap; }
+/* Chips stay on one line when they fit, but a long one (last online + what they were doing) wraps inside the card. */
+.fp-chips { min-width: 0; max-width: 100%; } .fp-chips span { white-space: nowrap; max-width: 100%; box-sizing: border-box; } .fp-chips span:first-child { white-space: normal; overflow-wrap: anywhere; line-height: 1.35; border-radius: 14px; }
 @media (max-width: 440px) {
   .fp-acts .btn { font-size: 12.5px; letter-spacing: .02em; padding: 11px 4px; }
   .fp-card .p2-top { grid-template-columns: 64px minmax(0, 1fr); gap: 10px; padding: 12px 44px 12px 12px; }
