@@ -194,6 +194,8 @@
     { id: 'raid_nihilus', name: 'Darth Nihilus', kind: 'character', faction: 'dark', rarity: 'legendary', role: 'attacker', spd: 140, traits: ['sith'], home: 'coruscant', bio: 'Raid boss.' },
     { id: 'raid_sarlacc', name: 'The Sarlacc', kind: 'character', faction: 'dark', rarity: 'legendary', role: 'tank', spd: 70, traits: [], home: 'tatooine', bio: 'Raid boss.' },
     { id: 'raid_snoke', name: 'Supreme Leader Snoke', kind: 'character', faction: 'dark', rarity: 'legendary', role: 'support', spd: 120, traits: ['leader'], home: 'coruscant', bio: 'Raid boss.' },
+    // Update 2.4: the first fleet raid boss. The card shows the Exegol portrait drawn in bosses22.js.
+    { id: 'raid_xyston', name: 'Xyston Star Destroyer', kind: 'ship', faction: 'dark', rarity: 'legendary', role: 'tank', shape: 'xyston', portrait: 'xyston_22', spd: 96, traits: ['capital'], home: 'exegol', bio: 'Raid boss. A Sith Eternal Star Destroyer of the Final Order, built in secret under Exegol, with a planet-killing axial superlaser down its keel.' },
   ];
   for (const c of NEW) {
     if (D.UNIT_MAP[c.id]) continue;
@@ -254,6 +256,46 @@
       + P('M38 40 L62 40 L60 46 L40 46Z', '#1a0202') + [44, 50, 56].map((x) => L(x, 50, x, 66, '#5a0806', 1.4)).join('')
       + L(78, 6, 70, 98, '#2a2a30', 2.6) + `<g ${glow('#ff6a3a', 3)}>${L(80, 4, 76.6, 34, '#ffd0a0', 2.2)}</g>`;
   });
+
+  // ---------- Update 2.4: the Xyston raid's Sith fleet ----------
+  // Top-down ships, nose up: a Xyston-class Star Destroyer (the raid boss's
+  // battle shape and its escorts) and the Sith Eternal's TIE Dagger.
+  const engR = (x, y, r) => `<g ${glow('#ff3a2a', 2)}>${C(x, y, r, '#ff6a4a')}${C(x, y, r * 0.45, '#ffe0d0')}</g>`;
+  const xyShip = () => {
+    const hull = lg([[0, '#4a4456'], [1, '#18161e']], 0, 0, 0, 1);
+    const side = lg([[0, '#5a5468'], [1, '#26232e']], 0, 0, 0, 1);
+    return P('M50 4 L86 88 L50 82 L14 88Z', hull) + P('M50 4 L14 88 L50 82Z', side)
+      + P('M50 4 L14 88', 'none', 'stroke="#c8d0ff" stroke-width=".7" opacity=".7"') + P('M50 4 L86 88', 'none', 'stroke="#ff4a4a" stroke-width=".5" opacity=".6"')
+      + P('M14 88 L50 82 L86 88 L86 91 L50 85 L14 91Z', '#100e14')
+      + [24, 38, 52, 66].map((y) => { const hw = (y - 4) * 0.43; return P(`M${50 - hw} ${y} L50 ${y - 2} L${50 + hw} ${y}`, 'none', 'stroke="#100e14" stroke-width=".7"'); }).join('')
+      + `<g ${glow('#ff2a3a', 1.4)}>${[31, 45, 59].map((y) => { const hw = (y - 4) * 0.36; return P(`M${50 - hw} ${y} L${50 - hw * 0.3} ${y - 1} M${50 + hw * 0.3} ${y - 1} L${50 + hw} ${y}`, 'none', 'stroke="#ff3a4a" stroke-width=".7"'); }).join('')}</g>`
+      + P('M47 18 L53 18 L55 70 L45 70Z', '#2a2632') + P('M47 18 L50 18 L50 70 L45 70Z', '#3a3644')
+      + `<g ${glow('#ff2a3a', 3)}>${E(50, 16, 3.6, 2.4, '#ff3a3a')}</g>` + E(50, 16, 1.5, 1, '#ffe0d8')
+      + P('M40 66 L60 66 L61 80 L39 80Z', '#34303e') + R(43, 60, 14, 7, '#3e3a48') + R(45, 56, 10, 5, '#4a4554') + R(43, 59, 14, 1.2, '#ff3a4a', 'opacity=".55"')
+      + engR(30, 90, 2.6) + engR(42, 89, 3) + engR(58, 89, 3) + engR(70, 90, 2.6);
+  };
+  const daggerShip = () => {
+    const wing = lg([[0, '#3a3842'], [1, '#141218']], 0, 0, 1, 0);
+    const wingR = lg([[0, '#141218'], [1, '#3a3842']], 0, 0, 1, 0);
+    return P('M6 10 L26 38 L26 62 L16 94 L4 62Z', wing) + P('M94 10 L74 38 L74 62 L84 94 L96 62Z', wingR)
+      + P('M6 10 L26 38 L26 62 L16 94', 'none', 'stroke="#d42a32" stroke-width="1.6"') + P('M94 10 L74 38 L74 62 L84 94', 'none', 'stroke="#d42a32" stroke-width="1.6"')
+      + [30, 50, 70].map((y) => L(8, y, 24, y, '#0a080c', 0.6) + L(76, y, 92, y, '#0a080c', 0.6)).join('')
+      + R(26, 46, 48, 8, '#2a2830') + C(50, 50, 13, '#2e2c36') + shade('M50 37 A13 13 0 0 0 50 63Z', 0.2)
+      + C(50, 50, 7, '#100e14') + `<g ${glow('#ff2a2a', 2)}>${C(50, 50, 5, '#ff3a3a', 'opacity=".55"')}</g>` + [0, 60, 120].map((a) => L(50, 50, 50, 43, '#2e2c36', 1.2).replace('/>', ` transform="rotate(${a} 50 50)"/>`)).join('')
+      + engR(46, 63, 1.6) + engR(54, 63, 1.6);
+  };
+  root.Art.addArt('ship', 'xyston', finish(() => MARK + xyShip()));
+  root.Art.addArt('ship', 'tiedagger', finish(() => MARK + daggerShip()));
+  // Card portraits: each ship climbing out of Exegol's lightning storm.
+  const storm = (seed) => R(0, 0, 100, 100, rg([[0, '#3a2a6a'], [0.6, '#120c22'], [1, '#050308']], 0.5, 0.2, 0.9)) + stars(seed, 12, 40)
+    + [[12, 0, 18, 16, 12, 28, 17, 40], [86, 0, 80, 14, 88, 26, 83, 38]].map((pts) => { let d = `M${pts[0]} ${pts[1]}`; for (let i = 2; i < pts.length; i += 2) d += ` L${pts[i]} ${pts[i + 1]}`; return `<g ${glow('#a8b8ff', 2)}>${P(d, 'none', 'stroke="#e8eeff" stroke-width=".9"')}</g>`; }).join('');
+  const fog = () => [[12, 88, 26], [44, 94, 30], [80, 90, 28]].map(([x, y, r]) => E(x, y, r, r * 0.32, '#140f20', 'opacity=".92"')).join('') + E(50, 84, 30, 5, '#ff2a3a', 'opacity=".22"');
+  add('hn_sith_destroyer', () => MARK + storm(41)
+    + [[18, 60, 0.18], [82, 54, 0.2]].map(([x, y, s]) => `<g transform="translate(${x - 50 * s} ${y - 50 * s}) scale(${s})" opacity=".45">${P('M50 4 L86 88 L50 82 L14 88Z', '#1c1a24')}${C(50, 16, 6, '#ff2a3a')}</g>`).join('')
+    + `<g transform="translate(16 10) scale(.68)">${xyShip()}</g>` + fog());
+  add('hn_tie_dagger', () => MARK + storm(57)
+    + [[22, 26, 0.14], [78, 34, 0.12]].map(([x, y, s]) => `<g transform="translate(${x - 50 * s} ${y - 50 * s}) scale(${s})" opacity=".5">${P('M50 4 L86 88 L50 82 L14 88Z', '#1c1a24')}</g>`).join('')
+    + `<g transform="translate(20 16) scale(.6)">${daggerShip()}</g>` + fog());
 
   // ---------- bounty targets (hologram figures) ----------
   // Each is a small silhouette standing above the puck's emitter.
@@ -704,16 +746,24 @@
   D.STATUS_INFO.grabbed = { label: 'Grabbed', icon: '⛓', kind: 'debuff', desc: 'Held by the boss. Loses its turns until the minions holding it are beaten.' };
   D.STATUS_INFO.pit = { label: 'In the pit', icon: '▼', kind: 'debuff', desc: 'Dropped through Jabba\'s trapdoor. Out of the fight until the henchmen fall.' };
   D.STATUS_INFO.mind = { label: 'Mind bridged', icon: '☯', kind: 'debuff', desc: 'Snoke controls this card on its next turn: it attacks its own squad.' };
+  D.STATUS_INFO.xylock = { label: 'Superlaser Lock', icon: '◎', kind: 'debuff', desc: 'The Xyston\'s axial superlaser fires on this ship on the Xyston\'s next turn. Defense Up halves the blast.' };
 
   const MINIONS = [
     { id: 'hn_chest', name: 'Jabba\'s Credit Chest', role: 'tank', spd: 40, abilities: [ab('Gilded Lock', 0, 'self', [buff('defUp', 2)], 'Hardens its lock.')], ultimate: ult('Hoard', 'self', [heal(0.2)], 'Counts its credits.', '') },
     { id: 'hn_husk', name: 'Husk', role: 'attacker', spd: 110, abilities: [ab('Hollow Claw', 0, 'enemy', [dmg(0.9)], 'An empty, hungry strike.')], ultimate: ult('Feed the Master', 'enemy', [dmg(1.6)], 'Tears at one enemy.', '') },
     { id: 'hn_tentacle', name: 'Sarlacc Tentacle', role: 'tank', spd: 90, abilities: [ab('Lash', 0, 'enemy', [dmg(0.8)], 'Whips one enemy.')], ultimate: ult('Constrict', 'enemy', [dmg(1.4), debuff('stun', 1, 0.5)], 'Squeezes one enemy.', '') },
     { id: 'hn_praetorian', name: 'Praetorian Guard', role: 'tank', spd: 128, abilities: [ab('Vibro-Voulge', 0, 'enemy', [dmg(1.0)], 'Precise, crimson strike.'), ab('Guard Stance', 3, 'self', [buff('taunt', 2), buff('defUp', 2)], 'Protects the Supreme Leader.')], ultimate: ult('Bladestorm', 'allEnemies', [dmg(1.0)], 'Spinning blades.', '') },
+    // Update 2.4: the Xyston's escorts. Card art in the raid minion art above.
+    { id: 'hn_sith_destroyer', name: 'Sith Star Destroyer', kind: 'ship', shape: 'xyston', portrait: 'hn_sith_destroyer', role: 'tank', spd: 78, traits: ['capital'], home: 'exegol',
+      abilities: [ab('Turbolaser Battery', 0, 'enemy', [dmg(1.0)], 'Heavy fire on one ship.'), ab('Screen the Flagship', 3, 'self', [buff('taunt', 2), buff('defUp', 2)], 'Pulls in front of the Xyston: Taunt and Defense Up.')],
+      ultimate: ult('Axial Cannon', 'enemy', [dmg(2.2)], 'Its own smaller superlaser fires on one ship.', '') },
+    { id: 'hn_tie_dagger', name: 'Sith TIE Dagger', kind: 'ship', shape: 'tiedagger', portrait: 'hn_tie_dagger', role: 'attacker', spd: 150, traits: ['fighter'], home: 'exegol',
+      abilities: [ab('Twin Laser Cannons', 0, 'enemy', [dmg(0.6, 2)], 'Hits one ship twice.')],
+      ultimate: ult('Strafing Run', 'allEnemies', [dmg(1.1)], 'Dives through your whole fleet.', '') },
   ];
   for (const m of MINIONS) {
     if (D.UNIT_MAP[m.id]) continue;
-    Object.assign(m, { kind: 'character', faction: 'dark', rarity: 'legendary', traits: [], home: 'tatooine', hn: true, minion: true });
+    Object.assign(m, { kind: m.kind || 'character', faction: 'dark', rarity: 'legendary', traits: m.traits || [], home: m.home || 'tatooine', hn: true, minion: true });
     D.UNIT_MAP[m.id] = m;
   }
 
@@ -738,21 +788,30 @@
       slots: ['hn_praetorian', 'hn_praetorian', 'raid_snoke', 'hn_praetorian', 'hn_praetorian'], start: [0, 1, 2, 3, 4],
       mech: [['Praetorian Guard', 'Starts with four Praetorian Guards. A fallen one steps back in every 3 turns.'], ['Bridge the Minds', 'Takes control of a card for a turn and turns it against your squad.'], ['Supreme Will', 'Every 4 turns revives every fallen guard, unless Snoke took an ultimate since his last turn.']],
     },
+    // Update 2.4: the first fleet raid. Joins the weekly rotation from the first full week
+    // after 2.4 ships (see raidList below); testers with the 2.4 switch get it straight away.
+    {
+      id: 'raid_xyston', name: 'Xyston Star Destroyer', sub: 'Rising from the storms of Exegol', planet: 'exegol', pool: 800000, color: '#ff2a3a', kind: 'ship', v24: true,
+      slots: ['hn_sith_destroyer', 'hn_tie_dagger', 'raid_xyston', 'hn_tie_dagger', 'hn_sith_destroyer'], start: [1, 2, 3],
+      mech: [['Axial Superlaser', 'Locks onto your strongest ship, then fires on its next turn for massive damage, and charges again every 4 turns. A locked ship with Defense Up takes half the blast.'], ['Sith Fleet', 'A Sith Star Destroyer escort rises from the storm every 3 turns. Escorts can Taunt to screen the flagship.'], ['The Final Order', 'At 50% health every waiting destroyer rises at once and the whole Sith fleet gains Offense Up.']],
+    },
   ];
+  const v24 = () => !!(root.Update24 && root.Update24.on());
   // Update 2.2 (switch in js/friends.js, off until the 2.2 date is set): raid bosses get at
   // least 5,000,000 health and hit much harder; their guards hit a bit harder.
   const v22 = () => !!(root.Update22 && root.Update22.on());
   const RAID_HP_MIN = 5000000;
   const RAID_BOSS_ATK = 1.6;
   const RAID_GUARD_ATK = 1.25;
+  // 2.4 raids ship after 2.2, so they always get the 2.2 toughness.
   const toughPool = (r) => {
     const base = r.pool;
-    Object.defineProperty(r, 'pool', { enumerable: true, get: () => (v22() ? Math.max(RAID_HP_MIN, base * 7) : base) });
+    Object.defineProperty(r, 'pool', { enumerable: true, get: () => (v22() || r.v24 ? Math.max(RAID_HP_MIN, base * 7) : base) });
   };
   for (const r of RAIDS) toughPool(r);
   // Applied in the raid battle setup.
   const raidToughen = (b, bossId) => {
-    if (!v22()) return;
+    if (!v22() && !RAIDS.some((r) => r.v24 && r.id === bossId)) return;
     b.side('enemy').forEach((u) => { u.atk = Math.round(u.atk * (u.id === bossId ? RAID_BOSS_ATK : RAID_GUARD_ATK)); });
   };
   const BOSS_KIT = {
@@ -760,6 +819,7 @@
     raid_nihilus: { role: 'attacker', spd: 136, abilities: [ab('Void Strike', 0, 'enemy', [dmg(1.4)], 'A strike that empties the target.'), ab('Drain Life', 3, 'enemy', [dmg(1.8), { ...heal(0.04), on: 'self' }], 'Drinks one enemy\'s life.')], ultimate: ult('Feast on the World', 'allEnemies', [dmg(2.0), { ...heal(0.06), on: 'self' }], 'Tears the life out of every enemy and feeds on it.', '…') },
     raid_sarlacc: { role: 'tank', spd: 70, abilities: [ab('Acid Spray', 0, 'allEnemies', [dmg(0.8), debuff('burn', 2, 0.4)], 'Digestive acid over everyone.'), ab('Quake', 3, 'allEnemies', [dmg(0.6), debuff('stun', 1, 0.3)], 'The pit heaves.')], ultimate: ult('Swallow', 'allEnemies', [dmg(2.0)], 'The beak opens and the whole pit pulls inward.', '') },
     raid_snoke: { role: 'support', spd: 120, abilities: [ab('Force Lightning', 0, 'enemy', [dmg(1.3), debuff('stun', 1, 0.25)], 'Lightning from the throne.'), ab('Supreme Command', 3, 'allAllies', [buff('offUp', 2)], 'His guards strike harder.')], ultimate: ult('Bow Before Me', 'allEnemies', [dmg(1.8), debuff('offDown', 2)], 'Pulls every enemy to its knees.', 'Pathetic.') },
+    raid_xyston: { role: 'tank', spd: 96, abilities: [ab('Turbolaser Broadside', 0, 'enemy', [dmg(1.3)], 'A broadside into one ship.'), ab('Exegol\'s Storm', 3, 'allEnemies', [dmg(0.7), debuff('offDown', 2, 0.6)], 'Drags the lightning storm over your fleet: damage and a 60% chance of Offense Down.'), ab('Tractor Lock', 4, 'enemy', [dmg(1.0), debuff('stun', 1), debuff('defDown', 2)], 'Holds one ship in place: damage, Stun and Defense Down.')], ultimate: ult('Sith Armada', 'allEnemies', [dmg(2.0), debuff('burn', 2)], 'Every Star Destroyer in the storm fires at once: heavy damage and Burn on your whole fleet.', 'The Sith Eternal will rise.') },
   };
   for (const r of RAIDS) {
     const def = D.UNIT_MAP[r.id];
@@ -1098,7 +1158,14 @@
   // ---------- raid ----------
   const WEEK = 7 * 24 * 3600 * 1000;
   const week = () => Math.floor((Date.now() + (S().weekShift || 0) * WEEK) / WEEK);
-  const raidNow = () => RAIDS[week() % RAIDS.length];
+  // 2.4 raids join the rotation from the first full week after 2.4 ships, so the
+  // boss never changes mid-week. Testers (2.4 switched on early) see them now.
+  const raidList = (w) => {
+    const at = root.Update24 && root.Update24.at;
+    const ready = v24() && (at == null || Date.now() < at || w > Math.floor(at / WEEK));
+    return ready ? RAIDS : RAIDS.filter((r) => !r.v24);
+  };
+  const raidNow = () => { const w = week(); const list = raidList(w); return list[w % list.length]; };
   function raidTotals() {
     const w = week();
     const boss = raidNow().id;
@@ -1163,6 +1230,7 @@
       if (n) events.push({ type: 'log', text, side: 'player' });
     };
     const pick = (b, list) => list[Math.floor(b.rng() * list.length)];
+    const AXIAL_MULT = 6;
     const free = (b) => b.living('player').filter((u) => !u.statuses.grabbed && !u.statuses.pit);
 
     const baseBegin = BP.beginTurn;
@@ -1240,6 +1308,35 @@
         if (T % 2 === 0) {
           const f = free(this).filter((u) => !u.statuses.mind);
           if (f.length > 1) { const t = pick(this, f); t.statuses.mind = 2; ev.push({ type: 'status', uid: t.uid, status: 'mind', turns: 1 }, { type: 'log', text: `Snoke reaches into ${t.def.name}'s mind…`, side: 'enemy' }); }
+        }
+      } else if (unit.def.raid === 'raid_xyston') {
+        const docks = waiting.filter((u) => u.id === 'hn_sith_destroyer');
+        // The Final Order: at half health the whole fleet rises and hits harder.
+        if (unit.enraged && !R.order) {
+          R.order = true;
+          for (const u of docks) spawn(this, u, ev);
+          ev.push({ type: 'hnfx', fx: 'storm' }, { type: 'log', text: 'The Final Order! Every Sith destroyer rises from the storm.', side: 'enemy' });
+          for (const u of this.living('enemy')) { u.statuses.offUp = Math.max(u.statuses.offUp || 0, 2); ev.push({ type: 'status', uid: u.uid, status: 'offUp', turns: 2 }); }
+        } else if (T % 3 === 0 && docks.length) spawn(this, docks[0], ev, 'A Sith Star Destroyer rises out of the storm!');
+        // Axial Superlaser: lock on, then fire on its next turn. Defense Up on the locked ship halves the blast.
+        if (R.lock) {
+          const t = this.units.find((u) => u.uid === R.lock);
+          R.lock = null;
+          if (t) { delete t.statuses.xylock; ev.push({ type: 'statusEnd', uid: t.uid, status: 'xylock' }); }
+          const target = t && t.alive ? t : this.living('player').slice().sort((a, b) => b.atk - a.atk)[0];
+          if (target) {
+            const braced = !!target.statuses.defUp;
+            ev.push({ type: 'hnfx', fx: 'axial', uid: unit.uid, to: target.uid }, { type: 'log', text: `The axial superlaser fires on ${target.def.name}!${braced ? ' Its shields take half the blast.' : ''}`, side: 'enemy' });
+            const { amount, crit } = this.rollDamage(unit, target, AXIAL_MULT);
+            this.applyDamage(target, braced ? Math.round(amount / 2) : amount, crit, ev);
+          }
+        } else if (T % 4 === 1) {
+          const target = this.living('player').slice().sort((a, b) => b.atk - a.atk)[0];
+          if (target) {
+            R.lock = target.uid;
+            target.statuses.xylock = 99;
+            ev.push({ type: 'status', uid: target.uid, status: 'xylock', turns: 1 }, { type: 'hnfx', fx: 'lock', uid: target.uid }, { type: 'log', text: `⚠ The Xyston's superlaser locks onto ${target.def.name}. It fires next turn!`, side: 'enemy' });
+          }
         }
       }
       // Free anyone held once their captors are gone.
@@ -1508,6 +1605,12 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
 @keyframes hn-coin { to { transform: translateY(110vh) rotate(720deg); } }
 .hn-ring { position: absolute; width: 60px; height: 60px; margin: -30px; border-radius: 50%; border: 3px solid var(--c, #fff); animation: hn-ring .7s ease-out forwards; }
 @keyframes hn-ring { from { transform: scale(.2); opacity: 1; } to { transform: scale(2.4); opacity: 0; } }
+.hn-axial { position: absolute; height: 10px; margin-top: -5px; transform-origin: 0 50%; border-radius: 5px; background: linear-gradient(180deg, #ff2a3a, #ffe0d8 45%, #fff 50%, #ffe0d8 55%, #ff2a3a); box-shadow: 0 0 18px 4px #ff2a3a; animation: hn-beam 1s ease-out forwards; }
+.hn-axial.lite { box-shadow: none; }
+.hn-flash { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 0%, rgba(200, 208, 255, 0.55), transparent 70%); opacity: 0; animation: hn-flash .3s steps(2) forwards; }
+@keyframes hn-flash { 50% { opacity: 1; } }
+.hn-cine .xy-shot { position: absolute; bottom: -10vh; width: 4px; height: 26vh; border-radius: 2px; background: linear-gradient(0deg, transparent, #ff2a3a 40%, #ffe0d8); box-shadow: 0 0 12px #ff2a3a; opacity: 0; animation: hn-xyshot .5s ease-in var(--t) 2 forwards; }
+@keyframes hn-xyshot { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-110vh); } }
 
 /* ---- boss ultimates: full-screen, transform/opacity only ---- */
 .hn-cine { position: fixed; inset: 0; z-index: 9500; pointer-events: none; overflow: hidden; display: grid; place-items: center; }
@@ -2268,14 +2371,18 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
 
   // ---------- raid ----------
   let allyPick = null;
-  function allies() {
-    const out = HN.Net.arena.filter((a) => a.uid !== HN.Net.me && Array.isArray(a.ground) && a.ground.length && a.ground.every((e) => D.UNIT_MAP[e.id])).slice(0, 5)
-      .map((a) => ({ id: `p:${a.uid}`, name: HN.Net.name(a.uid), real: true, squad: a.ground }));
+  // A fleet raid (the 2.4 Xyston) fights with ships: your fleet and an ally fleet.
+  const raidKind = (r) => r.kind || 'character';
+  function allies(kind = 'character') {
+    const key = kind === 'ship' ? 'fleet' : 'ground';
+    const out = HN.Net.arena.filter((a) => a.uid !== HN.Net.me && Array.isArray(a[key]) && a[key].length && a[key].every((e) => D.UNIT_MAP[e.id])).slice(0, 5)
+      .map((a) => ({ id: `p:${a.uid}`, name: HN.Net.name(a.uid), real: true, squad: a[key] }));
     const r = HN.rng(HN.week() * 31 + (S().allySeed || 0) * 7919 + 7);
-    const mine = HN.squadEntries('character');
+    const mine = HN.squadEntries(kind);
     const lvl = Math.max(1, Math.round(HN.avgLevel(mine)));
-    const avail = D.UNITS.filter((u) => u.kind === 'character' && !u.exclusive && !u.boss && !mine.some((e) => e.id === u.id));
-    const crews = ['Mandalorian mercenaries', 'Rebel strike team', 'Bounty hunter crew', 'Clone veterans', 'Smuggler\'s gang', 'Jedi survivors', 'Inquisitor cell', 'Hutt enforcers', 'Partisan cell', 'Imperial deserters'];
+    const avail = D.UNITS.filter((u) => u.kind === kind && !u.exclusive && !u.boss && !mine.some((e) => e.id === u.id));
+    const crews = kind === 'ship' ? ['Rogue Squadron', 'Phoenix Squadron', 'Black Squadron', 'Gold Squadron', 'Smuggler convoy', 'Mandalorian Fang wing', 'Clone starfighter wing', 'Bounty hunter fleet', 'Partisan raiders', 'Hutt patrol']
+      : ['Mandalorian mercenaries', 'Rebel strike team', 'Bounty hunter crew', 'Clone veterans', 'Smuggler\'s gang', 'Jedi survivors', 'Inquisitor cell', 'Hutt enforcers', 'Partisan cell', 'Imperial deserters'];
     const names = crews.slice().sort(() => r() - 0.5);
     for (let k = 0; out.length < 3 && k < 3; k++) {
       const picks = [];
@@ -2290,19 +2397,20 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const t = HN.raidTotals();
     const h = S();
     const rec = h.raids[`${HN.week()}:${r.id}`];
-    const al = allies();
+    const kind = raidKind(r);
+    const al = allies(kind);
     if (!allyPick || !al.some((a) => a.id === allyPick)) allyPick = al[0] && al[0].id;
-    const ids = HN.squad('character');
+    const ids = HN.squad(kind);
     return `${head('RAID', `Week ${HN.week() % 100} · bosses rotate every week`, true)}
       <div class="hn-raid-hero" style="--rc:${r.color}">
         <div class="art">${root.Art.unitArt(D.UNIT_MAP[r.id])}</div>
-        <div><h2>${esc(r.name)}</h2><p class="muted" style="margin:2px 0 8px">${esc(r.sub)} · 10 cards against him</p>
+        <div><h2>${esc(r.name)}</h2><p class="muted" style="margin:2px 0 8px">${esc(r.sub)} · ${kind === 'ship' ? 'fleet raid · 10 ships against it' : '10 cards against him'}</p>
           <div class="hn-hp"><i style="width:${(t.left / t.pool) * 100}%"></i><span>${t.fallen ? 'DEFEATED' : `${fmt(t.left)} / ${fmt(t.pool)}`}</span></div>
           <ul>${r.mech.map(([n, d]) => `<li><b>${esc(n)}</b>${esc(d)}</li>`).join('')}</ul></div>
       </div>
       ${t.fallen ? `<div class="hn-free"><span class="grow"><b>${esc(r.name)} has fallen!</b> ${rec && rec.dmg ? (rec.claimed ? 'Rewards claimed. A new boss arrives next week.' : 'You helped: claim your rewards.') : 'You didn\'t land a hit this week.'}</span>${rec && rec.dmg && !rec.claimed ? '<button type="button" class="hn-btn gold" data-hn="claim">Claim</button>' : ''}</div>` : ''}
       <div class="hn-sec"><h3>Damage this week</h3><div class="hn-board">${t.rows.slice(0, 8).map((x, i) => `<div class="${x.name === 'You' ? 'me' : ''}"><span>${i + 1}. ${esc(x.name)}</span><b>${fmt(x.dmg)}</b></div>`).join('')}</div><p class="muted small" style="margin:0">Top damage when the boss falls earns Krrsantan. Everyone who hit it gets 500 Beskar and an Elite bounty puck, with a chance at Aurra Sing or the Fang Fighter.</p></div>
-      ${squadBox(ids, 'character', HN.squadPower(HN.squadEntries('character')), 'Your 5')}
+      ${squadBox(ids, kind, HN.squadPower(HN.squadEntries(kind)), kind === 'ship' ? 'Your fleet' : 'Your 5')}
       <div class="hn-sec"><h3>Fight alongside</h3><div class="hn-allies">${al.map((a) => `<button type="button" class="hn-ally ${a.id === allyPick ? 'on' : ''}" data-hn="ally" data-id="${a.id}"><b>${esc(a.name)} ${a.real ? '<span class="hn-chip">player</span>' : ''}</b><div class="minis">${a.squad.map((e) => mini(e.id)).join('')}</div></button>`).join('')}</div></div>
       <button type="button" class="hn-btn gold" data-hn="raidgo" style="justify-self:center;padding:12px 28px" ${t.fallen || !ids.length ? 'disabled' : ''}>${t.fallen ? 'Boss defeated' : 'Start raid'}</button>`;
   };
@@ -2527,16 +2635,18 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   function startRaid() {
     const r = HN.raidNow();
     const t = HN.raidTotals();
-    const mine = HN.squadEntries('character');
-    if (!mine.length) return toast('Pick a squad first.');
-    const ally = allies().find((a) => a.id === allyPick) || allies()[0];
+    const kind = raidKind(r);
+    const mine = HN.squadEntries(kind);
+    if (!mine.length) return toast(kind === 'ship' ? 'You need ships for a fleet raid. Pick your fleet first.' : 'Pick a squad first.');
+    const al = allies(kind);
+    const ally = al.find((a) => a.id === allyPick) || al[0];
     const used = new Set(mine.map((e) => e.id));
     const allyEntries = ally.squad.filter((e) => !used.has(e.id)).map((e) => ({ ...e }));
     const lvl = Math.max(1, Math.round(HN.avgLevel(mine)));
     const enemies = r.slots.map((id) => ({ id, level: id === r.id ? lvl + 4 : lvl, stars: id === r.id ? 7 : 3 }));
     HNB.back = { view: 'raid' };
     hnStart({ type: 'hn', hn: 'raid', boss: r.id }, [...mine, ...allyEntries], enemies, {
-      name: `Raid · ${r.name}`, kind: 'character', planet: r.planet, raid: true, boss: r.id,
+      name: `Raid · ${r.name}`, kind, planet: r.planet, raid: true, boss: r.id,
       intro: `${allyEntries.length ? `${ally.name} fights beside you. ` : ''}Deal as much damage as you can: every hit counts toward the shared health bar.`,
       setup(b) {
         b.hnRaid = { boss: r.id, turn: 0, limit: 100 };
@@ -2693,6 +2803,31 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       sound('coins');
       return this.wait(600);
     }
+    // The Xyston: superlaser lock, the axial beam, the Final Order storm.
+    if (ev.fx === 'lock') {
+      const c = this.cards[ev.uid];
+      ring(this, ev.uid, '#ff2a3a');
+      if (c && !lite) c.animate([{ boxShadow: '0 0 0 0 #ff2a3a' }, { boxShadow: '0 0 0 6px #ff2a3a' }, { boxShadow: '0 0 0 0 #ff2a3a' }], { duration: 700, iterations: 2 });
+      sound('rumble');
+      return this.wait(500);
+    }
+    if (ev.fx === 'axial') {
+      const from = center(this, ev.uid), to = center(this, ev.to);
+      if (from && to && this.fxl) {
+        const dx = to.x - from.x, dy = to.y - from.y;
+        const n = el(`<i class="hn-axial ${lite ? 'lite' : ''}" style="left:${from.x}px;top:${from.y}px;width:${Math.hypot(dx, dy)}px;transform:rotate(${Math.atan2(dy, dx)}rad)"></i>`);
+        this.fxl.appendChild(n);
+        setTimeout(() => n.remove(), 1100);
+      }
+      sound('explosion');
+      if (this.shake && !lite) this.shake();
+      return this.wait(750);
+    }
+    if (ev.fx === 'storm' && !lite && this.fxl) {
+      for (let k = 0; k < 5; k++) { const n = el(`<i class="hn-flash" style="animation-delay:${k * 0.12}s"></i>`); this.fxl.appendChild(n); setTimeout(() => n.remove(), 1200); }
+      sound('lightning');
+      return this.wait(700);
+    }
     if (['grab', 'drop', 'digest', 'mind'].includes(ev.fx)) {
       const c = this.cards[ev.uid];
       ring(this, ev.uid, ev.fx === 'mind' ? '#ff3a3a' : ev.fx === 'digest' ? '#ffb05a' : '#c88a5a');
@@ -2708,6 +2843,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     raid_nihilus: (c) => ({ d: 2600, veil: 'radial-gradient(circle at 50% 45%, rgba(60,10,90,.7), rgba(4,0,8,.97))', extra: Array.from({ length: 10 }, (_, k) => `<i class="stream" style="--t:${0.3 + (k % 5) * 0.12}s;transform:rotate(${k * 36 + 18}deg) scaleX(-1)"></i>`).join(''), title: 'FEAST ON THE WORLD', sub: 'Nihilus hungers' }),
     raid_sarlacc: (c) => ({ d: 2400, veil: 'radial-gradient(circle at 50% 60%, rgba(30,12,4,.9), rgba(210,160,90,.85))', extra: '<i class="teeth"></i>', title: 'SWALLOW', sub: 'The pit pulls everything in', shake: true }),
     raid_snoke: (c) => ({ d: 2600, veil: 'radial-gradient(circle at 50% 40%, rgba(90,0,0,.6), rgba(6,0,0,.96))', extra: '<i class="curtain l"></i><i class="curtain r"></i>' + Array.from({ length: 8 }, (_, k) => `<i class="bolt" style="--t:${0.5 + (k % 4) * 0.18}s;transform:rotate(${-70 + k * 20}deg)"></i>`).join(''), title: 'BOW BEFORE ME', sub: 'Supreme Leader Snoke' }),
+    raid_xyston: (c) => ({ d: 2600, veil: 'radial-gradient(circle at 50% 30%, rgba(70,50,140,.55), rgba(4,2,10,.97))', extra: Array.from({ length: 6 }, (_, k) => `<i class="bolt" style="--c:#c8d0ff;--t:${0.2 + (k % 3) * 0.22}s;transform:rotate(${150 + k * 12}deg)"></i>`).join('') + Array.from({ length: 9 }, (_, k) => `<i class="xy-shot" style="--t:${0.7 + (k % 5) * 0.12}s;left:${8 + k * 10.5}%"></i>`).join(''), title: 'SITH ARMADA', sub: 'Every destroyer in the storm fires', shake: true }),
   };
   const baseSuper = BUI.superMove;
   BUI.superMove = async function (anim, actor, targets, ev) {
@@ -2719,7 +2855,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const d = lite ? 1200 : spec.d;
     const node = el(`<div class="hn-cine ${lite ? 'lite' : ''}" style="--d:${d}ms;--c:${r.color}"><div class="veil" style="background:${spec.veil}"></div>${lite ? '' : spec.extra}<div class="boss">${root.Art.unitArt(actor.def)}</div><div class="title"><small>${esc(r.name)}</small>${esc(spec.title)}</div></div>`);
     document.body.appendChild(node);
-    sound(actor.def.raid === 'raid_snoke' ? 'lightning' : actor.def.raid === 'raid_sarlacc' ? 'explosion' : 'reveal_legendary');
+    sound(actor.def.raid === 'raid_snoke' ? 'lightning' : actor.def.raid === 'raid_sarlacc' || actor.def.raid === 'raid_xyston' ? 'explosion' : 'reveal_legendary');
     if (spec.shake && this.shake) setTimeout(() => this.shake(), d * 0.5);
     await new Promise((res) => setTimeout(res, d / Math.max(1, this.speed > 1 ? this.speed * 0.7 : 1)));
     node.remove();

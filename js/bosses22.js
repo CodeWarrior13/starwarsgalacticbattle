@@ -2,8 +2,9 @@
 // Geonosis, Mustafar, Exegol, Battle of Coruscant), each with its own battle
 // mechanics, plus new art for the Hoth Star Destroyer and General Grievous.
 // Everything stays switched off until 2.2 (see Update22 in js/friends.js).
-// The Xyston Star Destroyer and the Invisible Hand are drawn here too, saved
-// for a future raid or boss battle; nothing uses them yet.
+// The Xyston Star Destroyer and the Invisible Hand are drawn here too: the
+// Xyston is the 2.4 weekly raid boss (js/holonet.js); the Invisible Hand is
+// still saved for a future raid or boss battle.
 (function (root) {
   'use strict';
   const D = root.GameData;
@@ -223,7 +224,7 @@
     + bolt(58, 18, 48, 30, '#ff4a3a') + bolt(80, 12, 70, 36, '#ff4a3a') + bolt(20, 14, 32, 26, '#ff4a3a')
     + `<g ${glow('#ff8a2a', 3)}>${C(12, 52, 1.6, '#ffb03a')}${C(90, 60, 1.4, '#ffb03a')}</g>` + P('M12 50 C10 44 14 38 10 30', 'none', 'stroke="#2a2430" stroke-width="2.4" opacity=".5" stroke-linecap="round"'));
 
-  // ---------- SAVED FOR LATER (raids): a Xyston Star Destroyer rising from the Exegol storm ----------
+  // ---------- Raids (2.4): a Xyston Star Destroyer rising from the Exegol storm, the raid_xyston card in js/holonet.js ----------
   add('xyston_22', () => R(0, 0, 100, 100, '#06050a') + R(0, 0, 100, 100, '#3a2a6a', 'opacity=".2"') + E(50, 10, 60, 18, '#5a5aa0', 'opacity=".18"')
     + [[12, 0, 16, 18, 10, 30, 14, 44], [88, 0, 84, 20, 90, 32, 86, 48], [64, 0, 60, 8, 66, 14]].map((pts) => { let d = `M${pts[0]} ${pts[1]}`; for (let i = 2; i < pts.length; i += 2) d += ` L${pts[i]} ${pts[i + 1]}`; return `<g ${glow('#a8b8ff', 2)}>${P(d, 'none', 'stroke="#e8eeff" stroke-width=".9"')}</g>`; }).join('')
     // the Sith fleet in the fog, each with its red cannon glow
