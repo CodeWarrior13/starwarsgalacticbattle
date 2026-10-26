@@ -493,7 +493,7 @@
   if (H) {
     H.feats.push((s) => {
       const have = ALL_BOSSES.filter((id) => s.bosses[id]).length;
-      return [{ id: 'liberator', tier: 7, icon: 'planet', name: 'Liberator of the Galaxy', desc: `Beat all ${ALL_BOSSES.length} bosses, main and optional. Reward: a secret card.`, have, need: ALL_BOSSES.length }];
+      return [{ id: 'liberator', tier: 7, icon: 'planet', name: 'Liberator of the Galaxy', desc: `Beat all ${ALL_BOSSES.length} bosses, main and optional. Reward: ???`, have, need: ALL_BOSSES.length }];
     });
     if (root.Lib24Crest) H.crests.liberator = () => root.Lib24Crest();
     H.battleEnd.push((battle, params, won) => {
