@@ -258,6 +258,10 @@
     endor: ['death_star_2', 'atst'], scarif: ['death_star', 'krennic'], coruscant: ['darth_sidious', 'commander_cody'], geonosis: ['acklay', 'jango_arena'],
     mustafar: ['lord_vader', 'executor'], exegol: ['sith_legion', 'emperor_reborn'], coruscant_siege: ['zillo_beast', 'grievous_warlord'],
   };
+  // Card levels go to 50 in 2.4, so the campaign stretches to match: levels
+  // up to 15 (Tatooine, Hoth and Dagobah) stay as they were, and above that
+  // they spread out evenly so the old top level, 36, becomes 46.
+  const stretch = (l) => (l <= 15 ? l : Math.round(15 + (l - 15) * 31 / 21));
   const BOSS_LEVELS = {
     rancor: 9, krayt_dragon: 11, star_destroyer: 12, wampa: 14, dragonsnake: 15, cave_vision: 17, carbon_vader: 17, bossk: 19, death_star_2: 20, atst: 22,
     death_star: 22, krennic: 24, darth_sidious: 24, commander_cody: 26, acklay: 28, jango_arena: 30, lord_vader: 31, executor: 33, sith_legion: 34,
@@ -298,6 +302,8 @@
     OLD_LEN.coruscant_siege = siege.stages.length;
     siege.stages.forEach((s, i) => { if (SIEGE_LEVELS[i]) s.level = SIEGE_LEVELS[i]; if (SIEGE_SWAPS[i]) s.enemies = SIEGE_SWAPS[i].slice(); });
   }
+  for (const p of D.PLANETS) for (const st of p.stages) st.level = stretch(st.level);
+  for (const id of Object.keys(BOSS_LEVELS)) BOSS_LEVELS[id] = stretch(BOSS_LEVELS[id]);
   if (D.PLANET_MAP.exegol) D.PLANET_MAP.exegol.reinforce.character = ['sith_trooper', 'knight_of_ren'];
   if (D.PLANET_MAP.hoth) D.PLANET_MAP.hoth.reinforce.character = ['snowtrooper'];
   if (D.PLANET_MAP.scarif) D.PLANET_MAP.scarif.reinforce.character = ['shoretrooper', 'death_trooper'];
@@ -483,11 +489,13 @@
   };
   root.QoL24 = qol;
 
-  // ---------- Card levels 31-35 cost more ----------
+  // ---------- Card level costs: 31-35 and the new 41-50 ----------
   // A quarter more for each level from 31 to 35, so taking a card from level
   // 1 to 35 costs about 150,000 credits instead of 140,000.
+  // Levels 41-50 (new in 2.4) cost half again as much: about 261,000 credits
+  // to take a card from 40 to 50.
   const baseLevelCost = D.levelCost;
-  D.levelCost = (level) => (level >= 31 && level <= 34 ? Math.round(baseLevelCost(level) * 1.25) : baseLevelCost(level));
+  D.levelCost = (level) => (level >= 40 ? Math.round(baseLevelCost(level) * 1.5 / 10) * 10 : level >= 31 && level <= 34 ? Math.round(baseLevelCost(level) * 1.25) : baseLevelCost(level));
 
   // ---------- Liberator of the Galaxy ----------
   if (H) {

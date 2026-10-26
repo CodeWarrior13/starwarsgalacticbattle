@@ -712,9 +712,9 @@ test('2.2 planet bosses stay off until 2.2, then fight with their mechanics', ()
 test('2.3: currency caps overflow into Aurodium then Kyber; Auto-open uses lower Holocron odds', () => {
   require('../js/v23.js');
   Player.reset();
-  Player.state.credits = 7499800; Player.save();
+  Player.state.credits = 9999800; Player.save();
   Player.state.credits += 500; Player.save();
-  assert.strictEqual(Player.state.credits, 7499800 + 500, 'off: no cap before 2.3');
+  assert.strictEqual(Player.state.credits, 9999800 + 500, 'off: no cap before 2.3');
   delete require.cache[require.resolve('../js/v23.js')];
   globalThis.__v23Test = 0;
   require('../js/v23.js');
@@ -723,11 +723,11 @@ test('2.3: currency caps overflow into Aurodium then Kyber; Auto-open uses lower
   assert.ok(U.on());
   Player.reset();
   const s = Player.state;
-  s.credits = 7499800; s.aurodium = 5; Player.save();
+  s.credits = 9999800; s.aurodium = 5; Player.save();
   s.credits += 500; Player.save();
-  assert.deepStrictEqual([s.credits, s.ovf.cr, s.aurodium], [7500000, 300, 5]);
+  assert.deepStrictEqual([s.credits, s.ovf.cr, s.aurodium], [10000000, 300, 5]);
   s.credits += 5000; Player.save();
-  assert.deepStrictEqual([s.credits, s.ovf.cr, s.aurodium], [7500000, 300, 7]);
+  assert.deepStrictEqual([s.credits, s.ovf.cr, s.aurodium], [10000000, 300, 7]);
   s.aurodium = 9999; const k0 = s.crystals; s.credits += 5000; Player.save();
   assert.deepStrictEqual([s.aurodium, s.crystals - k0], [10000, 10]);
   // Auto-open odds only apply while Auto-open runs.
@@ -796,11 +796,21 @@ test('2.4 Liberation: off until 2.4; then 10-stage worlds, 22 bosses, new cards 
     const lv = p.stages.map((s) => s.level);
     assert.ok(lv.every((x, i) => i === 0 || x >= lv[i - 1]), `${p.id} levels climb`);
   }
+  // Card levels go to 50: Tatooine, Hoth and Dagobah keep their levels, the rest stretch to a level 46 top boss.
+  assert.strictEqual(D.MAX_LEVEL, 50);
+  assert.deepStrictEqual(D.PLANET_MAP.tatooine.stages.map((s) => s.level), [1, 1, 2, 2, 3, 4, 4, 5, 6, 7]);
+  assert.strictEqual(D.PLANET_MAP.dagobah.stages[9].level, 13);
+  assert.strictEqual(Math.max(...D.BOSS_ENCOUNTERS.map((b) => b.level)), 46);
+  const u21 = globalThis.Update21; globalThis.Update21 = { on: () => true };
+  let to50 = 0; for (let l = 40; l < 50; l++) to50 += D.levelCost(l);
+  globalThis.Update21 = u21;
+  assert.ok(to50 > 250000 && to50 < 270000, `40 to 50 costs ${to50}`);
+  const v = D.UNIT_MAP.vader; assert.ok(D.unitStats(v, 50, 7).atk / D.unitStats(v, 40, 7).atk > 1.17, 'level 50 is about 19% stronger');
   assert.strictEqual(L.ALL_BOSSES.length, 22);
   for (const id of L.ALL_BOSSES) {
     const enc = D.BOSS_ENCOUNTERS.find((b) => b.id === id);
     assert.ok(enc && D.UNIT_MAP[id] && D.UNIT_MAP[id].boss, `${id} boss`);
-    assert.ok(enc.level <= 36 && enc.unlock === enc.planet, `${id} level/unlock`);
+    assert.ok(enc.level <= 46 && enc.unlock === enc.planet, `${id} level/unlock`);
     const bu = D.UNIT_MAP[id];
     assert.ok(bu.kind === 'ship' ? globalThis.Art.SHIP_SHAPES.includes(bu.shape) : globalThis.Art.CHARACTER_IDS.includes(id), `${id} art`);
   }

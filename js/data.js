@@ -1162,7 +1162,8 @@
 
   // Update 2.1 raises the card level cap to 40 with a cheaper level-up curve.
   const v21 = () => !!(root.Update21 && root.Update21.on());
-  const maxLevel = () => (v21() ? 40 : 30);
+  // Update 2.4 raises it again, to 50 (see js/liberation24.js).
+  const maxLevel = () => (root.Update24 && root.Update24.on() ? 50 : v21() ? 40 : 30);
   const MAX_STARS = 7;
   // Shards needed to go from star N to N+1 (index 0 = 1★ -> 2★).
   const STAR_COSTS = [10, 25, 50, 80, 120, 170];
@@ -1176,8 +1177,9 @@
   function levelCost(level) {
     return v21() ? Math.round(70 * level + 7.2 * level * level) : 100 * level + 20 * level * level;
   }
-  // Stats grow 8% a level up to 30, then 4% a level (defense half as fast).
-  const lvlGrow = (level, a, b) => (level <= 30 ? a * (level - 1) : a * 29 + b * (level - 30));
+  // Stats grow 8% a level up to 30, 4% a level to 40, then 7% a level to 50
+  // (defense half as fast).
+  const lvlGrow = (level, a, b) => (level <= 30 ? a * (level - 1) : level <= 40 ? a * 29 + b * (level - 30) : a * 29 + b * 10 + b * 1.75 * (level - 40));
 
   function unitStats(def, level, stars) {
     const base = ROLE_BASE[def.role];

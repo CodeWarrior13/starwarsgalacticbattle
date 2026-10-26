@@ -13,10 +13,10 @@
   const fmt = (n) => Number(n).toLocaleString('en-US');
 
   // ---------- Currency caps ----------
-  // Credits stop at 7,500,000 and Aurodium at 10,000; Kyber has no cap. Nothing
+  // Credits stop at 10,000,000 and Aurodium at 10,000; Kyber has no cap. Nothing
   // is lost: extra credits fill an overflow bank that pays out 1 Aurodium per
   // 2,500, and extra Aurodium (when its vault is full) becomes 10 Kyber each.
-  const CAPS = { credits: 7500000, aurodium: 10000 };
+  const CAPS = { credits: 10000000, aurodium: 10000 };
   const CR_PER_AU = 2500;
   const KY_PER_AU = 10;
   function settle(s) {
@@ -41,7 +41,7 @@
     if (s.aurodium >= CAPS.aurodium && !v.capAu) { v.capAu = 1; whenFree(() => rex(REX_AU)); }
   }
   const REX_CR = [
-    'Look at you, overachiever! Your credit vault is full: 7,500,000 credits.',
+    'Look at you, overachiever! Your credit vault is full: 10,000,000 credits.',
     'Nothing goes to waste, though. Every credit over the cap drops into an overflow bank.',
     'Every 2,500 credits in that bank turns into 1 Aurodium, all on its own.',
     'And if your Aurodium vault ever fills up too, the extra turns into Kyber. Keep it up, Commander!',
@@ -74,7 +74,7 @@
     });
   }
   // The vault moment: credit chips pour into a giant safe, the counter tops out
-  // at 7,500,000 and the door wheel spins shut.
+  // at 10,000,000 and the door wheel spins shut.
   const chip = '<svg viewBox="0 0 60 36"><rect x="2" y="4" width="56" height="28" rx="7" fill="#e8b830" stroke="#7a5206" stroke-width="2"/><path d="M28 14 H48 M28 18 H42 M28 22 H46" stroke="#7a5206" stroke-width="2"/><circle cx="15" cy="18" r="6" fill="#fff2a8" stroke="#7a5206" stroke-width="1.6"/></svg>';
   const vaultSvg = '<svg viewBox="0 0 200 200"><defs><radialGradient id="v23vd" cx=".4" cy=".35" r=".8"><stop offset="0" stop-color="#8a929e"/><stop offset="1" stop-color="#2a2e36"/></radialGradient></defs>'
     + '<rect x="14" y="20" width="172" height="166" rx="16" fill="#1c2028" stroke="#ffd23f" stroke-width="3"/><rect x="74" y="8" width="52" height="12" rx="4" fill="#0a0c10" stroke="#ffd23f" stroke-width="2"/>'
@@ -107,12 +107,12 @@
     await rex(REX_CR);
   }
   // Legendary badge for filling the credit vault.
-  const FEAT_PIGGY = { id: 'v23_piggy', tier: 7, icon: 'trophy', name: 'Piggy Bank Saver', desc: 'Fill your credit vault: 7,500,000 credits' };
+  const FEAT_PIGGY = { id: 'v23_piggy', tier: 7, icon: 'trophy', name: 'Piggy Bank Saver', desc: 'Fill your credit vault: 10,000,000 credits' };
   const piggyCrest = () => `<svg viewBox="-70 -70 140 140" aria-hidden="true"><defs><linearGradient id="v23pg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff2b0"/><stop offset=".5" stop-color="#ffb938"/><stop offset="1" stop-color="#7a3a08"/></linearGradient></defs>`
     + Array.from({ length: 16 }, (_, k) => `<path d="M0 -${k % 2 ? 56 : 64} L3 -46 L-3 -46Z" fill="#ffd86a" opacity=".85" transform="rotate(${k * 22.5})"/>`).join('')
     + '<circle r="46" fill="#1c2028" stroke="url(#v23pg)" stroke-width="7"/><circle r="32" fill="#4a505c" stroke="#c8a030" stroke-width="3"/>'
     + [0, 60, 120].map((r) => `<rect x="-24" y="-3" width="48" height="6" rx="3" fill="#c8ccd2" transform="rotate(${r})"/>`).join('')
-    + '<circle r="9" fill="#ffd23f" stroke="#7a5206" stroke-width="2"/><g transform="translate(0 50)"><path d="M-26 -7 L26 -7 L21 0 L26 7 L-26 7 L-21 0Z" fill="#c87a10" stroke="#fff2b0" stroke-width="1.2"/><text y="3.4" text-anchor="middle" font-size="8" font-weight="800" fill="#fff2b0" font-family="Oxanium, sans-serif">7.5M</text></g></svg>';
+    + '<circle r="9" fill="#ffd23f" stroke="#7a5206" stroke-width="2"/><g transform="translate(0 50)"><path d="M-26 -7 L26 -7 L21 0 L26 7 L-26 7 L-21 0Z" fill="#c87a10" stroke="#fff2b0" stroke-width="1.2"/><text y="3.4" text-anchor="middle" font-size="8" font-weight="800" fill="#fff2b0" font-family="Oxanium, sans-serif">10M</text></g></svg>';
   const walletTitles = (s) => {
     if (typeof document === 'undefined') return;
     const c = document.getElementById('credits');

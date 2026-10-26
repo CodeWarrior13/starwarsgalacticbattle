@@ -551,7 +551,8 @@
     if (!m) {
       return `<h3>${ico} Save your game</h3>
         <p class="muted small">Sign in to keep your progress safe and play on any device. Already saved somewhere else? Sign in with the same account to load it.</p>
-        ${choices()}`;
+        ${choices()}
+        ${root.Invite ? '<p class="muted small">Want to invite friends? Save your game first: your invite code is your HoloNet callsign.</p><div class="settings-btns"><button class="btn" type="button" data-acct="invite">Invite friends</button></div>' : ''}`;
     }
     const prof = root.Player.state.hn && root.Player.state.hn.prof;
     const line = state === 'saving' ? 'Saving…' : state === 'offline' ? 'Waiting for a connection' : `Saved ${esc(ago(m.at))}`;
