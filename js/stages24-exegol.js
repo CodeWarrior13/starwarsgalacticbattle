@@ -330,6 +330,7 @@
       + palpatine(80, 80, 3.2, 1) + forceLightning(f2(80 - 6.8 * 3.2), f2(80 - 11.6 * 3.2), 10, 54, 1) + forceLightning(f2(80 + 6.8 * 3.2), f2(80 - 11.6 * 3.2), 150, 56, 2)
       + knight(40, 86, 2.8, 1, 2) + sithTrooper(118, 86, 2.6, -1) + sithTrooper(138, 88, 2.6, -1),
   };
+  Object.assign(SA.kit = SA.kit || {}, { palpatine, forceLightning });
   Object.assign(SA.scenes, EX);
   SA.worlds.exegol = ['the_storm', 'citadel_gates', 'knights_in_the_fog', 'the_supreme_leader', 'sith_fleet', 'the_final_order', 'reys_trial', 'throne_room_guard', 'the_xyston_fleet', 'the_emperors_throne'];
 })(typeof window !== 'undefined' ? window : globalThis);

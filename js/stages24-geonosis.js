@@ -531,6 +531,7 @@
       + geonosian(22, 68, 1.2, 1) + geonosian(98, 67, 1.1, -1)
       + magnaguard(40, 86, 3, 1, -30) + dooku(80, 86, 3.2, 1) + grievousBoss(124, 92, 0.56),
   };
+  Object.assign(SA.kit = SA.kit || {}, { b1, b2, droideka, DKGUNS, magnaguard, grievousBoss, vulture, VGUNS, dooku, delta7, D7GUNS: DGUNS });
   Object.assign(SA.scenes, GE);
   SA.worlds.geonosis = ['orbital_defense', 'hive_spires', 'droid_foundry', 'conveyor_belts', 'jedi_starfighters', 'the_strike_team', 'droideka_wall', 'magnaguard_hall', 'battle_of_geonosis', 'dookus_hangar'];
 })(typeof window !== 'undefined' ? window : globalThis);
