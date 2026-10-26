@@ -137,6 +137,16 @@
   const reliefWall = (x, y, w, h, c = '#8a7458', d = '#5a4a36') => R(x, y, w, h, c, `stroke="${d}" stroke-width=".3"`) + R(x + w * 0.1, y + h * 0.1, w * 0.8, h * 0.5, 'none', `stroke="${d}" stroke-width=".3"`) + P(`M${x + w * 0.2} ${y + h * 0.55} L${x + w * 0.35} ${y + h * 0.25} L${x + w * 0.5} ${y + h * 0.45} L${x + w * 0.65} ${y + h * 0.2} L${x + w * 0.8} ${y + h * 0.55}`, 'none', `stroke="${d}" stroke-width=".3"`) + C(x + w * 0.5, y + h * 0.28, w * 0.06, 'none', `stroke="${d}" stroke-width=".25"`) + R(x + w * 0.1, y + h * 0.7, w * 0.8, h * 0.18, 'none', `stroke="${d}" stroke-width=".25"`);
   const sconce = (x, y, c = '#ffd890') => R(x - 0.8, y, 1.6, 2.4, '#5a4a36') + C(x, y - 0.4, 0.8, c) + glow(x, y - 0.4, 1.4, c, 0.35);
 
+  // The Archives hall without its people: the vaulted ceiling, the glowing
+  // holobook shelves, the busts, the reading tables and the floor.
+  const archivesHall = () => fill([[0, '#1a1e28'], [0.5, '#141820'], [1, '#08090e']])
+      + Array.from({ length: 7 }, (_, k) => { const w = 60 - k * 7; const yy = 2 + k * 2.6; return P(`M${80 - w} ${yy + 10} Q${80} ${yy - 8 + k} ${80 + w} ${yy + 10}`, 'none', `stroke="#4a5060" stroke-width="${1.6 - k * 0.15}"`); }).join('') + Array.from({ length: 6 }, (_, k) => R(80 - 4 + k * 0.1, 2 + k * 3, 8 - k * 0.2, 2, '#c8e0f0', `opacity="${0.6 - k * 0.07}"`)).join('') + P('M74 0 L86 0 L96 90 L64 90Z', '#c8e8ff', 'opacity=".05"')
+      + [-1, 1].map((sd) => Array.from({ length: 8 }, (_, k) => { const x1 = 80 + sd * (7 + k * 9); const x2 = 80 + sd * (10 + k * 11.4); const top = 22 - k * 2.6; const mid = 40 + k * 1.2; const bot = 58 + k * 4; const shelf = (t1, b1) => P(`M${x1} ${t1} L${x2} ${t1 - 2.6} L${x2} ${b1 + 3} L${x1} ${b1}Z`, '#14243a', 'stroke="#3a5a7a" stroke-width=".2"') + Array.from({ length: 6 }, (_, m) => { const y1 = t1 + ((b1 - t1) * (m + 0.5)) / 6; const y2 = t1 - 2.6 + ((b1 + 3 - t1 + 2.6) * (m + 0.5)) / 6; return L(x1, y1, x2, y2, '#5ad8ff', 0.35) + L(x1, y1 + 0.7, x2, y2 + 0.8, '#2a6a9a', 0.45); }).join(''); return shelf(top, mid - 2) + shelf(mid + 1, bot) + L(x1, mid - 1, x2, mid - 2, '#8a7a5e', 0.6) + L(x1, mid - 3.4, x2, mid - 4.4, '#8a7a5e', 0.25) + L(x1, mid - 3.4, x1, mid - 1, '#8a7a5e', 0.2); }).join('')).join('')
+      + R(73, 22, 14, 36, '#3a5a7a', 'opacity=".2"') + glow(80, 40, 8, '#5ad8ff', 0.1)
+      + P('M74 58 L86 58 L110 90 L50 90Z', '#3a2a2a') + P('M76 58 L84 58 L100 90 L60 90Z', '#5a2a2a', 'opacity=".7"')
+      + [[-1, 0], [1, 0], [-1, 1], [1, 1], [-1, 2], [1, 2]].map(([sd, k]) => bust(80 + sd * (10 + k * 14), 62 + k * 7, 0.7 + k * 0.38)).join('')
+      + [[-1, 30, 74], [1, 130, 74]].map(([sd, x, y]) => R(x - 7, y - 1, 14, 1.4, '#5a4636', 'stroke="#2a1e14" stroke-width=".2"') + L(x - 6, y, x - 6, y + 6, '#3a2a1e', 0.6) + L(x + 6, y, x + 6, y + 6, '#3a2a1e', 0.6) + L(x + sd * 3, y - 1, x + sd * 3, y - 4, '#8a7a5e', 0.3) + C(x + sd * 3, y - 4.4, 0.8, '#5ad8ff') + glow(x + sd * 3, y - 4.4, 1, '#5ad8ff', 0.4)).join('')
+      + P('M0 62 L160 62 L160 90 L0 90Z', '#0e1824', 'opacity=".6"') + Array.from({ length: 9 }, (_, k) => L(80, 58, -40 + k * 30, 90, '#1e2e40', 0.3)).join('');
   const CO = {
     // 1 · Temple Approach: night over Coruscant. The Jedi Temple stands at
     // the end of the processional way: three ribbed terraces lit with
@@ -185,14 +195,7 @@
     // gallery with its railing; bronze busts of the Lost Twenty on their
     // plinths lining the central aisle; reading tables with lamps; Cal Kestis
     // with his blue saber lit as clones close in.
-    the_archives: () => fill([[0, '#1a1e28'], [0.5, '#141820'], [1, '#08090e']])
-      + Array.from({ length: 7 }, (_, k) => { const w = 60 - k * 7; const yy = 2 + k * 2.6; return P(`M${80 - w} ${yy + 10} Q${80} ${yy - 8 + k} ${80 + w} ${yy + 10}`, 'none', `stroke="#4a5060" stroke-width="${1.6 - k * 0.15}"`); }).join('') + Array.from({ length: 6 }, (_, k) => R(80 - 4 + k * 0.1, 2 + k * 3, 8 - k * 0.2, 2, '#c8e0f0', `opacity="${0.6 - k * 0.07}"`)).join('') + P('M74 0 L86 0 L96 90 L64 90Z', '#c8e8ff', 'opacity=".05"')
-      + [-1, 1].map((sd) => Array.from({ length: 8 }, (_, k) => { const x1 = 80 + sd * (7 + k * 9); const x2 = 80 + sd * (10 + k * 11.4); const top = 22 - k * 2.6; const mid = 40 + k * 1.2; const bot = 58 + k * 4; const shelf = (t1, b1) => P(`M${x1} ${t1} L${x2} ${t1 - 2.6} L${x2} ${b1 + 3} L${x1} ${b1}Z`, '#14243a', 'stroke="#3a5a7a" stroke-width=".2"') + Array.from({ length: 6 }, (_, m) => { const y1 = t1 + ((b1 - t1) * (m + 0.5)) / 6; const y2 = t1 - 2.6 + ((b1 + 3 - t1 + 2.6) * (m + 0.5)) / 6; return L(x1, y1, x2, y2, '#5ad8ff', 0.35) + L(x1, y1 + 0.7, x2, y2 + 0.8, '#2a6a9a', 0.45); }).join(''); return shelf(top, mid - 2) + shelf(mid + 1, bot) + L(x1, mid - 1, x2, mid - 2, '#8a7a5e', 0.6) + L(x1, mid - 3.4, x2, mid - 4.4, '#8a7a5e', 0.25) + L(x1, mid - 3.4, x1, mid - 1, '#8a7a5e', 0.2); }).join('')).join('')
-      + R(73, 22, 14, 36, '#3a5a7a', 'opacity=".2"') + glow(80, 40, 8, '#5ad8ff', 0.1)
-      + P('M74 58 L86 58 L110 90 L50 90Z', '#3a2a2a') + P('M76 58 L84 58 L100 90 L60 90Z', '#5a2a2a', 'opacity=".7"')
-      + [[-1, 0], [1, 0], [-1, 1], [1, 1], [-1, 2], [1, 2]].map(([sd, k]) => bust(80 + sd * (10 + k * 14), 62 + k * 7, 0.7 + k * 0.38)).join('')
-      + [[-1, 30, 74], [1, 130, 74]].map(([sd, x, y]) => R(x - 7, y - 1, 14, 1.4, '#5a4636', 'stroke="#2a1e14" stroke-width=".2"') + L(x - 6, y, x - 6, y + 6, '#3a2a1e', 0.6) + L(x + 6, y, x + 6, y + 6, '#3a2a1e', 0.6) + L(x + sd * 3, y - 1, x + sd * 3, y - 4, '#8a7a5e', 0.3) + C(x + sd * 3, y - 4.4, 0.8, '#5ad8ff') + glow(x + sd * 3, y - 4.4, 1, '#5ad8ff', 0.4)).join('')
-      + P('M0 62 L160 62 L160 90 L0 90Z', '#0e1824', 'opacity=".6"') + Array.from({ length: 9 }, (_, k) => L(80, 58, -40 + k * 30, 90, '#1e2e40', 0.3)).join('')
+    the_archives: () => archivesHall()
       + templeGuard(58, 77, 2.1, 1) + cal(80, 84, 3, 1) + clone(40, 84, 2.6, 1) + clone(122, 84, 2.6, -1) + clone(108, 76, 2, -1),
 
     // 5 · The Inquisitors Arrive: a Temple landing platform under the burning
@@ -274,7 +277,7 @@
       + Array.from({ length: 22 }, (_, k) => C((k * 37) % 160, 20 + (k * 23) % 60, 0.35, '#ffb060', 'opacity=".8"')).join('')
       + templeGuard(56, 77, 1.75, 1) + templeGuard(104, 77, 1.75, -1) + secondSis(34, 86, 2.7, 1) + grandInq(80, 88, 3.1, 1) + fifthBro(126, 86, 2.8, -1),
   };
-  Object.assign(SA.kit = SA.kit || {}, { clone, robed, laat, arc170, inquisitor, skyline, traffic, temple, grandInq, fifthBro, secondSis });
+  Object.assign(SA.kit = SA.kit || {}, { clone, robed, laat, arc170, inquisitor, skyline, traffic, temple, grandInq, fifthBro, secondSis, archivesHall });
   Object.assign(SA.scenes, CO);
   SA.worlds.coruscant = ['temple_approach', 'skylane_patrol', 'temple_guard', 'the_archives', 'the_inquisitors_arrive', 'gunship_run', 'training_halls', 'the_purge', 'council_chamber', 'order_66'];
 })(typeof window !== 'undefined' ? window : globalThis);
