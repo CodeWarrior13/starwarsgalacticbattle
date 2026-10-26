@@ -67,6 +67,13 @@
         if (!Player.paySecretEntry(params.boss)) return toast(`The Monolith asks ${cost} Kyber to try again. You have ${Player.state.crystals}.`);
         if (cost) { toast(`Paid ${cost} Kyber to enter the trial.`); root.UI.updateWallet(); }
       }
+      // 2.4: a world's stage scenes download the first time you fight there.
+      if (root.Stages24 && !root.Stages24.ready(params)) {
+        if (this.loadingScene) return;
+        this.loadingScene = true;
+        try { await root.Stages24.load(params); } catch (e) { /* offline: the battle just has no scene */ }
+        this.loadingScene = false;
+      }
       this.params = params;
       this.enc = enc;
       this.kind = enc.kind;
@@ -238,13 +245,15 @@
       if (!card) return;
       const pct = (u.hp / u.maxHp) * 100;
       const hpBar = $('.bar.hp', card);
-      $('.fill', hpBar).style.width = pct + '%';
-      $('.lag', hpBar).style.width = pct + '%';
+      // Bars scale instead of changing width, so the GPU animates them without
+      // redrawing the card.
+      $('.fill', hpBar).style.transform = `scaleX(${pct / 100})`;
+      $('.lag', hpBar).style.transform = `scaleX(${pct / 100})`;
       hpBar.classList.toggle('mid', pct <= 50 && pct > 25);
       hpBar.classList.toggle('low', pct <= 25);
       $('[data-hp]', card).textContent = fmt(u.hp);
-      $('.bar.tm i', card).style.width = Math.min(100, u.tm) + '%';
-      $('.bar.ult i', card).style.width = u.ult + '%';
+      $('.bar.tm i', card).style.transform = `scaleX(${Math.min(100, u.tm) / 100})`;
+      $('.bar.ult i', card).style.transform = `scaleX(${Math.min(100, u.ult) / 100})`;
       $('.bar.ult', card).classList.toggle('full', u.ult >= 100);
       const st = $('.statuses', card);
       const want = Object.keys(u.statuses);

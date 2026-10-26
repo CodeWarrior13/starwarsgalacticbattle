@@ -29,9 +29,12 @@
     const av = D.UNIT_MAP[prof.av] ? prof.av : 'luke';
     if (pic.dataset.av !== av && root.Art) { pic.dataset.av = av; pic.innerHTML = root.Art.unitArt(D.UNIT_MAP[av]); }
     const b = acct.querySelector('.tb-badge');
-    b.hidden = !count;
-    b.textContent = count > 9 ? '9+' : String(count || '');
-    acct.setAttribute('aria-label', `Commander profile, level ${root.Player.state.account.level}${count ? `, ${count} new` : ''}`);
+    // Only touch the page when something changed (this runs every few seconds).
+    const txt = count > 9 ? '9+' : String(count || '');
+    if (b.hidden !== !count) b.hidden = !count;
+    if (b.textContent !== txt) b.textContent = txt;
+    const label = `Commander profile, level ${root.Player.state.account.level}${count ? `, ${count} new` : ''}`;
+    if (acct.getAttribute('aria-label') !== label) acct.setAttribute('aria-label', label);
   }
 
   // Tap a currency to see its full amount in a small bubble under it.

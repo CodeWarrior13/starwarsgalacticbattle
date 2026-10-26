@@ -16,8 +16,8 @@
   // Update 2.3 goes live at 7:05 a.m. Central on November 11, 2026 (after DST ends).
   const LAUNCH_23 = root.__v23Test != null ? root.__v23Test : Date.UTC(2026, 10, 11, 13, 5, 0);
   // Update 2.4 has no date yet, so its entry stays hidden. When the date is set,
-  // put the same time here as RELEASE24 in js/liberation24.js and fill in `date`.
-  const LAUNCH_24 = root.__v24Test != null ? root.__v24Test : null;
+  // put it in js/gate24.js (REL24) and fill in `date` below.
+  const LAUNCH_24 = root.__v24Test != null ? root.__v24Test : root.REL24 != null ? root.REL24 : null;
   const ALL_UPDATES = [
     {
       v: '2.4', date: 'Date to be set', title: 'Liberation', from: LAUNCH_24 == null ? Infinity : LAUNCH_24,
@@ -36,6 +36,7 @@
         'NEW|Replay ×3 (level 15): cleared stages get a button that plays the battle three times on Auto.',
         'NEW|The results screen shows what you\'ve earned this play session and about how much that is an hour.',
         'NEW|Sell spare shards: once a card is at top level and top stars, its extra shards sell for credits (Kyber for Secret cards).',
+        'IMPROVED|Each world\'s stage scenes download the first time you fight there, so the game still opens fast.',
         'IMPROVED|The Hoth Star Destroyer has a new, detailed portrait.',
         'NEW|Card level cap raised to 50. Levels 41 to 50 add 7% health and attack each, so a level 50 card is about 19% stronger than at level 40.',
         'BALANCE|The galaxy grows with your cards: from Bespin on, stage and boss levels rise, up to level 46 at the Siege of Coruscant. Tatooine, Hoth and Dagobah stay as they were, and the Endless Tower now climbs to level 50.',
@@ -99,6 +100,7 @@
         'NEW|A "NEW CARD" ribbon marks cards you didn\'t have yet when you open a crate, and on the crate summary after.',
         'IMPROVED|The Hoth Star Destroyer boss has new art.',
         'IMPROVED|Big performance boost: smoother menus and battles on all devices.',
+        'IMPROVED|Battles run lighter: health, turn and ultimate bars, target glows, glowing card frames and lightsabers no longer redraw the cards every frame, so battles stay smooth and use less battery. The loading screen logo downloads five times faster.',
         'FIXED|Some ultimates weren\'t playing their animations; Performance mode now keeps every card\'s own ultimate.',
         'FIXED|On phones, a friend\'s "Last online" tag no longer runs off the edge of their profile; long ones wrap onto a second line.',
         'IMPROVED|Removing test code.',

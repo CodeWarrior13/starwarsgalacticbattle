@@ -19,7 +19,7 @@
   if (!D || !Player) return;
 
   // ---------- Release switch ----------
-  const RELEASE24 = root.__v24Test != null ? root.__v24Test : null;
+  const RELEASE24 = root.__v24Test != null ? root.__v24Test : root.REL24 != null ? root.REL24 : null;
   const TEST_KEY = 'swcg-v24-test';
   const test = (v) => {
     try {

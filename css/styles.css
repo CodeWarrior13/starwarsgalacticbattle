@@ -371,7 +371,9 @@ body.in-battle .main-nav, body.in-battle .brand { pointer-events: none; opacity:
 /* Engine glow as a soft stroke halo: a filter here repainted every ship card several times a second. */
 .eng { stroke: var(--eng); stroke-opacity: 0.4; stroke-width: 3.5; paint-order: stroke; animation: eng 0.5s ease-in-out infinite alternate; }
 @keyframes eng { to { opacity: 0.7; } }
-.art-saber { animation: hum 1.6s ease-in-out infinite; }
+/* The saber hum repaints its whole card every frame (SVG can't be composited),
+   so it only plays where a portrait is shown big: the card inspector and walkouts. */
+.modal .art-saber, .walkout .art-saber { animation: hum 1.6s ease-in-out infinite; }
 @keyframes hum { 50% { opacity: 0.86; } }
 
 /* ---------- Campaign ---------- */
@@ -694,11 +696,13 @@ body.in-battle .main-nav, body.in-battle .brand { pointer-events: none; opacity:
 
 .bcard.active { border-color: var(--crawl); box-shadow: 0 0 0 2px rgba(255, 210, 63, 0.25), 0 0 26px rgba(255, 210, 63, 0.35); transform: translateY(-4px); }
 .enemy-row .bcard.active { transform: translateY(4px); }
-.bcard.targetable { cursor: crosshair; border-color: var(--dark); animation: target 0.9s ease-in-out infinite; }
+/* The pulsing target glow fades a fixed shadow in and out (opacity only), so the
+   compositor runs it without repainting the cards every frame. */
+.bcard.targetable { cursor: crosshair; border-color: var(--dark); }
+.bcard.targetable::after { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; box-shadow: 0 0 20px rgba(255, 75, 75, 0.6); opacity: 0; animation: target 0.9s ease-in-out infinite; will-change: opacity; }
+.bcard.targetable.friendly::after { box-shadow: 0 0 20px rgba(82, 224, 138, 0.6); }
 .bcard.targetable.friendly { border-color: var(--heal); cursor: pointer; }
-@keyframes target { 50% { box-shadow: 0 0 20px rgba(255, 75, 75, 0.6); } }
-.bcard.targetable.friendly { animation-name: target-f; }
-@keyframes target-f { 50% { box-shadow: 0 0 20px rgba(82, 224, 138, 0.6); } }
+@keyframes target { 50% { opacity: 1; } }
 .bcard.ko { filter: grayscale(1) brightness(0.4); opacity: 0.5; transform: scale(0.92); }
 .bcard.ko::after { content: 'DEFEATED'; position: absolute; inset: 35% 0 auto; text-align: center; font-family: var(--font-display); font-weight: 800; font-size: 11px; letter-spacing: 0.2em; color: var(--dark); }
 .bcard.flash-hit .portrait::after { content: ''; position: absolute; inset: 0; background: #fff; mix-blend-mode: overlay; animation: flash 0.3s; z-index: 5; }
@@ -3548,10 +3552,25 @@ body.perf-on .card-back .cb-rays { animation: none; }
 .result-modal .session-rate { text-align: center; margin: 4px 0 0; }
 .sell-shards { border-top: 1px dashed var(--line); padding-top: 10px; }
 /* 2.4 stage scenes behind the battle */
-.field > .stage-scene { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+.field > .stage-scene { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; will-change: transform; } /* drawn once, on its own layer */
 .field > .stage-scene svg { width: 100%; height: 100%; display: block; }
 .field > .stage-scene::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(4, 8, 16, 0.15), rgba(4, 8, 16, 0.35)); }
 
 /* Boss health runs into the millions: show just the current number so the two don't run together. */
 .bcard.boss .hp-num { justify-content: center; }
 .bcard.boss .hp-num span:last-child { display: none; }
+
+/* ---------- Glowing frames without repainting the art ----------
+   Mythic and Secret card frames, an enraged boss and holo cards pulse a glow
+   every frame. Their portrait gets its own layer, so only the thin frame is
+   redrawn each frame instead of the whole drawing inside it. */
+.ucard.rarity-mythic .portrait, .ucard.rarity-secret .portrait, .ucard.holo .portrait,
+.bcard.enraged .portrait, .flip.glow-legendary .flip-front .portrait, .flip.r-mythic .flip-front .portrait { will-change: transform; }
+
+/* Battle card bars (health, turn meter, ultimate) scale on the GPU instead of
+   animating their width, which re-laid-out and repainted every card each frame. */
+.bcard .bar i { width: 100%; transform-origin: 0 50%; transform: scaleX(0); transition: transform 0.45s ease-out; }
+.bcard .bar.hp i.lag { transition: transform 0.9s 0.25s ease-out; }
+/* Each battle portrait is its own layer: hits, bars and statuses around it no
+   longer redraw the drawing itself. */
+.bcard .portrait { will-change: transform; }
