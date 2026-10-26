@@ -61,13 +61,22 @@
     + P('M-10 0 L-10 -22 Q0 -34 10 -22 L10 0Z', '#08080c', 'stroke="#ff3a2a" stroke-width=".5" stroke-opacity=".7"') + P('M-7 0 L-7 -21 Q0 -30 7 -21 L7 0Z', '#3a0a08', 'opacity=".8"') + glow(0, -12, 5, RED, 0.25)
     + R(-1, -60, 2, 14, '#14141c') + C(0, -60.4, 0.5, RED)
     + P('M-40 0 L-30 -30 L-12 -46', 'none', 'stroke="#7a88b8" stroke-width=".35" opacity=".6"'));
-  // A colossal Sith statue: a hooded figure carved from black stone, face
-  // lost in shadow, hands clasped on a blade, its robes deeply grooved.
+  // A colossal Sith statue carved from black stone: a hooded figure on a
+  // rune-cut pedestal, the mantle over its shoulders with violet trim, a
+  // masked face in the hood's shadow with faintly glowing eye slits, arms
+  // bent to grip a great sword resting point-down, deep robe folds catching
+  // the storm light, and cracks running through the stone.
   const statue = (x, base, h, f = 1) => g(x, base, f2(h / 40), f,
-    P('M-9 0 L-8 -18 C-9 -26 -7 -34 -4 -37 C-2 -40 2 -40 4 -37 C7 -34 9 -26 8 -18 L9 0Z', '#16161e', 'stroke="#2a2a36" stroke-width=".4"') + P('M1 -38.6 C4 -38 7 -34 8 -26 L8 -18 L9 0 L2 0Z', '#000', 'opacity=".3"')
-    + P('M-3.4 -36 C-3 -32 3 -32 3.4 -36 C2 -38 -2 -38 -3.4 -36Z', '#06060a') + C(-1, -34.8, 0.35, '#5a2a3a', 'opacity=".6"') + C(1, -34.8, 0.35, '#5a2a3a', 'opacity=".6"')
-    + P('M-6 -26 L-2 -20 L2 -20 L6 -26', 'none', 'stroke="#2a2a36" stroke-width=".8"') + R(-0.8, -24, 1.6, 22, '#20202a') + P('M-2 -22 L2 -22 L1.4 -19 L-1.4 -19Z', '#2a2a36')
-    + [-5, -2.6, 2.6, 5].map((px) => L(px, -16, px * 1.1, 0, '#0a0a10', 0.5)).join('') + P('M-9 0 L-8 -18 C-9 -26 -7 -34 -4 -37', 'none', 'stroke="#5a6488" stroke-width=".4" opacity=".5"'));
+    R(-11, -3, 22, 3, '#1a1a24', 'stroke="#2a2a36" stroke-width=".3"') + R(-10, -4.6, 20, 1.6, '#20202a', 'stroke="#2a2a36" stroke-width=".2"') + [-7, -3, 1, 5].map((px) => P(`M${px} -1.6 l1 -.6 l1 .6 l-1 .6Z`, '#6a4a9a', 'opacity=".7"')).join('') + L(-11, -3, 11, -3, '#3a3a4a', 0.25)
+    + P('M-9 -4.6 L-8 -20 C-9 -27 -7 -34 -4 -37 C-2 -40 2 -40 4 -37 C7 -34 9 -27 8 -20 L9 -4.6Z', '#16161e', 'stroke="#2a2a36" stroke-width=".4"') + P('M1 -38.6 C4 -38 7 -34 8 -27 L8 -20 L9 -4.6 L3 -4.6Z', '#000', 'opacity=".3"')
+    + [-6, -3.6, -1.2, 1.2, 3.6, 6].map((px) => P(`M${f2(px * 0.6)} -19 Q${f2(px * 0.9)} -12 ${f2(px * 1.2)} -4.6`, 'none', 'stroke="#0a0a10" stroke-width=".55"') + P(`M${f2(px * 0.6 + 0.4)} -19 Q${f2(px * 0.9 + 0.4)} -12 ${f2(px * 1.2 + 0.4)} -4.6`, 'none', 'stroke="#3a3a4c" stroke-width=".2" opacity=".6"')).join('')
+    + P('M-8.4 -24 C-6 -28.4 6 -28.4 8.4 -24 L7.4 -20.6 C4 -22.8 -4 -22.8 -7.4 -20.6Z', '#1e1e28', 'stroke="#2a2a36" stroke-width=".3"') + P('M-7.6 -21.4 C-4 -23.4 4 -23.4 7.6 -21.4', 'none', 'stroke="#6a4a9a" stroke-width=".35" opacity=".7"') + [-5, -2.5, 0, 2.5, 5].map((px) => C(px, f2(-22.6 + Math.abs(px) * 0.12), 0.3, '#3a3a4c')).join('')
+    + P('M-4.4 -27 C-5.4 -31 -4.6 -36 -2 -38.4 C-0.6 -39.4 0.6 -39.4 2 -38.4 C4.6 -36 5.4 -31 4.4 -27 L2.8 -27.6 C3.4 -31 2.8 -34.4 0 -35.6 C-2.8 -34.4 -3.4 -31 -2.8 -27.6Z', '#1a1a24', 'stroke="#2a2a36" stroke-width=".3"') + P('M-2.8 -27.6 C-3.4 -31 -2.8 -34.4 0 -35.6 C2.8 -34.4 3.4 -31 2.8 -27.6Z', '#06060a')
+    + P('M-2 -33.2 C-1.8 -31 1.8 -31 2 -33.2 L1.4 -29.6 C0.6 -28.8 -0.6 -28.8 -1.4 -29.6Z', '#24242e', 'stroke="#3a3a4a" stroke-width=".15"') + R(-1.5, -32.4, 1.1, 0.35, '#8a5aff', 'opacity=".55"') + R(0.4, -32.4, 1.1, 0.35, '#8a5aff', 'opacity=".55"') + glow(0, -32.2, 0.6, '#8a5aff', 0.2) + L(0, -31.6, 0, -29.4, '#3a3a4a', 0.15)
+    + P('M-7 -22.6 L-4.6 -18.4 L-1.2 -19.6', 'none', 'stroke="#1a1a24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"') + P('M7 -22.6 L4.6 -18.4 L1.2 -19.6', 'none', 'stroke="#1a1a24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"') + P('M-7 -22.6 L-4.6 -18.4', 'none', 'stroke="#4a4a5c" stroke-width=".25"')
+    + R(-0.7, -17.8, 1.4, 12.6, '#2a2a36', 'stroke="#14141c" stroke-width=".15"') + L(-0.35, -17.4, -0.35, -5.6, '#5a5a6e', 0.15) + P('M-0.7 -5.2 L0 -4.2 L0.7 -5.2Z', '#2a2a36') + R(-3.2, -19.2, 6.4, 1.1, '#2e2e3a', 'stroke="#14141c" stroke-width=".15"') + R(-0.5, -21.2, 1, 2, '#24242e') + C(0, -21.6, 0.7, '#2e2e3a') + C(-1.2, -19.6, 0.75, '#1e1e28') + C(1.2, -19.6, 0.75, '#1e1e28')
+    + P('M-6 -14 L-5 -11 L-6.4 -8 M5.4 -30 L4.4 -27 M-3 -36 L-2 -33', 'none', 'stroke="#08080c" stroke-width=".3"')
+    + P('M-9 -4.6 L-8 -20 C-9 -27 -7 -34 -4 -37 C-2 -40 0 -39.6 0 -39.6', 'none', 'stroke="#6a78a8" stroke-width=".45" opacity=".55"'));
   // The Sith Eternal crowd packing the tiers: rows of small hooded figures.
   const crowd = (y0, rows, x1, x2) => Array.from({ length: rows }, (_, r) => Array.from({ length: Math.floor((x2 - x1) / 2.4) }, (_, k) => { const x = f2(x1 + k * 2.4 + (r % 2) * 1.2); const y = y0 + r * 3.2; return P(`M${f2(x - 0.8)} ${y} L${x} ${f2(y - 2)} L${f2(x + 0.8)} ${y}Z`, r % 2 ? '#0e0e14' : '#12121a') + C(x, f2(y - 1.5), 0.12, '#8a5aff', 'opacity=".5"'); }).join('') + L(x1, y0 + r * 3.2 + 0.2, x2, y0 + r * 3.2 + 0.2, '#22242e', 0.3)).join('');
 
@@ -159,17 +168,23 @@
       + `<g transform="rotate(-26 3.4 -8)">${L(2, -9.2, 4.8, -9.2, '#ff2a1a', 0.75)}${L(2, -9.2, 4.8, -9.2, '#ffe0d8', 0.25)}${P('M3 -10 L3.8 -11.4 L3 -12.8 L3.9 -14.2 L3 -15.6 L3.8 -17 L3.1 -18.4 L3.7 -19.6', 'none', 'stroke="#ff5a3a" stroke-width=".3" opacity=".8"')}</g>` + glow(1.4, -12, 0.6, '#ff2a1a', 0.2));
   // Rey with the Skywalker saber, in her pale wraps, hair half up.
   const rey = (x, y, s, f = 1) => robed(x, y, s, f, { robe: '#d8d0c0', tunic: '#efe8da', skin: '#ecc4a0', hair: 'M-1.5 -12.2 C-1.7 -14.2 1.7 -14.2 1.5 -12.2 L1.2 -12.7 C0.4 -13.2 -0.4 -13.2 -1.2 -12.7Z', hairC: '#4a2e1a', saber: '#3a8aff', trim: '#b8ae9a', belt: '#7a5a3a', fold: '#a8a090' }) + g(x, y, s, f, C(0, -14.2, 0.6, '#4a2e1a') + P('M-1.4 -12 C-1.6 -11 -1.5 -10.4 -1.2 -10', 'none', 'stroke="#4a2e1a" stroke-width=".35"'));
-  // The Emperor reborn: black hooded robes, the ravaged grey face with its
-  // pale yellow eyes and snarl, gnarled hands raised.
+  // The Emperor reborn: black hooded robes, gnarled hands raised, and the
+  // face from his Emperor Reborn boss card: the deep hood with its lit rim,
+  // the ravaged pale face in the hood's shadow, milky eyes, lined cheeks and
+  // a thin cruel mouth.
   const palpatine = (x, y, s, f = 1) => g(x, y, s, f,
     E(0, 0.2, 4, 0.6, '#000', 'opacity=".35"')
     + P('M-3 -10.6 C-4.4 -6 -5 -3 -5.4 0 L5.4 0 C5 -3 4.4 -6 3 -10.6Z', '#0a0a0c', 'stroke="#000" stroke-width=".2"') + P('M-1.6 -9 L-2.6 0 M0 -9 L0 0 M1.6 -9 L2.6 0 M-3.4 -4 L-4.4 0 M3.4 -4 L4.4 0', 'none', 'stroke="#1e1e24" stroke-width=".3"') + P('M-3 -10.6 C-4.4 -6 -5 -3 -5.4 0', 'none', 'stroke="#6a78a8" stroke-width=".3" opacity=".5"')
     + P('M-2.6 -10 L-5.6 -11.8 L-6.2 -10.6 L-2.8 -8.4Z M2.6 -10 L5.6 -11.8 L6.2 -10.6 L2.8 -8.4Z', '#0e0e12', 'stroke="#000" stroke-width=".15"')
     + P('M-6 -11.6 L-7.2 -12.6 M-6.1 -11.3 L-7.4 -11.8 M-6.1 -11 L-7.3 -10.9 M-5.8 -10.8 L-6.6 -10.2 M6 -11.6 L7.2 -12.6 M6.1 -11.3 L7.4 -11.8 M6.1 -11 L7.3 -10.9 M5.8 -10.8 L6.6 -10.2', 'none', 'stroke="#b8b8a8" stroke-width=".28" stroke-linecap="round"')
-    + P('M-2.6 -10.4 C-3.4 -13.4 -2.2 -16 0 -16.2 C2.2 -16 3.4 -13.4 2.6 -10.4 L1.4 -10.8 C1.6 -12.8 1 -14 0 -14 C-1 -14 -1.6 -12.8 -1.4 -10.8Z', '#0e0e10', 'stroke="#000" stroke-width=".15"')
-    + P('M-1.3 -11 C-1.5 -12.6 -1 -13.8 0 -13.8 C1 -13.8 1.5 -12.6 1.3 -11 C0.8 -10.4 -0.8 -10.4 -1.3 -11Z', '#a8aa9a', 'stroke="#4a4a40" stroke-width=".12"') + P('M-1 -13 Q0 -13.4 1 -13 M-1.1 -11.8 L-0.7 -11.4 M1.1 -11.8 L0.7 -11.4 M-0.3 -12.2 L-0.1 -11.6 M0.3 -12.2 L0.1 -11.6', 'none', 'stroke="#5a5a4a" stroke-width=".1"')
-    + E(-0.5, -12.5, 0.32, 0.18, '#3a2a10') + E(0.5, -12.5, 0.32, 0.18, '#3a2a10') + C(-0.5, -12.5, 0.13, '#f0d060') + C(0.5, -12.5, 0.13, '#f0d060') + glow(0, -12.5, 0.5, '#f0d060', 0.25)
-    + P('M-0.6 -11.1 Q0 -11.4 0.6 -11.1 L0.5 -10.8 Q0 -10.6 -0.5 -10.8Z', '#1a1010') + P('M-0.45 -11.05 l.15 .2 l.15 -.2 l.15 .2 l.15 -.2 l.15 .2', 'none', 'stroke="#d8d0b8" stroke-width=".07"'));
+    + `<g transform="translate(-6.5 -19.19) scale(.13)">`
+    + P('M28 70 C24 44 34 22 50 21 C66 22 76 44 72 70 C68 62 62 58 60 50 C58 40 54 36 50 36 C46 36 42 40 40 50 C38 58 32 62 28 70Z', '#1a1620')
+    + '<path d="M29 66 C27 44 36 25 50 24 C64 25 73 44 71 66" stroke="#5a4a7a" stroke-width="1" fill="none" opacity=".8"/><path d="M40 30 Q50 26 60 30" stroke="#2a2434" stroke-width="1.2" fill="none"/>'
+    + E(50, 53, 10, 12.5, '#c8c0b8') + P('M41 60 Q50 66 59 60 L58 63 Q50 67 42 63Z', '#9a928a', 'opacity=".6"') + P('M39.4 47 C41 38 46 36 50 36 C54 36 59 38 60.6 47 C57 42.6 43 42.6 39.4 47Z', '#1a1620') + P('M40 46 Q50 43 60 46 L60 50 Q50 47 40 50Z', '#000', 'opacity=".25"')
+    + [1, -1].map((sd) => { const X = (v) => 50 + sd * (v - 50); return E(X(45.6), 50.6, 2, 1.3, '#eef2f6') + C(X(45.6), 50.6, 0.9, '#9aa6b4') + `<path d="M${X(42.4)} 55.6 Q${X(43.6)} 58 ${X(43)} 60.4 M${X(41.4)} 52 Q${X(42.6)} 53.4 ${X(44)} 53.4 M${X(47)} 47.6 L${X(46.4)} 49" stroke="#8a7e74" stroke-width=".5" fill="none" opacity=".75"/>`; }).join('')
+    + '<path d="M50 50 L49 55.4 Q50 56.2 51 55.4" stroke="#8a7e74" stroke-width=".6" fill="none"/><path d="M46 60 Q50 61.2 54 60" stroke="#6a4a44" stroke-width=".9" fill="none" stroke-linecap="round"/><path d="M44 63.6 Q50 65.4 56 63.6 M47 44.6 Q50 44 53 44.6" stroke="#8a7e74" stroke-width=".4" fill="none" opacity=".6"/>'
+    + '</g>');
+
   // Force lightning crackling from a hand toward a target.
   const forceLightning = (x1, y1, x2, y2, seed) => [0, 1, 2].map((m) => { const n = 7; let d = `M${x1} ${y1}`; for (let k = 1; k < n; k++) { const t = k / n; const jx = (((k * 31 + m * 17 + seed * 7) % 9) - 4) * 0.7; const jy = (((k * 23 + m * 13 + seed * 5) % 9) - 4) * 0.7; d += ` L${f2(x1 + (x2 - x1) * t + jx)} ${f2(y1 + (y2 - y1) * t + jy)}`; } d += ` L${x2} ${y2}`; return P(d, 'none', 'stroke="#8a9cff" stroke-width="1.4" opacity=".25"') + P(d, 'none', `stroke="#e8eeff" stroke-width="${m ? 0.25 : 0.4}"`); }).join('') + glow(x1, y1, 0.8, '#aabaff', 0.5) + glow(x2, y2, 1.2, '#aabaff', 0.4);
   // Kylo's Upsilon-class shuttle, landed: the narrow black hull on its legs,
@@ -241,22 +256,26 @@
 
     // 6 · The Final Order: a hangar deep in a Xyston. Racks of TIEs hang
     // from the ceiling in the red light, the bay opens on the storm and the
-    // rising fleet, Sith troopers stand in ranks on the deck; three at the
-    // front and Trudgen with his vibro-cleaver.
+    // rising fleet, Xystons climbing at every angle and depth through the
+    // clouds with TIEs weaving between them; Sith troopers stand in ranks
+    // on the deck, three at the front and Trudgen with his vibro-cleaver.
     the_final_order: () => fill([[0, '#0a0608'], [1, '#1a0c0e']])
       + P('M0 0 L44 22 L116 22 L160 0Z', '#120a0c') + P('M0 0 L44 22 L44 60 L0 90Z', '#180c0e') + P('M160 0 L116 22 L116 60 L160 90Z', '#160a0c') + P('M0 90 L44 60 L116 60 L160 90Z', '#100a0c')
-      + R(44, 22, 72, 38, '#14182a') + '<clipPath id="exBay"><rect x="44" y="22" width="72" height="38"/></clipPath><g clip-path="url(#exBay)">' + clouds(34, 9, 0.6) + lightning(70, 22, 18, 10, 0.6) + [[58, 44, 0.3], [96, 40, 0.36], [80, 52, 0.26]].map(([x, y, s]) => xyston(x, y, s, 1)).join('') + clouds(58, 10, 0.7) + '</g>' + R(44, 22, 72, 38, 'none', 'stroke="#2a1a1e" stroke-width="1.6"') + R(44, 22, 72, 2, '#ff3a2a', 'opacity=".5"')
+      + R(44, 22, 72, 38, '#14182a') + '<clipPath id="exBay"><rect x="44" y="22" width="72" height="38"/></clipPath><g clip-path="url(#exBay)">' + clouds(34, 9, 0.6) + lightning(70, 22, 18, 10, 0.6) + `<g transform="rotate(-6 70 30)">${xyston(70, 30, 0.22, 1)}</g>` + `<g opacity=".85" transform="rotate(8 104 34)">${xyston(104, 34, 0.32, -1)}</g>` + clouds(46, 12, 0.65) + `<g transform="rotate(-4 64 46)">${xyston(64, 46, 0.5, 1)}</g>` + `<g transform="rotate(10 108 54)">${xyston(108, 54, 0.62, -1)}</g>` + tieDef(86, 36, 0.32, -20) + tieDef(92, 40, 0.26, -30) + tieDef(54, 30, 0.28, 10) + clouds(60, 10, 0.75) + '</g>' + R(44, 22, 72, 38, 'none', 'stroke="#2a1a1e" stroke-width="1.6"') + R(44, 22, 72, 2, '#ff3a2a', 'opacity=".5"')
       + [0.2, 0.45, 0.7].map((k) => L(f2(k * 44), f2(k * 22), f2(160 - k * 44), f2(k * 22), '#2a1a1e', 0.6)).join('') + [[18, 12], [36, 18], [124, 18], [142, 12]].map(([x, y]) => tieDef(x, y + 6, 0.55, 0) + L(x, 0, x, y + 2, '#2a1a1e', 0.4)).join('')
       + [0.15, 0.4, 0.65, 0.9].map((k) => L(f2(k * 44), f2(90 - k * 30), f2(160 - k * 44), f2(90 - k * 30), '#2a1a1e', 0.35)).join('') + [[30, 70], [130, 70], [60, 62], [100, 62]].map(([x, y]) => C(x, y, 0.5, RED) + glow(x, y, 0.6, RED, 0.3)).join('')
       + Array.from({ length: 12 }, (_, k) => sithTrooper(54 + (k % 6) * 10.4, 64 + Math.floor(k / 6) * 3.6, 0.75 + Math.floor(k / 6) * 0.1, 1)).join('')
-      + sithTrooper(44, 86, 2.6, 1) + sithTrooper(80, 84, 2.5, 1) + sithTrooper(116, 86, 2.6, -1) + knight(140, 88, 2.8, -1, 4),
+      + sithTrooper(30, 86, 2.6, 1) + sithTrooper(62, 84, 2.5, 1) + sithTrooper(94, 86, 2.5, 1) + knight(130, 88, 2.8, -1, 4),
 
     // 7 · Rey's Trial: in the ruins beneath the throne room. Broken stone
-    // stairs and fallen Sith statues, lightning flaring through a rent in
+    // stairs, carved wall reliefs with violet runes, broken pillars and
+    // colossal Sith statues gripping their swords, lightning flaring through a rent in
     // the cavern roof, fog on the floor; Rey with the Skywalker saber and
     // Kylo with his crackling red blade face each other.
     reys_trial: () => fill([[0, '#04050a'], [0.6, '#10141e'], [1, '#1a1e2a']])
       + P('M0 0 L160 0 L160 16 C120 24 100 10 80 12 C60 10 40 24 0 16Z', '#020306') + P('M64 0 L96 0 L90 12 L70 12Z', '#2a3048', 'opacity=".7"') + lightning(78, 0, 14, 11) + P('M70 12 L90 12 L110 70 L50 70Z', '#8a9cff', 'opacity=".06"')
+      + [[44, 34], [116, 34]].map(([x, y]) => R(x - 7, y - 10, 14, 24, '#10121a', 'stroke="#2a2e3e" stroke-width=".3"') + P(`M${x - 5} ${y + 10} L${x - 5} ${y - 4} Q${x} ${y - 9} ${x + 5} ${y - 4} L${x + 5} ${y + 10}`, 'none', 'stroke="#2a2e3e" stroke-width=".4"') + [-3, 0, 3].map((dy) => P(`M${x - 3} ${y + dy} l1 -.7 l1 .7 l1 -.7 l1 .7 l1 -.7 l1 .7`, 'none', 'stroke="#6a4a9a" stroke-width=".3" opacity=".6"')).join('') + glow(x, y - 2, 1, '#8a5aff', 0.15)).join('')
+      + [[60, 70, 1.4, 30], [100, 70, 1.4, 22]].map(([x, b, w, h]) => R(x - w, b - h, w * 2, h, '#14161e', 'stroke="#2a2e3e" stroke-width=".25"') + P(`M${x - w} ${b - h} L${x - w * 0.4} ${b - h - 2} L${x + w * 0.6} ${b - h - 0.6} L${x + w} ${b - h}`, '#14161e')).join('')
       + statue(24, 70, 52, 1) + statue(136, 70, 52, -1) + P('M100 70 L108 58 L124 60 L130 70Z', '#14141c', 'stroke="#2a2a36" stroke-width=".3"') + P('M40 70 L44 64 L56 66 L60 70Z', '#14141c')
       + Array.from({ length: 6 }, (_, k) => P(`M${50 + k * 4} ${70 - k * 2.4} L${110 - k * 4} ${70 - k * 2.4} L${110 - k * 4} ${71.4 - k * 2.4} L${50 + k * 4} ${71.4 - k * 2.4}Z`, k % 2 ? '#14161e' : '#181a24', 'stroke="#2a2e3e" stroke-width=".15"')).join('') + P('M78 58 L84 55 L86 58Z', '#0c0c10')
       + ground(70) + fog(74, 0.16, 9) + fog(84, 0.14, 10)
@@ -289,15 +308,25 @@
     },
 
     // 10 · The Emperor's Throne: Palpatine rises before his throne. The
-    // machine hangs above it, the Sith Eternal fill the tiers, colossal
-    // statues loom on either side and lightning flashes overhead; the
+    // machine hangs above it with its arms gripping his shoulders, the Sith
+    // Eternal fill the lit tiers, carved pillars and colossal statues loom
+    // on either side, violet braziers burn at the dais with red-robed
+    // Sovereign Protectors on guard, lightning flashes through the roof and
+    // fog lies on the floor; the
     // Emperor unleashes Force lightning from both hands, a Knight of Ren
     // and two Sith troopers beside him.
     the_emperors_throne: () => fill([[0, '#030308'], [0.6, '#0c0e1a'], [1, '#161a2c']])
-      + crowd(10, 7, 0, 160) + lightning(40, 0, 10, 12, 0.6) + lightning(124, 0, 8, 13, 0.5) + statue(14, 72, 64, 1) + statue(146, 72, 64, -1)
+      + P('M50 0 L110 0 L102 6 L58 6Z', '#1a2034', 'opacity=".8"') + lightning(70, 0, 8, 12, 0.7) + lightning(94, 0, 6, 13, 0.5)
+      + crowd(8, 8, 0, 160) + [12, 20, 28, 36].map((yy) => L(0, yy, 160, yy, '#2a2e40', 0.5) + L(0, yy - 0.5, 160, yy - 0.5, '#8a5aff', 0.15, 'opacity=".35"')).join('')
+      + [[38, 66], [122, 66]].map(([x, b]) => R(x - 3, 6, 6, b - 6, '#10121a', 'stroke="#2a2e3e" stroke-width=".3"') + R(x - 4, 6, 8, 2.4, '#1a1c28') + R(x - 4, b - 3, 8, 3, '#1a1c28') + [16, 26, 36, 46, 56].map((yy) => L(x - 3, yy, x + 3, yy, '#22263a', 0.3)).join('') + [20, 40].map((yy) => P(`M${x - 1.6} ${yy} l1.6 -1.2 l1.6 1.2 l-1.6 1.2Z`, '#6a4a9a', 'opacity=".6"')).join('')).join('')
+      + [[30, 0, 46, 24], [130, 0, 114, 24]].map(([x1, y1, x2, y2]) => P(`M${x1} ${y1} Q${f2((x1 + x2) / 2)} ${f2(y2 * 0.7)} ${x2} ${y2}`, 'none', 'stroke="#1e2030" stroke-width=".6"')).join('')
+      + statue(14, 72, 64, 1) + statue(146, 72, 64, -1)
       + L(80, 0, 80, 24, '#1a1a22', 1.4) + P('M72 24 L88 24 L86 30 L74 30Z', '#1e1e28', 'stroke="#2a2e3e" stroke-width=".25"') + P('M74 30 L70 40 L72 41 L76 32 M86 30 L90 40 L88 41 L84 32', 'none', 'stroke="#2a2e3e" stroke-width="1"') + glow(80, 27, 1.6, '#8a5aff', 0.35)
       + P('M68 64 L68 40 Q80 32 92 40 L92 64Z', '#0e0e14', 'stroke="#2a2e3e" stroke-width=".4"') + P('M72 64 L72 42 Q80 36 88 42 L88 64Z', '#16161e') + P('M60 64 L100 64 L106 70 L54 70Z', '#14141c', 'stroke="#2a2e3e" stroke-width=".3"')
-      + R(0, 70, 160, 20, '#0c0e16') + Array.from({ length: 9 }, (_, k) => L(80, 70, -40 + k * 30, 90, '#161a26', 0.3)).join('')
+      + [[56, 64], [104, 64]].map(([x, y]) => R(x - 1.6, y - 6, 3.2, 6, '#1a1c28', 'stroke="#2a2e3e" stroke-width=".2"') + E(x, y - 6, 2.2, 0.6, '#2a2e40') + P(`M${x - 1.4} ${y - 6} Q${x - 0.6} ${y - 10} ${x} ${y - 8} Q${x + 0.6} ${y - 11} ${x + 1.4} ${y - 6}Z`, '#a87aff', 'opacity=".85"') + glow(x, y - 8, 1.4, '#8a5aff', 0.35)).join('')
+      + [[62, 64, 1.5], [98, 64, 1.5], [50, 68, 1.6], [110, 68, 1.6]].map(([x, y, s2]) => g(x, y, s2, 1, P('M-2 -9 C-2.6 -6 -3 -3 -3.2 0 L3.2 0 C3 -3 2.6 -6 2 -9 C1.4 -10.4 1.4 -12.4 0 -12.8 C-1.4 -12.4 -1.4 -10.4 -2 -9Z', '#7a1a1a', 'stroke="#2a0808" stroke-width=".2"') + E(0, -11, 0.9, 1, '#4a0e0e') + L(2.4, -12, 2.4, 0, '#5a5a62', 0.3) + P('M1.8 -12.6 L2.4 -14.4 L3 -12.6Z', '#a8a8b2'))).join('')
+      + R(0, 70, 160, 20, '#0c0e16') + Array.from({ length: 9 }, (_, k) => L(80, 70, -40 + k * 30, 90, '#161a26', 0.3)).join('') + [74, 80, 86].map((yy) => L(0, yy, 160, yy, '#141824', 0.3)).join('') + fog(78, 0.12, 14) + fog(86, 0.1, 15)
+      + P('M80 30 C78 36 74 40 72 48 M80 30 C82 36 86 40 88 48', 'none', 'stroke="#2a2830" stroke-width="1.4" stroke-linecap="round"') + P('M80 30 C78 36 74 40 72 48 M80 30 C82 36 86 40 88 48', 'none', 'stroke="#5a5664" stroke-width=".35"') + C(72, 48, 0.8, '#3a3640') + C(88, 48, 0.8, '#3a3640')
       + palpatine(80, 80, 3.2, 1) + forceLightning(f2(80 - 6.8 * 3.2), f2(80 - 11.6 * 3.2), 10, 54, 1) + forceLightning(f2(80 + 6.8 * 3.2), f2(80 - 11.6 * 3.2), 150, 56, 2)
       + knight(40, 86, 2.8, 1, 2) + sithTrooper(118, 86, 2.6, -1) + sithTrooper(138, 88, 2.6, -1),
   };
