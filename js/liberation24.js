@@ -57,13 +57,13 @@
   // New opponents (they can also turn up in crates once 2.4 is out).
   const CARDS24 = [
     { id: 'gamorrean_guard', name: 'Gamorrean Guard', kind: 'character', faction: 'dark', rarity: 'rare', role: 'tank', spd: 92, traits: ['scoundrel', 'native'],
-      abilities: [A('Axe Chop', 0, 'enemy', [dmg(1.1)], 'Deal damage to one enemy.'), A('Palace Bulwark', 3, 'self', [buff('taunt', 2), buff('defUp', 2)], 'Gain Taunt and Defense Up for 2 turns.'), A('Hungry Roar', 4, 'enemy', [{ type: 'dispel' }, { ...buff('offUp', 2), on: 'self' }], 'Remove an enemy\'s buffs and gain Offense Up.')],
+      abilities: [A('Axe Chop', 0, 'enemy', [dmg(1.25)], 'Deal damage to one enemy.'), A('Palace Bulwark', 3, 'self', [buff('taunt', 2), buff('defUp', 2)], 'Gain Taunt and Defense Up for 2 turns.'), A('Hungry Roar', 4, 'enemy', [{ type: 'dispel' }, { ...buff('offUp', 2), on: 'self' }], 'Remove an enemy\'s buffs and gain Offense Up.')],
       ultimate: U('Jabba\'s Muscle', 'enemy', [dmg(3.0), debuff('stun', 1)], 'A huge axe swing: massive damage and Stun.', 'Grrraaagh!') },
     { id: 'snowtrooper', name: 'Snowtrooper', kind: 'character', faction: 'dark', rarity: 'common', role: 'attacker', spd: 110, traits: ['trooper', 'empire'],
       abilities: [A('E-11 Burst', 0, 'enemy', [dmg(0.6, 2)], 'Two quick shots at one enemy.'), A('Freeze Grenade', 3, 'enemy', [dmg(1.0), { type: 'tm', amount: -35 }], 'Damage and slow the target down.'), A('Echo Base Assault', 3, 'enemy', [{ ...dmg(1.2), execute: { below: 0.5, bonus: 1.4 } }], 'Heavy damage, +40% against enemies under half health.')],
       ultimate: U('Blizzard Force', 'allEnemies', [dmg(1.2), { type: 'tm', amount: -30 }], 'Fire on every enemy and slow them all down.', 'Blizzard Force, move in.') },
     { id: 'wing_guard', name: 'Cloud City Wing Guard', kind: 'character', faction: 'light', rarity: 'common', role: 'support', spd: 112, traits: ['scoundrel'],
-      abilities: [A('Stun Pistol', 0, 'enemy', [dmg(0.9), debuff('stun', 1, 0.3)], 'Damage with a 30% Stun chance.'), A('Cloud City Patrol', 3, 'ally', [buff('defUp', 2)], 'An ally gains Defense Up.'), A('Call Backup', 4, 'weakestAlly', [heal(0.1)], 'Heal the weakest ally 10%.')],
+      abilities: [A('Stun Pistol', 0, 'enemy', [dmg(1.15), debuff('stun', 1, 0.35)], 'Damage with a 35% Stun chance.'), A('Cloud City Patrol', 4, 'allAllies', [buff('defUp', 2)], 'Every ally gains Defense Up.'), A('Call Backup', 3, 'weakestAlly', [heal(0.15)], 'Heal the weakest ally 15%.')],
       ultimate: U('Lando\'s Orders', 'allAllies', [buff('offUp', 2), { type: 'tm', amount: 25 }], 'Every ally gains Offense Up and a speed boost.', 'Close all the landing platforms!') },
     { id: 'scout_trooper', name: 'Scout Trooper', kind: 'character', faction: 'dark', rarity: 'common', role: 'attacker', spd: 128, traits: ['trooper', 'empire'],
       abilities: [A('Hold-out Blaster', 0, 'enemy', [dmg(1.0)], 'A fast shot.'), A('Speeder Strafe', 3, 'randomEnemies', [dmg(0.8)], 'Two hits on random enemies.', 2), A('Recon', 3, 'enemy', [dmg(0.7), debuff('defDown', 2)], 'Damage and Defense Down.')],
@@ -75,68 +75,69 @@
       abilities: [A('Blaster Volley', 0, 'enemy', [dmg(0.7, 2)], 'Two quick shots.'), A('Execute Order', 3, 'enemy', [{ ...dmg(1.5), vsJedi: 1.5 }], 'Heavy damage, +50% against Jedi.'), A('Purge Formation', 4, 'self', [buff('offUp', 2)], 'Gain Offense Up.')],
       ultimate: U('Good Soldiers Follow Orders', 'allEnemies', [{ ...dmg(1.4), vsJedi: 2 }], 'Fire on every enemy; Jedi take double.', 'Good soldiers follow orders.') },
     { id: 'geonosian_warrior', name: 'Geonosian Warrior', kind: 'character', faction: 'dark', rarity: 'common', role: 'attacker', spd: 124, traits: ['separatist', 'native'],
-      abilities: [A('Sonic Blast', 0, 'enemy', [dmg(1.0), debuff('offDown', 1, 0.3)], 'Damage with a 30% chance to Daze (Offense Down).'), A('Wing Dive', 2, 'enemy', [dmg(1.3)], 'A fast diving hit.'), A('Hive Swarm', 4, 'self', [buff('offUp', 2), { type: 'tm', amount: 30 }], 'Offense Up and a speed boost.')],
+      abilities: [A('Sonic Blast', 0, 'enemy', [dmg(1.1), debuff('offDown', 1, 0.3)], 'Damage with a 30% chance to Daze (Offense Down).'), A('Wing Dive', 2, 'enemy', [dmg(1.45)], 'A fast diving hit.'), A('Hive Swarm', 4, 'self', [buff('offUp', 2), { type: 'tm', amount: 30 }], 'Offense Up and a speed boost.')],
       ultimate: U('Arena Swarm', 'randomEnemies', [dmg(0.8)], 'Five hits on random enemies.', 'Kill them!', 5) },
     { id: 'purge_trooper', name: 'Purge Trooper', kind: 'character', faction: 'dark', rarity: 'rare', role: 'attacker', spd: 118, traits: ['trooper', 'empire'],
       abilities: [A('Electrostaff Strike', 0, 'enemy', [dmg(1.0), debuff('stun', 1, 0.2)], 'Damage with a 20% Stun chance.'), A('Jedi Hunter', 3, 'enemy', [{ ...dmg(1.4), vsJedi: 1.5 }], 'Heavy damage, +50% against Jedi.'), A('Purge Protocol', 4, 'enemy', [{ ...dmg(1.2), execute: { below: 0.3, bonus: 2 } }], 'Double damage on enemies under 30%.')],
       ultimate: U('No Survivors', 'enemy', [{ ...dmg(1.1, 3), execute: { below: 0.25, bonus: 3 } }], 'Three hits; finishes anyone under 25%.', 'No survivors.') },
     { id: 'knight_of_ren', name: 'Knight of Ren', kind: 'character', faction: 'dark', rarity: 'epic', role: 'attacker', spd: 120, traits: ['sith'],
-      abilities: [A('War Scythe', 0, 'enemy', [dmg(1.15)], 'Deal damage to one enemy.'), A('Scythe Sweep', 3, 'allEnemies', [dmg(0.75)], 'Hit every enemy.'), A('Terror', 4, 'enemy', [debuff('offDown', 2), debuff('defDown', 2)], 'Fear: Offense Down and Defense Down.')],
-      ultimate: U('Knights of Ren', 'allEnemies', [dmg(1.5), { ...buff('offUp', 2), on: 'allies' }], 'Hit every enemy; allies gain Offense Up.', 'We are the Knights of Ren.') },
+      abilities: [A('War Scythe', 0, 'enemy', [dmg(1.3)], 'Deal damage to one enemy.'), A('Scythe Sweep', 3, 'allEnemies', [dmg(0.9)], 'Hit every enemy.'), A('Terror', 4, 'enemy', [debuff('offDown', 2), debuff('defDown', 2)], 'Fear: Offense Down and Defense Down.')],
+      ultimate: U('Knights of Ren', 'allEnemies', [dmg(1.7), { ...buff('offUp', 2), on: 'allies' }], 'Hit every enemy; allies gain Offense Up.', 'We are the Knights of Ren.') },
     { id: 'commando_droid', name: 'BX Commando Droid', kind: 'character', faction: 'dark', rarity: 'rare', role: 'attacker', spd: 130, traits: ['droid', 'separatist'],
       abilities: [A('Vibrosword', 0, 'enemy', [dmg(1.2)], 'Deal damage to one enemy.'), A('Disguise', 4, 'self', [buff('defUp', 2), { type: 'tm', amount: 40 }], 'Slip into cover: Defense Up and a speed boost.'), A('Commando Raid', 3, 'weakestEnemy', [dmg(0.9, 2)], 'Two hits on the weakest enemy.')],
       ultimate: U('Infiltration', 'weakestEnemy', [dmg(3.0), debuff('stun', 1)], 'Massive hit on the weakest enemy and Stun.', 'Roger, roger.') },
-    // The Bendu: Mythic, earned only with the Liberator of the Galaxy badge.
-    { id: 'bendu', name: 'The Bendu', kind: 'character', faction: 'light', rarity: 'mythic', role: 'tank', spd: 96, traits: ['jedi', 'native'], exclusive: true,
+    // The Bendu: a secret card, earned only with the Liberator of the Galaxy
+    // badge (every main and optional boss beaten).
+    { id: 'bendu', name: 'The Bendu', kind: 'character', faction: 'light', rarity: 'secret', role: 'tank', spd: 96, traits: ['jedi', 'native'], exclusive: true,
       store: { cap: 2, ally: 0.25 },
-      abilities: [A('Ancient Strike', 0, 'enemy', [dmg(1.0)], 'Deal damage to one enemy.'), A('Absorb', 3, 'self', [buff('absorb', 2)], 'For 2 turns he takes 50% less damage but stores the full amount.'), A('Feed the Storm', 4, 'self', [{ type: 'store', pct: 0.2 }, heal(0.1)], 'Add 20% of his max health to his Stored Power and heal 10%.')],
-      ultimate: U('The One in the Middle', 'allEnemies', [{ type: 'release', mult: 1.25 }], 'Unleash everything he has stored (plus 25%), split across every enemy, and Stun the strongest. His store empties.', 'I am the one in the middle.') },
+      abilities: [A('Ancient Strike', 0, 'enemy', [dmg(1.15)], 'Deal damage to one enemy.'), A('Absorb', 3, 'self', [buff('absorb', 2), buff('taunt', 2)], 'For 2 turns he draws every attack (Taunt) and takes 50% less damage, but stores the full amount.'), A('Feed the Storm', 4, 'self', [{ type: 'store', pct: 0.2 }, heal(0.12)], 'Add 20% of his max health to his Stored Power and heal 12%.')],
+      ultimate: U('The One in the Middle', 'allEnemies', [{ type: 'release', mult: 1.4 }], 'Unleash everything he has stored (plus 40%), split across every enemy, and Stun the strongest. His store empties.', 'I am the one in the middle.') },
   ];
 
   // Bosses: main (liberates the world) and optional.
   const BOSSES24 = [
     { id: 'carbon_vader', name: 'Carbonite Chamber Vader', kind: 'character', faction: 'dark', rarity: 'legendary', role: 'attacker', spd: 118,
-      boss: { hp: 7.5, atk: 1.1, def: 1.25 }, mech: { freeze: { every: 3, turns: 2 } },
+      boss: { hp: 9.5, atk: 1.3, def: 1.25 }, mech: { freeze: { every: 3, turns: 2 } },
       abilities: [A('Saber Strike', 0, 'enemy', [dmg(1.4)], 'Deal heavy damage to one enemy.'), A('Force Choke', 3, 'enemy', [dmg(1.1), debuff('offDown', 1)], 'Damage and Offense Down.'), A('Steam Vents', 4, 'allAllies', [buff('defUp', 1)], 'All allies gain Defense Up.')],
       ultimate: U('All Too Easy', 'allEnemies', [dmg(1.8), { type: 'freezeTop' }], 'Slashes every enemy, then freezes the toughest in carbonite.', 'All too easy.') },
     { id: 'darth_sidious', name: 'Darth Sidious', kind: 'character', faction: 'dark', rarity: 'legendary', role: 'support', spd: 124, traits: ['sith', 'leader'],
-      boss: { hp: 7.5, atk: 1.15, def: 1.2 }, mech: { power: { at: 3, mult: 1.2 } },
+      boss: { hp: 9.5, atk: 1.45, def: 1.2 }, mech: { power: { at: 3, mult: 1.2 } },
       abilities: [A('Sith Lightning', 0, 'enemy', [dmg(1.2), debuff('stun', 1, 0.3)], 'Lightning with a 30% Stun chance.'), A('Dark Deception', 3, 'enemy', [{ type: 'dispel' }, debuff('offDown', 2), debuff('defDown', 2)], 'Strip an enemy\'s buffs: Offense Down and Defense Down.'), A('Senate Decree', 4, 'allAllies', [buff('offUp', 2), { type: 'tm', amount: 25 }], 'All allies gain Offense Up and a speed boost.')],
       ultimate: U('UNLIMITED POWER', 'allEnemies', [dmg(2.4), debuff('stun', 1, 0.3)], 'Lightning on every enemy with a 30% Stun chance.', 'Unlimited power!') },
     { id: 'wampa', name: 'The Wampa', kind: 'character', faction: 'dark', rarity: 'legendary', role: 'attacker', spd: 116,
-      boss: { hp: 7, atk: 1.1, def: 1.15 }, mech: { frenzy: true },
+      boss: { hp: 6, atk: 1.0, def: 1.15 }, mech: { frenzy: { text: 'Ice Cave Frenzy!' } },
       abilities: [A('Claw Rend', 0, 'enemy', [dmg(0.75, 2), debuff('burn', 2, 0.5)], 'Two slashes with a 50% chance to Bleed.'), A('Drag to the Lair', 3, 'enemy', [dmg(1.0), debuff('stun', 1), debuff('defDown', 2)], 'Hung up in the lair: Stun and Defense Down.'), A('Ice Hide', 4, 'self', [heal(0.08), buff('defUp', 2)], 'Heal 8% and gain Defense Up.')],
       ultimate: U('Lair of the Wampa', 'allEnemies', [dmg(1.6), debuff('burn', 2), { ...heal(0.1), on: 'self' }], 'Every enemy is mauled and Bleeds; the Wampa heals 10%.', 'A roar echoes through the ice.') },
     { id: 'cave_vision', name: 'The Cave\'s Vision', kind: 'character', faction: 'dark', rarity: 'legendary', role: 'attacker', spd: 120, traits: ['sith'],
-      boss: { hp: 6.5, atk: 1.1, def: 1.2 }, mech: { mirror: true },
+      boss: { hp: 9, atk: 1.6, def: 1.2 }, mech: { mirror: true },
       abilities: [A('Phantom Blade', 0, 'enemy', [dmg(1.3)], 'Deal damage to one enemy.'), A('Mirror of Fear', 3, 'enemy', [debuff('offDown', 2), { type: 'drainUlt', amount: 50 }], 'Fear: Offense Down and it drains half the target\'s ultimate.'), A('Fade', 4, 'self', [buff('defUp', 2), heal(0.06)], 'Fade into the mist: Defense Up and heal 6%.')],
       ultimate: U('Your Own Face', 'allEnemies', [{ type: 'mirrorStrike', mult: 1.6 }], 'Strikes each enemy with their OWN attack power.', 'Your weapons... you will not need them.') },
     { id: 'bossk', name: 'Bossk and the Hound\'s Tooth', kind: 'character', faction: 'dark', rarity: 'legendary', role: 'attacker', spd: 114, traits: ['bounty'],
-      boss: { hp: 7, atk: 1.1, def: 1.2 }, mech: { trophy: 0.15 },
+      boss: { hp: 8, atk: 1.2, def: 1.2 }, mech: { trophy: 0.15 },
       abilities: [A('Relby Mortar', 0, 'enemy', [dmg(1.2), debuff('burn', 2, 0.4)], 'Damage with a 40% chance to Burn.'), A('Trandoshan Regeneration', 4, 'self', [heal(0.1), buff('defUp', 1)], 'Heal 10% and gain Defense Up.'), A('Wookiee Hunter', 3, 'enemy', [{ ...dmg(1.5), vsIds: { chewbacca: 2 } }], 'Heavy damage; double against Chewbacca.')],
       ultimate: U('Bossk\'s Bounty', 'allEnemies', [{ ...dmg(1.5), execute: { below: 0.35, bonus: 2 } }, debuff('burn', 2)], 'The Hound\'s Tooth fires a missile barrage: double damage under 35%, and Burn.', 'The hunt is on.') },
     { id: 'atst', name: 'AT-ST Walker', kind: 'character', faction: 'dark', rarity: 'legendary', role: 'tank', spd: 98, traits: ['empire'],
-      boss: { hp: 8, atk: 1.05, def: 1.3 }, mech: { armor: 0.7, weak: { ewok_warrior: 2 } },
+      boss: { hp: 13.5, atk: 1.55, def: 1.3 }, mech: { armor: 0.7, weak: { ewok_warrior: 2 } },
       abilities: [A('Chin Blasters', 0, 'enemy', [dmg(0.7, 2)], 'Two shots.'), A('Concussion Grenade', 3, 'allEnemies', [dmg(0.85), debuff('offDown', 1, 0.5)], 'Hit every enemy with a 50% chance to Daze.'), A('Stomp', 3, 'enemy', [dmg(1.6), debuff('defDown', 2)], 'Heavy hit and Defense Down.')],
       ultimate: U('Walker Assault', 'allEnemies', [dmg(2.0)], 'Every gun fires: heavy damage to every enemy.', 'Take them down!') },
     { id: 'krennic', name: 'Director Krennic', kind: 'character', faction: 'dark', rarity: 'legendary', role: 'support', spd: 112, traits: ['empire', 'leader'],
-      boss: { hp: 6.5, atk: 1.05, def: 1.15 }, mech: { relaunch: { ids: ['death_trooper'], every: 4, count: 1, text: 'Krennic calls in another death trooper!' } },
+      boss: { hp: 10, atk: 1.4, def: 1.15 }, mech: { relaunch: { ids: ['death_trooper'], every: 4, count: 1, text: 'Krennic calls in another death trooper!' } },
       abilities: [A('DT-29 Shot', 0, 'enemy', [dmg(1.2)], 'Deal damage to one enemy.'), A('On the Verge of Greatness', 3, 'allAllies', [buff('offUp', 2)], 'All allies gain Offense Up.'), A('Escort', 4, 'self', [buff('defUp', 2), heal(0.08)], 'His escort closes in: Defense Up and heal 8%.')],
       ultimate: U('Fire at Will', 'allEnemies', [dmg(2.2), debuff('burn', 2)], 'The Death Star fires: heavy damage and Burn to every enemy.', 'We were on the verge of greatness.') },
     { id: 'commander_cody', name: 'Commander Cody', kind: 'character', faction: 'dark', rarity: 'legendary', role: 'attacker', spd: 120, traits: ['trooper', 'republic', 'leader'],
-      boss: { hp: 6.5, atk: 1.1, def: 1.2 }, mech: { order66: { turn: 3 } },
+      boss: { hp: 10.5, atk: 1.55, def: 1.2 }, mech: { order66: { turn: 3 } },
       abilities: [A('DC-15 Burst', 0, 'enemy', [dmg(0.55, 3)], 'Three shots at one enemy.'), A('Rangefinder Mark', 3, 'enemy', [debuff('defDown', 3), debuff('offDown', 1)], 'Mark a target: Defense Down and Offense Down.'), A('Blast Him!', 3, 'enemy', [dmg(1.0), { type: 'teamStrike', mult: 0.6 }], 'He fires and every ally fires on the same target.')],
       ultimate: U('Execute Order 66', 'strongestJedi', [{ type: 'teamStrike', mult: 1.4 }, dmg(1.5)], 'Every ally attacks the strongest Jedi at once.', 'It will be done, my lord.') },
     { id: 'jango_arena', name: 'Jango Fett, Arena', kind: 'character', faction: 'dark', rarity: 'legendary', role: 'attacker', spd: 128, traits: ['bounty', 'mandalorian'],
-      boss: { hp: 6.5, atk: 1.1, def: 1.15 }, mech: { dodge: true },
+      boss: { hp: 12, atk: 1.7, def: 1.15 }, mech: { dodge: true },
       abilities: [A('Twin WESTARs', 0, 'enemy', [dmg(0.7, 2)], 'Two shots.'), A('Wrist Rocket', 3, 'allEnemies', [dmg(0.9)], 'Hit every enemy.'), A('Jetpack Leap', 4, 'enemy', [dmg(1.4), { ...buff('defUp', 1), on: 'self' }], 'A diving hit and Defense Up.')],
       ultimate: U('Bounty of Geonosis', 'randomEnemies', [dmg(0.9)], 'Flies up and rains six shots down on random enemies.', 'I\'m just a simple man trying to make my way in the universe.', 6) },
     { id: 'emperor_reborn', name: 'Emperor Reborn', kind: 'character', faction: 'dark', rarity: 'legendary', role: 'support', spd: 118, traits: ['sith', 'leader'],
-      boss: { hp: 8, atk: 1.15, def: 1.25 }, mech: { shield: ['sith_trooper'], regenShield: 0.03 },
+      boss: { hp: 11, atk: 1.6, def: 1.25 }, mech: { shield: ['sith_trooper'], regenShield: 0.03 },
       abilities: [A('Lightning Storm', 0, 'enemy', [dmg(1.25)], 'Lightning on one enemy.'), A('The Sith Eternal', 6, 'self', [{ type: 'revive', pct: 0.3 }], 'Bring back a fallen ally at 30%.'), A('Drain', 3, 'enemy', [dmg(1.2), { ...heal(0.08), on: 'self' }], 'Drain one enemy and heal 8%.')],
       ultimate: U('Everything You Hate', 'allEnemies', [dmg(2.6), { ...heal(0.1), on: 'self' }], 'Lightning on every enemy; he drains 10% back.', 'I have been every voice you have ever heard inside your head.') },
     { id: 'grievous_warlord', name: 'General Grievous, Warlord', kind: 'character', faction: 'dark', rarity: 'legendary', role: 'attacker', spd: 140, traits: ['droid', 'separatist', 'leader'], portrait: 'grievous_warlord',
-      boss: { hp: 7, atk: 1.1, def: 1.2 }, mech: { arms: 4 },
+      boss: { hp: 15, atk: 1.9, def: 1.2 }, mech: { arms: 4 },
       abilities: [A('Saber Whirl', 0, 'enemy', [dmg(0.42, 4)], 'Four blades: four hits on one enemy (one fewer for every arm he loses).'), A('Cape Spin', 3, 'self', [buff('defUp', 2), { type: 'tm', amount: 30 }], 'Defense Up and a speed boost.'), A('Collector', 4, 'enemy', [{ type: 'dispel' }, dmg(1.1)], 'Steal an enemy\'s buffs and strike.')],
       ultimate: U('Warlord\'s Whirlwind', 'randomEnemies', [dmg(0.75)], 'Eight blade hits spread across the enemy squad.', 'Your lightsabers will make a fine addition to my collection.', 8) },
   ];
@@ -492,7 +493,7 @@
   if (H) {
     H.feats.push((s) => {
       const have = ALL_BOSSES.filter((id) => s.bosses[id]).length;
-      return [{ id: 'liberator', tier: 7, icon: 'planet', name: 'Liberator of the Galaxy', desc: `Beat all ${ALL_BOSSES.length} bosses, main and optional. Reward: The Bendu (Mythic).`, have, need: ALL_BOSSES.length }];
+      return [{ id: 'liberator', tier: 7, icon: 'planet', name: 'Liberator of the Galaxy', desc: `Beat all ${ALL_BOSSES.length} bosses, main and optional. Reward: a secret card.`, have, need: ALL_BOSSES.length }];
     });
     if (root.Lib24Crest) H.crests.liberator = () => root.Lib24Crest();
     H.battleEnd.push((battle, params, won) => {
@@ -504,10 +505,114 @@
           lib().bendu = 1;
           Player.grantCard('bendu', false);
           Player.save();
-          UI.toast('Liberator of the Galaxy! Every boss has fallen. The Bendu joins your collection.');
+          benduWaiting = true;
+          whenFree(() => {
+            let seen = [];
+            try { seen = JSON.parse(localStorage.getItem('swcg-feats-seen') || '[]'); } catch (e) { seen = []; }
+            if (!seen.includes('liberator')) return UI.celebrateFeat('liberator');
+            benduWaiting = false;
+            UI.walkout(D.UNIT_MAP.bendu, 'secret', false, { exclusive: true, isNew: true });
+          });
         }
       }, 2500);
     });
+    H.scenes.liberator = (x) => liberatorScene(x);
+  }
+
+  // ---------- The Liberator cutscene ----------
+  // All 22 bosses ring the screen and fall one by one; the ring collapses
+  // into a single point of light, light on one side and dark on the other,
+  // and the Bendu rises out of it. The badge lands, and on close the Bendu
+  // walks out as a new secret card (only the first time; a replay from the
+  // badge shows the scene alone).
+  let benduWaiting = false;
+  const whenFree = (fn) => {
+    const busy = () => (UI.App && UI.App.battleActive) || document.querySelector('.result-modal, .feat-show, .feat-cine, .walkout, .modal-backdrop');
+    const tick = () => (busy() ? setTimeout(tick, 600) : fn());
+    setTimeout(tick, 800);
+  };
+  const libCss = () => {
+    if (document.getElementById('lib24-cine')) return;
+    const st = document.createElement('style');
+    st.id = 'lib24-cine';
+    st.textContent = `
+.feat-cine.lib24 { background: radial-gradient(ellipse at 50% 46%, #0d1430 0%, #04050c 62%, #000 100%); }
+.lib24 .lb-stars { position: absolute; inset: 0; background-image: radial-gradient(1px 1px at 12% 18%, #fff, transparent), radial-gradient(1px 1px at 72% 12%, #cfe0ff, transparent), radial-gradient(1.5px 1.5px at 30% 78%, #fff, transparent), radial-gradient(1px 1px at 88% 64%, #ffd9d9, transparent), radial-gradient(1px 1px at 52% 34%, #fff, transparent), radial-gradient(1px 1px at 8% 58%, #cfe0ff, transparent), radial-gradient(1.5px 1.5px at 62% 88%, #fff, transparent), radial-gradient(1px 1px at 92% 30%, #fff, transparent); opacity: .8; }
+.lib24 .lb-ring { position: absolute; left: 50%; top: 42%; width: 0; height: 0; }
+.lib24 .lb-boss { position: absolute; width: 12vmin; height: 12vmin; margin: -6vmin 0 0 -6vmin; border-radius: 50%; overflow: hidden; border: 2px solid var(--c); box-shadow: 0 0 12px var(--c); transform: rotate(var(--a)) translateY(-30vmin) rotate(calc(-1 * var(--a))) scale(0); animation: lbIn .45s calc(var(--k) * .09s) cubic-bezier(.2, 1.4, .4, 1) forwards, lbFall .5s calc(2.6s + var(--k) * .06s) ease-in forwards; }
+.lib24 .lb-boss .portrait, .lib24 .lb-boss svg { width: 100%; height: 100%; display: block; }
+.lib24 .lb-boss::after { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, transparent 46%, #ff3a3a 47%, #ff3a3a 53%, transparent 54%); opacity: 0; animation: lbX .2s calc(2.3s + var(--k) * .06s) forwards; }
+@keyframes lbIn { to { transform: rotate(var(--a)) translateY(-30vmin) rotate(calc(-1 * var(--a))) scale(1); } }
+@keyframes lbX { to { opacity: .9; } }
+@keyframes lbFall { from { transform: rotate(var(--a)) translateY(-30vmin) rotate(calc(-1 * var(--a))) scale(1); filter: none; } to { transform: rotate(var(--a)) translateY(0) rotate(calc(-1 * var(--a))) scale(.1); filter: grayscale(1) brightness(2); opacity: 0; } }
+.lib24 .lb-core { position: absolute; left: 50%; top: 44%; width: 4vmin; height: 4vmin; margin: -2vmin 0 0 -2vmin; border-radius: 50%; background: radial-gradient(circle, #fff 0%, #fff 30%, transparent 70%); opacity: 0; animation: lbCore 1.4s 3.6s ease-out forwards; }
+@keyframes lbCore { 0% { opacity: 0; transform: scale(.2); } 40% { opacity: 1; transform: scale(3); } 100% { opacity: .0; transform: scale(14); } }
+.lib24 .lb-split { position: absolute; left: 50%; top: 44%; width: 90vmin; height: 90vmin; margin: -45vmin 0 0 -45vmin; border-radius: 50%; background: linear-gradient(90deg, rgba(60, 150, 255, .55) 0%, rgba(60, 150, 255, .15) 40%, transparent 50%, rgba(255, 50, 60, .15) 60%, rgba(255, 50, 60, .55) 100%); filter: blur(18px); opacity: 0; animation: lbFade 1.2s 4.2s forwards; }
+.lib24 .lb-bendu { position: absolute; left: 50%; top: 44%; width: 34vmin; height: 34vmin; margin: -17vmin 0 0 -17vmin; border-radius: 50%; overflow: hidden; border: 3px solid #fff; box-shadow: -12px 0 30px #3c96ff, 12px 0 30px #ff323c, 0 0 60px rgba(255, 255, 255, .5); opacity: 0; transform: scale(.4); animation: lbRise 1.4s 4.4s cubic-bezier(.2, 1.2, .4, 1) forwards; }
+.lib24 .lb-bendu .portrait, .lib24 .lb-bendu svg { width: 100%; height: 100%; display: block; }
+@keyframes lbRise { to { opacity: 1; transform: scale(1); } }
+@keyframes lbFade { to { opacity: 1; } }
+.lib24 .lb-line { position: absolute; left: 0; right: 0; text-align: center; margin: 0; font-size: clamp(15px, 3.6vmin, 26px); font-weight: 700; letter-spacing: .04em; color: #e8f0ff; text-shadow: 0 2px 10px #000; opacity: 0; animation: lbLine 2s var(--t) forwards; }
+.lib24 .lb-line.q { color: #ffe9a8; font-style: italic; animation-duration: 2.6s; }
+@keyframes lbLine { 0% { opacity: 0; transform: translateY(8px); } 15%, 80% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+.lib24 .lb-line.stay { animation-name: lbStay; }
+@keyframes lbStay { 0% { opacity: 0; transform: translateY(8px); } 20%, 100% { opacity: 1; transform: none; } }
+.lib24.reveal .lb-line, .lib24.reveal .lb-ring { opacity: 0 !important; transition: opacity .3s; }
+.lib24.reveal .lb-bendu { opacity: .35 !important; transform: scale(1) !important; animation: none; }
+.lib24.skip .lb-split { opacity: 1; animation: none; }
+@media (prefers-reduced-motion: reduce) { .lib24 .lb-boss, .lib24 .lb-core { animation: none; opacity: 0; } .lib24 .lb-bendu, .lib24 .lb-split { animation: none; opacity: 1; transform: none; } .lib24 .lb-line { animation: none; opacity: 0; } .lib24 .lb-line.stay { opacity: 1; } }`;
+    document.head.appendChild(st);
+  };
+  function liberatorScene(x) {
+    libCss();
+    const bosses = ALL_BOSSES.map((id) => D.UNIT_MAP[id]).filter(Boolean);
+    const ring = bosses.map((b, k) => `<span class="lb-boss" style="--k:${k};--a:${(k * 360) / bosses.length}deg;--c:${b.faction === 'dark' ? '#ff4a4a' : '#5ab4ff'}">${UI.portrait(b, { plate: false })}</span>`).join('');
+    const bendu = D.UNIT_MAP.bendu;
+    const node = UI.el(`<div class="feat-cine lib24" role="dialog" aria-label="${UI.esc(x.name)}">
+      <div class="lb-stars"></div>
+      <div class="lb-ring">${ring}</div>
+      <p class="lb-line" style="top:80%;--t:.4s">${bosses.length} bosses. Eleven worlds.</p>
+      <p class="lb-line" style="top:80%;--t:2.4s">Every one of them has fallen.</p>
+      <i class="lb-split"></i><i class="lb-core"></i>
+      <div class="lb-bendu">${bendu ? UI.portrait(bendu, { plate: false }) : ''}</div>
+      <p class="lb-line q stay" style="top:76%;--t:5s">"I am the one in the middle."</p>
+      <i class="fc-flash"></i>
+      ${UI.featBadge(x, 'fc-badge')}
+      ${Array.from({ length: 80 }, (_, k) => `<i class="fs-spark" style="--a:${(k * 137.5) % 360}deg;--d:${(k % 9) * 0.05}s;--r:${22 + (k % 6) * 7}vmin;--c:${k % 2 ? '#5ab4ff' : '#ff4a4a'}"></i>`).join('')}
+      <div class="fs-text fc-text"><span class="fs-kicker">Legendary achievement</span><b>${UI.esc(x.name)}</b><span>${UI.esc(x.desc)}</span></div>
+      <span class="pc-skip">Tap to skip</span>
+    </div>`);
+    document.body.appendChild(node);
+    const S = root.Sound;
+    const timers = [];
+    const at = (t, fn) => timers.push(setTimeout(() => node.isConnected && fn(), t));
+    if (S) {
+      S.play('whoosh');
+      bosses.forEach((_, k) => { if (k % 4 === 0) at(k * 90, () => S.play('click')); });
+      at(2300, () => S.play('crit')); at(3000, () => S.play('ko'));
+      at(3600, () => S.play('ult')); at(4400, () => S.play('ignite'));
+    }
+    node.classList.add('play');
+    const REVEAL = 7600;
+    let done = false;
+    const reveal = (skip) => {
+      if (node.classList.contains('reveal')) return;
+      node.classList.add('reveal'); if (skip) node.classList.add('skip');
+      node.querySelector('.pc-skip').textContent = 'Tap to close';
+      if (S) { S.play('burst'); S.play('reveal_mythic'); }
+    };
+    node.addEventListener('click', () => {
+      if (!node.classList.contains('reveal')) return reveal(true);
+      if (done) return;
+      done = true;
+      timers.forEach(clearTimeout);
+      node.classList.add('out');
+      setTimeout(() => {
+        node.remove();
+        if (benduWaiting && bendu && UI.walkout) { benduWaiting = false; UI.walkout(bendu, 'secret', false, { exclusive: true, isNew: true }); }
+      }, 450);
+    });
+    at(REVEAL, () => reveal(false));
   }
 
   // ---------- Battle rules for the new bosses and the Bendu ----------
@@ -553,6 +658,15 @@
           ev.push({ type: 'status', uid: unit.uid, status: best[0], turns: best[1] });
           say(ev, `The vision mirrors your strength: it gains ${D.STATUS_INFO[best[0]].label}.`);
         }
+      }
+      // The Emperor's shield comes back whenever a Sith trooper escort stands
+      // again (The Sith Eternal brings them back), and life support heals him
+      // while it holds.
+      if (m.regenShield && m.shield && !unit.statuses.shielded && this.living(unit.side).some((u) => m.shield.includes(u.id))) {
+        unit.statuses.shielded = 99;
+        ev.push({ type: 'status', uid: unit.uid, status: 'shielded', turns: 99 });
+        ev.push({ type: 'b22', uid: unit.uid, text: 'Shield restored!' });
+        say(ev, `A Sith trooper stands guard again: ${unit.def.name}'s shield is back up.`);
       }
       if (m.regenShield && unit.statuses.shielded && unit.hp < unit.maxHp) {
         const amount = Math.min(unit.maxHp - unit.hp, Math.round(unit.maxHp * m.regenShield));

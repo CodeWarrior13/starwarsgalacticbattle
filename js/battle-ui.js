@@ -2454,6 +2454,7 @@
       const targetIdx = per * 3 + rewards.table.findIndex((t) => t.mult === rewards.mult);
       const target = items[targetIdx];
       const reveal = () => {
+        if (!scope.isConnected) return;
         target.classList.add('hit');
         $('[data-spin-math]', scope).innerHTML = `${cur('credits', rewards.base)} × <b class="mult">${rewards.mult}×</b>${rewards.bounty ? ' × 1.2' : ''} = ${cur('credits', rewards.credits)}`;
         $$('[data-rewards]', scope).forEach((n) => { n.hidden = false; });

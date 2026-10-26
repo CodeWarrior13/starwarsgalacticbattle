@@ -417,7 +417,7 @@
   //   shield [ids]                 takes half damage while any escort with one of these ids is alive
   //   charge {every, turns, mult}  every N of its turns charges a superlaser for `turns` turns, then fires
   //   cleave                       single-target attacks also hit a second enemy
-  //   frenzy                       below 50% health it acts twice in a row
+  //   frenzy                       below 50% health it acts twice in a row ({ text } names it)
   //   relaunch {ids, every, count} every N of its turns brings back fallen escorts with these ids
   //   aura {from, status}          while the escort `from` lives, every ally keeps `status`
   //   scales                       takes this fraction of damage from basic attacks
@@ -645,8 +645,9 @@
         if (!unit.__fx) {
           unit.__fx = true;
           unit.tm = 100;
-          events.push({ type: 'b22', uid: unit.uid, text: 'Arena Frenzy!' });
-          say(events, `Arena Frenzy! ${unit.def.name} strikes again.`);
+          const fx = (m.frenzy && m.frenzy.text) || 'Arena Frenzy!';
+          events.push({ type: 'b22', uid: unit.uid, text: fx });
+          say(events, `${fx} ${unit.def.name} strikes again.`);
         } else unit.__fx = false;
       }
       return events;
