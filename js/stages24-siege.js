@@ -73,31 +73,39 @@
     + IH_GUNS.map(([gx, gy]) => R(gx - 0.8, gy, 1.6, 0.8, '#3a3432', 'rx=".2"') + L(gx - 0.4, gy + 0.2, gx - 2, gy - 0.3, '#2a2422', 0.25)).join('')
     + Array.from({ length: 12 }, (_, i) => C(f2(-22 + i * 3.6), f2(3.1 + (i % 2) * 0.4), 0.2, '#ffd08a', 'opacity=".8"')).join('') + [-16, 0, 14].map((px) => P(`M${px} 3.8 l-1 2 l2 0Z`, '#3a3432')).join('')
     + R(25.4, -2.4, 1.8, 6.4, '#2a2422') + [-1.6, -0.2, 1.2, 2.6].map((ey) => E(27.4, ey, 0.5, 0.6, '#9ad8ff') + glow(27.6, ey, 0.6, BLUE, 0.3)).join(''));
-  // Coruscant from orbit, in detail: the planet-wide city as a mosaic of
-  // grey-blue districts cut by canyon grids and skylanes, megastructures and
-  // polar towers catching the sun, thin cloud, the night side blazing with
-  // a gold web of city lights along its traffic arteries, the terminator
-  // glow, and the blue rim of the atmosphere. Only the part in view is
-  // tiled, to keep it light.
+  // Coruscant from orbit, as in the films and The Clone Wars: the sunlit
+  // side a dull metallic grey of endless city, fine mosaic districts cut by
+  // canyon grids, towers glinting; a soft terminator; and the night side
+  // glowing amber, clusters of city light with bright cores, scattered
+  // lights and the glowing threads of traffic arteries between them, like
+  // a galaxy in miniature; an orange haze on the night limb and a thin
+  // blue-white rim on the day limb. The sun is to the left. Only the part
+  // in view is filled in, to keep it light.
   const planet = (cx, cy, r, id) => {
-    const [gr, d] = RG([[0, '#7a8aa8'], [0.6, '#3a4660'], [1, '#141a28']], 0.35, 0.3, 0.75);
     const cid = `siegeP${id}`;
-    const nx = cx + r * 0.95; const ny = cy - r * 0.2; const nr = r * 1.02;
+    const Lx = -0.95; const Ly = 0.3;
+    const lum = (x, y) => ((x - cx) / r) * Lx + ((y - cy) / r) * Ly;
     const inside = (x, y, m = 1) => (x - cx) ** 2 + (y - cy) ** 2 < (r * m) ** 2;
-    const night = (x, y) => (x - nx) ** 2 + (y - ny) ** 2 < nr * nr;
+    const inView = (x, y) => x > -4 && x < 164 && y > -4 && y < 94;
+    const [base, bd] = LG([[0, '#a8acb2'], [0.5, '#7a7e86'], [1, '#4a4e56']], 0, 0, 1, 1);
+    const [dusk, dd] = LG([[0, '#05070c', 0], [0.42, '#05070c', 0.05], [0.56, '#05070c', 0.82], [1, '#05070c', 0.96]], f2(0.5 + Lx * 0.5), f2(0.5 + Ly * 0.5), f2(0.5 - Lx * 0.5), f2(0.5 - Ly * 0.5));
     const cells = [];
-    for (let y = Math.max(0, cy - r); y < Math.min(92, cy + r); y += 2.6) for (let x = Math.max(-2, cx - r); x < Math.min(162, cx + r); x += 2.6) if (inside(x, y, 0.99)) cells.push([f2(x), f2(y)]);
-    const day = cells.filter(([x, y]) => !night(x, y)); const lit = cells.filter(([x, y]) => night(x, y));
-    const shades = ['#5a6a88', '#4a5878', '#6a7898', '#3e4c6c', '#56647e'];
-    return d + `<clipPath id="${cid}"><circle cx="${cx}" cy="${cy}" r="${r}"/></clipPath>` + C(cx, cy, r, gr) + `<g clip-path="url(#${cid})">`
-      + day.map(([x, y], i) => R(x, y, 2.1, 2.1, shades[(i * 7 + Math.floor(x)) % 5], 'opacity=".85"') + (i % 5 === 0 ? R(f2(x + 0.5), f2(y + 0.5), 0.9, 0.9, '#8a9ab8') : '')).join('')
-      + Array.from({ length: 9 }, (_, i) => { const yy = f2(cy - r + (i + 1) * (r * 2) / 10); return P(`M${cx - r} ${yy} Q${cx} ${f2(yy - r * 0.08)} ${cx + r} ${yy}`, 'none', 'stroke="#202a40" stroke-width=".45"'); }).join('') + Array.from({ length: 11 }, (_, i) => { const xx = f2(cx - r + (i + 1) * (r * 2) / 12); return P(`M${xx} ${cy - r} Q${f2(xx + (xx - cx) * 0.25)} ${cy} ${xx} ${cy + r}`, 'none', 'stroke="#202a40" stroke-width=".4"'); }).join('')
-      + day.filter((_, i) => i % 23 === 0).map(([x, y]) => R(f2(x - 0.4), f2(y - 2), 1.4, 3, '#a8b4cc', 'stroke="#2a3448" stroke-width=".1"') + C(f2(x + 0.3), f2(y - 2.2), 0.25, '#ff6a4a')).join('')
-      + [[-0.45, -0.6, 0.5], [0.05, -0.75, 0.6], [-0.2, -0.45, 0.4], [0.3, -0.55, 0.45]].map(([dx, dy, w]) => E(f2(cx + dx * r), f2(cy + dy * r), f2(r * w * 0.4), f2(r * 0.03), '#d8e0f0', 'opacity=".35"')).join('')
-      + C(f2(nx), f2(ny), f2(nr), '#06080e', 'opacity=".78"') + C(f2(nx), f2(ny), f2(nr + 2.4), 'none', 'stroke="#ffb46a" stroke-width="2" opacity=".12"')
-      + lit.map(([x, y], i) => C(f2(x + 1), f2(y + 1), f2(0.22 + (i % 3) * 0.1), i % 4 ? '#ffcf6a' : '#ffe8b0', `opacity="${(0.45 + (i % 4) * 0.13).toFixed(2)}"`) + (i % 3 === 0 ? C(f2(x + 2), f2(y + 0.4), 0.18, '#ffb04a', 'opacity=".6"') : '')).join('')
-      + Array.from({ length: 8 }, (_, i) => { const a = (i / 8) * Math.PI; return P(`M${f2(nx - nr * 0.8)} ${f2(ny - nr * 0.5 + i * 3)} Q${f2(nx + Math.cos(a) * nr * 0.3)} ${f2(ny - nr * 0.6 + Math.sin(a) * nr * 0.3)} ${f2(nx + nr * 0.3)} ${f2(ny - nr * 0.9 + i * 4)}`, 'none', 'stroke="#ffcf6a" stroke-width=".25" opacity=".6"'); }).join('')
-      + '</g>' + C(cx, cy, r, 'none', 'stroke="#9ab8ff" stroke-width=".7" opacity=".6"') + C(cx, cy, r + 1.4, 'none', 'stroke="#6a8aff" stroke-width="2" opacity=".15"') + C(cx, cy, r + 3, 'none', 'stroke="#4a6aff" stroke-width="2" opacity=".07"');
+    for (let y = Math.max(-2, cy - r); y < Math.min(92, cy + r); y += 2.4) for (let x = Math.max(-2, cx - r); x < Math.min(162, cx + r); x += 2.4) if (inside(x, y, 0.995)) cells.push([f2(x), f2(y)]);
+    const greys = ['#8e9298', '#7a7e86', '#9ea2a8', '#6e727a', '#868a92', '#a8acb0'];
+    const dayCells = cells.filter(([x, y]) => lum(x, y) > -0.1);
+    const seeds = [];
+    for (let y = cy - r; y < cy + r; y += 8.5) for (let x = cx - r; x < cx + r; x += 9) { const jx = f2(x + (((x * 7 + y * 13) % 11) - 5) * 0.7); const jy = f2(y + (((x * 5 + y * 3) % 9) - 4) * 0.7); if (inside(jx, jy, 0.97) && inView(jx, jy) && lum(jx, jy) < 0.02) seeds.push([jx, jy, 2.2 + (Math.abs(Math.floor(x * 3 + y)) % 4) * 0.9]); }
+    const near = (p, q) => Math.hypot(p[0] - q[0], p[1] - q[1]);
+    return bd + dd + `<clipPath id="${cid}"><circle cx="${cx}" cy="${cy}" r="${r}"/></clipPath>` + C(cx, cy, r, base) + `<g clip-path="url(#${cid})">`
+      + dayCells.map(([x, y], i) => R(x, y, 2.4, 2.4, greys[(i * 7 + Math.floor(x * 3)) % 6]) + (i % 3 === 0 ? R(f2(x + 0.4), f2(y + 0.4), 1, 1.4, greys[(i * 5 + 2) % 6]) : '') + (i % 11 === 0 ? C(f2(x + 1.2), f2(y + 1.2), 0.22, '#f4f6f8', 'opacity=".8"') : '')).join('')
+      + Array.from({ length: 14 }, (_, i) => { const yy = f2(cy - r + (i + 1) * (r * 2) / 15); return P(`M${cx - r} ${yy} Q${cx} ${f2(yy - r * 0.07)} ${cx + r} ${yy}`, 'none', 'stroke="#4a4e56" stroke-width=".3" opacity=".7"'); }).join('') + Array.from({ length: 16 }, (_, i) => { const xx = f2(cx - r + (i + 1) * (r * 2) / 17); return P(`M${xx} ${cy - r} Q${f2(xx + (xx - cx) * 0.22)} ${cy} ${xx} ${cy + r}`, 'none', 'stroke="#4a4e56" stroke-width=".28" opacity=".7"'); }).join('')
+      + dayCells.filter((_, i) => i % 19 === 0).map(([x, y]) => R(f2(x + 0.6), f2(y - 1.6), 1, 2.8, '#c8ccd2', 'stroke="#5a5e66" stroke-width=".1"') + L(f2(x + 1.1), f2(y - 1.6), f2(x + 1.1), f2(y - 2.6), '#5a5e66', 0.15)).join('')
+      + [[-0.6, -0.5, 0.5], [-0.35, -0.8, 0.45], [-0.75, -0.15, 0.35]].map(([dx, dy, w]) => E(f2(cx + dx * r), f2(cy + dy * r), f2(r * w * 0.35), f2(r * 0.025), '#eef0f4', 'opacity=".3"')).join('')
+      + C(cx, cy, r, dusk)
+      + seeds.map((q, i) => { const nb = seeds.filter((t, j) => j > i && near(q, t) < 14).slice(0, 2); return nb.map((t) => P(`M${q[0]} ${q[1]} Q${f2((q[0] + t[0]) / 2 + ((i % 3) - 1) * 2)} ${f2((q[1] + t[1]) / 2 + ((i % 2) - 0.5) * 2)} ${t[0]} ${t[1]}`, 'none', 'stroke="#ff9a3a" stroke-width=".25" opacity=".22"') + P(`M${q[0]} ${q[1]} Q${f2((q[0] + t[0]) / 2 + ((i % 3) - 1) * 2)} ${f2((q[1] + t[1]) / 2 + ((i % 2) - 0.5) * 2)} ${t[0]} ${t[1]}`, 'none', 'stroke="#ffd890" stroke-width=".1" stroke-dasharray=".3 .5" opacity=".6"')).join(''); }).join('')
+      + seeds.map(([x, y, rr], i) => { const deep = Math.min(1, (0.02 - lum(x, y)) * 3 + 0.4); return C(x, y, f2(rr * 1.2), '#ff8a2a', `opacity="${(0.06 * deep).toFixed(2)}"`) + C(x, y, f2(rr * 0.55), '#ffb04a', `opacity="${(0.12 * deep).toFixed(2)}"`) + Array.from({ length: 22 }, (_, m) => { const a = ((m * 137.5 + i * 31) % 360) * Math.PI / 180; const d = rr * 1.2 * Math.sqrt(((m * 7 + i) % 22) / 22); return C(f2(x + Math.cos(a) * d), f2(y + Math.sin(a) * d * 0.85), f2(0.12 + (m % 3) * 0.06), m % 4 ? '#ffc860' : '#fff0c8', `opacity="${(Math.min(1, 0.55 + (m % 3) * 0.15) * deep).toFixed(2)}"`); }).join('') + C(x, y, 0.32, '#fff4d8', `opacity="${(0.85 * deep).toFixed(2)}"`); }).join('')
+      + cells.filter(([x, y]) => lum(x, y) < 0).map(([x, y], i) => C(f2(x + ((i * 7) % 5) * 0.5), f2(y + ((i * 3) % 5) * 0.5), f2(0.1 + (i % 3) * 0.05), i % 5 ? '#ffb850' : '#ffe8b0', `opacity="${(0.35 + (i % 4) * 0.1).toFixed(2)}"`)).join('')
+      + '</g>' + P(`M${f2(cx + Ly * r)} ${f2(cy - Lx * r)} A${r} ${r} 0 0 1 ${f2(cx - Ly * r)} ${f2(cy + Lx * r)}`, 'none', 'stroke="#d8e8ff" stroke-width=".8" opacity=".7"') + C(cx, cy, r + 1.2, 'none', 'stroke="#ff9a4a" stroke-width="1.6" opacity=".12"') + C(cx, cy, r + 2.4, 'none', 'stroke="#8aaaff" stroke-width="1.6" opacity=".08"');
   };
   // A turbolaser strike on the city below: a white flash, a fireball and a
   // ring of smoke.
