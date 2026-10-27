@@ -4,7 +4,9 @@
 (function (root) {
   'use strict';
   const RELEASE23 = root.__v23Test != null ? root.__v23Test : Date.UTC(2026, 10, 11, 13, 5, 0);
-  const on = () => RELEASE23 != null && Date.now() >= RELEASE23;
+  // Testers switch 2.3 on early on one device with the master tester key (js/master.js).
+  const tested = () => { try { return localStorage.getItem('swcg-v23-test') === '1'; } catch (e) { return false; } };
+  const on = () => (RELEASE23 != null && Date.now() >= RELEASE23) || tested();
   // Hooks read the current switch, so a reload of this file never leaves a stale one behind.
   const live = () => !!(root.Update23 && root.Update23.on && root.Update23.on());
   const D = root.GameData;
