@@ -302,6 +302,22 @@
     return `${c.done}/${c.total} stages${k ? ` · ${mode === 'ship' ? '✈' : '⚔'} ${k.done}/${k.total}` : ''}`;
   }
 
+  // Where each world sits on the galaxy map, in route order. Wide screens read
+  // left to right on a gentle wave; tall phone screens climb from the bottom to
+  // the top, alternating sides. Every world keeps clear space around it and its
+  // name, so nothing overlaps and the route always reads one way.
+  const MapLayout = root.MapLayout = {
+    tall: () => !!(root.matchMedia && root.matchMedia('(max-width: 760px) and (orientation: portrait)').matches),
+    at(p, tall) {
+      const list = D.PLANETS.filter((q) => q.map);
+      const i = Math.max(0, list.indexOf(p));
+      const n = Math.max(2, list.length);
+      const k = i / (n - 1);
+      if (tall) return { x: i % 2 ? 72 : 28, y: +(80 - k * 63).toFixed(2) };
+      return { x: +(8 + k * 81).toFixed(2), y: i % 2 ? 40 : 64 };
+    },
+  };
+
   Screens.home = function () {
     const s = Player.state;
     const owned = Object.keys(s.units).length;
@@ -339,7 +355,8 @@
         ${D.PLANETS.map((p) => {
           const unlocked = Player.planetUnlocked(p.id);
           const dim = mode === 'boss' && !planetBosses(p).length && !Player.planetComplete(p.id);
-          return `<button class="map-planet ${unlocked ? '' : 'locked'} ${dim ? 'dim' : ''} ${p.id === current.id ? 'selected' : ''} ${Player.planetComplete(p.id) ? 'done' : ''}" type="button" data-planet="${p.id}" style="left:calc(var(--map-inset, 0%) + (100% - 2 * var(--map-inset, 0%)) * ${p.map.x / 100});top:${p.map.y}%;--pc:${p.color || '#ffd23f'}" ${unlocked ? '' : 'disabled'} aria-label="${esc(p.name)}">
+          const L = MapLayout.at(p, false); const T = MapLayout.at(p, true);
+          return `<button class="map-planet ${unlocked ? '' : 'locked'} ${dim ? 'dim' : ''} ${p.id === current.id ? 'selected' : ''} ${Player.planetComplete(p.id) ? 'done' : ''}" type="button" data-planet="${p.id}" style="--lx:${L.x}%;--ly:${L.y}%;--tx:${T.x}%;--ty:${T.y}%;--pc:${p.color || '#ffd23f'}" ${unlocked ? '' : 'disabled'} aria-label="${esc(p.name)}">
             <span class="map-label">${esc(p.name)}<small>${esc(mapLabel(p, mode))}</small></span>
           </button>`;
         }).join('')}

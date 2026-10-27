@@ -3574,3 +3574,11 @@ body.perf-on .card-back .cb-rays { animation: none; }
 /* Each battle portrait is its own layer: hits, bars and statuses around it no
    longer redraw the drawing itself. */
 .bcard .portrait { will-change: transform; }
+
+/* Galaxy map: worlds are placed by route order (see MapLayout in js/ui.js):
+   left to right on wide screens, bottom to top on tall phone screens. */
+.home-galaxy .map-planet { left: var(--lx); top: var(--ly); }
+@media (max-width: 760px) and (orientation: portrait) {
+  .home-galaxy { --map-inset: 0%; }
+  .home-galaxy .map-planet { left: var(--tx); top: var(--ty); width: 13%; }
+}

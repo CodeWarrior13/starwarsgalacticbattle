@@ -2045,6 +2045,10 @@
   }
 
   class GalaxyMap {
+    // A world's spot on the map in pixels, from the same layout the buttons use.
+    spot(p) { const L = root.MapLayout; return L ? L.at(p, this.isTall != null ? this.isTall : L.tall()) : { x: this.inset * 100 + p.map.x * (1 - 2 * this.inset), y: p.map.y }; }
+    mx(p, w) { return (this.spot(p).x / 100) * w; }
+    my(p, h) { return (this.spot(p).y / 100) * h; }
     constructor(canvas, planets, getState) {
       this.canvas = canvas;
       this.ctx = canvas.getContext('2d');
@@ -2086,6 +2090,7 @@
       this.canvas.height = Math.round(this.h * this.dpr);
       // Narrow screens pull the planets in from the edges so labels fit.
       this.inset = (parseFloat(getComputedStyle(this.canvas).getPropertyValue('--map-inset')) || 0) / 100;
+      this.isTall = root.MapLayout ? root.MapLayout.tall() : null;
     }
 
     frame(now) {
@@ -2178,7 +2183,7 @@
       this.drawParticles(ctx, theme, w, h, t);
       this.drawFlyers(ctx, theme, w, h, t);
       const st = st0;
-      const pos = this.planets.map((p) => ({ p, x: (this.inset + (p.map.x / 100) * (1 - 2 * this.inset)) * w, y: (p.map.y / 100) * h }));
+      const pos = this.planets.map((p) => ({ p, x: this.mx(p, w), y: this.my(p, h) }));
       // Hyperspace lanes.
       for (let i = 1; i < pos.length; i++) {
         const a = pos[i - 1];
@@ -2259,13 +2264,13 @@
         // Endor planet, small and dim so it stays behind the map.
         const r0 = Math.min(w, h) * 0.055;
         const en = (this.planets || []).find((p) => p.id === 'endor');
-        const ex = en ? (this.inset + (en.map.x / 100) * (1 - 2 * this.inset)) * w : w * 0.8;
-        const ey = en ? (en.map.y / 100) * h : h * 0.5;
+        const ex = en ? this.mx(en, w) : w * 0.8;
+        const ey = en ? this.my(en, h) : h * 0.5;
         const r = r0 * 0.95;
         // Pick the emptiest spot around Endor: furthest from every planet and its name label.
         const fkey = `${w}x${h}`;
         if (this.dsKey !== fkey) {
-          const pts = (this.planets || []).flatMap((p) => { const px = (this.inset + (p.map.x / 100) * (1 - 2 * this.inset)) * w; const py = (p.map.y / 100) * h; return [[px, py], [px, py + r0 * 2.1], [px - r0 * 1.2, py + r0 * 2.1], [px + r0 * 1.2, py + r0 * 2.1]]; });
+          const pts = (this.planets || []).flatMap((p) => { const px = this.mx(p, w); const py = this.my(p, h); return [[px, py], [px, py + r0 * 2.1], [px - r0 * 1.2, py + r0 * 2.1], [px + r0 * 1.2, py + r0 * 2.1]]; });
           let best = null;
           for (const d of [2.6, 3.3, 4.2]) for (let k = 0; k < 16; k++) {
             const a2 = (k / 16) * TAU; const cx2 = ex + Math.cos(a2) * r0 * d; const cy2 = ey + Math.sin(a2) * r0 * d;
