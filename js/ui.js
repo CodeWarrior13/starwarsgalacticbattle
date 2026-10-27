@@ -3061,7 +3061,10 @@
       const tier = R_ORDER[rarity];
       const mythic = rarity === 'mythic';
       // Exclusive cards from the Monolith get the longest show of all.
-      const ex = !!opts.exclusive || rarity === 'secret';
+      // HoloNet cards (opts.holonet) get the normal reveal for their rarity with a
+      // HoloNet beat, never the secret-card "Exclusive" one.
+      const hn = !!opts.holonet && rarity !== 'secret';
+      const ex = (!!opts.exclusive && !hn) || rarity === 'secret';
       const storm = mythic || ex;
       const ship = def.kind === 'ship';
       const planet = homeworldOf(def);
@@ -3070,6 +3073,7 @@
       const stepMs = ex ? 1700 : 1400;
       const steps = [
         ...(ex ? [{ kicker: 'From beyond the map', big: 'Exclusive', icon: `<span class="wo-role wo-holocron">${root.Icons.svg('holocron')}</span>`, tone: '#ffffff' }] : []),
+        ...(hn ? [{ kicker: 'New HoloNet card', big: 'HoloNet', icon: `<span class="wo-role">${root.Icons.svg('holocron')}</span>`, tone: '#5fd8ff' }] : []),
         { kicker: 'Allegiance', big: side ? 'Light Side' : 'Dark Side', icon: `<span class="wo-saber" style="--sc:${side ? '#4aa8ff' : '#ff2a2a'}"></span>`, tone: side ? '#4aa8ff' : '#ff2a2a' },
         { kicker: ship ? 'Starship class' : 'Class', big: ROLE_NAMES[def.role] || def.role, icon: `<span class="wo-role">${D.ROLE_ICONS[def.role] || '✦'}</span>`, tone: R_COLOR[rarity] },
         { kicker: ship ? 'Jumping from' : 'Homeworld', big: ship ? 'Hyperspace' : planet.name, icon: ship ? '<span class="wo-role">✈</span>' : '<canvas class="wo-sphere"></canvas>', tone: planet.color || R_COLOR[rarity] },
@@ -3091,7 +3095,7 @@
               .map(([l, v, c], k) => `<div class="wo-stat" style="--k:${k};--c:${c}"><span>${l}</span><b data-count="${Math.round(v)}">0</b></div>`).join('')
               + `<div class="wo-stat power" style="--k:4;--c:var(--rc)"><span>Power</span><b data-count="${D.power(def, own.level, own.stars)}">0</b></div>`;
           })()}</div>
-          <div class="br-text"><span class="br-kicker">${ex ? (opts.isNew === false ? `+${opts.shards} shards · the Monolith grants more` : 'Found nowhere else in the galaxy') : mythic ? 'You found something that should not exist' : ['New recruit', 'Rare recruit', 'Epic recruit', 'A legend joins your cause'][tier]}</span><b class="br-rarity" data-text="${ex ? 'EXCLUSIVE' : D.RARITIES[rarity].label.toUpperCase()}">${ex ? 'EXCLUSIVE' : D.RARITIES[rarity].label.toUpperCase()}</b><span class="br-name">${esc(def.name)}</span></div>
+          <div class="br-text"><span class="br-kicker">${ex ? (opts.isNew === false ? `+${opts.shards} shards · the Monolith grants more` : 'Found nowhere else in the galaxy') : hn ? 'HoloNet card · only on the HoloNet' : mythic ? 'You found something that should not exist' : ['New recruit', 'Rare recruit', 'Epic recruit', 'A legend joins your cause'][tier]}</span><b class="br-rarity" data-text="${ex ? 'EXCLUSIVE' : D.RARITIES[rarity].label.toUpperCase()}">${ex ? 'EXCLUSIVE' : D.RARITIES[rarity].label.toUpperCase()}</b><span class="br-name">${esc(def.name)}</span></div>
           ${Array.from({ length: ex ? 64 : 10 + tier * 8 }, (_, i) => `<i class="br-spark" style="--a:${(i * 137.5) % 360}deg;--d:${(Math.random() * 0.5).toFixed(2)}s;--r:${30 + Math.random() * 30}vmax"></i>`).join('')}
         </div>
         <span class="pc-skip">Tap to skip</span>

@@ -1698,6 +1698,12 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
 @keyframes hn-turn { 50% { transform: scaleX(.82); } }
 .hn-free { display: flex; gap: 10px; align-items: center; padding: 10px 12px; border-radius: 12px; background: rgba(255, 154, 42, 0.12); border: 1px solid rgba(255, 154, 42, 0.5); color: #ffd9b0; }
 .hn-free .grow { flex: 1; }
+.hn-forge-col { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.hn-forge-col > span { flex-basis: 100%; letter-spacing: 0.12em; text-transform: uppercase; font-size: 11px; }
+.hn-forge-col .hn-mini { flex: 1 1 200px; }
+.hn-have { display: inline-block; justify-self: start; font-size: 10.5px; font-weight: 800; letter-spacing: 0.06em; padding: 2px 8px; border-radius: 999px; }
+.hn-have.need { color: #1a1000; background: #ffd23f; }
+.hn-have.got { color: #8fe8b0; background: rgba(60, 200, 120, 0.15); border: 1px solid rgba(60, 200, 120, 0.4); }
 
 /* ---- captured log ---- */
 .hn-caps { display: grid; gap: 12px; }
@@ -2619,6 +2625,9 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       <div class="hn-forge-top"><div class="varka"><svg viewBox="0 0 100 100">${A.varka()}</svg></div>
         <div><b class="nm">VARKA · BESKAR BROKER</b><q>Steel from Mandalore, bounties from every corner of the galaxy. Win in the Arena and both are yours.</q>
         <p class="muted small" style="margin:8px 0 0"><b style="color:#ffcf8a">Beskar</b> is the HoloNet's currency: earn it from arena wins, raids and new divisions, and spend it here, on bounty pucks, shards and HoloNet card upgrades. New bounties are posted every day. Each target leans the pull toward its kind of card, and a bigger bounty means a better pull.</p></div></div>
+      <div class="hn-forge-col"><span class="muted small">Your collection</span>
+        <button type="button" class="hn-mini" data-hn="fcol" data-k="bounties"><b>Captured bounties</b><small>${Object.keys(h.captured).length} of ${Object.keys(A.ROSTER).length} · see who you still need</small></button>
+        <button type="button" class="hn-mini" data-hn="fcol" data-k="cards"><b>HoloNet cards</b><small>${HN.HN_IDS.filter(HN.owns).length} of ${HN.HN_IDS.length} earned</small></button></div>
       ${free.length ? `<div class="hn-free"><span class="grow"><b>Rewards waiting:</b> ${free.map((t) => A.TIER[t].label).join(', ')} bounty puck${free.length > 1 ? 's' : ''}</span><button type="button" class="hn-btn gold" data-hn="openfree">Open</button></div>` : ''}
       <div class="hn-sec"><h3>Today's bounties</h3><div class="hn-pucks">${b.pucks.map((pk, i) => {
         const t = A.ROSTER[pk.target];
@@ -2626,14 +2635,14 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
         return `<div class="hn-puck ${gold ? 'gold' : ''} ${pk.bought ? 'done' : ''}" style="--pc:${A.TIER[pk.tier].color}">
           <div class="art"><svg viewBox="0 0 100 100">${A.puck(pk.tier, pk.target)}</svg></div>
           <div class="wanted"><span>${gold ? '★ MOST WANTED' : 'DEAD OR ALIVE'}</span><em>${fmt(t.bounty)} cr</em></div>
-          <b>${esc(t.name)}</b><small>${esc(t.line)}</small><small>${A.TIER[pk.tier].label} puck · ${TIER_INFO[pk.tier]}${gold ? ' · boosted odds' : ''}</small>
+          <b>${esc(t.name)}</b><span class="hn-have ${h.captured[pk.target] ? 'got' : 'need'}">${h.captured[pk.target] ? '✓ Already captured' : '★ Not captured yet'}</span><small>${esc(t.line)}</small><small>${A.TIER[pk.tier].label} puck · ${TIER_INFO[pk.tier]}${gold ? ' · boosted odds' : ''}</small>
           <button type="button" class="hn-btn ${gold ? 'gold' : ''}" data-hn="buy" data-i="${i}" ${pk.bought ? 'disabled' : ''}>${pk.bought ? 'Captured' : price(pk.cur, pk.price)}</button></div>`;
       }).join('')}</div></div>
       <div class="hn-sec"><h3>Forge goods</h3><div class="hn-pucks">
         <div class="hn-puck" style="--pc:#5fd8ff"><div class="art"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#0c0e14"/><radialGradient id="hnsc"><stop offset="0" stop-color="#5fd8ff" stop-opacity=".45"/><stop offset="1" stop-color="#5fd8ff" stop-opacity="0"/></radialGradient><circle cx="50" cy="52" r="40" fill="url(#hnsc)"/><g transform="translate(50 54)" stroke="#e8faff" stroke-width="1" style="filter:drop-shadow(0 0 3px #5fd8ff)"><path d="M0 -30 L9 -4 L0 26 L-9 -4Z" fill="#7fe4ff"/><path d="M0 -30 L9 -4 L0 -2Z" fill="#ffffff" opacity=".7"/><path d="M-20 -12 L-13 4 L-20 22 L-27 4Z" fill="#5fc8f0" opacity=".85"/><path d="M20 -12 L27 4 L20 22 L13 4Z" fill="#5fc8f0" opacity=".85"/><path d="M-34 6 L-30 14 L-34 24 L-38 14Z M34 6 L38 14 L34 24 L30 14Z" fill="#3aa8d8" opacity=".7"/></g></svg></div><b>Shard Cache</b><small>20 shards for any card you choose</small><button type="button" class="hn-btn" data-hn="ingot">${bes(900)}</button></div>
         ${DIRECT.map((x) => { const def = D.UNIT_MAP[x.id]; const own = HN.owns(x.id); return `<div class="hn-puck" style="--pc:#ffb05a"><div class="art">${hnCard(def)}</div><b>${esc(def.name)}</b><small>Arena-only ${D.RARITIES[def.rarity].label}</small><button type="button" class="hn-btn" data-hn="direct" data-id="${x.id}" ${own ? 'disabled' : ''}>${own ? 'Owned' : price(x.cur, x.price)}</button></div>`; }).join('')}
       </div></div>
-      <button type="button" class="hn-btn ghost" data-hn="captured" style="justify-self:center">Captured bounties ›</button>`;
+      <button type="button" class="hn-btn ghost" data-hn="fcol" data-k="bounties" style="justify-self:center">Captured bounties ›</button>`;
   };
 
   // ---------- captured log ----------
@@ -2874,7 +2883,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     });
   }
   async function walk(cards) {
-    for (const c of cards) if (c.isNew) await UI.walkout(D.UNIT_MAP[c.id], D.UNIT_MAP[c.id].rarity, false, { exclusive: true, isNew: true, shards: 0 });
+    for (const c of cards) if (c.isNew) await UI.walkout(D.UNIT_MAP[c.id], D.UNIT_MAP[c.id].rarity, false, { holonet: true, isNew: true, shards: 0 });
   }
 
   function raidDone(p, b, won) {
@@ -3177,7 +3186,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
           node.remove();
           UI.App.refresh();
           if (out.rowPaid) toast(`Row complete in the Captured log! +${fmt(out.rowPaid)} Beskar`);
-          for (const r of res) if (r.isNew && (r.hn || r.rarity === 'mythic')) await UI.walkout(D.UNIT_MAP[r.id], D.UNIT_MAP[r.id].rarity, !!r.holo, { exclusive: r.hn, isNew: true, shards: 0 });
+          for (const r of res) if (r.isNew && (r.hn || r.rarity === 'mythic')) await UI.walkout(D.UNIT_MAP[r.id], D.UNIT_MAP[r.id].rarity, !!r.holo, { holonet: r.hn, isNew: true, shards: 0 });
           resolve();
           return;
         }
@@ -3243,7 +3252,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     HN.save();
     UI.updateWallet();
     render();
-    await UI.walkout(D.UNIT_MAP[id], D.UNIT_MAP[id].rarity, false, { exclusive: true, isNew: true, shards: 0 });
+    await UI.walkout(D.UNIT_MAP[id], D.UNIT_MAP[id].rarity, false, { holonet: true, isNew: true, shards: 0 });
   }
 
   // ---------- tester hooks ----------
@@ -6568,7 +6577,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       HN.save(); Net.publish();
       sound('reveal_legendary');
       toast(`${graidNow().name} is beaten! 800 Beskar, a High-value puck and 50 guild points.`);
-      if (drop && drop.isNew) await UI.walkout(D.UNIT_MAP.hn_dark_trooper, 'legendary', false, { exclusive: true, isNew: true, shards: 0 });
+      if (drop && drop.isNew) await UI.walkout(D.UNIT_MAP.hn_dark_trooper, 'legendary', false, { holonet: true, isNew: true, shards: 0 });
       else if (drop) toast(`Raid drop: Dark Trooper +${drop.shards} shards`);
     }
     if (kind === 'lvl') {
@@ -6633,7 +6642,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const card = rw.card ? HN.grant(rw.card) : null;
     HN.save(); Net.publish();
     sound('reveal_legendary');
-    if (card && card.isNew) await UI.walkout(D.UNIT_MAP[rw.card], D.UNIT_MAP[rw.card].rarity, false, { exclusive: true, isNew: true, shards: 0 });
+    if (card && card.isNew) await UI.walkout(D.UNIT_MAP[rw.card], D.UNIT_MAP[rw.card].rarity, false, { holonet: true, isNew: true, shards: 0 });
     else if (card) toast(`${D.UNIT_MAP[rw.card].name} +${card.shards} shards`);
     rerender();
   }
@@ -7603,7 +7612,7 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
     m.root.addEventListener('click', async (e) => {
       if (!e.target.closest('[data-x]')) return;
       m.close();
-      if (card && card.isNew) await UI.walkout(D.UNIT_MAP[rw.card], D.UNIT_MAP[rw.card].rarity, false, { exclusive: true, isNew: true, shards: 0 });
+      if (card && card.isNew) await UI.walkout(D.UNIT_MAP[rw.card], D.UNIT_MAP[rw.card].rarity, false, { holonet: true, isNew: true, shards: 0 });
       else if (card) toast(`${D.UNIT_MAP[rw.card].name} +${card.shards} shards`);
       SO.rerender();
     });
@@ -7703,15 +7712,19 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
   // =====================================================================
   let dbTab = 'cards';
   V.databank = (p) => {
-    if (p && p.tab) dbTab = p.tab;
+    if (p && p.tab) { dbTab = p.tab; delete p.tab; } // only on arrival, so the tabs still switch
     return `${head('DATABANK', dbTab === 'cards' ? 'Arena-only cards. They never appear in crates or the Black Market.' : 'Every target you bring in is logged here. Finish a row for Beskar.', true)}
       <div class="hn-seg" role="tablist"><button type="button" class="${dbTab === 'cards' ? 'on' : ''}" data-hn="dbtab" data-k="cards">HoloNet cards</button><button type="button" class="${dbTab === 'bounties' ? 'on' : ''}" data-hn="dbtab" data-k="bounties">Bounties</button></div>
-      ${dbTab === 'cards' ? V.vaultBody() : V.capturedBody()}`;
+      ${dbTab === 'cards' ? V.vaultBody() : V.capturedBody()}
+      ${p && p.from === 'forge' ? '<button type="button" class="hn-btn gold" data-hn="forgeback" style="justify-self:center">‹ Back to Varka\'s Forge</button>' : ''}`;
   };
   CL.dbtab = (b, render) => { dbTab = b.dataset.k; render(); };
   CL.databank = () => go('databank');
   CL.vault = () => go('databank', { tab: 'cards' });
   CL.captured = () => go('databank', { tab: 'bounties' });
+  // From Varka's Forge: the collection opens with a way straight back to the shop.
+  CL.fcol = (b) => go('databank', { tab: b.dataset.k, from: 'forge' });
+  CL.forgeback = () => go('forge');
 
   // =====================================================================
   // Guild: the founder can change the picture, colour and motto
