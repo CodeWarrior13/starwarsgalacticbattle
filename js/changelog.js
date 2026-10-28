@@ -14,6 +14,8 @@
   // Update 2.2 goes live at 7:05 a.m. Central on October 28, 2026.
   const LAUNCH_22 = root.__v22Test != null ? root.__v22Test : Date.UTC(2026, 9, 28, 12, 5, 0);
   // Update 2.3 goes live at 7:05 a.m. Central on November 11, 2026 (after DST ends).
+  // The guild overhaul went live straight away on October 28, 2026.
+  const LAUNCH_221 = root.__v22Test != null ? root.__v22Test : Date.UTC(2026, 9, 28, 12, 5, 0);
   const LAUNCH_23 = root.__v23Test != null ? root.__v23Test : Date.UTC(2026, 10, 11, 13, 5, 0);
   // Update 2.4 has no date yet, so its entry stays hidden. When the date is set,
   // put it in js/gate24.js (REL24) and fill in `date` below.
@@ -55,14 +57,7 @@
         'NEW|Auto-open (level 30): open Black Market crates hands-free until you reach your number.',
         'NEW|Wager duels: reach Silver III in a season to unlock a Wager tab in Live Duels. After bans you have 45 seconds to agree a stake of 1,000 to 100,000 credits (offer, counter or accept, and chat). The winner takes both wagers minus a 10% house tax. Rating counts, and leaving counts as a loss. Up to 5 a day with the same pilot.',
         'NEW|Wallet caps: 10,000,000 credits and 10,000 Aurodium. Anything over the cap isn\'t lost: every 2,500 extra credits become 1 Aurodium, and extra Aurodium becomes 10 Kyber each. Fill your credit vault for the new Piggy Bank Saver badge.',
-        'NEW|Guild levels: leaders and co-leaders now level up the guild with Beskar from the Beskar Vault. Every level costs more than the last (2,500 Beskar for level 2, up to 70,000 for level 10), and higher levels open stronger upgrades. Guilds keep the level they already have.',
-        'BALANCE|Guild upgrades are cheaper: 1,500, 3,500 and 7,000 Beskar for levels 1, 2 and 3.',
-        'NEW|Rank badges: the leader, co-leader and elders each get a symbol and a coloured name everywhere in the HoloNet. The leader picks each rank\'s symbol and colour in Edit guild.',
-        'NEW|Guild raids now have a 5-minute clock on screen. When it runs out: Time\'s up! Beat your best damage against a raid boss and the results show a big NEW BEST, with your previous best; otherwise you see the damage dealt and your best.',
-        'BALANCE|Guild raids: 3 ground runs and 3 fleet runs a day per player.',
-        'NEW|Guild chat comes alive: react to messages (👍 🔥 😂 ⚔️ ❤️), see rank badges by names, and the chat posts when the guild levels up, buys an upgrade or someone sets a new raid best.',
         'NEW|The Dark Trooper is now Mythic, and he\'s the first HoloNet card you can also use in the main game: campaign, bosses, the Endless Tower and more. He\'s still a rare guild raid drop (1 in 100 each time your guild beats the raid), and his Beskar Alloy passive now works: 25% less damage from attacks.',
-        'BALANCE|HoloNet: Beskar comes a little slower (arena wins, raids, guild raids, duels and guild rewards pay about 30% less), and Beskar pucks and Forge cards cost about 30% less to match.',
         'IMPROVED|Optimized the Collection: only the cards near your screen are drawn, sized to your device, so scrolling is smoother and uses less battery.',
         'BALANCE|Chance Cubes now cost 10 Kyber (was 25).',
         'BALANCE|Jedi Holocrons now cost 40 Kyber (was 50).',
@@ -82,6 +77,18 @@
         'FIXED|Cards in the Krayt Dragon battle now fit on phone screens.',
         'FIXED|Fixed Settings and other pop-ups not fitting at the top of phone screens.',
         'FIXED|Fixed the settings gear getting pushed off phone screens; big balances now show as 1.2M or 12.3K on phones.',
+      ],
+    },
+    {
+      v: '2.2.1', date: 'October 28, 2026', title: 'Guild Overhaul', from: LAUNCH_221,
+      items: [
+        'NEW|Guild levels: leaders and co-leaders now level up the guild with Beskar from the Beskar Vault. Every level costs more than the last (2,500 Beskar for level 2, up to 70,000 for level 10), and higher levels open stronger upgrades. Guilds keep the level they already have.',
+        'BALANCE|Guild upgrades are cheaper: 1,500, 3,500 and 7,000 Beskar for levels 1, 2 and 3.',
+        'NEW|Rank badges: the leader, co-leader and elders each get a symbol and a coloured name everywhere in the HoloNet. The leader picks each rank\'s symbol and colour in Edit guild.',
+        'NEW|Guild raids now have a 5-minute clock on screen. When it runs out: Time\'s up! Beat your best damage against a raid boss and the results show a big NEW BEST, with your previous best; otherwise you see the damage dealt and your best.',
+        'BALANCE|Guild raids: 3 ground runs and 3 fleet runs a day per player.',
+        'NEW|Guild chat comes alive: react to messages (👍 🔥 😂 ⚔️ ❤️), see rank badges by names, and the chat posts when the guild levels up, buys an upgrade or someone sets a new raid best.',
+        'BALANCE|HoloNet: Beskar comes a little slower (arena wins, raids, guild raids, duels and guild rewards pay about 30% less), and Beskar pucks and Forge cards cost about 30% less to match.',
       ],
     },
     {

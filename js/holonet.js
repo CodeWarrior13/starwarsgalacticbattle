@@ -1260,8 +1260,8 @@
   const payout = (their, streak) => {
     const h = S();
     const s = streak == null ? h.streak : streak;
-    // 2.3: Beskar is scarcer (and pucks cheaper): 28 a win at par instead of 40.
-    return Math.round(((root.Update23 && root.Update23.on()) ? 28 : 40) * Math.min(2.5, Math.max(0.5, (their / h.rating) ** 2)) * (1 + 0.05 * Math.min(5, s)));
+    // Beskar is scarcer (and pucks cheaper): 28 a win at par.
+    return Math.round(28 * Math.min(2.5, Math.max(0.5, (their / h.rating) ** 2)) * (1 + 0.05 * Math.min(5, s)));
   };
   const expected = (a, b) => 1 / (1 + 10 ** ((b - a) / 400));
 
@@ -1334,7 +1334,7 @@
     const rec = h.raids[k] || (h.raids[k] = { dmg: 0, best: 0, runs: 0, claimed: false });
     rec.dmg += dmgDone; rec.best = Math.max(rec.best, dmgDone); rec.runs += 1;
     h.allySeed = (h.allySeed || 0) + 1;
-    const bes = (root.Update23 && root.Update23.on()) ? Math.min(200, Math.round(dmgDone / 850)) : Math.min(300, Math.round(dmgDone / 600));
+    const bes = Math.min(200, Math.round(dmgDone / 850));
     h.beskar += bes;
     xp(40);
     save();
@@ -2622,13 +2622,13 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   };
 
   // ---------- forge ----------
-  // 2.3: Beskar comes slower, so Beskar pucks cost about 30% less.
-  const TIER_PRICE = (root.Update23 && root.Update23.on()) ? { guild: ['beskar', 420], elite: ['beskar', 1050], high: ['crystals', 300], legend: ['beskar', 2100] } : { guild: ['beskar', 600], elite: ['beskar', 1500], high: ['crystals', 300], legend: ['beskar', 3000] };
+  // Beskar comes slower, so Beskar pucks cost about 30% less than they used to.
+  const TIER_PRICE = { guild: ['beskar', 420], elite: ['beskar', 1050], high: ['crystals', 300], legend: ['beskar', 2100] };
   const TIER_INFO = { guild: '3 cards, Rare or better', elite: '5 cards, an Epic guaranteed', high: '6 cards, a Legendary guaranteed', legend: 'An arena-only card guaranteed, plus 3 Epic+' };
   const dayKey = () => Player.dayKey();
   function board() {
     const h = S();
-    if (h.board && h.board.day === dayKey() && h.board.v === 2 && (root.Update23 && root.Update23.on()) && !h.board.c23) { h.board.c23 = true; h.board.pucks.forEach((pk) => { if (pk.cur === 'beskar' && !pk.bought) pk.price = Math.round((pk.price * 0.7) / 10) * 10; }); }
+    if (h.board && h.board.day === dayKey() && h.board.v === 2 && !h.board.c23) { h.board.c23 = true; h.board.pucks.forEach((pk) => { if (pk.cur === 'beskar' && !pk.bought) pk.price = Math.round((pk.price * 0.7) / 10) * 10; }); }
     if (h.board && h.board.day === dayKey() && h.board.v === 2) {
       // Today's board from before the price cut: the unbought High-Value puck moves into 260-340.
       h.board.pucks.forEach((pk) => { if (pk.tier === 'high' && !pk.bought && (A.ROSTER[pk.target] || {}).tier !== 'gold') pk.price = Math.min(340, Math.max(260, pk.price)); });
@@ -2653,7 +2653,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     HN.save();
     return h.board;
   }
-  const DIRECT = [{ id: 'hn_armorer', cur: 'beskar', price: (root.Update23 && root.Update23.on()) ? 2800 : 4000 }, { id: 'hn_paz', cur: 'beskar', price: (root.Update23 && root.Update23.on()) ? 2800 : 4000 }, { id: 'hn_outrider', cur: 'crystals', price: 400 }];
+  const DIRECT = [{ id: 'hn_armorer', cur: 'beskar', price: 2800 }, { id: 'hn_paz', cur: 'beskar', price: 2800 }, { id: 'hn_outrider', cur: 'crystals', price: 400 }];
   const price = (cur, n) => (cur === 'beskar' ? bes(n) : kyb(n));
   VIEWS.forge = () => {
     const h = S();
@@ -4073,7 +4073,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     h.duels = h.duels || { w: 0, l: 0 };
     const draw = !!(M && M.result === 'draw');
     if (draw) h.duels.d = (h.duels.d || 0) + 1; else if (won) h.duels.w += 1; else h.duels.l += 1;
-    const bes = (root.Update23 && root.Update23.on()) ? (draw ? 20 : won ? 40 : 10) : (draw ? 30 : won ? 60 : 15);
+    const bes = draw ? 20 : won ? 40 : 10;
     h.beskar += bes;
     const rr = draw ? { delta: 0, after: HN.divOf(h.rating), rewards: [] } : rate(M, won);
     const wres = M && M.wager && HN.Wager ? HN.Wager.settle(M, draw ? 'draw' : won ? 'won' : 'lost') : null;
@@ -6085,8 +6085,9 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     gxp: { name: 'War Banners', desc: (v) => `+${v}% guild points`, vals: [0, 5, 10, 15] },
     barracks: { name: 'Barracks', desc: (v) => `+${v} member slots`, vals: [0, 5, 10, 15] },
   };
-  // 2.3: guild levels are bought from the Beskar Vault, so upgrades get cheaper.
-  const G23 = () => !!(root.Update23 && root.Update23.on());
+  // Guild levels are bought from the Beskar Vault, so upgrades are cheaper.
+  // The guild rework (Beskar guild levels, ranks, chat reactions, raid clock) is live for everyone.
+  const G23 = () => true;
   const PERK_COST = G23() ? [1500, 3500, 7000] : [2000, 5000, 10000];
   // 2.3: Beskar to reach each guild level (index = the level), from the Vault.
   // Every level costs more than the last: 211,500 Beskar from 1 to 10.
@@ -6644,7 +6645,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     h.soc.gr.runs = (h.soc.gr.runs || 0) + 1;
     const pts = Math.max(5, Math.round(dealt / 2000));
     addGP(pts);
-    const bes = (root.Update23 && root.Update23.on()) ? Math.min(200, Math.round(dealt / 950)) : Math.min(300, Math.round(dealt / 700));
+    const bes = Math.min(200, Math.round(dealt / 950));
     h.beskar += bes;
     HN.xp(40);
     HN.save(); Net.publish();
