@@ -1260,7 +1260,8 @@
   const payout = (their, streak) => {
     const h = S();
     const s = streak == null ? h.streak : streak;
-    return Math.round(40 * Math.min(2.5, Math.max(0.5, (their / h.rating) ** 2)) * (1 + 0.05 * Math.min(5, s)));
+    // 2.3: Beskar is scarcer (and pucks cheaper): 28 a win at par instead of 40.
+    return Math.round(((root.Update23 && root.Update23.on()) ? 28 : 40) * Math.min(2.5, Math.max(0.5, (their / h.rating) ** 2)) * (1 + 0.05 * Math.min(5, s)));
   };
   const expected = (a, b) => 1 / (1 + 10 ** ((b - a) / 400));
 
@@ -1333,7 +1334,7 @@
     const rec = h.raids[k] || (h.raids[k] = { dmg: 0, best: 0, runs: 0, claimed: false });
     rec.dmg += dmgDone; rec.best = Math.max(rec.best, dmgDone); rec.runs += 1;
     h.allySeed = (h.allySeed || 0) + 1;
-    const bes = Math.min(300, Math.round(dmgDone / 600));
+    const bes = (root.Update23 && root.Update23.on()) ? Math.min(200, Math.round(dmgDone / 850)) : Math.min(300, Math.round(dmgDone / 600));
     h.beskar += bes;
     xp(40);
     save();
@@ -1698,6 +1699,41 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
 @keyframes hn-turn { 50% { transform: scaleX(.82); } }
 .hn-free { display: flex; gap: 10px; align-items: center; padding: 10px 12px; border-radius: 12px; background: rgba(255, 154, 42, 0.12); border: 1px solid rgba(255, 154, 42, 0.5); color: #ffd9b0; }
 .hn-free .grow { flex: 1; }
+.graid-clock { position: fixed; z-index: 9500; top: calc(10px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); display: grid; justify-items: center; padding: 6px 16px; border-radius: 14px; background: rgba(8, 12, 22, 0.88); border: 1px solid rgba(255, 210, 63, 0.5); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5); pointer-events: none; }
+.graid-clock small { font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: #ffd23f; }
+.graid-clock b { font: 800 22px/1.1 var(--font-display, sans-serif); color: #fff; font-variant-numeric: tabular-nums; }
+.graid-clock.low { border-color: #ff4a4a; animation: gc-pulse 1s ease-in-out infinite; }
+.graid-clock.low b { color: #ff6a6a; }
+@keyframes gc-pulse { 50% { transform: translateX(-50%) scale(1.06); } }
+.graid-up { position: fixed; inset: 0; z-index: 9600; display: grid; place-items: center; background: rgba(4, 6, 12, 0.6); pointer-events: none; animation: gu-in 0.3s ease-out; }
+.graid-up b { font: 900 clamp(40px, 10vw, 96px)/1 var(--font-display, sans-serif); color: #ff5a4a; letter-spacing: 0.06em; text-shadow: 0 0 30px rgba(255, 60, 40, 0.8), 0 4px 0 #000; animation: gu-pop 0.5s cubic-bezier(.2, 1.5, .4, 1); }
+@keyframes gu-in { from { opacity: 0; } }
+@keyframes gu-pop { from { transform: scale(0.4); } }
+.graid-dmg, .graid-best { display: grid; justify-items: center; gap: 2px; text-align: center; margin: 4px 0 10px; }
+.graid-dmg small, .graid-best small { color: #9fb0c4; font-size: 12px; }
+.graid-best { position: relative; padding: 14px 12px 12px; border-radius: 16px; background: radial-gradient(ellipse at 50% 40%, rgba(178, 120, 255, 0.35), rgba(255, 210, 63, 0.08) 60%, transparent); border: 1px solid rgba(255, 210, 63, 0.6); overflow: hidden; }
+.graid-best .big-num { color: #ffe27a; text-shadow: 0 0 18px rgba(255, 210, 63, 0.7); animation: gu-pop 0.6s cubic-bezier(.2, 1.5, .4, 1); }
+.graid-best .gb-tag { font: 900 15px var(--font-display, sans-serif); letter-spacing: 0.2em; color: #d8b4ff; text-shadow: 0 0 10px #a26bff; }
+.graid-best .gb-rays { position: absolute; inset: -60%; background: repeating-conic-gradient(rgba(255, 210, 63, 0.12) 0 8deg, transparent 8deg 22deg); animation: gb-spin 14s linear infinite; pointer-events: none; z-index: -1; }
+@keyframes gb-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .graid-best .gb-rays, .graid-clock.low { animation: none; } }
+.g-rx { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
+.g-rx button { font: inherit; font-size: 12px; line-height: 1; padding: 3px 7px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.14); background: rgba(255, 255, 255, 0.05); color: #fff; cursor: pointer; display: inline-flex; gap: 4px; align-items: center; }
+.g-rx button b { font-size: 11px; color: #cfe0f0; }
+.g-rx button.mine { border-color: #ffd23f; background: rgba(255, 210, 63, 0.16); }
+.g-rx button.zero { display: none; }
+.msg.rx-open .g-rx button.zero { display: inline-flex; }
+.g-rx button.more { opacity: 0.55; }
+.g-chat p.sys.act { background: linear-gradient(90deg, rgba(255, 210, 63, 0.1), transparent); border-left: 2px solid rgba(255, 210, 63, 0.6); padding: 4px 8px; border-radius: 6px; }
+.g-rk { font-style: normal; display: inline-block; margin-right: 1px; text-shadow: 0 0 6px currentColor; }
+.g-lvup { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; padding: 10px 12px; margin: 8px 0 4px; border-radius: 12px; background: rgba(255, 210, 63, 0.08); border: 1px solid rgba(255, 210, 63, 0.35); }
+.g-lvup > div { display: grid; gap: 2px; min-width: 0; flex: 1 1 220px; }
+.g-lvup b small { color: var(--muted, #9aa8b8); font-weight: 600; }
+.g-rkrow { display: grid; gap: 6px; padding: 8px 0; border-top: 1px solid rgba(255, 255, 255, 0.08); }
+.g-rkrow span { display: flex; flex-wrap: wrap; gap: 6px; }
+.g-rks { width: 34px; height: 34px; border-radius: 9px; border: 1px solid rgba(255, 255, 255, 0.18); background: rgba(255, 255, 255, 0.04); color: #fff; font-size: 17px; cursor: pointer; }
+.g-rks.on { border-color: #ffd23f; box-shadow: 0 0 0 2px rgba(255, 210, 63, 0.4); }
+.g-c.sm { width: 26px; height: 26px; }
 .hn-forge-col { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .hn-forge-col > span { flex-basis: 100%; letter-spacing: 0.12em; text-transform: uppercase; font-size: 11px; }
 .hn-forge-col .hn-mini { flex: 1 1 200px; }
@@ -2586,11 +2622,13 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   };
 
   // ---------- forge ----------
-  const TIER_PRICE = { guild: ['beskar', 600], elite: ['beskar', 1500], high: ['crystals', 300], legend: ['beskar', 3000] };
+  // 2.3: Beskar comes slower, so Beskar pucks cost about 30% less.
+  const TIER_PRICE = (root.Update23 && root.Update23.on()) ? { guild: ['beskar', 420], elite: ['beskar', 1050], high: ['crystals', 300], legend: ['beskar', 2100] } : { guild: ['beskar', 600], elite: ['beskar', 1500], high: ['crystals', 300], legend: ['beskar', 3000] };
   const TIER_INFO = { guild: '3 cards, Rare or better', elite: '5 cards, an Epic guaranteed', high: '6 cards, a Legendary guaranteed', legend: 'An arena-only card guaranteed, plus 3 Epic+' };
   const dayKey = () => Player.dayKey();
   function board() {
     const h = S();
+    if (h.board && h.board.day === dayKey() && h.board.v === 2 && (root.Update23 && root.Update23.on()) && !h.board.c23) { h.board.c23 = true; h.board.pucks.forEach((pk) => { if (pk.cur === 'beskar' && !pk.bought) pk.price = Math.round((pk.price * 0.7) / 10) * 10; }); }
     if (h.board && h.board.day === dayKey() && h.board.v === 2) {
       // Today's board from before the price cut: the unbought High-Value puck moves into 260-340.
       h.board.pucks.forEach((pk) => { if (pk.tier === 'high' && !pk.bought && (A.ROSTER[pk.target] || {}).tier !== 'gold') pk.price = Math.min(340, Math.max(260, pk.price)); });
@@ -2615,7 +2653,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     HN.save();
     return h.board;
   }
-  const DIRECT = [{ id: 'hn_armorer', cur: 'beskar', price: 4000 }, { id: 'hn_paz', cur: 'beskar', price: 4000 }, { id: 'hn_outrider', cur: 'crystals', price: 400 }];
+  const DIRECT = [{ id: 'hn_armorer', cur: 'beskar', price: (root.Update23 && root.Update23.on()) ? 2800 : 4000 }, { id: 'hn_paz', cur: 'beskar', price: (root.Update23 && root.Update23.on()) ? 2800 : 4000 }, { id: 'hn_outrider', cur: 'crystals', price: 400 }];
   const price = (cur, n) => (cur === 'beskar' ? bes(n) : kyb(n));
   VIEWS.forge = () => {
     const h = S();
@@ -4035,7 +4073,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     h.duels = h.duels || { w: 0, l: 0 };
     const draw = !!(M && M.result === 'draw');
     if (draw) h.duels.d = (h.duels.d || 0) + 1; else if (won) h.duels.w += 1; else h.duels.l += 1;
-    const bes = draw ? 30 : won ? 60 : 15;
+    const bes = (root.Update23 && root.Update23.on()) ? (draw ? 20 : won ? 40 : 10) : (draw ? 30 : won ? 60 : 15);
     h.beskar += bes;
     const rr = draw ? { delta: 0, after: HN.divOf(h.rating), rewards: [] } : rate(M, won);
     const wres = M && M.wager && HN.Wager ? HN.Wager.settle(M, draw ? 'draw' : won ? 'won' : 'lost') : null;
@@ -5235,7 +5273,8 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   ];
   const SIG = { hn_dark_trooper: { move: 'shockwave', prop: 'roar', impact: 'stamp', color: '#ff3a2a' }, hn_nite_owl: { move: 'volley', prop: 'bolt', impact: 'burn', color: '#ff8a2a', n: 5 }, hn_kelleran: { move: 'aegis', prop: 'deflector', color: '#4ab8ff' } };
   for (const c of NEW) {
-    if (D.UNIT_MAP[c.id]) continue;
+    // Already defined (2.3's Dark Trooper crosses over from js/crossover23.js): still list it here.
+    if (D.UNIT_MAP[c.id]) { if (!HN.HN_IDS.includes(c.id)) HN.HN_IDS.push(c.id); HN.HOW[c.id] = D.UNIT_MAP[c.id].crossover ? `${c.how}. Mythic, and playable in the main game too` : c.how; continue; }
     const def = { ...c, hn: true, sig: SIG[c.id] };
     delete def.how;
     D.UNIT_MAP[c.id] = def;
@@ -5509,7 +5548,8 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   function chip(uid, extra = '') {
     const p = prof(uid);
     const g = p.guild && guildOf(p.guild);
-    return `<button type="button" class="pf-chip" data-hn="prof" data-uid="${esc(p.uid)}">${avatar(p)}<span class="nm"><b>${esc(Net.name(p.uid))}</b><small>${g ? `[${esc(g.tag)}] ` : ''}${p.nb} badge${p.nb === 1 ? '' : 's'}${extra}</small></span></button>`;
+    const rk = p.guild ? rankOf(p.uid, p.guild) : null;
+    return `<button type="button" class="pf-chip" data-hn="prof" data-uid="${esc(p.uid)}">${avatar(p)}<span class="nm"><b${rk ? ` style="color:${rk.c}"` : ''}>${rk ? `<i class="g-rk" title="${ROLE_NAME[rk.r]}">${rk.s}</i> ` : ''}${esc(Net.name(p.uid))}</b><small>${g ? `[${esc(g.tag)}] ` : ''}${p.nb} badge${p.nb === 1 ? '' : 's'}${extra}</small></span></button>`;
   }
   HN.chip = chip;
   HN.prof = prof;
@@ -6045,7 +6085,16 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     gxp: { name: 'War Banners', desc: (v) => `+${v}% guild points`, vals: [0, 5, 10, 15] },
     barracks: { name: 'Barracks', desc: (v) => `+${v} member slots`, vals: [0, 5, 10, 15] },
   };
-  const PERK_COST = [2000, 5000, 10000];
+  // 2.3: guild levels are bought from the Beskar Vault, so upgrades get cheaper.
+  const G23 = () => !!(root.Update23 && root.Update23.on());
+  const PERK_COST = G23() ? [1500, 3500, 7000] : [2000, 5000, 10000];
+  // 2.3: Beskar to reach each guild level (index = the level), from the Vault.
+  // Every level costs more than the last: 211,500 Beskar from 1 to 10.
+  const GLVL_COST = [0, 0, 2500, 4000, 6500, 10000, 15000, 22500, 33000, 48000, 70000];
+  // 2.3: each rank's badge by its name. The leader can change the symbol and colour.
+  const RANK_SYMBOLS = ['♛', '★', '✦', '⚔', '◆', '✪', '⬢', '☄'];
+  const RANK_COLORS = ['#ffd23f', '#ff9a3a', '#5fd8ff', '#ff5a6a', '#b18cff', '#6ef0a0', '#ffffff', '#ff7ad8'];
+  const RANK_DEF = { leader: { s: '♛', c: '#ffd23f' }, co: { s: '★', c: '#ff9a3a' }, elder: { s: '✦', c: '#5fd8ff' } };
   const PERK_NEEDS = [2, 4, 6]; // guild level needed for upgrade levels 1, 2, 3
   // Ranks: leader (the founder), one co-leader, up to four elders.
   // The leader is g.lead; guilds made before hand-overs existed fall back to the founder.
@@ -6079,10 +6128,28 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   // Guild levels 1-10 (guild XP = everyone's guild points, all time).
   const GLVL = [0, 500, 1500, 3000, 5000, 8000, 12000, 17000, 23000, 30000];
   const guildXp = (gid) => membersOf(gid).reduce((a, uid) => a + (prof(uid).gpl || 0), 0);
-  const guildLevel = (gid) => { const xp = guildXp(gid); let lv = 1; GLVL.forEach((t, i) => { if (xp >= t) lv = i + 1; }); return { lv, xp, next: GLVL[lv] || null }; };
+  const guildLevel = (gid) => {
+    const xp = guildXp(gid); let lv = 1; GLVL.forEach((t, i) => { if (xp >= t) lv = i + 1; });
+    if (!G23()) return { lv, xp, next: GLVL[lv] || null };
+    // 2.3: the level the guild has bought (guilds keep the level they had earned before).
+    const g = gmap.get(gid) || {};
+    const L = Math.max(1, Math.min(10, (g.lvl | 0) || lv));
+    return { lv: L, xp, next: null, cost: GLVL_COST[L + 1] || null };
+  };
+  const rankOf = (uid, gid) => {
+    if (!G23() || !gid) return null;
+    const r = roleOf(uid, gid);
+    if (!RANK_DEF[r]) return null;
+    const set = ((gmap.get(gid) || {}).ranks || {})[r] || {};
+    return { r, s: RANK_SYMBOLS.includes(set.s) ? set.s : RANK_DEF[r].s, c: RANK_COLORS.includes(set.c) ? set.c : RANK_DEF[r].c };
+  };
   const weekPoints = (uid) => { if (uid === Net.me || uid === 'me') return P2().soc.gp; const a = Net.arena.find((x) => x.uid === uid); return a && a.gpw === week() ? a.gp || 0 : 0; };
   const guildWeekPoints = (gid) => membersOf(gid).reduce((a, uid) => a + weekPoints(uid), 0);
-  const MILESTONES = [
+  const MILESTONES = G23() ? [
+    { pts: 250, beskar: 200, label: '200 Beskar' },
+    { pts: 750, beskar: 400, puck: 'elite', label: '400 Beskar + Elite puck' },
+    { pts: 1500, beskar: 800, puck: 'high', label: '800 Beskar + High-value puck' },
+  ] : [
     { pts: 250, beskar: 300, label: '300 Beskar' },
     { pts: 750, beskar: 600, puck: 'elite', label: '600 Beskar + Elite puck' },
     { pts: 1500, beskar: 1200, puck: 'high', label: '1,200 Beskar + High-value puck' },
@@ -6223,6 +6290,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   function pushGuildStats() {
     const gid = myGuildId();
     if (!gid || !canManage(gid)) return;
+    if (G23() && (gmap.get(gid) || {}).lvl == null) writeGuild(gid, { lvl: guildLevel(gid).lv });
     const g = guildOf(gid);
     const lv = guildLevel(gid);
     const dons = donors(gid);
@@ -6434,8 +6502,36 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const msgs = ((mine && mine.msgs) || []).slice(-29);
     if (ann && !canAnnounce(Net.me, gid)) return toast('Your rank can\'t post announcements right now.');
     msgs.push({ g: gid, t, ts: Date.now(), s: system ? 1 : 0, a: ann ? 1 : 0 });
-    try { await Net.db.doc(`gchat/${Net.me}`).set({ g: gid, msgs }); } catch (e) { toast('Message not sent.'); }
+    try { await Net.db.doc(`gchat/${Net.me}`).set({ g: gid, msgs, rx: (mine && mine.g === gid && mine.rx) || {} }); } catch (e) { toast('Message not sent.'); }
   }
+  // 2.3: react to a guild message (one reaction each; tap it again to take it back).
+  // Your reactions live in your own chat doc, so nobody can change anyone else's.
+  const REACTS = ['👍', '🔥', '😂', '⚔️', '❤️'];
+  async function react(uid, ts, e) {
+    const gid = S().guild;
+    if (!gid || !Net.ready || !REACTS.includes(e)) return;
+    const mine = G.chat.find((c) => c.uid === Net.me);
+    const rx = { ...((mine && mine.g === gid && mine.rx) || {}) };
+    const key = `${uid}_${ts}`;
+    if (rx[key] === e) delete rx[key]; else rx[key] = e;
+    const keep = Object.keys(rx).sort((a, b) => +b.split('_').pop() - +a.split('_').pop()).slice(0, 40);
+    const out = {}; for (const k of keep) out[k] = rx[k];
+    const msgs = (mine && mine.g === gid && mine.msgs) || [];
+    if (mine) mine.rx = out; else G.chat.push({ uid: Net.me, g: gid, msgs, rx: out });
+    rerender();
+    try { await Net.db.doc(`gchat/${Net.me}`).set({ g: gid, msgs, rx: out }); } catch (err) { toast('Reaction not sent.'); }
+  }
+  const reactsFor = (gid, uid, ts) => {
+    const out = {}; let mineE = '';
+    for (const c of G.chat) {
+      if (c.g !== gid || !c.rx || isMuted(c.uid)) continue;
+      const e = c.rx[`${uid}_${ts}`];
+      if (!REACTS.includes(e)) continue;
+      out[e] = (out[e] || 0) + 1;
+      if (c.uid === Net.me) mineE = e;
+    }
+    return { out, mineE };
+  };
   // Everyone's lines for this guild, filtered again on screen (older or
   // tampered messages included), minus anyone you've muted.
   const chatLines = (gid) => G.chat.filter((c) => !isMuted(c.uid)).flatMap((c) => (c.msgs || []).filter((m) => m && m.g === gid && typeof m.t === 'string').map((m) => {
@@ -6480,6 +6576,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const F = g[front];
     const t = graidTotals(gid)[front];
     if (t.down) return toast('That front is already cleared. Hit the other one!');
+    if (G23() && raidRunsLeft(front) <= 0) return toast(`No ${front} runs left today. You get ${RAID_RUNS} ground and ${RAID_RUNS} fleet runs a day.`);
     const kind = front === 'fleet' ? 'ship' : 'character';
     const mine = HN.squadEntries(kind);
     if (!mine.length) return toast(front === 'fleet' ? 'You need ships for the fleet front.' : 'Pick a squad first.');
@@ -6500,8 +6597,45 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
         if (boss.hp <= boss.maxHp / 2) { boss.enraged = true; boss.statuses.offUp = 99; }
         b.hnStartHp = boss.hp;
         b.side('enemy').forEach((u, i) => { if (!F.start.includes(i)) { u.alive = false; u.hp = 0; u.hnWait = true; } });
+        if (G23()) { startRaidClock(); useRaidRun(front); }
       },
     });
+  }
+  // 2.3: 3 ground runs and 3 fleet runs a day (a run counts as soon as it starts).
+  const RAID_RUNS = 3;
+  const raidDay = () => { const h = P2(); const d = Player.dayKey(); if (!h.soc.grDay || h.soc.grDay.d !== d) h.soc.grDay = { d, ground: 0, fleet: 0 }; return h.soc.grDay; };
+  const raidRunsLeft = (front) => Math.max(0, RAID_RUNS - (raidDay()[front] | 0));
+  const useRaidRun = (front) => { raidDay()[front] = (raidDay()[front] | 0) + 1; HN.save(); };
+  // 2.3: a guild raid run lasts 5 minutes, with the clock on screen the whole
+  // time. At zero: "Time's up!", then the damage you did.
+  const RAID_MS = 5 * 60 * 1000;
+  let raidClock = null;
+  function stopRaidClock() { if (raidClock) { clearInterval(raidClock.t); raidClock.el.remove(); raidClock = null; } }
+  function startRaidClock() {
+    stopRaidClock();
+    const el = document.createElement('div');
+    el.className = 'graid-clock';
+    el.setAttribute('role', 'timer');
+    document.body.appendChild(el);
+    const end = Date.now() + RAID_MS;
+    const tick = () => {
+      if (!BUI.battle || BUI.ended || !BUI.params || BUI.params.hn !== 'graid') return stopRaidClock();
+      const left = Math.max(0, end - Date.now());
+      const sec = Math.ceil(left / 1000);
+      el.innerHTML = `<small>Guild raid</small><b>${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}</b>`;
+      el.classList.toggle('low', sec <= 30);
+      if (left > 0) return;
+      stopRaidClock();
+      BUI.params.timeUp = true;
+      const up = document.createElement('div');
+      up.className = 'graid-up';
+      up.innerHTML = "<b>TIME'S UP!</b>";
+      document.body.appendChild(up);
+      if (root.Sound) root.Sound.play('crit');
+      setTimeout(() => { up.remove(); if (!BUI.ended) BUI.finish('timeout'); }, 1600);
+    };
+    raidClock = { el, t: setInterval(tick, 250) };
+    tick();
   }
   function bankGuildRaid(front, dealt) {
     const h = P2();
@@ -6510,7 +6644,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     h.soc.gr.runs = (h.soc.gr.runs || 0) + 1;
     const pts = Math.max(5, Math.round(dealt / 2000));
     addGP(pts);
-    const bes = Math.min(300, Math.round(dealt / 700));
+    const bes = (root.Update23 && root.Update23.on()) ? Math.min(200, Math.round(dealt / 950)) : Math.min(300, Math.round(dealt / 700));
     h.beskar += bes;
     HN.xp(40);
     HN.save(); Net.publish();
@@ -6529,12 +6663,24 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     if (root.Sound) { root.Sound.play(won ? 'victory' : 'defeat'); root.Sound.music('menu'); }
     const b = this.battle;
     this.teardown();
+    stopRaidClock();
     const boss = b.units.find((u) => u.def.raid);
     const dealt = Math.max(0, (b.hnStartHp || 0) - (boss ? boss.hp : 0));
     const res = bankGuildRaid(p.front, dealt);
+    const SO_say = (txt) => sayLine(txt, true);
     const t = graidTotals(myGuildId());
-    const m = openModal(`<div class="hn-result"><div class="result-title ${won ? 'win' : 'lose'}">${won ? 'FRONT CLEARED' : 'GUILD RAID'}</div>
-      <div class="big-num" style="color:#ffb05a">${fmt(dealt)} damage</div>
+    // 2.3: your best single run against each guild raid boss.
+    const h0 = P2();
+    const bests = h0.soc.grBest || (h0.soc.grBest = {});
+    const prev = bests[p.boss] | 0;
+    const best = G23() && dealt > prev;
+    if (best) { bests[p.boss] = dealt; HN.save(); if (prev) SO_say(`hit ${D.UNIT_MAP[p.boss].name} for ${fmt(dealt)} damage, a new personal best!`); }
+    const title = won ? 'FRONT CLEARED' : p.timeUp && G23() ? "TIME'S UP" : 'GUILD RAID';
+    const dmgBlock = !G23() ? `<div class="big-num" style="color:#ffb05a">${fmt(dealt)} damage</div>`
+      : best ? `<div class="graid-best"><i class="gb-rays"></i><span class="gb-tag">★ NEW BEST ★</span><div class="big-num">${fmt(dealt)}</div><small>damage to ${esc(D.UNIT_MAP[p.boss].name)}${prev ? ` · previous best ${fmt(prev)} (+${Math.round(((dealt - prev) / Math.max(1, prev)) * 100)}%)` : ' · your first run'}</small></div>`
+      : `<div class="graid-dmg"><small>Damage dealt</small><div class="big-num" style="color:#ffb05a">${fmt(dealt)}</div><small>Your best: ${fmt(prev)}</small></div>`;
+    const m = openModal(`<div class="hn-result ${best ? 'is-best' : ''}"><div class="result-title ${won ? 'win' : 'lose'}">${title}</div>
+      ${dmgBlock}
       <div class="rows"><div><span>Beskar</span><b>${HN.ui.bes(res.bes)}</b></div><div><span>Guild points</span><b>+${res.pts}</b></div>
       <div><span>Ground front</span><b>${t.ground.down ? 'Cleared' : `${fmt(t.ground.left)} left`}</b></div><div><span>Fleet front</span><b>${t.fleet.down ? 'Cleared' : `${fmt(t.fleet.left)} left`}</b></div></div>
       <div class="modal-actions"><button type="button" class="btn btn-primary" data-r="ok">Back to the guild raid</button></div></div>`, { small: true, dismissable: false, cls: 'result-modal' });
@@ -6544,6 +6690,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   Player.completeEncounter = function (params, won, r) {
     if (params && params.type === 'hn' && params.hn === 'graid') {
       HN.B.retreated = true;
+      stopRaidClock();
       if (BUI.battle) { const boss = BUI.battle.units.find((u) => u.def.raid); const dealt = Math.max(0, (BUI.battle.hnStartHp || 0) - (boss ? boss.hp : 0)); if (dealt) bankGuildRaid(params.front, dealt); }
       return { lost: true };
     }
@@ -6569,21 +6716,24 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       const t = graidTotals(gid);
       if (!t.fallen || h.soc.gr.claimed || !(h.soc.gr.d + h.soc.gr.f)) return;
       h.soc.gr.claimed = true;
-      h.beskar += 800;
+      const raidBes = G23() ? 500 : 800;
+      h.beskar += raidBes;
       h.freePucks = (h.freePucks || []).concat('high');
       addGP(50);
-      // The rarest card in the HoloNet: 1 in 2,000 per beaten guild raid, and no other way to get him.
+      // The rarest card in the HoloNet: 1 in 100 per beaten guild raid, and no other way to get him.
       const drop = Math.random() < 0.01 ? HN.grant('hn_dark_trooper') : null;
       HN.save(); Net.publish();
       sound('reveal_legendary');
-      toast(`${graidNow().name} is beaten! 800 Beskar, a High-value puck and 50 guild points.`);
-      if (drop && drop.isNew) await UI.walkout(D.UNIT_MAP.hn_dark_trooper, 'legendary', false, { holonet: true, isNew: true, shards: 0 });
+      toast(`${graidNow().name} is beaten! ${fmt(raidBes)} Beskar, a High-value puck and 50 guild points.`);
+      if (drop && drop.isNew) await UI.walkout(D.UNIT_MAP.hn_dark_trooper, D.UNIT_MAP.hn_dark_trooper.rarity, false, { holonet: true, isNew: true, shards: 0 });
+      if (drop && drop.isNew && D.UNIT_MAP.hn_dark_trooper.crossover) toast('The Dark Trooper joined your main collection too: use him anywhere in the game.');
       else if (drop) toast(`Raid drop: Dark Trooper +${drop.shards} shards`);
     }
     if (kind === 'lvl') {
       const lv = guildLevel(gid).lv;
       if (lv >= 2 && !(h.soc.frames || []).includes('guild')) { h.soc.frames = [...(h.soc.frames || []), 'guild']; toast('Guild Banner frame unlocked!'); }
-      if (lv >= 3 && !h.soc.gotTrooper) { h.soc.gotTrooper = true; h.beskar += 2000; h.freePucks = (h.freePucks || []).concat('legend'); sound('reveal_legendary'); toast('Guild level 3: 2,000 Beskar and a Legendary bounty puck!'); }
+      const l3 = G23() ? 1000 : 2000;
+      if (lv >= 3 && !h.soc.gotTrooper) { h.soc.gotTrooper = true; h.beskar += l3; h.freePucks = (h.freePucks || []).concat('legend'); sound('reveal_legendary'); toast(`Guild level 3: ${fmt(l3)} Beskar and a Legendary bounty puck!`); }
       HN.save();
     }
     rerender();
@@ -6678,21 +6828,21 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const g = guildOf(gid);
     const lv = guildLevel(gid);
     return `<div class="g-hero" style="--gc:${g.color}">${emblem(g, 64)}<div><h2>${esc(g.name)} <small>[${esc(g.tag)}]</small></h2><p class="muted">${esc(g.motto || 'No motto yet.')}</p>
-        <div class="g-lv"><b>Level ${lv.lv}</b><div class="hn-hp" style="--rc:${g.color}"><i style="width:${lv.next ? Math.min(100, (lv.xp / lv.next) * 100) : 100}%"></i><span>${fmt(lv.xp)}${lv.next ? ` / ${fmt(lv.next)}` : ''} guild XP</span></div></div>
+        ${G23() ? `<div class="g-lv"><b>Level ${lv.lv}<small> / 10</small></b><div class="hn-hp" style="--rc:${g.color}"><i style="width:${lv.cost ? Math.min(100, (bankOf(gid) / lv.cost) * 100) : 100}%"></i><span>${lv.cost ? `Vault ${fmt(bankOf(gid))} / ${fmt(lv.cost)} Beskar for level ${lv.lv + 1}` : 'Max level'}</span></div></div>` : `<div class="g-lv"><b>Level ${lv.lv}</b><div class="hn-hp" style="--rc:${g.color}"><i style="width:${lv.next ? Math.min(100, (lv.xp / lv.next) * 100) : 100}%"></i><span>${fmt(lv.xp)}${lv.next ? ` / ${fmt(lv.next)}` : ''} guild XP</span></div></div>`}
         <small class="muted">${membersOf(gid).length}/${maxMembers(gid)} members · ${MODES[modeOf(g)]}${g.min ? ` · ${fmt(g.min)}+ rating` : ''}</small></div></div>`;
   };
   GP.week = (gid) => {
     const wp = guildWeekPoints(gid);
     const h = P2();
     return `<div class="hn-sec"><h3>This week · ${fmt(wp)} guild points</h3><div class="g-ms">${MILESTONES.map((ms, i) => { const got = h.soc.guildClaims[`ms${i}`]; const ok = wp >= ms.pts; return `<div class="g-m ${ok ? 'ok' : ''}"><b>${fmt(ms.pts)} pts</b><small>${esc(ms.label)}</small><button type="button" class="hn-btn ${ok && !got ? 'gold' : 'ghost'}" data-hn="gclaim" data-k="ms" data-i="${i}" ${ok && !got ? '' : 'disabled'}>${got ? 'Claimed' : ok ? 'Claim' : `${fmt(Math.max(0, ms.pts - wp))} to go`}</button></div>`; }).join('')}</div>
-        <p class="muted small" style="margin:0">Earn points for your guild with arena wins (+10), raid runs (+5), guild raid damage and duel wins (+15). Milestones reset every week; guild XP never does.</p></div>`;
+        <p class="muted small" style="margin:0">Earn points for your guild with arena wins (+10), raid runs (+5), guild raid damage and duel wins (+15). Milestones reset every week; ${G23() ? 'guild levels are bought with Beskar from the Vault' : 'guild XP never does'}.</p></div>`;
   };
   GP.levels = (gid) => {
     const lv = guildLevel(gid);
     const h = P2();
     return `<div class="hn-sec"><h3>Guild level rewards</h3><div class="g-ms">
         <div class="g-m ${lv.lv >= 2 ? 'ok' : ''}"><b>Level 2</b><small>Guild Banner frame</small><button type="button" class="hn-btn ${lv.lv >= 2 && !(h.soc.frames || []).includes('guild') ? 'gold' : 'ghost'}" data-hn="gclaim" data-k="lvl" ${lv.lv >= 2 && !(h.soc.frames || []).includes('guild') ? '' : 'disabled'}>${(h.soc.frames || []).includes('guild') ? 'Unlocked' : lv.lv >= 2 ? 'Claim' : 'Locked'}</button></div>
-        <div class="g-m ${lv.lv >= 3 ? 'ok' : ''}"><b>Level 3</b><small>2,000 Beskar + Legendary puck</small><button type="button" class="hn-btn ${lv.lv >= 3 && !h.soc.gotTrooper ? 'gold' : 'ghost'}" data-hn="gclaim" data-k="lvl" ${lv.lv >= 3 && !h.soc.gotTrooper ? '' : 'disabled'}>${h.soc.gotTrooper ? 'Claimed' : lv.lv >= 3 ? 'Claim' : 'Locked'}</button></div>
+        <div class="g-m ${lv.lv >= 3 ? 'ok' : ''}"><b>Level 3</b><small>${G23() ? '1,000' : '2,000'} Beskar + Legendary puck</small><button type="button" class="hn-btn ${lv.lv >= 3 && !h.soc.gotTrooper ? 'gold' : 'ghost'}" data-hn="gclaim" data-k="lvl" ${lv.lv >= 3 && !h.soc.gotTrooper ? '' : 'disabled'}>${h.soc.gotTrooper ? 'Claimed' : lv.lv >= 3 ? 'Claim' : 'Locked'}</button></div>
       </div></div>`;
   };
   const canManageMember = (gid, uid) => {
@@ -6722,7 +6872,8 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   };
   GP.chat = (gid) => {
     const lines = chatLines(gid);
-    return `<div class="g-chat" data-noswipe>${lines.length ? lines.map((l) => l.s ? `<p class="sys"><b>${esc(Net.name(l.uid))}</b> ${esc(l.t)}</p>` : `<div class="msg ${l.uid === Net.me ? 'me' : ''} ${l.a ? 'ann' : ''}">${chip(l.uid)}<p>${l.a ? '<em class="g-annflag">Announcement</em>' : ''}${esc(l.t)}<small>${ago(l.ts)}</small></p></div>`).join('') : '<p class="muted" style="text-align:center">No messages yet. Say hello!</p>'}</div>
+    const rxRow = (l) => { if (!G23() || l.hid) return ''; const { out, mineE } = reactsFor(gid, l.uid, l.ts); return `<span class="g-rx">${REACTS.map((e) => `<button type="button" class="${out[e] ? 'has' : 'zero'} ${mineE === e ? 'mine' : ''}" data-hn="grx" data-u="${esc(l.uid)}" data-ts="${l.ts}" data-e="${e}">${e}${out[e] ? `<b>${out[e]}</b>` : ''}</button>`).join('')}<button type="button" class="more" data-hn="grxopen" aria-label="React">＋</button></span>`; };
+    return `<div class="g-chat" data-noswipe>${lines.length ? lines.map((l) => l.s ? `<p class="sys ${G23() ? 'act' : ''}"><b${(() => { const rk = rankOf(l.uid, gid); return rk ? ` style="color:${rk.c}"` : ''; })()}>${(() => { const rk = rankOf(l.uid, gid); return rk ? `<i class="g-rk">${rk.s}</i> ` : ''; })()}${esc(Net.name(l.uid))}</b> ${esc(l.t)}</p>` : `<div class="msg ${l.uid === Net.me ? 'me' : ''} ${l.a ? 'ann' : ''}">${chip(l.uid)}<p>${l.a ? '<em class="g-annflag">Announcement</em>' : ''}${esc(l.t)}<small>${ago(l.ts)}</small>${rxRow(l)}</p></div>`).join('') : '<p class="muted" style="text-align:center">No messages yet. Say hello!</p>'}</div>
       <form class="g-say" data-noswipe><input class="pf-in" data-chat maxlength="140" placeholder="Message your guild…" autocomplete="off"><button type="submit" class="hn-btn">Send</button></form>`;
   };
   GP.raid = (gid) => {
@@ -6741,7 +6892,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
           <div class="hn-hp"><i style="width:${(T.left / T.pool) * 100}%"></i><span>${T.down ? 'CLEARED' : `${fmt(T.left)} / ${fmt(T.pool)}`}</span></div>
           <ul>${F.mech.map(([n, d]) => `<li><b>${esc(n)}</b>${esc(d)}</li>`).join('')}</ul>
           <div class="minis">${ids.map((id) => HN.ui.mini(id)).join('')}${ally ? `<span class="muted small" style="align-self:center">+ ${esc(ally.name)}'s squad</span>` : ''}</div>
-          <button type="button" class="hn-btn ${T.down ? 'ghost' : 'gold'}" data-hn="graidgo" data-front="${f}" ${T.down || !ids.length ? 'disabled' : ''}>${T.down ? 'Cleared' : ids.length ? 'Attack this front' : (kind === 'ship' ? 'No ships yet' : 'Pick a squad')}</button>
+          ${(() => { const left = G23() ? raidRunsLeft(f) : 1; const out = G23() && !left; return `<button type="button" class="hn-btn ${T.down || out ? 'ghost' : 'gold'}" data-hn="graidgo" data-front="${f}" ${T.down || out || !ids.length ? 'disabled' : ''}>${T.down ? 'Cleared' : out ? 'No runs left today' : ids.length ? 'Attack this front' : (kind === 'ship' ? 'No ships yet' : 'Pick a squad')}</button>${G23() && !T.down ? `<small class="muted" style="display:block;margin-top:4px">${left} of ${RAID_RUNS} runs left today · 5 minutes each</small>` : ''}`; })()}
           ${T.rows.length ? `<div class="hn-board" style="margin-top:8px">${T.rows.slice(0, 5).map((r, i) => `<div class="${r.uid === Net.me ? 'me' : ''}"><span>${i + 1}. ${esc(Net.name(r.uid))}</span><b>${fmt(r.dmg)}</b></div>`).join('')}</div>` : ''}
         </div></div>`;
     };
@@ -6923,7 +7074,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
 
   // Ranked duels report into guild points and the season.
   HN.social = { addGP, trackSeasonBest, guildOf, myGuildId, GRAIDS, graidNow, graidTotals, FRAMES, ownedFrames, frameSvg,
-    prof, avatar, chip, nameKey, emblem, GUILD_PICS, PICS, pickerHtml, setPickCat, canAnnounce, announcements, sayLine, ago, roleOf, ROLE_NAME, canManage, MAX_ELDERS, PERK_NEEDS, GLVL, cleanText, PERKS, PERK_COST, PIC_COST, perkLevel, maxMembers, donors, bankOf, pushGuildStats, membersOf, guildLevel, guildWeekPoints, loadGuilds, G, gmap, setGuilds, rerender, SAFE, isMuted, editProfile, P2, seasonNo, seasonEnds, SEASON_REWARD, weekPoints, MAX_MEMBERS, COLORS, EMBLEMS, createGuild, joinGuild, watchMyGuild, GP, MODES, modeOf, approved, canReview, leaderOf, writeGuild, watchMembers, loadInvites, inviteTo, answerApp, applyGuild, cancelApply, unread, marks, markSeen, MKS, MEGA, setGtab: (t) => { gtab = t; }, gtabNow, sizeOf, chatLines, offlineGuild };
+    prof, avatar, chip, nameKey, emblem, GUILD_PICS, PICS, pickerHtml, setPickCat, canAnnounce, announcements, sayLine, ago, roleOf, ROLE_NAME, canManage, MAX_ELDERS, PERK_NEEDS, GLVL, cleanText, PERKS, PERK_COST, PIC_COST, G23, react, GLVL_COST, RANK_SYMBOLS, RANK_COLORS, RANK_DEF, rankOf, perkLevel, maxMembers, donors, bankOf, pushGuildStats, membersOf, guildLevel, guildWeekPoints, loadGuilds, G, gmap, setGuilds, rerender, SAFE, isMuted, editProfile, P2, seasonNo, seasonEnds, SEASON_REWARD, weekPoints, MAX_MEMBERS, COLORS, EMBLEMS, createGuild, joinGuild, watchMyGuild, GP, MODES, modeOf, approved, canReview, leaderOf, writeGuild, watchMembers, loadInvites, inviteTo, answerApp, applyGuild, cancelApply, unread, marks, markSeen, MKS, MEGA, setGtab: (t) => { gtab = t; }, gtabNow, sizeOf, chatLines, offlineGuild };
 
   // ---------- tester hooks ----------
   Object.assign(HN.dev, {
@@ -7295,7 +7446,8 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
     hn_todo: { move: 'heal', prop: 'spark', color: '#3affb0' },
   };
   for (const c of NEW) {
-    if (D.UNIT_MAP[c.id]) continue;
+    // Already defined (2.3's Dark Trooper crosses over from js/crossover23.js): still list it here.
+    if (D.UNIT_MAP[c.id]) { if (!HN.HN_IDS.includes(c.id)) HN.HN_IDS.push(c.id); HN.HOW[c.id] = D.UNIT_MAP[c.id].crossover ? `${c.how}. Mythic, and playable in the main game too` : c.how; continue; }
     const def = { ...c, hn: true, sig: SIG[c.id] };
     delete def.how;
     D.UNIT_MAP[c.id] = def;
@@ -7746,8 +7898,12 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
       return `<div class="g-m ${lv ? 'ok' : ''}"><b>${esc(P.name)} <small>Lv ${lv}/3</small></b><small>${lv ? esc(P.desc(P.vals[lv])) : 'Not built yet'}${lv < 3 ? ` · next: ${esc(P.desc(P.vals[lv + 1]))}` : ''}</small>
         ${lv >= 3 ? '<button type="button" class="hn-btn ghost" disabled>Maxed</button>' : locked ? `<span class="muted small">Needs guild level ${needs}</span>` : lead ? `<button type="button" class="hn-btn ${ok ? 'gold' : 'ghost'}" data-hn="gperk" data-k="${k}" ${ok ? '' : 'disabled'}>Upgrade · ${bes(cost)}</button>` : `<span class="muted small">${bes(cost)} · the leader or co-leader upgrades</span>`}</div>`;
     };
+    const L = SO.guildLevel(gid);
+    const lvlBox = SO.G23() ? `<div class="g-lvup"><div><b>Guild level ${L.lv}<small> / 10</small></b><small>${L.cost ? `Level ${L.lv + 1} costs ${fmt(L.cost)} Beskar from the Vault. Every level costs more than the last, and each one opens stronger upgrades.` : 'Your guild is at the top level.'}</small></div>
+      ${!L.cost ? '<button type="button" class="hn-btn ghost" disabled>Max level</button>' : lead ? `<button type="button" class="hn-btn ${bank >= L.cost ? 'gold' : 'ghost'}" data-hn="glvl" ${bank >= L.cost ? '' : 'disabled'}>Level up · ${bes(L.cost)}</button>` : '<span class="muted small">The leader or co-leader levels up the guild</span>'}</div>` : '';
     return `<div class="hn-sec"><h3>Beskar Vault · ${bes(bank)}</h3>
-      <p class="muted small" style="margin:0">Donate Beskar to power up the whole guild. The leader and co-leader spend the Vault on upgrades and on changing the guild picture (${fmt(SO.PIC_COST)} Beskar).</p>
+      <p class="muted small" style="margin:0">Donate Beskar to power up the whole guild. The leader and co-leader spend the Vault on ${SO.G23() ? 'guild levels, ' : ''}upgrades and on changing the guild picture (${fmt(SO.PIC_COST)} Beskar).</p>
+      ${lvlBox}
       <div class="hv-don">${[100, 500, 1000].map((n) => `<button type="button" class="hn-btn" data-hn="gdon" data-n="${n}" ${S().beskar >= n ? '' : 'disabled'}>Donate ${bes(n)}</button>`).join('')}</div>
       ${dons.length ? `<div class="hn-board">${dons.map(([uid, n], i) => `<div class="${uid === Net.me ? 'me' : ''}"><span>${i + 1}. ${esc(Net.name(uid))}</span><b>${fmt(n)}</b></div>`).join('')}</div>` : ''}
       <h3 style="margin-top:6px">Guild upgrades</h3><div class="g-ms">${Object.keys(SO.PERKS).map(perk).join('')}</div></div>`;
@@ -7858,13 +8014,28 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
       SO.rerender();
     });
   };
+  CL.grx = (b) => SO.react(b.dataset.u, +b.dataset.ts, b.dataset.e);
+  CL.grxopen = (b) => { const m = b.closest('.msg'); if (m) m.classList.toggle('rx-open'); };
+  // 2.3: buy the next guild level from the Vault.
+  CL.glvl = async (b, render) => {
+    const gid = SO.myGuildId();
+    if (!gid || !SO.canManage(gid) || !SO.G23()) return;
+    const L = SO.guildLevel(gid);
+    if (!L.cost) return;
+    if (await spend(gid, L.cost, { lvl: L.lv + 1 }, `Guild level ${L.lv + 1}`)) {
+      sound('rankup');
+      toast(`Your guild reached level ${L.lv + 1}!`);
+      SO.sayLine(`levelled the guild up to level ${L.lv + 1}!`, true);
+      render();
+    }
+  };
   CL.gperk = async (b, render) => {
     const gid = SO.myGuildId();
     const k = b.dataset.k;
     const lv = SO.perkLevel(gid, k);
     if (lv >= 3 || SO.guildLevel(gid).lv < SO.PERK_NEEDS[lv]) return;
     const raw = SO.gmap.get(gid) || {};
-    if (await spend(gid, SO.PERK_COST[lv], { perks: { ...(raw.perks || {}), [k]: lv + 1 } }, `${SO.PERKS[k].name} level ${lv + 1}`)) { sound('rankup'); toast(`${SO.PERKS[k].name} is now level ${lv + 1}!`); render(); }
+    if (await spend(gid, SO.PERK_COST[lv], { perks: { ...(raw.perks || {}), [k]: lv + 1 } }, `${SO.PERKS[k].name} level ${lv + 1}`)) { sound('rankup'); toast(`${SO.PERKS[k].name} is now level ${lv + 1}!`); if (SO.G23()) SO.sayLine(`upgraded ${SO.PERKS[k].name} to level ${lv + 1}.`, true); render(); }
   };
   // Beskar Haul: arena wins pay a little more.
   const baseResult = HN.arenaResult;
@@ -7883,11 +8054,15 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
     let pic = g.pic || '';
     let emblemI = g.emblem | 0;
     let color = g.color;
+    const isLead = SO.roleOf(Net.me, gid) === 'leader';
+    const ranks = JSON.parse(JSON.stringify(g.ranks || {}));
+    const rankRow = (r, label) => { const cur = { ...SO.RANK_DEF[r], ...(ranks[r] || {}) }; return `<div class="g-rkrow"><b style="color:${cur.c}"><i class="g-rk">${cur.s}</i> ${label}</b><span>${SO.RANK_SYMBOLS.map((x) => `<button type="button" class="g-rks ${x === cur.s ? 'on' : ''}" data-rks="${r}" data-v="${x}">${x}</button>`).join('')}</span><span>${SO.RANK_COLORS.map((c) => `<button type="button" class="g-c sm ${c === cur.c ? 'on' : ''}" data-rkc="${r}" data-v="${c}" style="background:${c}" aria-label="Colour"></button>`).join('')}</span></div>`; };
     const body = () => `<div class="pf-edit"><h2 style="margin:0">Edit guild</h2>
       <div style="display:flex;gap:12px;align-items:center">${SO.emblem({ ...g, pic, emblem: emblemI, color }, 64)}<b style="color:${color}">[${esc(g.tag)}] ${esc(g.name)}</b></div>
       <label class="pf-lbl">Motto <small>up to 70 letters</small><input class="pf-in" data-motto maxlength="70" value="${esc(g.motto || '')}"></label>
       <h3 class="pf-h">Picture <small>changing it costs ${fmt(SO.PIC_COST)} Beskar from the Beskar Vault (Vault: ${fmt(SO.bankOf(gid))})</small></h3>${SO.pickerHtml(pic, color, emblemI)}
       <h3 class="pf-h">Colour</h3><div class="g-pick">${SO.COLORS.map((c) => `<button type="button" class="g-c ${c === color ? 'on' : ''}" data-gc2="${c}" style="background:${c}"></button>`).join('')}</div>
+      ${SO.G23() && isLead ? `<h3 class="pf-h">Rank badges <small>shown by each name in chat and everywhere in the HoloNet</small></h3>${rankRow('leader', 'Leader')}${rankRow('co', 'Co-leader')}${rankRow('elder', 'Elder')}` : ''}
       <div class="modal-actions"><button type="button" class="btn" data-x="cancel">Cancel</button><button type="button" class="btn btn-primary" data-x="save">Save</button></div></div>`;
     const m = openModal(`<div data-body>${body()}</div>`, {});
     let motto = g.motto || '';
@@ -7898,6 +8073,8 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
       const gp = e.target.closest('[data-gp]'); if (gp) { pic = gp.dataset.gp; return redraw(); }
       const ge = e.target.closest('[data-ge]'); if (ge) { pic = ''; emblemI = +ge.dataset.ge; return redraw(); }
       const gc = e.target.closest('[data-gc2]'); if (gc) { color = gc.dataset.gc2; return redraw(); }
+      const rks = e.target.closest('[data-rks]'); if (rks) { ranks[rks.dataset.rks] = { ...(ranks[rks.dataset.rks] || {}), s: rks.dataset.v }; return redraw(); }
+      const rkc = e.target.closest('[data-rkc]'); if (rkc) { ranks[rkc.dataset.rkc] = { ...(ranks[rkc.dataset.rkc] || {}), c: rkc.dataset.v }; return redraw(); }
       const x = e.target.closest('[data-x]');
       if (!x) return;
       if (x.dataset.x === 'save') {
@@ -7906,7 +8083,7 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
         const picChanged = (pic || '') !== (g.pic || '') || (!pic && emblemI !== (g.emblem | 0));
         const cost = picChanged ? SO.PIC_COST : 0;
         if (cost && SO.bankOf(gid) < cost) return toast(`A new guild picture costs ${fmt(cost)} Beskar from the Beskar Vault. The Vault has ${fmt(SO.bankOf(gid))}.`);
-        if (!(await spend(gid, cost, { motto: mo, pic, emblem: emblemI, color }, 'A new guild picture'))) return;
+        if (!(await spend(gid, cost, { motto: mo, pic, emblem: emblemI, color, ...(SO.G23() && isLead ? { ranks } : {}) }, 'A new guild picture'))) return;
         toast(cost ? `Guild updated. ${fmt(cost)} Beskar spent from the Vault.` : 'Guild updated.');
       }
       m.close();

@@ -335,6 +335,7 @@
   }
   D.BOSS_ENCOUNTERS.sort((a, b) => a.level - b.level);
   const ALL_BOSSES = Object.values(WORLD_BOSSES).flat();
+  const FINAL_BOSS = WORLD_BOSSES.coruscant_siege[0];
   // Optional bosses pay their own way: a Holocron the first time (opened in
   // completeEncounter below), then 1,500 credits and 1 Aurodium a win.
   const baseBossRewards = D.bossRewards;
@@ -386,8 +387,21 @@
     const enc = params.type === 'boss' ? D.BOSS_ENCOUNTERS.find((b) => b.id === params.boss) : null;
     const optional = enc && enc.optional;
     const first = optional ? !this.state.bosses[enc.id] : false;
+    // The galaxy's last main boss: the first win spins a Holocron for one guaranteed Mythic.
+    const finalWin = enc && enc.id === FINAL_BOSS && !this.state.bosses[enc.id] && !(this.state.lib24 && this.state.lib24.spun);
     const out = baseComplete.call(this, params, won, rng);
     if (!out || out.lost) return out;
+    if (finalWin) {
+      const pool = D.UNITS.filter((u) => u.rarity === 'mythic' && !u.exclusive && !u.boss);
+      const pick = pool[Math.floor((rng || Math.random)() * pool.length)];
+      if (pick) {
+        const got = this.grantCard(pick.id, false);
+        lib().spun = 1;
+        lib().spin = { id: pick.id, side: D.UNIT_MAP[enc.id].faction === 'light' ? 'light' : 'dark', isNew: !!(got && got.isNew), shards: (got && got.shards) || 0 };
+        out.mythic = pick.id;
+        this.save();
+      }
+    }
     if (params.type === 'stage' && !out.firstClear) {
       const cut = out.credits - Math.round(out.credits * 0.6);
       out.credits -= cut;
@@ -504,6 +518,11 @@
       return [{ id: 'liberator', tier: 7, icon: 'planet', name: 'Liberator of the Galaxy', desc: `Beat all ${ALL_BOSSES.length} bosses, main and optional. Reward: ???`, have, need: ALL_BOSSES.length }];
     });
     if (root.Lib24Crest) H.crests.liberator = () => root.Lib24Crest();
+    // The final main boss's Holocron spin plays once the results screen is closed.
+    H.battleEnd.push((battle, params, won) => {
+      if (!won || !params || params.type !== 'boss' || params.boss !== FINAL_BOSS) return;
+      setTimeout(() => { const sp = Player.state.lib24 && Player.state.lib24.spin; if (sp) whenFree(() => mythicSpin(sp)); }, 2000);
+    });
     H.battleEnd.push((battle, params, won) => {
       if (!won || !params || params.type !== 'boss') return;
       setTimeout(() => {
@@ -571,6 +590,94 @@
 @media (prefers-reduced-motion: reduce) { .lib24 .lb-boss, .lib24 .lb-core { animation: none; opacity: 0; } .lib24 .lb-bendu, .lib24 .lb-split { animation: none; opacity: 1; transform: none; } .lib24 .lb-line { animation: none; opacity: 0; } .lib24 .lb-line.stay { opacity: 1; } }`;
     document.head.appendChild(st);
   };
+  // ---------- The final boss's Holocron spin ----------
+  // The Holocron of the boss's side turns in the dark while a reel of every
+  // Mythic card races past and slows down onto yours. Tap when it lands and
+  // your card walks out. It plays once (a replay never re-grants anything).
+  const spinCss = () => {
+    if (document.getElementById('lib24-spin')) return;
+    const st = document.createElement('style');
+    st.id = 'lib24-spin';
+    st.textContent = `
+.lib-spin { position: fixed; inset: 0; z-index: 9800; display: grid; place-items: center; align-content: center; gap: 18px; padding: 20px max(16px, env(safe-area-inset-right, 0px)) 20px max(16px, env(safe-area-inset-left, 0px)); background: radial-gradient(ellipse at 50% 38%, var(--sg) 0%, #05060c 62%); color: #fff; text-align: center; font-family: var(--font-display, sans-serif); animation: ls-in .4s ease-out; cursor: pointer; }
+.lib-spin.out { animation: ls-out .35s ease-in forwards; }
+@keyframes ls-in { from { opacity: 0; } } @keyframes ls-out { to { opacity: 0; } }
+.lib-spin .ls-kick { font-size: 12px; letter-spacing: .26em; text-transform: uppercase; color: var(--sc); }
+.lib-spin h2 { margin: 0; font-size: clamp(22px, 4.6vw, 40px); letter-spacing: .06em; text-shadow: 0 0 22px var(--sc); }
+.lib-spin .ls-holo { width: clamp(110px, 22vmin, 180px); aspect-ratio: 1; perspective: 600px; }
+.lib-spin .ls-holo svg { width: 100%; height: 100%; filter: drop-shadow(0 0 22px var(--sc)); animation: ls-turn 1.1s linear infinite; transform-style: preserve-3d; }
+.lib-spin.landed .ls-holo svg { animation: ls-turn 4s linear infinite; }
+@keyframes ls-turn { to { transform: rotateY(360deg); } }
+.lib-spin .ls-reel { position: relative; width: min(680px, 94vw); height: 150px; overflow: hidden; border-radius: 16px; border: 2px solid var(--sc); background: rgba(0,0,0,.45); box-shadow: 0 0 30px color-mix(in srgb, var(--sc) 50%, transparent), inset 0 0 40px #000; mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent); }
+.lib-spin .ls-strip { position: absolute; left: 0; top: 10px; display: flex; gap: 10px; will-change: transform; }
+.lib-spin .ls-item { flex: 0 0 110px; height: 130px; border-radius: 12px; overflow: hidden; border: 2px solid #ff2a5a; background: #120810; position: relative; }
+.lib-spin .ls-item .portrait, .lib-spin .ls-item svg { width: 100%; height: 100%; display: block; }
+.lib-spin .ls-item b { position: absolute; left: 0; right: 0; bottom: 0; font-size: 10px; padding: 3px; background: rgba(0,0,0,.7); letter-spacing: .04em; }
+.lib-spin .ls-mark { position: absolute; left: 50%; top: 0; bottom: 0; width: 3px; margin-left: -1.5px; background: #fff; box-shadow: 0 0 12px #fff; z-index: 2; }
+.lib-spin.landed .ls-item.win { border-color: #ffd23f; box-shadow: 0 0 26px #ffd23f; }
+.lib-spin .ls-res { min-height: 52px; opacity: 0; transition: opacity .4s; }
+.lib-spin.landed .ls-res { opacity: 1; }
+.lib-spin .ls-res b { display: block; font-size: clamp(26px, 6vw, 46px); color: #ff6a8a; letter-spacing: .14em; text-shadow: 0 0 24px #ff2a5a; }
+.lib-spin .ls-res span { font-size: 15px; }
+.lib-spin .ls-tap { font: 600 12px var(--font-body, sans-serif); letter-spacing: .14em; text-transform: uppercase; color: #9fb0c4; }
+@media (prefers-reduced-motion: reduce) { .lib-spin .ls-holo svg { animation: none; } }`;
+    document.head.appendChild(st);
+  };
+  const holoSvg = (light) => light
+    ? '<svg viewBox="-60 -60 120 120"><polygon points="0,-46 40,-23 40,23 0,46 -40,23 -40,-23" fill="#0a2a5a" stroke="#7cc8ff" stroke-width="3"/><polygon points="0,-46 40,-23 0,0 -40,-23" fill="#1a4a8a"/><polygon points="0,0 40,-23 40,23 0,46" fill="#0e3266"/><circle r="12" fill="#bfe6ff" opacity=".9"/><path d="M-26 -12 L0 2 L26 -12 M0 2 L0 32" stroke="#bfe6ff" stroke-width="2" fill="none" opacity=".7"/></svg>'
+    : '<svg viewBox="-60 -60 120 120"><polygon points="0,-50 44,36 -44,36" fill="#3a0608" stroke="#ff4a4a" stroke-width="3"/><polygon points="0,-50 0,36 -44,36" fill="#5a0a10"/><polygon points="0,-18 16,18 -16,18" fill="#ff7a6a" opacity=".85"/><path d="M0 -50 L0 36" stroke="#ff9a8a" stroke-width="1.5" opacity=".6"/></svg>';
+  function mythicSpin(sp) {
+    const def = D.UNIT_MAP[sp.id];
+    if (!def || document.querySelector('.lib-spin')) return;
+    spinCss();
+    lib().spin = null; Player.save();
+    const light = sp.side === 'light';
+    const pool = D.UNITS.filter((u) => u.rarity === 'mythic' && !u.exclusive && !u.boss);
+    const W = 120; const N = 34; const WIN = 29;
+    const items = Array.from({ length: N }, (_, i) => (i === WIN ? def : pool[(i * 7 + 3) % pool.length]));
+    const node = UI.el(`<div class="lib-spin" role="dialog" aria-label="${light ? 'Jedi' : 'Sith'} Holocron" style="--sc:${light ? '#7cc8ff' : '#ff4a4a'};--sg:${light ? 'rgba(40,110,220,.45)' : 'rgba(200,30,40,.45)'}">
+      <span class="ls-kick">The last boss has fallen</span><h2>${light ? 'Jedi' : 'Sith'} Holocron</h2>
+      <div class="ls-holo">${holoSvg(light)}</div>
+      <div class="ls-reel"><i class="ls-mark"></i><div class="ls-strip">${items.map((u, i) => `<div class="ls-item ${i === WIN ? 'win' : ''}">${UI.portrait(u, { plate: false })}<b>${UI.esc(u.name)}</b></div>`).join('')}</div></div>
+      <div class="ls-res"><b>MYTHIC</b><span>${UI.esc(def.name)}</span></div>
+      <span class="ls-tap">Spinning…</span>
+    </div>`);
+    document.body.appendChild(node);
+    const strip = node.querySelector('.ls-strip');
+    const reel = node.querySelector('.ls-reel');
+    const S = root.Sound;
+    const target = -(WIN * W) + (reel.clientWidth / 2 - (W - 10) / 2);
+    const SPIN = 4600;
+    strip.style.transform = 'translateX(0)';
+    requestAnimationFrame(() => requestAnimationFrame(() => { strip.style.transition = `transform ${SPIN}ms cubic-bezier(.1,.75,.18,1)`; strip.style.transform = `translateX(${target}px)`; }));
+    // Ticks as cards pass the marker, slowing down with the reel.
+    let last = 0; const t0 = performance.now(); let raf = 0;
+    const tick = () => {
+      const m = new DOMMatrixReadOnly(getComputedStyle(strip).transform);
+      const idx = Math.floor(-m.m41 / W);
+      if (idx !== last) { last = idx; if (S) S.play('click'); }
+      if (performance.now() - t0 < SPIN) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    if (S) S.play('whoosh');
+    let landed = false; let done = false;
+    const land = () => {
+      if (landed) return; landed = true; cancelAnimationFrame(raf);
+      strip.style.transition = 'none'; strip.style.transform = `translateX(${target}px)`;
+      node.classList.add('landed');
+      node.querySelector('.ls-tap').textContent = 'Tap to claim your card';
+      if (S) { S.play('burst'); S.play('reveal_mythic'); }
+    };
+    setTimeout(land, SPIN + 80);
+    node.addEventListener('click', () => {
+      if (!landed) return land();
+      if (done) return; done = true;
+      node.classList.add('out');
+      setTimeout(() => { node.remove(); if (UI.walkout) UI.walkout(def, 'mythic', false, { isNew: sp.isNew, shards: sp.shards }); }, 360);
+    });
+  }
+  root.Lib24Spin = (id, side) => mythicSpin({ id: id || 'darth_revan', side: side || 'dark', isNew: true, shards: 0 });
+
   function liberatorScene(x) {
     libCss();
     const bosses = ALL_BOSSES.map((id) => D.UNIT_MAP[id]).filter(Boolean);
