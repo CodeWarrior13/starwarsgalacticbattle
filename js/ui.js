@@ -302,19 +302,27 @@
     return `${c.done}/${c.total} stages${k ? ` · ${mode === 'ship' ? '✈' : '⚔'} ${k.done}/${k.total}` : ''}`;
   }
 
-  // Where each world sits on the galaxy map, in route order. Wide screens read
-  // left to right on a gentle wave; tall phone screens climb from the bottom to
-  // the top, alternating sides. Every world keeps clear space around it and its
-  // name, so nothing overlaps and the route always reads one way.
+  // Where each world sits on the galaxy map, in route order: a winding
+  // hyperspace route placed by hand so it reads like a real star chart, not a
+  // grid. Wide screens wander left to right across the whole map; tall phone
+  // screens wind from the bottom to the top. Each world keeps clear space
+  // around it and its name, and the corners stay free for the title, the
+  // battle modes, the Continue button and the progress card.
+  const ROUTE_WIDE = {
+    tatooine: [8, 72], hoth: [15, 46], dagobah: [25, 64], bespin: [31, 34], endor: [42, 54], scarif: [50, 77],
+    coruscant: [58, 50], geonosis: [65, 27], mustafar: [75, 44], exegol: [84, 25], coruscant_siege: [90, 57],
+  };
+  const ROUTE_TALL = {
+    tatooine: [26, 80], hoth: [60, 75], dagobah: [79, 67], bespin: [46, 61], endor: [20, 54], scarif: [50, 48],
+    coruscant: [79, 42], geonosis: [52, 36], mustafar: [22, 30], exegol: [52, 24], coruscant_siege: [77, 17],
+  };
   const MapLayout = root.MapLayout = {
     tall: () => !!(root.matchMedia && root.matchMedia('(max-width: 760px) and (orientation: portrait)').matches),
     at(p, tall) {
-      const list = D.PLANETS.filter((q) => q.map);
-      const i = Math.max(0, list.indexOf(p));
-      const n = Math.max(2, list.length);
-      const k = i / (n - 1);
-      if (tall) return { x: i % 2 ? 72 : 28, y: +(80 - k * 63).toFixed(2) };
-      return { x: +(8 + k * 81).toFixed(2), y: i % 2 ? 40 : 64 };
+      const hand = (tall ? ROUTE_TALL : ROUTE_WIDE)[p.id];
+      if (hand) return { x: hand[0], y: hand[1] };
+      // A world without a hand-placed spot falls back to its old map position.
+      return { x: p.map.x, y: p.map.y };
     },
   };
 

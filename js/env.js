@@ -2184,22 +2184,26 @@
       this.drawFlyers(ctx, theme, w, h, t);
       const st = st0;
       const pos = this.planets.map((p) => ({ p, x: this.mx(p, w), y: this.my(p, h) }));
-      // Hyperspace lanes.
+      // Hyperspace lanes: one smooth curve through every world in order
+      // (a Catmull-Rom spline), so the route flows like a real star chart.
+      const seg = (i) => {
+        const p0 = pos[Math.max(0, i - 2)], p1 = pos[i - 1], p2 = pos[i], p3 = pos[Math.min(pos.length - 1, i + 1)];
+        return [p1, { x: p1.x + (p2.x - p0.x) / 4, y: p1.y + (p2.y - p0.y) / 4 }, { x: p2.x - (p3.x - p1.x) / 4, y: p2.y - (p3.y - p1.y) / 4 }, p2];
+      };
       for (let i = 1; i < pos.length; i++) {
-        const a = pos[i - 1];
-        const b = pos[i];
+        const [a, c1, c2, b] = seg(i);
         const open = st.unlocked(b.p.id);
-        ctx.strokeStyle = open ? 'rgba(255,210,63,0.55)' : 'rgba(140,150,180,0.2)';
+        ctx.strokeStyle = open ? 'rgba(255,210,63,0.55)' : 'rgba(140,150,180,0.22)';
         ctx.lineWidth = open ? 2 : 1;
         ctx.setLineDash(open ? [] : [4, 6]);
         ctx.beginPath();
         ctx.moveTo(a.x, a.y);
-        ctx.quadraticCurveTo((a.x + b.x) / 2, (a.y + b.y) / 2 - 30, b.x, b.y);
+        ctx.bezierCurveTo(c1.x, c1.y, c2.x, c2.y, b.x, b.y);
         ctx.stroke();
         if (open) {
-          const k = (t * 0.35 + i * 0.2) % 1;
-          const mx = (1 - k) * (1 - k) * a.x + 2 * (1 - k) * k * ((a.x + b.x) / 2) + k * k * b.x;
-          const my = (1 - k) * (1 - k) * a.y + 2 * (1 - k) * k * ((a.y + b.y) / 2 - 30) + k * k * b.y;
+          const k = (t * 0.35 + i * 0.2) % 1, u = 1 - k;
+          const mx = u * u * u * a.x + 3 * u * u * k * c1.x + 3 * u * k * k * c2.x + k * k * k * b.x;
+          const my = u * u * u * a.y + 3 * u * u * k * c1.y + 3 * u * k * k * c2.y + k * k * k * b.y;
           glow(ctx, mx, my, 10, '#ffd23f', 0.9);
         }
       }
