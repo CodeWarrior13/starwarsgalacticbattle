@@ -9,6 +9,8 @@
   const on = () => (RELEASE23 != null && Date.now() >= RELEASE23) || tested();
   // Hooks read the current switch, so a reload of this file never leaves a stale one behind.
   const live = () => !!(root.Update23 && root.Update23.on && root.Update23.on());
+  // The wallet caps and their overflow are live for everyone now (listed in the 2.4 notes).
+  const capsLive = () => true;
   const D = root.GameData;
   const P = () => root.Player;
   const UI = () => root.UI;
@@ -128,12 +130,12 @@
     Pl.__v23save = true;
     const base = Pl.save;
     Pl.save = function () {
-      if (live() && this.state) {
+      if (capsLive() && this.state) {
         root.Update23.settle(this.state);
         capCheck(this.state);
       }
       const r = base.apply(this, arguments);
-      if (live() && this.state) walletTitles(this.state);
+      if (capsLive() && this.state) walletTitles(this.state);
       return r;
     };
   }
@@ -165,7 +167,7 @@
   if (H && !H.__v23) {
     H.__v23 = true;
     H.feats.push((s) => (s.v23 && s.v23.jjAuto ? [FEAT_JJ] : []));
-    H.feats.push((s) => (live() ? [{ ...FEAT_PIGGY, have: s.v23 && s.v23.capCr ? 1 : 0, need: 1 }] : []));
+    H.feats.push((s) => (capsLive() ? [{ ...FEAT_PIGGY, have: s.v23 && s.v23.capCr ? 1 : 0, need: 1 }] : []));
     H.crests.v23_piggy = piggyCrest;
     H.scenes.xq_jj_auto = () => (root.__xq && root.__xq.jj ? root.__xq.jj() : null);
   }

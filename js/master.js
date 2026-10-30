@@ -10,7 +10,7 @@
   const UI = root.UI;
   if (!UI || !UI.hooks) return;
   const KEY = 'swcg-master';
-  const SWITCHES = ['swcg-fr-test', 'swcg-pf2', 'swcg-v23-test', 'swcg-wg-test', 'swcg-v24-test', 'swcg-main-test'];
+  const SWITCHES = ['swcg-fr-test', 'swcg-pf2', 'swcg-v23-test', 'swcg-wg-test', 'swcg-v24-test', 'swcg-main-test', 'swcg-pv-test'];
   const KEEP = ['swcg-fr-test', 'swcg-pf2']; // HOLOSAVE21's: always left on
   const code = () => String.fromCharCode(77, 65, 83, 84, 69, 82, 75, 69, 89, 83);
   const get = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
@@ -36,7 +36,7 @@
       const mine = SWITCHES.filter((k) => get(k) !== '1');
       mine.forEach((k) => set(k, '1'));
       set(KEY, JSON.stringify({ mine, at: Date.now() }));
-      UI.toast('Master key ON for this device: 2.2, 2.3, 2.4 and the main teams preview are all switched on. Reloading…');
+      UI.toast('Master key ON for this device: 2.2, 2.3, 2.4 and the new previews are all switched on. Reloading…');
     } else {
       (st.mine || []).filter((k) => !KEEP.includes(k)).forEach((k) => set(k, null));
       set(KEY, null);
