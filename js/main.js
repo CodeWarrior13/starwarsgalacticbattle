@@ -66,6 +66,7 @@
     if (still) return;
     document.addEventListener('pointerover', (e) => {
       const host = e.target.closest(FX_SEL);
+      if (host && host.closest('.no-fx')) return; // panels that opt out of the button shine
       if (!host || host.disabled || (e.relatedTarget && host.contains(e.relatedTarget))) return;
       const clip = fxLayer(host);
       const g = document.createElement('i');
@@ -76,6 +77,7 @@
     });
     document.addEventListener('pointerdown', (e) => {
       const host = e.target.closest(FX_SEL);
+      if (host && host.closest('.no-fx')) return; // panels that opt out of the button shine
       if (!host || host.disabled) return;
       const clip = fxLayer(host);
       const r = host.getBoundingClientRect();

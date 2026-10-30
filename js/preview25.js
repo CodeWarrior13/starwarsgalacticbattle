@@ -238,8 +238,6 @@
     return out.sort((a, b) => D.power(D.UNIT_MAP[b.id], b.to.level, b.to.stars) - D.power(D.UNIT_MAP[a.id], a.to.level, a.to.stars));
   }
 
-  // A marker scribble across the old number.
-  const SCRIBBLE = '<svg class="pa-x" viewBox="0 0 100 24" preserveAspectRatio="none" aria-hidden="true"><path d="M2 14 C18 6 30 18 48 10 S80 4 98 12 M4 18 C26 10 52 20 96 8" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" pathLength="100"/></svg>';
   const STATS = [['power', 'Power'], ['hp', 'Health'], ['atk', 'Damage'], ['def', 'Defense'], ['spd', 'Speed']];
   const statsOf = (def, lv, st) => ({ ...D.unitStats(def, lv, st), power: D.power(def, lv, st) });
 
@@ -253,10 +251,14 @@
         const def = D.UNIT_MAP[r.id];
         const a = statsOf(def, r.from.level, r.from.stars);
         const b = statsOf(def, r.to.level, r.to.stars);
+        // Each stat is a little counter window: the old number rolls up and
+        // out as the new one rolls in, then the gain lights up beside it.
         return `<div class="pa-row rarity-${def.rarity}" data-pa-row style="--d:${Math.min(i, 3) * 120}ms">
-          <div class="pa-card"><div class="pa-spin">${portrait(def)}</div><span class="pa-stars"><s>${'★'.repeat(r.from.stars)}</s><b>${'★'.repeat(r.to.stars)}</b></span></div>
-          <div class="pa-body"><b class="pa-name">${esc(def.name)}</b><span class="muted small">${r.from.stars}★ → ${r.to.stars}★ · Lv ${r.to.level}</span>
-            <div class="pa-stats">${STATS.map(([k, l]) => `<div class="pa-st"><span class="pa-l">${l}</span><span class="pa-old">${fmt(a[k])}${SCRIBBLE}</span><span class="pa-new">${fmt(b[k])}</span><span class="pa-up">+${fmt(b[k] - a[k])}</span></div>`).join('')}</div>
+          <i class="pa-beam" aria-hidden="true"></i>
+          <div class="pa-card"><div class="pa-spin">${portrait(def, { plate: false })}</div>
+            <span class="pa-stars" aria-label="${r.from.stars} to ${r.to.stars} stars">${Array.from({ length: r.to.stars }, (_, k) => `<i class="${k >= r.from.stars ? 'new' : ''}" style="--k:${Math.max(0, k - r.from.stars)}">★</i>`).join('')}</span></div>
+          <div class="pa-body"><b class="pa-name">${esc(def.name)}</b><span class="pa-rank">${r.from.stars}★ <em>▶</em> ${r.to.stars}★ · Lv ${r.to.level}</span>
+            <div class="pa-stats">${STATS.map(([k, l], j) => `<div class="pa-st" style="--j:${j}"><span class="pa-l">${l}</span><span class="pa-roll"><span class="o">${fmt(a[k])}</span><span class="n">${fmt(b[k])}</span></span><span class="pa-up">▲ ${fmt(b[k] - a[k])}</span></div>`).join('')}</div>
           </div></div>`;
       }).join('')}</div>
       <div class="modal-actions"><button class="btn" type="button" data-pa-skip>Show all</button><button class="btn btn-primary" type="button" data-pa-done>Done</button></div>
@@ -308,7 +310,7 @@
     const max = () => Math.max(0, Math.min(QMAX, Math.floor(have() / unit)));
     const per = Object.values(charm.grants)[0];
     let n = Math.min(1, max()) || 1;
-    const m = openModal(`<div class="qp">
+    const m = openModal(`<div class="qp no-fx">
       <p class="eyebrow">Black Market</p><h2>${esc(charm.name)}</h2><p class="muted">${esc(charm.desc)}</p>
       <div class="qp-row" role="group" aria-label="How many to buy">
         <button class="btn" type="button" data-q="-10">−10</button><button class="btn" type="button" data-q="-1">−1</button>
