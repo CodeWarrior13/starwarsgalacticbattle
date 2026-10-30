@@ -746,6 +746,9 @@
     return D.traitsOf(id).map((t) => `<span class="trait" title="${D.TRAIT_INFO[t].label}">${D.TRAIT_INFO[t].icon} ${D.TRAIT_INFO[t].label}</span>`).join('');
   }
 
+  // Main teams preview (js/mainteams.js), only while its test switch is on.
+  const MT = () => (root.MainTeams && root.MainTeams.on() ? root.MainTeams : null);
+
   Screens.squad = function (params) {
     const enc = Player.encounter(params);
     const kind = enc.kind;
@@ -766,6 +769,7 @@
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn" type="button" data-back>Back</button>
           <button class="btn" type="button" data-auto-build title="Pick your strongest balanced squad">⚙ Auto-build</button>
+          ${MT() ? `<button class="btn" type="button" data-main-load ${MT().has(kind) ? '' : 'disabled'} title="Load your ${kind === 'ship' ? 'Fleet' : 'Ground'} main team">★ Main team</button><button class="btn" type="button" data-main-save title="Save this squad as your ${kind === 'ship' ? 'Fleet' : 'Ground'} main team">Save as main</button>` : ''}
           <button class="btn btn-primary" type="button" data-fight>${params.type === 'secret' && Player.secretCost(params.boss) ? `Engage · ${cur('crystals', Player.secretCost(params.boss))}` : 'Engage'}</button>
         </div>
       </div>
@@ -787,6 +791,7 @@
       </div>
       <div>
         <div class="roster-head"><span class="eyebrow">Your roster</span><span class="muted small">Tap to add or remove · up to ${size}</span></div>
+        ${MT() ? '<p class="mt-note muted small" data-main-note></p>' : ''}
         <div class="roster-filters" data-roster-filters></div>
         <div class="card-grid" data-roster></div>
       </div>
@@ -887,6 +892,13 @@
         }).join('');
       }
       $('[data-fight]', v).disabled = squad.length === 0;
+      const mn = $('[data-main-note]', v);
+      if (mn) {
+        const main = MT().team(kind);
+        const isMain = main.length && main.length === squad.length && main.every((id, i) => id === squad[i]);
+        mn.innerHTML = !main.length ? `★ No ${kind === 'ship' ? 'Fleet' : 'Ground'} main team yet: tap Save as main, or pick one in the Collection.`
+          : isMain ? '★ This is your main team. Auto-continue uses it.' : '★ Changed from your main team: auto battles will use this squad until you save a main team again.';
+      }
     }
 
     v.addEventListener('click', (e) => {
@@ -900,8 +912,21 @@
         toast('Auto-built your strongest squad.');
         return render({ auto: true });
       }
+      if (e.target.closest('[data-main-load]')) {
+        squad = MT().team(kind);
+        toast(`Loaded your ${kind === 'ship' ? 'Fleet' : 'Ground'} main team.`);
+        return render({ auto: true });
+      }
+      if (e.target.closest('[data-main-save]')) {
+        if (!squad.length) return toast('Add some units first.');
+        MT().set(kind, squad);
+        $('[data-main-load]', v).disabled = false;
+        toast(`Saved as your ${kind === 'ship' ? 'Fleet' : 'Ground'} main team.`);
+        return render();
+      }
       if (e.target.closest('[data-fight]')) {
         Player.setSquad(kind, squad);
+        if (MT()) MT().used(kind, squad);
         root.BattleUI.start(params);
         return;
       }
@@ -1314,6 +1339,7 @@
   Screens.collection = function () {
     const ui = App.ui;
     if (!ui.collectionClass) ui.collectionClass = 'all';
+    ui.mtPick = null;
     if (ui.collectionKind === 'holonet' && !hnFilter()) ui.collectionKind = 'all';
     const v = el(`<section class="view">
       <div class="view-head">
@@ -1326,6 +1352,7 @@
         </button>
       </div>
       <div class="ft-summary" data-ft-summary></div>
+      ${MT() ? '<div class="mt-panel" data-mt></div>' : ''}
       <div class="filter-drawer ${ui.collectionFiltersOpen ? 'open' : ''}" data-drawer>
         <div class="fd-inner">
         <div class="filters-row">
@@ -1369,6 +1396,37 @@
       }).join('');
     }
 
+    // Main teams (preview): Edit picks a Ground or Fleet team straight from
+    // the filtered collection; tap cards, or fill with the top of the filter.
+    let lastList = [];
+    const kName = (k) => (k === 'ship' ? 'Fleet' : 'Ground');
+    function renderMT() {
+      const box = $('[data-mt]', v);
+      if (!box) return;
+      const size = Player.slots();
+      const minis = (ids) => (ids.length ? ids.map((id) => miniPortrait(D.UNIT_MAP[id])).join('') : '<span class="muted small">Not set</span>');
+      if (ui.mtPick) {
+        const d = ui.mtDraft;
+        box.innerHTML = `<div class="mt-pick">
+          <div class="mt-row"><b>★ ${kName(ui.mtPick)} main team · ${d.length}/${size}</b><span class="mt-minis">${minis(d)}</span></div>
+          <p class="muted small">Filter the collection, then tap cards to add or remove them.</p>
+          <div class="mt-acts"><button class="btn" type="button" data-mt-fill>Fill top ${size} of this filter</button><button class="btn" type="button" data-mt-clear>Clear</button><button class="btn" type="button" data-mt-cancel>Cancel</button><button class="btn btn-primary" type="button" data-mt-done ${d.length ? '' : 'disabled'}>Save</button></div>
+        </div>`;
+        return;
+      }
+      box.innerHTML = ['character', 'ship'].map((k) => `<div class="mt-row"><b>★ ${kName(k)} main team</b><span class="mt-minis">${minis(MT().team(k))}</span><button class="btn mt-edit" type="button" data-mt-edit="${k}">${MT().has(k) ? 'Edit' : 'Set'}</button></div>`).join('')
+        + '<p class="muted small mt-hint">Auto-continue (Next and Repeat) uses these teams unless you change your squad.</p>';
+    }
+    function markPicks() {
+      if (!ui.mtPick) return;
+      $$('[data-grid] .ucard', v).forEach((c) => {
+        const idx = ui.mtDraft.indexOf(c.dataset.id);
+        c.classList.toggle('selected', idx >= 0);
+        let bd = c.querySelector(':scope > .sel-badge');
+        if (idx >= 0) { if (!bd) { bd = document.createElement('span'); bd.className = 'sel-badge'; c.prepend(bd); } bd.textContent = idx + 1; } else if (bd) bd.remove();
+      });
+    }
+
     // keep: after closing a card, rebuild at least as many cards as were
     // showing and put the scroll back, so you land where you were instead of
     // at the top (the grid briefly shrank to one batch and the page jumped).
@@ -1384,6 +1442,7 @@
       if (ui.collectionClass !== 'all') parts.push(D.CLASS_INFO[ui.collectionClass].label);
       const n = parts.length;
       parts.push(SORTS[ui.collectionSort].label);
+      renderMT();
       $('[data-ft-count]', v).textContent = n ? String(n) : '';
       $('[data-ft-summary]', v).innerHTML = parts.map((x) => `<span>${esc(x)}</span>`).join('');
       const hn = ui.collectionKind === 'holonet';
@@ -1397,6 +1456,7 @@
           const ob = (hn ? hnOwns(b) : Player.owns(b.id)) ? 0 : 1;
           return oa - ob || SORTS[ui.collectionSort].fn(a, b);
         });
+      lastList = list;
       // Cards are built a batch at a time as you scroll, not all ~140 at once:
       // each one is a detailed drawing, and building them all made the screen
       // slow to open and heavy to scroll on phones.
@@ -1418,6 +1478,7 @@
         const tail = grid.querySelector('.grid-more');
         if (tail && moreObs) moreObs.observe(tail);
         if (win) win.watch(grid.querySelectorAll('.ucard:not([data-o])'));
+        markPicks();
       };
       const had = keep ? grid.querySelectorAll('.ucard').length : 0;
       const y = window.scrollY;
@@ -1458,6 +1519,7 @@
           c.innerHTML = fresh.innerHTML;
           c.style.height = '';
           delete c.dataset.w;
+          markPicks();
         }
       }), { rootMargin: `${ahead * 2}px 0px` });
       return {
@@ -1476,7 +1538,26 @@
         $('[data-drawer]', v).classList.toggle('open', ui.collectionFiltersOpen);
         return;
       }
+      const mtb = e.target.closest('[data-mt-edit], [data-mt-fill], [data-mt-clear], [data-mt-cancel], [data-mt-done]');
+      if (mtb) {
+        const size = Player.slots();
+        if (mtb.dataset.mtEdit) {
+          Object.assign(ui, { mtPick: mtb.dataset.mtEdit, mtDraft: MT().team(mtb.dataset.mtEdit), collectionKind: mtb.dataset.mtEdit, collectionClass: 'all' });
+        } else if (mtb.hasAttribute('data-mt-fill')) {
+          ui.mtDraft = lastList.filter((u) => u.kind === ui.mtPick && Player.owns(u.id)).slice(0, size).map((u) => u.id);
+          if (!ui.mtDraft.length) toast('You own nothing in this filter.');
+        } else if (mtb.hasAttribute('data-mt-clear')) ui.mtDraft = [];
+        else if (mtb.hasAttribute('data-mt-cancel')) ui.mtPick = null;
+        else {
+          MT().set(ui.mtPick, ui.mtDraft);
+          toast(`${kName(ui.mtPick)} main team saved.`);
+          ui.mtPick = null;
+        }
+        render(true);
+        return;
+      }
       if (e.target.closest('[data-filters-reset]')) {
+        if (ui.mtPick) { Object.assign(ui, { collectionFaction: 'all', collectionClass: 'all', collectionSort: 'strong' }); render(); return; }
         Object.assign(ui, { collectionKind: 'all', collectionFaction: 'all', collectionClass: 'all', collectionSort: 'strong' });
         render();
         return;
@@ -1485,6 +1566,7 @@
       if (f) {
         const which = f.parentElement.dataset.filter;
         if (which === 'kind') {
+          if (ui.mtPick && f.dataset.v !== ui.mtPick) return toast(`Picking your ${kName(ui.mtPick)} main team: save or cancel first.`);
           ui.collectionKind = f.dataset.v;
           ui.collectionClass = 'all';
         } else if (which === 'faction') ui.collectionFaction = f.dataset.v;
@@ -1501,6 +1583,17 @@
       const hc = e.target.closest('[data-hn-card]');
       if (hc) return root.HN.ui && root.HN.ui.inspect ? root.HN.ui.inspect(hc.dataset.id, () => render(true)) : toast(root.HN.HOW[hc.dataset.id] || 'HoloNet reward');
       const card = e.target.closest('.ucard');
+      if (card && ui.mtPick) {
+        const id = card.dataset.id;
+        const d = ui.mtDraft;
+        if (!Player.owns(id)) return toast('You don\'t own this one yet.');
+        if (d.includes(id)) ui.mtDraft = d.filter((x) => x !== id);
+        else if (d.length >= Player.slots()) return toast(`Team is full (${Player.slots()}). Tap a card to take it out first.`);
+        else ui.mtDraft = [...d, id];
+        markPicks();
+        renderMT();
+        return;
+      }
       if (card) inspect(card.dataset.id, () => render(true), $$('[data-grid] .ucard', v).map((c) => c.dataset.id));
     });
     render();

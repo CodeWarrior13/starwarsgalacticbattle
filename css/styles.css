@@ -3582,3 +3582,17 @@ body.perf-on .card-back .cb-rays { animation: none; }
   .home-galaxy { --map-inset: 0%; }
   .home-galaxy .map-planet { left: var(--tx); top: var(--ty); width: 13%; }
 }
+
+/* Main teams (preview): Ground and Fleet teams picked in the Collection. */
+.mt-panel { display: grid; gap: 6px; margin: 0 0 12px; padding: 10px 12px; border: 1px solid rgba(255, 232, 31, .22); border-radius: 12px; background: rgba(255, 232, 31, .04); }
+.mt-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.mt-row > b { font-size: 13px; min-width: 150px; }
+.mt-minis { display: flex; gap: 4px; flex: 1; min-width: 0; flex-wrap: wrap; }
+.mt-minis .mini { width: 34px; height: 34px; }
+.mt-edit { padding: 6px 12px; font-size: 13px; }
+.mt-pick { display: grid; gap: 6px; }
+.mt-pick p, .mt-hint { margin: 0; }
+.mt-acts { display: flex; gap: 6px; flex-wrap: wrap; }
+.mt-acts .btn { padding: 6px 12px; font-size: 13px; }
+.mt-note { margin: 0 0 8px; }
+@media (max-width: 600px) { .mt-row > b { min-width: 0; flex-basis: 100%; } }
