@@ -1,9 +1,9 @@
 // Update 2.3: currency caps with fallback rewards, and Auto-open in the Black Market.
 // Everything here stays switched off until 2.3: 7:05 a.m. Central, Wednesday
-// November 11, 2026 (13:05 UTC, after DST ends). RELEASE23 null keeps it off.
+// November 4, 2026 (13:05 UTC, after DST ends). RELEASE23 null keeps it off.
 (function (root) {
   'use strict';
-  const RELEASE23 = root.__v23Test != null ? root.__v23Test : Date.UTC(2026, 10, 11, 13, 5, 0);
+  const RELEASE23 = root.__v23Test != null ? root.__v23Test : Date.UTC(2026, 10, 4, 13, 5, 0);
   // Testers switch 2.3 on early on one device with the master tester key (js/master.js).
   const tested = () => { try { return localStorage.getItem('swcg-v23-test') === '1'; } catch (e) { return false; } };
   const on = () => (RELEASE23 != null && Date.now() >= RELEASE23) || tested();

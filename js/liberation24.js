@@ -9,7 +9,7 @@
 // slots and keep the next worlds open; they go back for the new stages and
 // the boss to liberate it again.
 //
-// Off until 2.4 ships (late November, date to be set). Testers switch it on
+// Off until 2.4 ships (6:50 a.m. Central, November 11, 2026). Testers switch it on
 // early on one device with the LIBERATE24 code (which also switches on 2.2).
 (function (root) {
   'use strict';

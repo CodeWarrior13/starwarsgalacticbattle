@@ -13,16 +13,16 @@
   const LAUNCH_21 = root.__v21Test != null ? root.__v21Test : Date.UTC(2026, 9, 21, 12, 5, 0);
   // Update 2.2 goes live at 7:05 a.m. Central on October 28, 2026.
   const LAUNCH_22 = root.__v22Test != null ? root.__v22Test : Date.UTC(2026, 9, 28, 12, 5, 0);
-  // Update 2.3 goes live at 7:05 a.m. Central on November 11, 2026 (after DST ends).
+  // Update 2.3 goes live at 7:05 a.m. Central on November 4, 2026 (after DST ends).
   // The guild overhaul went live straight away on October 28, 2026.
   const LAUNCH_221 = root.__v22Test != null ? root.__v22Test : Date.UTC(2026, 9, 28, 12, 5, 0);
-  const LAUNCH_23 = root.__v23Test != null ? root.__v23Test : Date.UTC(2026, 10, 11, 13, 5, 0);
+  const LAUNCH_23 = root.__v23Test != null ? root.__v23Test : Date.UTC(2026, 10, 4, 13, 5, 0);
   // Update 2.4 has no date yet, so its entry stays hidden. When the date is set,
   // put it in js/gate24.js (REL24) and fill in `date` below.
   const LAUNCH_24 = root.__v24Test != null ? root.__v24Test : root.REL24 != null ? root.REL24 : null;
   const ALL_UPDATES = [
     {
-      v: '2.4', date: 'Date to be set', title: 'Liberation', from: LAUNCH_24 == null ? Infinity : LAUNCH_24,
+      v: '2.4', date: 'November 11, 2026', title: 'Liberation', from: LAUNCH_24 == null ? Infinity : LAUNCH_24,
       items: [
         'NEW|Liberate the galaxy: every world now has 10 stages with its own cast of enemies, a main boss that liberates it and an optional boss on the side. A world counts as liberated once its main boss falls.',
         'NEW|11 new bosses: the Wampa on Hoth, the Cave\'s Vision on Dagobah, Carbonite Chamber Vader and Bossk with the Hound\'s Tooth on Bespin, the AT-ST Walker on Endor, Director Krennic on Scarif, Darth Sidious and Commander Cody on Coruscant, Jango Fett in the Geonosis arena, Emperor Reborn on Exegol and General Grievous, Warlord at the Siege of Coruscant. Each fights with its own tricks.',
@@ -52,7 +52,7 @@
       ],
     },
     {
-      v: '2.3', date: 'November 11, 2026', title: 'The Hutt\'s Vault', from: LAUNCH_23,
+      v: '2.3', date: 'November 4, 2026', title: 'The Hutt\'s Vault', from: LAUNCH_23,
       items: [
         'NEW|The Legendary Exchange: once a week, at a time no one knows, a Hutt broker opens his vault for 30 minutes. Trade 5 Aurodium Ingots for 15,000 credits. Look under the gambling tables.',
         'NEW|Auto-open (level 30): open Black Market crates hands-free until you reach your number.',

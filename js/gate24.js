@@ -3,7 +3,7 @@
 // card art and stage scenes don't download at all. js/liberation24.js and
 // js/changelog.js read REL24, so the date only needs setting here.
 (function (root) {
-  root.REL24 = null; // e.g. Date.UTC(2026, 10, 25, 13, 5, 0) for 7:05 a.m. Central, November 25
+  root.REL24 = Date.UTC(2026, 10, 11, 12, 50, 0); // 6:50 a.m. Central, Wednesday November 11, 2026
   var test = false;
   try { test = localStorage.getItem('swcg-v24-test') === '1'; } catch (e) { /* storage blocked */ }
   var at = root.__v24Test != null ? root.__v24Test : root.REL24;
