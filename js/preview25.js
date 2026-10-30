@@ -1,4 +1,4 @@
-// Previews waiting for approval (test switch swcg-pv-test, or the master key):
+// Ships with 2.3 (testers: the swcg-pv-test key or the master key):
 //  - Rex's battle intel: Rex sits at the bottom of every battle in place of the
 //    bonus chips. Tap him for both squads side by side (every multiplier, per
 //    troop, live buffs and debuffs) and a guide to every battle icon.
@@ -16,7 +16,8 @@
   const { esc, fmt, portrait, toast, openModal } = UI;
   const get = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
   const set = (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* storage blocked */ } };
-  const on = () => get('swcg-pv-test') === '1';
+  // Ships with 2.3; testers get it early with its switch (or the master key).
+  const on = () => !!(root.Update23 && root.Update23.on && root.Update23.on()) || get('swcg-pv-test') === '1';
   const motionOK = () => UI.motionOK ? UI.motionOK() : true;
   const pct = (x) => `${x > 0 ? '+' : ''}${Math.round(x * 100)}%`;
 

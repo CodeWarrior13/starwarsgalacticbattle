@@ -3,14 +3,15 @@
 // start every battle with the main team for that kind of fight, unless you
 // changed the squad by hand for it; saving a main team again resets that.
 //
-// Test-only for now: on with the swcg-main-test key (or the master key).
+// Ships with 2.3 (testers: the swcg-main-test key or the master key).
 (function (root) {
   'use strict';
   const D = root.GameData;
   const Player = root.Player;
   if (!D || !Player) return;
   const get = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
-  const on = () => get('swcg-main-test') === '1';
+  // Ships with 2.3; testers get it early with its switch (or the master key).
+  const on = () => !!(root.Update23 && root.Update23.on && root.Update23.on()) || get('swcg-main-test') === '1';
 
   const st = () => {
     const s = Player.state;

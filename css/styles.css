@@ -3701,9 +3701,9 @@ body.perf-on .card-back .cb-rays { animation: none; }
 .pa-head h2 { margin: 2px 0 6px; }
 .pa-sum { display: flex; gap: 14px; flex-wrap: wrap; color: var(--muted); }
 .pa-sum b { color: #4ade80; font: 800 18px var(--font-display); }
-.pa-list { display: grid; grid-auto-rows: max-content; gap: 10px; max-height: min(60vh, 560px); overflow: auto; overscroll-behavior: contain; padding: 2px 4px 2px 2px; }
+.pa-list { display: flex; flex-direction: column; gap: 10px; max-height: min(60vh, 560px); overflow: auto; overscroll-behavior: contain; padding: 2px 4px 2px 2px; }
 /* Rows sit on the game's own dark panels, edged in the card's rarity color. */
-.pa-row { --r: var(--rare); position: relative; overflow: hidden; display: grid; grid-template-columns: 96px 1fr; gap: 14px; padding: 12px; border-radius: 14px; background: linear-gradient(180deg, #121b2c, #0b111d); border: 1px solid color-mix(in srgb, var(--r) 45%, transparent); }
+.pa-row { --r: var(--rare); flex: 0 0 auto; min-height: max-content; position: relative; overflow: hidden; display: grid; grid-template-columns: 96px 1fr; gap: 14px; padding: 12px; border-radius: 14px; background: linear-gradient(180deg, #121b2c, #0b111d); border: 1px solid color-mix(in srgb, var(--r) 45%, transparent); }
 .pa-row.rarity-common { --r: var(--common); } .pa-row.rarity-epic { --r: var(--epic); } .pa-row.rarity-legendary { --r: var(--legendary); } .pa-row.rarity-mythic { --r: var(--mythic); } .pa-row.rarity-secret { --r: #5affc8; }
 .pa-beam { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(100deg, transparent 30%, color-mix(in srgb, var(--r) 30%, transparent) 50%, transparent 70%); transform: translateX(-110%); }
 .pa-card { display: grid; gap: 6px; justify-items: center; align-content: start; perspective: 600px; }
