@@ -206,11 +206,17 @@
     if (upd) {
       BUI.updateAll = function () {
         const r = upd.apply(this, arguments);
-        const w = on() && this.view && this.view.querySelector('.rx-wrap');
-        if (w && !w.querySelector('[data-rx-pane="intel"]').hidden) {
-          const y = w.querySelector('.rx-panel').scrollTop;
-          w.innerHTML = intelHtml(this);
-          w.querySelector('.rx-panel').scrollTop = y;
+        // Battles update many times a second; the panel redraws at most
+        // every 400 ms, and only while it's open on the Squads tab.
+        if (on() && this.view && this.view.querySelector('.rx-wrap') && !this.__rxT) {
+          this.__rxT = setTimeout(() => {
+            this.__rxT = 0;
+            const w = this.view && this.view.querySelector('.rx-wrap');
+            if (!w || w.querySelector('[data-rx-pane="intel"]').hidden) return;
+            const y = w.querySelector('.rx-panel').scrollTop;
+            w.innerHTML = intelHtml(this);
+            w.querySelector('.rx-panel').scrollTop = y;
+          }, 400);
         }
         return r;
       };
@@ -256,7 +262,7 @@
         // out as the new one rolls in, then the gain lights up beside it.
         return `<div class="pa-row rarity-${def.rarity}" data-pa-row style="--d:${Math.min(i, 3) * 120}ms">
           <i class="pa-beam" aria-hidden="true"></i>
-          <div class="pa-card"><div class="pa-spin">${portrait(def, { plate: false })}</div>
+          <div class="pa-card"><div class="pa-spin" data-pa-art="${r.id}"></div>
             <span class="pa-stars" aria-label="${r.from.stars} to ${r.to.stars} stars">${Array.from({ length: r.to.stars }, (_, k) => `<i class="${k >= r.from.stars ? 'new' : ''}" style="--k:${Math.max(0, k - r.from.stars)}">★</i>`).join('')}</span></div>
           <div class="pa-body"><b class="pa-name">${esc(def.name)}</b><span class="pa-rank">${r.from.stars}★ <em>▶</em> ${r.to.stars}★ · Lv ${r.to.level}</span>
             <div class="pa-stats">${STATS.map(([k, l], j) => `<div class="pa-st" style="--j:${j}"><span class="pa-l">${l}</span><span class="pa-roll"><span class="o">${fmt(a[k])}</span><span class="n">${fmt(b[k])}</span></span><span class="pa-up">▲ ${fmt(b[k] - a[k])}</span></div>`).join('')}</div>
@@ -265,6 +271,13 @@
       <div class="modal-actions"><button class="btn" type="button" data-pa-skip>Show all</button><button class="btn btn-primary" type="button" data-pa-done>Done</button></div>
     </div>`, { cls: 'pa-modal' });
     const rows = [...m.root.querySelectorAll('[data-pa-row]')];
+    // Card pictures are drawn only as their rows come near the screen, so a
+    // report with dozens of cards opens instantly.
+    const art = (row) => { const a = row.querySelector('[data-pa-art]'); if (a && !a.firstChild) a.innerHTML = portrait(D.UNIT_MAP[a.dataset.paArt], { plate: false }); };
+    if ('IntersectionObserver' in root) {
+      const ao = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { art(e.target); ao.unobserve(e.target); } }), { root: m.root.querySelector('[data-pa-list]'), rootMargin: '400px 0px' });
+      rows.forEach((r) => ao.observe(r));
+    } else rows.forEach(art);
     const play = (row) => { row.classList.add('go'); };
     if (!motionOK() || !('IntersectionObserver' in root)) rows.forEach((r) => r.classList.add('go', 'done'));
     else {
