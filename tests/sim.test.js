@@ -714,7 +714,9 @@ test('2.3: currency caps overflow into Aurodium then Kyber; Auto-open uses lower
   Player.reset();
   Player.state.credits = 9999800; Player.save();
   Player.state.credits += 500; Player.save();
-  assert.strictEqual(Player.state.credits, 9999800 + 500, 'off: no cap before 2.3');
+  // The caps and their overflow are live before 2.3 too (in the 2.4 notes).
+  assert.strictEqual(Player.state.credits, 10000000, 'capped even before 2.3');
+  assert.strictEqual(Player.state.ovf.cr, 300, 'the extra waits in the overflow bank');
   delete require.cache[require.resolve('../js/v23.js')];
   globalThis.__v23Test = 0;
   require('../js/v23.js');
