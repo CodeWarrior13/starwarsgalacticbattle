@@ -1224,7 +1224,7 @@ const ccReset = () => {
 
 // ---------- the credit chip puzzle ----------
 // Ten hot credit chips hide around the game, each stamped with one letter but
-// not its place. The Fragment Journal (Settings, once you've found any
+// not its place. The Seeker's Codex (Settings, once you've found any
 // fragment) keeps every letter you've collected: rearrange the chips there to
 // spell the code, then enter it in Settings > Enter a code. Players who
 // already cashed the chips don't see them.
@@ -1258,14 +1258,15 @@ document.head.appendChild(Object.assign(document.createElement('style'), { textC
 .xq-cpop b { font-family: var(--font-display); font-size: clamp(60px, 20vmin, 120px); color: #fff3c4; text-shadow: 0 0 30px #ffb938; line-height: 1; animation: jp-sub .6s .5s both; }
 .xq-cpop span { letter-spacing: .3em; text-transform: uppercase; font-size: 12px; color: #ffd98a; animation: jp-sub .6s .8s both; }
 .xq-cpop em { font-style: normal; font-size: 12px; color: #a08a60; animation: jp-sub .6s 1.1s both; }
-.xq-journal { display: grid; gap: 14px; }
+.xq-journal { display: grid; gap: 12px; max-height: calc(100dvh - 120px); overflow: auto; overscroll-behavior: contain; }
+.modal.xq-journal-modal { width: min(460px, calc(100vw - 24px)); max-width: none; }
 .xq-journal h2 { margin: 0; }
-.xq-jsec { display: grid; gap: 8px; padding: 12px; border-radius: 14px; border: 1px solid var(--line); background: rgba(255,255,255,.03); }
+.xq-jsec { display: grid; gap: 8px; padding: clamp(8px, 2.6vw, 12px); border-radius: 14px; border: 1px solid var(--line); background: rgba(255,255,255,.03); }
 .xq-jsec h3 { margin: 0; font-family: var(--font-display); font-size: 14px; letter-spacing: .14em; text-transform: uppercase; }
 .xq-jsec.holo h3 { color: #7cd0ff; } .xq-jsec.cchip h3 { color: #ffcf4a; }
 .xq-jsec p { margin: 0; font-size: 13px; color: var(--muted); }
 .xq-row { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 4px; }
-.xq-l { width: 100%; height: 46px; border-radius: 9px; display: grid; place-items: center; align-content: center; font: 800 20px var(--font-display); line-height: 1; padding: 0; }
+.xq-l { width: 100%; height: clamp(34px, 11vw, 46px); min-width: 0; border-radius: 9px; display: grid; place-items: center; align-content: center; font: 800 clamp(14px, 4.6vw, 20px) var(--font-display); line-height: 1; padding: 0; }
 .xq-l small { font: 600 9px var(--font-body, inherit); letter-spacing: .08em; opacity: .7; margin-top: 2px; }
 .xq-jsec.holo .xq-l { border: 1px solid #2a5a8a; background: #0a1a30; color: #e8f8ff; }
 .xq-jsec.holo .xq-l.no { color: #2a4a6a; }
@@ -1283,7 +1284,7 @@ function collectChip(i) {
   chipOrder();
   Player.save();
   if (root.Sound) { root.Sound.play('coins'); setTimeout(() => root.Sound.play('reveal_rare'), 300); }
-  const pop = el(`<div class="xq-cpop" role="dialog"><div class="xq-bigchip">${miniChip()}</div><b>${CHIP[i]}</b><span>Hot credit chip</span><em>${f.length} of ${CHIP.length} found · see your Fragment Journal</em></div>`);
+  const pop = el(`<div class="xq-cpop" role="dialog"><div class="xq-bigchip">${miniChip()}</div><b>${CHIP[i]}</b><span>Vekko's hot chip</span><em>${f.length} of ${CHIP.length} found · logged in your Seeker's Codex</em></div>`);
   document.body.appendChild(pop);
   const close = () => { if (!pop.isConnected || pop.classList.contains('out')) return; pop.classList.add('out'); setTimeout(() => pop.remove(), 300); };
   pop.addEventListener('click', close);
@@ -1304,7 +1305,7 @@ function placeChips() {
   });
 }
 
-// The Fragment Journal: what you've found for both puzzles.
+// The Seeker's Codex: what you've found for both puzzles.
 function journal() {
   const z = Z();
   const hf = found();
@@ -1313,11 +1314,11 @@ function journal() {
   const paint = () => {
     const order = chipOrder();
     const solved = !z.cc && order.every((i, k) => i >= 0 && CHIP[i] === CHIP[k]);
-    m.root.querySelector('[data-j]').innerHTML = `<div><p class="eyebrow">Fragment Journal</p><h2>What you've found</h2></div>
-      <div class="xq-jsec holo"><h3>Holocron fragments</h3>
+    m.root.querySelector('[data-j]').innerHTML = `<div><p class="eyebrow">Seeker's Codex</p><h2>Shards &amp; Chips</h2></div>
+      <div class="xq-jsec holo"><h3>The Gatekeeper's Shards</h3>
         ${z.hp ? '<p class="xq-done">Opened. The archive is yours.</p>' : `<p>${hf.length} of ${WORD.length} found. Each one shows its place.</p>`}
         <div class="xq-row">${WORD.split('').map((ch, k) => `<span class="xq-l ${z.hp || hf.includes(k) ? '' : 'no'}">${z.hp || hf.includes(k) ? ch : '?'}<small>${ROMAN[k]}</small></span>`).join('')}</div></div>
-      <div class="xq-jsec cchip ${solved || z.cc ? 'solved' : ''}"><h3>Hot credit chips</h3>
+      <div class="xq-jsec cchip ${solved || z.cc ? 'solved' : ''}"><h3>Vekko's Hot Chips</h3>
         ${z.cc ? '<p class="xq-done">Cashed. Vekko remembers your face.</p>' : `<p>${chipFound().length} of ${CHIP.length} found. They don't say where they go: tap two chips to swap them until the word makes sense.</p>`}
         <div class="xq-row">${(z.cc ? CHIP.split('').map((_, k) => k) : order).map((i, k) => `<button type="button" class="xq-l ${i < 0 ? 'no' : ''} ${sel === k ? 'sel' : ''}" data-slot="${k}" ${z.cc ? 'disabled' : ''}>${i < 0 ? '?' : CHIP[i]}</button>`).join('')}</div>
         ${solved ? '<p class="xq-done">The chips click into place. Try it as a code.</p>' : ''}</div>
@@ -1346,7 +1347,7 @@ function placeJournal() {
   if (!host || host.parentElement.querySelector('[data-xq-journal]')) return;
   const z = Z();
   if (!found().length && !chipFound().length && !z.hp) return;
-  const b = el('<button class="btn" type="button" data-xq-journal>Fragment Journal</button>');
+  const b = el('<button class="btn" type="button" data-xq-journal>Seeker\'s Codex</button>');
   b.addEventListener('click', (e) => { e.stopPropagation(); journal(); });
   host.insertAdjacentElement('afterend', b);
 }
