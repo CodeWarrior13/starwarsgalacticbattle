@@ -45,4 +45,29 @@
     setTimeout(() => location.reload(), 1600);
     return true;
   };
+
+  // 2.3-only tester key: switches on just The Hutt's Vault (two bans each, True
+  // Strength, main teams, Rex, Promote All and the rest) on this device, and
+  // the same code switches it back off. Handy for testing duels with a friend.
+  const KEY23 = 'swcg-k23';
+  const SW23 = ['swcg-v23-test', 'swcg-main-test', 'swcg-pv-test'];
+  const code23 = () => String.fromCharCode(72, 85, 84, 84, 86, 65, 85, 76, 84, 51);
+  const before23 = UI.hooks.redeem;
+  UI.hooks.redeem = (c) => {
+    if (c !== code23()) return before23 ? before23(c) : false;
+    let st = null;
+    try { st = JSON.parse(get(KEY23) || 'null'); } catch (e) { st = null; }
+    if (!st) {
+      const mine = SW23.filter((k) => get(k) !== '1');
+      mine.forEach((k) => set(k, '1'));
+      set(KEY23, JSON.stringify({ mine }));
+      UI.toast('2.3 test ON for this device. Reloading…');
+    } else {
+      (st.mine || []).forEach((k) => set(k, null));
+      set(KEY23, null);
+      UI.toast('2.3 test OFF: it goes back to waiting for November 4. Reloading…');
+    }
+    setTimeout(() => location.reload(), 1600);
+    return true;
+  };
 })(window);
