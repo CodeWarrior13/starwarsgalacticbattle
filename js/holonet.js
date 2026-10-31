@@ -3420,10 +3420,12 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   // 2.3: two bans each (challenger, other player, challenger, other player).
   // The challenger's game sets the number and sends it with the challenge,
   // so both sides always agree on it.
-  const bansEach = () => (root.Update23 && root.Update23.on && root.Update23.on() ? 2 : 1);
+  // Friends test key (js/master.js) switches the duel changes on early by themselves.
+  const frTest = () => { try { return localStorage.getItem('swcg-frx-test') === '1'; } catch (e) { return false; } };
+  const bansEach = () => (frTest() || (root.Update23 && root.Update23.on && root.Update23.on()) ? 2 : 1);
   const banWord = (n) => (n >= 2 ? 'two cards' : 'one card');
   // 2.3: True Strength friendly battles bring every card's real level and stars.
-  const trueOn = () => !!(root.Update23 && root.Update23.on && root.Update23.on());
+  const trueOn = () => frTest() || !!(root.Update23 && root.Update23.on && root.Update23.on());
   const MAXLV = () => D.MAX_LEVEL || 50;
   const realEntry = (e) => ({ id: e.id, level: Math.max(1, Math.min(MAXLV(), Math.round(+e.level) || 1)), stars: Math.max(1, Math.min(D.MAX_STARS, Math.round(+e.stars) || 1)) });
   const levelOf = (ts) => (ts ? realEntry : atDuelLevel);
