@@ -675,7 +675,7 @@ function placeFrags() {
   });
 }
 let fragTick = null;
-new MutationObserver(() => { clearTimeout(fragTick); fragTick = setTimeout(placeFrags, 250); }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden'] });
+new MutationObserver(() => { if (fragTick) return; fragTick = setTimeout(() => { fragTick = null; placeFrags(); }, 250); }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden'] });
 
 FEATS.hp = { id: 'xq_hp', secret: true, tier: 6, icon: 'holocron', name: 'Holocron Puzzler', desc: 'Found the hidden fragments and opened the Gatekeeper\'s holocron', have: 1, need: 1 };
 H.feats.push((s) => ((s.z || {}).hp ? [FEATS.hp] : []));
@@ -1220,5 +1220,140 @@ const ccReset = () => {
   Player.load = function () { const r = baseLoad.apply(this, arguments); try { ccReset(); } catch (e) { /* never block loading */ } return r; };
   if (Player.state) ccReset();
 }
+
+
+// ---------- the credit chip puzzle ----------
+// Ten hot credit chips hide around the game, each stamped with one letter but
+// not its place. The Fragment Journal (Settings, once you've found any
+// fragment) keeps every letter you've collected: rearrange the chips there to
+// spell the code, then enter it in Settings > Enter a code. Players who
+// already cashed the chips don't see them.
+const CHIP_SPOTS = [
+  { at: () => document.querySelector('#screen .market-hero'), pos: 'right:12px;bottom:10px' },
+  { at: () => document.querySelector('#screen .luck-row'), pos: 'right:2px;top:-6px' },
+  { at: () => document.querySelector('#screen .cups'), pos: 'left:6px;bottom:4px' },
+  { at: () => document.querySelector('#screen .boss-thumb'), pos: 'left:4px;top:4px' },
+  { at: () => document.querySelector('.result-modal .spin-box'), pos: 'left:8px;bottom:6px' },
+  { at: () => document.querySelector('.feat-list'), pos: 'right:6px;top:2px' },
+  { at: () => document.querySelector('.result-modal .xp-box'), pos: 'right:4px;bottom:2px' },
+  { at: () => document.querySelector('.reveal-modal'), pos: 'left:12px;bottom:12px' },
+  { at: () => document.querySelector('.daily-streak'), pos: 'right:-4px;top:-4px' },
+  { at: () => document.querySelector('#screen .stage-info'), pos: 'right:-22px;top:0' },
+];
+const chipFound = () => { const z = Z(); z.cf = z.cf || []; return z.cf; };
+// Your arrangement in the journal: ten places, each a chip (its index) or -1.
+const chipOrder = () => {
+  const z = Z();
+  if (!Array.isArray(z.ca) || z.ca.length !== CHIP.length) z.ca = Array(CHIP.length).fill(-1);
+  for (const i of chipFound()) if (!z.ca.includes(i)) { const k = z.ca.indexOf(-1); if (k >= 0) z.ca[k] = i; }
+  return z.ca;
+};
+const miniChip = () => '<svg viewBox="0 0 60 36" aria-hidden="true"><rect x="2" y="4" width="56" height="28" rx="7" fill="#e8b23a" stroke="#5a3a04" stroke-width="1.6"/><rect x="11" y="13" width="12" height="10" rx="2" fill="#7a5206"/><path d="M28 14 H48 M28 18 H42 M28 22 H46" stroke="#7a5206" stroke-width="2" stroke-linecap="round"/></svg>';
+document.head.appendChild(Object.assign(document.createElement('style'), { textContent: `
+.xq-chip { position: absolute; z-index: 30; width: 18px; height: 12px; padding: 0; border: 0; background: none; cursor: pointer; opacity: .34; animation: xq-frag 3.8s ease-in-out infinite; will-change: opacity; }
+.xq-chip svg { width: 100%; height: 100%; display: block; filter: drop-shadow(0 0 4px #ffcf4a); }
+.xq-cpop { position: fixed; inset: 0; z-index: 280; display: grid; place-items: center; align-content: center; gap: 8px; background: radial-gradient(circle at 50% 45%, #2a1a04, #050302 70%); text-align: center; animation: fade-in .3s; cursor: pointer; }
+.xq-cpop.out { opacity: 0; transition: opacity .3s; }
+.xq-cpop .xq-bigchip { width: 120px; animation: xq-unfold .9s cubic-bezier(.2,.9,.3,1.3) both; filter: drop-shadow(0 0 20px #ffb938); }
+.xq-cpop b { font-family: var(--font-display); font-size: clamp(60px, 20vmin, 120px); color: #fff3c4; text-shadow: 0 0 30px #ffb938; line-height: 1; animation: jp-sub .6s .5s both; }
+.xq-cpop span { letter-spacing: .3em; text-transform: uppercase; font-size: 12px; color: #ffd98a; animation: jp-sub .6s .8s both; }
+.xq-cpop em { font-style: normal; font-size: 12px; color: #a08a60; animation: jp-sub .6s 1.1s both; }
+.xq-journal { display: grid; gap: 14px; }
+.xq-journal h2 { margin: 0; }
+.xq-jsec { display: grid; gap: 8px; padding: 12px; border-radius: 14px; border: 1px solid var(--line); background: rgba(255,255,255,.03); }
+.xq-jsec h3 { margin: 0; font-family: var(--font-display); font-size: 14px; letter-spacing: .14em; text-transform: uppercase; }
+.xq-jsec.holo h3 { color: #7cd0ff; } .xq-jsec.cchip h3 { color: #ffcf4a; }
+.xq-jsec p { margin: 0; font-size: 13px; color: var(--muted); }
+.xq-row { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 4px; }
+.xq-l { width: 100%; height: 46px; border-radius: 9px; display: grid; place-items: center; align-content: center; font: 800 20px var(--font-display); line-height: 1; padding: 0; }
+.xq-l small { font: 600 9px var(--font-body, inherit); letter-spacing: .08em; opacity: .7; margin-top: 2px; }
+.xq-jsec.holo .xq-l { border: 1px solid #2a5a8a; background: #0a1a30; color: #e8f8ff; }
+.xq-jsec.holo .xq-l.no { color: #2a4a6a; }
+.xq-jsec.cchip .xq-l { border: 1px solid #6a4a10; background: linear-gradient(180deg, #3a2806, #1c1404); color: #fff3c4; cursor: pointer; transition: transform .15s; }
+.xq-jsec.cchip .xq-l.no { color: #5a4420; cursor: pointer; }
+.xq-jsec.cchip .xq-l.sel { transform: translateY(-5px); border-color: #ffcf4a; box-shadow: 0 0 14px rgba(255, 207, 74, .5); }
+.xq-jsec.cchip.solved .xq-l { border-color: #ffcf4a; box-shadow: 0 0 12px rgba(255, 207, 74, .45); background: linear-gradient(180deg, #8a5a08, #3a2806); }
+.xq-done { color: #4ade80 !important; font-weight: 700; }
+` }));
+
+function collectChip(i) {
+  const f = chipFound();
+  if (f.includes(i)) return;
+  f.push(i);
+  chipOrder();
+  Player.save();
+  if (root.Sound) { root.Sound.play('coins'); setTimeout(() => root.Sound.play('reveal_rare'), 300); }
+  const pop = el(`<div class="xq-cpop" role="dialog"><div class="xq-bigchip">${miniChip()}</div><b>${CHIP[i]}</b><span>Hot credit chip</span><em>${f.length} of ${CHIP.length} found · see your Fragment Journal</em></div>`);
+  document.body.appendChild(pop);
+  const close = () => { if (!pop.isConnected || pop.classList.contains('out')) return; pop.classList.add('out'); setTimeout(() => pop.remove(), 300); };
+  pop.addEventListener('click', close);
+  setTimeout(close, 4500);
+}
+function placeChips() {
+  const z = Z();
+  if (z.cc || !Player.state || (Player.tutorialPending && Player.tutorialPending())) return;
+  const f = chipFound();
+  CHIP_SPOTS.forEach((sp, i) => {
+    if (f.includes(i)) return;
+    const host = sp.at();
+    if (!host || host.querySelector(`.xq-chip[data-c="${i}"]`)) return;
+    if (getComputedStyle(host).position === 'static') host.style.position = 'relative';
+    const b = el(`<button class="xq-chip" type="button" data-c="${i}" aria-label="?" style="${sp.pos}">${miniChip()}</button>`);
+    b.addEventListener('click', (e) => { e.stopPropagation(); e.preventDefault(); b.remove(); collectChip(i); });
+    host.appendChild(b);
+  });
+}
+
+// The Fragment Journal: what you've found for both puzzles.
+function journal() {
+  const z = Z();
+  const hf = found();
+  let sel = -1;
+  const m = UI.openModal('<div class="xq-journal no-fx" data-j></div>', { small: true, cls: 'xq-journal-modal' });
+  const paint = () => {
+    const order = chipOrder();
+    const solved = !z.cc && order.every((i, k) => i >= 0 && CHIP[i] === CHIP[k]);
+    m.root.querySelector('[data-j]').innerHTML = `<div><p class="eyebrow">Fragment Journal</p><h2>What you've found</h2></div>
+      <div class="xq-jsec holo"><h3>Holocron fragments</h3>
+        ${z.hp ? '<p class="xq-done">Opened. The archive is yours.</p>' : `<p>${hf.length} of ${WORD.length} found. Each one shows its place.</p>`}
+        <div class="xq-row">${WORD.split('').map((ch, k) => `<span class="xq-l ${z.hp || hf.includes(k) ? '' : 'no'}">${z.hp || hf.includes(k) ? ch : '?'}<small>${ROMAN[k]}</small></span>`).join('')}</div></div>
+      <div class="xq-jsec cchip ${solved || z.cc ? 'solved' : ''}"><h3>Hot credit chips</h3>
+        ${z.cc ? '<p class="xq-done">Cashed. Vekko remembers your face.</p>' : `<p>${chipFound().length} of ${CHIP.length} found. They don't say where they go: tap two chips to swap them until the word makes sense.</p>`}
+        <div class="xq-row">${(z.cc ? CHIP.split('').map((_, k) => k) : order).map((i, k) => `<button type="button" class="xq-l ${i < 0 ? 'no' : ''} ${sel === k ? 'sel' : ''}" data-slot="${k}" ${z.cc ? 'disabled' : ''}>${i < 0 ? '?' : CHIP[i]}</button>`).join('')}</div>
+        ${solved ? '<p class="xq-done">The chips click into place. Try it as a code.</p>' : ''}</div>
+      <div class="modal-actions"><button class="btn btn-primary" type="button" data-jx>Close</button></div>`;
+  };
+  paint();
+  m.root.addEventListener('click', (e) => {
+    if (e.target.closest('[data-jx]')) return m.close();
+    const b = e.target.closest('[data-slot]');
+    if (!b || z.cc) return;
+    const k = Number(b.dataset.slot);
+    if (sel < 0) sel = k;
+    else {
+      const o = chipOrder();
+      [o[sel], o[k]] = [o[k], o[sel]];
+      sel = -1;
+      Player.save();
+      if (root.Sound) root.Sound.play('click');
+    }
+    paint();
+  });
+}
+// The journal button sits under Enter a code once you've found any fragment.
+function placeJournal() {
+  const host = document.querySelector('.settings-modal [data-code-entry]');
+  if (!host || host.parentElement.querySelector('[data-xq-journal]')) return;
+  const z = Z();
+  if (!found().length && !chipFound().length && !z.hp) return;
+  const b = el('<button class="btn" type="button" data-xq-journal>Fragment Journal</button>');
+  b.addEventListener('click', (e) => { e.stopPropagation(); journal(); });
+  host.insertAdjacentElement('afterend', b);
+}
+let chipTick = null;
+// Throttled, not debounced: screens with constant small changes still get a pass.
+new MutationObserver(() => { if (chipTick) return; chipTick = setTimeout(() => { chipTick = null; placeChips(); placeJournal(); }, 260); }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden'] });
+root.__xq.chips = () => { delete Z().cf; delete Z().ca; Player.save(); placeChips(); };
+root.__xq.journal = () => journal();
 
 })(window);

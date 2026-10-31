@@ -49,6 +49,9 @@
     prefs: loadPrefs(),
 
     get speed() {
+      // Ultimate previews from the Collection always start at 1× so the whole
+      // ultimate plays out; the speed button still works there for that preview.
+      if (this.params && this.params.type === 'preview') return this.previewSpeed || 1;
       return this.prefs.speed || 1;
     },
 
@@ -120,6 +123,8 @@
       const fillers = kind === 'ship' ? ['x_wing', 'y_wing'] : ['rebel_soldier', 'clone_trooper'];
       const foes = kind === 'ship' ? ['tie_fighter', 'tie_interceptor', 'tie_fighter', 'tie_bomber'] : ['battle_droid', 'b2_droid', 'battle_droid', 'battle_droid'];
       this.params = { type: 'preview', unit: id };
+      this.previewSpeed = 1;
+      document.documentElement.style.setProperty('--speed', 1);
       this.previewBack = back;
       this.enc = { name: `Simulation · ${def.name}`, kind, planet: planet.id, type: 'preview' };
       this.kind = kind;
@@ -561,8 +566,8 @@
     },
 
     cycleSpeed() {
-      this.prefs.speed = this.speed >= 3 ? 1 : this.speed + 1;
-      savePrefs(this.prefs);
+      if (this.params && this.params.type === 'preview') this.previewSpeed = this.speed >= 3 ? 1 : this.speed + 1;
+      else { this.prefs.speed = this.speed >= 3 ? 1 : this.speed + 1; savePrefs(this.prefs); }
       document.documentElement.style.setProperty('--speed', this.speed);
       const btn = $('[data-speed]', this.view);
       if (btn) btn.textContent = `${this.speed}×`;

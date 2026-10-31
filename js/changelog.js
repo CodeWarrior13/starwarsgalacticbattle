@@ -63,6 +63,7 @@
         'NEW|Buy Chance Cubes and Loaded Dice several at a time: −10, −1, type any amount, +1, +10 or Max.',
         'BALANCE|Live Duels, Friendly Battles and Wager duels: you each ban two cards now (was one). You take turns: challenger, opponent, challenger, opponent.',
         'NEW|True Strength friendly battles: pick True Strength in Friends and every card fights at its real level and stars, so your level 40s take on their level 25s. Even mode (every card at Level 20 ★3) is still there. Just for fun: no rating, no rewards.',
+        'IMPROVED|Watching a card\'s ultimate from the Collection always starts at 1× speed, so you see all of it. The speed button still works there and doesn\'t change your battle speed.',
         'NEW|Wager duels: reach Silver III in a season to unlock a Wager tab in Live Duels. After bans you have 45 seconds to agree a stake of 1,000 to 100,000 credits (offer, counter or accept, and chat). The winner takes both wagers minus a 10% house tax. Rating counts, and leaving counts as a loss. Up to 5 a day with the same pilot.',
         'NEW|The Dark Trooper is now Mythic, and he\'s the first HoloNet card you can also use in the main game: campaign, bosses, the Endless Tower and more. He\'s still a rare guild raid drop (1 in 100 each time your guild beats the raid), and his Beskar Alloy passive now works: 25% less damage from attacks.',
         'IMPROVED|Optimized the Collection: only the cards near your screen are drawn, sized to your device, so scrolling is smoother and uses less battery.',
