@@ -3417,6 +3417,11 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   //   player bans a different one → both build squads without the banned
   //   cards ('squad') → the fight starts. Either side can back out ('cancel').
   const BAN_MS = 25000;
+  // 2.3: two bans each (challenger, other player, challenger, other player).
+  // The challenger's game sets the number and sends it with the challenge,
+  // so both sides always agree on it.
+  const bansEach = () => (root.Update23 && root.Update23.on && root.Update23.on() ? 2 : 1);
+  const banWord = (n) => (n >= 2 ? 'two cards' : 'one card');
   const BUILD_MS = 60000;
   const kindName = (k) => (k === 'ship' ? 'Fleet' : 'Ground');
   const poolIds = (kind) => HN.pool(kind).map((u) => u.id);
@@ -3431,8 +3436,8 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     if (Duel.prep) return toast('Finish setting up your other duel first.');
     const id = rid();
     const seed = 1 + Math.floor(Math.random() * 2e9);
-    Duel.pending = { id, peer: peer.peer, by: peer.by, kind, seed, fr: !!fr, wg: !!wg };
-    Duel.room.emit('challenge', { to: peer.peer, id, kind, seed, rating: HN.S().rating, nm: myNm(), pool: poolIds(kind), fr: fr ? 1 : 0, wg: wg ? 1 : 0 }).catch(() => toast('Could not reach them.'));
+    Duel.pending = { id, peer: peer.peer, by: peer.by, kind, seed, fr: !!fr, wg: !!wg, nb: bansEach() };
+    Duel.room.emit('challenge', { to: peer.peer, id, kind, seed, rating: HN.S().rating, nm: myNm(), pool: poolIds(kind), fr: fr ? 1 : 0, wg: wg ? 1 : 0, nb: bansEach() }).catch(() => toast('Could not reach them.'));
     const m = openModal(`<div class="hn-result"><div class="result-title" style="color:${wg ? '#ffd23f' : '#8fe8ff'};${fr || wg ? 'font-size:clamp(22px,6vw,34px)' : ''}">${fr ? 'FRIENDLY BATTLE' : wg ? 'WAGER DUEL' : 'CHALLENGE SENT'}</div><p style="text-align:center">Waiting for <b>${esc(Duel.name(peer))}</b> to accept a ${kindName(kind)} ${fr ? 'friendly battle' : wg ? 'wager duel' : 'duel'}…</p><div class="modal-actions"><button type="button" class="btn" data-x="cancel">Cancel</button></div></div>`, { small: true, dismissable: false });
     Duel.pending.modal = m;
     Duel.pending.timer = setTimeout(() => { if (Duel.pending && Duel.pending.id === id) { Duel.pending = null; m.close(); toast('No answer. Try again later.'); } }, 30000);
@@ -3459,11 +3464,11 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const who = Duel.name(msg);
     const m = openModal(`<div class="hn-result" data-invite="${esc(d.id)}">${d.fr ? `<div class="result-title" style="color:#8fe8ff;font-size:clamp(22px,6vw,34px)">FRIENDLY BATTLE</div>
       <p style="text-align:center">Your friend <b>${esc(who)}</b> challenges you to a <b>${kindName(d.kind)}</b> battle.</p>
-      <p class="muted small" style="text-align:center;margin:0">You each ban one card, then build your squads. Just for fun: no rating, no rewards.</p>` : d.wg ? `<div class="result-title" style="color:#ffd23f;font-size:clamp(22px,6vw,34px)">WAGER DUEL</div>
+      <p class="muted small" style="text-align:center;margin:0">You each ban ${banWord(d.nb)}, then build your squads. Just for fun: no rating, no rewards.</p>` : d.wg ? `<div class="result-title" style="color:#ffd23f;font-size:clamp(22px,6vw,34px)">WAGER DUEL</div>
       <p style="text-align:center"><b>${esc(who)}</b> (${fmt(d.rating || 0)} rating) challenges you to a <b>${kindName(d.kind)}</b> wager duel.</p>
       <p class="muted small" style="text-align:center;margin:0">After bans you have 45 seconds to agree a credit wager (1,000 to 100,000). The winner takes both, minus a 10% house tax. Ranked: rating counts.</p>` : `<div class="result-title" style="color:#8fe8ff">LIVE DUEL</div>
       <p style="text-align:center"><b>${esc(who)}</b> (${fmt(d.rating || 0)} rating) challenges you to a <b>${kindName(d.kind)}</b> duel.</p>
-      <p class="muted small" style="text-align:center;margin:0">You each ban one card, then build your squads.</p>`}
+      <p class="muted small" style="text-align:center;margin:0">You each ban ${banWord(d.nb)}, then build your squads.</p>`}
       <div class="modal-actions"><button type="button" class="btn" data-x="no">Decline</button><button type="button" class="btn btn-primary" data-x="yes">Accept</button></div></div>`, { small: true, dismissable: false });
     Duel.invite.modal = m;
     const timer = setTimeout(() => { m.close(); if (Duel.invite && Duel.invite.id === d.id) Duel.invite = null; refresh(); }, 25000);
@@ -3480,7 +3485,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       // Accepting drops any challenge we were still waiting on.
       if (Duel.pending) { const p = Duel.pending; clearTimeout(p.timer); if (p.modal) p.modal.close(); say(p.peer, { id: p.id, step: 'cancel' }); Duel.pending = null; }
       say(inv.peer, { id: inv.id, step: 'go', pool: poolIds(inv.kind), rating: HN.S().rating });
-      prep({ id: inv.id, host: false, kind: inv.kind, seed: inv.seed, peer: inv.peer, by: inv.by, who, rating: inv.rating, theirPool: okIds(inv.pool, inv.kind), fr: !!inv.fr, wg: !!inv.wg && !inv.fr });
+      prep({ id: inv.id, host: false, kind: inv.kind, seed: inv.seed, peer: inv.peer, by: inv.by, who, rating: inv.rating, theirPool: okIds(inv.pool, inv.kind), fr: !!inv.fr, wg: !!inv.wg && !inv.fr, nb: inv.nb === 2 ? 2 : 1 });
     });
   }
 
@@ -3505,7 +3510,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     if (step === 'go') {
       // They accepted too late: we're already fighting someone else.
       if (Duel.match || App.battleActive || Duel.prep) { say(msg.peer, { id: p.id, step: 'cancel' }); return; }
-      return prep({ id: p.id, host: true, kind: p.kind, seed: p.seed, peer: msg.peer, by: msg.by, who: Duel.name(msg), rating: d.rating, theirPool: okIds(d.pool, p.kind), fr: !!p.fr, wg: !!p.wg });
+      return prep({ id: p.id, host: true, kind: p.kind, seed: p.seed, peer: msg.peer, by: msg.by, who: Duel.name(msg), rating: d.rating, theirPool: okIds(d.pool, p.kind), fr: !!p.fr, wg: !!p.wg, nb: p.nb === 2 ? 2 : 1 });
     }
     toast(d.busy ? 'They are busy in another fight.' : d.nowg ? 'They can\'t take wager duels right now.' : 'Challenge declined.');
   }
@@ -3531,6 +3536,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     if (P.host) myBan(P); else waitFor(P, `<b>${esc(P.who)}</b> is choosing a card to ban…`, BAN_MS + 15000);
   }
   const live = (P) => Duel.prep === P && !P.done;
+  const banTotal = (P) => (P.nb === 2 ? 4 : 2);
   function closeWait(P) { clearTimeout(P.timer); if (P.wait) { P.wait.close(); P.wait = null; } }
   function endPrep(P, note) {
     if (P.done) return;
@@ -3568,8 +3574,8 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       if (card === false) return leave(P, 'You left the duel.');
       P.bans.push(card || null);
       say(P.peer, { id: P.id, step: 'ban', card: card || '' });
-      if (P.bans.length >= 2) return afterBans(P);
-      waitFor(P, `<b>${esc(P.who)}</b> is choosing their ban…`, BAN_MS + 15000);
+      if (P.bans.length >= banTotal(P)) return afterBans(P);
+      waitFor(P, `<b>${esc(P.who)}</b> is choosing their ${P.bans.length >= 2 ? 'second ' : ''}ban…`, BAN_MS + 15000);
     });
   }
   function prepMsg(P, step, d) {
@@ -3577,12 +3583,12 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     if (step === 'cancel' || step === 'no') return endPrep(P, `${P.who} left the duel.`);
     if (step === 'wg') { if (P.wg && HN.Wager) HN.Wager.msg(P, d); return; }
     if (step === 'ban') {
-      if (P.bans.length >= 2) return;
+      if (P.bans.length >= banTotal(P)) return;
       const card = typeof d.card === 'string' && D.UNIT_MAP[d.card] && D.UNIT_MAP[d.card].kind === P.kind && !P.bans.includes(d.card) ? d.card : null;
       P.bans.push(card);
       if (card) toast(`${P.who} banned ${unitName(card)}.`);
-      // The challenger has both bans now; the other player bans next.
-      return P.bans.length >= 2 ? afterBans(P) : myBan(P);
+      // Turns alternate until every ban is in.
+      return P.bans.length >= banTotal(P) ? afterBans(P) : myBan(P);
     }
     if (step === 'squad') {
       const sq = Array.isArray(d.squad) ? d.squad.filter((e) => e && D.UNIT_MAP[e.id] && D.UNIT_MAP[e.id].kind === P.kind && !P.bans.includes(e.id)).slice(0, 5) : [];
@@ -3613,7 +3619,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     start(cfg);
   }
 
-  // The ban: one card neither player can use this duel. The list is every
+  // A ban: a card neither player can use this duel (one or two each). The list is every
   // card either of you could bring.
   function banPick(P, done) {
     // Sort and filter, so the card you're after is easy to find.
@@ -3662,8 +3668,8 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       </div>`;
     const grid = () => { const ids = shown(); return ids.length ? ids.map(card).join('') : '<p class="muted small">No cards match these filters.</p>'; };
     const m = openModal(`<div class="db dp-ban">
-      <div class="db-head"><div><p class="eyebrow">Live duel · vs ${esc(P.who)}</p><h2>Ban a card</h2></div><span class="db-time" data-time>${left}s</span></div>
-      <p class="db-note">${first ? `You ban first, then <b>${esc(P.who)}</b> bans a different card.` : `<b>${esc(P.who)}</b> banned <b>${esc(unitName(taken[0]) || 'nothing')}</b>. Now pick yours.`} Banned cards can't be used by either of you this duel. Tags show who owns each card; stats are at duel level.</p>
+      <div class="db-head"><div><p class="eyebrow">Live duel · vs ${esc(P.who)}</p><h2>Ban a card${banTotal(P) > 2 ? ` <small class="muted">${Math.floor(P.bans.length / 2) + 1} of 2</small>` : ''}</h2></div><span class="db-time" data-time>${left}s</span></div>
+      <p class="db-note">${first ? `You ban first, then <b>${esc(P.who)}</b> bans a different card${banTotal(P) > 2 ? '. You take turns until you each have two bans' : ''}.` : `<b>${esc(P.who)}</b> banned <b>${esc(unitName(P.bans[P.bans.length - 1]) || 'nothing')}</b>. Now pick yours.`} Banned cards can't be used by either of you this duel. Tags show who owns each card; stats are at duel level.</p>
       ${tools()}
       <div class="hn-pick db-pick dp-grid" data-noswipe data-grid>${grid()}</div>
       <div class="db-foot"><button type="button" class="btn" data-x="leave">Leave duel</button><button type="button" class="btn btn-primary dp-go" data-x="ban" disabled>Pick a card to ban</button></div></div>`, { dismissable: false });
@@ -8797,7 +8803,7 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
             <p class="muted small">Your callsign is <b>${esc(myTag())}</b>. Share it so friends can add you.</p>`;
       host.dataset.chat = '';
       host.innerHTML = `<div class="fr-head"><div><p class="eyebrow">Friends</p><h2>Friendly battles</h2></div><button type="button" class="btn" data-f="close">Close</button></div>
-        <p class="muted small fr-blurb">Challenge a friend who's online to a Ground or Fleet battle: you each ban a card, build a squad, and every card fights at the same level. Just for fun: no rating, no rewards.</p>
+        <p class="muted small fr-blurb">Challenge a friend who's online to a Ground or Fleet battle: you each ban cards, build a squad, and every card fights at the same level. Just for fun: no rating, no rewards.</p>
         <div class="fr-tabs"><button type="button" class="${tab === 'list' ? 'on' : ''}" data-tab="list">Friends <i>${fr.length}</i></button><button type="button" class="${tab === 'req' ? 'on' : ''}" data-tab="req">Requests ${inc.length ? `<i class="hot">${inc.length}</i>` : ''}</button><button type="button" class="${tab === 'add' ? 'on' : ''}" data-tab="add">Add</button></div>
         ${body}<p class="pe-st ${status.cls}" data-st>${esc(status.msg)}</p>`;
       if (tab === 'add') {
