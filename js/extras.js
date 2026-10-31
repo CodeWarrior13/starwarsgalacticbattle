@@ -651,10 +651,11 @@ document.head.appendChild(Object.assign(document.createElement('style'), { textC
 const cubeShapes = (glow = '#7cd0ff') => `<path d="M20 3 L35 11.5 L35 28.5 L20 37 L5 28.5 L5 11.5Z" fill="#0a2a4a" stroke="${glow}" stroke-width="1.6"/><path d="M20 3 L20 20 M5 11.5 L20 20 L35 11.5 M20 20 L20 37" stroke="${glow}" stroke-width="1" opacity=".7"/><circle cx="20" cy="20" r="3.4" fill="#e8f8ff"/>`;
 const cubeSvg = (glow) => `<svg viewBox="0 0 40 40" aria-hidden="true">${cubeShapes(glow)}</svg>`;
 
-function collectFrag(i) {
+function collectFrag(i, from) {
   const f = found();
   if (f.includes(i)) return;
   f.push(i); Player.save();
+  if (cineOn()) return cineHolo(i, from);
   if (root.Sound) { root.Sound.play('glitch'); setTimeout(() => root.Sound.play('reveal_rare'), 300); }
   const pop = el(`<div class="xq-fpop" role="dialog"><div class="xq-cube">${cubeSvg()}</div><b>${WORD[i]}</b><span>Holocron fragment · ${ROMAN[i]}</span><em>${f.length} of ${WORD.length} found</em></div>`);
   document.body.appendChild(pop);
@@ -670,7 +671,7 @@ function placeFrags() {
     if (!host || host.querySelector(`.xq-frag[data-f="${i}"]`)) return;
     if (getComputedStyle(host).position === 'static') host.style.position = 'relative';
     const b = el(`<button class="xq-frag" type="button" data-f="${i}" aria-label="?" style="${sp.pos}">${cubeSvg()}</button>`);
-    b.addEventListener('click', (e) => { e.stopPropagation(); e.preventDefault(); b.remove(); collectFrag(i); });
+    b.addEventListener('click', (e) => { e.stopPropagation(); e.preventDefault(); const r = b.getBoundingClientRect(); b.remove(); collectFrag(i, r); });
     host.appendChild(b);
   });
 }
@@ -1275,14 +1276,18 @@ document.head.appendChild(Object.assign(document.createElement('style'), { textC
 .xq-jsec.cchip .xq-l.sel { transform: translateY(-5px); border-color: #ffcf4a; box-shadow: 0 0 14px rgba(255, 207, 74, .5); }
 .xq-jsec.cchip.solved .xq-l { border-color: #ffcf4a; box-shadow: 0 0 12px rgba(255, 207, 74, .45); background: linear-gradient(180deg, #8a5a08, #3a2806); }
 .xq-done { color: #4ade80 !important; font-weight: 700; }
+.xq-go { justify-self: center; font-weight: 800; letter-spacing: .08em; }
+.xq-go-holo { border-color: #7cd0ff; color: #bfe8ff; box-shadow: 0 0 16px rgba(124, 208, 255, .35); }
+.xq-go-chip { border-color: #ffcf4a; color: #ffe08a; box-shadow: 0 0 16px rgba(255, 207, 74, .35); }
 ` }));
 
-function collectChip(i) {
+function collectChip(i, from) {
   const f = chipFound();
   if (f.includes(i)) return;
   f.push(i);
   chipOrder();
   Player.save();
+  if (cineOn()) return cineChip(i, from);
   if (root.Sound) { root.Sound.play('coins'); setTimeout(() => root.Sound.play('reveal_rare'), 300); }
   const pop = el(`<div class="xq-cpop" role="dialog"><div class="xq-bigchip">${miniChip()}</div><b>${CHIP[i]}</b><span>Vekko's hot chip</span><em>${f.length} of ${CHIP.length} found · logged in your Seeker's Codex</em></div>`);
   document.body.appendChild(pop);
@@ -1300,7 +1305,7 @@ function placeChips() {
     if (!host || host.querySelector(`.xq-chip[data-c="${i}"]`)) return;
     if (getComputedStyle(host).position === 'static') host.style.position = 'relative';
     const b = el(`<button class="xq-chip" type="button" data-c="${i}" aria-label="?" style="${sp.pos}">${miniChip()}</button>`);
-    b.addEventListener('click', (e) => { e.stopPropagation(); e.preventDefault(); b.remove(); collectChip(i); });
+    b.addEventListener('click', (e) => { e.stopPropagation(); e.preventDefault(); const r = b.getBoundingClientRect(); b.remove(); collectChip(i, r); });
     host.appendChild(b);
   });
 }
@@ -1317,16 +1322,27 @@ function journal() {
     m.root.querySelector('[data-j]').innerHTML = `<div><p class="eyebrow">Seeker's Codex</p><h2>Shards &amp; Chips</h2></div>
       <div class="xq-jsec holo"><h3>The Gatekeeper's Shards</h3>
         ${z.hp ? '<p class="xq-done">Opened. The archive is yours.</p>' : `<p>${hf.length} of ${WORD.length} found. Each one shows its place.</p>`}
-        <div class="xq-row">${WORD.split('').map((ch, k) => `<span class="xq-l ${z.hp || hf.includes(k) ? '' : 'no'}">${z.hp || hf.includes(k) ? ch : '?'}<small>${ROMAN[k]}</small></span>`).join('')}</div></div>
+        <div class="xq-row">${WORD.split('').map((ch, k) => `<span class="xq-l ${z.hp || hf.includes(k) ? '' : 'no'}">${z.hp || hf.includes(k) ? ch : '?'}<small>${ROMAN[k]}</small></span>`).join('')}</div>
+        ${cineOn() && !z.hp && hf.length >= WORD.length ? '<button class="btn xq-go xq-go-holo" type="button" data-xq-go="holo">Open the holocron</button>' : ''}</div>
       <div class="xq-jsec cchip ${solved || z.cc ? 'solved' : ''}"><h3>Vekko's Hot Chips</h3>
         ${z.cc ? '<p class="xq-done">Cashed. Vekko remembers your face.</p>' : `<p>${chipFound().length} of ${CHIP.length} found. They don't say where they go: tap two chips to swap them until the word makes sense.</p>`}
         <div class="xq-row">${(z.cc ? CHIP.split('').map((_, k) => k) : order).map((i, k) => `<button type="button" class="xq-l ${i < 0 ? 'no' : ''} ${sel === k ? 'sel' : ''}" data-slot="${k}" ${z.cc ? 'disabled' : ''}>${i < 0 ? '?' : CHIP[i]}</button>`).join('')}</div>
-        ${solved ? '<p class="xq-done">The chips click into place. Try it as a code.</p>' : ''}</div>
+        ${solved ? `<p class="xq-done">The chips click into place.${cineOn() ? '' : ' Try it as a code.'}</p>` : ''}
+        ${cineOn() && solved ? '<button class="btn xq-go xq-go-chip" type="button" data-xq-go="chip">Cash the chips</button>' : ''}</div>
       <div class="modal-actions"><button class="btn btn-primary" type="button" data-jx>Close</button></div>`;
   };
   paint();
   m.root.addEventListener('click', (e) => {
     if (e.target.closest('[data-jx]')) return m.close();
+    // A finished puzzle enters its own code: same result and scene as typing it.
+    const go = e.target.closest('[data-xq-go]');
+    if (go) {
+      m.close();
+      const st = document.querySelector('.settings-modal [data-close]');
+      if (st) st.click();
+      if (H.redeem) H.redeem(go.dataset.xqGo === 'holo' ? WORD : CHIP);
+      return;
+    }
     const b = e.target.closest('[data-slot]');
     if (!b || z.cc) return;
     const k = Number(b.dataset.slot);
@@ -1356,5 +1372,186 @@ let chipTick = null;
 new MutationObserver(() => { if (chipTick) return; chipTick = setTimeout(() => { chipTick = null; placeChips(); placeJournal(); }, 260); }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden'] });
 root.__xq.chips = () => { delete Z().cf; delete Z().ca; Player.save(); placeChips(); };
 root.__xq.journal = () => journal();
+
+
+// ---------- find moments (preview: testers only until approved) ----------
+// Each puzzle gets its own short scene when you pick up a piece. The piece
+// flies from where you found it to the middle of the screen, does its thing,
+// then the puzzle's row slides up and the new letter drops into its place,
+// so you see everything you have so far. Tap to skip. Only transforms and
+// opacity move, so it stays smooth on phones.
+const cineOn = () => { try { return localStorage.getItem('swcg-xq-test') === '1'; } catch (e) { return false; } };
+document.head.appendChild(Object.assign(document.createElement('style'), { textContent: `
+.xc { position: fixed; inset: 0; z-index: 420; overflow: hidden; display: grid; place-items: center; cursor: pointer; animation: fade-in .25s; contain: strict; }
+.xc.out { opacity: 0; transition: opacity .35s; }
+.xc-bg { position: absolute; inset: 0; }
+.xc.k-chip .xc-bg { background: radial-gradient(circle at 50% 42%, #3a2406 0, #120a02 45%, #040201 80%); }
+.xc.k-holo .xc-bg { background: radial-gradient(circle at 50% 42%, #0c2c52 0, #06142a 45%, #010309 80%); }
+.xc-stage { position: absolute; left: 50%; top: 40%; width: 0; height: 0; }
+.xc-hero { position: absolute; left: 0; top: 0; will-change: transform; }
+.xc-row { position: absolute; left: 50%; bottom: max(14%, 90px); transform: translate(-50%, 40px); opacity: 0; display: grid; grid-template-columns: repeat(10, clamp(26px, 8vw, 44px)); gap: clamp(3px, 1vw, 6px); }
+.xc-row.on { transition: transform .45s cubic-bezier(.2,.9,.3,1.1), opacity .35s; transform: translate(-50%, 0); opacity: 1; }
+.xc-t { height: clamp(34px, 10vw, 52px); border-radius: 9px; display: grid; place-items: center; align-content: center; font: 800 clamp(15px, 4.6vw, 22px) var(--font-display); line-height: 1; }
+.xc-t small { font-size: 8px; letter-spacing: .06em; opacity: .7; margin-top: 2px; font-weight: 600; }
+.k-chip .xc-t { border: 1px solid #6a4a10; background: linear-gradient(180deg, #3a2806, #1c1404); color: #fff3c4; }
+.k-holo .xc-t { border: 1px solid #2a5a8a; background: #0a1a30; color: #e8f8ff; }
+.xc-t.no { color: transparent; }
+.k-chip .xc-t.no { border-style: dashed; }
+.k-holo .xc-t.no { border-style: dashed; }
+.xc-t.land { animation: xc-land .5s cubic-bezier(.2,1.6,.4,1); }
+.k-chip .xc-t.land { box-shadow: 0 0 22px #ffcf4a; border-color: #ffcf4a; }
+.k-holo .xc-t.land { box-shadow: 0 0 22px #7cd0ff; border-color: #bfe8ff; }
+@keyframes xc-land { 0% { transform: scale(1.5); } 100% { transform: none; } }
+.xc-cap { position: absolute; left: 0; right: 0; bottom: max(7%, 46px); margin: 0; text-align: center; font-size: 12px; letter-spacing: .26em; text-transform: uppercase; opacity: 0; transition: opacity .4s; }
+.xc-cap.on { opacity: 1; }
+.k-chip .xc-cap { color: #ffd98a; } .k-holo .xc-cap { color: #9fd4ff; }
+.xc-cap b { display: block; font-size: 11px; letter-spacing: .12em; color: #8a8070; margin-top: 4px; font-weight: 600; }
+.k-holo .xc-cap b { color: #6a8ab0; }
+.xc-done { display: block; margin-top: 8px; letter-spacing: .1em; color: #4ade80 !important; }
+/* Credit chip: spins in like a flipped coin, bounces twice (da, da), then dings. */
+.xc-chip { position: absolute; width: clamp(150px, 42vw, 220px); aspect-ratio: 60 / 36; margin: calc(clamp(150px, 42vw, 220px) * -.3) 0 0 calc(clamp(150px, 42vw, 220px) * -.5); animation: xc-chip-bounce 1.15s .55s both; }
+.xc-chip svg { width: 100%; height: 100%; display: block; filter: drop-shadow(0 8px 24px rgba(0,0,0,.6)) drop-shadow(0 0 18px rgba(255, 185, 56, .5)); }
+.xc-chip .xc-spin { width: 100%; height: 100%; animation: xc-flip .65s cubic-bezier(.3,.6,.3,1) both; }
+@keyframes xc-flip { from { transform: rotateY(1080deg) scale(.4); } to { transform: none; } }
+@keyframes xc-chip-bounce { 0% { transform: none; } 14% { transform: translateY(-18px) rotate(-4deg); } 28% { transform: none; } 42% { transform: translateY(-10px) rotate(3deg); } 56% { transform: none; } 100% { transform: none; } }
+.xc-chip b { position: absolute; left: 69.5%; top: 47%; transform: translate(-50%, -50%) scale(2.4); opacity: 0; font: 800 clamp(30px, 9vw, 48px)/1 var(--font-display); color: #fff3c4; text-shadow: 0 2px 0 #3a2402, 0 0 10px rgba(255, 220, 120, .6); animation: xc-stamp .3s 1.3s cubic-bezier(.2,1.5,.4,1) forwards; }
+@keyframes xc-stamp { to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
+.xc-ring { position: absolute; left: 0; top: 0; width: 20px; height: 20px; margin: -10px 0 0 -10px; border-radius: 50%; border: 3px solid #ffcf4a; opacity: 0; animation: xc-ring .7s 1.35s ease-out forwards; }
+.xc-ring.r2 { animation-delay: 1.48s; border-color: #fff3c4; }
+@keyframes xc-ring { 0% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(18); } }
+.xc-spark { position: absolute; left: 0; top: 0; width: 6px; height: 6px; margin: -3px; border-radius: 50%; background: #ffe08a; opacity: 0; animation: xc-spark .8s calc(1.35s + var(--d)) ease-out forwards; }
+@keyframes xc-spark { 0% { opacity: 1; transform: none; } 100% { opacity: 0; transform: rotate(var(--a)) translateY(calc(-1 * var(--r))); } }
+/* Holocron: settles in, rune rings wake, the faces open and the letter rises out. */
+.xc-holo { position: absolute; width: clamp(130px, 36vw, 190px); aspect-ratio: 1; margin: calc(clamp(130px, 36vw, 190px) * -.5) 0 0 calc(clamp(130px, 36vw, 190px) * -.5); }
+.xc-holo svg { width: 100%; height: 100%; display: block; overflow: visible; filter: drop-shadow(0 0 12px rgba(74, 168, 255, .55)); }
+.xc-holo .xh-body { animation: xc-hover 2.4s .6s ease-in-out infinite; transform-origin: 50% 50%; }
+@keyframes xc-hover { 50% { transform: translateY(-6px); } }
+.xc-holo .xh-lid { transform-origin: var(--ox) var(--oy); animation: xc-open .7s 1.25s cubic-bezier(.3,.8,.3,1.2) forwards; }
+@keyframes xc-open { to { transform: rotate(var(--rot)) translate(var(--tx), var(--ty)); opacity: .85; } }
+.xc-holo .xh-core { opacity: .3; animation: xc-core .6s 1.3s forwards; transform-origin: 50px 50px; }
+@keyframes xc-core { to { opacity: 1; transform: scale(1.6); } }
+.xc-runes { position: absolute; left: 0; top: 0; width: clamp(260px, 80vw, 420px); aspect-ratio: 1; margin: calc(clamp(260px, 80vw, 420px) * -.5) 0 0 calc(clamp(260px, 80vw, 420px) * -.5); opacity: 0; animation: xc-show .8s .5s forwards; pointer-events: none; }
+@keyframes xc-show { to { opacity: 1; } }
+.xc-runes svg { width: 100%; height: 100%; display: block; }
+.xc-runes .rr1 { animation: xc-rot 14s linear infinite; transform-origin: 50% 50%; }
+.xc-runes .rr2 { animation: xc-rot 22s linear infinite reverse; transform-origin: 50% 50%; }
+@keyframes xc-rot { to { transform: rotate(360deg); } }
+.xc-beam { position: absolute; left: 0; top: 0; width: clamp(60px, 18vw, 100px); height: 46vh; margin-left: calc(clamp(60px, 18vw, 100px) * -.5); transform-origin: 50% 100%; transform: translateY(-100%) scaleY(0); background: linear-gradient(0deg, rgba(160, 220, 255, .55), transparent); clip-path: polygon(35% 100%, 65% 100%, 100% 0, 0 0); animation: xc-beam .6s 1.4s ease-out forwards; }
+@keyframes xc-beam { to { transform: translateY(-100%) scaleY(1); } }
+.xc-glyph { position: absolute; left: 0; top: 0; opacity: 0; transform: translate(-50%, -50%) scale(.4); text-align: center; animation: xc-rise .7s 1.55s cubic-bezier(.2,1.2,.4,1) forwards; }
+.xc-glyph b { display: block; font: 800 clamp(56px, 18vmin, 104px)/1 var(--font-display); color: #e8f8ff; text-shadow: 0 0 26px #4aa8ff, 0 0 60px #4aa8ff; }
+.xc-glyph small { display: block; font: 700 13px var(--font-display); letter-spacing: .3em; color: #9fd4ff; margin-top: 2px; }
+@keyframes xc-rise { to { opacity: 1; transform: translate(-50%, calc(-50% - clamp(80px, 22vmin, 130px))) scale(1); } }
+.xc-mote { position: absolute; left: 0; top: 0; width: 4px; height: 4px; margin: -2px; border-radius: 50%; background: #bfe8ff; opacity: 0; animation: xc-mote 1.6s calc(.4s + var(--d)) ease-in forwards; }
+@keyframes xc-mote { 0% { opacity: 0; transform: rotate(var(--a)) translateY(calc(-1 * var(--r))); } 30% { opacity: 1; } 100% { opacity: 0; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .xc *, .xc { animation-duration: .01s !important; animation-delay: 0s !important; transition: none !important; } }
+` }));
+
+const bigChip = () => `<svg viewBox="0 0 60 36" aria-hidden="true"><defs>
+  <linearGradient id="xcg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff0a8"/><stop offset=".35" stop-color="#f2be3e"/><stop offset=".7" stop-color="#c88a14"/><stop offset="1" stop-color="#8a5a06"/></linearGradient>
+  <linearGradient id="xcg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a5a06"/><stop offset="1" stop-color="#c88a14"/></linearGradient></defs>
+  <rect x="1.5" y="2.5" width="57" height="31" rx="7" fill="#5a3a04"/>
+  <rect x="1" y="1.5" width="57" height="31" rx="7" fill="url(#xcg1)" stroke="#6a4206" stroke-width="1"/>
+  <rect x="4" y="4.5" width="51" height="25" rx="4.5" fill="none" stroke="#fff6c8" stroke-width=".6" opacity=".6"/>
+  <rect x="7.5" y="10" width="14" height="13" rx="2.4" fill="#d9a22a" stroke="#6a4206" stroke-width=".8"/>
+  <path d="M7.5 14.5 H12 M7.5 18.5 H12 M17 14.5 H21.5 M17 18.5 H21.5 M12 10 V23 M17 10 V23" stroke="#6a4206" stroke-width=".7"/>
+  <rect x="31" y="7.5" width="21" height="19" rx="3" fill="url(#xcg2)" stroke="#5a3a04" stroke-width=".8"/>
+  <rect x="31.6" y="8.1" width="19.8" height="17.8" rx="2.6" fill="none" stroke="#fff3b8" stroke-width=".4" opacity=".5"/>
+  <path d="M7 27.5 H24" stroke="#6a4206" stroke-width=".9" stroke-linecap="round" opacity=".6"/>
+  <text x="7.5" y="7.6" font-size="2.6" font-weight="800" fill="#6a4206" font-family="Oxanium, sans-serif" letter-spacing=".3">HUTT CARTEL · 1,000</text>
+  <path d="M5 3.5 L26 3.5" stroke="#fff" stroke-width="1.2" opacity=".55" stroke-linecap="round"/></svg>`;
+const holoSvg = () => `<svg viewBox="0 0 100 100" aria-hidden="true"><g class="xh-body">
+  <circle cx="50" cy="50" r="40" fill="#4aa8ff" opacity=".12"/>
+  <circle class="xh-core" cx="50" cy="50" r="10" fill="#e8f8ff"/>
+  <g stroke="#9fe0ff" stroke-width="1.6" stroke-linejoin="round">
+    <path class="xh-lid" style="--ox:50px;--oy:8px;--rot:-28deg;--tx:-8px;--ty:-14px" d="M50 8 L86 29 L50 50 L14 29Z" fill="#12406e"/>
+    <path class="xh-lid" style="--ox:14px;--oy:71px;--rot:24deg;--tx:-16px;--ty:6px" d="M14 29 L50 50 L50 92 L14 71Z" fill="#0c2c50"/>
+    <path class="xh-lid" style="--ox:86px;--oy:71px;--rot:-24deg;--tx:16px;--ty:6px" d="M86 29 L50 50 L50 92 L86 71Z" fill="#0a2442"/>
+  </g>
+  <g fill="none" stroke="#bfe8ff" stroke-width=".7" opacity=".75">
+    <path d="M50 16 L72 29 L50 42 L28 29Z"/><path d="M50 22 L62 29 L50 36 L38 29Z" opacity=".7"/>
+    <path d="M20 37 L44 51 L44 80 L20 66Z"/><path d="M26 47 L38 54 M26 54 L38 61 M32 44 V74" opacity=".7"/>
+    <path d="M80 37 L56 51 L56 80 L80 66Z"/><circle cx="68" cy="58.5" r="5" opacity=".8"/><circle cx="68" cy="58.5" r="2" fill="#bfe8ff"/></g>
+  <g fill="#e8f8ff"><circle cx="50" cy="8" r="1.8"/><circle cx="86" cy="29" r="1.8"/><circle cx="14" cy="29" r="1.8"/><circle cx="14" cy="71" r="1.8"/><circle cx="86" cy="71" r="1.8"/><circle cx="50" cy="92" r="1.8"/></g>
+</g></svg>`;
+const runesSvg = () => {
+  const ticks = (r, n, len) => Array.from({ length: n }, (_, k) => `<line x1="100" y1="${100 - r}" x2="100" y2="${100 - r + len}" transform="rotate(${(k * 360) / n} 100 100)"/>`).join('');
+  return `<svg viewBox="0 0 200 200" aria-hidden="true"><g fill="none" stroke="#7cd0ff">
+    <g class="rr1" opacity=".55"><circle cx="100" cy="100" r="92" stroke-width=".8" stroke-dasharray="2 5"/><g stroke-width="1.2">${ticks(92, 24, 6)}</g></g>
+    <g class="rr2" opacity=".4"><circle cx="100" cy="100" r="74" stroke-width="1.4" stroke-dasharray="18 6 2 6"/><g stroke-width="1">${ticks(74, 10, -8)}</g></g>
+    <circle cx="100" cy="100" r="58" stroke-width=".6" opacity=".35"/></g></svg>`;
+};
+
+function cine(kind, opts) {
+  const row = opts.row.map((t, k) => `<span class="xc-t ${t.ch ? '' : 'no'}" data-k="${k}">${t.ch || '?'}${t.sub ? `<small>${t.sub}</small>` : ''}</span>`).join('');
+  const node = el(`<div class="xc k-${kind}" role="dialog" aria-label="${esc(opts.label)}"><div class="xc-bg"></div>
+    <div class="xc-stage"><div class="xc-hero">${opts.hero}</div>${opts.fx || ''}</div>
+    <div class="xc-row">${row}</div><p class="xc-cap">${opts.cap}</p></div>`);
+  document.body.appendChild(node);
+  const hero = node.querySelector('.xc-hero');
+  const stage = node.querySelector('.xc-stage');
+  // Fly in from the spot where the piece was found.
+  if (opts.from && motion()) {
+    const c = stage.getBoundingClientRect();
+    const dx = opts.from.left + opts.from.width / 2 - c.left;
+    const dy = opts.from.top + opts.from.height / 2 - c.top;
+    hero.animate([{ transform: `translate(${dx}px, ${dy}px) scale(.12)`, opacity: .6 }, { transform: 'none', opacity: 1 }], { duration: 560, easing: 'cubic-bezier(.2,.8,.3,1)' });
+  }
+  const timers = [];
+  const at = (ms, fn) => timers.push(setTimeout(() => { if (node.isConnected) fn(); }, motion() ? ms : Math.min(ms, 200)));
+  (opts.sounds || []).forEach(([ms, name]) => at(ms, () => root.Sound && root.Sound.play(name)));
+  // The row comes up, then the letter drops into its place.
+  at(opts.rowAt, () => node.querySelector('.xc-row').classList.add('on'));
+  at(opts.rowAt + 450, () => {
+    const slot = node.querySelector(`.xc-t[data-k="${opts.slot}"]`);
+    const src = node.querySelector(opts.flyFrom);
+    if (!slot) return;
+    const land = () => { slot.classList.remove('no'); slot.classList.add('land'); slot.firstChild.textContent = opts.letter; if (root.Sound) root.Sound.play(opts.landSound || 'click'); node.querySelector('.xc-cap').classList.add('on'); };
+    if (!src || !motion()) return land();
+    const a = src.getBoundingClientRect();
+    const b = slot.getBoundingClientRect();
+    const ghost = el(`<span class="xc-t" style="position:fixed;left:${a.left + a.width / 2 - b.width / 2}px;top:${a.top + a.height / 2 - b.height / 2}px;width:${b.width}px;height:${b.height}px;z-index:2">${opts.letter}</span>`);
+    node.appendChild(ghost);
+    const hide = src.closest('.xc-glyph') || src;
+    hide.style.visibility = 'hidden'; // its rise animation holds opacity, so hide it this way
+    ghost.animate([{ transform: 'scale(1.6)' }, { transform: `translate(${b.left + b.width / 2 - (a.left + a.width / 2)}px, ${b.top + b.height / 2 - (a.top + a.height / 2)}px) scale(1)` }], { duration: 520, easing: 'cubic-bezier(.4,.1,.3,1)' }).onfinish = () => { ghost.remove(); land(); };
+  });
+  const close = () => { if (node.classList.contains('out')) return; timers.forEach(clearTimeout); node.classList.add('out'); setTimeout(() => node.remove(), 350); };
+  node.addEventListener('click', close);
+  at(opts.rowAt + 3600, close);
+}
+
+function cineChip(i, from) {
+  const order = chipOrder();
+  const f = chipFound();
+  const slot = order.indexOf(i);
+  const row = order.map((k) => ({ ch: k >= 0 && k !== i ? CHIP[k] : '' }));
+  const sparks = Array.from({ length: 14 }, (_, k) => `<i class="xc-spark" style="--a:${k * (360 / 14)}deg;--r:${90 + (k % 3) * 30}px;--d:${(k % 4) * 0.03}s"></i>`).join('');
+  const done = f.length >= CHIP.length;
+  cine('chip', {
+    label: "Vekko's hot chip", letter: CHIP[i], slot, row, from, rowAt: 2000, flyFrom: '.xc-chip b',
+    hero: `<div class="xc-chip"><div class="xc-spin">${bigChip()}</div><b>${CHIP[i]}</b></div>`,
+    fx: `<i class="xc-ring"></i><i class="xc-ring r2"></i>${sparks}`,
+    // da… da… ding!
+    sounds: [[620, 'click'], [790, 'click'], [1320, 'coins'], [1360, 'reveal_rare']], landSound: 'coins',
+    cap: `Vekko's hot chip · ${f.length} of ${CHIP.length}<b>Tap two chips in your Seeker's Codex to swap them</b>${done ? '<span class="xc-done">Every chip found. Put them in order.</span>' : ''}`,
+  });
+}
+
+function cineHolo(i, from) {
+  const f = found();
+  const row = WORD.split('').map((ch, k) => ({ ch: f.includes(k) && k !== i ? ch : '', sub: ROMAN[k] }));
+  const motes = Array.from({ length: 18 }, (_, k) => `<i class="xc-mote" style="--a:${k * 20}deg;--r:${120 + (k % 4) * 30}px;--d:${(k % 6) * 0.08}s"></i>`).join('');
+  const done = f.length >= WORD.length;
+  cine('holo', {
+    label: 'Holocron fragment', letter: WORD[i], slot: i, row, from, rowAt: 2500, flyFrom: '.xc-glyph b',
+    hero: `<div class="xc-holo">${holoSvg()}</div>`,
+    fx: `<div class="xc-runes">${runesSvg()}</div>${motes}<div class="xc-beam"></div><div class="xc-glyph"><b>${WORD[i]}</b><small>${ROMAN[i]}</small></div>`,
+    sounds: [[300, 'glitch'], [1250, 'heal'], [1550, 'reveal_rare']], landSound: 'click',
+    cap: `The Gatekeeper's Shards · ${f.length} of ${WORD.length}<b>Each shard knows its place</b>${done ? '<span class="xc-done">Every shard found. The holocron is ready.</span>' : ''}`,
+  });
+}
+root.__xq.cineChip = (i = 3) => cineChip(i, null);
+root.__xq.cineHolo = (i = 4) => cineHolo(i, null);
 
 })(window);
