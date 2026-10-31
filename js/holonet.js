@@ -3422,6 +3422,11 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   // so both sides always agree on it.
   const bansEach = () => (root.Update23 && root.Update23.on && root.Update23.on() ? 2 : 1);
   const banWord = (n) => (n >= 2 ? 'two cards' : 'one card');
+  // 2.3: True Strength friendly battles bring every card's real level and stars.
+  const trueOn = () => !!(root.Update23 && root.Update23.on && root.Update23.on());
+  const MAXLV = () => D.MAX_LEVEL || 50;
+  const realEntry = (e) => ({ id: e.id, level: Math.max(1, Math.min(MAXLV(), Math.round(+e.level) || 1)), stars: Math.max(1, Math.min(D.MAX_STARS, Math.round(+e.stars) || 1)) });
+  const levelOf = (ts) => (ts ? realEntry : atDuelLevel);
   const BUILD_MS = 60000;
   const kindName = (k) => (k === 'ship' ? 'Fleet' : 'Ground');
   const poolIds = (kind) => HN.pool(kind).map((u) => u.id);
@@ -3429,16 +3434,17 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   const unitName = (id) => (id && D.UNIT_MAP[id] ? D.UNIT_MAP[id].name : '');
   const say = (to, data) => Duel.room && Duel.room.emit('answer', { to, nm: myNm(), ...data }).catch(() => {});
 
-  function challenge(peer, kind, fr, wg) {
+  function challenge(peer, kind, fr, wg, ts) {
+    ts = !!(ts && fr && trueOn());
     if (!HN.pool(kind).length) return toast(kind === 'ship' ? 'You need a ship to fly a Fleet duel.' : 'You need a character for a Ground duel.');
     if (wg && !(HN.Wager && HN.Wager.canStart(peer.by))) return;
     if (!Duel.room) return toast('Lost the HoloNet connection.');
     if (Duel.prep) return toast('Finish setting up your other duel first.');
     const id = rid();
     const seed = 1 + Math.floor(Math.random() * 2e9);
-    Duel.pending = { id, peer: peer.peer, by: peer.by, kind, seed, fr: !!fr, wg: !!wg, nb: bansEach() };
-    Duel.room.emit('challenge', { to: peer.peer, id, kind, seed, rating: HN.S().rating, nm: myNm(), pool: poolIds(kind), fr: fr ? 1 : 0, wg: wg ? 1 : 0, nb: bansEach() }).catch(() => toast('Could not reach them.'));
-    const m = openModal(`<div class="hn-result"><div class="result-title" style="color:${wg ? '#ffd23f' : '#8fe8ff'};${fr || wg ? 'font-size:clamp(22px,6vw,34px)' : ''}">${fr ? 'FRIENDLY BATTLE' : wg ? 'WAGER DUEL' : 'CHALLENGE SENT'}</div><p style="text-align:center">Waiting for <b>${esc(Duel.name(peer))}</b> to accept a ${kindName(kind)} ${fr ? 'friendly battle' : wg ? 'wager duel' : 'duel'}…</p><div class="modal-actions"><button type="button" class="btn" data-x="cancel">Cancel</button></div></div>`, { small: true, dismissable: false });
+    Duel.pending = { id, peer: peer.peer, by: peer.by, kind, seed, fr: !!fr, wg: !!wg, nb: bansEach(), ts };
+    Duel.room.emit('challenge', { to: peer.peer, id, kind, seed, rating: HN.S().rating, nm: myNm(), pool: poolIds(kind), fr: fr ? 1 : 0, wg: wg ? 1 : 0, nb: bansEach(), ts: ts ? 1 : 0 }).catch(() => toast('Could not reach them.'));
+    const m = openModal(`<div class="hn-result"><div class="result-title" style="color:${wg ? '#ffd23f' : '#8fe8ff'};${fr || wg ? 'font-size:clamp(22px,6vw,34px)' : ''}">${fr ? (ts ? 'TRUE STRENGTH' : 'FRIENDLY BATTLE') : wg ? 'WAGER DUEL' : 'CHALLENGE SENT'}</div><p style="text-align:center">Waiting for <b>${esc(Duel.name(peer))}</b> to accept a ${kindName(kind)} ${fr ? 'friendly battle' : wg ? 'wager duel' : 'duel'}…</p><div class="modal-actions"><button type="button" class="btn" data-x="cancel">Cancel</button></div></div>`, { small: true, dismissable: false });
     Duel.pending.modal = m;
     Duel.pending.timer = setTimeout(() => { if (Duel.pending && Duel.pending.id === id) { Duel.pending = null; m.close(); toast('No answer. Try again later.'); } }, 30000);
     m.root.addEventListener('click', (e) => {
@@ -3464,6 +3470,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const who = Duel.name(msg);
     const m = openModal(`<div class="hn-result" data-invite="${esc(d.id)}">${d.fr ? `<div class="result-title" style="color:#8fe8ff;font-size:clamp(22px,6vw,34px)">FRIENDLY BATTLE</div>
       <p style="text-align:center">Your friend <b>${esc(who)}</b> challenges you to a <b>${kindName(d.kind)}</b> battle.</p>
+      ${d.ts ? '<p style="text-align:center;margin:0"><b style="color:#ffd23f">True Strength:</b> every card fights at its real level and stars.</p>' : ''}
       <p class="muted small" style="text-align:center;margin:0">You each ban ${banWord(d.nb)}, then build your squads. Just for fun: no rating, no rewards.</p>` : d.wg ? `<div class="result-title" style="color:#ffd23f;font-size:clamp(22px,6vw,34px)">WAGER DUEL</div>
       <p style="text-align:center"><b>${esc(who)}</b> (${fmt(d.rating || 0)} rating) challenges you to a <b>${kindName(d.kind)}</b> wager duel.</p>
       <p class="muted small" style="text-align:center;margin:0">After bans you have 45 seconds to agree a credit wager (1,000 to 100,000). The winner takes both, minus a 10% house tax. Ranked: rating counts.</p>` : `<div class="result-title" style="color:#8fe8ff">LIVE DUEL</div>
@@ -3485,7 +3492,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       // Accepting drops any challenge we were still waiting on.
       if (Duel.pending) { const p = Duel.pending; clearTimeout(p.timer); if (p.modal) p.modal.close(); say(p.peer, { id: p.id, step: 'cancel' }); Duel.pending = null; }
       say(inv.peer, { id: inv.id, step: 'go', pool: poolIds(inv.kind), rating: HN.S().rating });
-      prep({ id: inv.id, host: false, kind: inv.kind, seed: inv.seed, peer: inv.peer, by: inv.by, who, rating: inv.rating, theirPool: okIds(inv.pool, inv.kind), fr: !!inv.fr, wg: !!inv.wg && !inv.fr, nb: inv.nb === 2 ? 2 : 1 });
+      prep({ id: inv.id, host: false, kind: inv.kind, seed: inv.seed, peer: inv.peer, by: inv.by, who, rating: inv.rating, theirPool: okIds(inv.pool, inv.kind), fr: !!inv.fr, wg: !!inv.wg && !inv.fr, nb: inv.nb === 2 ? 2 : 1, ts: !!(inv.ts && inv.fr) });
     });
   }
 
@@ -3510,7 +3517,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     if (step === 'go') {
       // They accepted too late: we're already fighting someone else.
       if (Duel.match || App.battleActive || Duel.prep) { say(msg.peer, { id: p.id, step: 'cancel' }); return; }
-      return prep({ id: p.id, host: true, kind: p.kind, seed: p.seed, peer: msg.peer, by: msg.by, who: Duel.name(msg), rating: d.rating, theirPool: okIds(d.pool, p.kind), fr: !!p.fr, wg: !!p.wg, nb: p.nb === 2 ? 2 : 1 });
+      return prep({ id: p.id, host: true, kind: p.kind, seed: p.seed, peer: msg.peer, by: msg.by, who: Duel.name(msg), rating: d.rating, theirPool: okIds(d.pool, p.kind), fr: !!p.fr, wg: !!p.wg, nb: p.nb === 2 ? 2 : 1, ts: !!(p.ts && p.fr) });
     }
     toast(d.busy ? 'They are busy in another fight.' : d.nowg ? 'They can\'t take wager duels right now.' : 'Challenge declined.');
   }
@@ -3593,7 +3600,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     if (step === 'squad') {
       const sq = Array.isArray(d.squad) ? d.squad.filter((e) => e && D.UNIT_MAP[e.id] && D.UNIT_MAP[e.id].kind === P.kind && !P.bans.includes(e.id)).slice(0, 5) : [];
       if (!sq.length) return leave(P, 'Their squad could not be loaded.');
-      P.theirs = sq.map(atDuelLevel);
+      P.theirs = sq.map(levelOf(P.ts));
       if (P.mine) fight(P);
     }
   }
@@ -3602,7 +3609,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   const afterBans = (P) => (P.wg && HN.Wager ? HN.Wager.table(P, WAPI) : build(P));
   function build(P) {
     closeWait(P);
-    P.ui = buildSquad(P.kind, { who: P.who, role: P.host ? 'challenge' : 'accept', bans: P.bans.filter(Boolean) }, (mine) => {
+    P.ui = buildSquad(P.kind, { who: P.who, role: P.host ? 'challenge' : 'accept', bans: P.bans.filter(Boolean), ts: P.ts }, (mine) => {
       P.ui = null;
       if (!live(P)) return;
       if (!mine) return leave(P, 'You left the duel.');
@@ -3613,7 +3620,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     });
   }
   function fight(P) {
-    const cfg = { id: P.id, host: P.host, kind: P.kind, seed: P.seed, mine: P.mine, theirs: P.theirs, peer: P.peer, by: P.by, name: P.who, oppRating: +P.rating || 800, bans: P.bans.filter(Boolean), fr: !!P.fr, wager: P.wager || 0 };
+    const cfg = { id: P.id, host: P.host, kind: P.kind, seed: P.seed, mine: P.mine, theirs: P.theirs, peer: P.peer, by: P.by, name: P.who, oppRating: +P.rating || 800, bans: P.bans.filter(Boolean), fr: !!P.fr, wager: P.wager || 0, ts: !!P.ts };
     P.fought = true;
     endPrep(P);
     start(cfg);
@@ -3717,7 +3724,9 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const h = HN.S();
     h.duelSquads = h.duelSquads || {};
     const bans = opt.bans || [];
-    const list = HN.pool(kind).filter((u) => !bans.includes(u.id)).sort((x, y) => duelPow(y.id) - duelPow(x.id) || x.name.localeCompare(y.name));
+    const real = (id) => HN.entry(id) || { id, level: 1, stars: 1 };
+    const powOf = (id) => (opt.ts ? D.power(D.UNIT_MAP[id], real(id).level, real(id).stars) : duelPow(id));
+    const list = HN.pool(kind).filter((u) => !bans.includes(u.id)).sort((x, y) => powOf(y.id) - powOf(x.id) || x.name.localeCompare(y.name));
     if (!list.length) { toast('Every card you have for this duel is banned.'); setTimeout(() => done(null), 0); return { close() {} }; }
     const need = Math.min(5, list.length);
     const have = (id) => list.some((u) => u.id === id);
@@ -3727,10 +3736,10 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     let finished = false;
     const slot = (id) => id ? `<button type="button" class="db-slot on" data-rm="${id}" aria-label="Remove ${esc(D.UNIT_MAP[id].name)}">${HN.ui.mini(id)}<small>${esc(D.UNIT_MAP[id].name)}</small></button>` : '<span class="db-slot"><i></i><small>Empty</small></span>';
     const slots = () => Array.from({ length: 5 }, (_, i) => slot(sel[i])).join('');
-    const card = (u) => UI.unitCard(u, { tag: 'div', hideShards: true, owned: true, level: DUEL_LEVEL, stars: DUEL_STARS, selected: sel.includes(u.id) }).replace('class="ucard', `data-pick="${u.id}" class="ucard`);
+    const card = (u) => UI.unitCard(u, { tag: 'div', hideShards: true, owned: true, level: opt.ts ? real(u.id).level : DUEL_LEVEL, stars: opt.ts ? real(u.id).stars : DUEL_STARS, selected: sel.includes(u.id) }).replace('class="ucard', `data-pick="${u.id}" class="ucard`);
     const m = openModal(`<div class="db">
       <div class="db-head"><div><p class="eyebrow">${opt.role === 'accept' ? 'Duel accepted' : 'Live duel'} · vs ${esc(opt.who || 'Player')}</p><h2>Build your ${label} squad</h2></div><span class="db-time" data-time>${left}s</span></div>
-      <p class="db-note">Every card fights at <b>Level ${DUEL_LEVEL} ★${DUEL_STARS}</b> in duels, so pick your best team, not just your highest levels.</p>
+      <p class="db-note">${opt.ts ? '<b>True Strength:</b> every card fights at its real level and stars, so bring your strongest.' : `Every card fights at <b>Level ${DUEL_LEVEL} ★${DUEL_STARS}</b> in duels, so pick your best team, not just your highest levels.`}</p>
       ${bans.length ? `<p class="dp-bans">Banned this duel: ${bans.map((id) => `<b>${esc(unitName(id))}</b>`).join(' · ')}</p>` : ''}
       <div class="db-slots" data-slots>${slots()}</div>
       <div class="hn-pick db-pick" data-noswipe data-grid>${list.map(card).join('')}</div>
@@ -3748,7 +3757,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       if (finished) return;
       finished = true; clearInterval(tick); m.close();
       if (out) { h.duelSquads[kind] = out.slice(); HN.save(); }
-      done(out ? out.map((id) => ({ id, level: DUEL_LEVEL, stars: DUEL_STARS })) : null);
+      done(out ? out.map((id) => (opt.ts ? realEntry(real(id)) : { id, level: DUEL_LEVEL, stars: DUEL_STARS })) : null);
     };
     // Time's up: fill the empty spots with your best cards and go.
     const fill = () => { for (const u of list) { if (sel.length >= need) break; if (!sel.includes(u.id)) sel.push(u.id); } };
@@ -3800,9 +3809,9 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     // listed first, so turn order and every roll match.
     const rng = HN.rng(cfg.seed);
     HN.B.back = cfg.fr ? { friends: true } : { view: 'duels' };
-    HN.hnStart({ type: 'hn', hn: 'duel', kind: cfg.kind }, cfg.mine.map(atDuelLevel), cfg.theirs.map(atDuelLevel), {
-      name: `${cfg.fr ? 'Friendly Battle' : 'Live Duel'} · vs ${cfg.name}`, kind: cfg.kind, planet: cfg.kind === 'ship' ? 'coruscant' : 'geonosis', rng,
-      intro: `${cfg.fr ? 'Friendly battle (unranked, no rewards)' : 'Live'}: every card fights at Level ${DUEL_LEVEL} ★${DUEL_STARS}.${(cfg.bans || []).length ? ` Banned: ${cfg.bans.map(unitName).join(' and ')}.` : ''} You play your squad, they play theirs. 45 seconds per move.`,
+    HN.hnStart({ type: 'hn', hn: 'duel', kind: cfg.kind }, cfg.mine.map(levelOf(cfg.ts)), cfg.theirs.map(levelOf(cfg.ts)), {
+      name: `${cfg.ts ? 'True Strength' : cfg.fr ? 'Friendly Battle' : 'Live Duel'} · vs ${cfg.name}`, kind: cfg.kind, planet: cfg.kind === 'ship' ? 'coruscant' : 'geonosis', rng,
+      intro: `${cfg.fr ? 'Friendly battle (unranked, no rewards)' : 'Live'}: ${cfg.ts ? 'True Strength, every card fights at its real level and stars' : `every card fights at Level ${DUEL_LEVEL} ★${DUEL_STARS}`}.${(cfg.bans || []).length ? ` Banned: ${cfg.bans.map(unitName).join(' and ')}.` : ''} You play your squad, they play theirs. 45 seconds per move.`,
       setup(b) {
         b.duel = M;
         for (const u of b.units) {
@@ -4116,7 +4125,8 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       if (b.dataset.r === 'friends' && HN.friends) setTimeout(() => HN.friends.open(), 250);
     });
   }
-  Duel.challengeFriend = (peer, kind) => challenge(peer, kind, true);
+  Duel.challengeFriend = (peer, kind, ts) => challenge(peer, kind, true, false, ts);
+  Duel.trueOn = trueOn;
 
   // ---------- the lobby screen ----------
   HN.VIEWS.duels = () => {
@@ -8712,11 +8722,13 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
       ${mine ? '' : inThis ? '<p class="fr-gi-ok">You\'re in this guild ✓</p>' : `<div class="fr-gi-go"><button type="button" class="btn btn-primary" data-gjoin="${esc(gg.id)}">Join guild</button></div>`}</div>`;
   }
 
+  // Friendly battle mode, remembered on this device: Even (duel level) or True Strength.
+  const frMode = () => { try { return HN.Duel && HN.Duel.trueOn && HN.Duel.trueOn() && localStorage.getItem('swcg-fr-mode') === 'true' ? 'true' : 'even'; } catch (e) { return 'even'; } };
   function challenge(r, kind) {
     const uid = F.other(r);
     if (!isOnline(uid)) return toast(`${F.otherName(r)} isn't online right now.`);
     if (!HN.Duel || !HN.Duel.challengeFriend) return toast('Connecting… try again in a moment.');
-    HN.Duel.challengeFriend({ peer: uid, by: uid, nm: F.otherName(r) }, kind);
+    HN.Duel.challengeFriend({ peer: uid, by: uid, nm: F.otherName(r) }, kind, frMode() === 'true');
   }
 
   // Callsigns starting with key, closest first (exact, then shortest, then A-Z).
@@ -8803,7 +8815,8 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
             <p class="muted small">Your callsign is <b>${esc(myTag())}</b>. Share it so friends can add you.</p>`;
       host.dataset.chat = '';
       host.innerHTML = `<div class="fr-head"><div><p class="eyebrow">Friends</p><h2>Friendly battles</h2></div><button type="button" class="btn" data-f="close">Close</button></div>
-        <p class="muted small fr-blurb">Challenge a friend who's online to a Ground or Fleet battle: you each ban cards, build a squad, and every card fights at the same level. Just for fun: no rating, no rewards.</p>
+        <p class="muted small fr-blurb">Challenge a friend who's online to a Ground or Fleet battle: you each ban cards and build a squad. Just for fun: no rating, no rewards.</p>
+        ${HN.Duel && HN.Duel.trueOn && HN.Duel.trueOn() ? `<div class="fr-mode" role="group" aria-label="Battle mode"><button type="button" class="${frMode() === 'even' ? 'on' : ''}" data-frmode="even"><b>Even</b><small>Every card at Level ${(HN.Duel && HN.Duel.LEVEL) || 20} ★${(HN.Duel && HN.Duel.STARS) || 3}</small></button><button type="button" class="${frMode() === 'true' ? 'on' : ''}" data-frmode="true"><b>True Strength</b><small>Real levels and stars</small></button></div>` : ''}
         <div class="fr-tabs"><button type="button" class="${tab === 'list' ? 'on' : ''}" data-tab="list">Friends <i>${fr.length}</i></button><button type="button" class="${tab === 'req' ? 'on' : ''}" data-tab="req">Requests ${inc.length ? `<i class="hot">${inc.length}</i>` : ''}</button><button type="button" class="${tab === 'add' ? 'on' : ''}" data-tab="add">Add</button></div>
         ${body}<p class="pe-st ${status.cls}" data-st>${esc(status.msg)}</p>`;
       if (tab === 'add') {
@@ -8865,6 +8878,8 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
       if (t) { tab = t.dataset.tab; status = { msg: '', cls: '' }; render(); return; }
       const gj = e.target.closest('[data-gjoin]');
       if (gj) { if (HN.fcard) HN.fcard.join(gj.dataset.gjoin, () => m.close()); return; }
+      const fm = e.target.closest('[data-frmode]');
+      if (fm) { try { localStorage.setItem('swcg-fr-mode', fm.dataset.frmode); } catch (err) { /* storage blocked */ } host.querySelectorAll('[data-frmode]').forEach((x) => x.classList.toggle('on', x === fm)); return; }
       const b = e.target.closest('[data-f]');
       if (!b || b.disabled) return;
       const r = b.dataset.id ? F.rows.get(b.dataset.id) : null;
@@ -8960,6 +8975,12 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
 .fr-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
 .fr-head h2 { margin: 0; } .fr-head .eyebrow { margin: 0 0 2px; }
 .fr-blurb { margin: 0; }
+.fr-mode { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.fr-mode button { display: grid; gap: 2px; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line); background: rgba(255,255,255,.04); color: var(--muted); text-align: left; cursor: pointer; font: inherit; }
+.fr-mode button b { font-family: var(--font-display); color: #fff; letter-spacing: .04em; }
+.fr-mode button small { font-size: 11px; }
+.fr-mode button.on { border-color: #ffd23f; background: rgba(255,210,63,.1); }
+.fr-mode button.on b { color: #ffd23f; }
 .fr-tabs { display: flex; gap: 6px; }
 .fr-tabs button { flex: 1; padding: 9px 8px; border-radius: 10px; border: 1px solid rgba(95, 216, 255, 0.25); background: rgba(8, 20, 32, 0.85); color: #dff8ff; font: 700 13px var(--font-display, inherit); cursor: pointer; }
 .fr-tabs button.on { border-color: #5fd8ff; background: rgba(95, 216, 255, 0.18); }
