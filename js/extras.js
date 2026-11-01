@@ -1534,12 +1534,12 @@ function cine(kind, opts) {
     hide.style.visibility = 'hidden'; // its rise animation holds opacity, so hide it this way
     ghost.animate([{ transform: 'scale(1.6)' }, { transform: `translate(${b.left + b.width / 2 - (a.left + a.width / 2)}px, ${b.top + b.height / 2 - (a.top + a.height / 2)}px) scale(1)` }], { duration: 520, easing: 'cubic-bezier(.4,.1,.3,1)' }).onfinish = () => { ghost.remove(); land(); };
   });
-  const close = () => { if (node.classList.contains('out')) return; timers.forEach(clearTimeout); node.classList.add('out'); setTimeout(() => node.remove(), 350); };
+  const close = () => { if (node.classList.contains('out')) return; timers.forEach(clearTimeout); node.classList.add('out'); setTimeout(() => { node.remove(); if (opts.onClose) opts.onClose(); }, 350); };
   node.addEventListener('click', close);
   at(opts.rowAt + 3600, close);
 }
 
-function cineChip(i, from) {
+function cineChip(i, from, onClose) {
   const order = chipOrder();
   const f = chipFound();
   // (A tester replay can show a chip you haven't found: it borrows the first open spot.)
@@ -1548,7 +1548,7 @@ function cineChip(i, from) {
   const sparks = Array.from({ length: 14 }, (_, k) => `<i class="xc-spark" style="--a:${k * (360 / 14)}deg;--r:${90 + (k % 3) * 30}px;--d:${(k % 4) * 0.03}s"></i>`).join('');
   const done = f.length >= CHIP.length;
   cine('chip', {
-    label: "Vekko's hot chip", letter: CHIP[i], slot, row, from, rowAt: 2000, flyFrom: '.xc-chip b',
+    label: "Vekko's hot chip", letter: CHIP[i], slot, row, from, onClose, rowAt: 2000, flyFrom: '.xc-chip b',
     hero: `<div class="xc-chip"><div class="xc-spin">${bigChip()}</div><b>${CHIP[i]}</b></div>`,
     fx: `<i class="xc-ring"></i><i class="xc-ring r2"></i>${sparks}`,
     // da… da… ding!
@@ -1557,13 +1557,13 @@ function cineChip(i, from) {
   });
 }
 
-function cineHolo(i, from) {
+function cineHolo(i, from, onClose) {
   const f = found();
   const row = WORD.split('').map((ch, k) => ({ ch: f.includes(k) && k !== i ? ch : '', sub: ROMAN[k] }));
   const motes = Array.from({ length: 18 }, (_, k) => `<i class="xc-mote" style="--a:${k * 20}deg;--r:${120 + (k % 4) * 30}px;--d:${(k % 6) * 0.08}s"></i>`).join('');
   const done = f.length >= WORD.length;
   cine('holo', {
-    label: 'Holocron fragment', letter: WORD[i], slot: i, row, from, rowAt: 2500, flyFrom: '.xc-glyph b',
+    label: 'Holocron fragment', letter: WORD[i], slot: i, row, from, onClose, rowAt: 2500, flyFrom: '.xc-glyph b',
     hero: `<div class="xc-holo">${holoSvg()}</div>`,
     fx: `<div class="xc-runes">${runesSvg()}</div>${motes}<div class="xc-beam"></div><div class="xc-glyph"><b>${WORD[i]}</b><small>${ROMAN[i]}</small></div>`,
     sounds: [[300, 'glitch'], [1250, 'heal'], [1550, 'reveal_rare']], landSound: 'click',
@@ -1572,5 +1572,16 @@ function cineHolo(i, from) {
 }
 root.__xq.cineChip = (i = 3) => cineChip(i, null);
 root.__xq.cineHolo = (i = 4) => cineHolo(i, null);
+
+
+// Tester code: plays the chip find, then the holocron find. Records nothing.
+const sceneCode = () => String.fromCharCode(80, 76, 65, 89, 83, 67, 69, 78, 69, 83);
+const redeemScenes = H.redeem;
+H.redeem = (code) => {
+  if (code !== sceneCode()) return redeemScenes ? redeemScenes(code) : false;
+  const nextOf = (len, have) => { for (let i = 0; i < len; i++) if (!have.includes(i)) return i; return 0; };
+  setTimeout(() => cineChip(nextOf(CHIP.length, chipFound()), null, () => setTimeout(() => cineHolo(nextOf(WORD.length, found()), null), 300)), 300);
+  return true;
+};
 
 })(window);
