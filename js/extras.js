@@ -1301,7 +1301,7 @@ function collectChip(i, from) {
 function placeChips() {
   const z = Z();
   // Testers see the chips even after cashing them, so the find scene can be tried.
-  if ((z.cc && !cineOn()) || !Player.state || (Player.tutorialPending && Player.tutorialPending())) return;
+  if ((z.cc && !(xqTester() && !xqLive())) || !Player.state || (Player.tutorialPending && Player.tutorialPending())) return;
   const f = chipFound();
   CHIP_SPOTS.forEach((sp, i) => {
     if (f.includes(i)) return;
@@ -1333,7 +1333,7 @@ function journal() {
         <div class="xq-row">${(z.cc ? CHIP.split('').map((_, k) => k) : order).map((i, k) => `<button type="button" class="xq-l ${i < 0 ? 'no' : ''} ${sel === k ? 'sel' : ''}" data-slot="${k}" ${z.cc ? 'disabled' : ''}>${i < 0 ? '?' : CHIP[i]}</button>`).join('')}</div>
         ${solved ? `<p class="xq-done">The chips click into place.${cineOn() ? '' : ' Try it as a code.'}</p>` : ''}
         ${cineOn() && solved ? '<button class="btn xq-go xq-go-chip" type="button" data-xq-go="chip">Cash the chips</button>' : ''}</div>
-      ${cineOn() ? `<div class="xq-jsec xq-test"><h3>Tester tools</h3><p>Only on tester devices. Reset puts every piece back in hiding (your unlocked codes and rewards stay).</p>
+      ${xqTester() && !xqLive() ? `<div class="xq-jsec xq-test"><h3>Tester tools</h3><p>Only on tester devices. Reset puts every piece back in hiding (your unlocked codes and rewards stay).</p>
         <div class="xq-tbtns"><button class="btn" type="button" data-xq-t="chip">Play chip find</button><button class="btn" type="button" data-xq-t="holo">Play holocron find</button><button class="btn" type="button" data-xq-t="reset">Reset pieces</button></div></div>` : ''}
       <div class="modal-actions"><button class="btn btn-primary" type="button" data-jx>Close</button></div>`;
   };
@@ -1341,7 +1341,7 @@ function journal() {
   m.root.addEventListener('click', (e) => {
     if (e.target.closest('[data-jx]')) return m.close();
     const t = e.target.closest('[data-xq-t]');
-    if (t && cineOn()) {
+    if (t && xqTester()) {
       const k = t.dataset.xqT;
       if (k === 'reset') { delete z.cf; delete z.ca; z.hf = []; Player.save(); sel = -1; paint(); UI.toast('Pieces reset: they\'re hiding around the game again.'); return; }
       m.close();
@@ -1380,7 +1380,7 @@ function placeJournal() {
   const host = document.querySelector('.settings-modal [data-code-entry]');
   if (!host || host.parentElement.querySelector('[data-xq-journal]')) return;
   const z = Z();
-  if (!found().length && !chipFound().length && !z.hp && !cineOn()) return;
+  if (!found().length && !chipFound().length && !z.hp && !(xqTester() && !xqLive())) return;
   const b = el('<button class="btn" type="button" data-xq-journal>Seeker\'s Codex</button>');
   b.addEventListener('click', (e) => { e.stopPropagation(); journal(); });
   host.insertAdjacentElement('afterend', b);
@@ -1398,7 +1398,11 @@ root.__xq.journal = () => journal();
 // then the puzzle's row slides up and the new letter drops into its place,
 // so you see everything you have so far. Tap to skip. Only transforms and
 // opacity move, so it stays smooth on phones.
-const cineOn = () => { try { return localStorage.getItem('swcg-xq-test') === '1'; } catch (e) { return false; } };
+// They ship with 2.3: from its real release time (not a tester switch) they're on
+// for everyone, and the tester-only codes for them stop working.
+const xqLive = () => { const u = root.Update23; return !!(u && u.at != null && Date.now() >= u.at); };
+const xqTester = () => { try { return localStorage.getItem('swcg-xq-test') === '1'; } catch (e) { return false; } };
+const cineOn = () => xqLive() || xqTester();
 document.head.appendChild(Object.assign(document.createElement('style'), { textContent: `
 .xc { position: fixed; inset: 0; z-index: 420; overflow: hidden; display: grid; place-items: center; cursor: pointer; animation: fade-in .25s; contain: strict; }
 .xc.out { opacity: 0; transition: opacity .35s; }
@@ -1578,7 +1582,12 @@ root.__xq.cineHolo = (i = 4) => cineHolo(i, null);
 const sceneCode = () => String.fromCharCode(80, 76, 65, 89, 83, 67, 69, 78, 69, 83);
 const redeemScenes = H.redeem;
 H.redeem = (code) => {
-  if (code !== sceneCode()) return redeemScenes ? redeemScenes(code) : false;
+  // SEEKERSEYE: switches on the find scenes and the Codex tester tools on this
+  // device, then plays both scenes. PLAYSCENES just plays them.
+  const all = code === String.fromCharCode(83, 69, 69, 75, 69, 82, 83, 69, 89, 69);
+  // Both codes retire when 2.3 is out.
+  if ((code !== sceneCode() && !all) || xqLive()) return redeemScenes ? redeemScenes(code) : false;
+  if (all) { try { localStorage.setItem('swcg-xq-test', '1'); } catch (e) { /* storage blocked */ } UI.toast('Seeker tools on: find scenes, Codex tester tools and auto-enter.'); }
   const nextOf = (len, have) => { for (let i = 0; i < len; i++) if (!have.includes(i)) return i; return 0; };
   setTimeout(() => cineChip(nextOf(CHIP.length, chipFound()), null, () => setTimeout(() => cineHolo(nextOf(WORD.length, found()), null), 300)), 300);
   return true;
