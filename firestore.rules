@@ -1,0 +1,177 @@
+rules_version = '2';
+// Galactic Card Battles: Firestore rules for the whole game.
+// Paste this whole file into Firebase console > Firestore Database > Rules,
+// then Publish. Everyone plays signed in (a guest account is made silently),
+// players can only write their own data, shared things (guilds, friends,
+// direct messages, duels) only by the people in them, and anything not listed
+// here is locked.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function isMe(uid) { return signedIn() && request.auth.uid == uid; }
+    function data() { return request.resource.data; }
+    function me() { return request.auth.uid; }
+    // Keeps any one document from growing past ~200 fields.
+    function small() { return data().size() <= 200; }
+    function shortText(k, n) { return !(k in data()) || (data()[k] is string && data()[k].size() <= n); }
+
+    // ---------- saved accounts (cloud save) ----------
+    // Only the owner of the account can read or write their save.
+    match /accounts/{uid} {
+      allow read, write: if isMe(uid);
+    }
+
+    // ---------- invite a friend ----------
+    // invites/{new player's id} = who invited them. Written once by the new
+    // player; inviters count theirs with where('by', '==', their id).
+    match /invites/{uid} {
+      allow read: if signedIn() && (isMe(uid) || resource.data.by == me());
+      allow create: if isMe(uid) && data().by is string && data().by != uid
+        && data().keys().hasOnly(['by', 'code', 'lvl', 't']);
+    }
+
+    // ---------- the HoloNet and everything online ----------
+    // hn/live/... is the real game, hn/beta/... is tester sessions.
+    match /hn/{env} {
+
+      // Arena rows: squads, rating, guild, profile. Your own row only.
+      match /arena/{uid} {
+        allow read: if signedIn();
+        allow create, update: if isMe(uid) && small()
+          && (!('rating' in data()) || data().rating is number);
+        allow delete: if isMe(uid);
+      }
+
+      // Weekly raid damage.
+      match /raid/{uid} {
+        allow read: if signedIn();
+        allow create, update: if isMe(uid) && data().dmg is number && data().dmg >= 0;
+        allow delete: if isMe(uid);
+      }
+
+      // Callsigns: names/{lowercase key} = { uid }. One owner per name.
+      match /names/{key} {
+        allow read: if signedIn();
+        allow create: if signedIn() && data().uid == me();
+        allow update: if signedIn() && resource.data.uid == me() && data().uid == me();
+        allow delete: if signedIn() && resource.data.uid == me();
+      }
+
+      // Profile cards shown to friends.
+      match /cards/{uid} {
+        allow read: if signedIn();
+        allow create, update: if isMe(uid) && small();
+        allow delete: if isMe(uid);
+      }
+
+      // Who's online in the duel lobby.
+      match /lobby/{uid} {
+        allow read: if signedIn();
+        allow create, update: if isMe(uid);
+        allow delete: if isMe(uid);
+      }
+
+      // Duel lobby messages (challenge, accept, bans, squads): only the two
+      // players can see them; the receiver removes them once read.
+      match /challenges/{id} {
+        allow read: if signedIn() && (resource.data.to == me() || resource.data.from == me());
+        allow create: if signedIn() && data().from == me() && data().to is string;
+        allow delete: if signedIn() && (resource.data.to == me() || resource.data.from == me());
+      }
+
+      // A live duel and its moves: only its two players.
+      match /duels/{id} {
+        allow read: if signedIn() && me() in resource.data.players;
+        allow create: if signedIn() && data().players is list && data().players.size() == 2 && me() in data().players;
+        allow update: if signedIn() && me() in resource.data.players && me() in data().players;
+        match /moves/{mid} {
+          allow read: if signedIn() && me() in get(/databases/$(database)/documents/hn/$(env)/duels/$(id)).data.players;
+          allow create, update: if signedIn() && data().by == me()
+            && me() in get(/databases/$(database)/documents/hn/$(env)/duels/$(id)).data.players;
+        }
+      }
+
+      // Guilds live under their founder's id. The leader, co-leader and
+      // elders manage the guild doc; anyone signed in can read it.
+      function lead(gid) { return resource.data.get('lead', gid); }
+      function manages(gid) {
+        return me() == lead(gid) || me() == gid
+          || me() == resource.data.get('co', '')
+          || me() in resource.data.get('elders', []);
+      }
+      function guildOk() {
+        return data().name is string && data().name.size() >= 3 && data().name.size() <= 22
+          && data().tag is string && data().tag.size() >= 2 && data().tag.size() <= 4
+          && shortText('motto', 70)
+          && (!('elders' in data()) || (data().elders is list && data().elders.size() <= 4))
+          && (!('ok' in data()) || (data().ok is list && data().ok.size() <= 60))
+          && (!('no' in data()) || (data().no is list && data().no.size() <= 40))
+          && small();
+      }
+      match /guilds/{gid} {
+        allow read: if signedIn();
+        allow create: if isMe(gid) && guildOk();
+        allow update: if signedIn() && manages(gid) && guildOk();
+        allow delete: if signedIn() && (me() == lead(gid) || me() == gid);
+      }
+
+      // Guild chat: each player keeps their own recent messages in one doc.
+      match /gchat/{uid} {
+        allow read: if signedIn();
+        allow create, update: if isMe(uid) && data().g is string && data().msgs is list && data().msgs.size() <= 60;
+        allow delete: if isMe(uid);
+      }
+
+      // Friends: friends/{pair id} = { a, b, by, ok, ... }. Only the pair.
+      match /friends/{id} {
+        allow read: if signedIn() && (resource.data.a == me() || resource.data.b == me());
+        allow create: if signedIn() && data().by == me() && (data().a == me() || data().b == me()) && data().a != data().b;
+        allow update: if signedIn() && (resource.data.a == me() || resource.data.b == me())
+          && data().a == resource.data.a && data().b == resource.data.b;
+        allow delete: if signedIn() && (resource.data.a == me() || resource.data.b == me());
+      }
+
+      // Direct messages between friends: dms/{pair id}. Only the pair.
+      match /dms/{id} {
+        allow read: if signedIn() && (resource.data.a == me() || resource.data.b == me());
+        allow create, update: if signedIn() && (data().a == me() || data().b == me())
+          && data().msgs is list && data().msgs.size() <= 80;
+        allow delete: if signedIn() && (resource.data.a == me() || resource.data.b == me());
+      }
+
+      // Suggestion box: anyone signed in can send; the owner's report reads them.
+      match /suggestions/{id} {
+        allow read: if signedIn();
+        allow create: if signedIn() && data().keys().hasOnly(['text', 't', 'lvl'])
+          && data().text is string && data().text.size() > 0 && data().text.size() <= 600;
+      }
+      // Each player's daily suggestion counter.
+      match /limits/{uid} {
+        allow read, write: if isMe(uid);
+      }
+
+      // Card usage counter: each player's squads once a day, card ids only.
+      match /usage/{uid} {
+        allow read: if signedIn();
+        allow create, update: if isMe(uid)
+          && data().keys().hasOnly(['day', 'lvl', 'g', 'f', 't'])
+          && data().g is list && data().g.size() <= 5
+          && data().f is list && data().f.size() <= 5;
+      }
+
+      // Champion's Card: the season's number one sends their design and review.
+      match /champion/{uid} {
+        allow read: if signedIn();
+        allow create, update: if isMe(uid)
+          && data().keys().hasOnly(['season', 'name', 'answers', 'status', 'note', 'rev', 't'])
+          && data().status in ['pending', 'tweaks', 'approved'];
+      }
+    }
+
+    // Anything else: locked.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
