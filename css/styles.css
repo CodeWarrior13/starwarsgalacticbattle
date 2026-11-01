@@ -3124,9 +3124,16 @@ body.event-sith .topbar { border-bottom-color: rgba(255, 60, 70, 0.7); box-shado
 .ce-panel h3 { margin: 0 0 12px; }
 .ce-panel.shake { animation: ce-shake 0.4s; }
 @keyframes ce-shake { 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
-.ce-boxes { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 5px; }
-.ce-box { width: 100%; aspect-ratio: 1; box-sizing: border-box; border-radius: 8px; border: 1px solid rgba(124, 208, 255, 0.45); background: #050912; color: #fff; text-align: center; font-family: var(--font-display); font-size: clamp(14px, 4.4vw, 22px); text-transform: uppercase; padding: 0; }
-.ce-box:focus { outline: none; border-color: #ffd23f; box-shadow: 0 0 12px rgba(255, 210, 63, 0.5); }
+.ce-field { position: relative; display: block; cursor: text; }
+/* The real field sits invisibly over the squares (16px so phones don't zoom in). */
+.ce-in { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; font-size: 16px; border: 0; padding: 0; background: transparent; color: transparent; caret-color: transparent; }
+.ce-slots { display: flex; justify-content: center; gap: clamp(3px, 1vw, 5px); width: 100%; min-height: clamp(30px, 8.6vw, 46px); }
+.ce-box { flex: 0 1 44px; min-width: 0; height: clamp(30px, 8.6vw, 46px); box-sizing: border-box; border-radius: 8px; border: 1px solid rgba(124, 208, 255, 0.45); background: #050912; color: #fff; display: grid; place-items: center; font: 700 clamp(14px, 4.4vw, 22px) var(--font-display); font-style: normal; animation: ce-pop .18s ease-out; }
+.ce-box.on { border-color: rgba(124, 208, 255, 0.8); }
+.ce-box.cur { border-color: #ffd23f; box-shadow: 0 0 12px rgba(255, 210, 63, 0.5); }
+.ce-box.cur:empty::after { content: ''; width: 2px; height: 55%; background: #ffd23f; animation: ce-blink 1s steps(1) infinite; }
+@keyframes ce-pop { from { transform: scale(.6); opacity: 0; } }
+@keyframes ce-blink { 50% { opacity: 0; } }
 .ce-msg { min-height: 1.4em; margin: 10px 0 4px; }
 
 /* Update log */

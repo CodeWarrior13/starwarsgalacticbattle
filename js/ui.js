@@ -2484,39 +2484,55 @@
   // scenes, custom card reveals, end-of-battle checks and code redemption.
   const HOOKS = { feats: [], crests: {}, scenes: {}, reveal: null, battleEnd: [], redeem: null, codeLength: 10 };
 
-  // Settings > Enter a code: a row of letter boxes that auto-advance.
+  // Settings > Enter a code. One real text field (so phone keyboards, paste
+  // and autocorrect can't scatter letters across boxes) drawn as letter
+  // squares that grow as you type: 3 to start, up to the longest code.
   function codeEntry() {
-    const n = HOOKS.codeLength;
+    const MAX = HOOKS.codeLength;
+    const MIN = 3;
     const node = el(`<div class="code-entry" role="dialog" aria-label="Enter a code">
       <div class="ce-panel">
         <p class="eyebrow">Command Console</p><h3>Enter a code</h3>
-        <div class="ce-boxes">${Array.from({ length: n }, (_, i) => `<input class="ce-box" maxlength="1" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Letter ${i + 1}" data-i="${i}">`).join('')}</div>
+        <label class="ce-field"><input class="ce-in" maxlength="${MAX + 4}" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" inputmode="text" enterkeyhint="go" aria-label="Code" data-ce-in><span class="ce-slots" data-slots aria-hidden="true"></span></label>
         <p class="ce-msg muted small" data-msg>&nbsp;</p>
         <div class="modal-actions"><button class="btn" type="button" data-ce-close>Close</button><button class="btn btn-primary" type="button" data-ce-go>Submit</button></div>
       </div>
     </div>`);
     document.body.appendChild(node);
-    const boxes = [...node.querySelectorAll('.ce-box')];
+    const input = node.querySelector('[data-ce-in]');
+    const slots = node.querySelector('[data-slots]');
+    const clean = () => input.value.replace(/[^a-z0-9]/gi, '').toUpperCase().slice(0, MAX);
+    const draw = () => {
+      const v = clean();
+      if (input.value !== v) input.value = v;
+      const n = Math.min(MAX, Math.max(MIN, v.length + 1));
+      const focused = document.activeElement === input;
+      // Squares are added or removed one at a time, so only a new one pops in.
+      while (slots.children.length < n) slots.appendChild(document.createElement('i'));
+      while (slots.children.length > n) slots.lastChild.remove();
+      [...slots.children].forEach((b, i) => {
+        b.className = `ce-box ${i < v.length ? 'on' : ''} ${focused && i === Math.min(v.length, MAX - 1) ? 'cur' : ''}`;
+        b.textContent = v[i] || '';
+      });
+    };
     const close = () => { node.classList.add('out'); setTimeout(() => node.remove(), 250); };
     const submit = () => {
-      const code = boxes.map((b) => b.value).join('').toUpperCase();
-      const ok = code.length === n && HOOKS.redeem && HOOKS.redeem(code);
+      const code = clean();
+      const ok = code.length >= MIN && HOOKS.redeem && HOOKS.redeem(code);
       if (ok) { close(); return; }
       node.querySelector('.ce-panel').classList.remove('shake'); void node.offsetWidth; node.querySelector('.ce-panel').classList.add('shake');
-      node.querySelector('[data-msg]').textContent = code.length < n ? 'Fill every box.' : 'Nothing happens…';
+      node.querySelector('[data-msg]').textContent = code.length < MIN ? `Type at least ${MIN} letters.` : 'Nothing happens…';
       if (root.Sound) root.Sound.play('defeat');
     };
-    boxes.forEach((b, i) => {
-      b.addEventListener('input', () => { b.value = b.value.replace(/[^a-z0-9]/gi, '').slice(-1).toUpperCase(); if (b.value && boxes[i + 1]) boxes[i + 1].focus(); });
-      b.addEventListener('keydown', (e) => {
-        if (e.key === 'Backspace' && !b.value && boxes[i - 1]) boxes[i - 1].focus();
-        if (e.key === 'Enter') submit();
-      });
-    });
+    input.addEventListener('input', () => { node.querySelector('[data-msg]').innerHTML = '&nbsp;'; draw(); });
+    input.addEventListener('focus', draw);
+    input.addEventListener('blur', draw);
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); submit(); } });
     node.querySelector('[data-ce-close]').addEventListener('click', close);
     node.querySelector('[data-ce-go]').addEventListener('click', submit);
     node.addEventListener('click', (e) => { if (e.target === node) close(); });
-    setTimeout(() => boxes[0].focus(), 60);
+    draw();
+    setTimeout(() => input.focus(), 60);
   }
 
   // ---------- Achievement showcases ----------
