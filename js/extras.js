@@ -1398,9 +1398,8 @@ root.__xq.journal = () => journal();
 // then the puzzle's row slides up and the new letter drops into its place,
 // so you see everything you have so far. Tap to skip. Only transforms and
 // opacity move, so it stays smooth on phones.
-// They ship with 2.3: from its real release time (not a tester switch) they're on
-// for everyone, and the tester-only codes for them stop working.
-const xqLive = () => { const u = root.Update23; return !!(u && u.at != null && Date.now() >= u.at); };
+// Approved and live for everyone (Nov 1, 2026); the tester codes are retired.
+const xqLive = () => true;
 const xqTester = () => { try { return localStorage.getItem('swcg-xq-test') === '1'; } catch (e) { return false; } };
 const cineOn = () => xqLive() || xqTester();
 document.head.appendChild(Object.assign(document.createElement('style'), { textContent: `

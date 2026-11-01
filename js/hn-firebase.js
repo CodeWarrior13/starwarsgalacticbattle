@@ -44,13 +44,23 @@
   // account gets signed out, the next attempt (Try again) signs in afresh.
   let pending = null;
   let wasIn = false;
+  // Firebase always reports once the stored sign-in has loaded, however slow
+  // the device is. We used to give up after 5 seconds and make a guest account,
+  // and on a slow load that guest replaced the player's real account: they
+  // looked signed out and the HoloNet asked for a brand-new callsign. Now we
+  // wait for the real answer (30 s only as a last resort), and a device that
+  // has a saved account never gets a guest made in its place automatically.
+  let authKnown = false;
   const restored = new Promise((resolve) => {
-    const off = auth.onAuthStateChanged((u) => { off(); resolve(u); });
-    setTimeout(resolve, 5000);
+    const off = auth.onAuthStateChanged((u) => { authKnown = true; off(); resolve(u); });
+    setTimeout(resolve, 30000);
   });
+  const hasSavedAccount = () => { try { const m = JSON.parse(localStorage.getItem('swcg-acct') || 'null'); return !!(m && m.uid); } catch (e) { return false; } };
   const signedIn = async () => {
     await restored;
     if (auth.currentUser) return auth.currentUser;
+    // Still loading the saved sign-in: don't make a guest over it.
+    if (!authKnown && hasSavedAccount()) return null;
     if (pending) return pending;
     pending = new Promise((resolve) => {
       const off = auth.onAuthStateChanged((u) => { if (u) { off(); resolve(u); } });
@@ -61,9 +71,15 @@
   };
   signedIn();
   // For js/account.js: saved accounts and their cloud save (accounts/{uid}).
-  root.__hnFb = { firebase: root.firebase, auth, fs, signedIn };
+  root.__hnFb = { firebase: root.firebase, auth, fs, signedIn, authKnown: () => authKnown };
   auth.onAuthStateChanged((u) => {
-    if (u) { wasIn = true; return; }
+    if (u) {
+      // A slow sign-in that arrives after the HoloNet gave up: connect now.
+      const N = root.HN && root.HN.Net;
+      if (!wasIn && N && !N.ready && N.retry) setTimeout(() => { try { N.retry(); } catch (e) { /* ignore */ } }, 300);
+      wasIn = true;
+      return;
+    }
     if (!wasIn) return;
     // Signed out while playing: show the HoloNet as offline until we're back.
     const Net = root.HN && root.HN.Net;

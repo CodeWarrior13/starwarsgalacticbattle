@@ -1604,6 +1604,19 @@
 
   const traitsOf = (id) => TRAITS[id] || (UNIT_MAP[id] && UNIT_MAP[id].traits) || [];
 
+  // Cards that won't serve in the same squad: both bring fallen allies back,
+  // and together they made a squad that never stayed down.
+  const APART = [['the_daughter', 'holo_gatekeeper']];
+  function clashWith(ids, id) {
+    for (const [a, b] of APART) {
+      if (id === a && ids.includes(b)) return b;
+      if (id === b && ids.includes(a)) return a;
+    }
+    return null;
+  }
+  const keepApart = (ids) => ids.filter((id, i) => !clashWith(ids.slice(0, i), id));
+  const apartLine = (a, b) => `${(UNIT_MAP[a] || {}).name || 'They'} and ${(UNIT_MAP[b] || {}).name || 'that card'} won't serve in the same squad.`;
+
   function addMods(into, mods) {
     for (const [k, v] of Object.entries(mods)) into[k] = (into[k] || 0) + v;
   }
@@ -1845,7 +1858,7 @@
   };
 
   root.GameData = {
-    RARITIES, ROLE_BASE, ROLE_ICONS, STATUS_INFO, UNITS, UNIT_MAP, get MAX_LEVEL() { return maxLevel(); }, MAX_STARS, STAR_COSTS, STAR_AURODIUM, STAR_AURODIUM_MULT, starAurodium,
+    clashWith, keepApart, apartLine, RARITIES, ROLE_BASE, ROLE_ICONS, STATUS_INFO, UNITS, UNIT_MAP, get MAX_LEVEL() { return maxLevel(); }, MAX_STARS, STAR_COSTS, STAR_AURODIUM, STAR_AURODIUM_MULT, starAurodium,
     DUPLICATE_SHARDS, SQUAD_SIZE, PACKS, STARTER, levelCost, unitStats, power, stageRewards,
     ultimateFor, abilitiesFor, BOSSES, BOSS_ENCOUNTERS, bossRewards, CURRENCIES, LUCK, CHARMS, MARKET_REFRESH_MS, FLASH_MS, FLASH_KYBER_MIN, DAILY, SECRET_PLANET, SECRET_BOSSES, SECRET_COSTS, secretCost, RESTOCK_KYBER, EXCHANGE, TOWER, towerFloor, towerRewards, towerCheckpoint, SHELL_PAYOUT, SHELL_BETS, BIOS,
     BASE_SLOTS, SLOT_UNLOCKS, MAX_ACCOUNT_LEVEL, xpToNext, levelReward, XP, planetSquadSize,

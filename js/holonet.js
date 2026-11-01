@@ -1039,8 +1039,8 @@
   const powerOf = (id) => { const e = entry(id); return e ? D.power(D.UNIT_MAP[id], e.level, e.stars) : 0; };
   function squad(kind) {
     const saved = (S().squads[kind] || []).filter((id) => D.UNIT_MAP[id] && D.UNIT_MAP[id].kind === kind && entry(id));
-    if (saved.length) return saved.slice(0, 5);
-    return pool(kind).sort((a, b) => powerOf(b.id) - powerOf(a.id)).slice(0, 5).map((u) => u.id);
+    if (saved.length) return D.keepApart(saved).slice(0, 5);
+    return D.keepApart(pool(kind).sort((a, b) => powerOf(b.id) - powerOf(a.id)).map((u) => u.id)).slice(0, 5);
   }
   const squadEntries = (kind) => squad(kind).map(entry).filter(Boolean);
   const squadPower = (entries) => entries.reduce((a, e) => a + D.power(D.UNIT_MAP[e.id], e.level, e.stars), 0);
@@ -2765,10 +2765,10 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     };
     m.root.addEventListener('click', (e) => {
       const c = e.target.closest('[data-pick]');
-      if (c) { const id = c.dataset.pick; sel = sel.includes(id) ? sel.filter((x) => x !== id) : sel.length < 5 ? [...sel, id] : sel; return mark(); }
+      if (c) { const id = c.dataset.pick; if (!sel.includes(id) && D.clashWith(sel, id)) return toast(D.apartLine(id, D.clashWith(sel, id))); sel = sel.includes(id) ? sel.filter((x) => x !== id) : sel.length < 5 ? [...sel, id] : sel; return mark(); }
       const x = e.target.closest('[data-x]');
       if (!x) return;
-      if (x.dataset.x === 'auto') { sel = list.slice(0, 5).map((u) => u.id); return redraw(); }
+      if (x.dataset.x === 'auto') { sel = D.keepApart(list.map((u) => u.id)).slice(0, 5); return redraw(); }
       S().squads[kind] = sel;
       HN.save();
       HN.Net.publish();
@@ -3762,7 +3762,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       done(out ? out.map((id) => (opt.ts ? realEntry(real(id)) : { id, level: DUEL_LEVEL, stars: DUEL_STARS })) : null);
     };
     // Time's up: fill the empty spots with your best cards and go.
-    const fill = () => { for (const u of list) { if (sel.length >= need) break; if (!sel.includes(u.id)) sel.push(u.id); } };
+    const fill = () => { for (const u of list) { if (sel.length >= need) break; if (!sel.includes(u.id) && !D.clashWith(sel, u.id)) sel.push(u.id); } };
     const tick = setInterval(() => {
       left -= 1;
       const t = $('[data-time]'); if (t) { t.textContent = `${Math.max(0, left)}s`; t.classList.toggle('low', left <= 10); }
@@ -3771,10 +3771,10 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     m.root.addEventListener('click', (e) => {
       const r = e.target.closest('[data-rm]'); if (r) { sel = sel.filter((x) => x !== r.dataset.rm); return sync(); }
       const c = e.target.closest('[data-pick]');
-      if (c) { const id = c.dataset.pick; if (sel.includes(id)) sel = sel.filter((x) => x !== id); else if (sel.length < 5) sel = [...sel, id]; else toast('Your squad is full. Tap a card in it to swap it out.'); return sync(); }
+      if (c) { const id = c.dataset.pick; if (sel.includes(id)) sel = sel.filter((x) => x !== id); else if (D.clashWith(sel, id)) toast(D.apartLine(id, D.clashWith(sel, id))); else if (sel.length < 5) sel = [...sel, id]; else toast('Your squad is full. Tap a card in it to swap it out.'); return sync(); }
       const x = e.target.closest('[data-x]');
       if (!x) return;
-      if (x.dataset.x === 'best') { sel = list.slice(0, need).map((u) => u.id); return sync(); }
+      if (x.dataset.x === 'best') { sel = D.keepApart(list.map((u) => u.id)).slice(0, need); return sync(); }
       if (x.dataset.x === 'cancel') return finish(null);
       if (x.dataset.x === 'go' && sel.length >= need) finish(sel.slice());
     });
@@ -5797,6 +5797,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       <label class="pf-lbl">Callsign <small>3 to 16 letters or numbers</small>
         <input class="pf-in nm-in" data-tag maxlength="16" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="e.g. KesselRunner"></label>
       <p class="pe-st" data-st>You can change it later from your profile.</p>
+      ${root.Account && root.Account.meta && !root.Account.meta() ? '<p class="muted small nm-acct">Already have a saved account? <button type="button" class="linkish" data-x="acct">Sign in instead</button> to bring back your callsign.</p>' : ''}
       <div class="modal-actions"><button type="button" class="btn" data-x="leave">Not now</button><button type="button" class="btn btn-primary" data-x="ok" disabled>Confirm callsign</button></div></div>`, { small: true, dismissable: false });
     askOpen = m;
     const $ = (q) => m.root.querySelector(q);
@@ -5823,6 +5824,8 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       const x = e.target.closest('[data-x]');
       if (!x || busy) return;
       if (x.dataset.x === 'leave') { close(); return App.go('home'); }
+      // Signed out on this device: sign back in rather than making a new pilot.
+      if (x.dataset.x === 'acct') { close(); App.go('home'); setTimeout(() => { if (UI.settings) UI.settings(); toast('Sign in under Save your game, and your callsign comes back with your account.'); }, 300); return; }
       const typed = String(tag || '').replace(/[^A-Za-z0-9_ .-]/g, '').trim().slice(0, 16);
       const c = tagCheck(typed);
       if (!c.ok || !c.key) return status(c.msg || 'Pick a callsign first.', 'bad');

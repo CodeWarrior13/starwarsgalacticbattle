@@ -941,6 +941,8 @@
         return render();
       }
       if (squad.length >= size) return toast(`Squad is full. Remove someone first (max ${size}).`);
+      const clash = D.clashWith(squad, id);
+      if (clash) return toast(D.apartLine(id, clash));
       const from = card ? $('.portrait', card).getBoundingClientRect() : null;
       squad.push(id);
       render({ added: id, from });
@@ -1544,7 +1546,7 @@
         if (mtb.dataset.mtEdit) {
           Object.assign(ui, { mtPick: mtb.dataset.mtEdit, mtDraft: MT().team(mtb.dataset.mtEdit), collectionKind: mtb.dataset.mtEdit, collectionClass: 'all' });
         } else if (mtb.hasAttribute('data-mt-fill')) {
-          ui.mtDraft = lastList.filter((u) => u.kind === ui.mtPick && Player.owns(u.id)).slice(0, size).map((u) => u.id);
+          ui.mtDraft = D.keepApart(lastList.filter((u) => u.kind === ui.mtPick && Player.owns(u.id)).map((u) => u.id)).slice(0, size);
           if (!ui.mtDraft.length) toast('You own nothing in this filter.');
         } else if (mtb.hasAttribute('data-mt-clear')) ui.mtDraft = [];
         else if (mtb.hasAttribute('data-mt-cancel')) ui.mtPick = null;
@@ -1589,6 +1591,7 @@
         if (!Player.owns(id)) return toast('You don\'t own this one yet.');
         if (d.includes(id)) ui.mtDraft = d.filter((x) => x !== id);
         else if (d.length >= Player.slots()) return toast(`Team is full (${Player.slots()}). Tap a card to take it out first.`);
+        else if (D.clashWith(d, id)) return toast(D.apartLine(id, D.clashWith(d, id)));
         else ui.mtDraft = [...d, id];
         markPicks();
         renderMT();

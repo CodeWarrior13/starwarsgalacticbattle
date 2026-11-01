@@ -28,7 +28,7 @@
     has: (kind) => team(kind).length > 0,
     set(kind, ids) {
       const s = st();
-      s.mainTeams[kind] = ids.filter((id) => Player.owns(id) && D.UNIT_MAP[id] && D.UNIT_MAP[id].kind === kind).slice(0, Player.slots());
+      s.mainTeams[kind] = D.keepApart(ids).filter((id) => Player.owns(id) && D.UNIT_MAP[id] && D.UNIT_MAP[id].kind === kind).slice(0, Player.slots());
       s.mainEdited[kind] = false;
       Player.save();
     },

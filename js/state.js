@@ -566,7 +566,7 @@
     },
 
     setSquad(kind, ids) {
-      this.state.squads[kind] = ids.slice(0, this.slots());
+      this.state.squads[kind] = D.keepApart(ids).slice(0, this.slots());
       this.save();
     },
 
@@ -596,12 +596,12 @@
         let best = null;
         let bestScore = -Infinity;
         for (const u of owned) {
-          if (squad.includes(u.id) || (count[u.role] || 0) >= caps[u.role]) continue;
+          if (squad.includes(u.id) || (count[u.role] || 0) >= caps[u.role] || D.clashWith(squad, u.id)) continue;
           const sc = this.powerOf(u.id) + (synScore([...squad, u.id]) - base) * avg * 0.12;
           if (sc > bestScore) { bestScore = sc; best = u; }
         }
         // Not enough variety owned: relax the role caps.
-        if (!best) best = owned.find((u) => !squad.includes(u.id));
+        if (!best) best = owned.find((u) => !squad.includes(u.id) && !D.clashWith(squad, u.id));
         if (!best) break;
         add(best);
       }
@@ -609,8 +609,8 @@
     },
 
     squadEntries(kind) {
-      return this.state.squads[kind]
-        .filter((id) => this.owns(id))
+      return D.keepApart(this.state.squads[kind]
+        .filter((id) => this.owns(id)))
         .slice(0, this.slots())
         .map((id) => ({ id, level: this.unit(id).level, stars: this.unit(id).stars }));
     },

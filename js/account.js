@@ -245,6 +245,7 @@
     try {
       const F = await fb();
       const u = F.auth.currentUser;
+      if (!u && F.authKnown && !F.authKnown()) return false; // still loading the sign-in
       if (!u || u.uid !== m.uid || u.isAnonymous) { lost(); return false; }
       const raw = ls(SAVE_KEY);
       if (!raw) return false;
@@ -302,6 +303,7 @@
     try {
       const F = await fb();
       const u = F.auth.currentUser;
+      if (!u && F.authKnown && !F.authKnown()) { setTimeout(check, 8000); return; } // still loading the sign-in
       if (!u || u.uid !== m.uid || u.isAnonymous) return lost();
       const d = await ref(F, m.uid).get({ source: 'server' });
       if (!d.exists) return upload(true);
