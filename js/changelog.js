@@ -47,6 +47,7 @@
         'BALANCE|Levels 41 to 50 cost half again as much as the levels before them: about 261,000 credits to take a card from 40 to 50.',
         'BALANCE|Common, rare and epic cards are stronger: the gap to the top cards is smaller. A common card now has about 66% of a secret card\'s power at the same level and stars (was 62%), and rare, epic, legendary and mythic cards scale up with it.',
         'NEW|Elite promotion: once a common, rare or epic card reaches 7★, promote it to Elite with Kyber (300, 500 or 800). It fights with the next rarity\'s strength, keeps its own abilities and gets a gold Elite frame.',
+        'NEW|Champion\'s Card: finish a HoloNet season in the Legend league as number one in the world, and Admiral Ackbar asks you to design a card of your own: its rarity, who it is, its job, its abilities, its look and how players find it. Once it\'s built you see it first, watch it fight, and approve it before it joins the galaxy with your callsign on it.',
         'BALANCE|Levelling a card from 31 up to 35 costs a quarter more.',
         'IMPROVED|Coruscant Under Siege gets tougher levels and BX Commando Droids in its ranks.',
         'BALANCE|Replaying a stage you\'ve already beaten pays 60% of its rewards.',

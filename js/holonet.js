@@ -7778,6 +7778,8 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
     const card = rw && rw.card ? HN.grant(rw.card) : null;
     HN.save(); Net.publish();
     paying = false;
+    // 2.4: first in the world in the Legend league designs a card (js/champion.js).
+    if (rank === 1 && HN.divOf(prev.best).league === 'legend' && root.Champion) root.Champion.earned(prev.season);
     const m = openModal(`<div class="hn-result"><div class="result-title ${rw ? 'win' : ''}">SEASON ${prev.season % 100} LEADERBOARD</div>
       <p style="text-align:center;margin:4px 0">You finished <b>#${rank}</b> with a season best of <b>${fmt(prev.best)}</b>.</p>
       ${rw ? `<p style="text-align:center;margin:0" class="muted">${esc(rewardText(rw))}${rw.puck ? ' (open it in the Forge)' : ''}</p>` : '<p style="text-align:center;margin:0" class="muted">The top 25 earn rewards. There\'s always next season.</p>'}
