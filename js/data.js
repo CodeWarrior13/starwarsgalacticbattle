@@ -3,13 +3,24 @@
 
 (function (root) {
   const RARITIES = {
-    common: { label: 'Common', mult: 1.0, weight: 0 },
-    rare: { label: 'Rare', mult: 1.12, weight: 1 },
-    epic: { label: 'Epic', mult: 1.25, weight: 2 },
-    legendary: { label: 'Legendary', mult: 1.4, weight: 3 },
-    mythic: { label: 'Mythic', mult: 1.55, weight: 4 },
+    common: { label: 'Common', mult: 1.0, mult24: 1.072, weight: 0 },
+    rare: { label: 'Rare', mult: 1.12, mult24: 1.178, weight: 1 },
+    epic: { label: 'Epic', mult: 1.25, mult24: 1.294, weight: 2 },
+    legendary: { label: 'Legendary', mult: 1.4, mult24: 1.428, weight: 3 },
+    mythic: { label: 'Mythic', mult: 1.55, mult24: 1.561, weight: 4 },
     // Secret cards never drop from crates: only the Monolith's trials grant them.
-    secret: { label: 'Secret', mult: 1.65, weight: 5 },
+    secret: { label: 'Secret', mult: 1.65, mult24: 1.65, weight: 5 },
+  };
+  // 2.4: a gentler curve. A common is about 66% of a secret's power at the
+  // same level and stars (was 62%), and every rarity between scales up with it.
+  // Elite (2.4, common to epic at 7 stars, promoted with Kyber) fights with the
+  // next rarity's multiplier.
+  const RAR_ORDER = ['common', 'rare', 'epic', 'legendary', 'mythic', 'secret'];
+  const curve24 = () => !!(root.Update24 && root.Update24.on && root.Update24.on());
+  const rarMult = (rarity, elite) => {
+    const r = elite ? RAR_ORDER[Math.min(RAR_ORDER.length - 1, RAR_ORDER.indexOf(rarity) + 1)] || rarity : rarity;
+    const x = RARITIES[r] || RARITIES.common;
+    return curve24() ? x.mult24 : x.mult;
   };
 
   // Base stats by role at level 1, 1 star, common rarity.
@@ -1181,9 +1192,9 @@
   // (defense half as fast).
   const lvlGrow = (level, a, b) => (level <= 30 ? a * (level - 1) : level <= 40 ? a * 29 + b * (level - 30) : a * 29 + b * 10 + b * 1.75 * (level - 40));
 
-  function unitStats(def, level, stars) {
+  function unitStats(def, level, stars, elite) {
     const base = ROLE_BASE[def.role];
-    const rar = RARITIES[def.rarity].mult;
+    const rar = rarMult(def.rarity, elite);
     const grow = (1 + lvlGrow(level, 0.08, 0.04)) * (1 + 0.1 * (stars - 1));
     const b = def.boss || { hp: 1, atk: 1, def: 1 };
     return {
@@ -1194,8 +1205,8 @@
     };
   }
 
-  function power(def, level, stars) {
-    const s = unitStats(def, level, stars);
+  function power(def, level, stars, elite) {
+    const s = unitStats(def, level, stars, elite);
     return Math.round(s.hp * 0.3 + s.atk * 3 + s.def * 2 + s.spd * 1.5);
   }
 
@@ -1858,7 +1869,7 @@
   };
 
   root.GameData = {
-    clashWith, keepApart, apartLine, RARITIES, ROLE_BASE, ROLE_ICONS, STATUS_INFO, UNITS, UNIT_MAP, get MAX_LEVEL() { return maxLevel(); }, MAX_STARS, STAR_COSTS, STAR_AURODIUM, STAR_AURODIUM_MULT, starAurodium,
+    clashWith, keepApart, apartLine, rarMult, RAR_ORDER, RARITIES, ROLE_BASE, ROLE_ICONS, STATUS_INFO, UNITS, UNIT_MAP, get MAX_LEVEL() { return maxLevel(); }, MAX_STARS, STAR_COSTS, STAR_AURODIUM, STAR_AURODIUM_MULT, starAurodium,
     DUPLICATE_SHARDS, SQUAD_SIZE, PACKS, STARTER, levelCost, unitStats, power, stageRewards,
     ultimateFor, abilitiesFor, BOSSES, BOSS_ENCOUNTERS, bossRewards, CURRENCIES, LUCK, CHARMS, MARKET_REFRESH_MS, FLASH_MS, FLASH_KYBER_MIN, DAILY, SECRET_PLANET, SECRET_BOSSES, SECRET_COSTS, secretCost, RESTOCK_KYBER, EXCHANGE, TOWER, towerFloor, towerRewards, towerCheckpoint, SHELL_PAYOUT, SHELL_BETS, BIOS,
     BASE_SLOTS, SLOT_UNLOCKS, MAX_ACCOUNT_LEVEL, xpToNext, levelReward, XP, planetSquadSize,

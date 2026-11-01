@@ -71,13 +71,13 @@
       shard = `<div class="shardbar ${u.shards >= need ? 'ready' : ''}" title="${u.shards}/${need} shards"><i style="width:${pct}%"></i></div>`;
     }
     const tag = opts.tag || 'button';
-    return `<${tag} class="ucard rarity-${def.rarity} ${owned ? '' : 'locked'} ${opts.selected ? 'selected' : ''} ${opts.holo ? 'holo' : ''}" data-id="${def.id}" ${tag === 'button' ? `type="button" aria-label="${esc(def.name)}"` : ''}>
+    return `<${tag} class="ucard rarity-${def.rarity} ${owned ? '' : 'locked'} ${opts.selected ? 'selected' : ''} ${opts.holo ? 'holo' : ''} ${u && u.elite && !opts.level ? 'elite' : ''}" data-id="${def.id}" ${tag === 'button' ? `type="button" aria-label="${esc(def.name)}"` : ''}>
       ${opts.badge ? `<span class="sel-badge">${opts.badge}</span>` : ''}
       ${portrait(def)}
       <div class="ucard-body">
-        <div class="ucard-meta"><span class="rar">${D.RARITIES[def.rarity].label}</span><span>${owned ? 'Lv ' + level : 'Locked'}</span></div>
+        <div class="ucard-meta"><span class="rar">${D.RARITIES[def.rarity].label}${u && u.elite && !opts.level ? ' <b class="elite-tag">Elite</b>' : ''}</span><span>${owned ? 'Lv ' + level : 'Locked'}</span></div>
         ${owned ? stars(starCount) : '<span class="muted" style="font-size:12px">Find in the Black Market</span>'}
-        ${owned ? `<div class="ucard-meta"><span class="power">⚡ ${fmt(D.power(def, level, starCount))}</span><span>${def.kind === 'ship' ? 'Ship' : 'Hero'}</span></div>` : ''}
+        ${owned ? `<div class="ucard-meta"><span class="power">⚡ ${fmt(D.power(def, level, starCount, u && u.elite && !opts.level))}</span><span>${def.kind === 'ship' ? 'Ship' : 'Hero'}</span></div>` : ''}
         ${opts.traits ? `<div class="trait-icons">${D.traitsOf(def.id).map((t) => `<span title="${D.TRAIT_INFO[t].label}">${D.TRAIT_INFO[t].icon}</span>`).join('')}</div>` : ''}
         ${shard}
       </div>
@@ -1631,13 +1631,13 @@
     function statsPage() {
       const owned = Player.owns(id);
       const u = Player.unit(id) || { level: 1, stars: 1, shards: 0 };
-      const s = D.unitStats(def, u.level, u.stars);
+      const s = D.unitStats(def, u.level, u.stars, u.elite);
       const max = D.unitStats(def, D.MAX_LEVEL, D.MAX_STARS);
       const bar = (label, val, cap, color) => `<div class="statbar"><span>${label}</span><b>${fmt(val)}</b><i><em style="width:${Math.min(100, (val / cap) * 100)}%;background:${color}"></em></i></div>`;
       return `<div class="ipage-inner">
         <p class="eyebrow">Stats · ${owned ? `Level ${u.level} · ${u.stars}★` : 'Level 1 preview'}</p>
         <h2>${esc(def.name)}</h2>
-        <div class="power-big">⚡ ${fmt(D.power(def, u.level, u.stars))}<span>power</span></div>
+        <div class="power-big">⚡ ${fmt(D.power(def, u.level, u.stars, u.elite))}<span>power</span></div>
         ${bar('Health', s.hp, max.hp, '#52e08a')}
         ${bar('Attack', s.atk, max.atk, '#ff6b6b')}
         ${bar('Armor', s.def, max.def, '#5ab4ff')}
@@ -1675,6 +1675,23 @@
       </div>`;
     }
 
+    // 2.4 Elite: common, rare and epic cards at top stars can rise one rarity
+    // in strength with Kyber, keeping their own abilities.
+    function eliteHtml() {
+      const u = Player.unit(id);
+      if (!u || !(root.Update24 && root.Update24.on()) || !Player.ELITE_KYBER[def.rarity]) return '';
+      const nextR = D.RAR_ORDER[D.RAR_ORDER.indexOf(def.rarity) + 1];
+      const label = D.RARITIES[nextR].label;
+      if (u.elite) return `<div class="upgrade elite-box on"><b>Elite ✦</b><span class="muted">Fights with ${label} strength, keeping its own abilities.</span></div>`;
+      const cost = Player.ELITE_KYBER[def.rarity];
+      const ready = u.stars >= D.MAX_STARS;
+      const after = D.power(def, u.level, u.stars, true);
+      return `<div class="upgrade elite-box"><b>Elite promotion</b>
+          <span class="muted">${ready ? `Raise ${esc(def.name)} to ${label} strength: power ${fmt(D.power(def, u.level, u.stars))} → ${fmt(after)}. It keeps its own abilities and gets the Elite frame.` : `Reach ${D.MAX_STARS}★ to promote this card to Elite: ${label} strength, its own abilities, and the Elite frame.`}</span>
+          <button class="btn btn-gold" type="button" data-elite ${!ready || Player.state.crystals < cost ? 'disabled' : ''}>${ready ? `Promote to Elite · ${cur('crystals', cost)}` : `Locked until ${D.MAX_STARS}★`}</button>
+        </div>`;
+    }
+
     // 2.4: a maxed card's spare shards sell for credits (Kyber for secret cards).
     function sellHtml() {
       const o = root.QoL24 && root.QoL24.sellOffer(id);
@@ -1697,8 +1714,8 @@
       const lvlCost = D.levelCost(u.level);
       const starNeed = maxStars ? 0 : D.STAR_COSTS[u.stars - 1];
       const starAur = Player.starTopUpCost(id);
-      const next = D.unitStats(def, Math.min(D.MAX_LEVEL, u.level + 1), u.stars);
-      const nowS = D.unitStats(def, u.level, u.stars);
+      const next = D.unitStats(def, Math.min(D.MAX_LEVEL, u.level + 1), u.stars, u.elite);
+      const nowS = D.unitStats(def, u.level, u.stars, u.elite);
       return `<div class="ipage-inner">
         <p class="eyebrow">Upgrades</p>
         <h2>${esc(def.name)}</h2>
@@ -1715,6 +1732,7 @@
             : `<button class="btn btn-gold" type="button" data-star-aur ${Player.state.aurodium < starAur ? 'disabled' : ''}>Promote to ${u.stars + 1}★ · ${cur('aurodium', starAur)}</button>
           <span class="muted small">${u.shards ? `Uses your ${u.shards} shards; ingots cover the missing ${starNeed - u.shards}.` : 'No shards yet: ingots cover the whole promotion.'} Ingots come from bosses, new tower boss floors and the daily streak.</span>`}
         </div>
+        ${eliteHtml()}
         ${sellHtml()}
       </div>`;
     }
@@ -1850,6 +1868,7 @@
       if (e.target.closest('[data-level]') && Player.levelUp(id)) say('level', `Level ${Player.unit(id).level}!`);
       else if (e.target.closest('[data-star]') && Player.starUp(id)) say('star', `Promoted to ${Player.unit(id).stars}★!`);
       else if (e.target.closest('[data-star-aur]') && Player.starUpAurodium(id)) say('star', `Promoted to ${Player.unit(id).stars}★!`);
+      else if (e.target.closest('[data-elite]') && Player.eliteUp(id)) say('star', `${def.name} is now Elite!`);
       else if (e.target.closest('[data-sell-shards]') && root.QoL24) {
         const o = root.QoL24.sell(id);
         if (!o) return;

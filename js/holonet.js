@@ -1030,7 +1030,7 @@
   // ---------- squads ----------
   const entry = (id) => {
     const u = card(id) || Player.unit(id);
-    return u ? { id, level: u.level, stars: u.stars } : null;
+    return u ? { id, level: u.level, stars: u.stars, ...(u.elite ? { elite: true } : {}) } : null;
   };
   const pool = (kind) => [
     ...D.UNITS.filter((u) => u.kind === kind && Player.owns(u.id)),

@@ -216,7 +216,7 @@
 
     powerOf(id) {
       const u = this.unit(id);
-      return u ? D.power(D.UNIT_MAP[id], u.level, u.stars) : 0;
+      return u ? D.power(D.UNIT_MAP[id], u.level, u.stars, u.elite) : 0;
     },
 
     canAfford(cost) {
@@ -268,6 +268,23 @@
     // Earned-only cards: promoted with shards from earning them again, never Aurodium.
     ingotLocked(id) {
       return id === 'falcon_kessel' || (D.SECRET_BOSSES || []).some((b) => (b.rewards || []).includes(id));
+    },
+
+    // 2.4 Elite: a common, rare or epic card at top stars can be promoted once
+    // with Kyber. It keeps its abilities and fights with the next rarity's stats.
+    ELITE_KYBER: { common: 300, rare: 500, epic: 800 },
+    eliteCost(id) {
+      const u = this.unit(id);
+      const def = D.UNIT_MAP[id];
+      if (!u || !def || u.elite || u.stars < D.MAX_STARS || !(root.Update24 && root.Update24.on())) return 0;
+      return this.ELITE_KYBER[def.rarity] || 0;
+    },
+    eliteUp(id) {
+      const cost = this.eliteCost(id);
+      if (!cost || !this.spend({ crystals: cost })) return false;
+      this.unit(id).elite = true;
+      this.save();
+      return true;
     },
 
     // Promote using every shard you have plus Aurodium Ingots for the rest.
@@ -612,7 +629,7 @@
       return D.keepApart(this.state.squads[kind]
         .filter((id) => this.owns(id)))
         .slice(0, this.slots())
-        .map((id) => ({ id, level: this.unit(id).level, stars: this.unit(id).stars }));
+        .map((id) => ({ id, level: this.unit(id).level, stars: this.unit(id).stars, ...(this.unit(id).elite ? { elite: true } : {}) }));
     },
 
     // ---------- Encounters ----------

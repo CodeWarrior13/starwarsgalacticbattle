@@ -16,7 +16,7 @@
 
   function makeCombatant(entry, side, index) {
     const def = D.UNIT_MAP[entry.id];
-    const stats = D.unitStats(def, entry.level, entry.stars);
+    const stats = D.unitStats(def, entry.level, entry.stars, entry.elite);
     const abilities = D.abilitiesFor(def);
     return {
       uid: `${side}-${index}-${++uidCounter}`,

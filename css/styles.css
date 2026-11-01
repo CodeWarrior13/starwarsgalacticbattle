@@ -3766,3 +3766,9 @@ body.perf-on .card-back .cb-rays { animation: none; }
 .qp-sum { margin: 0; color: var(--muted); }
 .qp-sum b { color: #fff; }
 .qp-short { color: #ff8a8a; font-weight: 700; }
+
+/* 2.4 Elite: common to epic cards raised one rarity in strength with Kyber. */
+.ucard.elite { box-shadow: 0 0 0 2px #ffd23f, 0 0 16px rgba(255, 210, 63, .35); }
+.elite-tag { font-size: 9px; letter-spacing: .1em; padding: 1px 5px; margin-left: 4px; border-radius: 4px; background: #ffd23f; color: #1a1000; vertical-align: 1px; }
+.elite-box b { color: #ffd23f; }
+.elite-box.on { border-color: rgba(255, 210, 63, .5); }
