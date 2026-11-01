@@ -1276,6 +1276,9 @@ document.head.appendChild(Object.assign(document.createElement('style'), { textC
 .xq-jsec.cchip .xq-l.sel { transform: translateY(-5px); border-color: #ffcf4a; box-shadow: 0 0 14px rgba(255, 207, 74, .5); }
 .xq-jsec.cchip.solved .xq-l { border-color: #ffcf4a; box-shadow: 0 0 12px rgba(255, 207, 74, .45); background: linear-gradient(180deg, #8a5a08, #3a2806); }
 .xq-done { color: #4ade80 !important; font-weight: 700; }
+.xq-test h3 { color: #ff8ad8; }
+.xq-tbtns { display: flex; gap: 6px; flex-wrap: wrap; }
+.xq-tbtns .btn { flex: 1 1 auto; font-size: 12px; padding: 8px 10px; }
 .xq-go { justify-self: center; font-weight: 800; letter-spacing: .08em; }
 .xq-go-holo { border-color: #7cd0ff; color: #bfe8ff; box-shadow: 0 0 16px rgba(124, 208, 255, .35); }
 .xq-go-chip { border-color: #ffcf4a; color: #ffe08a; box-shadow: 0 0 16px rgba(255, 207, 74, .35); }
@@ -1297,7 +1300,8 @@ function collectChip(i, from) {
 }
 function placeChips() {
   const z = Z();
-  if (z.cc || !Player.state || (Player.tutorialPending && Player.tutorialPending())) return;
+  // Testers see the chips even after cashing them, so the find scene can be tried.
+  if ((z.cc && !cineOn()) || !Player.state || (Player.tutorialPending && Player.tutorialPending())) return;
   const f = chipFound();
   CHIP_SPOTS.forEach((sp, i) => {
     if (f.includes(i)) return;
@@ -1329,11 +1333,25 @@ function journal() {
         <div class="xq-row">${(z.cc ? CHIP.split('').map((_, k) => k) : order).map((i, k) => `<button type="button" class="xq-l ${i < 0 ? 'no' : ''} ${sel === k ? 'sel' : ''}" data-slot="${k}" ${z.cc ? 'disabled' : ''}>${i < 0 ? '?' : CHIP[i]}</button>`).join('')}</div>
         ${solved ? `<p class="xq-done">The chips click into place.${cineOn() ? '' : ' Try it as a code.'}</p>` : ''}
         ${cineOn() && solved ? '<button class="btn xq-go xq-go-chip" type="button" data-xq-go="chip">Cash the chips</button>' : ''}</div>
+      ${cineOn() ? `<div class="xq-jsec xq-test"><h3>Tester tools</h3><p>Only on tester devices. Reset puts every piece back in hiding (your unlocked codes and rewards stay).</p>
+        <div class="xq-tbtns"><button class="btn" type="button" data-xq-t="chip">Play chip find</button><button class="btn" type="button" data-xq-t="holo">Play holocron find</button><button class="btn" type="button" data-xq-t="reset">Reset pieces</button></div></div>` : ''}
       <div class="modal-actions"><button class="btn btn-primary" type="button" data-jx>Close</button></div>`;
   };
   paint();
   m.root.addEventListener('click', (e) => {
     if (e.target.closest('[data-jx]')) return m.close();
+    const t = e.target.closest('[data-xq-t]');
+    if (t && cineOn()) {
+      const k = t.dataset.xqT;
+      if (k === 'reset') { delete z.cf; delete z.ca; z.hf = []; Player.save(); sel = -1; paint(); UI.toast('Pieces reset: they\'re hiding around the game again.'); return; }
+      m.close();
+      const st = document.querySelector('.settings-modal [data-close]');
+      if (st) st.click();
+      // Plays the scene for a piece you don't have yet (or a random one).
+      if (k === 'chip') { const left = CHIP.split('').map((_, i) => i).filter((i) => !chipFound().includes(i)); const i = left.length ? left[0] : 0; setTimeout(() => cineChip(i, null), 250); }
+      else { const left = WORD.split('').map((_, i) => i).filter((i) => !found().includes(i)); const i = left.length ? left[0] : 0; setTimeout(() => cineHolo(i, null), 250); }
+      return;
+    }
     // A finished puzzle enters its own code: same result and scene as typing it.
     const go = e.target.closest('[data-xq-go]');
     if (go) {
@@ -1362,7 +1380,7 @@ function placeJournal() {
   const host = document.querySelector('.settings-modal [data-code-entry]');
   if (!host || host.parentElement.querySelector('[data-xq-journal]')) return;
   const z = Z();
-  if (!found().length && !chipFound().length && !z.hp) return;
+  if (!found().length && !chipFound().length && !z.hp && !cineOn()) return;
   const b = el('<button class="btn" type="button" data-xq-journal>Seeker\'s Codex</button>');
   b.addEventListener('click', (e) => { e.stopPropagation(); journal(); });
   host.insertAdjacentElement('afterend', b);
@@ -1524,7 +1542,8 @@ function cine(kind, opts) {
 function cineChip(i, from) {
   const order = chipOrder();
   const f = chipFound();
-  const slot = order.indexOf(i);
+  // (A tester replay can show a chip you haven't found: it borrows the first open spot.)
+  const slot = order.indexOf(i) >= 0 ? order.indexOf(i) : Math.max(0, order.indexOf(-1));
   const row = order.map((k) => ({ ch: k >= 0 && k !== i ? CHIP[k] : '' }));
   const sparks = Array.from({ length: 14 }, (_, k) => `<i class="xc-spark" style="--a:${k * (360 / 14)}deg;--r:${90 + (k % 3) * 30}px;--d:${(k % 4) * 0.03}s"></i>`).join('');
   const done = f.length >= CHIP.length;
