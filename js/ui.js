@@ -251,6 +251,8 @@
       if (mk) mk.classList.toggle('has-dot', !Player.dailyStatus().claimed);
       if (!opts.keepScroll) window.scrollTo({ top: 0 });
       if (root.Sound && screen !== 'battle') root.Sound.music('menu');
+      // Back out of the battle flow: a level-up from those battles plays now.
+      if (screen !== 'battle' && screen !== 'squad' && root.BattleUI && root.BattleUI.flushRankUp) root.BattleUI.flushRankUp();
     },
 
     // Re-render in place: shop buys, gambling and toggles keep your scroll position.

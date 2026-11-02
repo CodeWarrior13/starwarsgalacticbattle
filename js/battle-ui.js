@@ -2277,6 +2277,7 @@
         ${xpHtml}
         ${autoHtml}
         <div class="modal-actions">
+          ${p.type === 'secret' ? '' : '<button class="btn" type="button" data-r="home">Home</button>'}
           ${isTower ? '' : '<button class="btn" type="button" data-r="retry">Retry</button>'}
           ${nextParams && hasNext ? '<button class="btn" type="button" data-r="edit-next">Edit squad</button>' : ''}
           ${won ? '' : '<button class="btn" type="button" data-r="collection">Collection</button>'}
@@ -2287,7 +2288,7 @@
       const rateLine = won && root.QoL24 ? root.QoL24.rateLine() : '';
       const rw = m.root.querySelector('.rewards[data-rewards]');
       if (rateLine && rw) rw.insertAdjacentHTML('afterend', `<p class="muted small session-rate" data-rewards hidden>${esc(rateLine)}</p>`);
-      if (rewards.levelUps && rewards.levelUps.length) setTimeout(() => this.rankUp(rewards.levelUps[rewards.levelUps.length - 1]), won ? 4400 : 900);
+      if (rewards.levelUps && rewards.levelUps.length) this.queueRankUp(rewards.levelUps[rewards.levelUps.length - 1]);
       const curMode = () => (m.root.querySelector('[data-auto-mode].on') || {}).dataset ? m.root.querySelector('[data-auto-mode].on').dataset.autoMode : 'off';
       let countdown = null;
       const stopCount = () => { if (countdown) { clearInterval(countdown); countdown = null; } const c = m.root.querySelector('[data-auto-count]'); if (c) c.textContent = ''; };
@@ -2421,7 +2422,7 @@
         <div class="xp-box"><span class="xp-gain">+${rewards.xp} XP</span><span class="xp-bar"><i style="width:${acct.level >= D.MAX_ACCOUNT_LEVEL ? 100 : Math.min(100, (acct.xp / D.xpToNext(acct.level)) * 100)}%"></i></span><span class="muted small">Account Lv ${acct.level}</span></div>
         ${rewards.levelUps.map((u) => `<div class="level-up"><b>LEVEL UP!</b> Account level ${u.level} · ${cur('credits', u.reward.credits)} ${cur('crystals', u.reward.crystals)}</div>`).join('')}
         <div class="modal-actions"><button class="btn btn-primary" type="button" data-r="secret">Return to the Monolith</button></div>`, { small: true, dismissable: false, cls: 'result-modal' });
-      if (rewards.levelUps.length) setTimeout(() => this.rankUp(rewards.levelUps[rewards.levelUps.length - 1]), 600);
+      if (rewards.levelUps.length) this.queueRankUp(rewards.levelUps[rewards.levelUps.length - 1]);
       m.root.addEventListener('click', (e) => {
         const rc = e.target.closest('.reward-cards .ucard');
         if (rc) return root.UI.inspect(rc.dataset.id);
@@ -2455,6 +2456,26 @@
 
     nextUnlock(level) {
       return this.levelUnlocks().find((t) => t.level > level) || null;
+    },
+
+    // The level-up moment waits until you're out of the battle flow: results,
+    // Next, Repeat, Retry and the squad screen all count as still battling.
+    // It plays once you're back on the galaxy, collection, market or anywhere else.
+    queueRankUp(up) {
+      if (!up) return;
+      if (!this.pendingRank || up.level > this.pendingRank.level) this.pendingRank = up;
+    },
+    flushRankUp() {
+      const up = this.pendingRank;
+      if (!up) return;
+      const tryNow = (n) => {
+        if (App.battleActive || ['battle', 'squad'].includes(App.current)) return;
+        if (document.querySelector('.modal-backdrop, .feat-cine, .cp, .xc') && n < 20) return setTimeout(() => tryNow(n + 1), 700);
+        if (this.pendingRank !== up) return;
+        this.pendingRank = null;
+        this.rankUp(up);
+      };
+      setTimeout(() => tryNow(0), 500);
     },
 
     rankUp(up) {
