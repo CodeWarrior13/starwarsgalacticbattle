@@ -294,10 +294,25 @@
         let c = this.tmChips[u.uid];
         if (!c || !c.isConnected) {
           c = el(`<span class="tmt-chip ${u.side}" title="${esc(u.def.name)}">${portrait(u.def, { plate: false })}</span>`);
+          c.addEventListener('animationend', (e) => { if (e.target === c) c.classList.remove('hop', 'warp'); });
           lane.appendChild(c);
           this.tmChips[u.uid] = c;
         }
         const pct = Math.max(0, Math.min(100, u.tm));
+        const prev = c.tmPrev == null ? pct : c.tmPrev;
+        c.tmPrev = pct;
+        // Reaching GO: a quick hop over the pack to the front. Taking the
+        // turn: it warps back to the start. Plain CSS transforms; Performance
+        // mode turns both off.
+        if (u.alive && pct >= 99.5 && prev < 99.5) {
+          c.classList.remove('hop', 'warp');
+          void c.offsetWidth;
+          c.classList.add('hop');
+        } else if (pct < prev - 30) {
+          c.classList.remove('hop', 'warp');
+          void c.offsetWidth;
+          c.classList.add('warp');
+        }
         c.style.left = `${pct}%`;
         c.classList.toggle('ko', !u.alive);
         c.classList.toggle('soon', u.alive && pct >= 85);
