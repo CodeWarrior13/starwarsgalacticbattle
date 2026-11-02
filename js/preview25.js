@@ -28,7 +28,8 @@
   const MARKS = [
     ['⌖', 'Target', 'A glowing card is one you can hit with the ability you picked. Tap it to attack.'],
     ['❤', 'Health bar', 'Green, then yellow under half, red under a quarter.'],
-    ['»', 'Turn meter', 'The blue bar fills with speed. Full means that card moves next.'],
+    ['»', 'Turn Meter', 'The blue bar. Full = that card\'s turn. It glows when the card is about to move. Some moves boost it or drain it. Tap the bars on any card to see its numbers.'],
+    ['⇢', 'Next strip', 'The row at the top of the battle shows who moves next, in order.'],
     ['★', 'Ultimate bar', 'The gold bar fills as the card fights. When it glows, the ultimate is ready.'],
     ['☠', 'Enraged', 'A red, pulsing boss is low on health and hits much harder. Finish it fast.'],
   ];
@@ -41,7 +42,7 @@
       const rows = all.filter(([k]) => kindOf(k) === kind);
       return rows.length ? `<div class="rx-grp ${kind}"><h4>${title}</h4>${rows.map(([, i]) => `<div class="rx-row"><span class="rx-ic ${kind}">${esc(i.icon)}</span><p><b>${esc(i.label)}</b> · ${esc(i.desc)}</p></div>`).join('')}</div>` : '';
     };
-    return `<div class="rx-groups">
+    return `${root.TMDemo ? `<div class="rx-tm"><h4>» Turn Meter: who moves next</h4><p>Every card races. Its blue bar fills by itself, faster for faster cards. <b>Full bar = its turn.</b> Then it starts again.</p>${root.TMDemo()}</div>` : ''}<div class="rx-groups">
       ${group('buff', 'Helps (buffs)')}${group('debuff', 'Hurts (debuffs)')}${group('mech', 'Boss tricks')}
       <div class="rx-grp mark"><h4>Battlefield info</h4>${MARKS.map(([ic, l, d]) => `<div class="rx-row"><span class="rx-ic mark">${ic}</span><p><b>${l}</b> · ${d}</p></div>`).join('')}</div>
     </div>`;
@@ -190,6 +191,19 @@
           const n = u && u.statuses[k];
           const kind = kindOf(k);
           if (info) tip(ui.field, s, `<span class="k ${kind}">${KIND_LABEL[kind]}${n ? ` · ${n > 50 ? 'until the battle ends' : `${n} turn${n === 1 ? '' : 's'} left`}` : ''}</span><b>${esc(info.icon)} ${esc(info.label)}</b>${esc(info.desc)}`);
+          return;
+        }
+        // Tap the bars on a card (when it isn't a target) for its health,
+        // Turn Meter and Ultimate charge, with what each one means.
+        const bars = e.target.closest('.bcard .bars');
+        if (bars && !bars.closest('.bcard').classList.contains('targetable')) {
+          e.stopPropagation();
+          const card = bars.closest('.bcard');
+          const u = ui.battle.units.find((x) => String(x.uid) === card.dataset.uid);
+          if (u) {
+            const tm = Math.min(100, Math.round(u.tm));
+            tip(ui.field, bars, `<span class="k mark">${esc(u.def.name)}</span><b>» Turn Meter ${tm}%</b>Fills with speed (${u.spd}). At 100% this card takes its turn.<br><b>★ Ultimate ${Math.min(100, Math.round(u.ult))}%</b>Fills as it deals and takes hits.<br><b>❤ Health ${UI.fmt(u.hp)} / ${UI.fmt(u.maxHp)}</b>`);
+          }
           return;
         }
         if (!e.target.closest('.rx-tip')) ui.field.querySelectorAll('.rx-tip').forEach((t) => t.remove());

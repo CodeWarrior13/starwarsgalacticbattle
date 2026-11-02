@@ -678,7 +678,11 @@ body.in-battle .main-nav, body.in-battle .brand { pointer-events: none; opacity:
 .bar.hp i.fill { background: linear-gradient(90deg, #2fc46c, #6ef0a0); }
 .bar.hp.mid i.fill { background: linear-gradient(90deg, #d6a21b, #ffd23f); }
 .bar.hp.low i.fill { background: linear-gradient(90deg, #c52a2a, #ff5b5b); }
-.bar.tm { height: 3px; } .bar.tm i { background: var(--light); }
+.bar.tm { height: 5px; } .bar.tm i { background: linear-gradient(90deg, #2f8fff, #7fd8ff); }
+.bar.tm.soon { box-shadow: 0 0 8px rgba(127, 216, 255, .85); }
+.bar.tm.soon i { background: linear-gradient(90deg, #7fd8ff, #e6f8ff); animation: tm-soon .9s ease-in-out infinite alternate; }
+@keyframes tm-soon { from { filter: brightness(1); } to { filter: brightness(1.45); } }
+@media (prefers-reduced-motion: reduce) { .bar.tm.soon i { animation: none; } }
 .bar.ult { height: 4px; } .bar.ult i { background: linear-gradient(90deg, var(--crawl-deep), var(--crawl)); }
 .bar.ult.full i { animation: ult-full 0.8s ease-in-out infinite; }
 @keyframes ult-full { 50% { opacity: 0.55; } }
@@ -3772,3 +3776,29 @@ body.perf-on .card-back .cb-rays { animation: none; }
 .elite-tag { font-size: 9px; letter-spacing: .1em; padding: 1px 5px; margin-left: 4px; border-radius: 4px; background: #ffd23f; color: #1a1000; vertical-align: 1px; }
 .elite-box b { color: #ffd23f; }
 .elite-box.on { border-color: rgba(255, 210, 63, .5); }
+
+/* Turn Meter race demo (tutorial and Rex's guide). */
+.tmd { display: grid; gap: 7px; margin: 10px 0 2px; padding: 10px 12px; border-radius: 12px; background: rgba(4, 14, 30, .85); border: 1px solid rgba(127, 216, 255, .3); }
+.tmd-lane { display: grid; grid-template-columns: 112px 1fr; align-items: center; gap: 10px; }
+.tmd-n { display: grid; line-height: 1.15; }
+.tmd-n b { font-size: 13px; }
+.tmd-n small { font-size: 11px; color: var(--muted); }
+.tmd-bar { position: relative; height: 12px; border-radius: 99px; background: rgba(255, 255, 255, .08); overflow: visible; }
+.tmd-bar i { position: absolute; inset: 0; border-radius: 99px; background: linear-gradient(90deg, #2f8fff, #7fd8ff); transform-origin: left; animation: tmd-fill var(--d) linear infinite; }
+.tmd-bar em { position: absolute; right: -4px; top: 50%; transform: translate(0, -50%) scale(.6); font: 800 12px var(--font-display); font-style: normal; letter-spacing: .08em; color: #ffe81f; text-shadow: 0 0 10px rgba(255, 232, 31, .9); opacity: 0; animation: tmd-go var(--d) linear infinite; }
+@keyframes tmd-fill { 0% { transform: scaleX(0); box-shadow: none; } 88% { transform: scaleX(1); box-shadow: none; } 94% { transform: scaleX(1); box-shadow: 0 0 14px rgba(127, 216, 255, .95); filter: brightness(1.5); } 100% { transform: scaleX(0); } }
+@keyframes tmd-go { 0%, 86% { opacity: 0; transform: translate(0, -50%) scale(.6); } 90% { opacity: 1; transform: translate(0, -50%) scale(1.25); } 98% { opacity: 1; transform: translate(0, -50%) scale(1); } 100% { opacity: 0; } }
+.tmd-cap { margin: 2px 0 0; font-size: 12px; color: #a9c1dd; }
+.tmd-cap b { color: #ffe81f; }
+.rx-tm { margin-bottom: 14px; padding: 12px 14px; border-radius: 14px; border: 1px solid rgba(127, 216, 255, .35); background: rgba(20, 60, 110, .25); }
+.rx-tm h4 { margin: 0 0 4px; color: #7fd8ff; }
+.rx-tm p { margin: 0; }
+@media (prefers-reduced-motion: reduce) { .tmd-bar i { animation: none; transform: scaleX(.7); } .tmd-bar em { animation: none; } }
+
+.tut-coach:has(.tc-extra) { flex-wrap: wrap; }
+.tut-coach:has(.tc-extra) p { flex: 1 1 calc(100% - 80px); }
+.tut-coach .tc-extra { flex: 1 1 100%; order: 3; }
+.tut-coach .tc-extra .tmd { margin: 0; }
+.tut-coach:has(.tc-extra) [data-tc-next] { order: 4; margin-left: auto; }
+.battle .tut-coach:has(.tc-extra):not(.mini) { max-height: 520px; }
+.battle .tut-coach .tmd { gap: 5px; padding: 8px 10px; }

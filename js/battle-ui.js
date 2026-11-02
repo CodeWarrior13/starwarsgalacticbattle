@@ -258,6 +258,8 @@
       hpBar.classList.toggle('low', pct <= 25);
       $('[data-hp]', card).textContent = fmt(u.hp);
       $('.bar.tm i', card).style.transform = `scaleX(${Math.min(100, u.tm) / 100})`;
+      // The bar glows when this card is about to move.
+      $('.bar.tm', card).classList.toggle('soon', u.alive && u.tm >= 85);
       $('.bar.ult i', card).style.transform = `scaleX(${Math.min(100, u.ult) / 100})`;
       $('.bar.ult', card).classList.toggle('full', u.ult >= 100);
       const st = $('.statuses', card);

@@ -14,6 +14,14 @@
   const el = (html) => ui().el(html);
   const esc = (s) => ui().esc(s);
 
+  // The Turn Meter race: three fighters whose blue bars fill at their own
+  // speed. Whoever fills up first shouts GO and takes a turn, then starts over.
+  // Used in the tutorial and in Rex's battle guide.
+  root.TMDemo = () => `<div class="tmd" aria-hidden="true">
+    ${[['Han Solo', 'Fast', 150, 1.8], ['Luke', 'Medium', 120, 2.25], ['Chewbacca', 'Slow', 90, 3]].map(([n, k, sp, d]) => `<div class="tmd-lane" style="--d:${d}s"><span class="tmd-n"><b>${n}</b><small>${k} · speed ${sp}</small></span><span class="tmd-bar"><i></i><em>GO!</em></span></div>`).join('')}
+    <p class="tmd-cap">Same 9 seconds: Han moves <b>5</b> times, Luke <b>4</b>, Chewbacca <b>3</b>.</p>
+  </div>`;
+
   const Tutorial = {
     active: false,
     allowAuto: false,
@@ -151,6 +159,7 @@
       const node = el(`<div class="tut-coach ${opts.tip ? 'tip' : ''} ${opts.tour ? 'tour' : ''} ${opts.bottom ? 'bottom' : ''}" role="status">
         <span class="tc-face">${ui().portrait(rex, { plate: false })}</span>
         <p>${text}</p>
+        ${opts.extra ? `<div class="tc-extra">${opts.extra}</div>` : ''}
         ${opts.next ? `<button class="btn btn-small btn-primary" type="button" data-tc-next>${opts.label || 'Next'}</button>` : ''}
       </div>`);
       // In battle the bubble sits in the layout under the top bar, so it never
@@ -206,7 +215,10 @@
         return this.coach('Each ability does something different, so read the text on the buttons. A number on a button means it is cooling down for that many turns.', '.ability-buttons .abtn');
       }
       if (n === 3 && this.once('bars')) {
-        return this.coach('Under each card: blue is the <b>turn meter</b> (full means it acts) and gold is the <b>Ultimate charge</b>, which fills as you deal and take hits.', '.player-row .bar.tm, .player-row .bar.ult');
+        return this.coach(`<b>Turn Meter</b> = a race. The blue bar under each card fills up by itself. <b>Full bar = that card's turn.</b> Then it empties and races again. Faster cards fill quicker, so they get <b>more turns</b>.`, '.player-row .bar.tm', {
+          extra: root.TMDemo(),
+          next: () => this.coach('<b>Glowing blue bar</b> = that card moves next. The <b>Next</b> strip at the top shows the order. Some moves <b>boost</b> your bars (you go sooner) or <b>drain</b> enemy bars (they go later). The <b>gold</b> bar is your <b>Ultimate</b>: it fills as you fight.', '[data-order], .player-row .bar.tm, .player-row .bar.ult'),
+        });
       }
       if (n === 4 && this.once('synergy')) {
         return this.coach('These chips are <b>squad bonuses</b>. Every card has <b>traits</b> (Trooper, Rebel, Droid…). Field units that share a trait, like two Droids or two Troopers, and the whole squad gets stronger. The enemy gets them too!', '.syn-row .syn-chip', {
