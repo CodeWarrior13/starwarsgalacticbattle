@@ -2403,6 +2403,7 @@
         list.push({ level: 25, name: 'More Battle Plans', desc: 'You can now save 4 battle plans.' });
         list.push({ level: 40, name: 'Full Battle Plans', desc: 'All 6 battle plans are open.' });
       }
+      if (root.Update24 && root.Update24.on()) list.push({ level: Player.ELITE_LEVEL || 30, name: 'Elite promotion', desc: 'Promote 7★ commons, rares and epics with Kyber: next-rarity strength and a 25% stronger doctrine.' });
       if (root.Update23 && root.Update23.on()) list.push({ level: 30, name: 'Auto-open', desc: 'Open Black Market crates one after another, hands-free, until you reach your number.' });
       return list.sort((a, b) => a.level - b.level);
     },

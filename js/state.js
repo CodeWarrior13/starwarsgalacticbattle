@@ -279,8 +279,11 @@
       if (!u || !def || u.elite || u.stars < D.MAX_STARS || !(root.Update24 && root.Update24.on())) return 0;
       return this.ELITE_KYBER[def.rarity] || 0;
     },
+    // Elite promotion opens at account level 30.
+    ELITE_LEVEL: 30,
     eliteUp(id) {
       const cost = this.eliteCost(id);
+      if (this.state.account.level < this.ELITE_LEVEL) return false;
       if (!cost || !this.spend({ crystals: cost })) return false;
       this.unit(id).elite = true;
       this.save();

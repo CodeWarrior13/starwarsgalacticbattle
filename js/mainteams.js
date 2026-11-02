@@ -47,6 +47,12 @@
   // Each plan holds a Ground and a Fleet squad and is named after an Aurebesh
   // letter until renamed. One plan is the Flagship: its squads are the main
   // teams that Auto-continue and Replay x3 use.
+  let safeP = null;
+  const loadSafe = () => {
+    if (root.Safe) return Promise.resolve(root.Safe);
+    if (!safeP) safeP = new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = 'js/safe.js'; sc.onload = () => res(root.Safe); sc.onerror = () => { safeP = null; rej(new Error('offline')); }; document.head.appendChild(sc); });
+    return safeP;
+  };
   const PLAN_NAMES = ['Aurek', 'Besh', 'Cresh', 'Dorn', 'Esk', 'Forn'];
   const PLAN_LEVELS = [15, 15, 25, 25, 40, 40];
   const plansOn = () => on() && !!(root.Update24 && root.Update24.on());
@@ -82,11 +88,22 @@
       if (st().planFlag === i) MT.set(kind, p[kind]);
       Player.save();
     },
-    rename(i, name) {
+    // Plan names go through the same family-friendly filter as chat and
+    // callsigns (js/safe.js). A name it would mask or block is refused.
+    // Resolves to true when the name was saved.
+    async rename(i, name) {
       const p = plans()[i];
-      if (!p) return;
-      p.name = String(name || '').replace(/[<>]/g, '').trim().slice(0, 18);
+      if (!p) return false;
+      const clean = String(name || '').replace(/[<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, 18);
+      if (clean) {
+        let S = null;
+        try { S = await loadSafe(); } catch (e) { /* offline */ }
+        if (!S) { if (root.UI) root.UI.toast('Couldn\'t check that name right now. Try again in a moment.'); return false; }
+        if (!S.ok(clean)) { if (root.UI) root.UI.toast('That name isn\'t allowed. Try another.'); return false; }
+      }
+      p.name = clean;
       Player.save();
+      return true;
     },
     makeFlag(i) {
       plans();
@@ -144,8 +161,18 @@
       const inp = box.querySelector('[data-nm]');
       if (inp) { inp.focus(); inp.select(); }
     };
-    const finishName = () => { const inp = box.querySelector('[data-nm]'); if (inp) MT.rename(Number(inp.dataset.nm), inp.value); naming = -1; };
-    box.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.matches('[data-nm]')) { finishName(); draw(); } });
+    // Keeps the box open (with what was typed) when the filter refuses a name.
+    const finishName = async () => {
+      const inp = box.querySelector('[data-nm]');
+      if (!inp) { naming = -1; return draw(); }
+      const typed = inp.value;
+      const okd = await MT.rename(Number(inp.dataset.nm), typed);
+      if (okd) { naming = -1; draw(); return; }
+      draw();
+      const again = box.querySelector('[data-nm]');
+      if (again) { again.value = typed; again.select(); }
+    };
+    box.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.matches('[data-nm]')) finishName(); });
     box.addEventListener('click', (e) => {
       const t = (q) => e.target.closest(q);
       if (edit) {
@@ -169,14 +196,13 @@
         edit = null;
         return draw();
       }
-      if (t('[data-bn-ok]')) { finishName(); return draw(); }
-      if (naming >= 0 && !t('[data-nm]')) finishName();
+      if (t('[data-bn-ok]')) return finishName();
+      if (naming >= 0 && !t('[data-nm]') && !t('[data-bn]')) { finishName(); return; }
       const b = t('[data-bl]'); if (b) { m.close(); if (opts.onLoad) opts.onLoad(Number(b.dataset.bl)); return; }
       const be = t('[data-be]'); if (be) { const i = Number(be.dataset.be); edit = { i, kind: be.dataset.k, draft: planTeam(i, be.dataset.k) }; return draw(); }
       const bn = t('[data-bn]'); if (bn) { naming = Number(bn.dataset.bn); return draw(); }
       const bf = t('[data-bf]'); if (bf) { MT.makeFlag(Number(bf.dataset.bf)); U.toast(`${planName(Number(bf.dataset.bf))} is your Flagship plan.`); return draw(); }
       if (t('[data-bx="close"]')) { m.close(); return; }
-      if (naming >= 0) draw();
     });
     draw();
     return m;

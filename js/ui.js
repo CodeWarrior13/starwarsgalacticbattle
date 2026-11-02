@@ -730,7 +730,7 @@
   function docBox(id) {
     const d = root.Doctrines && root.Doctrines.of(id);
     const el = (Player.unit(id) || {}).elite;
-    return d ? `<div class="doctrine-box"><div class="dh">${d.icon} Doctrine <b>${esc(d.name)}</b><span class="dst ${d.style}">${d.styleLabel}</span></div><p>${esc(d.text)}</p><p class="d-el ${el ? 'on' : ''}">✦ ${el ? 'Elite: this doctrine is 25% stronger.' : 'Promote to Elite and this doctrine gets 25% stronger.'}</p></div>` : '';
+    return d ? `<div class="doctrine-box"><div class="dh"><span>${d.icon} Doctrine</span><span class="dst ${d.style}">${d.styleLabel}</span></div><b class="dn">${esc(d.name)}</b><p>${esc(d.text)}</p><p class="d-el ${el ? 'on' : ''}">✦ ${el ? 'Elite: this doctrine is 25% stronger.' : 'Promote to Elite and this doctrine gets 25% stronger.'}</p></div>` : '';
   }
 
   function bonusList(items, empty) {
@@ -1625,7 +1625,7 @@
         } else {
           const i = Number(pb.dataset.planName);
           const name = root.prompt ? root.prompt('Name this battle plan (up to 18 letters)', M.planName(i)) : null;
-          if (name != null) M.rename(i, name);
+          if (name != null) { M.rename(i, name).then(() => render(true)); return; }
         }
         render(true);
         return;
@@ -1779,6 +1779,8 @@
       const label = D.RARITIES[nextR].label;
       if (u.elite) return `<div class="upgrade elite-box on"><b>Elite ✦</b><span class="muted">Fights with ${label} strength, keeping its own abilities.</span></div>`;
       const cost = Player.ELITE_KYBER[def.rarity];
+      const lvl = Player.state.account.level >= Player.ELITE_LEVEL;
+      if (!lvl) return `<div class="upgrade elite-box"><b>Elite promotion</b><span class="muted">Unlocks at account level ${Player.ELITE_LEVEL}: promote a ${D.MAX_STARS}★ card with Kyber to fight at ${label} strength, keep its own abilities, and make its doctrine 25% stronger.</span><button class="btn btn-gold" type="button" disabled>Locked until level ${Player.ELITE_LEVEL}</button></div>`;
       const ready = u.stars >= D.MAX_STARS;
       const after = D.power(def, u.level, u.stars, true);
       return `<div class="upgrade elite-box"><b>Elite promotion</b>

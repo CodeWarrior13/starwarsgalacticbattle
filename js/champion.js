@@ -282,7 +282,11 @@
     const Net = HN().Net;
     if (!Net || !Net.ready || !Net.db) return false;
     try {
-      await Net.db.doc(`champion/${Net.me}`).set({ season: c.season, name: myName(), answers: c.answers, status: c.status, note: c.note || '', rev: c.reviewed || 0, t: Date.now(), ...(extra || {}) });
+      // Free text goes through the chat filter before it leaves the device.
+      const S = HN().safe;
+      const tidy = (v) => { if (typeof v !== 'string' || !S) return v; const r = S.clean(v); return r.blocked ? '[removed by the filter]' : r.text; };
+      const answers = c.answers ? Object.fromEntries(Object.entries(c.answers).map(([k, v]) => [k, tidy(v)])) : c.answers;
+      await Net.db.doc(`champion/${Net.me}`).set({ season: c.season, name: myName(), answers, status: c.status, note: tidy(c.note || ''), rev: c.reviewed || 0, t: Date.now(), ...(extra || {}) });
       c.sent = c.status;
       save();
       return true;

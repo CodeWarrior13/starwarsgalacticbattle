@@ -207,8 +207,8 @@
   const css = document.createElement('style');
   css.textContent = `.doctrine-box{margin:10px 0 2px;padding:10px 12px;border-radius:10px;border:1px solid rgba(120,170,255,.28);background:linear-gradient(180deg,rgba(40,70,130,.28),rgba(20,30,60,.2))}
 .doctrine-box .dh{display:flex;align-items:center;gap:8px;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:#9fc0ff}
-.doctrine-box .dh b{color:#fff;letter-spacing:.02em;text-transform:none;font-size:.95rem}
-.doctrine-box .dst{margin-left:auto;padding:1px 8px;border-radius:99px;font-size:.7rem;background:rgba(255,255,255,.08)}
+.doctrine-box .dn{display:block;margin-top:3px;color:#fff;font-size:1rem;line-height:1.2}
+.doctrine-box .dst{margin-left:auto;flex:0 0 auto;padding:1px 8px;border-radius:99px;font-size:.7rem;background:rgba(255,255,255,.08)}
 .doctrine-box .dst.G{color:#ffd36b}.doctrine-box .dst.S{color:#7fe3ff}.doctrine-box .dst.D{color:#8ff0a4}.doctrine-box .dst.A{color:#ff8f7a}
 .doctrine-box p{margin:6px 0 0;font-size:.9rem;line-height:1.35}
 .doctrine-box .d-el{font-size:.78rem;color:#8fa6c4}.doctrine-box .d-el.on{color:#ffd36b;font-weight:700}
