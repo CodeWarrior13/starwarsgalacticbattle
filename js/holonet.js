@@ -9001,6 +9001,23 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
     try { await Net.db.doc(`friends/${id}`).set(body); F.rows.set(id, { ...body, id }); redraw(); return 'Request sent'; } catch (e) { return "Couldn't send. Try again."; }
   }
 
+  // A player who joined from someone's invite link (or QR code) sends that
+  // player a friend request, once, as soon as they have Friends and a callsign.
+  async function inviterRequest() {
+    const inv = root.Player && root.Player.state && root.Player.state.invite;
+    if (!inv || !inv.key || inv.fr || !on()) return;
+    try {
+      await boot();
+      if (!Net.ready || !HN.hasProfile()) return;
+      const d = await Net.db.doc(`names/${inv.key}`).get();
+      const uid = d.exists ? d.data().uid : null;
+      if (!uid || uid === Net.me) { inv.fr = 1; root.Player.save(); return; }
+      const msg = await addUid(uid, inv.code);
+      if (/sent|Friends|Already/.test(msg || '')) { inv.fr = 1; root.Player.save(); }
+    } catch (e) { /* try again next time */ }
+  }
+  setTimeout(() => { inviterRequest(); }, 8000);
+  setInterval(() => { if (!document.hidden) inviterRequest(); }, 5 * 60000);
   HN.friends = { boot, open, addUid, sendCard, pairId, chatWith: (uid) => { const r = F.rows.get(pairId(Net.me, uid)); if (!r || !r.ok) return; F.chatWith = r.id; open(); }, badge: () => F.badge(), isFriend: (uid) => F.isFriend(uid), state: (uid) => { const r = F.rows.get(pairId(Net.me, uid)); return r ? (r.ok ? 'friends' : r.by === Net.me ? 'sent' : 'incoming') : ''; }, F };
 
   const css = document.createElement('style');
