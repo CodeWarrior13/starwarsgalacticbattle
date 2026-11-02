@@ -98,16 +98,16 @@
     cassian_haulcraft: ['Spy Network', 'G', '+10% XP from the battle.', { r: { xp: 0.1 } }],
 
     // The new 2.4 cards.
-    gamorrean_guard: ["Jabba's Muscle", 'D', 'Allies +6% health.', { a: { s: 'all', m: { hp: 0.06 } } }],
-    snowtrooper: ['Cold Assault', 'A', 'Empire allies +5% attack.', { a: { s: 'empire', m: { atk: 0.05 } } }],
+    gamorrean_guard: ["Jabba's Muscle", 'D', 'Allies +8% health and +3% armor.', { a: { s: 'all', m: { hp: 0.08, def: 0.03 } } }],
+    snowtrooper: ['Cold Assault', 'A', 'Allies +5% attack, and Trooper allies +5% armor.', { a: { s: 'all', m: { atk: 0.05 } }, a2: { s: 'trooper', m: { def: 0.05 } } }],
     wing_guard: ['Cloud City Tariff', 'G', '+8% credits from the battle.', { r: { cr: 0.08 } }],
-    scout_trooper: ['Speeder Recon', 'S', 'The squad starts with +8% Turn Meter.', { a: { s: 'all', m: { tmStart: 8 } } }],
-    shoretrooper: ['Coastal Defense', 'D', 'Trooper allies +8% health.', { a: { s: 'trooper', m: { hp: 0.08 } } }],
-    cf66_trooper: ['Execute Order 66', 'A', 'Jedi enemies -6% armor.', { e: { s: 'jedi', m: { def: -0.06 } } }],
-    geonosian_warrior: ['Hive Swarm', 'S', 'Separatist allies +6% speed.', { a: { s: 'separatist', m: { spd: 0.06 } } }],
-    purge_trooper: ['Purge Protocol', 'A', 'Allies +4% crit chance and +4% crit damage.', { a: { s: 'all', m: { crit: 0.04, critDmg: 0.04 } } }],
-    knight_of_ren: ['Knights of Ren', 'A', 'Sith allies +6% attack.', { a: { s: 'sith', m: { atk: 0.06 } } }],
-    commando_droid: ['Commando Strike', 'S', 'Droid allies +6% speed.', { a: { s: 'droid', m: { spd: 0.06 } } }],
+    scout_trooper: ['Speeder Recon', 'S', 'The squad starts with +20% Turn Meter and +1.5% speed.', { a: { s: 'all', m: { tmStart: 20, spd: 0.015 } } }],
+    shoretrooper: ['Coastal Defense', 'D', 'Allies +7% armor, and Trooper allies +8% health.', { a: { s: 'all', m: { def: 0.07 } }, a2: { s: 'trooper', m: { hp: 0.08 } } }],
+    cf66_trooper: ['Execute Order 66', 'A', 'Enemies -6% armor, and Jedi enemies -10% more.', { e: { s: 'all', m: { def: -0.06 } }, e2: { s: 'jedi', m: { def: -0.1 } } }],
+    geonosian_warrior: ['Hive Swarm', 'S', 'Allies +4% speed, and Separatist allies +4% more.', { a: { s: 'all', m: { spd: 0.04 } }, a2: { s: 'separatist', m: { spd: 0.04 } } }],
+    purge_trooper: ['Purge Protocol', 'A', 'Allies +6% crit chance and +10% crit damage.', { a: { s: 'all', m: { crit: 0.06, critDmg: 0.1 } } }],
+    knight_of_ren: ['Knights of Ren', 'A', 'Allies +5% attack, and Sith allies +4% more.', { a: { s: 'all', m: { atk: 0.05 } }, a2: { s: 'sith', m: { atk: 0.04 } } }],
+    commando_droid: ['Commando Strike', 'S', 'Allies +3% speed, and Droid allies +4% more.', { a: { s: 'all', m: { spd: 0.03 } }, a2: { s: 'droid', m: { spd: 0.04 } } }],
   };
 
   const STYLE = {
@@ -144,6 +144,9 @@
       const { a, x } = doc.spec;
       const f = eliteOf(elites, doc.id);
       if (a) { const m = scale(a.m, f); defs.forEach((d, i) => { if (d && inScope(d, a.s)) addMods(b.perUnit[i], m); }); }
+      // a2: a second, trait-only part on top of the squad-wide one.
+      const a2 = doc.spec.a2;
+      if (a2) { const m = scale(a2.m, f); defs.forEach((d, i) => { if (d && inScope(d, a2.s)) addMods(b.perUnit[i], m); }); }
       if (x === 'guard') defs.forEach((d, i) => { if (d && inScope(d, 'leader')) addMods(b.perUnit[i], { def: 0.08 * f }); });
       if (x === 'jescort') defs.forEach((d, i) => { if (d && inScope(d, 'jedi')) addMods(b.perUnit[i], { spd: 0.05 * f }); });
       // Leia and Echo have no numbers to boost, so as Elites they add +3% armor.
@@ -162,6 +165,7 @@
     for (const doc of listFor(ids)) {
       const f = eliteOf(elites, doc.id);
       if (doc.spec.e) out.foe.push({ s: doc.spec.e.s, m: scale(doc.spec.e.m, f) });
+      if (doc.spec.e2) out.foe.push({ s: doc.spec.e2.s, m: scale(doc.spec.e2.m, f) });
       if (doc.spec.x) { out.x[doc.spec.x] = (out.x[doc.spec.x] || 0) + f; out.f[doc.spec.x] = Math.max(out.f[doc.spec.x] || 1, f); }
     }
     // aoeN / healN add N% to area damage / healing received (each card once).
