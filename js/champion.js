@@ -421,6 +421,11 @@
     BUILDS,
   };
   root.Champion = Champion;
+  // The bridge, Ackbar and his speech box, shared with the season recap (js/recap.js).
+  Champion.kit = {
+    css: () => { if (!document.getElementById('cp-css')) document.head.appendChild(Object.assign(document.createElement('style'), { id: 'cp-css', textContent: css })); },
+    bridgeSvg, talk, myName, esc,
+  };
   // Test runs (owner codes): play the scenes without sending anything.
   Champion.testDesign = () => { const h = state(); if (!h) return false; testMode = true; h.champ = { season: (HN().social && HN().social.seasonNo ? HN().social.seasonNo() - 1 : 1), status: 'design', step: 0, answers: null, test: 1 }; save(); setTimeout(() => play(), 300); return true; };
   Champion.testReview = (id) => { if (!state()) return false; testMode = true; setTimeout(() => review({ card: id || 'luke', rev: 999 }), 300); return true; };

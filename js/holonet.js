@@ -7796,7 +7796,22 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
     HN.save(); Net.publish();
     paying = false;
     // 2.4: first in the world in the Legend league designs a card (js/champion.js).
-    if (rank === 1 && HN.divOf(prev.best).league === 'legend' && root.Champion) root.Champion.earned(prev.season);
+    const champ = () => { if (rank === 1 && HN.divOf(prev.best).league === 'legend' && root.Champion) root.Champion.earned(prev.season); };
+    const collect = async () => {
+      if (card && card.isNew) await UI.walkout(D.UNIT_MAP[rw.card], D.UNIT_MAP[rw.card].rarity, false, { holonet: true, isNew: true, shards: 0 });
+      else if (card) toast(`${D.UNIT_MAP[rw.card].name} +${card.shards} shards`);
+      SO.rerender();
+      champ();
+    };
+    // The season recap: Admiral Ackbar walks through the pilot's season (js/recap.js).
+    if (root.Recap) {
+      const all = h.rcAll || { best: h.best || 0, rank: 0 };
+      const record = prev.best >= (h.rcAll ? all.best + 1 : all.best);
+      h.rcAll = { best: Math.max(all.best || 0, prev.best), rank: all.rank ? Math.min(all.rank, rank) : rank };
+      HN.save();
+      const shown = await root.Recap.show({ season: prev.season % 100, rank, total: ladder.length + 1, best: prev.best, div: HN.divOf(prev.best), record, allBest: h.rcAll.best, prize: rw ? rewardText(rw) + (rw.puck ? ' (open it in the Forge)' : '') : '', stats: root.Recap.seasonStats(h, prev.season) });
+      if (shown) return collect();
+    }
     const m = openModal(`<div class="hn-result"><div class="result-title ${rw ? 'win' : ''}">SEASON ${prev.season % 100} LEADERBOARD</div>
       <p style="text-align:center;margin:4px 0">You finished <b>#${rank}</b> with a season best of <b>${fmt(prev.best)}</b>.</p>
       ${rw ? `<p style="text-align:center;margin:0" class="muted">${esc(rewardText(rw))}${rw.puck ? ' (open it in the Forge)' : ''}</p>` : '<p style="text-align:center;margin:0" class="muted">The top 25 earn rewards. There\'s always next season.</p>'}
@@ -7805,9 +7820,7 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
     m.root.addEventListener('click', async (e) => {
       if (!e.target.closest('[data-x]')) return;
       m.close();
-      if (card && card.isNew) await UI.walkout(D.UNIT_MAP[rw.card], D.UNIT_MAP[rw.card].rarity, false, { holonet: true, isNew: true, shards: 0 });
-      else if (card) toast(`${D.UNIT_MAP[rw.card].name} +${card.shards} shards`);
-      SO.rerender();
+      collect();
     });
   }
 

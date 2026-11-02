@@ -67,6 +67,7 @@
         'NEW|Promote All (level 20): promote every card with a full shard bar at once, then scroll through a promotion report with each card\'s new stars and stats.',
         'NEW|Buy Chance Cubes and Loaded Dice several at a time: −10, −1, type any amount, +1, +10 or Max.',
         'BALANCE|Live Duels, Friendly Battles and Wager duels: you each ban two cards now (was one). You take turns: challenger, opponent, challenger, opponent.',
+        'NEW|Season recap: when a HoloNet season ends, Admiral Ackbar welcomes you onto Home One\'s bridge with your final report: where you finished in the world (every pilot counted, bots included), your league and season best, your all-time high, your record, raids and favorite card of the season. Then collect your season reward.',
         'NEW|True Strength friendly battles: pick True Strength in Friends and every card fights at its real level and stars, so your level 40s take on their level 25s. Even mode (every card at Level 20 ★3) is still there. Just for fun: no rating, no rewards.',
         'NEW|Seekers who find hidden things now have somewhere to keep them, and every find gets its own moment. Keep your eyes open.',
         'IMPROVED|Watching a card\'s ultimate from the Collection always starts at 1× speed, so you see all of it. The speed button still works there and doesn\'t change your battle speed.',
