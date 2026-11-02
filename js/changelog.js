@@ -23,6 +23,17 @@
   const ALL_UPDATES = [
     {
       v: '2.4', date: 'November 11, 2026', title: 'Liberation', from: LAUNCH_24 == null ? Infinity : LAUNCH_24,
+      // The biggest update yet gets its own log: a liberation banner and themed sections.
+      theme: 'liberation',
+      stats: [['110', 'stages'], ['22', 'bosses'], ['10', 'new cards'], ['85', 'doctrines'], ['2', 'fleet raids'], ['50', 'level cap']],
+      groups: [
+        ['Liberate the Galaxy', '◉', 'Liberat|bosses|Optional bosses|Zillo|110 stages|Siege|Already finished|scenes download|galaxy grows'],
+        ['Cards & Doctrines', '✦', 'new cards|Doctrines|Elite|Common, rare and epic|level cap|Hoth Star Destroyer'],
+        ['Command Your Squad', '⚑', 'Battle Plans|Turn Meter|Replay ×3'],
+        ['HoloNet', '⌬', 'HoloNet raid|Axial|Sith Fleet|weekly raid|Champion'],
+        ['Credits & Rewards', '◈', 'results screen|Sell spare|Wallet|cost|Replaying|1.8×'],
+        ['One more thing…', '✧', ''],
+      ],
       items: [
         'NEW|Liberate the galaxy: every world now has 10 stages with its own cast of enemies, a main boss that liberates it and an optional boss on the side. A world counts as liberated once its main boss falls.',
         'NEW|11 new bosses: the Wampa on Hoth, the Cave\'s Vision on Dagobah, Carbonite Chamber Vader and Bossk with the Hound\'s Tooth on Bespin, the AT-ST Walker on Endor, Director Krennic on Scarif, Darth Sidious and Commander Cody on Coruscant, Jango Fett in the Geonosis arena, Emperor Reborn on Exegol and General Grievous, Warlord at the Siege of Coruscant. Each fights with its own tricks.',
@@ -74,7 +85,7 @@
         'NEW|Season recap: when a HoloNet season ends, Admiral Ackbar welcomes you onto Home One\'s bridge with your final report: where you finished in the world (every pilot counted, bots included), your league and season best, your all-time high, your record, raids and favorite card of the season. Then collect your season reward.',
         'NEW|True Strength friendly battles: pick True Strength in Friends and every card fights at its real level and stars, so your level 40s take on their level 25s. Even mode (every card at Level 20 ★3) is still there. Just for fun: no rating, no rewards.',
         'NEW|Seekers who find hidden things now have somewhere to keep them, and every find gets its own moment. Keep your eyes open.',
-        'IMPROVED|Enter a code and open your Seeker\'s Codex straight from your Commander profile (they\'re still in Settings too).',
+        'IMPROVED|Open your Seeker\'s Codex straight from your Commander profile, and enter codes from inside it (both are still in Settings too).',
         'IMPROVED|Watching a card\'s ultimate from the Collection always starts at 1× speed, so you see all of it. The speed button still works there and doesn\'t change your battle speed.',
         'NEW|Wager duels: reach Silver III in a season to unlock a Wager tab in Live Duels. After bans you have 45 seconds to agree a stake of 1,000 to 100,000 credits (offer, counter or accept, and chat). The winner takes both wagers minus a 10% house tax. Rating counts, and leaving counts as a loss. Up to 5 a day with the same pilot.',
         'NEW|The Dark Trooper is now Mythic, and he\'s the first HoloNet card you can also use in the main game: campaign, bosses, the Endless Tower and more. He\'s still a rare guild raid drop (1 in 100 each time your guild beats the raid), and his Beskar Alloy passive now works: 25% less damage from attacks.',
@@ -317,10 +328,39 @@
 
     entryHtml(u, open) {
       const esc = root.UI.esc;
-      return `<details class="ul-entry" ${open ? 'open' : ''}>
+      return `<details class="ul-entry ${u.theme ? `th-${u.theme}` : ''}" ${open ? 'open' : ''}>
         <summary><span class="ul-ver">v${esc(u.v)}</span><b>${esc(u.title)}</b><span class="ul-date">${esc(u.date)}</span><span class="ul-chev">▾</span></summary>
-        ${this.itemsHtml(u.items)}
+        ${u.theme ? this.themedHtml(u, true) : this.itemsHtml(u.items)}
       </details>`;
+    },
+
+    // A themed update: banner (every world lighting up), the numbers, then
+    // its notes in sections. Each note goes in the first section it matches;
+    // anything left over lands in the last one.
+    themedHtml(u, compact) {
+      const esc = root.UI.esc;
+      const D = root.GameData;
+      const worlds = (D && D.PLANETS ? D.PLANETS : []).map((p, i) => `<span class="lbl-w" style="--i:${i}" title="${esc(p.name)}"><canvas width="56" height="56" data-lblw="${esc(p.id)}"></canvas></span>`).join('');
+      const left = u.items.slice();
+      const take = (re) => { const out = []; for (let i = 0; i < left.length; i++) if (re && re.test(left[i])) { out.push(left[i]); left.splice(i--, 1); } return out; };
+      const secs = u.groups.map(([title, icon, pat], k) => [title, icon, k === u.groups.length - 1 ? null : take(pat ? new RegExp(pat, 'i') : null)]);
+      secs[secs.length - 1][2] = left;
+      return `<div class="lbl ${compact ? 'compact' : ''}">
+        <div class="lbl-hero"><div class="lbl-stars"></div><div class="lbl-worlds">${worlds}</div>
+          <p class="lbl-kick">Update ${esc(u.v)}</p><h2 class="lbl-title">${esc(u.title).toUpperCase()}</h2><p class="lbl-date">${esc(u.date)} · The biggest update yet</p></div>
+        <div class="lbl-stats">${(u.stats || []).map(([n, l], i) => `<div style="--i:${i}"><b>${esc(n)}</b><span>${esc(l)}</span></div>`).join('')}</div>
+        ${secs.filter((x) => x[2].length).map(([title, icon, items], k) => `<section class="lbl-sec ${k === secs.length - 1 ? 'last' : ''}" style="--i:${k}"><h3><i>${icon}</i>${esc(title)}</h3>${this.itemsHtml(items)}</section>`).join('')}
+      </div>`;
+    },
+
+    // Light up the banner's worlds (canvas spheres), one after another.
+    paintWorlds(scope) {
+      if (!root.drawPlanetSphere) return;
+      scope.querySelectorAll('canvas[data-lblw]').forEach((c) => {
+        if (c.dataset.done) return;
+        c.dataset.done = '1';
+        try { root.drawPlanetSphere(c.getContext('2d'), 28, 28, 20, c.dataset.lblw, 1.1, { halo: 0.35 }); } catch (e) { /* leave it blank */ }
+      });
     },
 
     // Settings > Update log: every update, newest first.
@@ -333,6 +373,7 @@
       // One version open at a time; the opened one scrolls to the top so it
       // fills the panel, and the others are a scroll away.
       const list = m.root.querySelector('.ul-list');
+      this.paintWorlds(m.root);
       m.root.querySelectorAll('.ul-entry').forEach((d) => d.addEventListener('toggle', () => {
         if (!d.open) return;
         m.root.querySelectorAll('.ul-entry[open]').forEach((o) => { if (o !== d) o.open = false; });
@@ -345,16 +386,20 @@
       this.markSeen();
     },
 
+    // Owner preview of an update's What's New before it's out: Changelog.preview('2.4').
+    preview(v) { const u = ALL_UPDATES.find((x) => x.v === v); if (u) this.showWhatsNew(u); },
+
     // After an update: show what's new once, the next time the game opens.
-    showWhatsNew() {
+    showWhatsNew(only) {
       const UI = root.UI;
-      const u = UPDATES[0];
-      const m = UI.openModal(`<div class="ul-head"><span class="ul-badge">What's new</span><span class="ul-ver big">v${UI.esc(u.v)}</span><h2>${UI.esc(u.title)}</h2></div>
+      const u = only || UPDATES[0];
+      const m = UI.openModal(`${u.theme ? this.themedHtml(u) : `<div class="ul-head"><span class="ul-badge">What's new</span><span class="ul-ver big">v${UI.esc(u.v)}</span><h2>${UI.esc(u.title)}</h2></div>
         <p class="ul-date-line">${UI.esc(u.date)}</p>
-        ${this.itemsHtml(u.items)}
+        ${this.itemsHtml(u.items)}`}
         <p class="ul-safe">Your progress is safe: updates never reset your save.</p>
         ${RELOAD_NOTE}
-        <div class="modal-actions"><button class="btn" type="button" data-all>Full update log</button><button class="btn btn-primary" type="button" data-close>Let's go</button></div>`, { small: true, cls: 'update-modal' });
+        <div class="modal-actions"><button class="btn" type="button" data-all>Full update log</button><button class="btn btn-primary" type="button" data-close>${u.theme === 'liberation' ? 'Liberate the galaxy' : "Let's go"}</button></div>`, { small: true, cls: `update-modal ${u.theme ? `th-${u.theme}` : ''}` });
+      this.paintWorlds(m.root);
       m.root.addEventListener('click', (e) => {
         if (e.target.closest('[data-close]')) m.close();
         if (e.target.closest('[data-all]')) { m.close(); this.showAll(); }

@@ -1337,11 +1337,12 @@ function journal() {
       ${kyHtml(ksel)}
       ${xqTester() && !xqLive() ? `<div class="xq-jsec xq-test"><h3>Tester tools</h3><p>Only on tester devices. Reset puts every piece back in hiding (your unlocked codes and rewards stay).</p>
         <div class="xq-tbtns"><button class="btn" type="button" data-xq-t="chip">Play chip find</button><button class="btn" type="button" data-xq-t="holo">Play holocron find</button><button class="btn" type="button" data-xq-t="reset">Reset pieces</button></div></div>` : ''}
-      <div class="modal-actions"><button class="btn btn-primary" type="button" data-jx>Close</button></div>`;
+      <div class="modal-actions">${UI.codeEntry ? '<button class="btn" type="button" data-jcode>Enter a code</button>' : ''}<button class="btn btn-primary" type="button" data-jx>Close</button></div>`;
   };
   paint();
   m.root.addEventListener('click', (e) => {
     if (e.target.closest('[data-jx]')) return m.close();
+    if (e.target.closest('[data-jcode]')) { m.close(); const st = document.querySelector('.settings-modal [data-close]'); if (st) st.click(); return UI.codeEntry(); }
     const t = e.target.closest('[data-xq-t]');
     if (t && xqTester()) {
       const k = t.dataset.xqT;
