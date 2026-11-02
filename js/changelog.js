@@ -323,7 +323,7 @@
       const esc = root.UI.esc;
       const LABEL = { NEW: 'New', IMPROVED: 'Improved', BALANCE: 'Balance', FIXED: 'Fixed' };
       const ICON = { NEW: '✦', IMPROVED: '▲', BALANCE: '⚖', FIXED: '✚' };
-      const glow = (t) => esc(t).replace(/(\d[\d,.]*(?:%|×|★)?)/g, '<b class="lbl-num">$1</b>');
+      const glow = (t) => esc(t).replace(/(?<![#\d])(\d+(?:[.,]\d+)*(?:%|×|★)?)/g, '<b class="lbl-num">$1</b>');
       return `<ul class="ul-items">${items.map((line, k) => {
         const [tag, text] = line.includes('|') ? line.split('|') : ['NEW', line];
         return `<li class="ul-item t-${tag.toLowerCase()}" style="--k:${k}"><span class="ul-tag">${themed ? `<i>${ICON[tag] || '✦'}</i>` : ''}${LABEL[tag] || tag}</span><span class="ul-text">${themed ? glow(text) : esc(text)}</span></li>`;

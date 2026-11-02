@@ -259,6 +259,7 @@
 .p2-codex i s { position: absolute; inset: -4px; border-radius: 50%; border: 1.5px dashed rgba(191, 232, 255, .8); animation: p2-ring 6s linear infinite; }
 @keyframes p2-ring { to { transform: rotate(360deg); } }
 @keyframes p2-pulse { 50% { box-shadow: 0 0 18px #7fd8ff; } }
+.p2-codex span { white-space: nowrap; }
 .p2-codex em { font-style: normal; font-size: 10px; letter-spacing: .08em; padding: 2px 7px; border-radius: 999px; background: rgba(255, 210, 63, .16); color: #ffe81f; border: 1px solid rgba(255, 210, 63, .4); }
 body.perf-on .p2-codex::before, body.perf-on .p2-codex i, body.perf-on .p2-codex i s { animation: none; }
 .p2-tabs { grid-template-columns: repeat(6, minmax(0, 1fr)); } .p2-tabs button { font-size: 12px; padding: 8px 2px; }
