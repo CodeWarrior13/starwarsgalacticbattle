@@ -272,7 +272,7 @@
 
     // 2.4 Elite: a common, rare or epic card at top stars can be promoted once
     // with Kyber. It keeps its abilities and fights with the next rarity's stats.
-    ELITE_KYBER: { common: 300, rare: 500, epic: 800 },
+    ELITE_KYBER: { common: 120, rare: 180, epic: 260 },
     eliteCost(id) {
       const u = this.unit(id);
       const def = D.UNIT_MAP[id];

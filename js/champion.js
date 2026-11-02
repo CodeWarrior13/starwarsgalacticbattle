@@ -36,43 +36,71 @@
 
   // ---------- look ----------
   const css = `
-.cp { position: fixed; inset: 0; z-index: 430; overflow: hidden; overflow: clip; display: grid; place-items: center; background: #02050c; color: #eef3fa; contain: strict; animation: fade-in .4s; }
+.cp { position: fixed; inset: 0; z-index: 430; height: 100%; height: 100dvh; overflow: hidden; overflow: clip; display: flex; flex-direction: column; background: #02050c; color: #eef3fa; animation: fade-in .4s; }
 .cp.out { opacity: 0; transition: opacity .45s; }
-.cp-bg { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 38%, #0f3a6a 0, #061a34 38%, #02050c 75%); }
-.cp-warp { position: absolute; left: 50%; top: 40%; width: 0; height: 0; }
-.cp-warp i { position: absolute; left: 0; top: 0; width: 2px; height: 46vmax; margin-left: -1px; transform-origin: 50% 0; background: linear-gradient(180deg, rgba(190, 230, 255, 0), rgba(190, 230, 255, .8)); opacity: 0; animation: cp-warp 1.3s calc(var(--d) * 1ms) cubic-bezier(.5, 0, 1, .5) both; }
+/* The bridge of Home One: dark curved viewports onto the stars. */
+.cp-bg { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 34%, #123f72 0, #07203f 36%, #030a16 70%, #010308 100%); }
+.cp-bridge { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; opacity: 0; animation: fade-in 1s 1.2s forwards; }
+.cp-warp { position: absolute; left: 50%; top: 38%; width: 0; height: 0; }
+.cp-warp i { position: absolute; left: 0; top: 0; width: 2px; height: 46vmax; margin-left: -1px; transform-origin: 50% 0; background: linear-gradient(180deg, rgba(190, 230, 255, 0), rgba(190, 230, 255, .85)); opacity: 0; animation: cp-warp 1.3s calc(var(--d) * 1ms) cubic-bezier(.5, 0, 1, .5) both; }
 @keyframes cp-warp { 0% { opacity: 0; transform: rotate(var(--a)) translateY(4vmax) scaleY(.05); } 30% { opacity: 1; } 100% { opacity: 0; transform: rotate(var(--a)) translateY(30vmax) scaleY(1); } }
 .cp-flash { position: absolute; inset: 0; background: #bfe8ff; opacity: 0; animation: cp-flash .5s 1.15s ease-out; pointer-events: none; }
-@keyframes cp-flash { 0% { opacity: 0; } 20% { opacity: .55; } 100% { opacity: 0; } }
-.cp-table { position: absolute; left: 50%; bottom: -6vh; width: min(560px, 100vw); aspect-ratio: 4 / 1; margin-left: calc(min(560px, 100vw) / -2); border-radius: 50%; background: radial-gradient(ellipse at 50% 30%, #2a6aa8 0, #0b2440 55%, #050d1a 72%); box-shadow: 0 0 60px rgba(74, 168, 255, .35); opacity: 0; animation: cp-up .7s 1.2s ease-out forwards; }
-@keyframes cp-up { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: none; } }
-.cp-holo { position: absolute; left: 50%; top: clamp(70px, 14vh, 140px); width: clamp(150px, 34vmin, 230px); margin-left: calc(clamp(150px, 34vmin, 230px) / -2); opacity: 0; animation: cp-holo 1s 1.45s steps(1) forwards, cp-flick 4.5s 2.6s infinite; }
-@keyframes cp-holo { 0% { opacity: 0; } 15% { opacity: .6; } 25% { opacity: .1; } 40% { opacity: .9; } 50% { opacity: .3; } 65%, 100% { opacity: .92; } }
-@keyframes cp-flick { 0%, 92%, 100% { opacity: .92; } 94% { opacity: .55; } 96% { opacity: .85; } }
-.cp-holo .cp-ack { position: relative; border-radius: 50% 50% 12px 12px; overflow: hidden; filter: sepia(1) hue-rotate(165deg) saturate(2.2) brightness(1.05); mask-image: linear-gradient(180deg, #000 72%, transparent); -webkit-mask-image: linear-gradient(180deg, #000 72%, transparent); }
-.cp-holo .cp-ack svg { display: block; width: 100%; height: auto; }
-.cp-holo::after { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(180deg, rgba(160, 220, 255, .16) 0 2px, transparent 2px 5px); mix-blend-mode: screen; pointer-events: none; }
-.cp-beam { position: absolute; left: 50%; top: 40%; width: 140%; height: 100vh; margin-left: -70%; background: linear-gradient(0deg, rgba(110, 200, 255, .32), rgba(110, 200, 255, 0) 70%); clip-path: polygon(44% 100%, 56% 100%, 100% 0, 0 0); transform: rotate(180deg); transform-origin: 50% 0; pointer-events: none; z-index: -1; }
-.cp-medal { position: absolute; left: 50%; top: clamp(70px, 14vh, 140px); transform: translateX(-50%); display: grid; justify-items: center; gap: 4px; text-align: center; opacity: 0; pointer-events: none; }
-.cp.medal .cp-medal { animation: cp-medal .9s cubic-bezier(.2, 1.3, .4, 1) forwards; }
-.cp.medal .cp-holo { animation: cp-out .4s forwards; }
-@keyframes cp-out { to { opacity: 0; transform: scale(.9); } }
-@keyframes cp-medal { from { opacity: 0; transform: translateX(-50%) translateY(-30px) scale(.5); } to { opacity: 1; transform: translateX(-50%) scale(1); } }
-.cp-medal .cp-rays { position: absolute; left: 50%; top: 60px; width: min(340px, 90vw); height: min(340px, 90vw); margin: calc(min(340px, 90vw) / -2) 0 0 calc(min(340px, 90vw) / -2); background: repeating-conic-gradient(rgba(255, 210, 63, .22) 0 6deg, transparent 6deg 18deg); border-radius: 50%; mask-image: radial-gradient(circle, #000 20%, transparent 70%); -webkit-mask-image: radial-gradient(circle, #000 20%, transparent 70%); animation: cp-spin 30s linear infinite; z-index: -1; }
-@keyframes cp-spin { to { transform: rotate(360deg); } }
-.cp-medal svg { width: clamp(96px, 24vmin, 140px); height: auto; filter: drop-shadow(0 0 22px rgba(255, 210, 63, .55)); }
-.cp-medal b { font: 800 clamp(26px, 7vw, 44px)/1 var(--font-display); letter-spacing: .08em; color: #ffd23f; text-shadow: 0 0 22px rgba(255, 210, 63, .6); }
-.cp-medal small { font-size: 12px; letter-spacing: .2em; text-transform: uppercase; color: #bfe8ff; }
-.cp-medal .cp-nm { font: 700 15px var(--font-display); letter-spacing: .06em; padding: 3px 12px; border-radius: 999px; border: 1px solid rgba(255, 210, 63, .5); background: rgba(255, 210, 63, .1); }
-.cp-say { position: absolute; left: 0; right: 0; margin: 0 auto; bottom: max(5vh, calc(16px + env(safe-area-inset-bottom, 0px))); width: min(620px, calc(100vw - 28px)); box-sizing: border-box; background: rgba(6, 16, 32, .92); border: 1px solid rgba(124, 208, 255, .45); border-radius: 16px; padding: 14px 16px 12px; display: grid; gap: 4px; opacity: 0; cursor: pointer; box-shadow: 0 10px 40px rgba(0, 0, 0, .5); }
+@keyframes cp-flash { 0% { opacity: 0; } 20% { opacity: .5; } 100% { opacity: 0; } }
+@keyframes cp-up { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: none; } }
+/* Everything above Ackbar's words lives here, so his words always have room. */
+.cp-scene { position: relative; flex: 1 1 auto; min-height: 0; }
+/* Ackbar: in full colour, projected from the holotable. */
+.cp-holo { position: absolute; left: 50%; top: 50%; width: clamp(150px, 36vmin, 240px); transform: translate(-50%, -54%); display: grid; justify-items: center; opacity: 0; animation: cp-holo 1s 1.45s steps(1) forwards; }
+@keyframes cp-holo { 0% { opacity: 0; } 15% { opacity: .7; } 25% { opacity: .15; } 40% { opacity: 1; } 50% { opacity: .4; } 65%, 100% { opacity: 1; } }
+.cp-holo .cp-cone { position: absolute; left: 50%; bottom: -8%; width: 150%; height: 120%; transform: translateX(-50%); background: linear-gradient(0deg, rgba(110, 200, 255, .45), rgba(110, 200, 255, 0) 85%); clip-path: polygon(46% 100%, 54% 100%, 100% 0, 0 0); pointer-events: none; }
+.cp-holo .cp-ack { position: relative; width: 100%; aspect-ratio: 100 / 110; border-radius: 48% 48% 14px 14px; overflow: hidden; box-shadow: 0 0 0 2px rgba(124, 208, 255, .75), 0 0 34px rgba(74, 168, 255, .55); animation: cp-flick 5s 2.6s infinite; }
+.cp-holo .cp-ack svg { display: block; width: 100%; height: 100%; }
+/* A light blue sheen and moving scanlines over his true colours. */
+.cp-holo .cp-ack::before { content: ''; position: absolute; inset: 0; z-index: 1; background: linear-gradient(180deg, rgba(120, 210, 255, .16), rgba(120, 210, 255, .04) 60%, rgba(120, 210, 255, .2)); pointer-events: none; }
+.cp-holo .cp-ack::after { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 200%; z-index: 2; background: repeating-linear-gradient(180deg, rgba(190, 235, 255, .13) 0 2px, transparent 2px 6px); animation: cp-scan 3s linear infinite; pointer-events: none; }
+@keyframes cp-scan { to { transform: translateY(-50%); } }
+@keyframes cp-flick { 0%, 93%, 100% { opacity: 1; } 95% { opacity: .7; } 97% { opacity: .95; } }
+.cp-holo .cp-emit { position: relative; margin-top: 12%; width: 70%; height: 12px; border-radius: 50%; background: radial-gradient(ellipse, #bfe8ff 0, #3a9ad8 45%, rgba(20, 60, 110, 0) 72%); box-shadow: 0 0 24px rgba(110, 200, 255, .8); }
+.cp-holo .cp-plate { position: absolute; left: 50%; bottom: 18%; transform: translateX(-50%); z-index: 3; font: 700 10px var(--font-display); letter-spacing: .22em; text-transform: uppercase; white-space: nowrap; padding: 3px 10px; border-radius: 999px; background: rgba(4, 16, 32, .85); border: 1px solid rgba(124, 208, 255, .55); color: #bfe8ff; }
+.cp.medal .cp-holo { animation: cp-out .45s forwards; }
+@keyframes cp-out { to { opacity: 0; transform: translate(-50%, -54%) scale(.92); } }
+/* The champion's medal. */
+.cp-medal { position: absolute; left: 50%; top: 50%; width: min(520px, 94%); transform: translate(-50%, -50%); display: grid; justify-items: center; gap: 6px; text-align: center; opacity: 0; pointer-events: none; }
+.cp.medal .cp-medal { opacity: 1; }
+.cp-medal .cp-mwrap { position: relative; width: clamp(130px, 32vmin, 190px); aspect-ratio: 120 / 150; perspective: 700px; }
+.cp.medal .cp-mwrap svg { animation: cp-drop 1.2s cubic-bezier(.2, 1.1, .3, 1) both; }
+@keyframes cp-drop { 0% { opacity: 0; transform: translateY(-60px) rotateY(540deg) scale(.4); } 70% { opacity: 1; transform: translateY(6px) rotateY(-10deg) scale(1.05); } 100% { opacity: 1; transform: none; } }
+.cp-mwrap svg { width: 100%; height: 100%; display: block; overflow: visible; filter: drop-shadow(0 10px 22px rgba(0, 0, 0, .55)) drop-shadow(0 0 18px rgba(255, 200, 60, .45)); }
+.cp-mwrap .cp-shine { animation: cp-shine 3.6s 2s ease-in-out infinite; }
+@keyframes cp-shine { 0% { transform: translateX(-90px) skewX(-20deg); } 45%, 100% { transform: translateX(110px) skewX(-20deg); } }
+.cp-rays { position: absolute; left: 50%; top: 58%; width: min(360px, 92vw); aspect-ratio: 1; transform: translate(-50%, -50%); background: repeating-conic-gradient(rgba(255, 210, 63, .2) 0 5deg, transparent 5deg 15deg); border-radius: 50%; mask-image: radial-gradient(circle, #000 18%, transparent 68%); -webkit-mask-image: radial-gradient(circle, #000 18%, transparent 68%); z-index: -1; opacity: 0; }
+.cp.medal .cp-rays { animation: fade-in .8s .6s forwards, cp-spin 40s linear infinite; }
+@keyframes cp-spin { to { transform: translate(-50%, -50%) rotate(360deg); } }
+.cp-ring { position: absolute; left: 50%; top: 58%; width: 40px; height: 40px; margin: -20px 0 0 -20px; border-radius: 50%; border: 2px solid #ffd23f; opacity: 0; }
+.cp.medal .cp-ring { animation: cp-ring 1.2s .8s ease-out forwards; }
+.cp.medal .cp-ring.r2 { animation-delay: 1s; border-color: #fff3c4; }
+@keyframes cp-ring { 0% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(9); } }
+.cp-medal .cp-ttl { font: 800 clamp(20px, 5.6vw, 34px)/1.05 var(--font-display); letter-spacing: .1em; text-transform: uppercase; color: #ffd23f; text-shadow: 0 2px 0 #6a4206, 0 0 26px rgba(255, 210, 63, .55); opacity: 0; }
+.cp-medal .cp-rank { font-size: 12px; letter-spacing: .22em; text-transform: uppercase; color: #bfe8ff; opacity: 0; }
+.cp-medal .cp-nm { font: 700 15px var(--font-display); letter-spacing: .06em; padding: 4px 14px; border-radius: 999px; border: 1px solid rgba(255, 210, 63, .55); background: rgba(255, 210, 63, .1); opacity: 0; }
+.cp.medal .cp-ttl { animation: cp-up .5s 1s forwards; }
+.cp.medal .cp-rank { animation: cp-up .5s 1.2s forwards; }
+.cp.medal .cp-nm { animation: cp-up .5s 1.35s forwards; }
+/* Ackbar's words: in the flow at the bottom, always fully on screen. */
+.cp-say { position: relative; z-index: 3; flex: 0 0 auto; width: min(620px, calc(100% - 28px)); box-sizing: border-box; margin: 0 auto calc(14px + env(safe-area-inset-bottom, 0px)); background: rgba(6, 16, 32, .94); border: 1px solid rgba(124, 208, 255, .45); border-radius: 16px; padding: 12px 14px 10px; display: grid; grid-template-columns: 44px 1fr; gap: 2px 12px; align-items: start; opacity: 0; cursor: pointer; box-shadow: 0 10px 40px rgba(0, 0, 0, .5); }
 .cp.talk .cp-say { animation: cp-up .45s ease-out forwards; }
+.cp-say .cp-face { grid-row: 1 / span 3; width: 44px; height: 48px; border-radius: 50% 50% 8px 8px; overflow: hidden; border: 1px solid rgba(124, 208, 255, .6); }
+.cp-say .cp-face svg { display: block; width: 100%; height: 100%; }
 .cp-say > b { font: 800 11px var(--font-display); letter-spacing: .18em; text-transform: uppercase; color: #7cd0ff; }
-.cp-say p { margin: 0; font-size: clamp(15px, 3.8vw, 17px); line-height: 1.45; min-height: 3em; }
+.cp-say p { margin: 0; font-size: clamp(14px, 3.8vw, 17px); line-height: 1.45; min-height: 2.9em; }
 .cp-say .cp-tap { justify-self: end; font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: #6a8ab0; opacity: 0; transition: opacity .3s; }
 .cp-say.done .cp-tap { opacity: 1; }
+/* The form and the review sit on their own panel, above the scene. */
+.cp-form { position: absolute; inset: 0; z-index: 5; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; display: grid; align-content: start; justify-items: center; gap: 12px; padding: max(16px, env(safe-area-inset-top, 0px)) 14px max(20px, calc(14px + env(safe-area-inset-bottom, 0px))); background: radial-gradient(ellipse at 50% 0, #0d2c52 0, #061428 45%, #020610 100%); animation: cp-up .45s ease-out; }
+.cp-form::before { content: ''; position: fixed; inset: 0; z-index: -1; background: repeating-linear-gradient(180deg, rgba(124, 208, 255, .035) 0 1px, transparent 1px 4px); pointer-events: none; }
 .cp-form { position: absolute; inset: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; display: grid; align-content: start; justify-items: center; gap: 12px; padding: max(16px, env(safe-area-inset-top, 0px)) 16px max(20px, env(safe-area-inset-bottom, 0px)); animation: cp-up .45s ease-out; }
 .cp-fhead { display: flex; align-items: center; gap: 10px; width: min(620px, 100%); }
-.cp-fhead .cp-mini { width: 54px; height: 60px; flex: 0 0 auto; border-radius: 50% 50% 10px 10px; overflow: hidden; border: 1px solid rgba(124, 208, 255, .6); filter: sepia(1) hue-rotate(165deg) saturate(2.2); }
+.cp-fhead .cp-mini { width: 54px; height: 60px; flex: 0 0 auto; border-radius: 50% 50% 10px 10px; overflow: hidden; border: 1px solid rgba(124, 208, 255, .6); box-shadow: 0 0 14px rgba(74, 168, 255, .4); }
 .cp-fhead .cp-mini svg { display: block; width: 100%; height: auto; }
 .cp-fhead p { margin: 0; flex: 1; font-size: 14px; color: #c9e6ff; background: rgba(6, 16, 32, .9); border: 1px solid rgba(124, 208, 255, .35); border-radius: 12px; padding: 8px 12px; }
 .cp-steps { display: flex; gap: 4px; justify-content: center; }
@@ -104,20 +132,54 @@
 .cp-ult b { color: #ffd23f; font-family: var(--font-display); }
 @media (prefers-reduced-motion: reduce) { .cp *, .cp { animation-duration: .01s !important; animation-delay: 0s !important; } }
 `;
-  const medalSvg = () => `<svg viewBox="0 0 120 140" aria-hidden="true"><defs><linearGradient id="cpg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff2b0"/><stop offset=".45" stop-color="#ffc83a"/><stop offset="1" stop-color="#8a5200"/></linearGradient></defs>
-    <path d="M38 0 L52 44 L60 40 L68 44 L82 0 L70 0 L60 30 L50 0Z" fill="#c8102e"/><path d="M44 0 L56 36 M76 0 L64 36" stroke="#ffd23f" stroke-width="2"/>
-    ${Array.from({ length: 16 }, (_, k) => `<path d="M60 ${k % 2 ? 46 : 40} L64 62 L56 62Z" fill="#ffd86a" opacity=".85" transform="rotate(${k * 22.5} 60 88)"/>`).join('')}
-    <circle cx="60" cy="88" r="38" fill="url(#cpg)" stroke="#7a4a04" stroke-width="2"/><circle cx="60" cy="88" r="30" fill="none" stroke="#fff2b0" stroke-width="1.2" opacity=".7"/>
-    <text x="60" y="102" text-anchor="middle" font-size="40" font-weight="800" fill="#5a3400" font-family="Oxanium, sans-serif">1</text></svg>`;
+  // The champion's medal: ribbon, laurel wreath, enamel centre with the
+  // number one, and a ring of engraved text naming the season.
+  const medalSvg = (season) => {
+    const leaves = (side) => Array.from({ length: 9 }, (_, k) => {
+      const a = (side < 0 ? 200 : -20) + side * k * 16;
+      const r = (a * Math.PI) / 180;
+      const x = 60 + Math.cos(r) * 47; const y = 96 + Math.sin(r) * 47;
+      return `<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="7" ry="3.2" fill="#e6b13a" stroke="#7a4a04" stroke-width=".6" transform="rotate(${(a + 90 * side).toFixed(0)} ${x.toFixed(1)} ${y.toFixed(1)})"/>`;
+    }).join('');
+    return `<svg viewBox="0 0 120 150" aria-hidden="true"><defs>
+      <linearGradient id="cpG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff4c0"/><stop offset=".35" stop-color="#ffd04a"/><stop offset=".7" stop-color="#d08a12"/><stop offset="1" stop-color="#7a4a04"/></linearGradient>
+      <radialGradient id="cpE" cx=".4" cy=".35" r=".8"><stop offset="0" stop-color="#2a5aa8"/><stop offset=".7" stop-color="#0c2a5a"/><stop offset="1" stop-color="#06163a"/></radialGradient>
+      <clipPath id="cpC"><circle cx="60" cy="96" r="38"/></clipPath>
+      <path id="cpT" d="M60 96 m-31 0 a31 31 0 1 1 62 0 a31 31 0 1 1 -62 0"/></defs>
+      <path d="M36 0 L52 52 L60 47 L68 52 L84 0Z" fill="#a80e26"/><path d="M42 0 L55 46 M78 0 L65 46" stroke="#f6f0e0" stroke-width="3"/><path d="M48 0 L57 38 M72 0 L63 38" stroke="#ffd23f" stroke-width="1.6"/>
+      <rect x="44" y="44" width="32" height="10" rx="3" fill="url(#cpG)" stroke="#7a4a04" stroke-width=".8"/>
+      ${leaves(-1)}${leaves(1)}
+      <circle cx="60" cy="96" r="40" fill="url(#cpG)" stroke="#6a3e04" stroke-width="1.4"/>
+      ${Array.from({ length: 40 }, (_, k) => `<line x1="60" y1="57" x2="60" y2="60" stroke="#8a5a0a" stroke-width=".8" transform="rotate(${k * 9} 60 96)"/>`).join('')}
+      <circle cx="60" cy="96" r="34" fill="url(#cpE)" stroke="#fff0b0" stroke-width="1.6"/>
+      <text font-size="5.6" font-weight="800" fill="#ffe08a" letter-spacing="1.2" font-family="Oxanium, sans-serif"><textPath href="#cpT" startOffset="2%">CHAMPION OF THE GALAXY · SEASON ${season % 100} · LEGEND ·</textPath></text>
+      <path d="M60 72 L64.6 86 L79 86 L67.4 94.6 L71.8 108.6 L60 100 L48.2 108.6 L52.6 94.6 L41 86 L55.4 86Z" fill="url(#cpG)" stroke="#6a3e04" stroke-width=".8" opacity=".95"/>
+      <text x="60" y="101" text-anchor="middle" font-size="20" font-weight="800" fill="#4a2a00" font-family="Oxanium, sans-serif">1</text>
+      <g clip-path="url(#cpC)"><rect class="cp-shine" x="40" y="50" width="16" height="100" fill="#fff" opacity=".35"/></g>
+    </svg>`;
+  };
+  // Home One's bridge: curved viewport frames and a scatter of stars.
+  const bridgeSvg = () => `<svg class="cp-bridge" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    ${Array.from({ length: 46 }, (_, k) => `<circle cx="${(k * 97) % 400}" cy="${(k * 53) % 190}" r="${k % 5 ? 0.6 : 1.1}" fill="#dff0ff" opacity="${0.3 + (k % 4) * 0.15}"/>`).join('')}
+    <circle cx="330" cy="70" r="26" fill="#1a4a7a" opacity=".55"/><circle cx="322" cy="64" r="26" fill="#030a16" opacity=".5"/>
+    <path d="M-20 300 L-20 40 C60 -10 340 -10 420 40 L420 300" fill="none" stroke="#0a1a2e" stroke-width="16"/>
+    <path d="M70 300 L90 10 M200 300 L200 0 M330 300 L310 10" stroke="#0a1a2e" stroke-width="7"/>
+    <path d="M-20 240 C80 200 320 200 420 240 L420 300 L-20 300Z" fill="#041020"/>
+    <path d="M-20 240 C80 200 320 200 420 240" fill="none" stroke="#2a6aa8" stroke-width="1" opacity=".6"/>
+    ${Array.from({ length: 12 }, (_, k) => `<rect x="${20 + k * 32}" y="${252 + (k % 3) * 6}" width="${10 + (k % 4) * 3}" height="2" rx="1" fill="${['#5fd8ff', '#ffd23f', '#ff6a4a'][k % 3]}" opacity=".7"/>`).join('')}
+  </svg>`;
 
-  function stage() {
+  function stage(season) {
     if (!document.getElementById('cp-css')) document.head.appendChild(Object.assign(document.createElement('style'), { id: 'cp-css', textContent: css }));
     const warp = Array.from({ length: 26 }, (_, k) => `<i style="--a:${(k * 360) / 26 + (k % 3) * 4}deg;--d:${(k % 7) * 70}"></i>`).join('');
     const node = UI().el(`<div class="cp" role="dialog" aria-modal="true" aria-label="Admiral Ackbar">
-      <div class="cp-bg"></div><div class="cp-warp">${warp}</div><div class="cp-flash"></div><div class="cp-table"></div>
-      <div class="cp-holo"><div class="cp-beam"></div><div class="cp-ack">${HN().ui.ACKBAR}</div></div>
-      <div class="cp-medal"><div class="cp-rays"></div>${medalSvg()}<b>NUMBER ONE</b><small data-sub></small><span class="cp-nm">${esc(myName())}</span></div>
-      <div class="cp-say"><b>Admiral Ackbar</b><p data-line></p><span class="cp-tap">Tap to continue</span></div>
+      <div class="cp-bg"></div>${bridgeSvg()}<div class="cp-warp">${warp}</div><div class="cp-flash"></div>
+      <div class="cp-scene">
+        <div class="cp-holo"><div class="cp-cone"></div><div class="cp-ack">${HN().ui.ACKBAR}</div><span class="cp-plate">Fleet Admiral · Home One</span><div class="cp-emit"></div></div>
+        <div class="cp-medal"><div class="cp-rays"></div><i class="cp-ring"></i><i class="cp-ring r2"></i><div class="cp-mwrap">${medalSvg(season || 0)}</div>
+          <div class="cp-ttl">Champion of the Galaxy</div><div class="cp-rank" data-sub></div><span class="cp-nm">${esc(myName())}</span></div>
+      </div>
+      <div class="cp-say"><span class="cp-face">${HN().ui.ACKBAR}</span><b>Admiral Ackbar</b><p data-line></p><span class="cp-tap">Tap to continue</span></div>
     </div>`);
     // Nothing closes it: no Escape, no tapping outside.
     node.addEventListener('keydown', (e) => { if (e.key === 'Escape') e.stopPropagation(); });
@@ -239,14 +301,14 @@
     open = true;
     await whenFree();
     const c = h.champ;
-    const node = stage();
-    node.querySelector('[data-sub]').textContent = `Season ${c.season % 100} · Legend league · first in the galaxy`;
+    const node = stage(c.season);
+    node.querySelector('[data-sub]').textContent = `No. 1 in the world · Legend league · Season ${c.season % 100}`;
     sound('whoosh');
     await wait(1500);
     if (c.status === 'design' && !c.step && !c.met) {
       sound('heal');
       await wait(1100);
-      await talk(node, [`Commander ${myName()}! The whole galaxy saw it.`, `You finished Season ${c.season % 100} in the Legend league, ranked first of every pilot alive.`, 'The fleet owes you a debt, and I have a reward no one else will ever receive.']);
+      await talk(node, [`Commander${myName() === 'Commander' ? '' : ` ${myName()}`}! The whole galaxy saw it.`, `You finished Season ${c.season % 100} in the Legend league, ranked first of every pilot alive.`, 'The fleet owes you a debt, and I have a reward no one else will ever receive.']);
       node.classList.add('medal');
       sound('reveal_legendary');
       await wait(1300);
@@ -282,7 +344,7 @@
     await whenFree();
     const keep = h.champ ? JSON.parse(JSON.stringify(h.champ)) : null;
     const c = testMode ? { season: 0, status: 'pending', test: 1 } : (h.champ || (h.champ = { season: 0, status: 'pending' }));
-    const node = stage();
+    const node = stage(c.season);
     node.classList.add('medal');
     node.querySelector('[data-sub]').textContent = 'Your card is ready';
     await wait(1500);

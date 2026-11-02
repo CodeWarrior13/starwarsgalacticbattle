@@ -1624,6 +1624,10 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
 .hn-mini { display: grid; gap: 4px; padding: 12px; border-radius: 14px; background: rgba(8, 20, 32, 0.9); border: 1px solid rgba(95, 216, 255, 0.25); color: #e6f6ff; text-align: left; cursor: pointer; font: inherit; }
 .hn-mini b { font-family: var(--font-display); letter-spacing: 0.08em; }
 .hn-mini small { color: #9fc4d8; }
+.sclock { font-variant-numeric: tabular-nums; color: #ffd23f; font-weight: 700; }
+.sclock-big { display: grid; justify-items: center; gap: 2px; margin: 6px 0 12px; padding: 10px; border-radius: 12px; background: rgba(255, 210, 63, .06); border: 1px solid rgba(255, 210, 63, .3); }
+.sclock-big span { font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: #9fc4d8; }
+.sclock-big b { font: 800 clamp(18px, 5vw, 26px) var(--font-display); font-variant-numeric: tabular-nums; color: #ffd23f; }
 .hn-mini.dot { box-shadow: 0 0 0 1px #ff9a2a inset, 0 0 16px rgba(255, 154, 42, 0.3); }
 
 /* ---- arena ---- */
@@ -6790,6 +6794,19 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   function seasonEnds() { const next = seasonStartWeek(seasonNo() + 1); return (next * WEEK_MS) - ((S().weekShift || 0) * WEEK_MS) - Date.now(); }
   const seasonLength = () => (seasonStartWeek(seasonNo() + 1) - seasonStartWeek(seasonNo())) * WEEK_MS;
   HN.seasonInfo = () => ({ no: seasonNo(), ends: seasonEnds(), length: seasonLength(), started: seasonLength() - seasonEnds() });
+  // Season countdown: "1w 3d 05:12:09" (long: "1 week 3 days 05:12:09").
+  HN.seasonClock = (long) => {
+    const ms = Math.max(0, seasonEnds());
+    const s = Math.floor(ms / 1000);
+    const w = Math.floor(s / 604800); const d = Math.floor((s % 604800) / 86400);
+    const hms = [Math.floor((s % 86400) / 3600), Math.floor((s % 3600) / 60), s % 60].map((n) => String(n).padStart(2, '0')).join(':');
+    return long ? `${w} week${w === 1 ? '' : 's'} ${d} day${d === 1 ? '' : 's'} ${hms}` : `${w}w ${d}d ${hms}`;
+  };
+  setInterval(() => {
+    const els = document.querySelectorAll('[data-season-clock]');
+    if (!els.length || document.hidden) return;
+    els.forEach((n) => { n.textContent = HN.seasonClock(n.hasAttribute('data-long')); });
+  }, 1000);
   function checkSeason() {
     const h = P2();
     if (h.soc.season === seasonNo() || h.soc.pendingSeason) return;
@@ -7837,7 +7854,7 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
         <button type="button" class="hn-mini" data-hn="leaders"><b>Leaderboards</b><small>Season ladder, duels, raid and guilds</small></button>
         ${root.Update21 && root.Update21.on() ? '<button type="button" class="hn-mini" data-hn="findpilot"><b>Find a pilot</b><small>Look up anyone by callsign</small></button>' : ''}
         <button type="button" class="hn-mini" data-hn="databank"><b>Databank</b><small>${HN.HN_IDS.filter(HN.owns).length}/${HN.HN_IDS.length} cards · ${Object.keys(h.captured).length} bounties</small></button>
-        <button type="button" class="hn-mini" data-hn="leagues"><b>Leagues &amp; Season</b><small>Season ${SO.seasonNo() % 100} · ${Math.max(0, Math.ceil(SO.seasonEnds() / 86400000))} days left</small></button>
+        <button type="button" class="hn-mini" data-hn="leagues"><b>Leagues &amp; Season</b><small>Season ${SO.seasonNo() % 100} · ends in <b class="sclock" data-season-clock>${HN.seasonClock()}</b></small></button>
       </div>`;
   };
 
@@ -7857,7 +7874,7 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
       const rows = seasonRows();
       const mine = rows.findIndex((x) => x.me);
       const shown = rows.slice(0, 25);
-      body = `<div class="hn-sec"><h3>Season ${SO.seasonNo() % 100} rewards · ${Math.max(0, Math.ceil(SO.seasonEnds() / 86400000))} days left</h3>
+      body = `<div class="hn-sec"><h3>Season ${SO.seasonNo() % 100} rewards</h3><div class="sclock-big"><span>Season ends in</span><b data-season-clock data-long>${HN.seasonClock(true)}</b></div>
           <div class="hv-rw">${LB_REWARD.map((r) => `<div><b>${r.label}</b><small>${esc(rewardText(r))}</small></div>`).join('')}</div>
           <p class="muted small" style="margin:0">Ranked by your best rating this season. Rewards are paid when the season ends.</p></div>
         <div class="g-list">${shown.map((x, i) => { const d = HN.divOf(x.best); return rowOf(x, i, `${A.badge(d.league, d.div)}<b>${fmt(x.best)}</b><small>${esc(d.name)}</small>`); }).join('')}</div>
