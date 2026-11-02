@@ -1609,11 +1609,11 @@ H.redeem = (code) => {
 // Ten Kyber crystals hide around the game, each holding one letter. Like the
 // chips, they don't say where they go, but a crystal hums (glows) when it sits
 // in its right place in the Seeker's Codex. The finished word is a one-time
-// code worth 150 Kyber: about a week of daily rewards, or one common Elite.
+// code worth 300 Kyber: about two weeks of daily rewards, or two common Elites.
 // Ships with 2.4 (testers: the 2.4 switch).
 const kyOn = () => !!(root.Update24 && root.Update24.on());
 const KY = String.fromCharCode(73, 76, 85, 77, 67, 65, 86, 69, 82, 78);
-const KY_REWARD = 150;
+const KY_REWARD = 300;
 const KY_COLORS = ['#4aa8ff', '#4ade80', '#b77bff', '#ffd23f', '#e8f8ff', '#ff9a3c', '#5ae0ff', '#7dff9a', '#d58bff', '#fff3a0'];
 const KY_SPOTS = [
   { at: () => document.querySelector('#screen .versus .vs'), pos: 'right:-14px;top:-6px' },
