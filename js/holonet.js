@@ -3470,7 +3470,15 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     if (d.fr ? !(HN.friends && HN.friends.isFriend(msg.by)) : !HN.ui.unlocked()) { say(msg.peer, { id: d.id, step: 'no' }); return; }
     // Wager duels: only when I can wager too (league, credits, today's limit with them).
     if (d.wg && !d.fr && !(HN.Wager && HN.Wager.canAccept(msg.by))) { say(msg.peer, { id: d.id, step: 'no', nowg: 1 }); return; }
-    if (Duel.match || App.battleActive || Duel.prep) { say(msg.peer, { id: d.id, step: 'no', busy: true }); return; }
+    if (Duel.match || App.battleActive || Duel.prep) {
+      say(msg.peer, { id: d.id, step: 'no', busy: true });
+      // Busy fighting: they're told you're in a battle, and you see who asked,
+      // with a tap to message them (friends) so you can say "after this one".
+      const nm = cleanNm(d.nm) || 'A pilot';
+      const friend = HN.friends && HN.friends.isFriend(msg.by);
+      UI.toast(`${nm} wants a ${d.fr ? 'friendly battle' : 'duel'}. You're mid-battle, so they were told you're busy.`, friend ? { onTap: () => HN.friends.chatWith(msg.by), tap: 'Tap to message them' } : { ms: 5000 });
+      return;
+    }
     Duel.invite = { ...d, peer: msg.peer, by: msg.by };
     learn(msg.by, d.nm);
     refresh();
@@ -8666,7 +8674,10 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
           // A new message while you're elsewhere: a small note that doesn't cover the screen.
           if (dmLoaded[side] && r && r.ok && last && last.by !== Net.me && (last.t || 0) > (lastBefore || 0) && F.chatWith !== d.id) {
             const x = dmText(last, r);
-            if (x) toast(`${F.otherName(r)}: ${x.length > 60 ? `${x.slice(0, 57)}…` : x}`);
+            // Tap it to answer straight away, even mid-battle: the chat opens over
+            // the fight and the battle keeps going underneath.
+            const them = r.a === Net.me ? r.b : r.a;
+            if (x) UI.toast(`${F.otherName(r)}: ${x.length > 60 ? `${x.slice(0, 57)}…` : x}`, { onTap: () => HN.friends.chatWith(them), tap: 'Tap to reply' });
             else if (last.k === 'gi') toast(`${F.otherName(r)} invited you to a guild. Open your chat to join.`);
           }
         }

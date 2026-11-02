@@ -601,7 +601,7 @@ body.in-battle .main-nav, body.in-battle .brand { pointer-events: none; opacity:
 @media (prefers-reduced-motion: reduce) { .new-corner b { animation: none; } }
 
 /* ---------- Toast ---------- */
-#toast-root { position: fixed; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%); z-index: 90; display: grid; gap: 8px; width: min(420px, calc(100% - 32px)); }
+#toast-root { position: fixed; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%); z-index: 320; display: grid; gap: 8px; width: min(420px, calc(100% - 32px)); }
 .toast {
   padding: 10px 16px;
   border-radius: 10px;
@@ -3917,3 +3917,6 @@ body.perf-on .tmt-chip.hop, body.perf-on .tmt-chip.warp, body.perf-on .tmt-chip.
 @keyframes lbl-ready { 0% { box-shadow: 0 0 0 0 rgba(255, 232, 31, .8); } 100% { box-shadow: 0 0 0 16px rgba(255, 232, 31, 0); } }
 body.perf-on .lbl-deco b, body.perf-on .lbl-deco b::after, body.perf-on .lbl-more { animation: none !important; }
 @media (prefers-reduced-motion: reduce) { .lbl.anim .ul-item, .lbl.anim .lbl-sec h3 > i, .lbl.anim .lbl-sec h3::after { opacity: 1; transform: none; transition: none; } .lbl-deco b, .lbl-deco b::after, .lbl-more { animation: none !important; } }
+
+.toast.tap { display: grid; gap: 2px; width: 100%; text-align: center; font: inherit; color: inherit; cursor: pointer; border-color: rgba(124, 208, 255, .55); }
+.toast.tap small { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: #7cd0ff; }

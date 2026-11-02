@@ -91,15 +91,18 @@
   // ---------- Toasts and modals ----------
   // Never let toasts pile up: the same message refreshes in place and at
   // most two are on screen at once.
-  function toast(text) {
+  // opts.onTap: the note becomes a button (e.g. tap a message to reply),
+  // shown a little longer with a hint (opts.tap) underneath.
+  function toast(text, opts = {}) {
     const rootEl = $('#toast-root');
     const same = [...rootEl.children].find((n) => n.dataset.text === text);
     if (same) same.remove();
     while (rootEl.children.length >= 2) rootEl.firstElementChild.remove();
-    const t = el(`<div class="toast">${esc(text)}</div>`);
+    const t = el(opts.onTap ? `<button type="button" class="toast tap">${esc(text)}<small>${esc(opts.tap || 'Tap to open')}</small></button>` : `<div class="toast">${esc(text)}</div>`);
     t.dataset.text = text;
+    if (opts.onTap) t.addEventListener('click', () => { t.remove(); opts.onTap(); });
     rootEl.appendChild(t);
-    setTimeout(() => t.remove(), 2700);
+    setTimeout(() => t.remove(), opts.ms || (opts.onTap ? 6000 : 2700));
   }
 
   function openModal(html, opts = {}) {
