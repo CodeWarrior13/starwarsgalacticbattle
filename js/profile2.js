@@ -70,7 +70,7 @@
           <p class="muted small">${title(a.level)} · Level ${a.level}${lg ? ` · ${esc(lg.name)}` : ''}</p>
           <button type="button" class="p2-lvbtn" data-p2="level" aria-label="Level ${a.level}: what's coming up"><span class="p2-xp"><i style="width:${pct}%"></i></span>
           <span class="muted small">${a.level >= D.MAX_ACCOUNT_LEVEL ? 'Maximum rank reached.' : `${fmt(a.xp)} / ${fmt(need)} XP to level ${a.level + 1}`} · <b class="p2-more">Coming up ›</b></span></button>
-          <div class="p2-codes">${root.__xq && root.__xq.hasCodex && root.__xq.hasCodex() ? `<button type="button" class="p2-codex" data-p2="codex"><i aria-hidden="true"><s></s>✧</i><span>Seeker's Codex</span><em>${root.__xq.foundCount ? root.__xq.foundCount() : 0} found</em></button>` : ''}</div></div>
+          <div class="p2-codes">${root.__xq && root.__xq.hasCodex && root.__xq.hasCodex() ? `<button type="button" class="p2-codex" data-p2="codex"><i aria-hidden="true"><s></s>✧</i><span>Seeker's Codex</span><em title="Pieces found">${root.__xq.foundCount ? root.__xq.foundCount() : 0}</em></button>` : ''}</div></div>
       </div>`;
     };
     const tabs = () => `<div class="pc-tabs p2-tabs" role="tablist">${[['overview', 'Overview'], ['collection', 'Collection'], ['worlds', 'Worlds'], ['badges', 'Badges'], ['friends', 'Friends'], ['stats', 'Stats']].map(([k, n]) => `<button type="button" role="tab" aria-selected="${tab === k}" class="${tab === k ? 'on' : ''}" data-p2t="${k}">${n}</button>`).join('')}</div>`;
@@ -260,7 +260,7 @@
 @keyframes p2-ring { to { transform: rotate(360deg); } }
 @keyframes p2-pulse { 50% { box-shadow: 0 0 18px #7fd8ff; } }
 .p2-codex span { white-space: nowrap; }
-.p2-codex em { font-style: normal; font-size: 10px; letter-spacing: .08em; padding: 2px 7px; border-radius: 999px; background: rgba(255, 210, 63, .16); color: #ffe81f; border: 1px solid rgba(255, 210, 63, .4); }
+.p2-codex em { position: absolute; left: 1px; top: 0; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 99px; font-style: normal; font: 800 10px/16px var(--font-display); text-align: center; background: #ffe81f; color: #241a00; box-shadow: 0 0 8px rgba(255, 232, 31, .7); z-index: 1; }
 body.perf-on .p2-codex::before, body.perf-on .p2-codex i, body.perf-on .p2-codex i s { animation: none; }
 .p2-tabs { grid-template-columns: repeat(6, minmax(0, 1fr)); } .p2-tabs button { font-size: 12px; padding: 8px 2px; }
 @media (max-width: 480px) { .p2-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
