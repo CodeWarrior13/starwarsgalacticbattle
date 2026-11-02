@@ -1802,7 +1802,8 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
 @keyframes hn-glow { 50% { transform: scale(1.18); } }
 
 /* ---- squad picker ---- */
-.hn-pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 8px; max-height: 56vh; overflow: auto; padding: 4px; align-items: start; }
+.hn-pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 8px; max-height: 56vh; overflow: auto; padding: 4px; align-items: start; grid-auto-rows: max-content; }
+.hn-pick > .ucard { min-height: max-content; }
 .hn-pick .ucard { width: 100%; min-width: 0; font-size: 11px; }
 .hn-pick .ucard:hover { transform: none; }
 .hn-pick .ucard-body { padding: 7px 8px 9px; gap: 3px; min-width: 0; }
