@@ -754,6 +754,8 @@
 
   // Main teams preview (js/mainteams.js), only while its test switch is on.
   const MT = () => (root.MainTeams && root.MainTeams.on() ? root.MainTeams : null);
+  // 2.4 Battle Plans replace the single main team once the first plans unlock (level 15).
+  const planMode = () => !!(MT() && MT().plansOn && MT().plansOn() && MT().planCount() > 0);
 
   Screens.squad = function (params) {
     const enc = Player.encounter(params);
@@ -775,7 +777,8 @@
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn" type="button" data-back>Back</button>
           <button class="btn" type="button" data-auto-build title="Pick your strongest balanced squad">⚙ Auto-build</button>
-          ${MT() ? `<button class="btn" type="button" data-main-load ${MT().has(kind) ? '' : 'disabled'} title="Load your ${kind === 'ship' ? 'Fleet' : 'Ground'} main team">★ Main team</button><button class="btn" type="button" data-main-save title="Save this squad as your ${kind === 'ship' ? 'Fleet' : 'Ground'} main team">Save as main</button>` : ''}
+          ${planMode() ? `<label class="bp-pick"><select data-plan-pick aria-label="Load a battle plan"><option value="">Battle plan…</option>${MT().plans().slice(0, MT().planCount()).map((p, i) => MT().planTeam(i, kind).length ? `<option value="${i}">${esc(MT().planName(i))}${MT().flag() === i ? ' (Flagship)' : ''}</option>` : '').join('')}</select></label><button class="btn" type="button" data-plan-save title="Save this squad into a battle plan">Save to plan</button>`
+            : MT() ? `<button class="btn" type="button" data-main-load ${MT().has(kind) ? '' : 'disabled'} title="Load your ${kind === 'ship' ? 'Fleet' : 'Ground'} main team">★ Main team</button><button class="btn" type="button" data-main-save title="Save this squad as your ${kind === 'ship' ? 'Fleet' : 'Ground'} main team">Save as main</button>` : ''}
           <button class="btn btn-primary" type="button" data-fight>${params.type === 'secret' && Player.secretCost(params.boss) ? `Engage · ${cur('crystals', Player.secretCost(params.boss))}` : 'Engage'}</button>
         </div>
       </div>
@@ -902,11 +905,25 @@
       if (mn) {
         const main = MT().team(kind);
         const isMain = main.length && main.length === squad.length && main.every((id, i) => id === squad[i]);
-        mn.innerHTML = !main.length ? `★ No ${kind === 'ship' ? 'Fleet' : 'Ground'} main team yet: tap Save as main, or pick one in the Collection.`
+        const fl = planMode() ? MT().flag() : -1;
+        if (planMode()) {
+          const nm = fl >= 0 ? esc(MT().planName(fl)) : '';
+          mn.innerHTML = `${MT().flagIcon} ` + (fl < 0 ? 'No Flagship plan yet: pick one in the Collection\'s Battle Plans.'
+            : isMain ? `This is your Flagship plan, ${nm}. Auto-continue uses it.` : `Changed from your Flagship plan (${nm}): auto battles use this squad until you save a plan again.`);
+        } else mn.innerHTML = !main.length ? `★ No ${kind === 'ship' ? 'Fleet' : 'Ground'} main team yet: tap Save as main, or pick one in the Collection.`
           : isMain ? '★ This is your main team. Auto-continue uses it.' : '★ Changed from your main team: auto battles will use this squad until you save a main team again.';
       }
     }
 
+    v.addEventListener('change', (e) => {
+      const sel = e.target.closest('[data-plan-pick]');
+      if (!sel || sel.value === '') return;
+      const i = Number(sel.value);
+      squad = MT().planTeam(i, kind);
+      toast(`Loaded ${MT().planName(i)}.`);
+      sel.value = '';
+      render({ auto: true });
+    });
     v.addEventListener('click', (e) => {
       if (e.target.closest('[data-back]')) return App.go(params.type === 'secret' ? 'secret' : 'home');
       const rfb = e.target.closest('[data-rf]');
@@ -917,6 +934,23 @@
         squad = Player.autoSquad(kind);
         toast('Auto-built your strongest squad.');
         return render({ auto: true });
+      }
+      if (e.target.closest('[data-plan-save]')) {
+        if (!squad.length) return toast('Add some units first.');
+        const M = MT();
+        const m = openModal(`<h2>Save to a battle plan</h2><p class="muted small">Saves this ${kind === 'ship' ? 'Fleet' : 'Ground'} squad into the plan you pick. Its other squad stays as it is.</p>
+          <div class="bp-list">${M.plans().slice(0, M.planCount()).map((p, i) => `<button type="button" class="bp-card ${M.flag() === i ? 'flag' : ''}" data-ps="${i}" style="cursor:pointer;text-align:left;color:inherit;font:inherit"><div class="bp-top"><b>${esc(M.planName(i))}</b>${M.flag() === i ? `<span class="bp-flag">${M.flagIcon} Flagship</span>` : ''}</div><div class="bp-row"><span>${kind === 'ship' ? 'Fleet' : 'Ground'}</span><span class="mt-minis">${M.planTeam(i, kind).map((id) => miniPortrait(D.UNIT_MAP[id])).join('') || '<span class="muted small">Empty</span>'}</span></div></button>`).join('')}</div>
+          <div class="modal-actions"><button class="btn" type="button" data-close>Cancel</button></div>`, { small: true });
+        m.root.addEventListener('click', (ev) => {
+          const b = ev.target.closest('[data-ps]');
+          if (ev.target.closest('[data-close]')) return m.close();
+          if (!b) return;
+          M.setPlan(Number(b.dataset.ps), kind, squad);
+          m.close();
+          toast(`Saved to ${M.planName(Number(b.dataset.ps))}.`);
+          render();
+        });
+        return;
       }
       if (e.target.closest('[data-main-load]')) {
         squad = MT().team(kind);
@@ -1413,15 +1447,34 @@
       if (!box) return;
       const size = Player.slots();
       const minis = (ids) => (ids.length ? ids.map((id) => miniPortrait(D.UNIT_MAP[id])).join('') : '<span class="muted small">Not set</span>');
+      const PL = planMode();
       if (ui.mtPick) {
         const d = ui.mtDraft;
         box.innerHTML = `<div class="mt-pick">
-          <div class="mt-row"><b>★ ${kName(ui.mtPick)} main team · ${d.length}/${size}</b><span class="mt-minis">${minis(d)}</span></div>
+          <div class="mt-row"><b>${PL && ui.planIdx != null ? `${esc(MT().planName(ui.planIdx))} · ${kName(ui.mtPick)}` : `★ ${kName(ui.mtPick)} main team`} · ${d.length}/${size}</b><span class="mt-minis">${minis(d)}</span></div>
           <p class="muted small">Filter the collection, then tap cards to add or remove them.</p>
           <div class="mt-acts"><button class="btn" type="button" data-mt-fill>Fill top ${size} of this filter</button><button class="btn" type="button" data-mt-clear>Clear</button><button class="btn" type="button" data-mt-cancel>Cancel</button><button class="btn btn-primary" type="button" data-mt-done ${d.length ? '' : 'disabled'}>Save</button></div>
         </div>`;
         return;
       }
+      if (PL) {
+        const M = MT();
+        const n = M.planCount();
+        const flag = M.flag();
+        box.classList.add('bp-panel');
+        const open = !!ui.bpOpen;
+        box.innerHTML = `<div class="bp-head"><b>Battle Plans</b><span class="muted small">${n} of 6 unlocked · Auto-continue flies your Flagship</span><button class="linkish" type="button" data-bp-toggle style="margin-left:auto">${open ? 'Show Flagship only ▴' : `Show all plans (${n}) ▾`}</button></div>
+          <div class="bp-list">${M.plans().map((p, i) => {
+            if (!open && i !== (flag >= 0 ? flag : 0)) return '';
+            if (i >= n) return `<div class="bp-card locked">🔒 Unlocks at level ${M.PLAN_LEVELS[i]}</div>`;
+            const row = (k) => `<div class="bp-row"><span>${k === 'ship' ? 'Fleet' : 'Ground'}</span><span class="mt-minis">${minis(M.planTeam(i, k))}</span><button class="btn" type="button" data-plan-edit="${i}" data-k="${k}">${M.planTeam(i, k).length ? 'Edit' : 'Set'}</button></div>`;
+            return `<div class="bp-card ${flag === i ? 'flag' : ''}"><div class="bp-top"><b>${esc(M.planName(i))}</b><button class="linkish" type="button" data-plan-name="${i}">Rename</button>${flag === i ? `<span class="bp-flag">${M.flagIcon} Flagship</span>` : ''}</div>
+              ${row('character')}${row('ship')}
+              ${flag === i ? '' : `<button class="btn bp-make" type="button" data-plan-flag="${i}">${M.flagIcon} Make Flagship</button>`}</div>`;
+          }).join('')}</div>`;
+        return;
+      }
+      box.classList.remove('bp-panel');
       box.innerHTML = ['character', 'ship'].map((k) => `<div class="mt-row"><b>★ ${kName(k)} main team</b><span class="mt-minis">${minis(MT().team(k))}</span><button class="btn mt-edit" type="button" data-mt-edit="${k}">${MT().has(k) ? 'Edit' : 'Set'}</button></div>`).join('')
         + '<p class="muted small mt-hint">Auto-continue (Next and Repeat) uses these teams unless you change your squad.</p>';
     }
@@ -1546,6 +1599,25 @@
         $('[data-drawer]', v).classList.toggle('open', ui.collectionFiltersOpen);
         return;
       }
+      if (e.target.closest('[data-bp-toggle]')) { ui.bpOpen = !ui.bpOpen; renderMT(); return; }
+      const pb = e.target.closest('[data-plan-edit], [data-plan-flag], [data-plan-name]');
+      if (pb && MT()) {
+        const M = MT();
+        if (pb.dataset.planEdit != null) {
+          const i = Number(pb.dataset.planEdit);
+          const k = pb.dataset.k;
+          Object.assign(ui, { mtPick: k, planIdx: i, mtDraft: M.planTeam(i, k), collectionKind: k, collectionClass: 'all' });
+        } else if (pb.dataset.planFlag != null) {
+          M.makeFlag(Number(pb.dataset.planFlag));
+          toast(`${M.planName(Number(pb.dataset.planFlag))} is your Flagship plan.`);
+        } else {
+          const i = Number(pb.dataset.planName);
+          const name = root.prompt ? root.prompt('Name this battle plan (up to 18 letters)', M.planName(i)) : null;
+          if (name != null) M.rename(i, name);
+        }
+        render(true);
+        return;
+      }
       const mtb = e.target.closest('[data-mt-edit], [data-mt-fill], [data-mt-clear], [data-mt-cancel], [data-mt-done]');
       if (mtb) {
         const size = Player.slots();
@@ -1555,8 +1627,12 @@
           ui.mtDraft = D.keepApart(lastList.filter((u) => u.kind === ui.mtPick && Player.owns(u.id)).map((u) => u.id)).slice(0, size);
           if (!ui.mtDraft.length) toast('You own nothing in this filter.');
         } else if (mtb.hasAttribute('data-mt-clear')) ui.mtDraft = [];
-        else if (mtb.hasAttribute('data-mt-cancel')) ui.mtPick = null;
-        else {
+        else if (mtb.hasAttribute('data-mt-cancel')) { ui.mtPick = null; ui.planIdx = null; }
+        else if (planMode() && ui.planIdx != null) {
+          MT().setPlan(ui.planIdx, ui.mtPick, ui.mtDraft);
+          toast(`${MT().planName(ui.planIdx)}: ${kName(ui.mtPick)} squad saved.`);
+          ui.mtPick = null; ui.planIdx = null;
+        } else {
           MT().set(ui.mtPick, ui.mtDraft);
           toast(`${kName(ui.mtPick)} main team saved.`);
           ui.mtPick = null;
