@@ -729,7 +729,8 @@
   // 2.4 Battle Doctrine panel for a card (commons, rares and epics).
   function docBox(id) {
     const d = root.Doctrines && root.Doctrines.of(id);
-    return d ? `<div class="doctrine-box"><div class="dh">${d.icon} Doctrine <b>${esc(d.name)}</b><span class="dst ${d.style}">${d.styleLabel}</span></div><p>${esc(d.text)}</p></div>` : '';
+    const el = (Player.unit(id) || {}).elite;
+    return d ? `<div class="doctrine-box"><div class="dh">${d.icon} Doctrine <b>${esc(d.name)}</b><span class="dst ${d.style}">${d.styleLabel}</span></div><p>${esc(d.text)}</p><p class="d-el ${el ? 'on' : ''}">✦ ${el ? 'Elite: this doctrine is 25% stronger.' : 'Promote to Elite and this doctrine gets 25% stronger.'}</p></div>` : '';
   }
 
   function bonusList(items, empty) {
@@ -777,7 +778,7 @@
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn" type="button" data-back>Back</button>
           <button class="btn" type="button" data-auto-build title="Pick your strongest balanced squad">⚙ Auto-build</button>
-          ${planMode() ? `<label class="bp-pick"><select data-plan-pick aria-label="Load a battle plan"><option value="">Battle plan…</option>${MT().plans().slice(0, MT().planCount()).map((p, i) => MT().planTeam(i, kind).length ? `<option value="${i}">${esc(MT().planName(i))}${MT().flag() === i ? ' (Flagship)' : ''}</option>` : '').join('')}</select></label><button class="btn" type="button" data-plan-save title="Save this squad into a battle plan">Save to plan</button>`
+          ${planMode() ? `<label class="bp-pick"><select data-plan-pick aria-label="Load a battle plan"><option value="">Battle plan…</option>${MT().plans().slice(0, MT().planCount()).map((p, i) => MT().planTeam(i, kind).length ? `<option value="${i}">${esc(MT().planName(i))}${MT().flag() === i ? ' (Flagship)' : ''}</option>` : '').join('')}</select></label><button class="btn" type="button" data-plan-save title="Save this squad into a battle plan">Save to plan</button><button class="btn" type="button" data-plan-manage title="See and edit all your battle plans">Plans</button>`
             : MT() ? `<button class="btn" type="button" data-main-load ${MT().has(kind) ? '' : 'disabled'} title="Load your ${kind === 'ship' ? 'Fleet' : 'Ground'} main team">★ Main team</button><button class="btn" type="button" data-main-save title="Save this squad as your ${kind === 'ship' ? 'Fleet' : 'Ground'} main team">Save as main</button>` : ''}
           <button class="btn btn-primary" type="button" data-fight>${params.type === 'secret' && Player.secretCost(params.boss) ? `Engage · ${cur('crystals', Player.secretCost(params.boss))}` : 'Engage'}</button>
         </div>
@@ -841,7 +842,7 @@
       const mp = $('[data-mypower]', v);
       mp.textContent = '⚡ ' + fmt(power);
       mp.className = power >= enemyPower ? 'good' : power >= enemyPower * 0.8 ? 'close' : 'bad';
-      const bonus = D.squadBonuses(squad, planetId);
+      const bonus = D.squadBonuses(squad, planetId, squad.filter((id) => (Player.unit(id) || {}).elite));
       $('[data-my-bonus]', v).innerHTML = bonusList(bonus.active, 'Combine units that share a trait to unlock synergies.') + hintList(bonus.hints);
 
       // Slot load-in animations.
@@ -934,6 +935,10 @@
         squad = Player.autoSquad(kind);
         toast('Auto-built your strongest squad.');
         return render({ auto: true });
+      }
+      if (e.target.closest('[data-plan-manage]')) {
+        MT().manager({ kind, onLoad: (i) => { squad = MT().planTeam(i, kind); toast(`Loaded ${MT().planName(i)}.`); render({ auto: true }); } });
+        return;
       }
       if (e.target.closest('[data-plan-save]')) {
         if (!squad.length) return toast('Add some units first.');
@@ -1463,7 +1468,11 @@
         const flag = M.flag();
         box.classList.add('bp-panel');
         const open = !!ui.bpOpen;
-        box.innerHTML = `<div class="bp-head"><b>Battle Plans</b><span class="muted small">${n} of 6 unlocked · Auto-continue flies your Flagship</span><button class="linkish" type="button" data-bp-toggle style="margin-left:auto">${open ? 'Show Flagship only ▴' : `Show all plans (${n}) ▾`}</button></div>
+        if (M.hidden()) {
+          box.innerHTML = `<div class="bp-head"><b>Battle Plans</b><span class="muted small">Hidden</span><span style="margin-left:auto;display:flex;gap:10px"><button class="linkish" type="button" data-bp-manage>Edit plans</button><button class="linkish" type="button" data-bp-hide="0">Show ▾</button></span></div>`;
+          return;
+        }
+        box.innerHTML = `<div class="bp-head"><b>Battle Plans</b><span class="muted small">${n} of 6 unlocked · Auto-continue flies your Flagship</span><span style="margin-left:auto;display:flex;gap:10px;flex-wrap:wrap"><button class="linkish" type="button" data-bp-manage>Edit plans</button><button class="linkish" type="button" data-bp-toggle>${open ? 'Flagship only ▴' : `All plans (${n}) ▾`}</button><button class="linkish" type="button" data-bp-hide="1">Hide</button></span></div>
           <div class="bp-list">${M.plans().map((p, i) => {
             if (!open && i !== (flag >= 0 ? flag : 0)) return '';
             if (i >= n) return `<div class="bp-card locked">🔒 Unlocks at level ${M.PLAN_LEVELS[i]}</div>`;
@@ -1600,6 +1609,9 @@
         return;
       }
       if (e.target.closest('[data-bp-toggle]')) { ui.bpOpen = !ui.bpOpen; renderMT(); return; }
+      const bph = e.target.closest('[data-bp-hide]');
+      if (bph) { MT().setHidden(bph.dataset.bpHide === '1'); renderMT(); return; }
+      if (e.target.closest('[data-bp-manage]')) { MT().manager({ onClose: () => render(true) }); return; }
       const pb = e.target.closest('[data-plan-edit], [data-plan-flag], [data-plan-name]');
       if (pb && MT()) {
         const M = MT();

@@ -98,6 +98,90 @@
   // The Flagship marker: a Star Destroyer wedge with its bridge tower.
   MT.flagIcon = '<svg class="fs-ico" viewBox="0 0 28 14" aria-hidden="true"><path d="M1 9.5 27 3v10H1z" fill="currentColor" opacity=".55"/><path d="M1 9.5 27 3v4L1 10.5z" fill="currentColor"/><path d="M17 3.2h5V1.4h3v2.4h-8z" fill="currentColor"/></svg>';
 
+  // Hide the Battle Plans panel in the Collection (remembered on this save).
+  MT.hidden = () => !!st().plansHidden;
+  MT.setHidden = (v) => { st().plansHidden = !!v; Player.save(); };
+
+  // The Battle Plans manager: every plan, its squads, renaming, the Flagship,
+  // and a card picker to edit a squad, all in one window. Opened from the
+  // squad screen (where it can also load a plan) or from the Collection.
+  // opts.kind + opts.onLoad(i): show Load buttons for that kind of battle.
+  MT.manager = (opts = {}) => {
+    const U = root.UI;
+    const esc = U.esc;
+    const kN = (k) => (k === 'ship' ? 'Fleet' : 'Ground');
+    const mini = (id) => `<span class="mini" title="${esc(D.UNIT_MAP[id].name)}">${U.portrait(D.UNIT_MAP[id], { plate: false })}</span>`;
+    let edit = null; // { i, kind, draft }
+    let naming = -1;
+    const m = U.openModal('<div data-bpm></div>', { cls: 'bpm-modal', onClose: opts.onClose });
+    const box = m.root.querySelector('[data-bpm]');
+    const draw = () => {
+      const n = planCount();
+      const flag = MT.flag();
+      if (edit) {
+        const size = Player.slots();
+        const owned = D.UNITS.filter((u) => u.kind === edit.kind && Player.owns(u.id)).sort((x, y) => Player.powerOf(y.id) - Player.powerOf(x.id));
+        box.innerHTML = `<div class="bpm-top"><h2>${esc(planName(edit.i))} · ${kN(edit.kind)}</h2><span class="muted small">${edit.draft.length}/${size} · tap cards to add or remove</span></div>
+          <div class="bpm-sel">${edit.draft.length ? edit.draft.map(mini).join('') : '<span class="muted small">Empty</span>'}</div>
+          <div class="bpm-grid">${owned.map((u) => {
+            const at = edit.draft.indexOf(u.id);
+            const doc = root.Doctrines && root.Doctrines.of(u.id);
+            const el = (Player.unit(u.id) || {}).elite;
+            return `<button type="button" class="bpm-c ${at >= 0 ? 'on' : ''}" data-pick="${u.id}">${U.portrait(u, { plate: false })}${at >= 0 ? `<i class="bpm-n">${at + 1}</i>` : ''}${doc ? `<i class="bpm-d ${doc.style}" title="${esc(doc.name)}">${doc.icon}</i>` : ''}<b>${esc(u.name)}${el ? ' ✦' : ''}</b><small>⚡ ${U.fmt(Player.powerOf(u.id))}</small></button>`;
+          }).join('')}</div>
+          <div class="modal-actions"><button class="btn" type="button" data-bx="clear">Clear</button><button class="btn" type="button" data-bx="back">Cancel</button><button class="btn btn-primary" type="button" data-bx="save">Save squad</button></div>`;
+        return;
+      }
+      box.innerHTML = `<div class="bpm-top"><h2>Battle Plans</h2><span class="muted small">${n} of 6 unlocked · Auto-continue flies your Flagship</span></div>
+        <div class="bp-list">${plans().map((p, i) => {
+          if (i >= n) return `<div class="bp-card locked">🔒 Unlocks at level ${PLAN_LEVELS[i]}</div>`;
+          const row = (k) => `<div class="bp-row"><span>${kN(k)}</span><span class="mt-minis">${planTeam(i, k).map(mini).join('') || '<span class="muted small">Not set</span>'}</span>${opts.kind === k && planTeam(i, k).length ? `<button class="btn btn-primary" type="button" data-bl="${i}">Load</button>` : ''}<button class="btn" type="button" data-be="${i}" data-k="${k}">${planTeam(i, k).length ? 'Edit' : 'Set'}</button></div>`;
+          return `<div class="bp-card ${flag === i ? 'flag' : ''}"><div class="bp-top">${naming === i ? `<input class="bpm-name" data-nm="${i}" maxlength="18" value="${esc(planName(i))}" aria-label="Plan name"><button class="btn" type="button" data-bn-ok="${i}">OK</button>` : `<b>${esc(planName(i))}</b><button class="linkish" type="button" data-bn="${i}">Rename</button>`}${flag === i ? `<span class="bp-flag">${MT.flagIcon} Flagship</span>` : ''}</div>
+            ${row('character')}${row('ship')}
+            ${flag === i ? '' : `<button class="btn bp-make" type="button" data-bf="${i}">${MT.flagIcon} Make Flagship</button>`}</div>`;
+        }).join('')}</div>
+        <div class="modal-actions"><button class="btn" type="button" data-bx="close">Done</button></div>`;
+      const inp = box.querySelector('[data-nm]');
+      if (inp) { inp.focus(); inp.select(); }
+    };
+    const finishName = () => { const inp = box.querySelector('[data-nm]'); if (inp) MT.rename(Number(inp.dataset.nm), inp.value); naming = -1; };
+    box.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.matches('[data-nm]')) { finishName(); draw(); } });
+    box.addEventListener('click', (e) => {
+      const t = (q) => e.target.closest(q);
+      if (edit) {
+        const c = t('[data-pick]');
+        if (c) {
+          const id = c.dataset.pick;
+          const d = edit.draft;
+          if (d.includes(id)) edit.draft = d.filter((x) => x !== id);
+          else if (d.length >= Player.slots()) return U.toast(`Squad is full (${Player.slots()}). Tap a card to take it out first.`);
+          else if (D.clashWith(d, id)) return U.toast(D.apartLine(id, D.clashWith(d, id)));
+          else edit.draft = [...d, id];
+          const keep = box.querySelector('.bpm-grid') ? box.querySelector('.bpm-grid').scrollTop : 0;
+          draw();
+          const g = box.querySelector('.bpm-grid'); if (g) g.scrollTop = keep;
+          return;
+        }
+        const bx = t('[data-bx]');
+        if (!bx) return;
+        if (bx.dataset.bx === 'clear') { edit.draft = []; return draw(); }
+        if (bx.dataset.bx === 'save') { MT.setPlan(edit.i, edit.kind, edit.draft); U.toast(`${planName(edit.i)}: ${kN(edit.kind)} squad saved.`); }
+        edit = null;
+        return draw();
+      }
+      if (t('[data-bn-ok]')) { finishName(); return draw(); }
+      if (naming >= 0 && !t('[data-nm]')) finishName();
+      const b = t('[data-bl]'); if (b) { m.close(); if (opts.onLoad) opts.onLoad(Number(b.dataset.bl)); return; }
+      const be = t('[data-be]'); if (be) { const i = Number(be.dataset.be); edit = { i, kind: be.dataset.k, draft: planTeam(i, be.dataset.k) }; return draw(); }
+      const bn = t('[data-bn]'); if (bn) { naming = Number(bn.dataset.bn); return draw(); }
+      const bf = t('[data-bf]'); if (bf) { MT.makeFlag(Number(bf.dataset.bf)); U.toast(`${planName(Number(bf.dataset.bf))} is your Flagship plan.`); return draw(); }
+      if (t('[data-bx="close"]')) { m.close(); return; }
+      if (naming >= 0) draw();
+    });
+    draw();
+    return m;
+  };
+
   if (!document.getElementById('bp-css')) {
     document.head.appendChild(Object.assign(document.createElement('style'), { id: 'bp-css', textContent: `
 .bp-panel { display: grid; gap: 8px; margin: 0 0 12px; }
@@ -118,6 +202,22 @@
 .bp-row .btn { padding: 4px 10px; font-size: 12px; }
 .bp-make { justify-self: start; padding: 4px 10px; font-size: 12px; }
 .bp-pick { display: inline-flex; align-items: center; gap: 6px; }
+.bpm-modal { width: min(760px, calc(100vw - 20px)); }
+.bpm-top { display: grid; gap: 2px; margin-bottom: 10px; }
+.bpm-top h2 { margin: 0; }
+.bpm-name { font: inherit; font-size: 14px; padding: 5px 8px; border-radius: 8px; border: 1px solid var(--line); background: #050912; color: inherit; flex: 1; min-width: 0; }
+.bpm-sel { display: flex; gap: 4px; min-height: 36px; align-items: center; margin-bottom: 8px; }
+.bpm-sel .mini { width: 34px; height: 34px; }
+.bpm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 6px; max-height: min(42vh, 400px); overflow-y: auto; padding: 2px; margin-bottom: 10px; }
+.bpm-c { position: relative; display: grid; gap: 2px; padding: 4px 4px 6px; border-radius: 10px; border: 1px solid var(--line); background: rgba(255, 255, 255, .03); color: inherit; font: inherit; cursor: pointer; text-align: center; }
+.bpm-c .portrait, .bpm-c > :first-child { aspect-ratio: 1; border-radius: 8px; overflow: hidden; }
+.bpm-c b { font-size: 11px; line-height: 1.15; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bpm-c small { font-size: 10px; color: var(--muted); }
+.bpm-c.on { border-color: #ffe81f; box-shadow: 0 0 0 1px #ffe81f inset; background: rgba(255, 232, 31, .08); }
+.bpm-n { position: absolute; top: 6px; left: 6px; width: 20px; height: 20px; border-radius: 50%; background: #ffe81f; color: #111; font: 800 11px/20px var(--font-display); font-style: normal; }
+.bpm-d { position: absolute; top: 6px; right: 6px; width: 20px; height: 20px; border-radius: 50%; background: rgba(4, 12, 26, .85); font-style: normal; font-size: 11px; line-height: 20px; }
+.bpm-d.G { color: #ffd36b; } .bpm-d.S { color: #7fe3ff; } .bpm-d.D { color: #8ff0a4; } .bpm-d.A { color: #ff8f7a; }
+.bp-panel.hid { padding: 0; }
 .bp-pick select { font: inherit; font-size: 13px; padding: 7px 8px; border-radius: 10px; border: 1px solid var(--line); background: #0a1120; color: inherit; max-width: 190px; }
 ` }));
   }

@@ -27,6 +27,7 @@
       index,
       level: entry.level,
       stars: entry.stars,
+      elite: !!entry.elite,
       maxHp: stats.hp,
       hp: stats.hp,
       atk: stats.atk,
@@ -75,7 +76,7 @@
       this.bonuses = {};
       for (const side of ['player', 'enemy']) {
         const squad = this.side(side);
-        const b = D.squadBonuses(squad.map((u) => u.id), opts.planet);
+        const b = D.squadBonuses(squad.map((u) => u.id), opts.planet, squad.filter((u) => u.elite).map((u) => u.id));
         squad.forEach((u, i) => applyMods(u, b.perUnit[i]));
         // Early planets field slightly weaker enemies.
         if (side === 'enemy' && opts.enemyScale && opts.enemyScale !== 1) {
@@ -90,7 +91,7 @@
       this.docs = { player: { x: {} }, enemy: { x: {} } };
       const Doc = root.Doctrines;
       if (Doc && Doc.on()) {
-        for (const side of ['player', 'enemy']) this.docs[side] = Doc.battleRules(this.side(side).map((u) => u.id));
+        for (const side of ['player', 'enemy']) this.docs[side] = Doc.battleRules(this.side(side).map((u) => u.id), this.side(side).filter((u) => u.elite).map((u) => u.id));
         for (const side of ['player', 'enemy']) {
           const own = this.docs[side];
           const foes = this.side(side === 'player' ? 'enemy' : 'player');
@@ -105,10 +106,10 @@
           const squad = this.side(side);
           if (own.x.first && squad.length) {
             const fast = squad.reduce((a, u) => (u.spd > a.spd ? u : a), squad[0]);
-            fast.tm = Math.min(99, fast.tm + 25);
+            fast.tm = Math.min(99, fast.tm + 25 * this.docF(side, 'first'));
           }
           // Grand Inquisitor's Purge Order hits Jedi harder (on top of the -3% for all).
-          if (own.x.purge) foes.filter((u) => D.traitsOf(u.id).includes('jedi')).forEach((u) => { u.atk = Math.max(1, Math.round(u.atk * 0.91)); });
+          if (own.x.purge) foes.filter((u) => D.traitsOf(u.id).includes('jedi')).forEach((u) => { u.atk = Math.max(1, Math.round(u.atk * (1 - 0.09 * this.docF(side, 'purge')))); });
         }
       }
       this.turnCount = 0;
@@ -263,7 +264,7 @@
       }
       if (unit.alive && unit.id === 'grogu' && this.docs && this.docs[unit.side].x.grogu) {
         const weak = this.side(unit.side).filter((u) => u.alive && u.hp < u.maxHp).sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0];
-        if (weak) this.docHeal(weak, 0.035, events);
+        if (weak) this.docHeal(weak, 0.035 * this.docF(unit.side, 'grogu'), events);
       }
       let skipped = false;
       if (unit.alive && unit.statuses.stun) {
@@ -489,10 +490,10 @@
         const sx = this.docs[source.side].x;
         const tx = this.docs[target.side].x;
         if (this.currentAoe) amount *= 1 + (sx.aoe || 0);
-        else if (sx.marksman) amount *= 1.08;
-        if (sx.assassin && target.hp / target.maxHp < 0.35) amount *= 1.22;
-        if (tx.shield) amount *= 0.94;
-        if (tx.high && !target.docHigh) { target.docHigh = true; amount *= 0.5; }
+        else if (sx.marksman) amount *= 1 + 0.08 * this.docF(source.side, 'marksman');
+        if (sx.assassin && target.hp / target.maxHp < 0.35) amount *= 1 + 0.22 * this.docF(source.side, 'assassin');
+        if (tx.shield) amount *= 1 - 0.06 * this.docF(target.side, 'shield');
+        if (tx.high && !target.docHigh) { target.docHigh = true; amount *= 1 - 0.5 * this.docF(target.side, 'high'); }
       }
       return { amount: Math.max(1, Math.round(amount)), crit };
     }
@@ -527,11 +528,17 @@
         if (kx && (kx.magick || kx.unleashed)) {
           for (const u of this.side(target.side)) {
             if (!u.alive) continue;
-            if (kx.magick) this.chargeUlt(u, 10);
-            if (kx.unleashed) u.atk = Math.round(u.atk * 1.05);
+            if (kx.magick) this.chargeUlt(u, 10 * this.docF(target.side, 'magick'));
+            if (kx.unleashed) u.atk = Math.round(u.atk * (1 + 0.05 * this.docF(target.side, 'unleashed')));
           }
         }
       } else if (target.alive && this.docs) this.docGuard(target, events);
+    }
+
+    // A doctrine's Elite boost (1.25 when the card leading it is Elite).
+    docF(side, key) {
+      const f = this.docs && this.docs[side] && this.docs[side].f;
+      return (f && f[key]) || 1;
     }
 
     // Doctrine heals: R2-D2's Plucky Repairs and IG-11's Nurse Mode.
@@ -540,12 +547,12 @@
       const frac = target.hp / target.maxHp;
       if (dx.r2 && frac < 0.3 && !target.docR2) {
         target.docR2 = true;
-        this.docHeal(target, 0.08, events);
+        this.docHeal(target, 0.08 * this.docF(target.side, 'r2'), events);
       }
       if (dx.nurse && frac < 0.5 && !this.docs[target.side].nursed) {
         this.docs[target.side].nursed = true;
         const weak = this.side(target.side).filter((u) => u.alive).sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0];
-        if (weak) this.docHeal(weak, 0.2, events);
+        if (weak) this.docHeal(weak, 0.2 * this.docF(target.side, 'nurse'), events);
       }
     }
 

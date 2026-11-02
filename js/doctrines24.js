@@ -12,6 +12,10 @@
 (function (root) {
   const D = root.GameData;
   if (!D) return;
+  // An Elite card leads its doctrine harder: every number in it is 25% bigger.
+  const ELITE_BOOST = 1.25;
+  const scale = (m, f) => { if (f === 1) return m; const o = {}; for (const [k, v] of Object.entries(m)) o[k] = v * f; return o; };
+  const eliteOf = (elites, id) => (elites && elites.includes(id) ? ELITE_BOOST : 1);
   const on = () => !!(root.Update24 && root.Update24.on());
 
   const DOC = {
@@ -130,28 +134,35 @@
 
   // Squad bonuses gain each card's doctrine (ally stat mods + an entry in the list).
   const baseBonuses = D.squadBonuses;
-  D.squadBonuses = function (ids, planetId) {
+  // elites: ids of the Elite cards in this squad (their doctrines are boosted).
+  D.squadBonuses = function (ids, planetId, elites) {
     const b = baseBonuses(ids, planetId);
     if (!on()) return b;
     const defs = ids.map((id) => D.UNIT_MAP[id]);
     const tieCount = defs.filter((d) => d && d.kind === 'ship' && /^tie_/.test(d.id)).length;
     for (const doc of listFor(ids)) {
       const { a, x } = doc.spec;
-      if (a) defs.forEach((d, i) => { if (d && inScope(d, a.s)) addMods(b.perUnit[i], a.m); });
-      if (x === 'guard') defs.forEach((d, i) => { if (d && inScope(d, 'leader')) addMods(b.perUnit[i], { def: 0.08 }); });
-      if (x === 'jescort') defs.forEach((d, i) => { if (d && inScope(d, 'jedi')) addMods(b.perUnit[i], { spd: 0.05 }); });
-      if (x === 'swarm') defs.forEach((d, i) => { if (d) addMods(b.perUnit[i], { atk: 0.03 * tieCount }); });
-      b.active.push({ kind: 'doctrine', key: 'doc_' + doc.id, tier: 0, members: [ids.indexOf(doc.id)], name: doc.name, desc: `${D.UNIT_MAP[doc.id].name}: ${doc.text}`, icon: doc.icon, doctrine: doc.style });
+      const f = eliteOf(elites, doc.id);
+      if (a) { const m = scale(a.m, f); defs.forEach((d, i) => { if (d && inScope(d, a.s)) addMods(b.perUnit[i], m); }); }
+      if (x === 'guard') defs.forEach((d, i) => { if (d && inScope(d, 'leader')) addMods(b.perUnit[i], { def: 0.08 * f }); });
+      if (x === 'jescort') defs.forEach((d, i) => { if (d && inScope(d, 'jedi')) addMods(b.perUnit[i], { spd: 0.05 * f }); });
+      // Leia and Echo have no numbers to boost, so as Elites they add +3% armor.
+      if (f > 1 && x === 'hope') defs.forEach((d, i) => { if (d) addMods(b.perUnit[i], { def: 0.03 }); });
+      if (f > 1 && x === 'regs') defs.forEach((d, i) => { if (d && inScope(d, 'trooper')) addMods(b.perUnit[i], { def: 0.03 }); });
+      if (x === 'swarm') defs.forEach((d, i) => { if (d) addMods(b.perUnit[i], { atk: 0.03 * tieCount * f }); });
+      b.active.push({ kind: 'doctrine', key: 'doc_' + doc.id, tier: 0, members: [ids.indexOf(doc.id)], name: doc.name + (f > 1 ? ' ✦' : ''), desc: `${D.UNIT_MAP[doc.id].name}${f > 1 ? ' (Elite, 25% stronger)' : ''}: ${doc.text}`, icon: doc.icon, doctrine: doc.style });
     }
     return b;
   };
 
   // The battle engine asks for everything the side's doctrines do in a fight.
-  function battleRules(ids) {
-    const out = { foe: [], x: {} };
+  function battleRules(ids, elites) {
+    // x: each special rule, counted; f: its Elite boost (1 or 1.25).
+    const out = { foe: [], x: {}, f: {} };
     for (const doc of listFor(ids)) {
-      if (doc.spec.e) out.foe.push(doc.spec.e);
-      if (doc.spec.x) out.x[doc.spec.x] = (out.x[doc.spec.x] || 0) + 1;
+      const f = eliteOf(elites, doc.id);
+      if (doc.spec.e) out.foe.push({ s: doc.spec.e.s, m: scale(doc.spec.e.m, f) });
+      if (doc.spec.x) { out.x[doc.spec.x] = (out.x[doc.spec.x] || 0) + f; out.f[doc.spec.x] = Math.max(out.f[doc.spec.x] || 1, f); }
     }
     // aoeN / healN add N% to area damage / healing received (each card once).
     out.x.aoe = 0; out.x.heal = 0;
@@ -167,8 +178,10 @@
   function rewards(ids, type) {
     const r = { cr: 0, xp: 0, ky: 0, spin: 0, shard: 0, names: [] };
     for (const doc of listFor(ids)) {
-      const s = doc.spec.r;
-      if (!s) continue;
+      const s0 = doc.spec.r;
+      if (!s0) continue;
+      const u = root.Player && root.Player.unit && root.Player.unit(doc.id);
+      const s = scale(s0, u && u.elite ? ELITE_BOOST : 1);
       let used = false;
       if (s.cr) { r.cr += s.cr; used = true; }
       if (s.crBoss && type === 'boss') { r.cr += s.crBoss; used = true; }
@@ -186,6 +199,7 @@
   }
 
   D.DOCTRINES = DOC;
+  D.DOCTRINE_ELITE = ELITE_BOOST;
   D.DOCTRINE_STYLES = STYLE;
   root.Doctrines = { on, of: doctrineOf, list: listFor, battleRules, rewards, styles: STYLE };
 
@@ -197,6 +211,7 @@
 .doctrine-box .dst{margin-left:auto;padding:1px 8px;border-radius:99px;font-size:.7rem;background:rgba(255,255,255,.08)}
 .doctrine-box .dst.G{color:#ffd36b}.doctrine-box .dst.S{color:#7fe3ff}.doctrine-box .dst.D{color:#8ff0a4}.doctrine-box .dst.A{color:#ff8f7a}
 .doctrine-box p{margin:6px 0 0;font-size:.9rem;line-height:1.35}
+.doctrine-box .d-el{font-size:.78rem;color:#8fa6c4}.doctrine-box .d-el.on{color:#ffd36b;font-weight:700}
 .bonus.doctrine .bonus-icon,.syn-chip.doctrine{color:#9fc0ff}`;
   document.head.appendChild(css);
 })(typeof window !== 'undefined' ? window : globalThis);

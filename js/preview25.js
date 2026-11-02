@@ -72,7 +72,7 @@
     const out = {};
     for (const side of ['player', 'enemy']) {
       const units = b.side(side);
-      const sb = D.squadBonuses(units.map((u) => u.id), ui.planetId);
+      const sb = D.squadBonuses(units.map((u) => u.id), ui.planetId, units.filter((u) => u.elite).map((u) => u.id));
       const rows = units.map((u, i) => {
         const m = sb.perUnit[i] || {};
         const live = { atk: 0, def: 0 };
