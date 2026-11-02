@@ -30,7 +30,7 @@
         ['Liberate the Galaxy', '◉', 'Liberat|bosses|Optional bosses|Zillo|110 stages|Siege|Already finished|scenes download|galaxy grows'],
         ['Cards & Doctrines', '✦', 'new cards|Doctrines|Elite|Common, rare and epic|level cap|Hoth Star Destroyer'],
         ['Command Your Squad', '⚑', 'Battle Plans|Turn Meter|Replay ×3'],
-        ['HoloNet', '⌬', 'HoloNet raid|Axial|Sith Fleet|weekly raid|Champion'],
+        ['HoloNet', '⌬', 'HoloNet raid|Axial|Sith Fleet|weekly raid|Champion|HoloNet Season'],
         ['Credits & Rewards', '◈', 'results screen|Sell spare|Wallet|cost|Replaying|1.8×'],
         ['One more thing…', '✧', ''],
       ],
@@ -63,6 +63,7 @@
         'NEW|Turn Meter track: a live race right under the turn order in every battle. Every fighter\'s portrait slides toward GO as their Turn Meter fills (your squad below the line, enemies above). Whoever reaches GO hops to the front and takes their turn, then warps back to the start. Faster cards race quicker, and faces glow just before they move.',
         'IMPROVED|Turn Meter, made easy: the blue bar under every battle card is bigger and glows when that card is about to move, tap a card\'s bars to see its Turn Meter, Ultimate and health, and Captain Rex teaches it in the opening tutorial with a Turn Meter race.',
         'NEW|Something out there has started to hum. Listen closely, Seekers.',
+        'NEW|HoloNet Season 2 ends tonight, November 11, at 6:00 PM Central. Log in after it closes and Admiral Ackbar has your season recap ready: your final place in the world, your league, your record and your favorite card, then collect your reward. Season 3 starts straight away.',
         'NEW|Champion\'s Card: finish a HoloNet season in the Legend league as number one in the world, and Admiral Ackbar asks you to design a card of your own: its rarity, who it is, its job, its abilities, its look and how players find it. Once it\'s built you see it first, watch it fight, and approve it before it joins the galaxy with your callsign on it.',
         'BALANCE|Levelling a card from 31 up to 35 costs a quarter more.',
         'IMPROVED|Coruscant Under Siege gets tougher levels and BX Commando Droids in its ranks.',
@@ -317,13 +318,29 @@
     latest: UPDATES[0].v + (UPDATES[0].rev ? `.r${UPDATES[0].rev}` : ''),
 
     // Each line is "TAG|text"; the tag becomes a coloured label.
-    itemsHtml(items) {
+    // themed: numbers glow gold and each note gets an icon on its tag.
+    itemsHtml(items, themed) {
       const esc = root.UI.esc;
       const LABEL = { NEW: 'New', IMPROVED: 'Improved', BALANCE: 'Balance', FIXED: 'Fixed' };
-      return `<ul class="ul-items">${items.map((line) => {
+      const ICON = { NEW: '✦', IMPROVED: '▲', BALANCE: '⚖', FIXED: '✚' };
+      const glow = (t) => esc(t).replace(/(\d[\d,.]*(?:%|×|★)?)/g, '<b class="lbl-num">$1</b>');
+      return `<ul class="ul-items">${items.map((line, k) => {
         const [tag, text] = line.includes('|') ? line.split('|') : ['NEW', line];
-        return `<li class="ul-item t-${tag.toLowerCase()}"><span class="ul-tag">${LABEL[tag] || tag}</span><span class="ul-text">${esc(text)}</span></li>`;
+        return `<li class="ul-item t-${tag.toLowerCase()}" style="--k:${k}"><span class="ul-tag">${themed ? `<i>${ICON[tag] || '✦'}</i>` : ''}${LABEL[tag] || tag}</span><span class="ul-text">${themed ? glow(text) : esc(text)}</span></li>`;
       }).join('')}</ul>`;
+    },
+
+    // Themed logs come alive as you scroll: each note slides in when it
+    // reaches the screen, and section headers draw their line and wake their
+    // little animation. A bar at the top shows how far down you are.
+    animate(scroller) {
+      const box = scroller.querySelector('.lbl');
+      if (!box) return;
+      box.classList.add('anim');
+      const io = 'IntersectionObserver' in root ? new IntersectionObserver((list) => {
+        for (const e of list) if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+      }, { root: scroller, threshold: 0.12 }) : null;
+      box.querySelectorAll('.ul-item, .lbl-sec h3').forEach((n) => (io ? io.observe(n) : n.classList.add('in')));
     },
 
     entryHtml(u, open) {
@@ -349,7 +366,7 @@
         <div class="lbl-hero"><div class="lbl-stars"></div><div class="lbl-worlds">${worlds}</div>
           <p class="lbl-kick">Update ${esc(u.v)}</p><h2 class="lbl-title">${esc(u.title).toUpperCase()}</h2><p class="lbl-date">${esc(u.date)} · The biggest update yet</p></div>
         <div class="lbl-stats">${(u.stats || []).map(([n, l], i) => `<div style="--i:${i}"><b>${esc(n)}</b><span>${esc(l)}</span></div>`).join('')}</div>
-        ${secs.filter((x) => x[2].length).map(([title, icon, items], k) => `<section class="lbl-sec ${k === secs.length - 1 ? 'last' : ''}" style="--i:${k}"><h3><i>${icon}</i>${esc(title)}</h3>${this.itemsHtml(items)}</section>`).join('')}
+        ${secs.filter((x) => x[2].length).map(([title, icon, items], k, arr) => `<section class="lbl-sec deco-${['galaxy', 'cards', 'squad', 'holonet', 'credits', 'secret'][u.groups.findIndex((g) => g[0] === title)] || 'galaxy'} ${k === arr.length - 1 ? 'last' : ''}" style="--i:${k}"><h3><i>${icon}</i><span>${esc(title)}</span><em class="lbl-deco" aria-hidden="true"><b></b><b></b><b></b></em></h3>${this.itemsHtml(items, true)}</section>`).join('')}
       </div>`;
     },
 
@@ -374,6 +391,7 @@
       // fills the panel, and the others are a scroll away.
       const list = m.root.querySelector('.ul-list');
       this.paintWorlds(m.root);
+      m.root.querySelectorAll('.ul-entry.th-liberation').forEach(() => this.animate(list));
       m.root.querySelectorAll('.ul-entry').forEach((d) => d.addEventListener('toggle', () => {
         if (!d.open) return;
         m.root.querySelectorAll('.ul-entry[open]').forEach((o) => { if (o !== d) o.open = false; });
@@ -398,8 +416,28 @@
         ${this.itemsHtml(u.items)}`}
         <p class="ul-safe">Your progress is safe: updates never reset your save.</p>
         ${RELOAD_NOTE}
-        <div class="modal-actions"><button class="btn" type="button" data-all>Full update log</button><button class="btn btn-primary" type="button" data-close>${u.theme === 'liberation' ? 'Liberate the galaxy' : "Let's go"}</button></div>`, { small: true, cls: `update-modal ${u.theme ? `th-${u.theme}` : ''}` });
+        <div class="modal-actions"><button class="btn" type="button" data-all>Full update log</button><button class="btn btn-primary" type="button" data-close>${u.theme === 'liberation' ? 'Liberate the galaxy' : "Let's go"}</button></div>
+        ${u.theme ? '<div class="lbl-foot"><button type="button" class="lbl-more" data-more>Keep scrolling ↓</button><div class="lbl-prog" aria-hidden="true"><i></i></div></div>' : ''}`, { small: true, cls: `update-modal ${u.theme ? `th-${u.theme}` : ''}`, dismissable: !u.theme });
       this.paintWorlds(m.root);
+      // The biggest update: you read to the end before you can close it. The
+      // buttons wait at the bottom, and Escape or a tap outside does nothing.
+      if (u.theme) {
+        const sc = m.root.querySelector('.modal');
+        this.animate(sc);
+        const bar = m.root.querySelector('.lbl-prog i');
+        const more = m.root.querySelector('[data-more]');
+        const btns = m.root.querySelectorAll('.modal-actions .btn');
+        btns.forEach((b) => { b.disabled = true; });
+        const onScroll = () => {
+          const max = sc.scrollHeight - sc.clientHeight;
+          const p = max > 0 ? Math.min(1, sc.scrollTop / max) : 1;
+          bar.style.transform = `scaleX(${p})`;
+          if (p > 0.985) { btns.forEach((b) => { b.disabled = false; }); more.classList.add('gone'); m.root.querySelector('.lbl-foot').classList.add('done'); m.root.querySelector('.modal-actions').classList.add('ready'); }
+        };
+        sc.addEventListener('scroll', onScroll, { passive: true });
+        more.addEventListener('click', () => sc.scrollBy({ top: sc.clientHeight * 0.8, behavior: 'smooth' }));
+        onScroll();
+      }
       m.root.addEventListener('click', (e) => {
         if (e.target.closest('[data-close]')) m.close();
         if (e.target.closest('[data-all]')) { m.close(); this.showAll(); }

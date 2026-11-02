@@ -1402,6 +1402,7 @@ new MutationObserver(() => { if (chipTick) return; chipTick = setTimeout(() => {
 root.__xq.chips = () => { delete Z().cf; delete Z().ca; Player.save(); placeChips(); };
 root.__xq.journal = () => journal();
 // The profile shows a Codex button once there's anything in it (same rule as Settings).
+root.__xq.foundCount = () => found().length + chipFound().length + (kyOn() ? kyFound().length : 0);
 root.__xq.hasCodex = () => { const z = Z(); return !!(found().length || chipFound().length || z.hp || (kyOn() && (kyFound().length || z.kc)) || (xqTester() && !xqLive())); };
 
 

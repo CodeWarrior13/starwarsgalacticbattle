@@ -5400,6 +5400,10 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   // Seasons were 4 weeks; from 2.2 they're 3. The 4-week season running when
   // 2.2 lands finishes normally, and 3-week seasons start right after it.
   const SEASON_WEEKS = 4;
+  // Seasons are counted from 1970 inside the game; the HoloNet opened in
+  // season 740 (October 14, 2026), so that one is shown as Season 1.
+  const FIRST_SEASON = 739;
+  HN.seasonLabel = (n) => Math.max(1, n - FIRST_SEASON);
   const WEEK_MS = 7 * 24 * 3600 * 1000;
   const short22 = () => !!(root.Update22 && root.Update22.on());
   const switchWeek = () => Math.ceil(Math.floor((root.Update22 && root.Update22.at || 0) / WEEK_MS) / SEASON_WEEKS) * SEASON_WEEKS;
@@ -6839,7 +6843,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const ps = P2().soc.pendingSeason;
     if (!ps || document.querySelector('.modal-backdrop')) return;
     const rw = SEASON_REWARD[ps.league] || SEASON_REWARD.bronze;
-    const m = openModal(`<div class="hn-result"><div class="result-title win">SEASON ${ps.no % 100} COMPLETE</div>
+    const m = openModal(`<div class="hn-result"><div class="result-title win">SEASON ${HN.seasonLabel(ps.no)} COMPLETE</div>
       <div style="display:grid;justify-items:center;gap:6px"><div style="width:110px">${A.badge(ps.league, ps.div)}</div><b>You finished in ${esc(ps.name)}</b></div>
       <div class="rows"><div><span>Beskar</span><b>${HN.ui.bes(rw.beskar)}</b></div>${rw.puck ? `<div><span>Bounty puck</span><b>${A.TIER[rw.puck].label}</b></div>` : ''}${rw.card ? `<div><span>Card</span><b>${esc(D.UNIT_MAP[rw.card].name)}</b></div>` : ''}${rw.frame ? `<div><span>Frame</span><b>${esc(FRAMES[rw.frame].name)}</b></div>` : ''}</div>
       <p class="muted small" style="text-align:center">A new season starts now. Ratings above 800 settle halfway back, so everyone climbs again.</p>
@@ -7007,7 +7011,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const frames = ownedFrames();
     const me = prof();
     return `${baseLeagues(p)}
-      <div class="hn-sec"><h3>Season ${seasonNo() % 100} · ends in ${days} day${days === 1 ? '' : 's'}</h3>
+      <div class="hn-sec"><h3>Season ${HN.seasonLabel(seasonNo())} · ends in ${days} day${days === 1 ? '' : 's'}</h3>
         <p class="muted small" style="margin:0">Seasons last four weeks. When one ends you're paid for the best division you reached that season, then ratings above 800 settle halfway back. Best this season: <b>${esc(HN.divOf(h.soc.sBest || h.rating).name)}</b>.</p>
         <div class="g-ms">${Object.entries(SEASON_REWARD).map(([lg, rw]) => `<div class="g-m ${HN.divOf(h.soc.sBest || h.rating).league === lg ? 'ok' : ''}"><div style="width:48px">${A.badge(lg, lg === 'legend' ? 1 : 3)}</div><b>${lg[0].toUpperCase() + lg.slice(1)}</b><small>${fmt(rw.beskar)} Beskar${rw.puck ? ` · ${A.TIER[rw.puck].label} puck` : ''}${rw.card ? ` · ${esc(D.UNIT_MAP[rw.card].name)}` : ''}${rw.frame ? ` · ${esc(FRAMES[rw.frame].name)} frame` : ''}</small></div>`).join('')}</div></div>
       <div class="hn-sec"><h3>Profile frames</h3><div class="pf-frames">${shownFrames().map(([id, f]) => `<div class="pf-fr ${frames.includes(id) ? '' : 'locked'}">${avatar({ ...me, frame: id }, 'md')}<b>${esc(f.name)}</b><small>${frames.includes(id) ? 'Unlocked' : esc(f.how)}</small></div>`).join('')}</div>
@@ -7809,10 +7813,10 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
       const record = prev.best >= (h.rcAll ? all.best + 1 : all.best);
       h.rcAll = { best: Math.max(all.best || 0, prev.best), rank: all.rank ? Math.min(all.rank, rank) : rank };
       HN.save();
-      const shown = await root.Recap.show({ season: prev.season % 100, rank, total: ladder.length + 1, best: prev.best, div: HN.divOf(prev.best), record, allBest: h.rcAll.best, prize: rw ? rewardText(rw) + (rw.puck ? ' (open it in the Forge)' : '') : '', stats: root.Recap.seasonStats(h, prev.season) });
+      const shown = await root.Recap.show({ season: HN.seasonLabel(prev.season), rank, total: ladder.length + 1, best: prev.best, div: HN.divOf(prev.best), record, allBest: h.rcAll.best, prize: rw ? rewardText(rw) + (rw.puck ? ' (open it in the Forge)' : '') : '', stats: root.Recap.seasonStats(h, prev.season) });
       if (shown) return collect();
     }
-    const m = openModal(`<div class="hn-result"><div class="result-title ${rw ? 'win' : ''}">SEASON ${prev.season % 100} LEADERBOARD</div>
+    const m = openModal(`<div class="hn-result"><div class="result-title ${rw ? 'win' : ''}">SEASON ${HN.seasonLabel(prev.season)} LEADERBOARD</div>
       <p style="text-align:center;margin:4px 0">You finished <b>#${rank}</b> with a season best of <b>${fmt(prev.best)}</b>.</p>
       ${rw ? `<p style="text-align:center;margin:0" class="muted">${esc(rewardText(rw))}${rw.puck ? ' (open it in the Forge)' : ''}</p>` : '<p style="text-align:center;margin:0" class="muted">The top 25 earn rewards. There\'s always next season.</p>'}
       <div class="modal-actions"><button type="button" class="btn btn-primary" data-x>${rw ? 'Collect' : 'OK'}</button></div></div>`, { small: true });
@@ -7867,7 +7871,7 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
         <button type="button" class="hn-mini" data-hn="leaders"><b>Leaderboards</b><small>Season ladder, duels, raid and guilds</small></button>
         ${root.Update21 && root.Update21.on() ? '<button type="button" class="hn-mini" data-hn="findpilot"><b>Find a pilot</b><small>Look up anyone by callsign</small></button>' : ''}
         <button type="button" class="hn-mini" data-hn="databank"><b>Databank</b><small>${HN.HN_IDS.filter(HN.owns).length}/${HN.HN_IDS.length} cards · ${Object.keys(h.captured).length} bounties</small></button>
-        <button type="button" class="hn-mini" data-hn="leagues"><b>Leagues &amp; Season</b><small>Season ${SO.seasonNo() % 100} · ends in <b class="sclock" data-season-clock>${HN.seasonClock()}</b></small></button>
+        <button type="button" class="hn-mini" data-hn="leagues"><b>Leagues &amp; Season</b><small>Season ${HN.seasonLabel(SO.seasonNo())} · ends in <b class="sclock" data-season-clock>${HN.seasonClock()}</b></small></button>
       </div>`;
   };
 
@@ -7887,7 +7891,7 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
       const rows = seasonRows();
       const mine = rows.findIndex((x) => x.me);
       const shown = rows.slice(0, 25);
-      body = `<div class="hn-sec"><h3>Season ${SO.seasonNo() % 100} rewards</h3><div class="sclock-big"><span>Season ends in</span><b data-season-clock data-long>${HN.seasonClock(true)}</b></div>
+      body = `<div class="hn-sec"><h3>Season ${HN.seasonLabel(SO.seasonNo())} rewards</h3><div class="sclock-big"><span>Season ends in</span><b data-season-clock data-long>${HN.seasonClock(true)}</b></div>
           <div class="hv-rw">${LB_REWARD.map((r) => `<div><b>${r.label}</b><small>${esc(rewardText(r))}</small></div>`).join('')}</div>
           <p class="muted small" style="margin:0">Ranked by your best rating this season. Rewards are paid when the season ends.</p></div>
         <div class="g-list">${shown.map((x, i) => { const d = HN.divOf(x.best); return rowOf(x, i, `${A.badge(d.league, d.div)}<b>${fmt(x.best)}</b><small>${esc(d.name)}</small>`); }).join('')}</div>

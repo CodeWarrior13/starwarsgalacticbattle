@@ -70,7 +70,7 @@
           <p class="muted small">${title(a.level)} · Level ${a.level}${lg ? ` · ${esc(lg.name)}` : ''}</p>
           <button type="button" class="p2-lvbtn" data-p2="level" aria-label="Level ${a.level}: what's coming up"><span class="p2-xp"><i style="width:${pct}%"></i></span>
           <span class="muted small">${a.level >= D.MAX_ACCOUNT_LEVEL ? 'Maximum rank reached.' : `${fmt(a.xp)} / ${fmt(need)} XP to level ${a.level + 1}`} · <b class="p2-more">Coming up ›</b></span></button>
-          <div class="p2-codes">${root.__xq && root.__xq.hasCodex && root.__xq.hasCodex() ? '<button type="button" class="p2-codex" data-p2="codex"><i aria-hidden="true">✧</i>Seeker\'s Codex</button>' : ''}</div></div>
+          <div class="p2-codes">${root.__xq && root.__xq.hasCodex && root.__xq.hasCodex() ? `<button type="button" class="p2-codex" data-p2="codex"><i aria-hidden="true"><s></s>✧</i><span>Seeker's Codex</span><em>${root.__xq.foundCount ? root.__xq.foundCount() : 0} found</em></button>` : ''}</div></div>
       </div>`;
     };
     const tabs = () => `<div class="pc-tabs p2-tabs" role="tablist">${[['overview', 'Overview'], ['collection', 'Collection'], ['worlds', 'Worlds'], ['badges', 'Badges'], ['friends', 'Friends'], ['stats', 'Stats']].map(([k, n]) => `<button type="button" role="tab" aria-selected="${tab === k}" class="${tab === k ? 'on' : ''}" data-p2t="${k}">${n}</button>`).join('')}</div>`;
@@ -252,7 +252,15 @@
 .p2-xp { height: 7px; border-radius: 4px; background: #1b2436; overflow: hidden; margin-top: 6px; } .p2-xp i { display: block; height: 100%; background: linear-gradient(90deg, #ffd23f, #ff9a3a); }
 .p2-codes { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; } .p2-codes:empty { display: none; }
 .p2-codex { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px 6px 6px; border-radius: 999px; border: 1px solid rgba(124, 208, 255, .55); background: linear-gradient(90deg, rgba(18, 64, 110, .9), rgba(8, 18, 36, .9)); color: #cfeeff; font: 700 11px var(--font-display); letter-spacing: .14em; text-transform: uppercase; cursor: pointer; box-shadow: 0 0 14px rgba(74, 168, 255, .3); }
-.p2-codex i { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; font-style: normal; color: #06142a; background: radial-gradient(circle, #e8f8ff, #4aa8ff); box-shadow: 0 0 10px #4aa8ff; }
+.p2-codex { position: relative; overflow: hidden; }
+.p2-codex::before { content: ''; position: absolute; top: 0; bottom: 0; width: 40%; left: -60%; background: linear-gradient(100deg, transparent, rgba(191, 232, 255, .35), transparent); animation: p2-sheen 3.6s ease-in-out infinite; pointer-events: none; }
+@keyframes p2-sheen { 0%, 55% { left: -60%; } 100% { left: 130%; } }
+.p2-codex i { position: relative; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; font-style: normal; color: #06142a; background: radial-gradient(circle, #e8f8ff, #4aa8ff); box-shadow: 0 0 10px #4aa8ff; animation: p2-pulse 2.4s ease-in-out infinite; }
+.p2-codex i s { position: absolute; inset: -4px; border-radius: 50%; border: 1.5px dashed rgba(191, 232, 255, .8); animation: p2-ring 6s linear infinite; }
+@keyframes p2-ring { to { transform: rotate(360deg); } }
+@keyframes p2-pulse { 50% { box-shadow: 0 0 18px #7fd8ff; } }
+.p2-codex em { font-style: normal; font-size: 10px; letter-spacing: .08em; padding: 2px 7px; border-radius: 999px; background: rgba(255, 210, 63, .16); color: #ffe81f; border: 1px solid rgba(255, 210, 63, .4); }
+body.perf-on .p2-codex::before, body.perf-on .p2-codex i, body.perf-on .p2-codex i s { animation: none; }
 .p2-tabs { grid-template-columns: repeat(6, minmax(0, 1fr)); } .p2-tabs button { font-size: 12px; padding: 8px 2px; }
 @media (max-width: 480px) { .p2-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 .p2-next { display: grid; gap: 6px; } .p2-next div { display: grid; grid-template-columns: 70px 1fr; gap: 8px; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.03); font-size: 12.5px; } .p2-next b { color: #ffd23f; } .p2-next em { font-style: normal; font-weight: 700; }

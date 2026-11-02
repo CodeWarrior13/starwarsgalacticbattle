@@ -17,6 +17,7 @@
 
   const live = () => !!(root.Update24 && root.Update24.on && root.Update24.on());
   const D = root.GameData;
+  const label = (n) => (root.HN && root.HN.seasonLabel ? root.HN.seasonLabel(n) : n);
   const UI = () => root.UI;
   const HN = () => root.HN;
   const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -152,7 +153,7 @@
       <circle cx="60" cy="96" r="40" fill="url(#cpG)" stroke="#6a3e04" stroke-width="1.4"/>
       ${Array.from({ length: 40 }, (_, k) => `<line x1="60" y1="57" x2="60" y2="60" stroke="#8a5a0a" stroke-width=".8" transform="rotate(${k * 9} 60 96)"/>`).join('')}
       <circle cx="60" cy="96" r="34" fill="url(#cpE)" stroke="#fff0b0" stroke-width="1.6"/>
-      <text font-size="5.6" font-weight="800" fill="#ffe08a" letter-spacing="1.2" font-family="Oxanium, sans-serif"><textPath href="#cpT" startOffset="2%">CHAMPION OF THE GALAXY · SEASON ${season % 100} · LEGEND ·</textPath></text>
+      <text font-size="5.6" font-weight="800" fill="#ffe08a" letter-spacing="1.2" font-family="Oxanium, sans-serif"><textPath href="#cpT" startOffset="2%">CHAMPION OF THE GALAXY · SEASON ${label(season)} · LEGEND ·</textPath></text>
       <path d="M60 72 L64.6 86 L79 86 L67.4 94.6 L71.8 108.6 L60 100 L48.2 108.6 L52.6 94.6 L41 86 L55.4 86Z" fill="url(#cpG)" stroke="#6a3e04" stroke-width=".8" opacity=".95"/>
       <text x="60" y="101" text-anchor="middle" font-size="20" font-weight="800" fill="#4a2a00" font-family="Oxanium, sans-serif">1</text>
       <g clip-path="url(#cpC)"><rect class="cp-shine" x="40" y="50" width="16" height="100" fill="#fff" opacity=".35"/></g>
@@ -306,13 +307,13 @@
     await whenFree();
     const c = h.champ;
     const node = stage(c.season);
-    node.querySelector('[data-sub]').textContent = `No. 1 in the world · Legend league · Season ${c.season % 100}`;
+    node.querySelector('[data-sub]').textContent = `No. 1 in the world · Legend league · Season ${label(c.season)}`;
     sound('whoosh');
     await wait(1500);
     if (c.status === 'design' && !c.step && !c.met) {
       sound('heal');
       await wait(1100);
-      await talk(node, [`Commander${myName() === 'Commander' ? '' : ` ${myName()}`}! The whole galaxy saw it.`, `You finished Season ${c.season % 100} in the Legend league, ranked first of every pilot alive.`, 'The fleet owes you a debt, and I have a reward no one else will ever receive.']);
+      await talk(node, [`Commander${myName() === 'Commander' ? '' : ` ${myName()}`}! The whole galaxy saw it.`, `You finished Season ${label(c.season)} in the Legend league, ranked first of every pilot alive.`, 'The fleet owes you a debt, and I have a reward no one else will ever receive.']);
       node.classList.add('medal');
       sound('reveal_legendary');
       await wait(1300);

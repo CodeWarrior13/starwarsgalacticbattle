@@ -189,7 +189,7 @@
     const use = {};
     const ids = Object.keys(root.Player.state.units).slice(0, 5);
     ids.forEach((id, i) => { use[id] = 30 - i * 5; });
-    show({ season: (seasonNow() || 41) % 100, rank: 7, total: 112, best, div: HN().divOf(best), record: true, allBest: best, prize: 'a sample reward (this is a test)', stats: { w: 41, l: 17, dw: 6, dl: 3, raids: 12, streak: 9, use } });
+    show({ season: HN().seasonLabel ? HN().seasonLabel((seasonNow() || 741) - 1) : 1, rank: 7, total: 112, best, div: HN().divOf(best), record: true, allBest: best, prize: 'a sample reward (this is a test)', stats: { w: 41, l: 17, dw: 6, dl: 3, raids: 12, streak: 9, use } });
     return true;
   }
 
