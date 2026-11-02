@@ -3575,5 +3575,5 @@
     }
   }
 
-  root.UI = { hooks: HOOKS, achievements, featBadge, secretPeek, badgePeek, stillSvg, packReveal, motionOK, walkout, settings, profile, playFeat, celebrateFeat, markFeatSeen, soundSettings: settings, homeworldOf, $, $$, el, esc, fmt, cur, portrait, stars, unitCard, toast, openModal, confirmBox, updateWallet, inspect, synergyBanner, App, Screens };
+  root.UI = { codeEntry: () => codeEntry(), hooks: HOOKS, achievements, featBadge, secretPeek, badgePeek, stillSvg, packReveal, motionOK, walkout, settings, profile, playFeat, celebrateFeat, markFeatSeen, soundSettings: settings, homeworldOf, $, $$, el, esc, fmt, cur, portrait, stars, unitCard, toast, openModal, confirmBox, updateWallet, inspect, synergyBanner, App, Screens };
 })(window);

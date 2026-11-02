@@ -69,7 +69,8 @@
         <div class="p2-id"><p class="eyebrow">Commander profile</p><h2>${esc(name)}</h2>${prof.tag ? '' : '<button type="button" class="btn btn-small btn-primary p2-addprof" data-p2="addprof">Add profile</button>'}
           <p class="muted small">${title(a.level)} · Level ${a.level}${lg ? ` · ${esc(lg.name)}` : ''}</p>
           <button type="button" class="p2-lvbtn" data-p2="level" aria-label="Level ${a.level}: what's coming up"><span class="p2-xp"><i style="width:${pct}%"></i></span>
-          <span class="muted small">${a.level >= D.MAX_ACCOUNT_LEVEL ? 'Maximum rank reached.' : `${fmt(a.xp)} / ${fmt(need)} XP to level ${a.level + 1}`} · <b class="p2-more">Coming up ›</b></span></button></div>
+          <span class="muted small">${a.level >= D.MAX_ACCOUNT_LEVEL ? 'Maximum rank reached.' : `${fmt(a.xp)} / ${fmt(need)} XP to level ${a.level + 1}`} · <b class="p2-more">Coming up ›</b></span></button>
+          <div class="p2-codes">${UI.codeEntry ? '<button type="button" class="btn btn-small" data-p2="code">Enter a code</button>' : ''}${root.__xq && root.__xq.hasCodex && root.__xq.hasCodex() ? '<button type="button" class="btn btn-small" data-p2="codex">Seeker\'s Codex</button>' : ''}</div></div>
       </div>`;
     };
     const tabs = () => `<div class="pc-tabs p2-tabs" role="tablist">${[['overview', 'Overview'], ['collection', 'Collection'], ['worlds', 'Worlds'], ['badges', 'Badges'], ['friends', 'Friends'], ['stats', 'Stats']].map(([k, n]) => `<button type="button" role="tab" aria-selected="${tab === k}" class="${tab === k ? 'on' : ''}" data-p2t="${k}">${n}</button>`).join('')}</div>`;
@@ -198,6 +199,9 @@
       if (!x) return;
       if (x.dataset.p2 === 'close') return m.close();
       if (x.dataset.p2 === 'level') return levelInfo();
+      // Codes and the Seeker's Codex, right from your profile (also in Settings).
+      if (x.dataset.p2 === 'code') { m.close(); return UI.codeEntry(); }
+      if (x.dataset.p2 === 'codex') { m.close(); return root.__xq.journal(); }
       // No profile yet: make one (callsign and picture). The button stays until you do.
       if (x.dataset.p2 === 'addprof') { m.close(); if (root.Account && root.Account.profile) root.Account.profile(() => open(), false); return; }
       if (x.dataset.p2 === 'pic' && root.RexGuide && root.RexGuide.active && root.RexGuide.active()) return toast('Finish Captain Rex\'s tour first, then tap your picture to change it.');
@@ -246,6 +250,7 @@
 .p2-ring b { font-size: 14px; }
 .p2-id { min-width: 0; text-align: left; } .p2-id h2 { margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: clamp(20px, 5vw, 28px); } .p2-id .eyebrow { margin: 0; } .p2-id .small { margin: 2px 0 0; }
 .p2-xp { height: 7px; border-radius: 4px; background: #1b2436; overflow: hidden; margin-top: 6px; } .p2-xp i { display: block; height: 100%; background: linear-gradient(90deg, #ffd23f, #ff9a3a); }
+.p2-codes { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; } .p2-codes:empty { display: none; } .p2-codes .btn { font-size: 11px; padding: 5px 10px; }
 .p2-tabs { grid-template-columns: repeat(6, minmax(0, 1fr)); } .p2-tabs button { font-size: 12px; padding: 8px 2px; }
 @media (max-width: 480px) { .p2-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 .p2-next { display: grid; gap: 6px; } .p2-next div { display: grid; grid-template-columns: 70px 1fr; gap: 8px; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.03); font-size: 12.5px; } .p2-next b { color: #ffd23f; } .p2-next em { font-style: normal; font-weight: 700; }

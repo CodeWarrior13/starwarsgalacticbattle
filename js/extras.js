@@ -1319,11 +1319,12 @@ function journal() {
   const z = Z();
   const hf = found();
   let sel = -1;
+  let ksel = -1;
   const m = UI.openModal('<div class="xq-journal no-fx" data-j></div>', { small: true, cls: 'xq-journal-modal' });
   const paint = () => {
     const order = chipOrder();
     const solved = !z.cc && order.every((i, k) => i >= 0 && CHIP[i] === CHIP[k]);
-    m.root.querySelector('[data-j]').innerHTML = `<div><p class="eyebrow">Seeker's Codex</p><h2>Shards &amp; Chips</h2></div>
+    m.root.querySelector('[data-j]').innerHTML = `<div><p class="eyebrow">Seeker's Codex</p><h2>${kyOn() && (kyFound().length || z.kc) ? 'Shards, Chips &amp; Crystals' : 'Shards &amp; Chips'}</h2></div>
       <div class="xq-jsec holo"><h3>The Gatekeeper's Shards</h3>
         ${z.hp ? '<p class="xq-done">Opened. The archive is yours.</p>' : `<p>${hf.length} of ${WORD.length} found. Each one shows its place.</p>`}
         <div class="xq-row">${WORD.split('').map((ch, k) => `<span class="xq-l ${z.hp || hf.includes(k) ? '' : 'no'}">${z.hp || hf.includes(k) ? ch : '?'}<small>${ROMAN[k]}</small></span>`).join('')}</div>
@@ -1333,6 +1334,7 @@ function journal() {
         <div class="xq-row">${(z.cc ? CHIP.split('').map((_, k) => k) : order).map((i, k) => `<button type="button" class="xq-l ${i < 0 ? 'no' : ''} ${sel === k ? 'sel' : ''}" data-slot="${k}" ${z.cc ? 'disabled' : ''}>${i < 0 ? '?' : CHIP[i]}</button>`).join('')}</div>
         ${solved ? `<p class="xq-done">The chips click into place.${cineOn() ? '' : ' Try it as a code.'}</p>` : ''}
         ${cineOn() && solved ? '<button class="btn xq-go xq-go-chip" type="button" data-xq-go="chip">Cash the chips</button>' : ''}</div>
+      ${kyHtml(ksel)}
       ${xqTester() && !xqLive() ? `<div class="xq-jsec xq-test"><h3>Tester tools</h3><p>Only on tester devices. Reset puts every piece back in hiding (your unlocked codes and rewards stay).</p>
         <div class="xq-tbtns"><button class="btn" type="button" data-xq-t="chip">Play chip find</button><button class="btn" type="button" data-xq-t="holo">Play holocron find</button><button class="btn" type="button" data-xq-t="reset">Reset pieces</button></div></div>` : ''}
       <div class="modal-actions"><button class="btn btn-primary" type="button" data-jx>Close</button></div>`;
@@ -1358,7 +1360,15 @@ function journal() {
       m.close();
       const st = document.querySelector('.settings-modal [data-close]');
       if (st) st.click();
-      if (H.redeem) H.redeem(go.dataset.xqGo === 'holo' ? WORD : CHIP);
+      if (H.redeem) H.redeem(go.dataset.xqGo === 'holo' ? WORD : go.dataset.xqGo === 'ky' ? KY : CHIP);
+      return;
+    }
+    const kb = e.target.closest('[data-kslot]');
+    if (kb && !z.kc) {
+      const k = Number(kb.dataset.kslot);
+      if (ksel < 0) ksel = k;
+      else { const o = kyOrder(); const a = ksel; [o[a], o[k]] = [o[k], o[a]]; ksel = -1; Player.save(); if (root.Sound) root.Sound.play(o[k] === k || o[a] === a ? 'heal' : 'click'); }
+      paint();
       return;
     }
     const b = e.target.closest('[data-slot]');
@@ -1380,16 +1390,18 @@ function placeJournal() {
   const host = document.querySelector('.settings-modal [data-code-entry]');
   if (!host || host.parentElement.querySelector('[data-xq-journal]')) return;
   const z = Z();
-  if (!found().length && !chipFound().length && !z.hp && !(xqTester() && !xqLive())) return;
+  if (!found().length && !chipFound().length && !z.hp && !(kyOn() && (kyFound().length || z.kc)) && !(xqTester() && !xqLive())) return;
   const b = el('<button class="btn" type="button" data-xq-journal>Seeker\'s Codex</button>');
   b.addEventListener('click', (e) => { e.stopPropagation(); journal(); });
   host.insertAdjacentElement('afterend', b);
 }
 let chipTick = null;
 // Throttled, not debounced: screens with constant small changes still get a pass.
-new MutationObserver(() => { if (chipTick) return; chipTick = setTimeout(() => { chipTick = null; placeChips(); placeJournal(); }, 260); }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden'] });
+new MutationObserver(() => { if (chipTick) return; chipTick = setTimeout(() => { chipTick = null; placeChips(); placeKy(); placeJournal(); }, 260); }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden'] });
 root.__xq.chips = () => { delete Z().cf; delete Z().ca; Player.save(); placeChips(); };
 root.__xq.journal = () => journal();
+// The profile shows a Codex button once there's anything in it (same rule as Settings).
+root.__xq.hasCodex = () => { const z = Z(); return !!(found().length || chipFound().length || z.hp || (kyOn() && (kyFound().length || z.kc)) || (xqTester() && !xqLive())); };
 
 
 // ---------- find moments (preview: testers only until approved) ----------
@@ -1591,5 +1603,187 @@ H.redeem = (code) => {
   setTimeout(() => cineChip(nextOf(CHIP.length, chipFound()), null, () => setTimeout(() => cineHolo(nextOf(WORD.length, found()), null), 300)), 300);
   return true;
 };
+
+
+// ---------- the singing crystals (2.4) ----------
+// Ten Kyber crystals hide around the game, each holding one letter. Like the
+// chips, they don't say where they go, but a crystal hums (glows) when it sits
+// in its right place in the Seeker's Codex. The finished word is a one-time
+// code worth 150 Kyber: about a week of daily rewards, or one common Elite.
+// Ships with 2.4 (testers: the 2.4 switch).
+const kyOn = () => !!(root.Update24 && root.Update24.on());
+const KY = String.fromCharCode(73, 76, 85, 77, 67, 65, 86, 69, 82, 78);
+const KY_REWARD = 150;
+const KY_COLORS = ['#4aa8ff', '#4ade80', '#b77bff', '#ffd23f', '#e8f8ff', '#ff9a3c', '#5ae0ff', '#7dff9a', '#d58bff', '#fff3a0'];
+const KY_SPOTS = [
+  { at: () => document.querySelector('#screen .versus .vs'), pos: 'right:-14px;top:-6px' },
+  { at: () => document.querySelector('#screen .tower-panel'), pos: 'right:10px;bottom:10px' },
+  { at: () => document.querySelector('#screen .roster-head'), pos: 'right:-2px;top:-12px' },
+  { at: () => document.querySelector('.inspect .power-big'), pos: 'right:-16px;top:2px' },
+  { at: () => document.querySelector('.pf-head'), pos: 'right:8px;bottom:4px' },
+  { at: () => document.querySelector('.result-modal .result-title'), pos: 'left:6px;top:4px' },
+  { at: () => document.querySelector('.ul-head'), pos: 'right:4px;top:4px' },
+  { at: () => document.querySelector('.settings-modal .set-head'), pos: 'right:46px;top:6px' },
+  { at: () => document.querySelector('.elite-box'), pos: 'right:6px;top:6px' },
+  { at: () => document.querySelector('.tm-track .tmt-lbl'), pos: 'left:-4px;top:-14px' },
+];
+const kyFound = () => { const z = Z(); z.kf = z.kf || []; return z.kf; };
+const kyOrder = () => {
+  const z = Z();
+  if (!Array.isArray(z.ka) || z.ka.length !== KY.length) z.ka = Array(KY.length).fill(-1);
+  for (const i of kyFound()) if (!z.ka.includes(i)) { const k = z.ka.indexOf(-1); if (k >= 0) z.ka[k] = i; }
+  return z.ka;
+};
+// A Kyber crystal: a long six-sided prism with lit facets.
+const kyCrystal = (c, big) => { const u = `ky${++seq}`; return `<svg viewBox="0 0 20 32" aria-hidden="true"><defs><linearGradient id="${u}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff"/><stop offset=".35" stop-color="${c}"/><stop offset="1" stop-color="#0a1a30"/></linearGradient></defs>
+  <path d="M10 0 L18 8 L18 24 L10 32 L2 24 L2 8Z" fill="url(#${u})" stroke="#fff" stroke-opacity=".7" stroke-width="${big ? 0.4 : 0.7}"/>
+  <path d="M10 0 L10 32 M2 8 L10 12 L18 8 M2 24 L10 20 L18 24 M10 12 L10 20" stroke="#fff" stroke-opacity=".55" stroke-width=".4" fill="none"/>
+  <path d="M4 9 L8 11 L8 22 L4 23Z" fill="#fff" opacity=".35"/></svg>`; };
+document.head.appendChild(Object.assign(document.createElement('style'), { textContent: `
+.xq-kyc { position: absolute; z-index: 30; width: 11px; height: 18px; padding: 0; border: 0; background: none; cursor: pointer; opacity: .36; animation: xq-frag 4.2s ease-in-out infinite; will-change: opacity; }
+.xq-kyc svg { width: 100%; height: 100%; display: block; filter: drop-shadow(0 0 4px var(--kc)); }
+.xq-jsec.ky h3 { color: #9fe8ff; }
+.xq-jsec.ky .xq-l { border: 1px solid #1e4a6a; background: linear-gradient(180deg, #0c2236, #050d18); color: #e8f8ff; cursor: pointer; transition: transform .15s, box-shadow .3s; }
+.xq-jsec.ky .xq-l.no { color: #24405a; }
+.xq-jsec.ky .xq-l.sel { transform: translateY(-5px); border-color: #9fe8ff; }
+.xq-jsec.ky .xq-l.hum { border-color: #7fe0ff; box-shadow: 0 0 12px rgba(127, 224, 255, .65), inset 0 0 10px rgba(127, 224, 255, .25); animation: ky-hum 2.4s ease-in-out infinite; }
+@keyframes ky-hum { 50% { box-shadow: 0 0 18px rgba(127, 224, 255, .9), inset 0 0 14px rgba(127, 224, 255, .35); } }
+.xq-jsec.ky.solved .xq-l { border-color: #bff2ff; background: linear-gradient(180deg, #1a5a8a, #0c2236); }
+.xq-go-ky { border-color: #7fe0ff; color: #cff4ff; box-shadow: 0 0 16px rgba(127, 224, 255, .4); }
+.xq-ky-clue { font-style: italic; color: #8fb6d6 !important; }
+/* Find scene: the crystal rises out of the dark, turns, splits light, and hums. */
+.xc.k-ky .xc-bg { background: radial-gradient(circle at 50% 42%, #0a2a40 0, #04121e 45%, #010407 80%); }
+.k-ky .xc-t { border: 1px solid #1e4a6a; background: linear-gradient(180deg, #0c2236, #050d18); color: #e8f8ff; }
+.k-ky .xc-t.no { border-style: dashed; }
+.k-ky .xc-t.land { box-shadow: 0 0 22px #7fe0ff; border-color: #bff2ff; }
+.k-ky .xc-cap { color: #9fe8ff; } .k-ky .xc-cap b { color: #5f86a6; }
+.xc-kc { position: absolute; width: clamp(70px, 20vw, 110px); aspect-ratio: 20 / 32; margin: calc(clamp(70px, 20vw, 110px) * -.8) 0 0 calc(clamp(70px, 20vw, 110px) * -.5); animation: xc-krise 1s cubic-bezier(.2,.9,.3,1.1) both; }
+.xc-kc .xc-kspin { width: 100%; height: 100%; animation: xc-kturn 1.6s .2s cubic-bezier(.3,.7,.3,1) both, xc-hover 2.6s 1.8s ease-in-out infinite; }
+.xc-kc svg { width: 100%; height: 100%; display: block; filter: drop-shadow(0 0 16px var(--kc)) drop-shadow(0 0 40px var(--kc)); }
+@keyframes xc-krise { from { opacity: 0; transform: translateY(40vh) scale(.6); } to { opacity: 1; transform: none; } }
+@keyframes xc-kturn { from { transform: rotateY(720deg); } to { transform: none; } }
+.xc-prism { position: absolute; left: 0; top: 0; width: 0; height: 0; }
+.xc-prism i { position: absolute; left: -6px; top: 0; width: 12px; height: 46vmax; transform-origin: 50% 0; transform: rotate(var(--a)) scaleY(0); background: linear-gradient(180deg, var(--c), transparent 80%); opacity: .55; filter: blur(2px); animation: xc-beamk .7s calc(1.2s + var(--d)) cubic-bezier(.2,.8,.3,1) forwards; }
+@keyframes xc-beamk { to { transform: rotate(var(--a)) scaleY(1); } }
+.xc-hum { position: absolute; left: 0; top: 0; width: 30px; height: 30px; margin: -15px; border-radius: 50%; border: 2px solid var(--kc); opacity: 0; animation: xc-hum 1.6s calc(1.3s + var(--d)) ease-out infinite; }
+@keyframes xc-hum { 0% { opacity: .9; transform: scale(1); } 100% { opacity: 0; transform: scale(9); } }
+.xc-kglyph { position: absolute; left: 0; top: 0; opacity: 0; transform: translate(-50%, -50%) scale(.3); animation: xc-rise .7s 1.7s cubic-bezier(.2,1.2,.4,1) forwards; }
+.xc-kglyph b { display: block; font: 800 clamp(56px, 18vmin, 104px)/1 var(--font-display); color: #f0fbff; text-shadow: 0 0 26px var(--kc), 0 0 60px var(--kc); }
+/* Cashing in: the crystals circle, fuse, and a blade ignites. */
+.feat-cine.xq-ky { background: #02060c; }
+.ky-cave { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 30%, #12324a 0, #061624 45%, #010409 85%); }
+.ky-cave svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.ky-orbit { position: absolute; left: 50%; top: 42%; width: 0; height: 0; animation: ky-spin 3.2s cubic-bezier(.5,0,.7,1) forwards; }
+@keyframes ky-spin { to { transform: rotate(900deg); } }
+.ky-orbit span { position: absolute; width: clamp(16px, 4.4vmin, 26px); aspect-ratio: 20 / 32; margin: -16px 0 0 -10px; transform: rotate(var(--a)) translateY(calc(-1 * clamp(80px, 26vmin, 150px))); animation: ky-in 3.2s cubic-bezier(.6,0,.8,.6) forwards; }
+.ky-orbit span svg { width: 100%; height: 100%; display: block; filter: drop-shadow(0 0 8px var(--kc)); }
+@keyframes ky-in { 0% { opacity: 0; } 15% { opacity: 1; } 90% { opacity: 1; transform: rotate(var(--a)) translateY(0) scale(.6); } 100% { opacity: 0; transform: rotate(var(--a)) translateY(0) scale(.2); } }
+.ky-flash { position: absolute; inset: 0; background: radial-gradient(circle at 50% 42%, #fff, #7fe0ff 20%, transparent 60%); opacity: 0; animation: ky-flash .9s 3.1s ease-out forwards; }
+@keyframes ky-flash { 0% { opacity: 0; } 25% { opacity: 1; } 100% { opacity: 0; } }
+.ky-saber { position: absolute; left: 50%; top: 42%; width: clamp(16px, 3.6vmin, 22px); transform: translate(-50%, 0) rotate(-8deg); transform-origin: 50% 0; opacity: 0; animation: cc-in .3s 3.3s forwards; }
+.ky-hilt { height: clamp(60px, 15vmin, 90px); border-radius: 4px; background: linear-gradient(90deg, #4a4f5a, #d9dde4 40%, #6a707c 70%, #2a2e36); box-shadow: inset 0 6px 0 #1a1c22, inset 0 -10px 0 #1a1c22; }
+.ky-blade { position: absolute; left: 50%; bottom: 100%; width: 70%; height: clamp(160px, 40vmin, 300px); transform: translateX(-50%) scaleY(0); transform-origin: 50% 100%; border-radius: 99px 99px 4px 4px; background: linear-gradient(90deg, #7fe0ff, #fff 45%, #fff 55%, #7fe0ff); box-shadow: 0 0 14px #7fe0ff, 0 0 40px #4aa8ff, 0 0 90px #4aa8ff; animation: ky-ignite .5s 3.6s cubic-bezier(.2,.9,.3,1) forwards; }
+@keyframes ky-ignite { to { transform: translateX(-50%) scaleY(1); } }
+.ky-count { position: absolute; top: 12%; left: 0; right: 0; text-align: center; z-index: 3; font: 800 clamp(42px, 11vmin, 88px) var(--font-display); color: #bff2ff; text-shadow: 0 0 24px rgba(127, 224, 255, .7), 0 3px 0 #0a3050; opacity: 0; animation: cc-in .4s 3.7s forwards; }
+.ky-kick { position: absolute; top: 7%; left: 0; right: 0; text-align: center; font-family: var(--font-display); letter-spacing: .4em; font-size: clamp(11px, 2vw, 14px); color: #9fe8ff; opacity: 0; animation: jp-sub .5s .3s forwards; }
+@media (prefers-reduced-motion: reduce) { .ky-orbit, .ky-orbit span { animation-duration: .01s !important; } }
+` }));
+
+function kyHtml(sel) {
+  const z = Z();
+  if (!kyOn() || (!kyFound().length && !z.kc)) return '';
+  const order = kyOrder();
+  const solved = !z.kc && order.every((i, k) => i === k);
+  return `<div class="xq-jsec ky ${solved || z.kc ? 'solved' : ''}"><h3>The Singing Crystals</h3>
+    ${z.kc ? '<p class="xq-done">Attuned. The crystals sing for you.</p>' : `<p>${kyFound().length} of ${KY.length} found. Tap two crystals to swap them. A crystal hums when it sits in its place.</p><p class="xq-ky-clue">Every Jedi's first crystal came from the same frozen world, deep underground.</p>`}
+    <div class="xq-row">${(z.kc ? KY.split('').map((_, k) => k) : order).map((i, k) => `<button type="button" class="xq-l ${i < 0 ? 'no' : ''} ${!z.kc && i === k ? 'hum' : ''} ${sel === k ? 'sel' : ''}" data-kslot="${k}" ${z.kc ? 'disabled' : ''}>${i < 0 ? '?' : KY[i]}</button>`).join('')}</div>
+    ${solved ? '<p class="xq-done">Every crystal hums as one.</p><button class="btn xq-go xq-go-ky" type="button" data-xq-go="ky">Attune the crystals</button>' : ''}</div>`;
+}
+
+function cineKy(i, from, onClose, letterOverride) {
+  const order = kyOrder();
+  const f = kyFound();
+  const c = KY_COLORS[i % KY_COLORS.length];
+  const letter = letterOverride || KY[i];
+  const slot = order.indexOf(i) >= 0 ? order.indexOf(i) : Math.max(0, order.indexOf(-1));
+  const row = order.map((k) => ({ ch: !letterOverride && k >= 0 && k !== i ? KY[k] : '' }));
+  const beams = KY_COLORS.slice(0, 7).map((bc, k) => `<i style="--a:${-60 + k * 20}deg;--c:${bc};--d:${k * 0.04}s"></i>`).join('');
+  const hums = [0, 0.5, 1].map((d) => `<i class="xc-hum" style="--d:${d}s"></i>`).join('');
+  const done = f.length >= KY.length;
+  cine('ky', {
+    label: 'Kyber crystal', letter, slot, row, from, onClose, rowAt: 2500, flyFrom: '.xc-kglyph b',
+    hero: `<div class="xc-kc" style="--kc:${c}"><div class="xc-kspin">${kyCrystal(c, true)}</div></div>`,
+    fx: `<div class="xc-prism">${beams}</div><div style="--kc:${c}">${hums}</div><div class="xc-kglyph" style="--kc:${c}"><b>${letter}</b></div>`,
+    sounds: [[150, 'whoosh'], [900, 'heal'], [1250, 'ignite'], [1700, 'reveal_rare']], landSound: 'click',
+    cap: `The Singing Crystals · ${f.length} of ${KY.length}<b>It remembers the cold</b>${done ? '<span class="xc-done">Every crystal found. Help them sing together.</span>' : ''}`,
+  });
+}
+
+function collectKy(i, from) {
+  const f = kyFound();
+  if (f.includes(i)) return;
+  f.push(i);
+  kyOrder();
+  Player.save();
+  cineKy(i, from);
+}
+
+function placeKy() {
+  const z = Z();
+  if (!kyOn() || z.kc || !Player.state || (Player.tutorialPending && Player.tutorialPending())) return;
+  const f = kyFound();
+  KY_SPOTS.forEach((sp, i) => {
+    if (f.includes(i)) return;
+    const host = sp.at();
+    if (!host || host.querySelector(`.xq-kyc[data-k="${i}"]`)) return;
+    if (getComputedStyle(host).position === 'static') host.style.position = 'relative';
+    const b = el(`<button class="xq-kyc" type="button" data-k="${i}" aria-label="?" style="${sp.pos};--kc:${KY_COLORS[i]}">${kyCrystal(KY_COLORS[i])}</button>`);
+    b.addEventListener('click', (e) => { e.stopPropagation(); e.preventDefault(); const r = b.getBoundingClientRect(); b.remove(); collectKy(i, r); });
+    host.appendChild(b);
+  });
+}
+
+const FEAT_KY = { id: 'xq_ky', secret: true, tier: 5, icon: 'spark', name: 'Attuned', desc: 'Found ten singing Kyber crystals and taught them one song', have: 1, need: 1 };
+H.feats.push((st) => ((st.z || {}).kc ? [FEAT_KY] : []));
+H.crests.xq_ky = () => {
+  const u = `xk${++seq}`;
+  const ring = KY_COLORS.slice(0, 8).map((c, k) => `<g transform="rotate(${k * 45}) translate(0,-50) scale(.9) translate(-10,-16)"><path d="M10 0 L18 8 L18 24 L10 32 L2 24 L2 8Z" fill="${c}" stroke="#fff" stroke-opacity=".6" stroke-width=".8"/></g>`).join('');
+  return frame(u, `<g>${anim.spin(30)}${ring}</g><rect x="-5" y="-6" width="10" height="34" rx="2" fill="#c9ced8"/><rect x="-3.5" y="-56" width="7" height="50" rx="3.5" fill="#bff2ff" filter="url(#${u}f)">${anim.fade('1;.7;1', 1.6)}</rect>`, 'ATTUNED', { glow: '#7fe0ff', core: '#06223a', tail: '#0a3a5a' });
+};
+const sceneKY = (x) => {
+  const orbit = KY_COLORS.map((c, k) => `<span style="--a:${k * 36}deg;--kc:${c}">${kyCrystal(c)}</span>`).join('');
+  const ice = `<svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><g fill="#0e2a40" opacity=".9">${Array.from({ length: 16 }, (_, k) => `<path d="M${k * 26} 0 L${k * 26 + 13} ${30 + (k * 37) % 50} L${k * 26 + 26} 0Z"/>`).join('')}</g><g fill="#0a2236">${Array.from({ length: 12 }, (_, k) => `<path d="M${k * 36} 300 L${k * 36 + 18} ${240 - (k * 29) % 50} L${k * 36 + 36} 300Z"/>`).join('')}</g></svg>`;
+  const stage = `<div class="ky-cave">${ice}</div><div class="ky-kick">THE CRYSTALS SING</div><div class="ky-orbit">${orbit}</div><div class="ky-flash"></div>
+    <div class="ky-saber"><div class="ky-blade"></div><div class="ky-hilt"></div></div><div class="ky-count">+0 Kyber</div>`;
+  const setup = (node, go) => {
+    const count = node.querySelector('.ky-count');
+    setTimeout(() => {
+      const t0 = performance.now();
+      const step = (now) => { if (!node.isConnected) return; const k = Math.min(1, (now - t0) / 1400); count.textContent = `+${Math.round(KY_REWARD * (1 - Math.pow(1 - k, 3)))} Kyber`; if (k < 1) requestAnimationFrame(step); };
+      requestAnimationFrame(step);
+    }, 3700);
+    setTimeout(go, 6200);
+  };
+  return scene(x, 'xq-ky', stage, null, null, (S, at) => {
+    at(200, () => S.play('whoosh')); at(900, () => S.play('heal')); at(2000, () => S.play('heal'));
+    at(3100, () => S.play('burst')); at(3600, () => S.play('ignite')); at(3900, () => S.play('saber')); at(4200, () => S.play('jackpot'));
+  }, 'Secret achievement', setup);
+};
+H.scenes.xq_ky = (x) => sceneKY(x);
+const redeemKy = H.redeem;
+H.redeem = (code) => {
+  if (code !== KY || !kyOn()) return redeemKy ? redeemKy(code) : false;
+  const z = Z();
+  if (z.kc) { UI.toast('These crystals already sing for you.'); return true; }
+  z.kc = 1;
+  Player.state.crystals += KY_REWARD;
+  Player.save();
+  UI.markFeatSeen('xq_ky');
+  later(() => sceneKY(FEAT_KY).then(() => UI.updateWallet()));
+  return true;
+};
+root.__xq.ky = () => sceneKY(FEAT_KY);
+root.__xq.cineKy = (i = 2, letter) => cineKy(i, null, null, letter);
+root.__xq.kyReset = () => { const z = Z(); delete z.kf; delete z.ka; delete z.kc; Player.save(); };
 
 })(window);
