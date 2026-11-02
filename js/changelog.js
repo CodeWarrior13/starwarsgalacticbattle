@@ -92,6 +92,7 @@
         'IMPROVED|Watching a card\'s ultimate from the Collection always starts at 1× speed, so you see all of it. The speed button still works there and doesn\'t change your battle speed.',
         'NEW|Wager duels: reach Silver III in a season to unlock a Wager tab in Live Duels. After bans you have 45 seconds to agree a stake of 1,000 to 100,000 credits (offer, counter or accept, and chat). The winner takes both wagers minus a 10% house tax. Rating counts, and leaving counts as a loss. Up to 5 a day with the same pilot.',
         'NEW|The Dark Trooper is now Mythic, and he\'s the first HoloNet card you can also use in the main game: campaign, bosses, the Endless Tower and more. He\'s still a rare guild raid drop (1 in 100 each time your guild beats the raid), and his Beskar Alloy passive now works: 25% less damage from attacks.',
+        'IMPROVED|Faster and smoother: after your first visit the game loads straight from your device, updates only download what changed, and the galaxy map, battle backdrops and glowing effects use far less power. Chromebooks and low-memory devices start in Performance mode (you can switch it off in Settings).',
         'IMPROVED|Optimized the Collection: only the cards near your screen are drawn, sized to your device, so scrolling is smoother and uses less battery.',
         'BALANCE|Chance Cubes now cost 10 Kyber (was 25).',
         'BALANCE|Jedi Holocrons now cost 40 Kyber (was 50).',
