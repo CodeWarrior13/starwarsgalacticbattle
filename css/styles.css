@@ -3802,3 +3802,18 @@ body.perf-on .card-back .cb-rays { animation: none; }
 .tut-coach:has(.tc-extra) [data-tc-next] { order: 4; margin-left: auto; }
 .battle .tut-coach:has(.tc-extra):not(.mini) { max-height: 520px; }
 .battle .tut-coach .tmd { gap: 5px; padding: 8px 10px; }
+
+/* Turn Meter track: portraits race toward GO. */
+.tm-track { display: flex; align-items: center; gap: 8px; padding: 2px 4px 4px; flex: 1 1 100%; width: 100%; min-width: 0; }
+.tmt-lbl { flex: 0 0 auto; font: 700 9px/1.1 var(--font-display); letter-spacing: .14em; text-transform: uppercase; color: #7fd8ff; text-align: right; }
+.tmt-lane { position: relative; flex: 1; height: 50px; margin-right: 34px; border-radius: 10px; background: linear-gradient(90deg, rgba(47, 143, 255, .06), rgba(127, 216, 255, .18)); border: 1px solid rgba(127, 216, 255, .22); }
+.tmt-mid { position: absolute; left: 0; right: 0; top: 50%; height: 2px; margin-top: -1px; background: linear-gradient(90deg, rgba(127, 216, 255, .15), #7fd8ff); }
+.tmt-go { position: absolute; right: -32px; top: 50%; transform: translateY(-50%); font: 800 12px var(--font-display); letter-spacing: .08em; color: #ffe81f; text-shadow: 0 0 10px rgba(255, 232, 31, .7); }
+.tmt-lane::after { content: ''; position: absolute; right: -2px; top: 4px; bottom: 4px; width: 3px; border-radius: 2px; background: #ffe81f; box-shadow: 0 0 10px rgba(255, 232, 31, .8); }
+.tmt-chip { position: absolute; width: 22px; height: 22px; margin-left: -11px; border-radius: 50%; overflow: hidden; border: 2px solid; transition: left .45s ease-out, opacity .3s, transform .3s; z-index: 1; }
+.tmt-chip.enemy { top: 1px; border-color: #ff5b5b; }
+.tmt-chip.player { bottom: 1px; border-color: #4aa8ff; }
+.tmt-chip > *, .tmt-chip svg, .tmt-chip img { width: 100%; height: 100%; display: block; object-fit: cover; }
+.tmt-chip.soon { transform: scale(1.25); z-index: 2; box-shadow: 0 0 10px rgba(255, 232, 31, .9); border-color: #ffe81f; }
+.tmt-chip.ko { opacity: 0; }
+@media (max-height: 520px) and (orientation: landscape) and (pointer: coarse) { body.in-battle .tm-track { display: none; } }

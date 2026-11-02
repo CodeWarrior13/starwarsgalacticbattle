@@ -193,6 +193,7 @@
           <button class="btn btn-small toggle" type="button" data-auto title="Let the AI play your turns (A)">Auto</button>
           <button class="btn btn-small" type="button" data-speed title="Animation speed (F)">${this.speed}×</button>
           <button class="btn btn-small btn-danger" type="button" data-retreat>Retreat</button>
+  <div class="tm-track" data-tmtrack aria-label="Turn Meter: who moves next"><span class="tmt-lbl">Turn<br>Meter</span><div class="tmt-lane"><i class="tmt-mid"></i><span class="tmt-go">GO</span></div></div>
         </div>
         <div class="field ${ships ? 'ships' : 'ground'}" data-field>
           <canvas class="env-canvas" data-env></canvas>
@@ -279,9 +280,32 @@
 
     updateAll() {
       for (const u of this.battle.units) this.updateCard(u);
+      this.updateTrack();
+    },
+
+    // The Turn Meter track under the turn order: every fighter's portrait
+    // slides toward GO as its Turn Meter fills. Enemies ride above the line,
+    // your squad below it.
+    updateTrack() {
+      const lane = this.view && $('[data-tmtrack] .tmt-lane', this.view);
+      if (!lane || !this.battle) return;
+      this.tmChips = this.tmChips || {};
+      for (const u of this.battle.units) {
+        let c = this.tmChips[u.uid];
+        if (!c || !c.isConnected) {
+          c = el(`<span class="tmt-chip ${u.side}" title="${esc(u.def.name)}">${portrait(u.def, { plate: false })}</span>`);
+          lane.appendChild(c);
+          this.tmChips[u.uid] = c;
+        }
+        const pct = Math.max(0, Math.min(100, u.tm));
+        c.style.left = `${pct}%`;
+        c.classList.toggle('ko', !u.alive);
+        c.classList.toggle('soon', u.alive && pct >= 85);
+      }
     },
 
     updateTurnOrder() {
+      this.updateTrack();
       const order = this.battle.predictOrder(7);
       $('[data-order]', this.view).innerHTML = '<span class="label">Next</span>' + order.map((uid) => {
         const u = this.battle.get(uid);

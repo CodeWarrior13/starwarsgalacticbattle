@@ -42,7 +42,7 @@
       const rows = all.filter(([k]) => kindOf(k) === kind);
       return rows.length ? `<div class="rx-grp ${kind}"><h4>${title}</h4>${rows.map(([, i]) => `<div class="rx-row"><span class="rx-ic ${kind}">${esc(i.icon)}</span><p><b>${esc(i.label)}</b> · ${esc(i.desc)}</p></div>`).join('')}</div>` : '';
     };
-    return `${root.TMDemo ? `<div class="rx-tm"><h4>» Turn Meter: who moves next</h4><p>Every card races. Its blue bar fills by itself, faster for faster cards. <b>Full bar = its turn.</b> Then it starts again.</p>${root.TMDemo()}</div>` : ''}<div class="rx-groups">
+    return `<div class="rx-groups">
       ${group('buff', 'Helps (buffs)')}${group('debuff', 'Hurts (debuffs)')}${group('mech', 'Boss tricks')}
       <div class="rx-grp mark"><h4>Battlefield info</h4>${MARKS.map(([ic, l, d]) => `<div class="rx-row"><span class="rx-ic mark">${ic}</span><p><b>${l}</b> · ${d}</p></div>`).join('')}</div>
     </div>`;

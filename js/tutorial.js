@@ -215,9 +215,9 @@
         return this.coach('Each ability does something different, so read the text on the buttons. A number on a button means it is cooling down for that many turns.', '.ability-buttons .abtn');
       }
       if (n === 3 && this.once('bars')) {
-        return this.coach(`<b>Turn Meter</b> = a race. The blue bar under each card fills up by itself. <b>Full bar = that card's turn.</b> Then it empties and races again. Faster cards fill quicker, so they get <b>more turns</b>.`, '.player-row .bar.tm', {
+        return this.coach(`<b>Turn Meter</b> = a race. Every fighter races to <b>GO</b> on the track above the battlefield (your squad on the bottom, enemies on top). <b>Reach GO = take your turn.</b> Then back to the start. Faster cards race quicker, so they get <b>more turns</b>.`, '.tm-track, .player-row .bar.tm', {
           extra: root.TMDemo(),
-          next: () => this.coach('<b>Glowing blue bar</b> = that card moves next. The <b>Next</b> strip at the top shows the order. Some moves <b>boost</b> your bars (you go sooner) or <b>drain</b> enemy bars (they go later). The <b>gold</b> bar is your <b>Ultimate</b>: it fills as you fight.', '[data-order], .player-row .bar.tm, .player-row .bar.ult'),
+          next: () => this.coach('A <b>glowing face</b> on the track is about to move. The small <b>blue bar</b> under each card shows the same race. Some moves <b>push</b> your squad forward (you go sooner) or <b>knock enemies back</b> (they go later). The <b>gold</b> bar is your <b>Ultimate</b>: it fills as you fight.', '.tm-track, .player-row .bar.tm, .player-row .bar.ult'),
         });
       }
       if (n === 4 && this.once('synergy')) {
