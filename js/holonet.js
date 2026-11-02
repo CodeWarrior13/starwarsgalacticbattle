@@ -1098,7 +1098,20 @@
       if (scope) for (const [uid, r] of map) if (r.__s === scope && !docs.some((d) => d.id === uid)) map.delete(uid);
       for (const d of docs) if (d.data()) map.set(d.id, { ...(map.get(d.id) || {}), ...d.data(), uid: d.id, __s: scope || (map.get(d.id) || {}).__s });
     },
-    sync() { this.arena = [...this.rows.values()]; this.raid = [...this.raidRows.values()]; this.resolveNames(); this.emit(); },
+    sync() { this.arena = this.unclone([...this.rows.values()]); this.raid = [...this.raidRows.values()]; this.resolveNames(); this.emit(); },
+    // A player who lost their sign-in and came back on a new account leaves a
+    // frozen copy of their old row behind. Rows with the same full badge
+    // list, picture and badge count are the same player: show only the one
+    // that's still active (the stale copy is 3+ days behind). Never hides you.
+    unclone(rows) {
+      const fp = (a) => (Array.isArray(a.ball) && a.ball.length >= 5 ? `${a.av}|${a.nb}|${JSON.stringify(a.ball)}` : '');
+      const newest = new Map();
+      for (const a of rows) { const k = fp(a); if (k && (a.updated || 0) > ((newest.get(k) || {}).updated || 0)) newest.set(k, a); }
+      return rows.filter((a) => {
+        const k = fp(a); const n = k && newest.get(k);
+        return !n || n === a || a.uid === this.me || (n.updated || 0) - (a.updated || 0) < 3 * 864e5;
+      });
+    },
     // One-off reads, refreshed at most once a minute per kind.
     async want(kind, force) {
       if (!this.ready) return;
