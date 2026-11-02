@@ -852,9 +852,9 @@
 
       // Synergy activation banners for anything new (or a tier up).
       const now = {};
-      bonus.active.filter((b) => b.kind !== 'terrain').forEach((b) => { now[b.key] = b.tier || 0; });
+      bonus.active.filter((b) => b.kind !== 'terrain' && b.kind !== 'doctrine').forEach((b) => { now[b.key] = b.tier || 0; });
       if (prevSyn && !anim.initial) {
-        const fresh = bonus.active.filter((b) => b.kind !== 'terrain' && (prevSyn[b.key] == null || prevSyn[b.key] < (b.tier || 0)))
+        const fresh = bonus.active.filter((b) => b.kind !== 'terrain' && b.kind !== 'doctrine' && (prevSyn[b.key] == null || prevSyn[b.key] < (b.tier || 0)))
           .sort((a, b) => (b.need || 0) - (a.need || 0));
         const delay = anim.auto ? squad.length * 140 + 300 : 420;
         fresh.forEach((b) => synergyBanner(b, b.members.map((m) => D.UNIT_MAP[squad[m]]).filter(Boolean), delay));

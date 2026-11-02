@@ -105,9 +105,10 @@
           const squad = this.side(side);
           if (own.x.first && squad.length) {
             const fast = squad.reduce((a, u) => (u.spd > a.spd ? u : a), squad[0]);
-            fast.tm = Math.min(99, fast.tm + 20);
+            fast.tm = Math.min(99, fast.tm + 25);
           }
-          if (own.x.taunt) squad.filter((u) => u.id === 'battle_droid').forEach((u) => { u.statuses.taunt = 2; });
+          // Grand Inquisitor's Purge Order hits Jedi harder (on top of the -3% for all).
+          if (own.x.purge) foes.filter((u) => D.traitsOf(u.id).includes('jedi')).forEach((u) => { u.atk = Math.max(1, Math.round(u.atk * 0.91)); });
         }
       }
       this.turnCount = 0;
@@ -262,7 +263,7 @@
       }
       if (unit.alive && unit.id === 'grogu' && this.docs && this.docs[unit.side].x.grogu) {
         const weak = this.side(unit.side).filter((u) => u.alive && u.hp < u.maxHp).sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0];
-        if (weak) this.docHeal(weak, 0.04, events);
+        if (weak) this.docHeal(weak, 0.035, events);
       }
       let skipped = false;
       if (unit.alive && unit.statuses.stun) {
@@ -488,9 +489,9 @@
         const sx = this.docs[source.side].x;
         const tx = this.docs[target.side].x;
         if (this.currentAoe) amount *= 1 + (sx.aoe || 0);
-        else if (sx.marksman) amount *= 1.06;
-        if (sx.assassin && target.hp / target.maxHp < 0.3) amount *= 1.12;
-        if (tx.shield) amount *= 0.95;
+        else if (sx.marksman) amount *= 1.08;
+        if (sx.assassin && target.hp / target.maxHp < 0.35) amount *= 1.22;
+        if (tx.shield) amount *= 0.94;
         if (tx.high && !target.docHigh) { target.docHigh = true; amount *= 0.5; }
       }
       return { amount: Math.max(1, Math.round(amount)), crit };
@@ -527,7 +528,7 @@
           for (const u of this.side(target.side)) {
             if (!u.alive) continue;
             if (kx.magick) this.chargeUlt(u, 10);
-            if (kx.unleashed) u.atk = Math.round(u.atk * 1.02);
+            if (kx.unleashed) u.atk = Math.round(u.atk * 1.05);
           }
         }
       } else if (target.alive && this.docs) this.docGuard(target, events);
@@ -539,12 +540,12 @@
       const frac = target.hp / target.maxHp;
       if (dx.r2 && frac < 0.3 && !target.docR2) {
         target.docR2 = true;
-        this.docHeal(target, 0.1, events);
+        this.docHeal(target, 0.08, events);
       }
-      if (dx.nurse && frac < 0.4 && !this.docs[target.side].nursed) {
+      if (dx.nurse && frac < 0.5 && !this.docs[target.side].nursed) {
         this.docs[target.side].nursed = true;
         const weak = this.side(target.side).filter((u) => u.alive).sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0];
-        if (weak) this.docHeal(weak, 0.15, events);
+        if (weak) this.docHeal(weak, 0.2, events);
       }
     }
 

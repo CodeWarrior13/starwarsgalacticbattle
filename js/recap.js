@@ -89,6 +89,17 @@
 .rc-go.on { opacity: 1; pointer-events: auto; }
 .rc-go .btn { min-width: 180px; }
 .rc .cp-say p { min-height: 2.9em; }
+.rc.end .cp-say { display: none; }
+.rc.end .cp-holo { display: none; }
+.rc.end .cp-scene { justify-content: center; padding-bottom: max(14px, env(safe-area-inset-bottom, 0px)); gap: 8px; }
+.rc.end .rc-head { animation: none; opacity: 1; }
+@media (max-height: 760px) {
+  .rc .rc-board { gap: 6px; }
+  .rc .rc-t { padding: 7px 10px; }
+  .rc .rc-t.rank .rc-n { font-size: clamp(34px, 10vw, 50px); }
+  .rc .rc-t.fav .rc-card { width: 58px; }
+  .rc .rc-t.fav { grid-template-columns: 58px 1fr; }
+}
 `;
 
   // data: { season, rank, total, best, div, record, allBest, bestRank, prize, stats, test }
@@ -157,9 +168,10 @@
           if (cls) reveal(cls);
           if (line) await C2.talk(node, [line]);
         }
-        node.querySelector('.cp-say').style.visibility = 'hidden';
+        // The report is done: Ackbar steps back so the whole board fits on screen.
+        node.classList.add('end');
         node.querySelector('.rc-go').classList.add('on');
-        scene.scrollTo({ top: scene.scrollHeight, behavior: 'smooth' });
+        setTimeout(() => scene.scrollTo({ top: 0, behavior: 'smooth' }), 60);
       })();
       node.querySelector('[data-rc-go]').addEventListener('click', () => {
         node.classList.add('out');

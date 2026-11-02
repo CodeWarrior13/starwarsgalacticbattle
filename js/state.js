@@ -791,8 +791,13 @@
       if (floor === t.floor) t.floor = floor + 1;
       t.best = Math.max(t.best || 0, floor);
       const out = { base: r.credits, crystals: r.crystals, aurodium: newBest ? r.aurodium : 0, firstClear: newBest, card: null, mult: spin.mult, table: spin.table, loaded: spin.loaded, towerFloor: t.floor, newBest };
-      out.credits = Math.round(out.base * spin.mult);
-      out.xp = enc.boss ? D.XP.boss(enc.level) : D.XP.stage(enc.level);
+      // 2.4 Battle Doctrines pay in the tower too (Grind cards in the squad).
+      const tsq = (this.state.squads[enc.kind] || []).filter((id) => this.owns(id));
+      const doc = root.Doctrines && root.Doctrines.on() ? root.Doctrines.rewards(tsq, enc.boss ? 'boss' : 'tower') : null;
+      out.docCr = doc ? doc.cr : 0;
+      out.doctrines = doc ? doc.names : [];
+      out.credits = Math.round(out.base * spin.mult * (1 + out.docCr));
+      out.xp = Math.round((enc.boss ? D.XP.boss(enc.level) : D.XP.stage(enc.level)) * (1 + (doc ? doc.xp : 0)));
       out.levelUps = this.gainXp(out.xp);
       out.newSlot = this.slots() > slotsBefore;
       this.state.credits += out.credits;
