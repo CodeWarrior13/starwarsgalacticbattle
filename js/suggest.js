@@ -31,7 +31,7 @@
   let safeP = null;
   const loadSafe = () => {
     if (root.Safe) return Promise.resolve(root.Safe);
-    if (!safeP) safeP = new Promise((res, rej) => { const s = document.createElement('script'); s.src = 'js/safe.js'; s.onload = () => res(root.Safe); s.onerror = () => { safeP = null; rej(); }; document.head.appendChild(s); });
+    if (!safeP) safeP = new Promise((res, rej) => { const s = document.createElement('script'); s.src = root.__ver ? root.__ver('js/safe.js') : 'js/safe.js'; s.onload = () => res(root.Safe); s.onerror = () => { safeP = null; rej(); }; document.head.appendChild(s); });
     return safeP;
   };
   async function fb() {

@@ -161,7 +161,7 @@
     }, 3000);
     // The bar eases toward the real progress instead of jumping.
     const tick = () => {
-      if (done) return;
+      if (done || !splash.isConnected) return;
       shown += (target - shown) * 0.18 + 0.2;
       shown = Math.min(shown, target);
       fill.style.width = `${shown}%`;

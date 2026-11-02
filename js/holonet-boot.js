@@ -17,7 +17,7 @@
   const has = () => { try { return sessionStorage.getItem(KEY) === '1'; } catch (e) { return false; } };
   const load = (src) => new Promise((resolve, reject) => {
     const s = document.createElement('script');
-    s.src = src;
+    s.src = root.__ver ? root.__ver(src) : src;
     s.async = false;
     s.onload = resolve;
     s.onerror = () => reject(new Error(src));

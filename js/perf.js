@@ -24,7 +24,7 @@
     iphone: { label: 'iPhone', dpr: 1, particles: 0.5, fps: 60, glow: false, shake: true },
     ipad: { label: 'iPad', dpr: 1.25, particles: 0.7, fps: 60, glow: false, shake: true },
     android: { label: 'Android', dpr: 1.35, particles: 0.8, fps: 60, glow: true, shake: true },
-    pc: { label: 'PC', dpr: 1.5, particles: 1, fps: 60, glow: true, shake: true },
+    pc: { label: 'PC', dpr: /CrOS/.test(ua) ? 1 : 1.5, particles: /CrOS/.test(ua) ? 0.7 : 1, fps: 60, glow: true, shake: true },
   };
   const LITE = { dpr: 0.85, particles: 0.25, fps: 30, glow: false, shake: false, simpleUlts: true };
 
@@ -33,8 +33,9 @@
       const s = JSON.parse(localStorage.getItem(KEY));
       if (s && typeof s === 'object') return s;
     } catch (e) { /* storage unavailable */ }
-    // Very low-memory devices start in Performance mode.
-    return { device: 'auto', mode: (navigator.deviceMemory || 8) <= 2 };
+    // Low-power devices start in Performance mode (players can turn it off):
+    // Chromebooks, and machines with 4 GB of memory or less, or two cores.
+    return { device: 'auto', mode: (navigator.deviceMemory || 8) <= 4 || (navigator.hardwareConcurrency || 8) <= 2 || /CrOS/.test(ua) };
   }
 
   const Perf = {
@@ -120,6 +121,34 @@
     new MutationObserver(() => { if (!queued) { queued = true; requestAnimationFrame(scan); } }).observe(screen, { childList: true, subtree: true });
     scan();
   }
+  // Looping glows (box-shadow, blur and drop-shadow, text glow) make the
+  // browser repaint their element on every frame. A glow that changes 15
+  // times a second looks the same as one that changes 60 times, so any
+  // endless glow animation, today's or a future one, is stepped down to
+  // that rate as it starts (8 a second in Performance mode). Movement
+  // (transforms, sweeps) is left alone so it stays smooth.
+  const PAINT = /boxShadow|filter|textShadow/;
+  function stepGlows() {
+    const seen = new WeakSet();
+    document.addEventListener('animationstart', (e) => {
+      const t = e.target;
+      if (!t || !t.getAnimations) return;
+      for (const a of t.getAnimations()) {
+        if (seen.has(a) || a.animationName !== e.animationName) continue;
+        seen.add(a);
+        const tm = a.effect && a.effect.getTiming ? a.effect.getTiming() : null;
+        if (!tm || tm.iterations !== Infinity) continue;
+        const kf = a.effect.getKeyframes ? a.effect.getKeyframes() : [];
+        // Inside an SVG drawing even a fade repaints the drawing, so those count too.
+        const svgPart = typeof SVGElement !== 'undefined' && t instanceof SVGElement && t.tagName.toLowerCase() !== 'svg';
+        if (!kf.some((k) => Object.keys(k).some((p) => PAINT.test(p) || (svgPart && p === 'opacity')))) continue;
+        if (kf.some((k) => Object.keys(k).some((p) => p === 'transform' || p === 'translate' || p === 'left' || p === 'top'))) continue;
+        const secs = (Number(tm.duration) || 1000) / 1000;
+        const rate = Perf.on ? 8 : 15;
+        try { a.effect.updateTiming({ easing: `steps(${Math.max(4, Math.round(secs * rate))}, jump-none)` }); } catch (err) { /* older browsers: leave it smooth */ }
+      }
+    }, true);
+  }
   // A full-screen scene (crate opening, card walkout, badge cutscene) hides
   // the screen behind it, so that screen's looping effects pause meanwhile.
   function watchOverlays() {
@@ -150,6 +179,7 @@
   }
   Perf.apply();
   const boot = () => { watchOffscreen(); watchOverlays(); };
+  stepGlows();
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
   if (!document.body) document.addEventListener('DOMContentLoaded', () => Perf.apply());
   root.Perf = Perf;

@@ -50,7 +50,7 @@
   let safeP = null;
   const loadSafe = () => {
     if (root.Safe) return Promise.resolve(root.Safe);
-    if (!safeP) safeP = new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = 'js/safe.js'; sc.onload = () => res(root.Safe); sc.onerror = () => { safeP = null; rej(new Error('offline')); }; document.head.appendChild(sc); });
+    if (!safeP) safeP = new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = root.__ver ? root.__ver('js/safe.js') : 'js/safe.js'; sc.onload = () => res(root.Safe); sc.onerror = () => { safeP = null; rej(new Error('offline')); }; document.head.appendChild(sc); });
     return safeP;
   };
   const PLAN_NAMES = ['Aurek', 'Besh', 'Cresh', 'Dorn', 'Esk', 'Forn'];

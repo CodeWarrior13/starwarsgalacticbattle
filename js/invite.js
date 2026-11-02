@@ -256,7 +256,7 @@
   let qrP = null;
   const loadQr = () => {
     if (root.qrcode) return Promise.resolve();
-    if (!qrP) qrP = new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = 'js/qr.js'; sc.onload = res; sc.onerror = () => { qrP = null; rej(); }; document.head.appendChild(sc); });
+    if (!qrP) qrP = new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = root.__ver ? root.__ver('js/qr.js') : 'js/qr.js'; sc.onload = res; sc.onerror = () => { qrP = null; rej(); }; document.head.appendChild(sc); });
     return qrP;
   };
   function qrSvg(text) {

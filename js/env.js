@@ -159,6 +159,34 @@
     ctx.restore();
   }
 
+  // The galaxy map draws eleven spinning worlds. Their surfaces turn slowly,
+  // so each one is painted into its own small canvas about eight times a
+  // second and stamped onto the map in between, instead of redrawing every
+  // band, cloud and crack on every frame.
+  const SPHERE_CACHE = new Map();
+  function drawSphereCached(ctx, x, y, r, id, t, opts = {}) {
+    const dpr = Math.min(2, (ctx.getTransform ? ctx.getTransform().a : 1) || 1);
+    const halo = opts.halo != null ? opts.halo : 0.35;
+    const key = `${id}|${Math.round(r * 2)}|${halo}|${dpr}`;
+    const pad = r * 1.4;
+    let c = SPHERE_CACHE.get(key);
+    if (!c) {
+      if (SPHERE_CACHE.size > 60) SPHERE_CACHE.clear();
+      const cv = document.createElement('canvas');
+      cv.width = cv.height = Math.ceil(pad * 2 * dpr) + 2;
+      c = { cv, cx: cv.getContext('2d'), t: -1 };
+      SPHERE_CACHE.set(key, c);
+    }
+    if (c.t < 0 || Math.abs(t - c.t) >= 0.125) {
+      c.cx.setTransform(1, 0, 0, 1, 0, 0);
+      c.cx.clearRect(0, 0, c.cv.width, c.cv.height);
+      c.cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      drawSphere(c.cx, pad + 1 / dpr, pad + 1 / dpr, r, id, t, opts);
+      c.t = t;
+    }
+    ctx.drawImage(c.cv, x - pad - 1 / dpr, y - pad - 1 / dpr, c.cv.width / dpr, c.cv.height / dpr);
+  }
+
   // ---------- Silhouettes ----------
   function atat(ctx, x, base, s, phase, color) {
     ctx.fillStyle = color;
@@ -1729,7 +1757,9 @@
       // Performance mode draws the scene at a lower frame rate.
       // Weather and drifting scenery read the same at 30-40 frames a second as at
       // 60, so the backdrop never takes more (30 on phones and tablets).
-      const fps = root.sigOpen > 0 ? Math.min(30, P().fps) : Math.min(COARSE ? 30 : 40, P().fps);
+      // Battle backdrops are scenery behind the fight: 24 a second on every
+      // device (20 in Performance mode) looks the same and leaves the work to the battle.
+      const fps = P().on ? 20 : 24;
       if (fps < 60 && now - this.last < 1000 / fps - 4) return requestAnimationFrame(this.frame);
       this.dt = Math.min(0.05, (now - this.last) / 1000);
       this.last = now;
@@ -2101,7 +2131,8 @@
       // Everything on the map drifts slowly, so 40 frames a second looks the
       // same as 60 and leaves a third of the work undone.
       // Phones and tablets: 30 is plenty for a map this slow, and it halves the heat.
-      const fps = Math.min(30, P().fps);
+      // 24 a second (20 in Performance mode): the map drifts too slowly for more to show.
+      const fps = P().on ? 20 : 24;
       if (now - this.last < 1000 / fps - 3) return requestAnimationFrame(this.frame);
       const dt = Math.min(0.05, (now - this.last) / 1000);
       this.last = now;
@@ -2219,7 +2250,7 @@
           ctx.beginPath(); ctx.arc(x, y, r * 1.5 + Math.sin(t * 3) * 3, 0, TAU); ctx.stroke();
         }
         ctx.globalAlpha = unlocked ? 1 : 0.35;
-        drawSphere(ctx, x, y, r, p.id, t, { halo: unlocked ? 0.45 : 0.1 });
+        drawSphereCached(ctx, x, y, r, p.id, t, { halo: unlocked ? 0.45 : 0.1 });
         ctx.globalAlpha = 1;
         if (unlocked) drawProgress(ctx, p, x, y, r, st.cleared(p.id), t);
       }

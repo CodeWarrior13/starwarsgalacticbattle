@@ -2303,7 +2303,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
         line.textContent = '';
         let i = 0;
         const my = ++typing;
-        const step = () => { if (done || my !== typing || i > text.length) return; line.textContent = text.slice(0, i++); if (i <= text.length) timers.push(setTimeout(step, speed)); };
+        const step = () => { if (done || my !== typing || i > text.length || !node.isConnected) return; line.textContent = text.slice(0, i++); if (i <= text.length) timers.push(setTimeout(step, speed)); };
         step();
       };
       const shake = (el2, mag, ms) => el2 && el2.animate(Array.from({ length: 10 }, (_, k) => ({ transform: k === 9 ? 'none' : `translate(${(Math.random() - 0.5) * mag}px, ${(Math.random() - 0.5) * mag}px)` })), { duration: ms, easing: 'linear' });
@@ -2838,6 +2838,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   }
 
   function attack(kind, opp) {
+    if (HN.seasonBreak && HN.seasonBreak()) return toast(HN.breakNote());
     const squad = HN.squadEntries(kind);
     if (!squad.length) return toast('Pick a squad first.');
     HNB.back = { view: 'arena', kind };
@@ -3441,6 +3442,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   const say = (to, data) => Duel.room && Duel.room.emit('answer', { to, nm: myNm(), ...data }).catch(() => {});
 
   function challenge(peer, kind, fr, wg, ts) {
+    if (!fr && HN.seasonBreak && HN.seasonBreak()) return toast(HN.breakNote());
     ts = !!(ts && fr && trueOn());
     if (!HN.pool(kind).length) return toast(kind === 'ship' ? 'You need a ship to fly a Fleet duel.' : 'You need a character for a Ground duel.');
     if (wg && !(HN.Wager && HN.Wager.canStart(peer.by))) return;
@@ -6797,10 +6799,24 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   function trackSeasonBest() { const h = P2(); h.soc.sBest = Math.max(h.soc.sBest || 0, h.rating); }
   function seasonEnds() { const next = seasonStartWeek(seasonNo() + 1); return (next * WEEK_MS) - ((S().weekShift || 0) * WEEK_MS) - Date.now(); }
   const seasonLength = () => (seasonStartWeek(seasonNo() + 1) - seasonStartWeek(seasonNo())) * WEEK_MS;
+  // Between seasons: a two-day break (from Season 3 on) after each season
+  // ends. The recap, rewards and the Champion's Card happen as usual; ranked
+  // arena battles and ranked or wager duels open again when the new season
+  // starts. Raids, guilds and friendly battles carry on.
+  const BREAK_MS = 2 * 864e5;
+  function seasonBreak() {
+    const sn = seasonNo();
+    if (HN.seasonLabel && HN.seasonLabel(sn) < 3) return 0;
+    const start = seasonStartWeek(sn) * WEEK_MS - ((S().weekShift || 0) * WEEK_MS);
+    const left = start + BREAK_MS - Date.now();
+    return left > 0 ? left : 0;
+  }
+  HN.seasonBreak = seasonBreak;
+  HN.breakNote = () => `Season ${HN.seasonLabel(seasonNo())} starts in ${HN.seasonClock()}. Ranked battles open then; raids, guilds and friendly battles are on now.`;
   HN.seasonInfo = () => ({ no: seasonNo(), ends: seasonEnds(), length: seasonLength(), started: seasonLength() - seasonEnds() });
   // Season countdown: "1w 3d 05:12:09" (long: "1 week 3 days 05:12:09").
   HN.seasonClock = (long) => {
-    const ms = Math.max(0, seasonEnds());
+    const ms = Math.max(0, seasonBreak() || seasonEnds());
     const s = Math.floor(ms / 1000);
     const w = Math.floor(s / 604800); const d = Math.floor((s % 604800) / 86400);
     const hms = [Math.floor((s % 86400) / 3600), Math.floor((s % 3600) / 60), s % 60].map((n) => String(n).padStart(2, '0')).join(':');
@@ -7011,7 +7027,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const frames = ownedFrames();
     const me = prof();
     return `${baseLeagues(p)}
-      <div class="hn-sec"><h3>Season ${HN.seasonLabel(seasonNo())} · ends in ${days} day${days === 1 ? '' : 's'}</h3>
+      <div class="hn-sec"><h3>Season ${HN.seasonLabel(seasonNo())} · ${HN.seasonBreak() ? 'starts' : 'ends'} in ${days} day${days === 1 ? '' : 's'}</h3>
         <p class="muted small" style="margin:0">Seasons last four weeks. When one ends you're paid for the best division you reached that season, then ratings above 800 settle halfway back. Best this season: <b>${esc(HN.divOf(h.soc.sBest || h.rating).name)}</b>.</p>
         <div class="g-ms">${Object.entries(SEASON_REWARD).map(([lg, rw]) => `<div class="g-m ${HN.divOf(h.soc.sBest || h.rating).league === lg ? 'ok' : ''}"><div style="width:48px">${A.badge(lg, lg === 'legend' ? 1 : 3)}</div><b>${lg[0].toUpperCase() + lg.slice(1)}</b><small>${fmt(rw.beskar)} Beskar${rw.puck ? ` · ${A.TIER[rw.puck].label} puck` : ''}${rw.card ? ` · ${esc(D.UNIT_MAP[rw.card].name)}` : ''}${rw.frame ? ` · ${esc(FRAMES[rw.frame].name)} frame` : ''}</small></div>`).join('')}</div></div>
       <div class="hn-sec"><h3>Profile frames</h3><div class="pf-frames">${shownFrames().map(([id, f]) => `<div class="pf-fr ${frames.includes(id) ? '' : 'locked'}">${avatar({ ...me, frame: id }, 'md')}<b>${esc(f.name)}</b><small>${frames.includes(id) ? 'Unlocked' : esc(f.how)}</small></div>`).join('')}</div>
@@ -7871,7 +7887,7 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
         <button type="button" class="hn-mini" data-hn="leaders"><b>Leaderboards</b><small>Season ladder, duels, raid and guilds</small></button>
         ${root.Update21 && root.Update21.on() ? '<button type="button" class="hn-mini" data-hn="findpilot"><b>Find a pilot</b><small>Look up anyone by callsign</small></button>' : ''}
         <button type="button" class="hn-mini" data-hn="databank"><b>Databank</b><small>${HN.HN_IDS.filter(HN.owns).length}/${HN.HN_IDS.length} cards · ${Object.keys(h.captured).length} bounties</small></button>
-        <button type="button" class="hn-mini" data-hn="leagues"><b>Leagues &amp; Season</b><small>Season ${HN.seasonLabel(SO.seasonNo())} · ends in <b class="sclock" data-season-clock>${HN.seasonClock()}</b></small></button>
+        <button type="button" class="hn-mini" data-hn="leagues"><b>Leagues &amp; Season</b><small>Season ${HN.seasonLabel(SO.seasonNo())} · ${HN.seasonBreak() ? 'starts' : 'ends'} in <b class="sclock" data-season-clock>${HN.seasonClock()}</b></small></button>
       </div>`;
   };
 
@@ -7891,7 +7907,7 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
       const rows = seasonRows();
       const mine = rows.findIndex((x) => x.me);
       const shown = rows.slice(0, 25);
-      body = `<div class="hn-sec"><h3>Season ${HN.seasonLabel(SO.seasonNo())} rewards</h3><div class="sclock-big"><span>Season ends in</span><b data-season-clock data-long>${HN.seasonClock(true)}</b></div>
+      body = `<div class="hn-sec"><h3>Season ${HN.seasonLabel(SO.seasonNo())} rewards</h3><div class="sclock-big"><span>${HN.seasonBreak() ? `Season ${HN.seasonLabel(SO.seasonNo())} starts in` : 'Season ends in'}</span><b data-season-clock data-long>${HN.seasonClock(true)}</b></div>
           <div class="hv-rw">${LB_REWARD.map((r) => `<div><b>${r.label}</b><small>${esc(rewardText(r))}</small></div>`).join('')}</div>
           <p class="muted small" style="margin:0">Ranked by your best rating this season. Rewards are paid when the season ends.</p></div>
         <div class="g-list">${shown.map((x, i) => { const d = HN.divOf(x.best); return rowOf(x, i, `${A.badge(d.league, d.div)}<b>${fmt(x.best)}</b><small>${esc(d.name)}</small>`); }).join('')}</div>

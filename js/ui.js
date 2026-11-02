@@ -709,8 +709,12 @@
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     let t = 0;
-    const draw = () => {
+    let last = 0;
+    const draw = (now) => {
       if (!canvas.isConnected) return;
+      // A slow spin: 24 frames a second is plenty, and nothing while a pop-up covers it.
+      if (now - last < 40 || document.body.classList.contains('overlay-on')) { requestAnimationFrame(draw); return; }
+      last = now;
       const r = canvas.getBoundingClientRect();
       const dpr = Math.min(1.5, window.devicePixelRatio || 1);
       if (canvas.width !== Math.round(r.width * dpr)) {
@@ -720,7 +724,7 @@
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.fillStyle = '#04060d';
       ctx.fillRect(0, 0, r.width, r.height);
-      root.drawPlanetSphere(ctx, r.width / 2, r.height / 2, Math.min(r.width, r.height) * 0.34, id, t += 0.03);
+      root.drawPlanetSphere(ctx, r.width / 2, r.height / 2, Math.min(r.width, r.height) * 0.34, id, t += 0.075);
       requestAnimationFrame(draw);
     };
     requestAnimationFrame(draw);

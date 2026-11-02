@@ -32,6 +32,17 @@ self.addEventListener('fetch', (event) => {
   if (url.origin !== location.origin && !fonts) return;
   event.respondWith((async () => {
     const cache = await caches.open(CACHE);
+    // Versioned files (name?v=…) never change once published: a new version
+    // gets a new address. So a saved copy is used straight away, and only
+    // new or changed files are downloaded. That makes every launch after the
+    // first one load from the device.
+    if (req.mode !== 'navigate' && url.origin === location.origin && url.searchParams.has('v')) {
+      const saved = await cache.match(req);
+      if (saved) return saved;
+      const res = await fetch(req);
+      if (res.ok) cache.put(req, res.clone());
+      return res;
+    }
     // The page itself is stored under one key whatever its query string.
     const key = req.mode === 'navigate' ? './' : req;
     // Network first, but never left hanging: after 2.5 s on a slow

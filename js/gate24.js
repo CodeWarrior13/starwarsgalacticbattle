@@ -7,7 +7,7 @@
   var test = false;
   try { test = localStorage.getItem('swcg-v24-test') === '1'; } catch (e) { /* storage blocked */ }
   var at = root.__v24Test != null ? root.__v24Test : root.REL24;
-  if (test || (at != null && Date.now() >= at)) document.write('<script src="js/liberation24-art.js"><\/script>');
+  if (test || (at != null && Date.now() >= at)) document.write('<script src="' + (root.__ver ? root.__ver('js/liberation24-art.js') : 'js/liberation24-art.js') + '"><\/script>');
   var on = (root.__l24art = test || (at != null && Date.now() >= at));
 
   // Stage scenes download the first time a battle needs them: the shared kit
@@ -30,7 +30,7 @@
           loaded[i] = new Promise(function (res, rej) {
             var k = i;
             var sc = document.createElement('script');
-            sc.src = 'js/stages24-' + FILES[k] + '.js';
+            sc.src = root.__ver ? root.__ver('js/stages24-' + FILES[k] + '.js') : 'js/stages24-' + FILES[k] + '.js';
             sc.async = false; // run in order, whatever order they arrive in
             sc.onload = res;
             sc.onerror = function () { loaded[k] = null; rej(new Error('offline')); };
