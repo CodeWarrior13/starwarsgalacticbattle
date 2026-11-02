@@ -864,12 +864,29 @@
       // Bounty Hunters synergy pays out extra credits.
       const squad = this.state.squads[kind].filter((id) => this.owns(id));
       out.bounty = D.squadBonuses(squad).active.some((a) => a.trait === 'bounty');
+      // 2.4 Battle Doctrines: Grind cards in the squad boost the payout.
+      const doc = root.Doctrines && root.Doctrines.on() ? root.Doctrines.rewards(squad, params.type) : null;
+      if (doc && doc.spin && (rng || Math.random)() < doc.spin) {
+        const steps = spin.table.map((t) => t.mult).sort((x, y) => x - y);
+        const up = steps.find((m) => m > spin.mult);
+        if (up) { spin.mult = up; out.luckUp = true; this.state.stats.bestSpin = Math.max(this.state.stats.bestSpin, up); }
+      }
       out.mult = spin.mult;
       out.table = spin.table;
       out.loaded = spin.loaded;
-      out.credits = Math.round(out.base * spin.mult * (out.bounty ? 1.2 : 1));
+      out.docCr = doc ? doc.cr : 0;
+      out.doctrines = doc ? doc.names : [];
+      out.credits = Math.round(out.base * spin.mult * (out.bounty ? 1.2 : 1) * (1 + out.docCr));
+      if (doc && doc.ky && out.firstClear && out.crystals) out.crystals = Math.round(out.crystals * (1 + doc.ky));
+      if (doc && doc.shard && squad.length && (rng || Math.random)() < doc.shard) {
+        const pick = squad[Math.floor((rng || Math.random)() * squad.length)];
+        if (this.state.units[pick]) { this.state.units[pick].shards += 5; out.docShard = { id: pick, n: 5 }; }
+      }
       const enc = this.encounter(params);
-      const fullXp = params.type === 'boss' ? D.XP.boss(enc.level) : D.XP.stage(enc.level);
+      // 2.4: first clears of campaign stages pay 1.8x XP, so the first 100
+      // stages (their boss stages included) take a new player to about level 24.
+      const firstBoost = out.firstClear && params.type === 'stage' && root.Update24 && root.Update24.on() ? 1.8 : 1;
+      const fullXp = Math.round((params.type === 'boss' ? D.XP.boss(enc.level) : D.XP.stage(enc.level)) * firstBoost * (1 + (doc ? doc.xp : 0)));
       out.xp = this.farmXp(fullXp, params, out.firstClear);
       out.farmed = out.xp < fullXp;
       out.levelUps = this.gainXp(out.xp);

@@ -86,6 +86,30 @@
         }
         this.bonuses[side] = b.active;
       }
+      // 2.4 Battle Doctrines: each side's enemy debuffs and special rules.
+      this.docs = { player: { x: {} }, enemy: { x: {} } };
+      const Doc = root.Doctrines;
+      if (Doc && Doc.on()) {
+        for (const side of ['player', 'enemy']) this.docs[side] = Doc.battleRules(this.side(side).map((u) => u.id));
+        for (const side of ['player', 'enemy']) {
+          const own = this.docs[side];
+          const foes = this.side(side === 'player' ? 'enemy' : 'player');
+          for (const e of own.foe) {
+            for (const u of foes) {
+              if (!own.foeOk(u.def, e.s)) continue;
+              if (e.m.atk) u.atk = Math.max(1, Math.round(u.atk * (1 + e.m.atk)));
+              if (e.m.def) u.armor = Math.max(0, Math.round(u.armor * (1 + e.m.def)));
+              if (e.m.tm) u.tm = Math.max(0, u.tm + e.m.tm);
+            }
+          }
+          const squad = this.side(side);
+          if (own.x.first && squad.length) {
+            const fast = squad.reduce((a, u) => (u.spd > a.spd ? u : a), squad[0]);
+            fast.tm = Math.min(99, fast.tm + 20);
+          }
+          if (own.x.taunt) squad.filter((u) => u.id === 'battle_droid').forEach((u) => { u.statuses.taunt = 2; });
+        }
+      }
       this.turnCount = 0;
       this.lastHazard = 0;
       // Event boost: one faction on the player's side hits harder and lasts longer.
@@ -236,6 +260,10 @@
         unit.hp += amount;
         events.push({ type: 'heal', uid: unit.uid, amount, hp: unit.hp, source: 'regen' });
       }
+      if (unit.alive && unit.id === 'grogu' && this.docs && this.docs[unit.side].x.grogu) {
+        const weak = this.side(unit.side).filter((u) => u.alive && u.hp < u.maxHp).sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0];
+        if (weak) this.docHeal(weak, 0.04, events);
+      }
       let skipped = false;
       if (unit.alive && unit.statuses.stun) {
         skipped = true;
@@ -310,6 +338,7 @@
       events.push({ type: 'log', text: `${unit.def.name} uses ${ab.name}${targetText ? ' on ' + targetText : ''}.`, side: unit.side });
 
       this.currentUltimate = !!ab.ultimate;
+      this.currentAoe = ab.target === 'allEnemies';
       for (const eff of ab.effects) {
         // Revive brings back the first fallen ally instead of targeting the living.
         if (eff.type === 'revive') {
@@ -347,6 +376,7 @@
       }
 
       this.currentUltimate = false;
+      this.currentAoe = false;
       if (ab.ultimate) {
         unit.ult = 0;
       } else {
@@ -378,7 +408,8 @@
           }
           break;
         case 'heal': {
-          let amount = Math.min(target.maxHp - target.hp, Math.round(target.maxHp * eff.pct * (this.overtime ? 0.5 : 1)));
+          const boost = this.docs ? 1 + (this.docs[target.side].x.heal || 0) : 1;
+          let amount = Math.min(target.maxHp - target.hp, Math.round(target.maxHp * eff.pct * boost * (this.overtime ? 0.5 : 1)));
           // Some bosses (and their guards) can only be healed so much between each
           // unit's own turns, so a stack of healer ultimates can't refill them in one round.
           const capper = this.units.find((u) => u.boss && u.side === target.side && u.def.healCap);
@@ -399,6 +430,18 @@
           if (this.rng() >= eff.chance) {
             events.push({ type: 'resist', uid: target.uid });
             break;
+          }
+          // Doctrines: Leia's Hope shrugs off each ally's first debuff, Echo's
+          // Regs Recall each Trooper's first stun.
+          if (this.docs && D.STATUS_INFO[eff.status] && D.STATUS_INFO[eff.status].kind === 'debuff') {
+            const dx = this.docs[target.side].x;
+            const regs = eff.status === 'stun' && dx.regs && !target.docRegs && D.traitsOf(target.id).includes('trooper');
+            if (regs || (dx.hope && !target.docHope)) {
+              if (regs) target.docRegs = true; else target.docHope = true;
+              events.push({ type: 'resist', uid: target.uid });
+              events.push({ type: 'log', text: `${target.def.name} shrugs it off (${regs ? 'Regs Recall' : 'Hope'}).`, side: target.side });
+              break;
+            }
           }
           target.statuses[eff.status] = Math.max(target.statuses[eff.status] || 0, eff.turns);
           events.push({ type: 'status', uid: target.uid, status: eff.status, turns: eff.turns });
@@ -441,6 +484,15 @@
       const mitigation = 150 / (150 + this.effectiveArmor(target));
       let amount = this.effectiveAtk(source) * 1.7 * mult * mitigation * variance;
       if (crit) amount *= CRIT_MULT + source.mods.critDmg;
+      if (this.docs && source.side) {
+        const sx = this.docs[source.side].x;
+        const tx = this.docs[target.side].x;
+        if (this.currentAoe) amount *= 1 + (sx.aoe || 0);
+        else if (sx.marksman) amount *= 1.06;
+        if (sx.assassin && target.hp / target.maxHp < 0.3) amount *= 1.12;
+        if (tx.shield) amount *= 0.95;
+        if (tx.high && !target.docHigh) { target.docHigh = true; amount *= 0.5; }
+      }
       return { amount: Math.max(1, Math.round(amount)), crit };
     }
 
@@ -470,7 +522,37 @@
         target.ult = 0;
         events.push({ type: 'ko', uid: target.uid });
         events.push({ type: 'log', text: `${target.def.name} has been defeated!`, side: target.side === 'player' ? 'enemy' : 'player' });
+        const kx = this.docs && this.docs[target.side].x;
+        if (kx && (kx.magick || kx.unleashed)) {
+          for (const u of this.side(target.side)) {
+            if (!u.alive) continue;
+            if (kx.magick) this.chargeUlt(u, 10);
+            if (kx.unleashed) u.atk = Math.round(u.atk * 1.02);
+          }
+        }
+      } else if (target.alive && this.docs) this.docGuard(target, events);
+    }
+
+    // Doctrine heals: R2-D2's Plucky Repairs and IG-11's Nurse Mode.
+    docGuard(target, events) {
+      const dx = this.docs[target.side].x;
+      const frac = target.hp / target.maxHp;
+      if (dx.r2 && frac < 0.3 && !target.docR2) {
+        target.docR2 = true;
+        this.docHeal(target, 0.1, events);
       }
+      if (dx.nurse && frac < 0.4 && !this.docs[target.side].nursed) {
+        this.docs[target.side].nursed = true;
+        const weak = this.side(target.side).filter((u) => u.alive).sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0];
+        if (weak) this.docHeal(weak, 0.15, events);
+      }
+    }
+
+    docHeal(u, pct, events) {
+      const amount = Math.min(u.maxHp - u.hp, Math.round(u.maxHp * pct * (this.overtime ? 0.5 : 1)));
+      if (amount <= 0) return;
+      u.hp += amount;
+      events.push({ type: 'heal', uid: u.uid, amount, hp: u.hp, source: 'regen' });
     }
 
     // Simple AI used by enemies and by the player's auto-battle.

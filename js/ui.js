@@ -726,6 +726,12 @@
     requestAnimationFrame(draw);
   }
 
+  // 2.4 Battle Doctrine panel for a card (commons, rares and epics).
+  function docBox(id) {
+    const d = root.Doctrines && root.Doctrines.of(id);
+    return d ? `<div class="doctrine-box"><div class="dh">${d.icon} Doctrine <b>${esc(d.name)}</b><span class="dst ${d.style}">${d.styleLabel}</span></div><p>${esc(d.text)}</p></div>` : '';
+  }
+
   function bonusList(items, empty) {
     if (!items.length) return `<p class="muted small">${empty}</p>`;
     return `<ul class="bonus-list">${items.map((b) => `<li class="bonus ${b.kind || ''}"><span class="bonus-icon">${b.icon}</span><span><b>${esc(b.name)}</b>${b.need ? ` <em>${b.count}/${b.need}</em>` : ''}<small>${esc(b.desc)}</small></span></li>`).join('')}</ul>`;
@@ -1668,6 +1674,7 @@
             <h3>${esc(def.name)}</h3>
             <p class="bio">${esc(D.BIOS[def.id] || '')}</p>
             <div class="trait-row">${D.classesOf(def).map((c) => `<span class="trait cls">${D.CLASS_INFO[c].icon} ${D.CLASS_INFO[c].label}</span>`).join('')}${traitChips(def.id)}</div>
+            ${docBox(def.id)}
             <ul class="mini-abilities">${abilities.map((ab, i) => `<li class="${ab.ultimate ? 'ult' : ''}"><b>${ab.ultimate ? '★ ' : ''}${esc(ab.name)}</b><span>${ab.ultimate ? 'Ultimate' : ab.cd ? `${ab.cd}-turn cooldown` : 'Basic'}</span><p>${esc(ab.desc)}</p>${ab.quote ? `<q>${esc(ab.quote)}</q>` : ''}</li>`).join('')}</ul>
           </div>
         </div>

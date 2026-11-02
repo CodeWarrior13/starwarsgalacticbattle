@@ -2219,7 +2219,9 @@
         ${won && rewards.planetComplete ? `<div class="liberated"><p class="eyebrow">Planet liberated</p><h3>${esc(planet.name)} is free!</h3><p class="muted">${nextPlanet ? `Hyperspace lane to ${esc(nextPlanet.name)} unlocked.` : 'You have liberated the entire galaxy.'}</p></div>` : ''}
         ${won ? `
           <div class="spin-box ${rewards.loaded ? 'loaded' : ''}">
-            <p class="eyebrow">${rewards.loaded ? 'Loaded Dice · luck spin' : 'Luck spin'}${rewards.bounty ? ' · Bounty Hunters +20%' : ''}</p>
+            <p class="eyebrow">${rewards.loaded ? 'Loaded Dice · luck spin' : 'Luck spin'}${rewards.bounty ? ' · Bounty Hunters +20%' : ''}${rewards.luckUp ? " · Gambler's Luck ▲" : ''}</p>
+            ${rewards.doctrines && rewards.doctrines.length ? `<p class="muted small doc-line">◈ Doctrines: ${esc(rewards.doctrines.join(', '))}${rewards.docCr ? ` · +${Math.round(rewards.docCr * 100)}% credits` : ''}</p>` : ''}
+            ${rewards.docShard ? `<p class="muted small doc-line">Business Opportunity: +${rewards.docShard.n} ${esc(D.UNIT_MAP[rewards.docShard.id].name)} shards</p>` : ''}
             <div class="reel"><div class="reel-track" data-reel>${reel}${reel}${reel}${reel}</div></div>
             <p class="spin-math" data-spin-math>${cur('credits', rewards.base)} × ?</p>
           </div>
@@ -2470,7 +2472,7 @@
       const reveal = () => {
         if (!scope.isConnected) return;
         target.classList.add('hit');
-        $('[data-spin-math]', scope).innerHTML = `${cur('credits', rewards.base)} × <b class="mult">${rewards.mult}×</b>${rewards.bounty ? ' × 1.2' : ''} = ${cur('credits', rewards.credits)}`;
+        $('[data-spin-math]', scope).innerHTML = `${cur('credits', rewards.base)} × <b class="mult">${rewards.mult}×</b>${rewards.bounty ? ' × 1.2' : ''}${rewards.docCr ? ` × ${(1 + rewards.docCr).toFixed(2).replace(/0$/, '')}` : ''} = ${cur('credits', rewards.credits)}`;
         $$('[data-rewards]', scope).forEach((n) => { n.hidden = false; });
         updateWallet();
         const max = Math.max(...rewards.table.map((t) => t.mult));
