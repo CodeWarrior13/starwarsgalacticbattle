@@ -1700,7 +1700,9 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
 .hn-forge-top .varka svg { width: 100%; height: 100%; display: block; }
 .hn-forge-top q { color: #ffd9b0; font-style: italic; }
 .hn-forge-top b.nm { display: block; color: #ffb36a; letter-spacing: .14em; font-size: 12px; margin-bottom: 4px; }
-.hn-pucks { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr)); gap: 12px; }
+.hn-pucks { display: grid; grid-template-columns: 1fr; gap: 12px; }
+@media (min-width: 520px) { .hn-pucks { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 900px) { .hn-pucks { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 .hn-puck { display: grid; gap: 6px; padding: 10px; border-radius: 14px; background: linear-gradient(180deg, #11141c, #08090d); border: 1px solid color-mix(in srgb, var(--pc) 50%, #222); text-align: center; color: #e8eef6; }
 .hn-puck.gold { border-color: #ffd23f; box-shadow: 0 0 22px rgba(255, 210, 63, 0.35); }
 .hn-puck .art svg { width: 100%; height: auto; display: block; border-radius: 10px; }
