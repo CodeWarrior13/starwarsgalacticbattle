@@ -3945,6 +3945,28 @@ body.perf-on .lbl-deco b, body.perf-on .lbl-deco b::after, body.perf-on .lbl-mor
   body.in-battle .waiting { font-size: 12px; }
   body.in-battle .syn-row { flex-wrap: nowrap; overflow: hidden; justify-content: flex-start; mask-image: linear-gradient(90deg, #000 85%, transparent); -webkit-mask-image: linear-gradient(90deg, #000 85%, transparent); }
   body.in-battle .syn-chip { flex: none; padding: 1px 6px; font-size: 9px; line-height: 1.5; }
+  /* Abilities fill the column: bigger buttons, the log shrinks to a short strip. */
+  body.in-battle .action-bar > .actions { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+  body.in-battle .actions-main { flex: 1; min-height: 0; display: flex; flex-direction: column; width: 100%; align-self: stretch; margin: 0; }
+  body.in-battle .ability-buttons { flex: 1; min-height: 0; grid-auto-rows: minmax(0, 1fr); gap: 5px; }
+  body.in-battle .ability-buttons .abtn { display: flex; flex-direction: column; justify-content: center; gap: 3px; padding: 6px 9px; min-height: 44px; }
+  body.in-battle .ability-buttons .abtn .an { font-size: 14px; line-height: 1.15; }
+  /* An odd number of moves: the last one (usually the ultimate) runs the full width. */
+  body.in-battle .ability-buttons > .abtn:last-child:nth-child(odd) { grid-column: 1 / -1; align-items: center; text-align: center; }
+  body.in-battle .action-bar > .battle-log { flex: 0 0 auto; max-height: 52px; padding: 4px 8px; font-size: 10.5px; }
+  body.in-battle .waiting { flex: 1; display: flex; align-items: center; justify-content: center; }
   body.in-battle .field .bcard { width: clamp(42px, min(14vw, calc(30cqh - 20px)), 108px); }
   body.in-battle .field .bcard.boss { width: clamp(50px, calc(36cqh - 20px), 124px); }
+}
+/* Captain Rex's intel on a phone held sideways: a slimmer header leaves more
+   room for the squads and icon lists underneath. */
+@media (max-height: 520px) and (orientation: landscape) and (pointer: coarse) {
+  .rx-wrap { padding: 8px 12px; }
+  .rx-panel { gap: 8px; padding: 10px 14px; }
+  .rx-head { gap: 8px; }
+  .rx-head .rx-face { width: 36px; height: 36px; }
+  .rx-say { padding: 4px 10px; border-radius: 10px; }
+  .rx-say b { font-size: 10px; }
+  .rx-say p { font-size: 12px; margin: 0; }
+  .rx-tabs button { padding: 5px; font-size: 11px; }
 }
