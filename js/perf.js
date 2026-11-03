@@ -199,13 +199,13 @@
   async function hold(e) {
     if (lock || asking || document.visibilityState !== 'visible') return;
     // A refused request isn't retried on every tap, only every few seconds.
-    if (e && e.type !== 'visibilitychange' && Date.now() - lastTry < 10000) return;
-    lastTry = Date.now();
+    const tap = !!(e && e.type !== 'visibilitychange');
+    if (tap && Date.now() - lastTry < 10000) return;
     asking = true;
     try {
       lock = await nav.wakeLock.request('screen');
       lock.addEventListener('release', () => { lock = null; });
-    } catch (e) { lock = null; }
+    } catch (err) { lock = null; if (tap) lastTry = Date.now(); }
     asking = false;
   }
   document.addEventListener('visibilitychange', (e) => { if (document.visibilityState === 'visible') hold(e); });
