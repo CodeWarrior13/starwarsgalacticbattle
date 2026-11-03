@@ -1244,9 +1244,13 @@
     return CHAR[id] ? CHAR[id]() : SCENES.space(1);
   }
 
+  const NO_FLIP = new Set(['deathstar']);
   function shipArt(def) {
     const bg = SCENES.space(def.id.length * 7) + (def.boss ? C(20, 80, 30, def.id === 'death_star' ? '#3a2a5a' : '#2a3a5a', 'opacity=".5"') : '');
-    return `${bg}<g class="ship-body">${(SHIPS[def.shape] || SHIPS.xwing)()}</g>`;
+    // Round stations (the Death Stars) have a top and bottom, so they never
+    // get turned around to face the player like enemy fighters do.
+    const noFlip = NO_FLIP.has(def.shape) ? ' no-flip' : '';
+    return `${bg}<g class="ship-body${noFlip}">${(SHIPS[def.shape] || SHIPS.xwing)()}</g>`;
   }
 
   // Card art is deterministic, so each unit is drawn once and reused: the

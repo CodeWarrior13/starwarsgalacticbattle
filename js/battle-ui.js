@@ -210,6 +210,17 @@
         </div>
       </section>`);
       this.view = view;
+      // Phones held sideways: the Turn Meter moves into the right-hand column,
+      // above the abilities, and moves back if the phone turns upright.
+      {
+        const mq = root.matchMedia && root.matchMedia('(max-height: 520px) and (orientation: landscape) and (pointer: coarse)');
+        const track = $('[data-tmtrack]', view);
+        const top = $('.battle-top', view);
+        const bar = $('.action-bar', view);
+        const place = () => { if (!track || !top || !bar) return; if (mq && mq.matches) { if (track.parentNode !== bar) bar.insertBefore(track, bar.firstChild); } else if (track.parentNode !== top) top.appendChild(track); };
+        place();
+        if (mq) { const on = () => { if (!view.isConnected) { if (mq.removeEventListener) mq.removeEventListener('change', on); return; } place(); }; if (mq.addEventListener) mq.addEventListener('change', on); }
+      }
       this.field = $('[data-field]', view);
       this.fx = $('[data-fx]', view);
       this.cards = {};

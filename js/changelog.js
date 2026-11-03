@@ -72,6 +72,8 @@
         'BALANCE|Replaying a stage you\'ve already beaten pays 60% of its rewards.',
         'BALANCE|Beating a campaign stage for the first time gives 1.8× XP, so playing through the first 100 stages (their bosses included) takes you to about level 24, close to the HoloNet at 25.',
         'IMPROVED|Already finished a world before 2.4? You keep every stage you beat, your squad slots and the next worlds open. Go back for the new stages and the boss to liberate it.',
+        'IMPROVED|Phones held sideways: the Turn Meter now sits beside your abilities, the ability buttons are compact, and every card and the battle log fit on screen.',
+        'FIXED|The Death Star no longer shows upside down on its battle card.',
       ],
     },
     {
