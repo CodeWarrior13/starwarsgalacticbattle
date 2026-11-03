@@ -191,7 +191,7 @@
     node.dataset.counting = id;
     const step = (now) => {
       if (node.dataset.counting !== id) return;
-      const k = Math.min(1, (now - t0) / dur);
+      const k = Math.max(0, Math.min(1, (now - t0) / dur));
       const e = 1 - Math.pow(1 - k, 3);
       node.textContent = walletFmt(Math.round(from + (to - from) * e));
       if (k < 1) requestAnimationFrame(step);
@@ -3365,7 +3365,7 @@
           if (!node.isConnected) return;
           const to = Number(b.dataset.count);
           const t0 = performance.now();
-          const tick = (now) => { const q = Math.min(1, (now - t0) / 700); b.textContent = fmt(Math.round(to * (1 - Math.pow(1 - q, 3)))); if (q < 1) requestAnimationFrame(tick); };
+          const tick = (now) => { const q = Math.max(0, Math.min(1, (now - t0) / 700)); b.textContent = fmt(Math.round(to * (1 - Math.pow(1 - q, 3)))); if (q < 1) requestAnimationFrame(tick); };
           requestAnimationFrame(tick);
           if (root.Sound) root.Sound.play('click');
         }, 1100 + k * 380));

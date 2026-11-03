@@ -1166,7 +1166,7 @@ const sceneCC = (x) => {
     const count = node.querySelector('.cc-count');
     const run = (from, to, ms, delay) => setTimeout(() => {
       const t0 = performance.now();
-      const step = (now) => { if (!node.isConnected) return; const k = Math.min(1, (now - t0) / ms); const v = Math.round(from + (to - from) * (1 - Math.pow(1 - k, 3))); count.textContent = `+${v.toLocaleString('en-US')}`; if (k < 1) requestAnimationFrame(step); };
+      const step = (now) => { if (!node.isConnected) return; const k = Math.max(0, Math.min(1, (now - t0) / ms)); const v = Math.round(from + (to - from) * (1 - Math.pow(1 - k, 3))); count.textContent = `+${v.toLocaleString('en-US')}`; if (k < 1) requestAnimationFrame(step); };
       requestAnimationFrame(step);
     }, delay);
     run(0, 10000, 1900, 500);
@@ -1761,7 +1761,7 @@ const sceneKY = (x) => {
     const count = node.querySelector('.ky-count');
     setTimeout(() => {
       const t0 = performance.now();
-      const step = (now) => { if (!node.isConnected) return; const k = Math.min(1, (now - t0) / 1400); count.textContent = `+${Math.round(KY_REWARD * (1 - Math.pow(1 - k, 3)))} Kyber`; if (k < 1) requestAnimationFrame(step); };
+      const step = (now) => { if (!node.isConnected) return; const k = Math.max(0, Math.min(1, (now - t0) / 1400)); count.textContent = `+${Math.round(KY_REWARD * (1 - Math.pow(1 - k, 3)))} Kyber`; if (k < 1) requestAnimationFrame(step); };
       requestAnimationFrame(step);
     }, 3700);
     setTimeout(go, 6200);

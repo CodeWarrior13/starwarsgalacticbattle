@@ -95,7 +95,7 @@
       if (root.Sound) { root.Sound.play('coins'); for (let k = 0; k < 12; k++) setTimeout(() => root.Sound.play('click'), 200 + k * 160); }
       const count = node.querySelector('.vv-count');
       const t0 = performance.now();
-      const step = (now) => { if (!node.isConnected) return; const q = Math.min(1, (now - t0) / 2400); count.textContent = fmt(Math.round(CAPS.credits * (1 - Math.pow(1 - q, 3)))); if (q < 1) requestAnimationFrame(step); };
+      const step = (now) => { if (!node.isConnected) return; const q = Math.max(0, Math.min(1, (now - t0) / 2400)); count.textContent = fmt(Math.round(CAPS.credits * (1 - Math.pow(1 - q, 3)))); if (q < 1) requestAnimationFrame(step); };
       requestAnimationFrame(step);
       setTimeout(() => { node.classList.add('shut'); if (root.Sound) root.Sound.play('reveal_legendary'); }, 2600);
       const done = () => { if (node.classList.contains('out')) return; node.classList.add('out'); setTimeout(() => { node.remove(); resolve(); }, 350); };

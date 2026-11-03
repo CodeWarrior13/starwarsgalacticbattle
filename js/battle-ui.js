@@ -2154,7 +2154,7 @@
         const start = performance.now();
         const total = 1100;
         const frame = (now) => {
-          const t = Math.min(1, (now - start) / total);
+          const t = Math.max(0, Math.min(1, (now - start) / total));
           ctx.fillStyle = 'rgba(0,0,0,0.35)';
           ctx.fillRect(0, 0, w, h);
           const cx = w / 2;
