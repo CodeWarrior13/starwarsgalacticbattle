@@ -184,3 +184,31 @@
   if (!document.body) document.addEventListener('DOMContentLoaded', () => Perf.apply());
   root.Perf = Perf;
 })(window);
+
+// Keep the screen on while the game is open (Screen Wake Lock). The lock is
+// dropped by the browser whenever the tab is hidden, so it's taken again each
+// time the game comes back, and on the first tap for browsers that want one.
+// Browsers without it just behave as before.
+(function (root) {
+  'use strict';
+  const nav = root.navigator;
+  if (!nav || !nav.wakeLock || !nav.wakeLock.request) return;
+  let lock = null;
+  let asking = false;
+  let lastTry = 0;
+  async function hold(e) {
+    if (lock || asking || document.visibilityState !== 'visible') return;
+    // A refused request isn't retried on every tap, only every few seconds.
+    if (e && e.type !== 'visibilitychange' && Date.now() - lastTry < 10000) return;
+    lastTry = Date.now();
+    asking = true;
+    try {
+      lock = await nav.wakeLock.request('screen');
+      lock.addEventListener('release', () => { lock = null; });
+    } catch (e) { lock = null; }
+    asking = false;
+  }
+  document.addEventListener('visibilitychange', (e) => { if (document.visibilityState === 'visible') hold(e); });
+  for (const ev of ['pointerdown', 'keydown']) document.addEventListener(ev, hold, { passive: true });
+  hold();
+})(window);
