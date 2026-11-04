@@ -75,6 +75,7 @@
         'IMPROVED|Phones held sideways: the Turn Meter sits at the top right, your ability buttons are bigger and fill the space (an odd one out, like an Ultimate, runs full width), every card fits on screen, and Captain Rex\'s intel shows more at a glance.',
         'FIXED|The Death Star no longer shows upside down on its battle card.',
         'IMPROVED|Ranked rework: every opponent shows what a win is worth in rating and Beskar, and the Gold, Kyber and Legend leagues fight harder and pay more.',
+        'NEW|Placement battles: from Season 3, each season's ranked play opens with five placement battles. Damage, speed and survival all count, every fight adapts to how you did, and the fifth is the Boss Trial. Then Admiral Ackbar reveals the league you start in.',
         'IMPROVED|Every raid, guild raids included, now has a 5-minute raid clock on screen.',
         'FIXED|Raids no longer end early: a raid only ends when its clock runs out, the boss falls or your squad does.',
         'IMPROVED|Guilds: leaders can now demote a co-leader or elder, the Manage button no longer covers a member\'s rank, and every member shows their profile frame.',

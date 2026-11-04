@@ -1559,7 +1559,7 @@
     };
   }
 
-  root.HN = { BETA, v22, raidToughen, toughPool, xp, grantBase, HN_IDS, HOW, RAIDS, LEAGUES, DIVS, LEAGUE_REWARD, S, save, owns, card, grant, entry, pool, squad, squadEntries, squadPower, powerOf, avgLevel, divOf, opponents, payout, arenaResult, claimDivisions, week, raidNow, raidTotals, bankRaid, claimRaid, Net, rng, BOT_NAMES, BOT_AVS, BOT_NAMES_2 };
+  root.HN = { BETA, v22, raidToughen, toughPool, xp, grantBase, HN_IDS, HOW, RAIDS, LEAGUES, DIVS, LEAGUE_REWARD, S, save, owns, card, grant, entry, pool, squad, squadEntries, squadPower, powerOf, avgLevel, divOf, opponents, payout, arenaResult, claimDivisions, week, raidNow, raidTotals, bankRaid, claimRaid, Net, rng, botSquad, BOT_NAMES, BOT_AVS, BOT_NAMES_2 };
   // Win-streak flame: one emoji plus a CSS glow, tier every 10 wins.
   root.HN.streakFlame = (n, big) => { n = n | 0; if (n < 1) return '0'; const t = Math.min(9, Math.floor(n / 10)); return `<span class="hn-flame t${t}${big ? ' big' : ''}" title="${n} win streak"><i>🔥</i>${n}</span>`; };
 })(window);
@@ -1688,6 +1688,12 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
 .hn-flame.t5, .hn-flame.t6 { color: #ff5f6d; } .hn-flame.t5 i, .hn-flame.t6 i { animation-duration: .6s; }
 .hn-flame.t7, .hn-flame.t8, .hn-flame.t9 { color: #7fd8ff; } .hn-flame.t7 i, .hn-flame.t8 i, .hn-flame.t9 i { animation-duration: .5s; filter: hue-rotate(180deg); }
 .hn-flame.big { font-size: 1.15em; } .hn-flame.big i { font-size: 1.2em; }
+.pl-pips { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; margin: 8px 0; }
+.pl-pip { display: grid; justify-items: center; padding: 6px 2px; border-radius: 10px; background: rgba(8, 20, 32, .85); border: 1px solid rgba(95, 216, 255, .15); }
+.pl-pip small { font: 700 10px var(--font-display); letter-spacing: .08em; color: #9fc4d8; } .pl-pip b { font: 800 16px var(--font-display); color: #cfe9ff; }
+.pl-pip.now { border-color: #5fd8ff; box-shadow: 0 0 12px rgba(95, 216, 255, .35); } .pl-pip.w b { color: #7af0a0; } .pl-pip.l b { color: #ff8a8a; }
+.pl-pip.boss { border-color: rgba(255, 200, 80, .45); } .pl-pip.boss small { color: #ffd166; }
+.hn-opp.pl-boss { border-color: rgba(255, 200, 80, .6); box-shadow: 0 0 18px rgba(255, 180, 60, .18); }
 @keyframes hnFl { from { transform: scale(1) rotate(-4deg); opacity: .85; } to { transform: scale(1.18) rotate(4deg); opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .hn-flame i { animation: none; } }
 .hn-opp .tag { font-size: 10px; letter-spacing: .14em; padding: 2px 6px; border-radius: 4px; background: #1a6a9a; color: #dff8ff; margin-left: 6px; vertical-align: middle; }
@@ -2598,6 +2604,61 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
 
   // ---------- arena ----------
   let oppCache = {};
+  // Placement battles (js/placement.js): five fights decide where you start.
+  function placePanel(kind, ids) {
+    const P = root.Placement;
+    const pr = P.rec();
+    const n = pr.games.length;
+    const o = P.opponent(kind);
+    const t = P.tier();
+    const pips = Array.from({ length: P.GAMES }, (_, i) => {
+      const g = pr.games[i];
+      const boss = i === P.GAMES - 1;
+      return `<div class="pl-pip ${g ? (g.won ? 'w' : 'l') : i === n ? 'now' : ''} ${boss ? 'boss' : ''}"><small>${boss ? 'BOSS' : i + 1}</small><b>${g ? g.score : i === n ? '▶' : '·'}</b></div>`;
+    }).join('');
+    const pic = HN.avatarFor ? HN.avatarFor(null, o) : '';
+    return `<div class="hn-sec pl-box"><h3>Placement battles · ${n} of ${P.GAMES} done</h3>
+      <p class="muted small" style="margin:0">Before you climb this season, ${P.GAMES} placement battles decide your starting league. Each one is scored on damage per minute, time to clear, how much of your squad survives and how efficiently you fight. Every fight adapts to how you did, and the last is the Boss Trial. Every second counts.</p>
+      <div class="pl-pips">${pips}</div>
+      <div class="hn-opp ${o.boss ? 'pl-boss' : ''}"><div class="hn-opp-id">${pic}</div>
+        <div class="who"><b>${esc(o.name)}</b><span class="tag">${esc(t.label.toUpperCase())}</span><small>${esc(t.note)} · ⚡ ${fmt(HN.squadPower(o.squad))}</small><div class="minis">${o.squad.map((e) => mini(e.id)).join('')}</div></div>
+        <div class="go"><button type="button" class="hn-btn" data-hn="placego" data-kind="${kind}" ${ids.length ? '' : 'disabled'}>${o.boss ? 'Boss Trial' : `Fight ${n + 1}`}</button></div></div></div>`;
+  }
+  function placeAttack(kind) {
+    if (HN.seasonBreak && HN.seasonBreak() && !(S().place && S().place.force)) return toast(HN.breakNote());
+    const squad = HN.squadEntries(kind);
+    if (!squad.length) return toast('Pick a squad first.');
+    const P = root.Placement;
+    const opp = P.opponent(kind);
+    const n = P.rec().games.length;
+    HNB.back = { view: 'arena', kind };
+    hnStart({ type: 'hn', hn: 'place', kind, opp }, squad, opp.squad.map((e) => ({ ...e })), {
+      name: `${opp.boss ? 'Boss Trial' : `Placement ${n + 1} of ${P.GAMES}`} · vs ${opp.name}`, kind, planet: kind === 'ship' ? 'coruscant' : 'geonosis', boss: opp.boss || null,
+      intro: opp.boss ? 'The Boss Trial: beat it fast to break into the top leagues.' : 'Placement battle: damage, speed and survival all count.',
+    });
+  }
+  function placeDone(p, b, won) {
+    const P = root.Placement;
+    const g = P.record(p, b, won, false);
+    const pr = P.rec();
+    const last = pr.done;
+    const mmss = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+    const rows = g ? `<div><span>Damage per minute</span><b>${fmt(g.dpm)}</b></div><div><span>Time${g.won ? ' to clear' : ''}</span><b>${mmss(g.secs)}</b></div><div><span>Damage dealt</span><b>${g.dmg}%</b></div><div><span>Squad survived</span><b>${g.surv}%</b></div><div><span>Efficiency</span><b>${g.eff}%</b></div>` : '';
+    const m = openModal(`<div class="hn-result"><div class="result-title ${won ? 'win' : 'lose'}">${won ? 'VICTORY' : 'DEFEAT'}</div>
+      <div class="big-num" style="color:#7fd8ff">${g ? g.score : 0}<small style="font-size:.45em;opacity:.7"> / 100</small></div>
+      <p class="muted small" style="text-align:center;margin:0">Placement ${pr.games.length} of ${P.GAMES}${last ? ' · all done!' : ''}</p>
+      <div class="rows">${rows}</div>
+      <div class="modal-actions"><button type="button" class="btn" data-r="hub">HoloNet</button><button type="button" class="btn btn-primary" data-r="${last ? 'reveal' : 'arena'}">${last ? 'See your placement' : 'Next placement battle'}</button></div></div>`, { small: true, dismissable: false, cls: 'result-modal' });
+    m.root.addEventListener('click', async (e) => {
+      const x = e.target.closest('[data-r]');
+      if (!x) return;
+      m.close();
+      if (x.dataset.r === 'reveal') { await P.reveal(); return go('arena', { kind: p.kind }); }
+      if (last && !pr.seen) { await P.reveal(); }
+      return x.dataset.r === 'hub' ? go('hub') : go('arena', { kind: p.kind });
+    });
+  }
+
   VIEWS.arena = (p) => {
     const kind = p.kind || 'character';
     const h = S();
@@ -2610,13 +2671,13 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       <div class="hn-seg" role="tablist"><button type="button" class="${kind === 'character' ? 'on' : ''}" data-hn="arena" data-kind="character">Ground</button><button type="button" class="${kind === 'ship' ? 'on' : ''}" data-hn="arena" data-kind="ship">Fleet</button></div>
       ${squadBox(ids, kind, myPow)}
       <p class="muted" style="margin:0">This squad is also your defense: other players fight it. Win streak: ${HN.streakFlame(h.streak)} (+${Math.min(5, h.streak) * 5}% Beskar, max +25%). Tougher opponents pay more.</p>
-      <div class="hn-opps">${opps.map((o, i) => {
+      ${root.Placement && root.Placement.need() ? placePanel(kind, ids) : `<div class="hn-opps">${opps.map((o, i) => {
         const d = HN.divOf(o.rating);
         const pic = !o.real && HN.avatarFor ? HN.avatarFor(null, o) : '';
         return `<div class="hn-opp"><div class="hn-opp-id">${pic}${A.badge(d.league, d.div)}</div>
           <div class="who"><b>${esc(o.name)}</b>${o.real ? '<span class="tag">PLAYER</span>' : ''}${!o.real && o.streak >= 3 ? ` ${HN.streakFlame(o.streak)}` : ''}<small>${esc(d.name)} · ${fmt(o.rating)} · ⚡ ${fmt(o.power)}</small><div class="minis">${o.squad.map((e) => mini(e.id)).join('')}</div></div>
           <div class="go"><span class="hn-gain" title="Rating you gain with a win">▲ +${o.gain}</span>${bes(o.payout)}<button type="button" class="hn-btn" data-hn="attack" data-i="${i}" data-kind="${kind}" ${ids.length ? '' : 'disabled'}>Attack</button></div></div>`;
-      }).join('')}</div>
+      }).join('')}</div>`}
 `;
   };
 
@@ -2784,6 +2845,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     if (a === 'arena') return go('arena', { kind: b.dataset.kind });
     if (a === 'pick') return pickSquad(b.dataset.kind, render);
     if (a === 'attack') return attack(b.dataset.kind, oppCache[b.dataset.kind][+b.dataset.i]);
+    if (a === 'placego') return placeAttack(b.dataset.kind);
     if (a === 'ally') { allyPick = b.dataset.id; return render(); }
     if (a === 'raidgo') return startRaid();
     if (a === 'claim') return claim(render);
@@ -2931,6 +2993,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const b = this.battle;
     this.teardown();
     if (p.hn === 'arena') return arenaDone(p, won);
+    if (p.hn === 'place') return placeDone(p, b, won);
     if (p.hn === 'duel') return HN.duelDone(p, won);
     return raidDone(p, b, won);
   };
@@ -2940,6 +3003,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     if (params && params.type === 'hn') {
       HNB.retreated = true;
       if (params.hn === 'arena') HN.arenaResult(params.opp, false);
+      else if (params.hn === 'place') { if (root.Placement) { root.Placement.record(params, BUI.battle, false, true); if (root.Placement.rec().done) setTimeout(() => root.Placement.reveal(), 1200); } }
       else if (params.hn === 'duel') { if (HN.Duel) HN.Duel.forfeit(); }
       else if (BUI.battle) { const boss = BUI.battle.units.find((u) => u.def.raid); const dealt = Math.max(0, (BUI.battle.hnStartHp || 0) - (boss ? boss.hp : 0)); if (dealt) HN.bankRaid(dealt); }
       return { lost: true };
