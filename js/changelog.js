@@ -75,6 +75,7 @@
         'IMPROVED|Already finished a world before 2.4? You keep every stage you beat, your squad slots and the next worlds open. Go back for the new stages and the boss to liberate it.',
         'IMPROVED|Phones held sideways: the Turn Meter sits at the top right, your ability buttons are bigger and fill the space (an odd one out, like an Ultimate, runs full width), every card fits on screen, and Captain Rex\'s intel shows more at a glance.',
         'FIXED|The Death Star no longer shows upside down on its battle card.',
+        'BALANCE|HoloNet cards rebalanced: 18 of them gain health and attack so each one stands with the best cards of its rarity. Cad Bane, Kelleran Beq, Hallway Vader and the Dark Trooper get the biggest boosts.',
         'NEW|Beskar Forging: every HoloNet card has its own five-tier upgrade, paid in Beskar. Each tier adds health and armor, and tier 5 unlocks a passive, so your HoloNet cards keep growing after the rest stop.',
         'NEW|Hunters & Clans: two Bounty Hunters or Mandalorians in a squad gain +10% crit chance; three gain more crit, crit damage and armor.',
         'NEW|HoloNet card pairings: Kelleran Beq with Grogu, Krrsantan with Boba Fett, Hallway Vader with Darth Vader, and the Armorer with any Mandalorian each unlock a bonus together.',

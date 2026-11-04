@@ -52,12 +52,35 @@
     return { ok: true, tier: t + 1, cost: c };
   }
 
+  // ---------- 2.4 calibration ----------
+  // HoloNet cards were measured against core cards of the same rarity (battle
+  // sims across every card). Each gets the health and attack it needs to be
+  // on par before forging; Beskar Forging takes it beyond.
+  const CAL = {
+    hn_fang: 1.03, hn_ig11: 1.03, hn_outrider: 1.06, hn_nite_owl: 1.12, hn_zuckuss: 1.1, hn_fennec: 1.1,
+    hn_krrsantan: 1.12, hn_aurra: 1.16, hn_embo: 1.14, hn_gauntlet: 1.1, hn_bossk: 1.19, hn_greef: 1.13,
+    hn_armorer: 1.16, hn_pre_vizsla: 1.18, hn_kelleran: 1.24, hn_cadbane: 1.25, hn_vader_hallway: 1.29, hn_dark_trooper: 1.3,
+  };
+  const baseStats = D.unitStats;
+  D.unitStats = function (def, level, stars, elite) {
+    const s = baseStats(def, level, stars, elite);
+    const k = def && CAL[def.id];
+    if (!k || !on()) return s;
+    return { ...s, hp: Math.round(s.hp * k), atk: Math.round(s.atk * k) };
+  };
+  const basePower = D.power;
+  D.power = function (def, level, stars, elite) {
+    if (!def || !CAL[def.id] || !on()) return basePower(def, level, stars, elite);
+    const s = D.unitStats(def, level, stars, elite);
+    return Math.round(s.hp * 0.3 + s.atk * 3 + s.def * 2 + s.spd * 1.5);
+  };
+
   // ---------- Pair bonuses ----------
   const isMando = (id) => D.traitsOf(id).includes('mandalorian');
   const PAIRS = [
-    { a: 'hn_kelleran', b: (id) => id === 'grogu', name: 'Foundling\'s Guard', with: 'Grogu', desc: 'Each time Kelleran Beq takes a turn, the ally lowest on health gains Defense Up and heals 4%.' },
+    { a: 'hn_kelleran', b: (id) => id === 'grogu', name: 'Foundling\'s Guard', with: 'Grogu', desc: 'Each time Kelleran Beq takes a turn, the ally lowest on health (below 50%) gains Defense Up and heals 4%.' },
     { a: 'hn_krrsantan', b: (id) => id === 'boba_fett', name: 'Old Partners', with: 'Boba Fett', desc: 'Krrsantan and Boba Fett start with +30% Turn Meter.' },
-    { a: 'hn_vader_hallway', b: (id) => id === 'vader', name: 'Dark Lord\'s Shadow', with: 'Darth Vader', desc: 'Enemies start in fear: Offense Down for 2 turns and -15% Turn Meter.' },
+    { a: 'hn_vader_hallway', b: (id) => id === 'vader', name: 'Dark Lord\'s Shadow', with: 'Darth Vader', desc: 'Enemies start in fear: Offense Down for 2 turns and -25% Turn Meter.' },
     { a: 'hn_armorer', b: (id) => id !== 'hn_armorer' && isMando(id), name: 'Forged Covert', with: 'any Mandalorian', desc: 'Mandalorian allies start with Defense Up for 2 turns.' },
   ];
   const pairsFor = (ids) => PAIRS.filter((p) => ids.includes(p.a) && ids.some(p.b));
@@ -111,7 +134,7 @@
     const foes = b.side(side === 'player' ? 'enemy' : 'player');
     for (const p of pairsFor(ids)) {
       if (p.a === 'hn_krrsantan') squad.filter((u) => u.id === 'hn_krrsantan' || u.id === 'boba_fett').forEach((u) => { u.tm = Math.min(99, u.tm + 30); });
-      if (p.a === 'hn_vader_hallway') foes.forEach((u) => { u.statuses.offDown = Math.max(u.statuses.offDown || 0, 2); u.tm = Math.max(0, u.tm - 15); });
+      if (p.a === 'hn_vader_hallway') foes.forEach((u) => { u.statuses.offDown = Math.max(u.statuses.offDown || 0, 2); u.tm = Math.max(0, u.tm - 25); });
       if (p.a === 'hn_armorer') squad.filter((u) => isMando(u.id)).forEach((u) => { u.statuses.defUp = Math.max(u.statuses.defUp || 0, 2); });
       if (p.a === 'hn_kelleran') squad.filter((u) => u.id === 'hn_kelleran').forEach((u) => { u.guard = true; });
     }
@@ -218,12 +241,12 @@
       if (unit && unit.guard && unit.alive && on()) {
         const allies = this.side(unit.side).filter((u) => u.alive);
         const low = allies.reduce((a, u) => (u.hp / u.maxHp < a.hp / a.maxHp ? u : a), allies[0]);
-        if (low) { low.statuses.defUp = Math.max(low.statuses.defUp || 0, 1); low.hp = Math.min(low.maxHp, low.hp + Math.round(low.maxHp * 0.04)); }
+        if (low && low.hp / low.maxHp < 0.5) { low.statuses.defUp = Math.max(low.statuses.defUp || 0, 1); low.hp = Math.min(low.maxHp, low.hp + Math.round(low.maxHp * 0.04)); }
       }
       return r;
     };
   }
 
   if (root.addEventListener) root.addEventListener('hn-ready', () => patchDefs());
-  root.HNBonus = { on, TIERS, COST, HP_STEP, ARMOR_STEP, forgeable, costOf, tierOf, passiveOf, forge, PAIRS, pairsFor, patchDefs, BIO, JOBS };
+  root.HNBonus = { CAL, on, TIERS, COST, HP_STEP, ARMOR_STEP, forgeable, costOf, tierOf, passiveOf, forge, PAIRS, pairsFor, patchDefs, BIO, JOBS };
 })(typeof window !== 'undefined' ? window : globalThis);
