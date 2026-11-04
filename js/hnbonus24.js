@@ -84,7 +84,7 @@
   // ---------- Pair bonuses ----------
   const isMando = (id) => D.traitsOf(id).includes('mandalorian');
   const PAIRS = [
-    { a: 'hn_kelleran', b: (id) => id === 'grogu', name: 'Foundling\'s Guard', with: 'Grogu', desc: 'Each time Kelleran Beq takes a turn, the ally lowest on health (below 50%) gains Defense Up.' },
+    { a: 'hn_kelleran', b: (id) => id === 'grogu', name: 'Foundling\'s Guard', with: 'Grogu', desc: 'Each time Kelleran Beq takes a turn, the ally lowest on health (below 50%) gains Defense Up and heals 5%.' },
     { a: 'hn_krrsantan', b: (id) => id === 'boba_fett', name: 'Old Partners', with: 'Boba Fett', desc: 'Krrsantan and Boba Fett start with +30% Turn Meter.' },
     { a: 'hn_vader_hallway', b: (id) => id === 'vader', name: 'Dark Lord\'s Shadow', with: 'Darth Vader', desc: 'Enemies start in fear: Offense Down for 1 turn and -15% Turn Meter.' },
     { a: 'hn_armorer', b: (id) => id !== 'hn_armorer' && isMando(id), name: 'Forged Covert', with: 'any Mandalorian', desc: 'Mandalorian allies start with Defense Up for 2 turns.' },
@@ -255,7 +255,7 @@
       if (unit && unit.guard && unit.alive && on() && !root.__hnPairOff) {
         const allies = this.side(unit.side).filter((u) => u.alive);
         const low = allies.reduce((a, u) => (u.hp / u.maxHp < a.hp / a.maxHp ? u : a), allies[0]);
-        if (low && low.hp / low.maxHp < 0.5) low.statuses.defUp = Math.max(low.statuses.defUp || 0, 1);
+        if (low && low.hp / low.maxHp < 0.5) { low.statuses.defUp = Math.max(low.statuses.defUp || 0, 1); low.hp = Math.min(low.maxHp, low.hp + Math.round(low.maxHp * 0.05)); }
       }
       return r;
     };
