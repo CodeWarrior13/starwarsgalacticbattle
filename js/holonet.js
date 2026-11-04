@@ -1199,7 +1199,8 @@
   // 2.2: opponents are built for their league, not from your own cards, with a
   // little randomness (one card above the rest now and then). For the first two
   // days of a season the field is much tougher.
-  const BOT_BAND = { bronze: [5, 10, 1, 2], silver: [10, 18, 2, 3], gold: [18, 26, 3, 4], kyber: [26, 34, 4, 5], legend: [34, 40, 5, 7] };
+  // Kyber and Legend fights are tougher (higher levels and stars) but pay more rating.
+  const BOT_BAND = { bronze: [5, 10, 1, 2], silver: [10, 18, 2, 3], gold: [18, 27, 3, 5], kyber: [28, 38, 5, 6], legend: [36, 46, 6, 7] };
   const BOT_MIX = {
     bronze: { common: 55, rare: 35, epic: 9, legendary: 1 }, silver: { common: 25, rare: 45, epic: 25, legendary: 5 },
     gold: { common: 5, rare: 30, epic: 45, legendary: 18, mythic: 2 }, kyber: { rare: 15, epic: 45, legendary: 34, mythic: 6 },
@@ -1267,7 +1268,7 @@
       const rating = Math.max(400, Math.round(h.rating + offsets[i % offsets.length] + (r() - 0.5) * 60));
       out.push({ id: `b:${i}`, name: BOT_NAMES[Math.floor(r() * BOT_NAMES.length)], real: false, rating, squad: botSquad(kind, rating, r) });
     }
-    return out.map((o) => ({ ...o, payout: payout(o.rating), power: squadPower(o.squad) }));
+    return out.map((o) => ({ ...o, payout: payout(o.rating), gain: winGain(h.rating, o.rating), power: squadPower(o.squad) }));
   }
   // payout = 40 × clamp((their ÷ yours)², 0.5, 2.5) × (1 + 0.05 × streak)
   const payout = (their, streak) => {
@@ -1277,13 +1278,17 @@
     return Math.round(28 * Math.min(2.5, Math.max(0.5, (their / h.rating) ** 2)) * (1 + 0.05 * Math.min(5, s)));
   };
   const expected = (a, b) => 1 / (1 + 10 ** ((b - a) / 400));
+  // Higher leagues: wins are worth more rating (losses cost a little more too).
+  const LEAGUE_GAIN = { bronze: 1, silver: 1.1, gold: 1.25, kyber: 1.45, legend: 1.7 };
+  const gainMult = (rating) => LEAGUE_GAIN[divOf(rating).league] || 1;
+  const winGain = (mine, theirs) => Math.max(6, Math.round(36 * (1 - expected(mine, theirs)) * gainMult(mine)));
+  const lossCost = (mine, theirs) => Math.max(4, Math.round(28 * expected(mine, theirs) * (1 + (gainMult(mine) - 1) * 0.5)));
 
   // Record an arena result: rating, streak, Beskar, and any new division.
   function arenaResult(opp, won) {
     const h = S();
     const before = divOf(h.rating);
-    const e = expected(h.rating, opp.rating);
-    const delta = won ? Math.max(6, Math.round(36 * (1 - e))) : -Math.max(4, Math.round(28 * e));
+    const delta = won ? winGain(h.rating, opp.rating) : -lossCost(h.rating, opp.rating);
     const bes = won ? payout(opp.rating, h.streak) : 0;
     const streakBefore = h.streak;
     h.rating = Math.max(0, h.rating + delta);
@@ -1666,6 +1671,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
 .hn-opp .minis { display: flex; gap: 4px; margin-top: 6px; flex-wrap: wrap; }
 .hn-opp .minis .mini { width: 34px; height: 34px; }
 .hn-opp .go { display: grid; gap: 6px; justify-items: end; }
+.hn-gain { font: 800 12px var(--font-display); letter-spacing: .04em; color: #7af0a0; background: rgba(122, 240, 160, .1); border: 1px solid rgba(122, 240, 160, .35); border-radius: 999px; padding: 2px 8px; white-space: nowrap; }
 .hn-opp .tag { font-size: 10px; letter-spacing: .14em; padding: 2px 6px; border-radius: 4px; background: #1a6a9a; color: #dff8ff; margin-left: 6px; vertical-align: middle; }
 .hn-btn { padding: 9px 16px; border-radius: 10px; border: 1px solid #8fe8ff; background: linear-gradient(180deg, #2ab0e0, #126a9a); color: #fff; font: 800 13px var(--font-body, system-ui); letter-spacing: .08em; cursor: pointer; text-transform: uppercase; }
 .hn-btn:disabled { opacity: .45; cursor: default; }
@@ -2590,7 +2596,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
         const d = HN.divOf(o.rating);
         return `<div class="hn-opp"><div>${A.badge(d.league, d.div)}</div>
           <div class="who"><b>${esc(o.name)}</b>${o.real ? '<span class="tag">PLAYER</span>' : ''}<small>${esc(d.name)} · ${fmt(o.rating)} · ⚡ ${fmt(o.power)}</small><div class="minis">${o.squad.map((e) => mini(e.id)).join('')}</div></div>
-          <div class="go">${bes(o.payout)}<button type="button" class="hn-btn" data-hn="attack" data-i="${i}" data-kind="${kind}" ${ids.length ? '' : 'disabled'}>Attack</button></div></div>`;
+          <div class="go"><span class="hn-gain" title="Rating you gain with a win">▲ +${o.gain}</span>${bes(o.payout)}<button type="button" class="hn-btn" data-hn="attack" data-i="${i}" data-kind="${kind}" ${ids.length ? '' : 'disabled'}>Attack</button></div></div>`;
       }).join('')}</div>
 `;
   };
@@ -2881,13 +2887,14 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       name: `Raid · ${r.name}`, kind, planet: r.planet, raid: true, boss: r.id,
       intro: `${allyEntries.length ? `${ally.name} fights beside you. ` : ''}Deal as much damage as you can: every hit counts toward the shared health bar.`,
       setup(b) {
-        b.hnRaid = { boss: r.id, turn: 0, limit: 100 };
+        b.hnRaid = { boss: r.id, turn: 0, limit: HN.startRaidClock ? Infinity : 100 };
         const boss = b.units.find((u) => u.id === r.id);
         boss.maxHp = t.pool; boss.hp = Math.max(1, t.left);
         HN.raidToughen(b, r.id);
         if (boss.hp <= boss.maxHp / 2) { boss.enraged = true; boss.statuses.offUp = 99; }
         b.hnStartHp = boss.hp;
         b.side('enemy').forEach((u, i) => { if (!r.start.includes(i)) { u.alive = false; u.hp = 0; u.hnWait = true; } });
+        if (HN.startRaidClock) HN.startRaidClock('Raid', 'raid');
       },
     });
   }
@@ -2951,7 +2958,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const res = HN.bankRaid(dealt);
     const t = HN.raidTotals();
     const r = HN.raidNow();
-    const m = openModal(`<div class="hn-result"><div class="result-title ${won ? 'win' : 'lose'}">${won ? 'BOSS DEFEATED' : 'RAID OVER'}</div>
+    const m = openModal(`<div class="hn-result"><div class="result-title ${won ? 'win' : 'lose'}">${won ? 'BOSS DEFEATED' : p.timeUp ? "TIME'S UP" : 'RAID OVER'}</div>
       <div class="big-num" style="color:#ffb05a">${fmt(dealt)} damage</div>
       <div class="rows"><div><span>Beskar</span><b>${bes(res.beskar)}</b></div><div><span>Your total this week</span><b>${fmt(res.rec.dmg)}</b></div><div><span>${esc(r.name)}</span><b>${t.fallen ? 'Defeated!' : `${fmt(t.left)} health left`}</b></div></div>
       <div class="modal-actions"><button type="button" class="btn" data-r="hub">HoloNet</button><button type="button" class="btn btn-primary" data-r="raid">${t.fallen ? 'Claim rewards' : 'Back to the raid'}</button></div></div>`, { small: true, dismissable: false, cls: 'result-modal' });
@@ -6653,7 +6660,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
         if (boss.hp <= boss.maxHp / 2) { boss.enraged = true; boss.statuses.offUp = 99; }
         b.hnStartHp = boss.hp;
         b.side('enemy').forEach((u, i) => { if (!F.start.includes(i)) { u.alive = false; u.hp = 0; u.hnWait = true; } });
-        if (G23()) { startRaidClock(); useRaidRun(front); }
+        if (G23()) { b.hnRaid.limit = Infinity; startRaidClock('Guild raid', 'graid'); useRaidRun(front); }
       },
     });
   }
@@ -6667,7 +6674,11 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   const RAID_MS = 5 * 60 * 1000;
   let raidClock = null;
   function stopRaidClock() { if (raidClock) { clearInterval(raidClock.t); raidClock.el.remove(); raidClock = null; } }
-  function startRaidClock() {
+  // Every raid (guild raids and the weekly HoloNet raids) runs on this one
+  // visible clock. It's the only thing that ends a raid early: no hidden
+  // turn limit.
+  function startRaidClock(label, key) {
+    label = label || 'Guild raid'; key = key || 'graid';
     stopRaidClock();
     const el = document.createElement('div');
     el.className = 'graid-clock';
@@ -6675,10 +6686,10 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     document.body.appendChild(el);
     const end = Date.now() + RAID_MS;
     const tick = () => {
-      if (!BUI.battle || BUI.ended || !BUI.params || BUI.params.hn !== 'graid') return stopRaidClock();
+      if (!BUI.battle || BUI.ended || !BUI.params || BUI.params.hn !== key) return stopRaidClock();
       const left = Math.max(0, end - Date.now());
       const sec = Math.ceil(left / 1000);
-      el.innerHTML = `<small>Guild raid</small><b>${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}</b>`;
+      el.innerHTML = `<small>${label}</small><b>${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}</b>`;
       el.classList.toggle('low', sec <= 30);
       if (left > 0) return;
       stopRaidClock();
@@ -6693,6 +6704,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     raidClock = { el, t: setInterval(tick, 250) };
     tick();
   }
+  HN.startRaidClock = startRaidClock;
   function bankGuildRaid(front, dealt) {
     const h = P2();
     h.soc.gr.b = graidNow().id;
