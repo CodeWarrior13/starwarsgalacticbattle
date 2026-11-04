@@ -112,6 +112,8 @@
           if (own.x.purge) foes.filter((u) => D.traitsOf(u.id).includes('jedi')).forEach((u) => { u.atk = Math.max(1, Math.round(u.atk * (1 - 0.09 * this.docF(side, 'purge')))); });
         }
       }
+      // 2.4 extras (HoloNet card forging, pair bonuses): js/hnbonus24.js.
+      if (root.BattleExtras) for (const f of root.BattleExtras) { try { f(this, opts, playerSquad, enemySquad); } catch (e) { /* never block a battle */ } }
       this.turnCount = 0;
       this.lastHazard = 0;
       // Event boost: one faction on the player's side hits harder and lasts longer.

@@ -1367,6 +1367,10 @@
       { n: 2, mods: { double: 0.16, crit: 0.05 }, desc: 'Scoundrels gain +16% double-hit and +5% crit chance.' }] },
     { trait: 'bounty', name: 'Bounty Hunters', scope: 'trait', tiers: [
       { n: 2, mods: { critDmg: 0.35, crit: 0.08 }, desc: 'Bounty Hunters gain +8% crit chance and +35% crit damage. +20% credits on victory.' }] },
+    // 2.4: Bounty Hunters and Mandalorians fight as one.
+    { trait: 'bounty', traits: ['bounty', 'mandalorian'], key: 'hunters', name: 'Hunters & Clans', icon: '⟁', v24: true, scope: 'trait', tiers: [
+      { n: 2, mods: { crit: 0.1 }, desc: 'Bounty Hunters and Mandalorians gain +10% crit chance.' },
+      { n: 3, mods: { crit: 0.15, critDmg: 0.2, def: 0.08 }, desc: 'Bounty Hunters and Mandalorians gain +15% crit chance, +20% crit damage and +8% armor.' }] },
     { trait: 'droid', name: 'Droid Network', scope: 'trait', tiers: [
       { n: 2, mods: { tmStart: 35, def: 0.1 }, desc: 'Droids start with +35% Turn Meter and +10% armor.' },
       { n: 3, mods: { tmStart: 45, def: 0.15, double: 0.08 }, desc: 'Droids start with +45% Turn Meter, +15% armor and +8% double-hit chance.' },
@@ -1401,7 +1405,7 @@
 
   // Colors used by the synergy activation banners.
   const SYN_THEME = {
-    droid: '#ffb03a', sith: '#ff2a2a', jedi: '#5ab4ff', rebel: '#ff8a4a', empire: '#b8c2cc', republic: '#8fd3ff', separatist: '#6a8aff',
+    hunters: '#c9d4de', droid: '#ffb03a', sith: '#ff2a2a', jedi: '#5ab4ff', rebel: '#ff8a4a', empire: '#b8c2cc', republic: '#8fd3ff', separatist: '#6a8aff',
     scoundrel: '#ffd23f', bounty: '#9fe07a', trooper: '#e6ecf5', native: '#8aa04a', leader: '#ffd23f', fighter: '#8fd3ff', bomber: '#ff9a3a',
     gunship: '#b8c2cc', badbatch: '#3b8bff', inquisitor: '#ff2a2a', nightsister: '#4ade80', healer: '#52e08a', tank: '#8fd3ff', attacker: '#ff6b6b', unity_light: '#ffe08a', unity_dark: '#ff3a3a', formation: '#8fd3ff', terrain: '#52e08a',
   };
@@ -1643,19 +1647,22 @@
     const counts = {};
     defs.forEach((d) => traitsOf(d.id).forEach((t) => { counts[t] = (counts[t] || 0) + 1; }));
 
+    const on24 = !!(root.Update24 && root.Update24.on());
     for (const syn of SYNERGIES) {
-      const n = counts[syn.trait] || 0;
+      if ((syn.v24 && !on24) || syn.off) continue;
+      const inSyn = (id) => (syn.traits ? syn.traits.some((t) => traitsOf(id).includes(t)) : traitsOf(id).includes(syn.trait));
+      const n = syn.traits ? defs.filter((d) => inSyn(d.id)).length : counts[syn.trait] || 0;
       const tier = [...syn.tiers].reverse().find((t) => n >= t.n);
       const next = syn.tiers.find((t) => n < t.n);
       if (tier) {
         defs.forEach((d, i) => {
-          if (syn.scope === 'all' || traitsOf(d.id).includes(syn.trait)) addMods(perUnit[i], tier.mods);
+          if (syn.scope === 'all' || inSyn(d.id)) addMods(perUnit[i], tier.mods);
         });
-        const members = defs.map((d, i) => (traitsOf(d.id).includes(syn.trait) ? i : -1)).filter((i) => i >= 0);
-        active.push({ kind: 'synergy', key: syn.trait, trait: syn.trait, name: syn.name, count: n, need: tier.n, tier: syn.tiers.indexOf(tier), desc: tier.desc, icon: TRAIT_INFO[syn.trait].icon, members });
+        const members = defs.map((d, i) => (inSyn(d.id) ? i : -1)).filter((i) => i >= 0);
+        active.push({ kind: 'synergy', key: syn.key || syn.trait, trait: syn.key || syn.trait, name: syn.name, count: n, need: tier.n, tier: syn.tiers.indexOf(tier), desc: tier.desc, icon: syn.icon || TRAIT_INFO[syn.trait].icon, members });
       }
       if (next && n > 0 && next.n - n === 1) {
-        hints.push({ trait: syn.trait, name: syn.name, count: n, need: next.n, desc: next.desc, icon: TRAIT_INFO[syn.trait].icon });
+        hints.push({ trait: syn.key || syn.trait, name: syn.name, count: n, need: next.n, desc: next.desc, icon: syn.icon || TRAIT_INFO[syn.trait].icon });
       }
     }
 

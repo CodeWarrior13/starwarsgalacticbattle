@@ -1042,7 +1042,8 @@
     if (saved.length) return D.keepApart(saved).slice(0, 5);
     return D.keepApart(pool(kind).sort((a, b) => powerOf(b.id) - powerOf(a.id)).map((u) => u.id)).slice(0, 5);
   }
-  const squadEntries = (kind) => squad(kind).map(entry).filter(Boolean);
+  // Entries carry each HoloNet card's Beskar Forge tier (2.4), so opponents fight your forged cards too.
+  const squadEntries = (kind) => squad(kind).map(entry).filter(Boolean).map((e) => { const t = root.HNBonus && root.HNBonus.on() ? root.HNBonus.tierOf(e.id) : 0; return t ? { ...e, forge: t } : e; });
   const squadPower = (entries) => entries.reduce((a, e) => a + D.power(D.UNIT_MAP[e.id], e.level, e.stars), 0);
   const avgLevel = (entries) => (entries.length ? entries.reduce((a, e) => a + e.level, 0) / entries.length : 10);
 
@@ -1310,7 +1311,9 @@
     const h = S();
     const before = divOf(h.rating);
     const delta = won ? winGain(h.rating, opp.rating) : -lossCost(h.rating, opp.rating);
-    const bes = won ? payout(opp.rating, h.streak) : 0;
+    // Greef Karga's Good Business: +10% Beskar when he's in the squad.
+    const greef = (squad('character').includes('hn_greef') || squad('ship').includes('hn_greef')) ? 1.1 : 1;
+    const bes = won ? Math.round(payout(opp.rating, h.streak) * greef) : 0;
     const streakBefore = h.streak;
     h.rating = Math.max(0, h.rating + delta);
     h.best = Math.max(h.best, h.rating);
@@ -1711,6 +1714,10 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
 .g-found > summary::-webkit-details-marker { display: none; } .g-found > summary > span:first-child { flex: 1; display: grid; } .g-found > summary small { color: #9fc4d8; }
 .g-found > summary::after { content: '▾'; color: #ffd23f; transition: transform .2s; } .g-found[open] > summary::after { transform: rotate(180deg); }
 .g-found > div { padding: 10px 2px 0; } .g-found .g-cost { display: grid; gap: 2px; justify-items: end; }
+.hn-forge { display: grid; gap: 6px; margin: 10px 0; padding: 10px 12px; border-radius: 12px; background: linear-gradient(135deg, rgba(201, 212, 222, .1), rgba(8, 20, 32, .6)); border: 1px solid rgba(201, 212, 222, .35); }
+.hn-forge .hd { display: flex; justify-content: space-between; align-items: baseline; } .hn-forge .hd b { letter-spacing: .1em; text-transform: uppercase; font-size: 12px; color: #dfe8f2; } .hn-forge .hd span { font-size: 12px; color: #9fc4d8; }
+.hn-forge .pips { display: flex; gap: 5px; } .hn-forge .pips i { flex: 1; height: 7px; border-radius: 4px; background: rgba(255, 255, 255, .1); }
+.hn-forge .pips i.on { background: linear-gradient(90deg, #9aa8b5, #eef3f8); box-shadow: 0 0 6px rgba(220, 230, 240, .5); } .hn-forge .pips i.cap.on { background: linear-gradient(90deg, #ffd166, #fff2c0); }
 .pl-pips { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; margin: 8px 0; }
 .pl-pip { display: grid; justify-items: center; padding: 6px 2px; border-radius: 10px; background: rgba(8, 20, 32, .85); border: 1px solid rgba(95, 216, 255, .15); }
 .pl-pip small { font: 700 10px var(--font-display); letter-spacing: .08em; color: #9fc4d8; } .pl-pip b { font: 800 16px var(--font-display); color: #cfe9ff; }
@@ -2924,6 +2931,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       <p class="eyebrow">${D.RARITIES[def.rarity].label} · ${def.role} · ${def.kind === 'ship' ? 'Fleet' : 'Ground'} · HoloNet only</p><h2 style="margin:2px 0">${esc(def.name)}</h2>
       <p class="muted">${esc(def.bio.replace(/ Passive,.*$/, ''))}</p>
       <ul>${abil.map((x) => `<li class="${x.ultimate ? 'ult' : ''}"><b>${x.ultimate ? '★ ' : ''}${esc(x.name)}</b> <span class="muted small">${x.ultimate ? 'Ultimate' : x.cd ? `${x.cd}-turn cooldown` : 'Basic'}</span><br>${esc(x.desc)}</li>`).join('')}${passive[1] ? `<li><b>Passive · ${esc(passive[1])}</b><br>${esc(passive[2])}</li>` : ''}</ul>
+      ${forgeBox(id, c)}
       ${c ? `<p>Lv ${c.level} · ${'★'.repeat(c.stars)} · ${c.shards} shards</p>` : `<p class="hn-how" style="text-align:left">How to get: ${esc(HN.HOW[id])}</p>`}
       <div class="modal-actions">${c ? `<button type="button" class="btn" data-x="lvl" ${c.level >= (D.MAX_LEVEL || 30) || S().beskar < lvlCost ? 'disabled' : ''}>Level up · ${bes(lvlCost)}</button><button type="button" class="btn" data-x="star" ${!starNeed || c.shards < starNeed ? 'disabled' : ''}>Promote · ${starNeed ? `${c.shards}/${starNeed}` : 'max'}</button>` : ''}<button type="button" class="btn btn-primary" data-x="watch">▶ Watch ultimate</button></div>
     </div></div>`, {});
@@ -2933,7 +2941,23 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       if (x.dataset.x === 'lvl') { S().beskar -= lvlCost; c.level += 1; HN.save(); HN.Net.publish(); sound('rankup'); m.close(); after(); inspect(id, after); }
       if (x.dataset.x === 'star') { c.shards -= starNeed; c.stars += 1; HN.save(); HN.Net.publish(); sound('rankup'); m.close(); after(); inspect(id, after); }
       if (x.dataset.x === 'watch') { m.close(); BUI.preview(id, () => go('vault')); }
+      if (x.dataset.x === 'forge') { const r = root.HNBonus.forge(id); if (!r.ok) return toast(r.why); HN.Net.publish(); sound('rankup'); toast(`${def.name} forged to tier ${r.tier}!${r.tier === root.HNBonus.TIERS ? ` ${root.HNBonus.passiveOf(id).name} unlocked.` : ''}`); m.close(); after(); inspect(id, after); }
     });
+  }
+  // 2.4 Beskar Forging: five tiers of health and armor, then a passive.
+  function forgeBox(id, c) {
+    const F = root.HNBonus;
+    if (!F || !F.on() || !F.forgeable(id)) return '';
+    const t = F.tierOf(id);
+    const pas = F.passiveOf(id);
+    const pairs = F.PAIRS.filter((p) => p.a === id);
+    const cost = t < F.TIERS ? F.costOf(id, t) : 0;
+    return `<div class="hn-forge"><div class="hd"><b>Beskar Forge</b><span>Tier ${t} / ${F.TIERS}</span></div>
+      <div class="pips">${Array.from({ length: F.TIERS }, (_, i) => `<i class="${i < t ? 'on' : ''} ${i === F.TIERS - 1 ? 'cap' : ''}"></i>`).join('')}</div>
+      <p class="muted small" style="margin:0">+${Math.round(F.HP_STEP * 100 * t)}% health · +${Math.round(F.ARMOR_STEP * 100 * t)}% armor${t < F.TIERS ? ` · next tier +${Math.round(F.HP_STEP * 100)}% / +${Math.round(F.ARMOR_STEP * 100)}%` : ''}</p>
+      <p class="small" style="margin:0"><b style="color:${t >= F.TIERS ? '#ffd166' : '#9fc4d8'}">${t >= F.TIERS ? '✦' : '🔒'} Tier 5 · ${esc(pas.name)}:</b> ${esc(pas.desc)}</p>
+      ${pairs.map((p) => `<p class="small" style="margin:0"><b style="color:#8fe8ff">⚭ ${esc(p.name)}</b> (with ${esc(p.with)}): ${esc(p.desc)}</p>`).join('')}
+      ${c && t < F.TIERS ? `<button type="button" class="btn btn-primary" data-x="forge" ${S().beskar < cost ? 'disabled' : ''}>Forge tier ${t + 1} · ${bes(cost)}</button>` : ''}</div>`;
   }
 
   // ---------- battles ----------

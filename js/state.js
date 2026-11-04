@@ -884,7 +884,9 @@
       out.loaded = spin.loaded;
       out.docCr = doc ? doc.cr : 0;
       out.doctrines = doc ? doc.names : [];
-      out.credits = Math.round(out.base * spin.mult * (out.bounty ? 1.2 : 1) * (1 + out.docCr));
+      // 2.4: Greef Karga's Good Business.
+      const greef = squad.includes('hn_greef') && root.Update24 && root.Update24.on() ? 1.1 : 1;
+      out.credits = Math.round(out.base * spin.mult * (out.bounty ? 1.2 : 1) * (1 + out.docCr) * greef);
       if (doc && doc.ky && out.firstClear && out.crystals) out.crystals = Math.round(out.crystals * (1 + doc.ky));
       if (doc && doc.shard && squad.length && (rng || Math.random)() < doc.shard) {
         const pick = squad[Math.floor((rng || Math.random)() * squad.length)];
