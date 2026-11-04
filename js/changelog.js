@@ -30,7 +30,8 @@
         ['Liberate the Galaxy', '◉', 'Liberat|bosses|Optional bosses|Zillo|110 stages|Siege|Already finished|scenes download|galaxy grows'],
         ['Cards & Doctrines', '✦', 'new cards|Doctrines|Elite|Common, rare and epic|level cap|Hoth Star Destroyer'],
         ['Command Your Squad', '⚑', 'Battle Plans|Turn Meter|Replay ×3'],
-        ['HoloNet', '⌬', 'HoloNet raid|Axial|Sith Fleet|weekly raid|Champion|HoloNet Season|between seasons|Ranked|Placement|raid clock|Raids no longer|Guild|guild|catch fire|Leaderboards'],
+        ['HoloNet', '⌬', 'HoloNet raid|Axial|Sith Fleet|weekly raid|Champion|HoloNet Season|between seasons'],
+        ['Ranked & Guilds', '⚔', 'Ranked|Placement|raid clock|Raids no longer|Guild|guild|catch fire|Leaderboards'],
         ['Credits & Rewards', '◈', 'results screen|Sell spare|Wallet|cost|Replaying|1.8×'],
         ['One more thing…', '✧', ''],
       ],
@@ -74,12 +75,12 @@
         'IMPROVED|Already finished a world before 2.4? You keep every stage you beat, your squad slots and the next worlds open. Go back for the new stages and the boss to liberate it.',
         'IMPROVED|Phones held sideways: the Turn Meter sits at the top right, your ability buttons are bigger and fill the space (an odd one out, like an Ultimate, runs full width), every card fits on screen, and Captain Rex\'s intel shows more at a glance.',
         'FIXED|The Death Star no longer shows upside down on its battle card.',
-        'IMPROVED|Ranked rework: every opponent shows what a win is worth in rating and Beskar, and the Gold, Kyber and Legend leagues fight harder and pay more.',
-        'NEW|Placement battles: from Season 3, each season\'s ranked play opens with five placement battles. Damage, speed and survival all count, every fight adapts to how you did, and the fifth is the Boss Trial. Then Admiral Ackbar reveals the league you start in.',
+        'IMPROVED|Ranked rework: you only face pilots from your own division or one either side, with a fresh set after every fight. Each opponent shows what a win is worth in rating and Beskar, and the Gold, Kyber and Legend leagues fight harder and pay more.',
+        'NEW|Placement battles: from Season 3, ranked opens with five Ground placement battles. They open on the last day of the season break (or whenever you arrive), each one adapts to how you fight, and the last is the Boss Trial. When the season starts, Admiral Ackbar reveals the league you start in. Fleet ranked opens once they\'re done.',
         'IMPROVED|Every raid, guild raids included, now has a 5-minute raid clock on screen.',
         'FIXED|Raids no longer end early: a raid only ends when its clock runs out, the boss falls or your squad does.',
         'IMPROVED|Guilds: leaders can now demote a co-leader or elder, the Manage button no longer covers a member\'s rank, and every member shows their profile frame.',
-        'IMPROVED|Finding a guild: search sits at the top, Guilds you may like suggests ones you can join right now, more guilds are waiting to be found, and founding your own is tucked into a dropdown. Founding a guild now costs 100 Kyber (was 500 Beskar).',
+        'IMPROVED|Finding a guild: search sits at the top, Guilds you may like suggests ones you can join right now, more guilds are waiting to be found, and founding your own is tucked into a dropdown. Founding a guild now costs 100 Kyber and 500 Beskar.',
         'NEW|Win streaks catch fire: hit 3 wins in a row and a flame appears by your name, burning hotter every 10 wins. Your arena and duel win streaks show on your profile.',
         'IMPROVED|Leaderboards show the top 50 pilots, each with their picture, frame and current win streak.',
       ],
@@ -381,7 +382,7 @@
         <div class="lbl-hero"><div class="lbl-stars"></div><div class="lbl-worlds">${worlds}</div>
           <p class="lbl-kick">Update ${esc(u.v)}</p><h2 class="lbl-title">${esc(u.title).toUpperCase()}</h2><p class="lbl-date">${esc(u.date)} · The biggest update yet</p></div>
         <div class="lbl-stats">${(u.stats || []).map(([n, l], i) => `<div style="--i:${i}"><b>${esc(n)}</b><span>${esc(l)}</span></div>`).join('')}</div>
-        ${secs.filter((x) => x[2].length).map(([title, icon, items], k, arr) => `<section class="lbl-sec deco-${['galaxy', 'cards', 'squad', 'holonet', 'credits', 'secret'][u.groups.findIndex((g) => g[0] === title)] || 'galaxy'} ${k === arr.length - 1 ? 'last' : ''}" style="--i:${k}"><h3><i>${icon}</i><span>${esc(title)}</span><em class="lbl-deco" aria-hidden="true"><b></b><b></b><b></b></em></h3>${this.itemsHtml(items, true)}</section>`).join('')}
+        ${secs.filter((x) => x[2].length).map(([title, icon, items], k, arr) => `<section class="lbl-sec deco-${['galaxy', 'cards', 'squad', 'holonet', 'ranked', 'credits', 'secret'][u.groups.findIndex((g) => g[0] === title)] || 'galaxy'} ${k === arr.length - 1 ? 'last' : ''}" style="--i:${k}"><h3><i>${icon}</i><span>${esc(title)}</span><em class="lbl-deco" aria-hidden="true"><b></b><b></b><b></b></em></h3>${this.itemsHtml(items, true)}</section>`).join('')}
       </div>`;
     },
 

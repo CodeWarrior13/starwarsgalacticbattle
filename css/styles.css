@@ -3899,6 +3899,9 @@ body.perf-on .tmt-chip.hop, body.perf-on .tmt-chip.warp, body.perf-on .tmt-chip.
 .deco-holonet .lbl-deco b { left: 50%; top: 50%; width: 8px; height: 8px; margin: -4px; border-radius: 50%; border: 1.5px solid #ff5a6a; animation: lbl-radar 2.4s ease-out infinite; }
 .deco-holonet .lbl-deco b:nth-child(2) { animation-delay: .8s; } .deco-holonet .lbl-deco b:nth-child(3) { animation-delay: 1.6s; }
 @keyframes lbl-radar { from { opacity: 1; transform: scale(.4); } to { opacity: 0; transform: scale(3); } }
+.deco-ranked .lbl-deco b { bottom: 2px; width: 9px; height: 13px; border-radius: 50% 50% 45% 45% / 65% 65% 35% 35%; background: radial-gradient(circle at 50% 75%, #fff2a8, #ff9a3a 55%, #ff4a2a); transform-origin: 50% 100%; animation: lbl-flame .7s ease-in-out infinite alternate; }
+.deco-ranked .lbl-deco b:nth-child(1) { left: 4px; } .deco-ranked .lbl-deco b:nth-child(2) { left: 18px; height: 17px; animation-delay: .2s; } .deco-ranked .lbl-deco b:nth-child(3) { left: 32px; animation-delay: .4s; }
+@keyframes lbl-flame { from { transform: scaleY(.85) rotate(-5deg); opacity: .8; } to { transform: scaleY(1.1) rotate(5deg); opacity: 1; } }
 .deco-credits .lbl-deco b { bottom: 2px; width: 12px; height: 12px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #fff2a8, #e8b830 55%, #8a5c08); animation: lbl-coin 1.6s ease-in-out infinite; }
 .deco-credits .lbl-deco b:nth-child(1) { left: 2px; } .deco-credits .lbl-deco b:nth-child(2) { left: 17px; animation-delay: .2s; } .deco-credits .lbl-deco b:nth-child(3) { left: 32px; animation-delay: .4s; }
 @keyframes lbl-coin { 0%, 100% { transform: none; } 30% { transform: translateY(-8px) scaleX(.4); } 60% { transform: scaleX(1); } }

@@ -1202,7 +1202,9 @@
   // little randomness (one card above the rest now and then). For the first two
   // days of a season the field is much tougher.
   // Kyber and Legend fights are tougher (higher levels and stars) but pay more rating.
-  const BOT_BAND = { bronze: [5, 10, 1, 2], silver: [10, 18, 2, 3], gold: [18, 27, 3, 5], kyber: [28, 38, 5, 6], legend: [36, 46, 6, 7] };
+  // 2.4 ranked rework: the top leagues field tougher squads.
+  const BOT_BAND_23 = { bronze: [5, 10, 1, 2], silver: [10, 18, 2, 3], gold: [18, 26, 3, 4], kyber: [26, 34, 4, 5], legend: [34, 40, 5, 7] };
+  const BOT_BAND_24 = { bronze: [5, 10, 1, 2], silver: [10, 18, 2, 3], gold: [18, 27, 3, 5], kyber: [28, 38, 5, 6], legend: [36, 46, 6, 7] };
   const BOT_MIX = {
     bronze: { common: 55, rare: 35, epic: 9, legendary: 1 }, silver: { common: 25, rare: 45, epic: 25, legendary: 5 },
     gold: { common: 5, rare: 30, epic: 45, legendary: 18, mythic: 2 }, kyber: { rare: 15, epic: 45, legendary: 34, mythic: 6 },
@@ -1215,7 +1217,7 @@
     const sweat = !!(si && si.started >= 0 && si.started < 2 * 864e5);
     const li = LEAGUE_IDS.indexOf(dv.league);
     const lg = sweat ? LEAGUE_IDS[Math.min(4, li + 1)] : dv.league;
-    const [lo, hi, s0, s1] = BOT_BAND[dv.league];
+    const [lo, hi, s0, s1] = (v24() ? BOT_BAND_24 : BOT_BAND_23)[dv.league];
     const cap = D.MAX_LEVEL || 40;
     // Divisions I-III sit low, middle and high in the league's level band.
     const t = dv.league === 'legend' ? 0.5 : (dv.div - 1) / 2;
@@ -1263,11 +1265,26 @@
     const out = [];
     const real = Net.arena.filter((a) => a.uid !== Net.me && Array.isArray(a[key]) && a[key].length && a[key].every((e) => D.UNIT_MAP[e.id]))
       .sort((a, b) => Math.abs(a.rating - h.rating) - Math.abs(b.rating - h.rating)).slice(0, 2);
-    for (const a of real) out.push({ id: `p:${a.uid}`, name: Net.name(a.uid), real: true, rating: a.rating, squad: a[key] });
     const r = rng(h.seed * 7919 + (kind === 'ship' ? 13 : 0));
+    // 2.4: you only meet pilots from your own division or one either side
+    // (Gold II meets Gold I, II and III; Gold I can meet Silver III). The four
+    // rotate after every fight, recent opponents sit out, and there's no re-roll.
+    const di = DIVS.indexOf(divOf(h.rating));
+    const near = (x) => Math.abs(DIVS.indexOf(divOf(x)) - di) <= 1;
+    const recent = h.recentOpp || [];
+    if (v24()) {
+      const pool = Net.arena.filter((a) => a.uid !== Net.me && Array.isArray(a[key]) && a[key].length && a[key].every((e) => D.UNIT_MAP[e.id]) && near(a.rating || 0) && !recent.includes(`p:${a.uid}`));
+      real.length = 0;
+      while (real.length < 2 && pool.length) real.push(pool.splice(Math.floor(r() * pool.length), 1)[0]);
+    }
+    for (const a of real) out.push({ id: `p:${a.uid}`, name: Net.name(a.uid), real: true, rating: a.rating, squad: a[key] });
     const offsets = [-140, 30, 210, 90];
+    const span = [DIVS[Math.max(0, di - 1)], DIVS[di], DIVS[Math.min(DIVS.length - 1, di + 1)]];
+    const divTop = (d) => { const nx = DIVS[DIVS.indexOf(d) + 1]; return nx ? nx.min - 1 : d.min + 300; };
+    const order = [0, 1, 2, 1].map((x) => span[x]).sort(() => r() - 0.5);
     for (let i = 0; out.length < 4; i++) {
-      const rating = Math.max(400, Math.round(h.rating + offsets[i % offsets.length] + (r() - 0.5) * 60));
+      const dv = order[i % order.length];
+      const rating = v24() ? Math.max(400, Math.round(dv.min + r() * (divTop(dv) - dv.min))) : Math.max(400, Math.round(h.rating + offsets[i % offsets.length] + (r() - 0.5) * 60));
       const sq = botSquad(kind, rating, r);
       const lg = divOf(rating).league;
       out.push({ id: `b:${i}`, name: BOT_NAMES.concat(BOT_NAMES_2)[Math.floor(r() * (BOT_NAMES.length + BOT_NAMES_2.length))], real: false, rating, squad: sq, av: BOT_AVS[Math.floor(r() * BOT_AVS.length)], frame: r() < 0.75 ? lg : r() < 0.5 ? 'guild' : 'linked', streak: Math.floor(r() * r() * 14) });
@@ -1284,7 +1301,7 @@
   const expected = (a, b) => 1 / (1 + 10 ** ((b - a) / 400));
   // Higher leagues: wins are worth more rating (losses cost a little more too).
   const LEAGUE_GAIN = { bronze: 1, silver: 1.1, gold: 1.25, kyber: 1.45, legend: 1.7 };
-  const gainMult = (rating) => LEAGUE_GAIN[divOf(rating).league] || 1;
+  const gainMult = (rating) => (v24() ? LEAGUE_GAIN[divOf(rating).league] || 1 : 1);
   const winGain = (mine, theirs) => Math.max(6, Math.round(36 * (1 - expected(mine, theirs)) * gainMult(mine)));
   const lossCost = (mine, theirs) => Math.max(4, Math.round(28 * expected(mine, theirs) * (1 + (gainMult(mine) - 1) * 0.5)));
 
@@ -1298,6 +1315,7 @@
     h.rating = Math.max(0, h.rating + delta);
     h.best = Math.max(h.best, h.rating);
     if (won) { h.wins += 1; h.streak += 1; } else { h.losses += 1; h.streak = 0; }
+    if (opp && opp.id && String(opp.id).startsWith('p:')) h.recentOpp = [opp.id, ...(h.recentOpp || []).filter((x) => x !== opp.id)].slice(0, 3);
     h.beskar += bes;
     h.seed += 1;
     const after = divOf(h.rating);
@@ -1692,12 +1710,14 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
 .g-found { padding: 0; } .g-found > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 12px; background: rgba(255, 210, 63, .08); border: 1px solid rgba(255, 210, 63, .35); }
 .g-found > summary::-webkit-details-marker { display: none; } .g-found > summary > span:first-child { flex: 1; display: grid; } .g-found > summary small { color: #9fc4d8; }
 .g-found > summary::after { content: '▾'; color: #ffd23f; transition: transform .2s; } .g-found[open] > summary::after { transform: rotate(180deg); }
-.g-found > div { padding: 10px 2px 0; }
+.g-found > div { padding: 10px 2px 0; } .g-found .g-cost { display: grid; gap: 2px; justify-items: end; }
 .pl-pips { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; margin: 8px 0; }
 .pl-pip { display: grid; justify-items: center; padding: 6px 2px; border-radius: 10px; background: rgba(8, 20, 32, .85); border: 1px solid rgba(95, 216, 255, .15); }
 .pl-pip small { font: 700 10px var(--font-display); letter-spacing: .08em; color: #9fc4d8; } .pl-pip b { font: 800 16px var(--font-display); color: #cfe9ff; }
 .pl-pip.now { border-color: #5fd8ff; box-shadow: 0 0 12px rgba(95, 216, 255, .35); } .pl-pip.w b { color: #7af0a0; } .pl-pip.l b { color: #ff8a8a; }
 .pl-pip.boss { border-color: rgba(255, 200, 80, .45); } .pl-pip.boss small { color: #ffd166; }
+.pl-ack { display: flex; gap: 10px; align-items: center; margin: 6px 0 10px; padding: 10px; border-radius: 12px; background: rgba(95, 216, 255, .07); border: 1px solid rgba(95, 216, 255, .25); }
+.pl-ack .face { width: 46px; height: 46px; flex: none; border-radius: 50%; overflow: hidden; display: block; } .pl-ack .face svg { width: 100%; height: 100%; } .pl-ack > span:last-child { display: grid; gap: 2px; font-size: 13px; } .pl-ack b:first-child { font-size: 11px; letter-spacing: .12em; color: #8fe8ff; text-transform: uppercase; }
 .hn-opp.pl-boss { border-color: rgba(255, 200, 80, .6); box-shadow: 0 0 18px rgba(255, 180, 60, .18); }
 @keyframes hnFl { from { transform: scale(1) rotate(-4deg); opacity: .85; } to { transform: scale(1.18) rotate(4deg); opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .hn-flame i { animation: none; } }
@@ -2609,58 +2629,60 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
 
   // ---------- arena ----------
   let oppCache = {};
-  // Placement battles (js/placement.js): five fights decide where you start.
+  // Placement battles (js/placement.js): five Ground fights decide where you start.
+  const waitTxt = (ms) => { const m = Math.ceil(ms / 60000); const h = Math.floor(m / 60); const d = Math.floor(h / 24); return d ? `${d}d ${h % 24}h` : h ? `${h}h ${m % 60}m` : `${m}m`; };
+  const ackSay = (txt) => `<div class="pl-ack"><span class="face">${ACKBAR}</span><span><b>Admiral Ackbar</b><span>${txt}</span></span></div>`;
   function placePanel(kind, ids) {
     const P = root.Placement;
     const pr = P.rec();
     const n = pr.games.length;
-    const o = P.opponent(kind);
-    const t = P.tier();
+    if (kind === 'ship') return `<div class="hn-sec pl-box">${ackSay('Fleet ranked opens once your Ground placement battles are done, Commander.')}<button type="button" class="hn-btn gold" data-hn="arena" data-kind="character">Go to Ground placement</button></div>`;
     const pips = Array.from({ length: P.GAMES }, (_, i) => {
       const g = pr.games[i];
       const boss = i === P.GAMES - 1;
-      return `<div class="pl-pip ${g ? (g.won ? 'w' : 'l') : i === n ? 'now' : ''} ${boss ? 'boss' : ''}"><small>${boss ? 'BOSS' : i + 1}</small><b>${g ? g.score : i === n ? '▶' : '·'}</b></div>`;
+      return `<div class="pl-pip ${g ? (g.won ? 'w' : 'l') : i === n && !pr.done ? 'now' : ''} ${boss ? 'boss' : ''}"><small>${boss ? 'BOSS' : i + 1}</small><b>${g ? (g.won ? 'W' : 'L') : i === n ? '▶' : '·'}</b></div>`;
     }).join('');
+    const top = `<h3>Placement battles · ${n} of ${P.GAMES}</h3><p class="muted small" style="margin:0">Before you can climb this season, ${P.GAMES} placement battles decide the league you start in. The last one is the Boss Trial.</p><div class="pl-pips">${pips}</div>`;
+    if (pr.done && P.ready()) return `<div class="hn-sec pl-box">${top}${ackSay('Your results are in, Commander. Come to the bridge.')}<button type="button" class="hn-btn gold" data-hn="placeshow">See your placement</button></div>`;
+    if (pr.done) return `<div class="hn-sec pl-box">${top}${ackSay(`Well fought, Commander. Your scores are in. I'll reveal your league when Season ${HN.seasonLabel(pr.s)} opens in <b>${waitTxt(P.revealIn())}</b>.`)}</div>`;
+    if (P.openIn() > 0) return `<div class="hn-sec pl-box">${top}${ackSay(`Placement battles open in <b>${waitTxt(P.openIn())}</b>, on the last day of the break. Get your Ground squad ready.`)}</div>`;
+    const o = P.opponent();
     const pic = HN.avatarFor ? HN.avatarFor(null, o) : '';
-    return `<div class="hn-sec pl-box"><h3>Placement battles · ${n} of ${P.GAMES} done</h3>
-      <p class="muted small" style="margin:0">Before you climb this season, ${P.GAMES} placement battles decide your starting league. Each one is scored on damage per minute, time to clear, how much of your squad survives and how efficiently you fight. Every fight adapts to how you did, and the last is the Boss Trial. Every second counts.</p>
-      <div class="pl-pips">${pips}</div>
-      <div class="hn-opp ${o.boss ? 'pl-boss' : ''}"><div class="hn-opp-id">${pic}</div>
-        <div class="who"><b>${esc(o.name)}</b><span class="tag">${esc(t.label.toUpperCase())}</span><small>${esc(t.note)} · ⚡ ${fmt(HN.squadPower(o.squad))}</small><div class="minis">${o.squad.map((e) => mini(e.id)).join('')}</div></div>
-        <div class="go"><button type="button" class="hn-btn" data-hn="placego" data-kind="${kind}" ${ids.length ? '' : 'disabled'}>${o.boss ? 'Boss Trial' : `Fight ${n + 1}`}</button></div></div></div>`;
+    const boss = n === P.GAMES - 1;
+    return `<div class="hn-sec pl-box">${top}
+      <div class="hn-opp ${boss ? 'pl-boss' : ''}"><div class="hn-opp-id">${pic}</div>
+        <div class="who"><b>${esc(o.name)}</b><span class="tag">${boss ? 'BOSS TRIAL' : `PLACEMENT ${n + 1}`}</span><small>⚡ ${fmt(HN.squadPower(o.squad))}</small><div class="minis">${o.squad.map((e) => mini(e.id)).join('')}</div></div>
+        <div class="go"><button type="button" class="hn-btn ${boss ? 'gold' : ''}" data-hn="placego" ${ids.length ? '' : 'disabled'}>${boss ? 'Boss Trial' : 'Fight'}</button></div></div></div>`;
   }
-  function placeAttack(kind) {
-    if (HN.seasonBreak && HN.seasonBreak() && !(S().place && S().place.force)) return toast(HN.breakNote());
+  function placeAttack() {
+    const P = root.Placement;
+    if (!P.canPlay()) return go('arena', { kind: 'character' });
+    const kind = P.KIND;
     const squad = HN.squadEntries(kind);
     if (!squad.length) return toast('Pick a squad first.');
-    const P = root.Placement;
-    const opp = P.opponent(kind);
-    const n = P.rec().games.length;
+    const opp = P.opponent();
     HNB.back = { view: 'arena', kind };
     hnStart({ type: 'hn', hn: 'place', kind, opp }, squad, opp.squad.map((e) => ({ ...e })), {
-      name: `${opp.boss ? 'Boss Trial' : `Placement ${n + 1} of ${P.GAMES}`} · vs ${opp.name}`, kind, planet: kind === 'ship' ? 'coruscant' : 'geonosis', boss: opp.boss || null,
-      intro: opp.boss ? 'The Boss Trial: beat it fast to break into the top leagues.' : 'Placement battle: damage, speed and survival all count.',
+      name: `${P.label()} · vs ${opp.name}`, kind, planet: 'geonosis', boss: opp.boss || null,
+      intro: opp.boss ? 'The Boss Trial. Give it everything.' : 'Placement battle: every second counts.',
     });
   }
   function placeDone(p, b, won) {
     const P = root.Placement;
-    const g = P.record(p, b, won, false);
+    P.record(p, b, won, false);
     const pr = P.rec();
     const last = pr.done;
-    const mmss = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
-    const rows = g ? `<div><span>Damage per minute</span><b>${fmt(g.dpm)}</b></div><div><span>Time${g.won ? ' to clear' : ''}</span><b>${mmss(g.secs)}</b></div><div><span>Damage dealt</span><b>${g.dmg}%</b></div><div><span>Squad survived</span><b>${g.surv}%</b></div><div><span>Efficiency</span><b>${g.eff}%</b></div>` : '';
+    const show = last && P.ready();
     const m = openModal(`<div class="hn-result"><div class="result-title ${won ? 'win' : 'lose'}">${won ? 'VICTORY' : 'DEFEAT'}</div>
-      <div class="big-num" style="color:#7fd8ff">${g ? g.score : 0}<small style="font-size:.45em;opacity:.7"> / 100</small></div>
-      <p class="muted small" style="text-align:center;margin:0">Placement ${pr.games.length} of ${P.GAMES}${last ? ' · all done!' : ''}</p>
-      <div class="rows">${rows}</div>
-      <div class="modal-actions"><button type="button" class="btn" data-r="hub">HoloNet</button><button type="button" class="btn btn-primary" data-r="${last ? 'reveal' : 'arena'}">${last ? 'See your placement' : 'Next placement battle'}</button></div></div>`, { small: true, dismissable: false, cls: 'result-modal' });
+      <p style="text-align:center;margin:0;font-weight:700">Placement battles · ${pr.games.length} of ${P.GAMES}</p>
+      ${last ? `<p class="muted small" style="text-align:center;margin:0">${show ? 'All done! Admiral Ackbar has your results.' : `All done! Your league is revealed when the season opens in ${waitTxt(P.revealIn())}.`}</p>` : ''}
+      <div class="modal-actions"><button type="button" class="btn" data-r="hub">HoloNet</button><button type="button" class="btn btn-primary" data-r="${show ? 'reveal' : 'arena'}">${show ? 'See your placement' : last ? 'OK' : 'Next placement battle'}</button></div></div>`, { small: true, dismissable: false, cls: 'result-modal' });
     m.root.addEventListener('click', async (e) => {
       const x = e.target.closest('[data-r]');
       if (!x) return;
       m.close();
-      if (x.dataset.r === 'reveal') { await P.reveal(); return go('arena', { kind: p.kind }); }
-      if (last && !pr.seen) { await P.reveal(); }
-      return x.dataset.r === 'hub' ? go('hub') : go('arena', { kind: p.kind });
+      if (x.dataset.r === 'reveal') { await P.reveal(); return go('arena', { kind: 'character' }); }
+      return x.dataset.r === 'hub' ? go('hub') : go('arena', { kind: 'character' });
     });
   }
 
@@ -2673,7 +2695,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const opps = oppCache[kind] || (oppCache[kind] = HN.opponents(kind));
     const myPow = HN.squadPower(HN.squadEntries(kind));
     return `${head(kind === 'ship' ? 'FLEET ARENA' : 'GROUND ARENA', null, true)}
-      <div class="hn-seg" role="tablist"><button type="button" class="${kind === 'character' ? 'on' : ''}" data-hn="arena" data-kind="character">Ground</button><button type="button" class="${kind === 'ship' ? 'on' : ''}" data-hn="arena" data-kind="ship">Fleet</button></div>
+      <div class="hn-seg" role="tablist"><button type="button" class="${kind === 'character' ? 'on' : ''}" data-hn="arena" data-kind="character">Ground</button><button type="button" class="${kind === 'ship' ? 'on' : ''}" data-hn="arena" data-kind="ship">${root.Placement && root.Placement.need() ? '🔒 ' : ''}Fleet</button></div>
       ${squadBox(ids, kind, myPow)}
       <p class="muted" style="margin:0">This squad is also your defense: other players fight it. Win streak: ${HN.streakFlame(h.streak)} (+${Math.min(5, h.streak) * 5}% Beskar, max +25%). Tougher opponents pay more.</p>
       ${root.Placement && root.Placement.need() ? placePanel(kind, ids) : `<div class="hn-opps">${opps.map((o, i) => {
@@ -2850,7 +2872,8 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     if (a === 'arena') return go('arena', { kind: b.dataset.kind });
     if (a === 'pick') return pickSquad(b.dataset.kind, render);
     if (a === 'attack') return attack(b.dataset.kind, oppCache[b.dataset.kind][+b.dataset.i]);
-    if (a === 'placego') return placeAttack(b.dataset.kind);
+    if (a === 'placego') return placeAttack();
+    if (a === 'placeshow') return root.Placement.reveal().then(() => go('arena', { kind: 'character' }));
     if (a === 'ally') { allyPick = b.dataset.id; return render(); }
     if (a === 'raidgo') return startRaid();
     if (a === 'claim') return claim(render);
@@ -3008,7 +3031,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     if (params && params.type === 'hn') {
       HNB.retreated = true;
       if (params.hn === 'arena') HN.arenaResult(params.opp, false);
-      else if (params.hn === 'place') { if (root.Placement) { root.Placement.record(params, BUI.battle, false, true); if (root.Placement.rec().done) setTimeout(() => root.Placement.reveal(), 1200); } }
+      else if (params.hn === 'place') { if (root.Placement) root.Placement.record(params, BUI.battle, false, true); }
       else if (params.hn === 'duel') { if (HN.Duel) HN.Duel.forfeit(); }
       else if (BUI.battle) { const boss = BUI.battle.units.find((u) => u.def.raid); const dealt = Math.max(0, (BUI.battle.hnStartHp || 0) - (boss ? boss.hp : 0)); if (dealt) HN.bankRaid(dealt); }
       return { lost: true };
@@ -6325,6 +6348,9 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     { id: 'npc_mando', name: 'Clan Beskar', tag: 'BSKR', motto: 'This is the Way. Raid every week.', color: '#c9d4de', emblem: 7, mode: 'open', size: 27, xp: 84000, min: 1300, lvl: 8 },
     { id: 'npc_kessel', name: 'Kessel Runners', tag: 'KSL', motto: 'Fast ships, faster friends. Chill and casual.', color: '#6ef0a0', emblem: 2, mode: 'open', size: 14, xp: 21000, lvl: 3 },
     { id: 'npc_jedi', name: 'Jedi Temple Guard', tag: 'JTG', motto: 'Patience, young pilot. Help the new ones.', color: '#ffd23f', emblem: 5, mode: 'open', size: 21, xp: 47000, lvl: 6 },
+    { id: 'npc_sith', name: 'Sith Eternal', tag: 'SITH', motto: 'Power is earned in the arena. Legend or bust.', color: '#ff5a6a', emblem: 3, mode: 'open', size: 29, xp: 102000, min: 1600, lvl: 9 },
+    { id: 'npc_ewok', name: 'Endor Ewoks', tag: 'YUB', motto: 'Small but fierce. Yub nub!', color: '#b18cff', emblem: 6, mode: 'open', size: 11, xp: 9000, lvl: 2 },
+    { id: 'npc_hutt', name: 'Hutt Cartel', tag: 'HUTT', motto: 'Beskar, credits and raids. In that order.', color: '#ff7ad8', emblem: 0, mode: 'open', size: 17, xp: 30000, lvl: 4 },
   ];
   const isNpcG = (gid) => typeof gid === 'string' && gid.startsWith('npc_');
   const NPC_ROWS = new Map();
@@ -6550,6 +6576,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
 
   // Founding a guild costs Kyber.
   const FOUND_COST = 100;
+  const FOUND_BESKAR = 500;
   async function createGuild(form) {
     if (!Net.ready) return toast('Guilds need an internet connection.');
     const g = { name: cleanText(form.name, 22), tag: cleanText(form.tag, 4).toUpperCase().replace(/[^A-Z0-9]/g, ''), motto: cleanText(form.motto, 70), emblem: form.emblem | 0, pic: GUILD_PICS.includes(form.pic) ? form.pic : '', color: COLORS.includes(form.color) ? form.color : COLORS[0], min: Math.max(0, Math.min(2500, form.min | 0)), mode: MODES[form.mode] ? form.mode : 'open', created: Date.now(), lead: Net.me, leadSeen: Date.now(), ok: [], no: [], xp: 0, n: 1, wp: 0, wk: week() };
@@ -6557,9 +6584,9 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     if (g.name.length < 3) return toast('Give your guild a name (3+ letters).');
     if (!SAFE.ok(g.name) || !SAFE.ok(g.tag) || !SAFE.ok(g.motto)) return toast('Keep it friendly: pick a different name, tag or motto.');
     if (g.tag.length < 2) return toast('Pick a 2–4 letter tag.');
-    if (Player.state.crystals < FOUND_COST) return toast(`Founding a guild costs ${FOUND_COST} Kyber. You have ${fmt(Player.state.crystals)}.`);
+    if (Player.state.crystals < FOUND_COST || S().beskar < FOUND_BESKAR) return toast(`Founding a guild costs ${FOUND_COST} Kyber and ${fmt(FOUND_BESKAR)} Beskar. You have ${fmt(Player.state.crystals)} Kyber and ${fmt(S().beskar)} Beskar.`);
     try { await Net.db.doc(`guilds/${Net.me}`).set(g); } catch (e) { return toast('Could not create the guild. Try again.'); }
-    Player.spend({ crystals: FOUND_COST }); Player.save();
+    Player.spend({ crystals: FOUND_COST }); S().beskar -= FOUND_BESKAR; Player.save();
     S().guild = Net.me; S().apply = null;
     gmap.set(Net.me, { id: Net.me, ...g }); setGuilds();
     HN.save(); Net.publish(); watchMyGuild();
@@ -7198,8 +7225,8 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       ${appG ? `<div class="hn-sec"><h3>Your request</h3><div class="g-list">${row(appG, sizeOf(appG.id))}</div><p class="muted small" style="margin:0">Waiting for its leader. You'll join automatically when they accept, even if you're offline.</p></div>` : ''}
       ${liked.length ? `<div class="hn-sec"><h3>Guilds you may like</h3><div class="g-list">${liked.map(({ g, n }) => row(g, n)).join('')}</div></div>` : ''}
       ${rest.length ? `<div class="hn-sec"><h3>More guilds</h3><div class="g-list">${rest.map(({ g, n }) => row(g, n)).join('')}</div></div>` : ''}
-      <details class="hn-sec g-found"><summary><span><b>Or create your own guild</b><small>Lead it, name it, pick its look</small></span><span class="g-cost">${HN.ui.kyb(FOUND_COST)}</span></summary>
-      <div><p class="muted small" style="margin:0 0 8px">Founding a guild costs ${FOUND_COST} Kyber. You have ${fmt(Player.state.crystals)}.</p>
+      <details class="hn-sec g-found"><summary><span><b>Or create your own guild</b><small>Lead it, name it, pick its look</small></span><span class="g-cost">${HN.ui.kyb(FOUND_COST)}${HN.ui.bes(FOUND_BESKAR)}</span></summary>
+      <div><p class="muted small" style="margin:0 0 8px">Founding a guild costs ${FOUND_COST} Kyber and ${fmt(FOUND_BESKAR)} Beskar. You have ${fmt(Player.state.crystals)} Kyber and ${fmt(S().beskar)} Beskar.</p>
         <div class="g-form" data-noswipe>
           <input class="pf-in" data-gf="name" maxlength="22" placeholder="Guild name">
           <input class="pf-in" data-gf="tag" maxlength="4" placeholder="TAG" style="text-transform:uppercase">
@@ -7209,7 +7236,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
           <p class="muted small" style="margin:0">Guild picture · ${GUILD_PICS.length} to choose from</p>
           <div data-gpicker>${pickerHtml(form.pic, '#8fe8ff', form.emblem)}</div>
           <div class="g-pick">${COLORS.map((c, i) => `<button type="button" class="g-c ${i === 0 ? 'on' : ''}" data-gc="${c}" style="background:${c}"></button>`).join('')}</div>
-          <button type="button" class="hn-btn gold" data-hn="gcreate">Found guild · ${FOUND_COST} Kyber</button>
+          <button type="button" class="hn-btn gold" data-hn="gcreate">Found guild · ${FOUND_COST} Kyber + ${fmt(FOUND_BESKAR)} Beskar</button>
         </div></div></details>`;
   };
 
