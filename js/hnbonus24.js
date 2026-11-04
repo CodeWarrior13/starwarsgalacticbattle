@@ -57,9 +57,15 @@
   // sims across every card). Each gets the health and attack it needs to be
   // on par before forging; Beskar Forging takes it beyond.
   const CAL = {
-    hn_fang: 1.03, hn_ig11: 1.03, hn_outrider: 1.06, hn_nite_owl: 1.12, hn_zuckuss: 1.1, hn_fennec: 1.1,
-    hn_krrsantan: 1.12, hn_aurra: 1.16, hn_embo: 1.14, hn_gauntlet: 1.1, hn_bossk: 1.19, hn_greef: 1.13,
-    hn_armorer: 1.16, hn_pre_vizsla: 1.18, hn_kelleran: 1.24, hn_cadbane: 1.25, hn_vader_hallway: 1.29, hn_dark_trooper: 1.3,
+    hn_fang: 1.08, hn_ig11: 1.1, hn_outrider: 1.12, hn_nite_owl: 1.22, hn_zuckuss: 1.2, hn_fennec: 1.2,
+    hn_krrsantan: 1.25, hn_aurra: 1.3, hn_embo: 1.25, hn_gauntlet: 1.2, hn_bossk: 1.35, hn_greef: 1.25,
+    hn_armorer: 1.3, hn_pre_vizsla: 1.3, hn_kelleran: 1.35, hn_cadbane: 1.35, hn_vader_hallway: 1.4, hn_dark_trooper: 1.35,
+  };
+  // Kits that needed more than stats: harder hits (dmg) and a shorter main cooldown (cd).
+  const KIT = {
+    hn_dark_trooper: { dmg: 1.25, cd: -1 }, hn_pre_vizsla: { dmg: 1.25, cd: -1 }, hn_armorer: { dmg: 1.2, cd: -1 }, hn_krrsantan: { dmg: 1.2, cd: -1 },
+    hn_gauntlet: { dmg: 1.2, cd: -1 }, hn_zuckuss: { dmg: 1.2, cd: 0 }, hn_kelleran: { dmg: 1.15, cd: -1 }, hn_embo: { dmg: 1.2, cd: 0 },
+    hn_cadbane: { dmg: 1.15, cd: -1 }, hn_aurra: { dmg: 1.15, cd: 0 }, hn_greef: { dmg: 1.1, cd: -1 }, hn_fennec: { dmg: 1.15, cd: 0 },
   };
   const baseStats = D.unitStats;
   D.unitStats = function (def, level, stars, elite) {
@@ -78,9 +84,9 @@
   // ---------- Pair bonuses ----------
   const isMando = (id) => D.traitsOf(id).includes('mandalorian');
   const PAIRS = [
-    { a: 'hn_kelleran', b: (id) => id === 'grogu', name: 'Foundling\'s Guard', with: 'Grogu', desc: 'Each time Kelleran Beq takes a turn, the ally lowest on health (below 50%) gains Defense Up and heals 4%.' },
+    { a: 'hn_kelleran', b: (id) => id === 'grogu', name: 'Foundling\'s Guard', with: 'Grogu', desc: 'Each time Kelleran Beq takes a turn, the ally lowest on health (below 50%) gains Defense Up.' },
     { a: 'hn_krrsantan', b: (id) => id === 'boba_fett', name: 'Old Partners', with: 'Boba Fett', desc: 'Krrsantan and Boba Fett start with +30% Turn Meter.' },
-    { a: 'hn_vader_hallway', b: (id) => id === 'vader', name: 'Dark Lord\'s Shadow', with: 'Darth Vader', desc: 'Enemies start in fear: Offense Down for 2 turns and -25% Turn Meter.' },
+    { a: 'hn_vader_hallway', b: (id) => id === 'vader', name: 'Dark Lord\'s Shadow', with: 'Darth Vader', desc: 'Enemies start in fear: Offense Down for 1 turn and -15% Turn Meter.' },
     { a: 'hn_armorer', b: (id) => id !== 'hn_armorer' && isMando(id), name: 'Forged Covert', with: 'any Mandalorian', desc: 'Mandalorian allies start with Defense Up for 2 turns.' },
   ];
   const pairsFor = (ids) => PAIRS.filter((p) => ids.includes(p.a) && ids.some(p.b));
@@ -110,6 +116,14 @@
       const def = D.UNIT_MAP[id];
       if (def && def.bio && !def.bio.includes(line.split(':')[0])) { def.bio = def.bio.replace(/Passive,[^.]*\.?.*$/, line); any = true; }
     }
+    for (const [id, k] of Object.entries(KIT)) {
+      const def = D.UNIT_MAP[id];
+      if (!def) continue;
+      const boost = (a) => { if (!a || !a.effects) return; a.effects = a.effects.map((e) => (e.type === 'damage' ? { ...e, mult: Math.round(e.mult * k.dmg * 100) / 100 } : e)); };
+      (def.abilities || []).forEach((a, n) => { boost(a); if (n > 0 && k.cd && a.cd > 1) a.cd = Math.max(1, a.cd + k.cd); });
+      boost(def.ultimate);
+      any = true;
+    }
     patched = any;
   }
 
@@ -134,7 +148,7 @@
     const foes = b.side(side === 'player' ? 'enemy' : 'player');
     for (const p of pairsFor(ids)) {
       if (p.a === 'hn_krrsantan') squad.filter((u) => u.id === 'hn_krrsantan' || u.id === 'boba_fett').forEach((u) => { u.tm = Math.min(99, u.tm + 30); });
-      if (p.a === 'hn_vader_hallway') foes.forEach((u) => { u.statuses.offDown = Math.max(u.statuses.offDown || 0, 2); u.tm = Math.max(0, u.tm - 25); });
+      if (p.a === 'hn_vader_hallway') foes.forEach((u) => { u.statuses.offDown = Math.max(u.statuses.offDown || 0, 1); u.tm = Math.max(0, u.tm - 15); });
       if (p.a === 'hn_armorer') squad.filter((u) => isMando(u.id)).forEach((u) => { u.statuses.defUp = Math.max(u.statuses.defUp || 0, 2); });
       if (p.a === 'hn_kelleran') squad.filter((u) => u.id === 'hn_kelleran').forEach((u) => { u.guard = true; });
     }
@@ -241,7 +255,7 @@
       if (unit && unit.guard && unit.alive && on()) {
         const allies = this.side(unit.side).filter((u) => u.alive);
         const low = allies.reduce((a, u) => (u.hp / u.maxHp < a.hp / a.maxHp ? u : a), allies[0]);
-        if (low && low.hp / low.maxHp < 0.5) { low.statuses.defUp = Math.max(low.statuses.defUp || 0, 1); low.hp = Math.min(low.maxHp, low.hp + Math.round(low.maxHp * 0.04)); }
+        if (low && low.hp / low.maxHp < 0.5) low.statuses.defUp = Math.max(low.statuses.defUp || 0, 1);
       }
       return r;
     };
