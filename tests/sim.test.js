@@ -40,6 +40,16 @@ function test(name, fn) {
   console.log(`ok - ${name}`);
 }
 
+test('every game script parses (no syntax errors ship)', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const vm = require('vm');
+  const dir = path.join(__dirname, '..', 'js');
+  for (const f of fs.readdirSync(dir).filter((x) => x.endsWith('.js'))) {
+    try { new vm.Script(fs.readFileSync(path.join(dir, f), 'utf8'), { filename: f }); } catch (e) { throw new Error(`${f}: ${e.message}`); }
+  }
+});
+
 test('every unit has valid abilities', () => {
   for (const u of D.UNITS) {
     assert.ok(u.abilities.length >= 2, u.id);

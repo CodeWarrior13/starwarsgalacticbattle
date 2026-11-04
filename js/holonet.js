@@ -1688,6 +1688,11 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
 .hn-flame.t5, .hn-flame.t6 { color: #ff5f6d; } .hn-flame.t5 i, .hn-flame.t6 i { animation-duration: .6s; }
 .hn-flame.t7, .hn-flame.t8, .hn-flame.t9 { color: #7fd8ff; } .hn-flame.t7 i, .hn-flame.t8 i, .hn-flame.t9 i { animation-duration: .5s; filter: hue-rotate(180deg); }
 .hn-flame.big { font-size: 1.15em; } .hn-flame.big i { font-size: 1.2em; }
+.g-find .g-search { display: flex; gap: 8px; } .g-find .g-search .pf-in { flex: 1; min-width: 0; }
+.g-found { padding: 0; } .g-found > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 12px; background: rgba(255, 210, 63, .08); border: 1px solid rgba(255, 210, 63, .35); }
+.g-found > summary::-webkit-details-marker { display: none; } .g-found > summary > span:first-child { flex: 1; display: grid; } .g-found > summary small { color: #9fc4d8; }
+.g-found > summary::after { content: '▾'; color: #ffd23f; transition: transform .2s; } .g-found[open] > summary::after { transform: rotate(180deg); }
+.g-found > div { padding: 10px 2px 0; }
 .pl-pips { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; margin: 8px 0; }
 .pl-pip { display: grid; justify-items: center; padding: 6px 2px; border-radius: 10px; background: rgba(8, 20, 32, .85); border: 1px solid rgba(95, 216, 255, .15); }
 .pl-pip small { font: 700 10px var(--font-display); letter-spacing: .08em; color: #9fc4d8; } .pl-pip b { font: 800 16px var(--font-display); color: #cfe9ff; }
@@ -2912,7 +2917,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   const HNB = { retreated: false, back: null };
   HN.B = HNB;
   HN.hnStart = (...a) => hnStart(...a);
-  HN.ui = { ACKBAR, inspect: (id, after) => inspect(id, after || (() => {})), unlocked: () => unlocked(), head: (...a) => head(...a), mini: (id) => mini(id), go: (...a) => go(...a), bes: (n) => bes(n), award: (f) => award(f) };
+  HN.ui = { ACKBAR, inspect: (id, after) => inspect(id, after || (() => {})), unlocked: () => unlocked(), head: (...a) => head(...a), mini: (id) => mini(id), go: (...a) => go(...a), bes: (n) => bes(n), kyb: (n) => kyb(n), award: (f) => award(f) };
   async function hnStart(params, squad, enemies, opts) {
     const self = BUI;
     self.params = params;
@@ -5655,7 +5660,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const me = !uid || uid === Net.me || uid === 'me';
     const PC = root.PlayerCollections;
     if (me) { const h = S(); const p = myProfile(); return { uid: Net.me || 'me', me: true, ...p, rating: h.rating, level: Player.state.account.level, guild: h.guild || null, gpl: P2().soc.gpl, col: PC ? PC.encode() : '', use: PC ? PC.encodeUse() : '', ball: allBadges() }; }
-    const a = Net.arena.find((x) => x.uid === uid) || Net.rows.get(uid) || {};
+    const a = Net.arena.find((x) => x.uid === uid) || Net.rows.get(uid) || NPC_ROWS.get(uid) || {};
     return { uid, me: false, col: a.col || '', use: a.use || '', ball: Array.isArray(a.ball) ? a.ball : null, tag: cleanTag(a.tag), av: a.av && D.UNIT_MAP[a.av] ? a.av : ((a.ground || [])[0] || {}).id || 'luke', frame: FRAMES[a.frame] ? a.frame : 'recruit', badges: Array.isArray(a.badges) ? a.badges.slice(0, 6) : [], nb: a.nb || 0, st: a.st || {}, rating: a.rating || 800, level: a.level || 1, guild: a.guild || null, gpl: a.gpl || 0 };
   }
   // Name shown everywhere: your callsign, else your account name.
@@ -5667,6 +5672,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     if (t) return t;
     // Someone we haven't loaded (not on the boards we fetched): look up
     // their row once so everyone sees their callsign, not a placeholder.
+    if (NPC_ROWS.has(uid)) return NPC_ROWS.get(uid).tag;
     if (uid && !a && this.ready && this.db) lookupName(uid);
     return baseName(uid);
   };
@@ -6219,6 +6225,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const out = (gmap.get(gid) || {}).kicked || [];
     const rows = Net.arena.filter((a) => a.guild === gid && a.uid !== Net.me && !out.includes(a.uid)).map((a) => a.uid);
     if (S().guild === gid) rows.unshift(Net.me || 'me');
+    if (isNpcG(gid)) rows.push(...npcCrew(gid));
     return rows;
   };
   // 35 members to start, up to 50 with Barracks.
@@ -6276,7 +6283,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   const bankOf = (gid) => { const g = gmap.get(gid) || {}; return Math.max(0, Object.values(donors(gid)).reduce((a, n) => a + (n | 0), 0) - (g.spent | 0)); };
   // Guild levels 1-10 (guild XP = everyone's guild points, all time).
   const GLVL = [0, 500, 1500, 3000, 5000, 8000, 12000, 17000, 23000, 30000];
-  const guildXp = (gid) => membersOf(gid).reduce((a, uid) => a + (prof(uid).gpl || 0), 0);
+  const guildXp = (gid) => (isNpcG(gid) ? npcXp(NPC_GUILDS.find((g) => g.id === gid)) : 0) + membersOf(gid).reduce((a, uid) => a + (NPC_ROWS.has(uid) ? 0 : (prof(uid).gpl || 0)), 0);
   const guildLevel = (gid) => {
     const xp = guildXp(gid); let lv = 1; GLVL.forEach((t, i) => { if (xp >= t) lv = i + 1; });
     if (!G23()) return { lv, xp, next: GLVL[lv] || null };
@@ -6292,7 +6299,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const set = ((gmap.get(gid) || {}).ranks || {})[r] || {};
     return { r, s: RANK_SYMBOLS.includes(set.s) ? set.s : RANK_DEF[r].s, c: RANK_COLORS.includes(set.c) ? set.c : RANK_DEF[r].c };
   };
-  const weekPoints = (uid) => { if (uid === Net.me || uid === 'me') return P2().soc.gp; const a = Net.arena.find((x) => x.uid === uid); return a && a.gpw === week() ? a.gp || 0 : 0; };
+  const weekPoints = (uid) => { if (uid === Net.me || uid === 'me') return P2().soc.gp; if (NPC_ROWS.has(uid)) return NPC_ROWS.get(uid).gp; const a = Net.arena.find((x) => x.uid === uid); return a && a.gpw === week() ? a.gp || 0 : 0; };
   const guildWeekPoints = (gid) => membersOf(gid).reduce((a, uid) => a + weekPoints(uid), 0);
   const MILESTONES = G23() ? [
     { pts: 250, beskar: 200, label: '200 Beskar' },
@@ -6308,7 +6315,72 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   // guild leaderboard), plus live feeds of your own guild's doc, members and chat.
   const gmap = new Map();
   const safeGuild = (g) => ({ ...g, name: SAFE.ok(g.name) ? g.name : 'Guild', tag: SAFE.ok(g.tag) ? g.tag : 'GLD', motto: g.motto ? SAFE.clean(g.motto).text : '' });
-  const setGuilds = () => { G.guilds = [...gmap.values()].filter((g) => g && g.name).map(safeGuild); };
+  // A few guilds the HoloNet runs itself, so there's always somewhere to
+  // join: open to all, with their own crew and chatter. Their docs live only
+  // here (nothing is written for them); real players who join show up in
+  // them like any guild, because membership comes from each player's row.
+  const NPC_GUILDS = [
+    { id: 'npc_rogue', name: 'Rogue Squadron', tag: 'RGS', motto: 'Never tell us the odds.', color: '#ff9a3a', emblem: 1, mode: 'open', size: 24, xp: 61000, lvl: 7 },
+    { id: 'npc_echo', name: 'Echo Base', tag: 'ECHO', motto: 'Cold planet, warm crew. All pilots welcome.', color: '#5fd8ff', emblem: 4, mode: 'open', size: 19, xp: 38000, lvl: 5 },
+    { id: 'npc_mando', name: 'Clan Beskar', tag: 'BSKR', motto: 'This is the Way. Raid every week.', color: '#c9d4de', emblem: 7, mode: 'open', size: 27, xp: 84000, min: 1300, lvl: 8 },
+    { id: 'npc_kessel', name: 'Kessel Runners', tag: 'KSL', motto: 'Fast ships, faster friends. Chill and casual.', color: '#6ef0a0', emblem: 2, mode: 'open', size: 14, xp: 21000, lvl: 3 },
+    { id: 'npc_jedi', name: 'Jedi Temple Guard', tag: 'JTG', motto: 'Patience, young pilot. Help the new ones.', color: '#ffd23f', emblem: 5, mode: 'open', size: 21, xp: 47000, lvl: 6 },
+  ];
+  const isNpcG = (gid) => typeof gid === 'string' && gid.startsWith('npc_');
+  const NPC_ROWS = new Map();
+  const npcCrew = (gid) => [...NPC_ROWS.values()].filter((r) => r.guild === gid).map((r) => r.uid);
+  (() => {
+    const names = (HN.BOT_NAMES || []).concat(HN.BOT_NAMES_2 || []);
+    const avs = HN.BOT_AVS || ['luke'];
+    const frames = ['bronze', 'silver', 'gold', 'kyber', 'guild', 'linked', 'squadron'];
+    let k = 0;
+    NPC_GUILDS.forEach((g, gi) => {
+      const r = HN.rng(9173 + gi * 131);
+      for (let i = 0; i < g.size; i++) {
+        const uid = `npc:${g.id}:${i}`;
+        const name = names[(k++ * 7 + gi * 3) % names.length];
+        const rating = Math.round((g.min || 900) + r() * 900);
+        NPC_ROWS.set(uid, { uid, tag: name, av: avs[Math.floor(r() * avs.length)], frame: frames[Math.floor(r() * frames.length)], rating, guild: g.id, gpl: Math.round(r() * 4000), gp: Math.round(r() * 900), nb: 2 + Math.floor(r() * 12), bot: true });
+        Net.names[uid] = name;
+      }
+      g.lead = `npc:${g.id}:0`; g.co = `npc:${g.id}:1`; g.elders = [`npc:${g.id}:2`, `npc:${g.id}:3`];
+      g.created = Date.UTC(2026, 9, 14) + gi * 3 * 86400000;
+    });
+  })();
+  const npcXp = (g) => Math.round(g.xp * (1 + Math.max(0, (Date.now() - Date.UTC(2026, 9, 14)) / (7 * 86400000)) * 0.06));
+  const setGuilds = () => {
+    NPC_GUILDS.forEach((g) => { gmap.set(g.id, { ...g, xp: npcXp(g) }); });
+    G.guilds = [...gmap.values()].filter((g) => g && g.name).map(safeGuild);
+  };
+  // Their chatter: a few lines every few hours, plus a reply when you post.
+  const NPC_LINES = ['Raid fronts are up, hit them when you can!', 'gg everyone, great week', 'Anyone got tips for the Fleet front?', 'Just pulled a legendary from a puck!!', 'Welcome to all the new pilots o7', 'Don\'t forget your arena battles today', 'Who else is grinding Beskar?', 'That Boss Trial is no joke', 'Ground front almost cleared, push!', 'Night shift checking in', 'Remember to use your raid runs', 'New season soon, who\'s going for Legend?', 'My squad finally hit level 40', 'Lol the Wampa just ate my whole team', 'Good luck in your duels everyone', 'Vault upgrades looking good this week', 'Anyone want a friendly battle?', 'May the Force be with you all'];
+  const NPC_REPLY = ['Welcome aboard!', 'o7', 'Haha nice', 'Glad to have you here', 'gg!', 'Let\'s go!', 'Same here', 'Good luck out there', 'True', 'Hit the raid when you can, every hit counts'];
+  const npcChat = (gid) => {
+    const crew = npcCrew(gid);
+    if (!crew.length) return [];
+    const slot = 3 * 3600000;
+    const now = Date.now();
+    const out = [];
+    const gi = NPC_GUILDS.findIndex((g) => g.id === gid);
+    for (let k = 7; k >= 0; k--) {
+      const t = Math.floor(now / slot) - k;
+      const r = HN.rng(t * 31 + gi * 977);
+      const ts = t * slot + Math.floor(r() * slot);
+      if (ts > now) continue;
+      out.push({ g: gid, uid: crew[Math.floor(r() * crew.length)], t: NPC_LINES[Math.floor(r() * NPC_LINES.length)], ts });
+    }
+    const mine = (S().npcChat || []).filter((m) => m.g === gid && m.ts <= now);
+    return out.concat(mine);
+  };
+  const npcReply = (gid) => {
+    const crew = npcCrew(gid);
+    if (!crew.length) return;
+    const h = S();
+    h.npcChat = (h.npcChat || []).filter((m) => Date.now() - m.ts < 2 * 86400000).slice(-20);
+    h.npcChat.push({ g: gid, uid: crew[Math.floor(Math.random() * crew.length)], t: NPC_REPLY[Math.floor(Math.random() * NPC_REPLY.length)], ts: Date.now() + 3000 + Math.random() * 5000 });
+    HN.save();
+    setTimeout(() => { if (gtabNow() === 'chat') rerenderLive(); }, 9000);
+  };
   async function loadGuilds(maxAge = 60000) {
     if (!Net.ready) return;
     const now = Date.now();
@@ -6338,7 +6410,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     marks();
     if (!key) return rerenderLive();
     const docId = gid || appGid;
-    const off = Net.db.doc(`guilds/${docId}`).onSnapshot((d) => {
+    const off = isNpcG(docId) ? (setGuilds(), () => {}) : Net.db.doc(`guilds/${docId}`).onSnapshot((d) => {
       const data = d && (typeof d.data === 'function' ? d.data() : d);
       if (data && data.name) gmap.set(docId, { id: docId, ...data }); else gmap.delete(docId);
       if (gid) onMyGuild(gid, data && data.name ? data : null); else onApplied(appGid, data && data.name ? data : null);
@@ -6416,6 +6488,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   }
   // Write the guild doc (the database rules decide who may change what).
   async function writeGuild(gid, change) {
+    if (isNpcG(gid)) return false;
     const raw = gmap.get(gid);
     if (!raw || !Net.ready) return false;
     const next = { ...raw, ...change };
@@ -6475,6 +6548,8 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   }
   Net.on(() => { if (Net.ready) subscribe(); });
 
+  // Founding a guild costs Kyber.
+  const FOUND_COST = 100;
   async function createGuild(form) {
     if (!Net.ready) return toast('Guilds need an internet connection.');
     const g = { name: cleanText(form.name, 22), tag: cleanText(form.tag, 4).toUpperCase().replace(/[^A-Z0-9]/g, ''), motto: cleanText(form.motto, 70), emblem: form.emblem | 0, pic: GUILD_PICS.includes(form.pic) ? form.pic : '', color: COLORS.includes(form.color) ? form.color : COLORS[0], min: Math.max(0, Math.min(2500, form.min | 0)), mode: MODES[form.mode] ? form.mode : 'open', created: Date.now(), lead: Net.me, leadSeen: Date.now(), ok: [], no: [], xp: 0, n: 1, wp: 0, wk: week() };
@@ -6482,9 +6557,9 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     if (g.name.length < 3) return toast('Give your guild a name (3+ letters).');
     if (!SAFE.ok(g.name) || !SAFE.ok(g.tag) || !SAFE.ok(g.motto)) return toast('Keep it friendly: pick a different name, tag or motto.');
     if (g.tag.length < 2) return toast('Pick a 2–4 letter tag.');
-    if (S().beskar < 500) return toast(`Founding a guild costs 500 Beskar. You have ${fmt(S().beskar)}.`);
+    if (Player.state.crystals < FOUND_COST) return toast(`Founding a guild costs ${FOUND_COST} Kyber. You have ${fmt(Player.state.crystals)}.`);
     try { await Net.db.doc(`guilds/${Net.me}`).set(g); } catch (e) { return toast('Could not create the guild. Try again.'); }
-    S().beskar -= 500;
+    Player.spend({ crystals: FOUND_COST }); Player.save();
     S().guild = Net.me; S().apply = null;
     gmap.set(Net.me, { id: Net.me, ...g }); setGuilds();
     HN.save(); Net.publish(); watchMyGuild();
@@ -6652,6 +6727,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     if (ann && !canAnnounce(Net.me, gid)) return toast('Your rank can\'t post announcements right now.');
     msgs.push({ g: gid, t, ts: Date.now(), s: system ? 1 : 0, a: ann ? 1 : 0 });
     try { await Net.db.doc(`gchat/${Net.me}`).set({ g: gid, msgs, rx: (mine && mine.g === gid && mine.rx) || {} }); } catch (e) { toast('Message not sent.'); }
+    if (isNpcG(gid) && !system && Math.random() < 0.7) npcReply(gid);
   }
   // 2.3: react to a guild message (one reaction each; tap it again to take it back).
   // Your reactions live in your own chat doc, so nobody can change anyone else's.
@@ -6683,11 +6759,11 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   };
   // Everyone's lines for this guild, filtered again on screen (older or
   // tampered messages included), minus anyone you've muted.
-  const chatLines = (gid) => G.chat.filter((c) => !isMuted(c.uid)).flatMap((c) => (c.msgs || []).filter((m) => m && m.g === gid && typeof m.t === 'string').map((m) => {
+  const chatLines = (gid) => G.chat.filter((c) => !isMuted(c.uid)).flatMap((c) => (c.msgs || []).filter((m) => m && m.g === gid && typeof m.t === 'string').map((m) => ({ ...m, uid: c.uid }))).concat(isNpcG(gid) ? npcChat(gid) : []).map((m) => {
     const f = SAFE.clean(m.t);
     // An announcement only counts if the sender's rank may post them right now.
-    return { ...m, uid: c.uid, t: f.blocked ? 'Message hidden' : f.text, hid: f.blocked, a: m.a && !f.blocked && canAnnounce(c.uid, gid) ? 1 : 0 };
-  })).sort((a, b) => a.ts - b.ts).slice(-60);
+    return { ...m, t: f.blocked ? 'Message hidden' : f.text, hid: f.blocked, a: m.a && !f.blocked && canAnnounce(m.uid, gid) ? 1 : 0 };
+  }).sort((a, b) => a.ts - b.ts).slice(-60);
   const announcements = (gid) => chatLines(gid).filter((l) => l.a).slice(-3).reverse();
   const ago = (ts) => { const s = Math.max(0, (Date.now() - ts) / 1000); return s < 60 ? 'now' : s < 3600 ? `${Math.floor(s / 60)}m` : s < 86400 ? `${Math.floor(s / 3600)}h` : `${Math.floor(s / 86400)}d`; };
 
@@ -7095,6 +7171,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   // Browse and found guilds. Your invites and your open request come first.
   V.guilds = () => {
     if (!Net.ready) return offlineGuild();
+    setGuilds();
     const list = G.guilds.map((g) => ({ g, n: sizeOf(g.id), xp: guildXp(g.id) })).sort((a, b) => b.xp - a.xp);
     const appG = S().apply && gmap.get(S().apply) ? safeGuild(gmap.get(S().apply)) : null;
     const inv = (G.invites || []).map((id) => gmap.get(id)).filter(Boolean).map(safeGuild);
@@ -7110,12 +7187,19 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       if (mode === 'request') return `<button type="button" class="hn-btn" data-hn="gjoin" data-id="${esc(g.id)}" ${S().apply ? 'disabled' : ''}>Request to join</button>`;
       return `<button type="button" class="hn-btn" data-hn="gjoin" data-id="${esc(g.id)}">Join</button>`;
     };
-    const row = (g, n) => `<div class="g-row">${emblem(g, 40)}<span class="nm"><b style="color:${g.color}">[${esc(g.tag)}] ${esc(g.name)}</b><small>${esc(g.motto || '')}</small><small>Level ${guildLevel(g.id).lv} · ${n}/${maxMembers(g.id)} members · ${MODES[modeOf(g)]}${g.min ? ` · ${fmt(g.min)}+ rating` : ''}</small></span>${btn(g, n)}</div>`;
+    const row = (g, n) => `<div class="g-row" data-gkey="${esc(`${g.name} ${g.tag}`.toLowerCase())}">${emblem(g, 40)}<span class="nm"><b style="color:${g.color}">[${esc(g.tag)}] ${esc(g.name)}</b><small>${esc(g.motto || '')}</small><small>Level ${guildLevel(g.id).lv} · ${n}/${maxMembers(g.id)} members · ${MODES[modeOf(g)]}${g.min ? ` · ${fmt(g.min)}+ rating` : ''}</small></span>${btn(g, n)}</div>`;
+    // Guilds you may like: open to you, not full, then the liveliest first.
+    const fits = ({ g, n }) => g.id !== S().apply && !inv.some((x) => x.id === g.id) && n < maxMembers(g.id) && modeOf(g) !== 'invite' && S().rating >= (g.min || 0);
+    const liked = list.filter(fits).sort((a, b) => (b.n / maxMembers(b.g.id)) - (a.n / maxMembers(a.g.id)) || b.xp - a.xp).slice(0, 4);
+    const rest = list.filter(({ g }) => g.id !== S().apply && !inv.some((x) => x.id === g.id) && !liked.some((l) => l.g.id === g.id));
     return `${HN.ui.head('GUILDS', 'Join a clan: shared raids, guild chat and weekly rewards', true)}
+      <div class="hn-sec g-find" data-noswipe><form class="g-search" data-gsearch-form><input class="pf-in" data-gsearch type="search" maxlength="22" placeholder="Search guilds by name or tag" autocomplete="off"><button type="submit" class="hn-btn">Search</button></form><p class="muted small g-nores" hidden style="margin:0">No guilds match that yet. Try the full tag, then tap Search.</p></div>
       ${inv.length ? `<div class="hn-sec g-inv"><h3>Invites for you</h3><div class="g-list">${inv.map((g) => row(g, sizeOf(g.id))).join('')}</div></div>` : ''}
       ${appG ? `<div class="hn-sec"><h3>Your request</h3><div class="g-list">${row(appG, sizeOf(appG.id))}</div><p class="muted small" style="margin:0">Waiting for its leader. You'll join automatically when they accept, even if you're offline.</p></div>` : ''}
-      <div class="hn-sec"><h3>Guilds in the HoloNet</h3>${list.length ? `<div class="g-list">${list.filter(({ g }) => g.id !== S().apply && !inv.some((x) => x.id === g.id)).map(({ g, n }) => row(g, n)).join('')}</div>` : '<div class="hn-free"><span class="grow"><b>No guilds yet.</b> Be the first to found one.</span></div>'}</div>
-      <div class="hn-sec"><h3>Found a guild · 500 Beskar</h3>
+      ${liked.length ? `<div class="hn-sec"><h3>Guilds you may like</h3><div class="g-list">${liked.map(({ g, n }) => row(g, n)).join('')}</div></div>` : ''}
+      ${rest.length ? `<div class="hn-sec"><h3>More guilds</h3><div class="g-list">${rest.map(({ g, n }) => row(g, n)).join('')}</div></div>` : ''}
+      <details class="hn-sec g-found"><summary><span><b>Or create your own guild</b><small>Lead it, name it, pick its look</small></span><span class="g-cost">${HN.ui.kyb(FOUND_COST)}</span></summary>
+      <div><p class="muted small" style="margin:0 0 8px">Founding a guild costs ${FOUND_COST} Kyber. You have ${fmt(Player.state.crystals)}.</p>
         <div class="g-form" data-noswipe>
           <input class="pf-in" data-gf="name" maxlength="22" placeholder="Guild name">
           <input class="pf-in" data-gf="tag" maxlength="4" placeholder="TAG" style="text-transform:uppercase">
@@ -7125,8 +7209,8 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
           <p class="muted small" style="margin:0">Guild picture · ${GUILD_PICS.length} to choose from</p>
           <div data-gpicker>${pickerHtml(form.pic, '#8fe8ff', form.emblem)}</div>
           <div class="g-pick">${COLORS.map((c, i) => `<button type="button" class="g-c ${i === 0 ? 'on' : ''}" data-gc="${c}" style="background:${c}"></button>`).join('')}</div>
-          <button type="button" class="hn-btn gold" data-hn="gcreate">Found guild</button>
-        </div></div>`;
+          <button type="button" class="hn-btn gold" data-hn="gcreate">Found guild · ${FOUND_COST} Kyber</button>
+        </div></div></details>`;
   };
 
   V.gchat = () => {
@@ -7213,6 +7297,28 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   CL.gleave = () => leaveGuild();
   CL.gclaim = (b) => claimGuild(b.dataset.k, +b.dataset.i);
   const form = { emblem: 0, pic: GUILD_PICS[0], color: COLORS[0] };
+  // Guild search: filters the lists as you type; Search also looks up an exact tag or name online.
+  document.addEventListener('input', (e) => {
+    const inp = e.target.closest && e.target.closest('[data-gsearch]');
+    if (!inp) return;
+    const q = inp.value.trim().toLowerCase();
+    let shown = 0;
+    document.querySelectorAll('.view.hn [data-gkey]').forEach((r) => { const ok = !q || r.dataset.gkey.includes(q); r.hidden = !ok; if (ok) shown++; });
+    const nr = document.querySelector('.g-nores'); if (nr) nr.hidden = !q || shown > 0;
+  });
+  document.addEventListener('submit', async (e) => {
+    const f = e.target.closest && e.target.closest('[data-gsearch-form]');
+    if (!f) return;
+    e.preventDefault();
+    const q = (f.querySelector('[data-gsearch]').value || '').trim();
+    if (!q || !Net.ready) return;
+    try {
+      const [a, b] = await Promise.all([Net.db.collection('guilds').where('tag', '==', q.toUpperCase()).limit(5).get(), Net.db.collection('guilds').where('name', '==', q).limit(5).get()]);
+      for (const d of [...a.docs, ...b.docs]) gmap.set(d.id, { id: d.id, ...d.data() });
+      setGuilds(); rerender();
+      setTimeout(() => { const i = document.querySelector('[data-gsearch]'); if (i) { i.value = q; i.dispatchEvent(new Event('input', { bubbles: true })); } }, 50);
+    } catch (err) { toast('Search failed. Try again.'); }
+  });
   CL.gcreate = (b) => {
     const root2 = b.closest('.g-form');
     const v = (k) => (root2.querySelector(`[data-gf="${k}"]`) || {}).value || '';
