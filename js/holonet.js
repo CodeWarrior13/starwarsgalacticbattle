@@ -1195,6 +1195,8 @@
 
   // ---------- arena opponents ----------
   // Gamer tags like real players pick; opponents rotate through them.
+  const BOT_AVS = ['luke', 'vader', 'leia', 'han_solo', 'boba_fett', 'grogu', 'yoda', 'obi_wan', 'kylo_ren', 'rey', 'ahsoka', 'din_djarin', 'darth_maul', 'chewbacca', 'r2d2', 'mace_windu', 'grievous', 'thrawn', 'stormtrooper', 'lando'];
+  const BOT_NAMES_2 = ['CoruscantCody', 'MillenniumMo', 'xwing_xander', 'Bespin_Bella', 'NabooNate', 'Kashyyyk_Kai', 'sith_happens', 'DeathStarDev', 'Ewok_Emma', 'Geonosis_Gus', 'JawaJuice', 'Mynock_Mia', 'Scarif_Sam', 'TuskenTess', 'Lothal_Leo', 'Bantha_Blake', 'Kamino_Kit', 'DagobahDrew', 'Carbonite_Cole', 'Holocron_Hal', 'Sarlacc_Sid', 'Jakku_Jade', 'Crait_Cruz', 'Exegol_Eli'];
   const BOT_NAMES = ['KesselRunner12', 'xXSithLordXx', 'MandoMike', 'wookiee_wendy', 'Lukewarm', 'DarthVapor99', 'jedi_jess', 'TIEfighterTom', 'NerfHerder', 'HanShotFirst', 'BobaFettish', 'rebel_rachel', 'ObiWanKenobae', 'Sabine_Fan', 'GrogusDad', 'ackbar_trapped', 'Tatooine_Tyler', 'kyber_kat', 'StormtrooperAim', 'Hoth_Hannah', 'R2_D2_Dee', 'MaulMadness', 'yoda_best', 'AhsokaNotSorry', 'BeskarBen', 'Endor_Ewoker', 'thrawn_tactics', 'Jango_Jen', 'Chewie_Chris', 'ForceGhostGabe', 'PadmeMe', 'Rancor_Ryan', 'Lando_Lewis', 'DinDjarinDan', 'Starkiller88', 'quigon_quinn', 'Ezra_Elli', 'PoeDameronFan', 'Mustafar_Max', 'Jyn_Erso_Jo'];
   // 2.2: opponents are built for their league, not from your own cards, with a
   // little randomness (one card above the rest now and then). For the first two
@@ -1266,7 +1268,9 @@
     const offsets = [-140, 30, 210, 90];
     for (let i = 0; out.length < 4; i++) {
       const rating = Math.max(400, Math.round(h.rating + offsets[i % offsets.length] + (r() - 0.5) * 60));
-      out.push({ id: `b:${i}`, name: BOT_NAMES[Math.floor(r() * BOT_NAMES.length)], real: false, rating, squad: botSquad(kind, rating, r) });
+      const sq = botSquad(kind, rating, r);
+      const lg = divOf(rating).league;
+      out.push({ id: `b:${i}`, name: BOT_NAMES.concat(BOT_NAMES_2)[Math.floor(r() * (BOT_NAMES.length + BOT_NAMES_2.length))], real: false, rating, squad: sq, av: BOT_AVS[Math.floor(r() * BOT_AVS.length)], frame: r() < 0.75 ? lg : r() < 0.5 ? 'guild' : 'linked', streak: Math.floor(r() * r() * 14) });
     }
     return out.map((o) => ({ ...o, payout: payout(o.rating), gain: winGain(h.rating, o.rating), power: squadPower(o.squad) }));
   }
@@ -1555,7 +1559,9 @@
     };
   }
 
-  root.HN = { BETA, v22, raidToughen, toughPool, xp, grantBase, HN_IDS, HOW, RAIDS, LEAGUES, DIVS, LEAGUE_REWARD, S, save, owns, card, grant, entry, pool, squad, squadEntries, squadPower, powerOf, avgLevel, divOf, opponents, payout, arenaResult, claimDivisions, week, raidNow, raidTotals, bankRaid, claimRaid, Net, rng, BOT_NAMES };
+  root.HN = { BETA, v22, raidToughen, toughPool, xp, grantBase, HN_IDS, HOW, RAIDS, LEAGUES, DIVS, LEAGUE_REWARD, S, save, owns, card, grant, entry, pool, squad, squadEntries, squadPower, powerOf, avgLevel, divOf, opponents, payout, arenaResult, claimDivisions, week, raidNow, raidTotals, bankRaid, claimRaid, Net, rng, BOT_NAMES, BOT_AVS, BOT_NAMES_2 };
+  // Win-streak flame: one emoji plus a CSS glow, tier every 10 wins.
+  root.HN.streakFlame = (n, big) => { n = n | 0; if (n < 1) return '0'; const t = Math.min(9, Math.floor(n / 10)); return `<span class="hn-flame t${t}${big ? ' big' : ''}" title="${n} win streak"><i>🔥</i>${n}</span>`; };
 })(window);
 
 // HoloNet Arena screens (tester build only): the 4th tab, the level-25
@@ -1671,7 +1677,19 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
 .hn-opp .minis { display: flex; gap: 4px; margin-top: 6px; flex-wrap: wrap; }
 .hn-opp .minis .mini { width: 34px; height: 34px; }
 .hn-opp .go { display: grid; gap: 6px; justify-items: end; }
+.hn-opp-id { display: grid; justify-items: center; gap: 2px; } .hn-opp-id .pf-av { width: 44px; height: 44px; } .hn-opp-id .hn-badge { width: 30px; height: auto; margin-top: -10px; position: relative; z-index: 1; }
 .hn-gain { font: 800 12px var(--font-display); letter-spacing: .04em; color: #7af0a0; background: rgba(122, 240, 160, .1); border: 1px solid rgba(122, 240, 160, .35); border-radius: 999px; padding: 2px 8px; white-space: nowrap; }
+.hn-flame { display: inline-flex; align-items: center; gap: 1px; font-weight: 800; color: #ffb35c; -webkit-text-fill-color: currentColor; background: none; white-space: nowrap; }
+.hn-flame i { font-style: normal; font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; display: inline-block; transform-origin: 50% 90%; animation: hnFl 1.1s ease-in-out infinite alternate; will-change: transform; }
+.pc-tiles .hn-flame, .pc-stats .hn-flame { font-size: inherit; color: #ffb35c; }
+.hn-flame.t0 i { animation: none; }
+.hn-flame.t1 i { animation-duration: 1s; } .hn-flame.t2 i { animation-duration: .85s; transform: scale(1.1); }
+.hn-flame.t3, .hn-flame.t4 { color: #ff8a3c; } .hn-flame.t3 i, .hn-flame.t4 i { animation-duration: .7s; }
+.hn-flame.t5, .hn-flame.t6 { color: #ff5f6d; } .hn-flame.t5 i, .hn-flame.t6 i { animation-duration: .6s; }
+.hn-flame.t7, .hn-flame.t8, .hn-flame.t9 { color: #7fd8ff; } .hn-flame.t7 i, .hn-flame.t8 i, .hn-flame.t9 i { animation-duration: .5s; filter: hue-rotate(180deg); }
+.hn-flame.big { font-size: 1.15em; } .hn-flame.big i { font-size: 1.2em; }
+@keyframes hnFl { from { transform: scale(1) rotate(-4deg); opacity: .85; } to { transform: scale(1.18) rotate(4deg); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .hn-flame i { animation: none; } }
 .hn-opp .tag { font-size: 10px; letter-spacing: .14em; padding: 2px 6px; border-radius: 4px; background: #1a6a9a; color: #dff8ff; margin-left: 6px; vertical-align: middle; }
 .hn-btn { padding: 9px 16px; border-radius: 10px; border: 1px solid #8fe8ff; background: linear-gradient(180deg, #2ab0e0, #126a9a); color: #fff; font: 800 13px var(--font-body, system-ui); letter-spacing: .08em; cursor: pointer; text-transform: uppercase; }
 .hn-btn:disabled { opacity: .45; cursor: default; }
@@ -2591,11 +2609,12 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     return `${head(kind === 'ship' ? 'FLEET ARENA' : 'GROUND ARENA', null, true)}
       <div class="hn-seg" role="tablist"><button type="button" class="${kind === 'character' ? 'on' : ''}" data-hn="arena" data-kind="character">Ground</button><button type="button" class="${kind === 'ship' ? 'on' : ''}" data-hn="arena" data-kind="ship">Fleet</button></div>
       ${squadBox(ids, kind, myPow)}
-      <p class="muted" style="margin:0">This squad is also your defense: other players fight it. Win streak: ${h.streak} (+${Math.min(5, h.streak) * 5}% Beskar, max +25%). Tougher opponents pay more.</p>
+      <p class="muted" style="margin:0">This squad is also your defense: other players fight it. Win streak: ${HN.streakFlame(h.streak)} (+${Math.min(5, h.streak) * 5}% Beskar, max +25%). Tougher opponents pay more.</p>
       <div class="hn-opps">${opps.map((o, i) => {
         const d = HN.divOf(o.rating);
-        return `<div class="hn-opp"><div>${A.badge(d.league, d.div)}</div>
-          <div class="who"><b>${esc(o.name)}</b>${o.real ? '<span class="tag">PLAYER</span>' : ''}<small>${esc(d.name)} · ${fmt(o.rating)} · ⚡ ${fmt(o.power)}</small><div class="minis">${o.squad.map((e) => mini(e.id)).join('')}</div></div>
+        const pic = !o.real && HN.avatarFor ? HN.avatarFor(null, o) : '';
+        return `<div class="hn-opp"><div class="hn-opp-id">${pic}${A.badge(d.league, d.div)}</div>
+          <div class="who"><b>${esc(o.name)}</b>${o.real ? '<span class="tag">PLAYER</span>' : ''}${!o.real && o.streak >= 3 ? ` ${HN.streakFlame(o.streak)}` : ''}<small>${esc(d.name)} · ${fmt(o.rating)} · ⚡ ${fmt(o.power)}</small><div class="minis">${o.squad.map((e) => mini(e.id)).join('')}</div></div>
           <div class="go"><span class="hn-gain" title="Rating you gain with a win">▲ +${o.gain}</span>${bes(o.payout)}<button type="button" class="hn-btn" data-hn="attack" data-i="${i}" data-kind="${kind}" ${ids.length ? '' : 'disabled'}>Attack</button></div></div>`;
       }).join('')}</div>
 `;
@@ -3999,7 +4018,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     if (M.fr) { cleanup(M); return; }
     const h = HN.S();
     h.duels = h.duels || { w: 0, l: 0 };
-    h.duels.l += 1;
+    h.duels.l += 1; h.duels.s = 0;
     rate(M, false);
     if (M.wager && HN.Wager) HN.Wager.settle(M, 'lost');
     HN.save();
@@ -4126,7 +4145,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const h = HN.S();
     h.duels = h.duels || { w: 0, l: 0 };
     const draw = !!(M && M.result === 'draw');
-    if (draw) h.duels.d = (h.duels.d || 0) + 1; else if (won) h.duels.w += 1; else h.duels.l += 1;
+    if (draw) h.duels.d = (h.duels.d || 0) + 1; else if (won) { h.duels.w += 1; h.duels.s = (h.duels.s || 0) + 1; } else { h.duels.l += 1; h.duels.s = 0; }
     const bes = draw ? 20 : won ? 40 : 10;
     h.beskar += bes;
     const rr = draw ? { delta: 0, after: HN.divOf(h.rating), rewards: [] } : rate(M, won);
@@ -4216,7 +4235,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     } catch (e) { /* ignore */ }
     // The page closed without saying goodbye (a crash, a dead battery): book the loss now.
     if (left && left.fr) { left = null; crashed = false; }
-    if (crashed) { const h = HN.S(); h.duels = h.duels || { w: 0, l: 0 }; h.duels.l += 1; HN.save(); }
+    if (crashed) { const h = HN.S(); h.duels = h.duels || { w: 0, l: 0 }; h.duels.l += 1; h.duels.s = 0; HN.save(); }
     if (left && Date.now() - left.at < 6 * 3600000) toast(`Your live duel against ${left.name || 'a player'} ended when you left, so it counted as a loss.`);
   }, 4000);
   addEventListener('online', refresh);
@@ -5559,7 +5578,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const h = S();
     const raidDmg = Object.values(h.raids || {}).reduce((a, r) => a + (r.dmg || 0), 0);
     const d = h.duels || { w: 0, l: 0 };
-    return { w: h.wins, l: h.losses, best: h.best, dw: d.w, dl: d.l, raid: raidDmg, bosses: Object.values(h.beaten || {}).reduce((a, n) => a + n, 0), cards: Object.keys(Player.state.units).length, hn: HN.HN_IDS.filter(HN.owns).length, seasons: (h.soc && h.soc.seasonsDone) || 0 };
+    return { w: h.wins, l: h.losses, best: h.best, ws: h.streak | 0, ds: d.s | 0, dw: d.w, dl: d.l, raid: raidDmg, bosses: Object.values(h.beaten || {}).reduce((a, n) => a + n, 0), cards: Object.keys(Player.state.units).length, hn: HN.HN_IDS.filter(HN.owns).length, seasons: (h.soc && h.soc.seasonsDone) || 0 };
   }
   const defaultAv = () => (HN.squad('character')[0] || Object.keys(Player.state.units)[0] || 'luke');
   function myProfile() {
@@ -5612,6 +5631,8 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   }
   HN.chip = chip;
   HN.prof = prof;
+  // A picture in its frame for any player (uid) or arena bot ({ av, frame }).
+  HN.avatarFor = (uid, bot) => { try { if (uid) return avatar(prof(uid), 'sm'); if (bot) return avatar({ av: bot.av, frame: bot.frame }, 'sm'); } catch (e) { /* ignore */ } return ''; };
 
   // Leaders and co-leaders (and elders, if allowed) can invite players with no guild.
   const canInvite = (p) => { const gid = myGuildId(); return !!gid && !p.me && !p.guild && canReview(gid) && Net.ready; };
@@ -5631,6 +5652,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       <div class="pf-stats">
         <div><b>${fmt(p.rating)}</b><span>Rating</span></div><div><b>${fmt(st.best || p.rating)}</b><span>Best</span></div>
         <div><b>${fmt(st.w || 0)}–${fmt(st.l || 0)}</b><span>Arena W–L · ${wr}%</span></div><div><b>${fmt(st.dw || 0)}–${fmt(st.dl || 0)}</b><span>Live duels</span></div>
+        <div><b>${HN.streakFlame ? HN.streakFlame(st.ws | 0, true) : fmt(st.ws | 0)}</b><span>Arena win streak</span></div><div><b>${HN.streakFlame ? HN.streakFlame(st.ds | 0, true) : fmt(st.ds | 0)}</b><span>Duel win streak</span></div>
         <div><b>${fmt(st.raid || 0)}</b><span>Raid damage</span></div><div><b>${fmt(st.bosses || 0)}</b><span>Bosses beaten</span></div>
         <div><b>${fmt(st.cards || 0)}</b><span>Cards</span></div><div><b>${fmt(st.seasons || 0)}</b><span>Seasons played</span></div>
       </div>
@@ -5691,7 +5713,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const overview = () => {
       const f = fav && col[fav];
       const fu = fav && use[fav];
-      return `<div class="pc-tiles"><div><b>${fmt(p.rating)}</b><span>Rating</span></div><div><b>${fmt(st.best || p.rating)}</b><span>Best</span></div><div><b>${fmt(st.w || 0)}–${fmt(st.l || 0)}</b><span>Arena · ${wr}%</span></div><div><b>${fmt(st.dw || 0)}–${fmt(st.dl || 0)}</b><span>Live duels</span></div></div>
+      return `<div class="pc-tiles"><div><b>${fmt(p.rating)}</b><span>Rating</span></div><div><b>${fmt(st.best || p.rating)}</b><span>Best</span></div><div><b>${fmt(st.w || 0)}–${fmt(st.l || 0)}</b><span>Arena · ${wr}%</span></div><div><b>${fmt(st.dw || 0)}–${fmt(st.dl || 0)}</b><span>Live duels</span></div><div><b>${HN.streakFlame(st.ws | 0, true)}</b><span>Arena win streak</span></div><div><b>${HN.streakFlame(st.ds | 0, true)}</b><span>Duel win streak</span></div></div>
         <h3 class="pc-h">Favorite card <small>most used</small></h3>
         ${f ? `<div class="pc-fav"><div class="pt">${UI.portrait(D.UNIT_MAP[fav])}</div><div><h4>${esc(D.UNIT_MAP[fav].name)}</h4><div class="sub">${esc(D.RARITIES[D.UNIT_MAP[fav].rarity].label)} · Lv ${f.level} · ${'★'.repeat(f.stars)}</div>
           <div class="nums"><div><b>${fmt(fu.b)}</b><span>battles</span></div><div><b>${fu.b ? Math.round((fu.w / fu.b) * 100) : 0}%</b><span>win rate</span></div><div><b>${fmt(power(fav, f))}</b><span>power</span></div></div></div></div>` : '<p class="pc-empty">Not enough battles yet to pick a favorite.</p>'}
@@ -5737,7 +5759,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const stats = () => {
       const cell = (n, v) => `<div><span>${n}</span><b>${v}</b></div>`;
       const totalB = Object.values(use).reduce((a, u) => a + u.b, 0);
-      return `<div class="pc-stats">${cell('Rating', fmt(p.rating))}${cell('Best rating', fmt(st.best || p.rating))}${cell('League', esc(d.name))}${cell('Arena W–L', `${fmt(st.w || 0)}–${fmt(st.l || 0)} · ${wr}%`)}${cell('Live duels', `${fmt(st.dw || 0)}–${fmt(st.dl || 0)}`)}${cell('Raid damage', fmt(st.raid || 0))}${cell('Bosses beaten', fmt(st.bosses || 0))}${cell('Cards', `${fmt(owned.length)}`)}${cell('HoloNet cards', `${HN.HN_IDS.filter((id) => col[id]).length} / ${HN.HN_IDS.length}`)}${cell('Seasons played', fmt(st.seasons || 0))}${cell('Favorite card', fav ? `${esc(D.UNIT_MAP[fav].name)} · ${fmt(use[fav].b)}` : '—')}${cell('Battles tracked', fmt(totalB))}${cell('Guild', g ? `[${esc(g.tag)}]` : '—')}${cell('Account level', fmt(p.level))}</div>`;
+      return `<div class="pc-stats">${cell('Rating', fmt(p.rating))}${cell('Best rating', fmt(st.best || p.rating))}${cell('League', esc(d.name))}${cell('Arena W–L', `${fmt(st.w || 0)}–${fmt(st.l || 0)} · ${wr}%`)}${cell('Live duels', `${fmt(st.dw || 0)}–${fmt(st.dl || 0)}`)}${cell('Arena win streak', HN.streakFlame(st.ws | 0))}${cell('Duel win streak', HN.streakFlame(st.ds | 0))}${cell('Raid damage', fmt(st.raid || 0))}${cell('Bosses beaten', fmt(st.bosses || 0))}${cell('Cards', `${fmt(owned.length)}`)}${cell('HoloNet cards', `${HN.HN_IDS.filter((id) => col[id]).length} / ${HN.HN_IDS.length}`)}${cell('Seasons played', fmt(st.seasons || 0))}${cell('Favorite card', fav ? `${esc(D.UNIT_MAP[fav].name)} · ${fmt(use[fav].b)}` : '—')}${cell('Battles tracked', fmt(totalB))}${cell('Guild', g ? `[${esc(g.tag)}]` : '—')}${cell('Account level', fmt(p.level))}</div>`;
     };
     const head = () => `<button type="button" class="pf-x" data-x="ok" aria-label="Close">✕</button>
       <div class="pf-top">${avatar(p, 'lg')}<div class="pf-id"><p class="eyebrow">${p.me ? 'Your HoloNet profile' : 'HoloNet profile'}</p><h2>${esc(Net.name(p.uid).replace(' (you)', ''))}</h2>
@@ -6963,7 +6985,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   };
   GP.members = (gid) => {
     const members = membersOf(gid).map((uid) => ({ uid, pts: weekPoints(uid), p: prof(uid), r: roleOf(uid, gid) })).sort((a, b) => ['leader', 'co', 'elder', 'member'].indexOf(a.r) - ['leader', 'co', 'elder', 'member'].indexOf(b.r) || b.pts - a.pts || b.p.rating - a.p.rating);
-    return `<div class="hn-sec"><h3>Members · ${members.length}/${maxMembers(gid)}</h3><div class="g-list">${members.map((x) => `<div class="g-row ${x.p.me ? 'me' : ''}">${chip(x.uid, ` · ${ROLE_NAME[x.r]}`)}<span class="r">${canManageMember(gid, x.uid) ? `<button type="button" class="hn-btn ghost g-mng" data-hn="gmanage" data-uid="${esc(x.uid)}" aria-label="Manage">Manage</button>` : ''}${A.badge(HN.divOf(x.p.rating).league, HN.divOf(x.p.rating).div)}<b>${fmt(x.pts)}</b><small>pts</small></span></div>`).join('')}</div></div>`;
+    return `<div class="hn-sec"><h3>Members · ${members.length}/${maxMembers(gid)}</h3><div class="g-list">${members.map((x) => `<div class="g-row ${x.p.me ? 'me' : ''}">${chip(x.uid, ` · ${ROLE_NAME[x.r]}`)}${canManageMember(gid, x.uid) ? `<button type="button" class="hn-btn ghost g-mng" data-hn="gmanage" data-uid="${esc(x.uid)}" aria-label="Manage">Manage</button>` : ''}<span class="r">${A.badge(HN.divOf(x.p.rating).league, HN.divOf(x.p.rating).div)}<b>${fmt(x.pts)}</b><small>pts</small></span></div>`).join('')}</div></div>`;
   };
   GP.chat = (gid) => {
     const lines = chatLines(gid);
@@ -7285,9 +7307,10 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
 .g-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 12px; background: rgba(8, 20, 32, 0.85); border: 1px solid rgba(95, 216, 255, 0.12); }
 .g-row.me { border-color: rgba(95, 216, 255, 0.5); }
 .g-row .nm { flex: 1; display: grid; min-width: 0; } .g-row .nm small { color: #9fc4d8; }
-.g-row .pf-chip { flex: 1; }
-.g-row .r { display: grid; grid-template-columns: 34px auto; column-gap: 6px; align-items: center; justify-items: start; text-align: left; }
-.g-row .r .hn-badge { width: 34px; height: auto; grid-row: span 2; } .g-row .r small { color: #9fc4d8; font-size: 10px; }
+.g-row .pf-chip { flex: 1; min-width: 0; } .g-row .pf-chip .nm { min-width: 0; } .g-row .pf-chip .nm b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .g-row .pf-chip .nm small { white-space: normal; overflow-wrap: anywhere; }
+.g-row .r { flex: none; }
+.g-row .r { display: grid; grid-template-columns: 30px auto; column-gap: 6px; align-items: center; justify-items: start; text-align: left; }
+.g-row .r .hn-badge { width: 30px; height: auto; grid-row: span 2; } .g-row .r small { color: #9fc4d8; font-size: 10px; }
 .g-form { display: grid; gap: 8px; padding: 12px; border-radius: 14px; background: rgba(8, 20, 32, 0.85); border: 1px solid rgba(95, 216, 255, 0.2); }
 .g-pick { display: flex; gap: 6px; flex-wrap: wrap; }
 .g-e, .g-c { padding: 3px; border-radius: 10px; border: 2px solid transparent; background: #06121e; cursor: pointer; }
@@ -7807,10 +7830,16 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
   // 25 bots per season, climbing as the season goes on.
   function bots(season, frac) {
     const r = HN.rng(season * 977 + 31);
-    const names = HN.BOT_NAMES.slice().sort(() => r() - 0.5).slice(0, 25);
+    const pool = HN.BOT_NAMES.concat(HN.BOT_NAMES_2 || []);
+    const names = pool.slice().sort(() => r() - 0.5).slice(0, 60);
+    const avs = HN.BOT_AVS || ['luke'];
     return names.map((name, i) => {
-      const peak = 2380 - i * 52 + Math.round((r() - 0.5) * 30);
-      return { bot: true, name, best: Math.round(900 + (peak - 900) * (0.55 + 0.45 * frac)), dw: Math.max(0, Math.round((58 - i * 2.2) * (0.25 + 0.75 * frac))) };
+      const peak = 2380 - i * 26 + Math.round((r() - 0.5) * 30);
+      const best = Math.round(900 + (peak - 900) * (0.55 + 0.45 * frac));
+      const lg = HN.divOf(best).league;
+      const fr = i < 1 && frac > 0.5 ? 'champion' : i < 3 && frac > 0.5 ? 'podium' : r() < 0.7 ? lg : ['guild', 'linked', 'victor', 'squadron'][Math.floor(r() * 4)];
+      const hot = r();
+      return { bot: true, name, best, av: avs[Math.floor(r() * avs.length)], frame: fr, ws: Math.floor(hot * hot * hot * (i < 10 ? 48 : 22)), ds: Math.floor(r() * r() * 12), dw: Math.max(0, Math.round((58 - i * 1.1) * (0.25 + 0.75 * frac))) };
     });
   }
   const mySeasonBest = () => { const h = SO.P2(); return Math.max(h.soc.sBest || 0, h.rating); };
@@ -7933,7 +7962,9 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
   let lbTab = 'season';
   const rowOf = (x, i, right) => {
     const me = x.me || x.uid === Net.me;
-    const who = x.bot ? `<span class="hv-bot"><span class="pf-av sm"><span class="pic hv-botpic">${x.name.slice(0, 1).toUpperCase()}</span></span><span class="nm"><b>${esc(x.name)}</b></span></span>` : SO.chip(me ? 'me' : x.uid);
+    const ws = x.bot ? x.ws : me ? (SO.P2().streak | 0) : ((Net.arena.find((a) => a.uid === x.uid) || {}).st || {}).ws | 0;
+    const fl = HN.streakFlame && ws >= 3 ? HN.streakFlame(ws) : '';
+    const who = x.bot ? `<span class="hv-bot">${SO.avatar({ av: x.av, frame: x.frame }, 'sm')}<span class="nm"><b>${esc(x.name)}${fl ? ` ${fl}` : ''}</b><small>${esc(HN.divOf(x.best).name)}</small></span></span>` : SO.chip(me ? 'me' : x.uid).replace('</b>', `${fl ? ` ${fl}` : ''}</b>`);
     return `<div class="g-row ${me ? 'me' : ''}"><span class="rk">${i + 1}</span>${who}<span class="r">${right}</span></div>`;
   };
   V.leaders = () => {
@@ -7942,19 +7973,19 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
     if (lbTab === 'season') {
       const rows = seasonRows();
       const mine = rows.findIndex((x) => x.me);
-      const shown = rows.slice(0, 25);
+      const shown = rows.slice(0, 50);
       body = `<div class="hn-sec"><h3>Season ${HN.seasonLabel(SO.seasonNo())} rewards</h3><div class="sclock-big"><span>${HN.seasonBreak() ? `Season ${HN.seasonLabel(SO.seasonNo())} starts in` : 'Season ends in'}</span><b data-season-clock data-long>${HN.seasonClock(true)}</b></div>
           <div class="hv-rw">${LB_REWARD.map((r) => `<div><b>${r.label}</b><small>${esc(rewardText(r))}</small></div>`).join('')}</div>
           <p class="muted small" style="margin:0">Ranked by your best rating this season. Rewards are paid when the season ends.</p></div>
         <div class="g-list">${shown.map((x, i) => { const d = HN.divOf(x.best); return rowOf(x, i, `${A.badge(d.league, d.div)}<b>${fmt(x.best)}</b><small>${esc(d.name)}</small>`); }).join('')}</div>
-        ${mine >= 25 ? `<div class="g-list" style="margin-top:6px">${rowOf(rows[mine], mine, `<b>${fmt(rows[mine].best)}</b>`)}</div>` : ''}`;
+        ${mine >= 50 ? `<div class="g-list" style="margin-top:6px">${rowOf(rows[mine], mine, `<b>${fmt(rows[mine].best)}</b>`)}</div>` : ''}`;
     } else if (lbTab === 'duels') {
       const st = SO.prof().st || {};
       const rows = Net.arena.filter((a) => a.uid !== Net.me && (a.dw || 0) > 0).map((a) => ({ uid: a.uid, dw: a.dw }));
       rows.push({ uid: Net.me || 'me', me: true, dw: st.dw || 0 });
       rows.push(...bots(SO.seasonNo(), seasonFrac()).map((b) => ({ ...b })));
       rows.sort((a, b) => b.dw - a.dw);
-      body = `<p class="muted small" style="margin:0">Most Live Duel wins.</p><div class="g-list">${rows.slice(0, 25).map((x, i) => rowOf(x, i, `<b>${fmt(x.dw)}</b><small>wins</small>`)).join('')}</div>`;
+      body = `<p class="muted small" style="margin:0">Most Live Duel wins.</p><div class="g-list">${rows.slice(0, 50).map((x, i) => rowOf(x, i, `<b>${fmt(x.dw)}</b><small>wins</small>`)).join('')}</div>`;
     } else if (lbTab === 'raid') {
       const t = HN.raidTotals();
       body = `<p class="muted small" style="margin:0">Damage on ${esc(HN.raidNow().name)} this week.</p>${t.rows.length ? `<div class="g-list">${t.rows.slice(0, 25).map((x, i) => rowOf({ uid: x.uid === 'me' ? 'me' : x.uid, me: x.uid === Net.me || x.uid === 'me' }, i, `<b>${fmt(x.dmg)}</b><small>damage</small>`)).join('')}</div>` : '<div class="hn-free"><span class="grow">No damage yet this week. Be the first to hit the boss.</span></div>'}`;
@@ -8088,10 +8119,11 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
     const role = SO.roleOf(uid, gid);
     const elders = raw.elders || [];
     const acts = [];
-    if (role === 'member' && elders.length < SO.MAX_ELDERS) acts.push(['elder', 'Promote to Elder']);
-    if (role === 'elder') acts.push(['member', 'Demote to Member']);
-    if (me === 'leader' && role !== 'co') acts.push(['co', raw.co ? 'Make Co-leader (replaces the current one)' : 'Make Co-leader']);
-    if (me === 'leader' && role === 'co') acts.push(['unco', 'Remove as Co-leader']);
+    if (role === 'member' && elders.length < SO.MAX_ELDERS) acts.push(['elder', '▲ Promote to Elder']);
+    if (me === 'leader' && role !== 'co') acts.push(['co', raw.co ? '▲ Make Co-leader (replaces the current one)' : '▲ Make Co-leader']);
+    if (me === 'leader' && role === 'co') acts.push(['co2elder', '▼ Demote to Elder']);
+    if (me === 'leader' && role === 'co') acts.push(['unco', '▼ Demote to Member']);
+    if (role === 'elder') acts.push(['member', '▼ Demote to Member']);
     if (me === 'leader') acts.push(['lead', 'Make leader (you become co-leader)']);
     acts.push(['kick', 'Remove from guild']);
     const m = openModal(`<div class="hn-result"><h3 style="margin:0 0 6px">${esc(Net.name(uid))} · ${SO.ROLE_NAME[role]}</h3>
@@ -8109,7 +8141,8 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
       const r = SO.gmap.get(gid) || {};
       const el = (r.elders || []).filter((x) => x !== uid);
       const change = { elders: el };
-      if (k === 'elder') change.elders = [...el, uid].slice(0, SO.MAX_ELDERS);
+      if (k === 'elder' || k === 'co2elder') change.elders = [...el, uid].slice(0, SO.MAX_ELDERS);
+      if (k === 'co2elder') change.co = '';
       if (k === 'co') { change.co = uid; }
       if (k === 'unco' || (k === 'kick' && r.co === uid)) change.co = '';
       if (k === 'kick') change.kicked = [...new Set([...(r.kicked || []), uid])];
@@ -8120,7 +8153,7 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
         if (await SO.writeGuild(gid, { kicked: (g2.kicked || []).filter((x) => x !== uid) })) { toast(`${Net.name(uid)} is back in the guild.`); SO.rerender(); }
       });
       else if (k === 'lead') { toast(`${Net.name(uid)} is now the leader.`); SO.sayLine(`handed leadership to ${Net.name(uid)}.`, true); }
-      else toast('Ranks updated.');
+      else { const lbl = { elder: 'promoted to Elder', co: 'made Co-leader', co2elder: 'demoted to Elder', unco: 'demoted to Member', member: 'demoted to Member' }[k]; toast(lbl ? `${Net.name(uid)} was ${lbl}.` : 'Ranks updated.'); }
       SO.rerender();
     });
   };
@@ -8237,7 +8270,7 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
 .hv-rw div { padding: 8px 10px; border-radius: 10px; border: 1px solid rgba(255, 210, 63, 0.3); background: rgba(40, 30, 6, 0.4); display: grid; gap: 2px; }
 .hv-rw b { color: #ffd23f; font-family: var(--font-display); letter-spacing: .06em; } .hv-rw small { color: #d8c89a; font-size: 11px; }
 .hv-don { display: flex; gap: 8px; flex-wrap: wrap; }
-.g-mng { padding: 4px 8px; font-size: 11px; }
+.g-mng { padding: 4px 8px; font-size: 11px; flex: none; }
 .hv-ann { border-color: rgba(255, 210, 63, 0.35); }
 .hv-annl { padding: 8px 10px; border-radius: 10px; background: rgba(40, 30, 6, 0.45); border-left: 3px solid #ffd23f; }
 .hv-annl b { font-size: 13px; color: #ffd86a; } .hv-annl small { color: #c8b88a; font-weight: 500; } .hv-annl p { margin: 4px 0 0; font-size: 14px; }
