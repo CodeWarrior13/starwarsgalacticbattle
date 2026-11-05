@@ -122,7 +122,7 @@
     const dt = D.UNIT_MAP.hn_dark_trooper;
     const grip = dt && (dt.abilities || []).find((a) => a.name === 'Crushing Grip');
     if (grip) { grip.effects = grip.effects.map((e) => (e.type === 'status' && e.status === 'stun' ? { ...e, chance: 0.4 } : e)); grip.desc = 'Deal damage with a 40% chance to Stun.'; any = true; }
-    if (dt && dt.bio) { dt.bio = dt.bio.replace('takes 25% less damage', 'takes 35% less damage'); }
+    if (dt && dt.bio && !dt.bio.includes('Reboot')) { dt.bio = `${dt.bio.replace('takes 25% less damage', 'takes 35% less damage')} Phase III Reboot: once per battle, a blow that would destroy him reboots him at 40% health with Taunt.`; }
     const hw = D.UNIT_MAP.hn_vader_hallway;
     if (hw && hw.bio) { hw.bio = hw.bio.replace('12% more damage', '18% more damage'); }
     for (const [id, k] of Object.entries(KIT)) {
@@ -259,6 +259,22 @@
         events.push({ type: 'status', uid: target.uid, status: 'defUp', turns: 2 });
       }
       return r;
+    };
+    // 2.4 Dark Trooper, Phase III Reboot: once per battle, a blow that would
+    // destroy him reboots him at 40% health with Taunt instead.
+    const dmg0 = BP.applyDamage;
+    BP.applyDamage = function (target, amount, crit, events, source) {
+      if (on() && target && target.id === 'hn_dark_trooper' && target.alive && !target.rebooted && amount >= target.hp) {
+        target.rebooted = true;
+        const keep = Math.max(1, Math.round(target.maxHp * 0.4));
+        dmg0.call(this, target, Math.max(0, target.hp - 1), crit, events, source);
+        target.hp = keep;
+        target.statuses.taunt = Math.max(target.statuses.taunt || 0, 1);
+        events.push({ type: 'heal', uid: target.uid, amount: keep, hp: target.hp });
+        events.push({ type: 'log', text: 'PHASE III REBOOT: the Dark Trooper rises again!', side: target.side });
+        return undefined;
+      }
+      return dmg0.call(this, target, amount, crit, events, source);
     };
     const turn0 = BP.beginTurn;
     BP.beginTurn = function (unit) {
