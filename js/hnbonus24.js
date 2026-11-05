@@ -59,11 +59,11 @@
   const CAL = {
     hn_fang: 1.08, hn_ig11: 1.1, hn_outrider: 1.12, hn_nite_owl: 1.22, hn_zuckuss: 1.28, hn_fennec: 1.2,
     hn_krrsantan: 1.25, hn_aurra: 1.38, hn_embo: 1.32, hn_gauntlet: 1.28, hn_bossk: 1.35, hn_greef: 1.35,
-    hn_armorer: 1.4, hn_pre_vizsla: 1.3, hn_kelleran: 1.45, hn_cadbane: 1.5, hn_vader_hallway: 1.4, hn_dark_trooper: 1.5,
+    hn_armorer: 1.55, hn_pre_vizsla: 1.3, hn_kelleran: 1.45, hn_cadbane: 1.5, hn_vader_hallway: 1.6, hn_dark_trooper: 1.65,
   };
   // Kits that needed more than stats: harder hits (dmg) and a shorter main cooldown (cd).
   const KIT = {
-    hn_dark_trooper: { dmg: 1.4, cd: -1 }, hn_pre_vizsla: { dmg: 1.25, cd: -1 }, hn_armorer: { dmg: 1.3, cd: -1 }, hn_krrsantan: { dmg: 1.2, cd: -1 },
+    hn_dark_trooper: { dmg: 1.55, cd: -1 }, hn_vader_hallway: { dmg: 1.2, cd: -1 }, hn_pre_vizsla: { dmg: 1.25, cd: -1 }, hn_armorer: { dmg: 1.45, cd: -1 }, hn_krrsantan: { dmg: 1.2, cd: -1 },
     hn_gauntlet: { dmg: 1.2, cd: -1 }, hn_zuckuss: { dmg: 1.2, cd: 0 }, hn_kelleran: { dmg: 1.15, cd: -1 }, hn_embo: { dmg: 1.2, cd: 0 },
     hn_cadbane: { dmg: 1.25, cd: -1 }, hn_aurra: { dmg: 1.15, cd: 0 }, hn_greef: { dmg: 1.1, cd: -1 }, hn_fennec: { dmg: 1.15, cd: 0 },
   };
@@ -93,6 +93,7 @@
 
   // ---------- Role jobs (ability tweaks) ----------
   const JOBS = {
+    hn_armorer: { ab: 'Temper the Steel', add: [{ type: 'plating' }], desc: 'One ally gains Beskar Plating (the next hit on them is fully blocked) and Defense Up for 2 turns.' },
     hn_ig11: { ab: 'Nurse Protocol', add: [{ type: 'cleanse' }], desc: 'Heal one ally 30%, clear their debuffs and give them Defense Up.' },
     hn_paz: { ab: 'Hold the Covert', add: [{ type: 'status', status: 'defUp', turns: 1, chance: 1, on: 'allies' }], desc: 'Gain Taunt and Defense Up and heal 20%; every ally gains Defense Up for 1 turn.' },
   };
@@ -116,6 +117,14 @@
       const def = D.UNIT_MAP[id];
       if (def && def.bio && !def.bio.includes(line.split(':')[0])) { def.bio = def.bio.replace(/Passive,[^.]*\.?.*$/, line); any = true; }
     }
+    const arm = D.UNIT_MAP.hn_armorer;
+    if (arm && arm.ultimate && !arm.ultimate.effects.some((e) => e.type === 'plating')) { arm.ultimate.effects = [...arm.ultimate.effects, { type: 'plating' }]; any = true; }
+    const dt = D.UNIT_MAP.hn_dark_trooper;
+    const grip = dt && (dt.abilities || []).find((a) => a.name === 'Crushing Grip');
+    if (grip) { grip.effects = grip.effects.map((e) => (e.type === 'status' && e.status === 'stun' ? { ...e, chance: 0.4 } : e)); grip.desc = 'Deal damage with a 40% chance to Stun.'; any = true; }
+    if (dt && dt.bio) { dt.bio = dt.bio.replace('takes 25% less damage', 'takes 35% less damage'); }
+    const hw = D.UNIT_MAP.hn_vader_hallway;
+    if (hw && hw.bio) { hw.bio = hw.bio.replace('12% more damage', '18% more damage'); }
     for (const [id, k] of Object.entries(KIT)) {
       const def = D.UNIT_MAP[id];
       if (!def) continue;
@@ -207,13 +216,26 @@
       if (source.id === 'hn_zuckuss' && !source.zuckDone) { source.zuckDone = true; target.zuckMark = source.side; }
       if (target.id === 'hn_krrsantan' && target.statuses.taunt) k *= 0.8;
       if (target.id === 'hn_cara' && target.statuses.taunt) k *= 0.9;
-      if (target.id === 'hn_dark_trooper') k *= 0.75;
+      if (target.id === 'hn_dark_trooper') k *= on() ? 0.65 : 0.75;
+      // 2.4: Hallway Vader's No Escape climbs 18% per fallen enemy (12% before).
+      if (on() && source.def && source.def.hallway) { const fallen = this.units.filter((x) => x.side !== source.side && !x.alive).length; if (fallen) k *= (1 + 0.18 * fallen) / (1 + 0.12 * fallen); }
       if (target.hp / target.maxHp < 0.3 && has(this, target.side, 'hn_kelleran')) k *= 0.7;
       if (k !== 1) r.amount = Math.max(1, Math.round(r.amount * k));
       return r;
     };
     const eff0 = BP.applyEffect;
     BP.applyEffect = function (source, target, eff, events) {
+      // 2.4 Beskar Plating (the Armorer): blocks the next hit completely.
+      if (eff && eff.type === 'plating') {
+        if (target && target.alive) { target.plating = (target.plating || 0) + 1; events.push({ type: 'log', text: `${target.def.name} is covered in Beskar Plating.`, side: target.side }); }
+        return undefined;
+      }
+      if (eff && eff.type === 'damage' && target && target.plating > 0 && source && source.side !== target.side) {
+        target.plating -= 1;
+        events.push({ type: 'resist', uid: target.uid });
+        events.push({ type: 'log', text: `Beskar Plating blocks the hit on ${target.def.name}!`, side: target.side });
+        return undefined;
+      }
       if (pOn() && target && eff && source && source.side !== target.side) {
         if (eff.type === 'damage') {
           const dodge = (target.id === 'hn_embo' && this.rng() < 0.2) || (target.id === 'hn_fang' && target.dodgeReady);

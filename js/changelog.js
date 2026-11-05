@@ -79,7 +79,7 @@
         'NEW|Beskar Forging: every HoloNet card has its own five-tier upgrade, paid in Beskar. Each tier adds health and armor, and tier 5 unlocks a passive, so your HoloNet cards keep growing after the rest stop.',
         'NEW|Hunters & Clans: two Bounty Hunters or Mandalorians in a squad gain +10% crit chance; three gain more crit, crit damage and armor.',
         'NEW|HoloNet card pairings: Kelleran Beq with Grogu, Krrsantan with Boba Fett, Hallway Vader with Darth Vader, and the Armorer with any Mandalorian each unlock a bonus together.',
-        'IMPROVED|HoloNet card jobs: IG-11\'s Nurse Protocol also clears debuffs, Paz Vizsla shares his armor with the squad, Todo 360 repairs droid allies every turn, and Greef Karga pays extra credits as well as Beskar.',
+        'IMPROVED|HoloNet card jobs: IG-11\'s Nurse Protocol also clears debuffs, Paz Vizsla shares his armor with the squad, Todo 360 repairs droid allies every turn, Greef Karga pays extra credits as well as Beskar, and the Armorer\'s Beskar Plating now blocks the next hit completely.',
         'FIXED|Every HoloNet card\'s passive now works in battle exactly as written on the card.',
         'IMPROVED|Ranked rework: you only face pilots from your own division or one either side, with a fresh set after every fight. Each opponent shows what a win is worth in rating and Beskar, and the Gold, Kyber and Legend leagues fight harder and pay more.',
         'NEW|Placement battles: from Season 3, ranked opens with five Ground placement battles. They open on the last day of the season break (or whenever you arrive), each one adapts to how you fight, and the last is the Boss Trial. When the season starts, Admiral Ackbar reveals the league you start in. Fleet ranked opens once they\'re done.',
