@@ -59,7 +59,7 @@
   const CAL = {
     hn_fang: 1.08, hn_ig11: 1.1, hn_outrider: 1.12, hn_nite_owl: 1.22, hn_zuckuss: 1.28, hn_fennec: 1.2,
     hn_krrsantan: 1.25, hn_aurra: 1.38, hn_embo: 1.32, hn_gauntlet: 1.28, hn_bossk: 1.35, hn_greef: 1.35,
-    hn_armorer: 1.8, hn_pre_vizsla: 1.3, hn_kelleran: 1.45, hn_cadbane: 1.5, hn_vader_hallway: 1.6, hn_dark_trooper: 1.9,
+    hn_armorer: 1.8, hn_pre_vizsla: 1.3, hn_kelleran: 1.45, hn_cadbane: 1.5, hn_vader_hallway: 1.6, hn_dark_trooper: 2.05,
   };
   // Kits that needed more than stats: harder hits (dmg) and a shorter main cooldown (cd).
   const KIT = {
@@ -122,7 +122,7 @@
     const dt = D.UNIT_MAP.hn_dark_trooper;
     const grip = dt && (dt.abilities || []).find((a) => a.name === 'Crushing Grip');
     if (grip) { grip.effects = grip.effects.map((e) => (e.type === 'status' && e.status === 'stun' ? { ...e, chance: 0.4 } : e)); grip.desc = 'Deal damage with a 40% chance to Stun.'; any = true; }
-    if (dt && dt.bio && !dt.bio.includes('Reboot')) { dt.bio = `${dt.bio.replace('takes 25% less damage', 'takes 35% less damage')} Phase III Reboot: once per battle, a blow that would destroy him reboots him at 40% health with Taunt.`; }
+    if (dt && dt.bio && !dt.bio.includes('Reboot')) { dt.bio = `${dt.bio.replace('takes 25% less damage', 'takes 35% less damage')} Phase III Reboot: once per battle, a blow that would destroy him reboots him at 50% health with Taunt.`; }
     const hw = D.UNIT_MAP.hn_vader_hallway;
     if (hw && hw.bio) { hw.bio = hw.bio.replace('12% more damage', '18% more damage'); }
     for (const [id, k] of Object.entries(KIT)) {
@@ -261,12 +261,12 @@
       return r;
     };
     // 2.4 Dark Trooper, Phase III Reboot: once per battle, a blow that would
-    // destroy him reboots him at 40% health with Taunt instead.
+    // destroy him reboots him at 50% health with Taunt instead.
     const dmg0 = BP.applyDamage;
     BP.applyDamage = function (target, amount, crit, events, source) {
       if (on() && target && target.id === 'hn_dark_trooper' && target.alive && !target.rebooted && amount >= target.hp) {
         target.rebooted = true;
-        const keep = Math.max(1, Math.round(target.maxHp * 0.4));
+        const keep = Math.max(1, Math.round(target.maxHp * 0.5));
         dmg0.call(this, target, Math.max(0, target.hp - 1), crit, events, source);
         target.hp = keep;
         target.statuses.taunt = Math.max(target.statuses.taunt || 0, 1);
