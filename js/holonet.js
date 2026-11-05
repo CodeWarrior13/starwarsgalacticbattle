@@ -1233,6 +1233,23 @@
   // Gamer tags like real players pick; opponents rotate through them.
   const BOT_AVS = ['luke', 'vader', 'leia', 'han_solo', 'boba_fett', 'grogu', 'yoda', 'obi_wan', 'kylo_ren', 'rey', 'ahsoka', 'din_djarin', 'darth_maul', 'chewbacca', 'r2d2', 'mace_windu', 'grievous', 'thrawn', 'stormtrooper', 'lando'];
   const BOT_NAMES_2 = ['CoruscantCody', 'MillenniumMo', 'xwing_xander', 'Bespin_Bella', 'NabooNate', 'Kashyyyk_Kai', 'sith_happens', 'DeathStarDev', 'Ewok_Emma', 'Geonosis_Gus', 'JawaJuice', 'Mynock_Mia', 'Scarif_Sam', 'TuskenTess', 'Lothal_Leo', 'Bantha_Blake', 'Kamino_Kit', 'DagobahDrew', 'Carbonite_Cole', 'Holocron_Hal', 'Sarlacc_Sid', 'Jakku_Jade', 'Crait_Cruz', 'Exegol_Eli'];
+  // Callsigns for the computer-run guilds' members: one per pilot, never shared with anyone else on the boards.
+  const BOT_NAMES_X = (() => {
+    const a = ['Rogue', 'Corellia', 'Bespin', 'Kyber', 'Ord', 'Mando', 'Hoth', 'Naboo', 'Tython', 'Ilum', 'Kessel', 'Ryloth', 'Dantooine', 'Jedha', 'Mustafar', 'Felucia', 'Mon', 'Wookie', 'Alderaan', 'Sullust', 'Utapau', 'Corran', 'Wedge', 'Bothan', 'Ahch', 'Zeffo', 'Bracca', 'Batuu', 'Taris', 'Vandor'];
+    const b = ['Ace', 'Rix', 'Nova', 'Vex', 'Kade', 'Jax', 'Lux', 'Rook', 'Zane', 'Tali', 'Bolt', 'Skye', 'Dax', 'Wren', 'Juno', 'Cass', 'Orin', 'Pax', 'Remy', 'Sol', 'Tess', 'Vale', 'Knox', 'Mira', 'Fynn', 'Isla', 'Quill', 'Rho', 'Shay', 'Tor'];
+    const sep = ['_', '', '_', ''];
+    const out = [];
+    const seen = new Set();
+    let k = 0;
+    while (out.length < 240) {
+      const x = a[(k * 7) % a.length]; const y = b[(k * 11 + Math.floor(k / a.length)) % b.length];
+      let n = `${x}${sep[k % 4]}${y}`;
+      if (k % 5 === 3) n += String(10 + ((k * 37) % 89));
+      if (!seen.has(n)) { seen.add(n); out.push(n); }
+      k++;
+    }
+    return out;
+  })();
   const BOT_NAMES = ['KesselRunner12', 'xXSithLordXx', 'MandoMike', 'wookiee_wendy', 'Lukewarm', 'DarthVapor99', 'jedi_jess', 'TIEfighterTom', 'NerfHerder', 'HanShotFirst', 'BobaFettish', 'rebel_rachel', 'ObiWanKenobae', 'Sabine_Fan', 'GrogusDad', 'ackbar_trapped', 'Tatooine_Tyler', 'kyber_kat', 'StormtrooperAim', 'Hoth_Hannah', 'R2_D2_Dee', 'MaulMadness', 'yoda_best', 'AhsokaNotSorry', 'BeskarBen', 'Endor_Ewoker', 'thrawn_tactics', 'Jango_Jen', 'Chewie_Chris', 'ForceGhostGabe', 'PadmeMe', 'Rancor_Ryan', 'Lando_Lewis', 'DinDjarinDan', 'Starkiller88', 'quigon_quinn', 'Ezra_Elli', 'PoeDameronFan', 'Mustafar_Max', 'Jyn_Erso_Jo'];
   // 2.2: opponents are built for their league, not from your own cards, with a
   // little randomness (one card above the rest now and then). For the first two
@@ -1445,8 +1462,9 @@
       const runs = hr < start ? 0 : 1 + Math.floor(((hr - start) / 24) * runsPerDay);
       const rs = rng(w * 31 + i * 7);
       let dmg = 0; for (let k = 0; k < runs; k++) dmg += Math.round(per * (0.6 + rs() * 0.8));
-      return { bot: true, name, av: BOT_AVS[Math.floor(r() * BOT_AVS.length)], frame: ['bronze', 'silver', 'gold', 'kyber', 'legend', 'guild', 'squadron'][Math.floor(r() * 7)], best: toNewR(Math.round(1100 + keen * 700 + r() * 200)), dmg };
-    }).filter((b) => b.dmg > 0);
+      const fx = r();
+      return { bot: true, name, av: BOT_AVS[Math.floor(r() * BOT_AVS.length)], fx, best: toNewR(Math.round(1100 + keen * 700 + r() * 200)), dmg };
+    }).filter((b) => b.dmg > 0).map((b) => ({ ...b, frame: b.fx < 0.75 ? divOf(b.best).league : ['guild', 'linked', 'squadron'][Math.floor(b.fx * 37) % 3] }));
     raidBotCache = { key, rows };
     return rows;
   }
@@ -1661,7 +1679,7 @@
     };
   }
 
-  root.HN = { BETA, v22, raidToughen, toughPool, xp, grantBase, HN_IDS, HOW, RAIDS, LEAGUES, DIVS, toNewR, toOldR, syncLadder, LEAGUE_REWARD, S, save, owns, card, grant, entry, pool, squad, squadEntries, squadPower, powerOf, avgLevel, divOf, opponents, payout, arenaResult, claimDivisions, week, raidNow, raidTotals, bankRaid, claimRaid, Net, rng, botSquad, BOT_NAMES, BOT_AVS, BOT_NAMES_2 };
+  root.HN = { BETA, v22, raidToughen, toughPool, xp, grantBase, HN_IDS, HOW, RAIDS, LEAGUES, DIVS, toNewR, toOldR, syncLadder, LEAGUE_REWARD, S, save, owns, card, grant, entry, pool, squad, squadEntries, squadPower, powerOf, avgLevel, divOf, opponents, payout, arenaResult, claimDivisions, week, raidNow, raidTotals, bankRaid, claimRaid, Net, rng, botSquad, BOT_NAMES, BOT_AVS, BOT_NAMES_2, BOT_NAMES_X };
   // Win-streak flame: one emoji plus a CSS glow, tier every 10 wins.
   root.HN.streakFlame = (n, big) => { n = n | 0; if (n < 1) return '0'; const t = Math.min(9, Math.floor(n / 10)); return `<span class="hn-flame t${t}${big ? ' big' : ''}" title="${n} win streak"><i>🔥</i>${n}</span>`; };
 })(window);
@@ -1711,8 +1729,8 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
 /* ---- shared view shell ---- */
 .hn { --holo: #5fd8ff; position: relative; display: grid; gap: 14px; padding-bottom: 20px; }
 .hn::before { content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none; background: radial-gradient(ellipse at 50% -10%, rgba(95, 216, 255, 0.16), transparent 60%), repeating-linear-gradient(0deg, rgba(95, 216, 255, 0.025) 0 1px, transparent 1px 4px); }
-.hn-head { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 12px 14px; border-radius: 16px; background: linear-gradient(135deg, rgba(10, 30, 46, 0.92), rgba(6, 12, 22, 0.92)); border: 1px solid rgba(95, 216, 255, 0.35); box-shadow: 0 0 24px rgba(95, 216, 255, 0.12) inset; }
-.hn-head { position: sticky; top: calc(var(--topbar-h, 56px) + 6px); z-index: 6; }
+.hn-head { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 12px 14px; border-radius: 16px; background: linear-gradient(135deg, #0a1e2e, #060c16); border: 1px solid rgba(95, 216, 255, 0.35); box-shadow: 0 0 24px rgba(95, 216, 255, 0.12) inset; }
+.hn-head { position: sticky; top: calc(var(--topbar-h, 56px) + 6px); z-index: 30; }
 .hn-head .hn-badge-wrap { width: 64px; padding: 0; border: 0; background: none; cursor: pointer; display: grid; justify-items: center; gap: 2px; color: #8fe8ff; font: 700 9px var(--font-body, system-ui); letter-spacing: .04em; }
 .hn-head .hn-badge-wrap small { font-size: 9px; white-space: nowrap; }
 @media (max-width: 560px) {
@@ -5797,6 +5815,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const me = !uid || uid === Net.me || uid === 'me';
     const PC = root.PlayerCollections;
     if (me) { const h = S(); const p = myProfile(); return { uid: Net.me || 'me', me: true, ...p, rating: h.rating, level: Player.state.account.level, guild: h.guild || null, gpl: P2().soc.gpl, col: PC ? PC.encode() : '', use: PC ? PC.encodeUse() : '', ball: allBadges() }; }
+    if (HN.botProfile && (String(uid).startsWith('bot:') || NPC_ROWS.has(uid))) { const bp = HN.botProfile(uid); if (bp) return bp; }
     const a = Net.arena.find((x) => x.uid === uid) || Net.rows.get(uid) || (NPC_ROWS.has(uid) ? npcRow(uid) : null) || {};
     return { uid, me: false, col: a.col || '', use: a.use || '', ball: Array.isArray(a.ball) ? a.ball : null, tag: cleanTag(a.tag), av: a.av && D.UNIT_MAP[a.av] ? a.av : ((a.ground || [])[0] || {}).id || 'luke', frame: FRAMES[a.frame] ? a.frame : 'recruit', badges: Array.isArray(a.badges) ? a.badges.slice(0, 6) : [], nb: a.nb || 0, st: a.st || {}, rating: a.rating || 800, level: a.level || 1, guild: a.guild || null, gpl: a.gpl || 0 };
   }
@@ -5810,6 +5829,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     // Someone we haven't loaded (not on the boards we fetched): look up
     // their row once so everyone sees their callsign, not a placeholder.
     if (NPC_ROWS.has(uid)) return NPC_ROWS.get(uid).tag;
+    if (String(uid).startsWith('bot:')) return this.names[uid] || String(uid).slice(4);
     if (uid && !a && this.ready && this.db) lookupName(uid);
     return baseName(uid);
   };
@@ -5978,6 +5998,13 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const card = m.root.querySelector('.pc-card');
     const redraw = () => { card.innerHTML = body(); };
     m.root.addEventListener('click', (e) => {
+      const af = e.target.closest('[data-addfr]');
+      if (af && !af.disabled) {
+        af.disabled = true;
+        af.textContent = 'Sending…';
+        HN.friends.addUid(p.uid, Net.name(p.uid)).then((msg) => { af.textContent = msg || 'Add friend'; if (!/sent|Friends|Already/.test(msg)) af.disabled = false; });
+        return;
+      }
       const t = e.target.closest('[data-pct]');
       if (t) { tab = t.dataset.pct; pick = null; return redraw(); }
       const c = e.target.closest('[data-pcc]');
@@ -6470,7 +6497,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   const NPC_ROWS = new Map();
   const npcCrew = (gid) => [...NPC_ROWS.values()].filter((r) => r.guild === gid).map((r) => r.uid);
   (() => {
-    const names = (HN.BOT_NAMES || []).concat(HN.BOT_NAMES_2 || []);
+    const names = HN.BOT_NAMES_X || [];
     const avs = HN.BOT_AVS || ['luke'];
     const frames = ['bronze', 'silver', 'gold', 'kyber', 'guild', 'linked', 'squadron'];
     let k = 0;
@@ -6478,7 +6505,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       const r = HN.rng(9173 + gi * 131);
       for (let i = 0; i < g.size; i++) {
         const uid = `npc:${g.id}:${i}`;
-        const name = names[(k++ * 7 + gi * 3) % names.length];
+        const name = names[k++ % names.length];
         const rating = Math.round((g.min || 900) + r() * 900);
         NPC_ROWS.set(uid, { uid, tag: name, av: avs[Math.floor(r() * avs.length)], frame: frames[Math.floor(r() * frames.length)], rating, off: Math.round(((g.min || 900) - 1100) * 0.6 + (r() - 0.45) * 700), loff: Math.round((r() - 0.5) * 16), guild: g.id, gpl: Math.round(r() * 4000), gp: Math.round(r() * 900), nb: 2 + Math.floor(r() * 12), bot: true });
         Net.names[uid] = name;
@@ -6527,6 +6554,10 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const sr = HN.rng(hashS(uid) + wk * 13);
     const live = { ...row, rating, level, gp, gpw: wk, gpl: row.gpl + Math.round(weeksLive() * rp.gp * 0.8), nb: row.nb + Math.floor(weeksLive() * 0.6),
       ground: HN.botSquad('character', rating, sr, true), fleet: HN.botSquad('ship', rating, sr, true), st: { ws: Math.floor(r() * r() * 9) } };
+    // A league frame is only worn once you've reached that league.
+    const LG = ['bronze', 'silver', 'gold', 'kyber', 'legend'];
+    const li = LG.indexOf(live.frame);
+    if (li >= 0 && li > LG.indexOf(HN.divOf(rating).league)) live.frame = HN.divOf(rating).league;
     npcLiveCache.set(uid, { key, row: live });
     return live;
   }
@@ -6554,6 +6585,67 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   // Faces for the HoloNet: crew members show up as arena opponents and on the boards under their guild tag.
   HN.npcFace = (r) => { const ids = [...NPC_ROWS.keys()]; const row = NPC_ROWS.get(ids[Math.floor(r() * ids.length)]); const g = NPC_GUILDS.find((x) => x.id === row.guild); return { name: row.tag, av: row.av, frame: row.frame, gtag: g ? g.tag : '' }; };
   HN.npcTagOf = (name) => { for (const row of NPC_ROWS.values()) if (row.tag === name) { const g = NPC_GUILDS.find((x) => x.id === row.guild); return g ? g.tag : ''; } return ''; };
+  // Every pilot on the boards has a full profile you can open: picture, frame,
+  // stats, a collection that fits their rating and level, and badges. Same pilot,
+  // same profile, every time.
+  const BOT_ROWS = new Map();
+  const npcUidByName = new Map();
+  for (const row of NPC_ROWS.values()) if (!npcUidByName.has(row.tag)) npcUidByName.set(row.tag, row.uid);
+  HN.botUid = (x, keep = true) => {
+    if (!x || !x.name) return '';
+    const uid = `bot:${x.name}`;
+    const prev = BOT_ROWS.get(uid);
+    if (prev && keep) return uid;
+    const nu = npcUidByName.get(x.name);
+    const row = { ...(prev || {}), uid, tag: x.name, av: x.av || (prev && prev.av) || 'luke', frame: x.frame || (prev && prev.frame) || 'recruit', bot: true,
+      rating: x.best || (prev && prev.rating) || 1200, ws: x.ws != null ? x.ws : prev ? prev.ws : 0, ds: x.ds != null ? x.ds : prev ? prev.ds : 0, dw: x.dw != null ? x.dw : prev ? prev.dw : 0,
+      guild: nu ? NPC_ROWS.get(nu).guild : null, full: null };
+    BOT_ROWS.set(uid, row);
+    Net.names[uid] = x.name;
+    return uid;
+  };
+  HN.isBotUid = (uid) => typeof uid === 'string' && (uid.startsWith('bot:') || uid.startsWith('npc:'));
+  const NPC_FULL = new Map();
+  function botProfile(uid) {
+    let row = BOT_ROWS.get(uid);
+    if (!row && NPC_ROWS.has(uid)) {
+      const n = npcRow(uid);
+      const c = NPC_FULL.get(uid);
+      if (c && c.r === n.rating && c.frame === n.frame) return c;
+      row = { uid, tag: n.tag, av: n.av, frame: n.frame, rating: n.rating, ws: (n.st || {}).ws | 0, ds: 0, dw: 0, guild: n.guild, npc: n };
+    }
+    if (!row) return null;
+    if (row.full && row.full.r === row.rating) return row.full;
+    const r = HN.rng(hashS(uid));
+    const rating = row.rating;
+    // Collections and levels follow the 2.3 ladder's numbers, so they fit the same league on either ladder.
+    const base = HN.toOldR ? HN.toOldR(rating) : rating;
+    const level = row.npc ? row.npc.level : Math.round(clampN(8 + (base - 800) / 40 + (r() - 0.5) * 6, 6, 50));
+    const cap = D.MAX_LEVEL || 50;
+    const RW = { common: 1, rare: 1, epic: 0.8, legendary: 0.45 + base / 6000, mythic: Math.max(0.05, (base - 1400) / 3000), secret: base > 2000 ? 0.04 : 0 };
+    const pool = D.UNITS.filter((u) => !u.boss && !u.raid && (!u.exclusive || u.rarity === 'secret') && !String(u.id).startsWith('hn_') && D.UNIT_MAP[u.id] === u);
+    const want = Math.round(clampN(30 + level * 2.6 + r() * 20, 30, pool.length));
+    const picks = pool.filter((u) => r() < (RW[u.rarity] || 0.3)).sort(() => r() - 0.5).slice(0, want);
+    const stars = (u) => Math.max(1, Math.min(7, Math.round(1 + (base - 900) / 320 + (r() - 0.5) * 2 - (u.rarity === 'mythic' || u.rarity === 'secret' ? 1 : 0))));
+    const col = picks.map((u) => `${u.id}.${Math.max(1, Math.min(cap, Math.round(level - r() * 12)))}.${stars(u)}`);
+    const use = picks.slice(0, 10).map((u, k) => { const b = Math.round((120 - k * 9) * (0.6 + r())); return `${u.id}.${b}.${Math.round(b * (0.45 + r() * 0.25))}`; });
+    let ach = [];
+    try { ach = UI.achievements().filter((a) => !a.secret); } catch (e) { ach = []; }
+    const nb = Math.round(clampN(level * 0.9 + r() * 10, 3, Math.max(3, ach.length)));
+    const got = ach.slice().sort(() => r() - 0.5).slice(0, nb).sort((a, b) => (b.tier || 1) - (a.tier || 1));
+    const badges = got.slice(0, 6).map((a) => ({ id: a.id || '', tier: a.tier || 1, icon: a.icon, name: a.name, desc: String(a.desc || '').slice(0, 90), level: a.level }));
+    const games = Math.round(60 + level * 9 + r() * 200);
+    const wr = clampN(0.42 + (base - 1200) / 4000 + (r() - 0.5) * 0.08, 0.35, 0.8);
+    const w = Math.round(games * wr);
+    const full = { r: rating, uid, me: false, bot: true, tag: row.tag, av: D.UNIT_MAP[row.av] ? row.av : 'luke', frame: FRAMES[row.frame] ? row.frame : 'recruit', badges, ball: got.map((a) => ({ id: a.id || '', tier: a.tier || 1, icon: a.icon, name: a.name, desc: String(a.desc || '').slice(0, 90), level: a.level })), nb: got.length,
+      col: col.join(','), use: use.join(','), rating, level, guild: row.guild, gpl: Math.round(level * 140 * (0.5 + r())),
+      st: { w, l: games - w, best: rating + Math.round(r() * 60), ws: row.ws | 0, ds: row.ds | 0, dw: row.dw | 0, dl: Math.round((row.dw | 0) * (0.5 + r() * 0.6)), raid: Math.round(level * 9000 * (0.5 + r())), bosses: Math.round(level * 0.8 + r() * 10), cards: picks.length, seasons: 1 + Math.floor(r() * 2) } };
+    if (row.npc) { full.gpl = row.npc.gpl; NPC_FULL.set(uid, full); } else row.full = full;
+    return full;
+  }
+  // Computer guild members on the season board, at their current rating.
+  HN.npcBoard = () => [...NPC_ROWS.keys()].map((uid) => { const n = npcRow(uid); return { uid, npc: true, best: n.rating + (hashS(uid) % 40), ws: (n.st || {}).ws | 0 }; });
+  HN.botProfile = botProfile;
   // Their chatter: a few lines every few hours, plus a reply when you post.
   const NPC_LINES = ['Raid fronts are up, hit them when you can!', 'gg everyone, great week', 'Anyone got tips for the Fleet front?', 'Just pulled a legendary from a puck!!', 'Welcome to all the new pilots o7', 'Don\'t forget your arena battles today', 'Who else is grinding Beskar?', 'That Boss Trial is no joke', 'Ground front almost cleared, push!', 'Night shift checking in', 'Remember to use your raid runs', 'New season soon, who\'s going for Legend?', 'My squad finally hit level 40', 'Lol the Wampa just ate my whole team', 'Good luck in your duels everyone', 'Vault upgrades looking good this week', 'Anyone want a friendly battle?', 'May the Force be with you all'];
   const NPC_REPLY = ['Welcome aboard!', 'o7', 'Haha nice', 'Glad to have you here', 'gg!', 'Let\'s go!', 'Same here', 'Good luck out there', 'True', 'Hit the raid when you can, every hit counts'];
@@ -8348,7 +8440,9 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
       const peak = 2380 - i * 26 + Math.round((r() - 0.5) * 30);
       const best = HN.toNewR(Math.round(900 + (peak - 900) * (0.55 + 0.45 * frac)));
       const lg = HN.divOf(best).league;
-      const fr = i < 1 && frac > 0.5 ? 'champion' : i < 3 && frac > 0.5 ? 'podium' : r() < 0.7 ? lg : ['guild', 'linked', 'victor', 'squadron'][Math.floor(r() * 4)];
+      // Frames fit the pilot: only the very top wear Champion and Podium, only Kyber and Legend pilots wear Season Victor.
+      const extra = ['guild', 'linked', 'squadron'].concat(lg === 'kyber' || lg === 'legend' ? ['victor', 'victor'] : []);
+      const fr = i < 1 && frac > 0.5 ? 'champion' : i < 3 && frac > 0.5 ? 'podium' : r() < 0.7 ? lg : extra[Math.floor(r() * extra.length)];
       const hot = r();
       return { bot: true, name, best, av: avs[Math.floor(r() * avs.length)], frame: fr, ws: Math.floor(hot * hot * hot * (i < 10 ? 48 : 22)), ds: Math.floor(r() * r() * 12), dw: Math.max(0, Math.round((58 - i * 1.1) * (0.25 + 0.75 * frac))) };
     });
@@ -8359,6 +8453,7 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
     const rows = Net.arena.filter((a) => a.uid !== Net.me && typeof a.ss === 'number' && Math.floor(a.ss / 1e5) === sn).map((a) => ({ uid: a.uid, best: a.ss % 1e5 }));
     rows.push({ uid: Net.me || 'me', me: true, best: mySeasonBest() });
     rows.push(...bots(sn, seasonFrac()));
+    if (HN.npcBoard) rows.push(...HN.npcBoard());
     return rows.sort((a, b) => b.best - a.best);
   }
 
@@ -8379,7 +8474,7 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
         others = snap.docs.map((d) => ({ uid: d.id, ...(d.data() || {}) })).filter((a) => a.uid !== Net.me && typeof a.ss === 'number' && Math.floor(a.ss / 1e5) === prev.season).map((a) => a.ss % 1e5);
       } catch (e) { /* offline: rank against the bots only */ }
     }
-    const ladder = [...others, ...bots(prev.season, 1).map((b) => b.best)];
+    const ladder = [...others, ...bots(prev.season, 1).map((b) => b.best), ...(HN.npcBoard ? HN.npcBoard().map((b) => b.best) : [])];
     const rank = 1 + ladder.filter((v) => v > prev.best).length;
     h.lb = { season: sn, best: mySeasonBest() };
     const rw = rewardFor(rank);
@@ -8486,27 +8581,27 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
   const val = (b, sm, badge = '') => `${badge}<span class="v"><b>${b}</b><small>${sm}</small></span>`;
   const whoOf = (x, fl = '') => {
     if (x.guild) { const g = x.guild; return `<span class="hv-bot">${SO.emblem(g, 34)}<span class="nm"><b style="color:${g.color}">[${esc(g.tag)}] ${esc(g.name)}</b><small>${fmt(g.n || 1)} member${(g.n || 1) === 1 ? '' : 's'}${g.lvl ? ` · level ${g.lvl}` : ''}</small></span></span>`; }
-    if (x.bot) { const t = HN.npcTagOf ? HN.npcTagOf(x.name) : ''; return `<span class="hv-bot">${SO.avatar({ av: x.av, frame: x.frame }, 'sm')}<span class="nm"><b>${esc(x.name)}${fl ? ` ${fl}` : ''}</b><small>${t ? `[${esc(t)}] ` : ''}${esc(HN.divOf(x.best).name)}</small></span></span>`; }
+    if (x.bot) { const uid = HN.botUid(x); const bp = HN.botProfile ? HN.botProfile(uid) : null; const nb = bp ? bp.nb : 0; return `<button type="button" class="hv-bot" data-hn="prof" data-uid="${esc(uid)}">${SO.avatar({ av: x.av, frame: x.frame }, 'sm')}<span class="nm"><b>${esc(x.name)}${fl ? ` ${fl}` : ''}</b><small>${nb} badge${nb === 1 ? '' : 's'}</small></span></button>`; }
     return SO.chip(isMe(x) ? 'me' : x.uid).replace('</b>', `${fl ? ` ${fl}` : ''}</b>`);
   };
   const flameOf = (x) => {
     if (x.guild) return '';
-    const ws = x.bot ? x.ws : isMe(x) ? (SO.P2().streak | 0) : ((Net.arena.find((a) => a.uid === x.uid) || {}).st || {}).ws | 0;
+    const ws = x.bot || x.npc ? x.ws : isMe(x) ? (SO.P2().streak | 0) : ((Net.arena.find((a) => a.uid === x.uid) || {}).st || {}).ws | 0;
     return HN.streakFlame && ws >= 3 ? HN.streakFlame(ws) : '';
   };
   // Rank, name, value, then an open lane for banners.
   const rowOf = (x, i, right, tr = '') => {
     const me = x.guild ? x.guild.id === SO.myGuildId() : isMe(x);
-    return `<div class="g-row lb-row ${me ? 'me' : ''} ${i < 3 ? `t${i + 1}` : ''}"><span class="rk"><b>${i + 1}</b>${tr}</span><span class="lb-who">${whoOf(x, flameOf(x))}</span><span class="r">${right}</span><span class="lb-banner" aria-hidden="true"></span></div>`;
+    return `<div class="g-row lb-row ${me ? 'me' : ''} ${i < 3 ? `t${i + 1}` : ''}" ${x.guild ? `data-hn="gpeek" data-id="${esc(x.guild.id)}" role="button" tabindex="0"` : ''}><span class="rk"><b>${i + 1}</b>${tr}</span><span class="lb-who">${whoOf(x, flameOf(x))}</span><span class="r">${right}</span><span class="lb-banner" aria-hidden="true"></span></div>`;
   };
   const podPic = (x) => (x.guild ? SO.emblem(x.guild, 64) : x.bot ? SO.avatar({ av: x.av, frame: x.frame }, 'md') : SO.avatar(SO.prof(isMe(x) ? 'me' : x.uid), 'md'));
   const podName = (x) => (x.guild ? `[${x.guild.tag}] ${x.guild.name}` : x.bot ? x.name : isMe(x) ? myName() : Net.name(x.uid));
   function podium(rows, valOf) {
     if (rows.length < 3) return '';
     const spot = (x, i) => {
-      const tag = !x.guild && !x.bot ? 'button type="button"' : 'div';
-      const end = tag === 'div' ? 'div' : 'button';
-      const link = !x.guild && !x.bot ? ` data-hn="prof" data-uid="${esc(isMe(x) ? 'me' : x.uid)}"` : '';
+      const tag = 'button type="button"';
+      const end = 'button';
+      const link = x.guild ? ` data-hn="gpeek" data-id="${esc(x.guild.id)}"` : ` data-hn="prof" data-uid="${esc(x.bot ? HN.botUid(x) : isMe(x) ? 'me' : x.uid)}"`;
       return `<${tag} class="lb-pod p${i + 1} ${(x.guild ? x.guild.id === SO.myGuildId() : isMe(x)) ? 'me' : ''}"${link}><span class="medal">${['1ST', '2ND', '3RD'][i]}</span><span class="pic">${podPic(x)}</span><b>${esc(podName(x))}</b>${valOf(x)}<span class="step"></span></${end}>`;
     };
     return `<div class="lb-podium">${spot(rows[1], 1)}${spot(rows[0], 0)}${spot(rows[2], 2)}</div>`;
@@ -8531,6 +8626,8 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
   }
   V.leaders = () => {
     const tabs = [['season', 'Season'], ['duels', 'Duel wins'], ['raid', 'Raid damage'], ['guilds', 'Guilds']];
+    // The season board's pilots are the canonical ones: same picture, frame and profile on every board.
+    if (HN.botUid) bots(SO.seasonNo(), seasonFrac()).forEach((b) => HN.botUid(b, false));
     let body = '';
     if (lbTab === 'season') {
       const rows = seasonRows();
@@ -8547,16 +8644,40 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
       body = `<p class="muted small" style="margin:0">Most Live Duel wins this season.</p>${board('duels', rows, (x) => x.dw, 'wins', (x, pod) => (pod ? `${fmt(x.dw)} wins` : val(fmt(x.dw), 'wins')))}`;
     } else if (lbTab === 'raid') {
       const t = HN.raidTotals();
-      const rows = t.rows.map((x) => ({ uid: x.uid === 'me' ? 'me' : x.uid, me: x.uid === Net.me || x.uid === 'me', dmg: x.dmg })).concat(t.bots || []).sort((a, b) => b.dmg - a.dmg);
+      const rows = t.rows.map((x) => ({ uid: x.uid === 'me' ? 'me' : x.uid, me: x.uid === Net.me || x.uid === 'me', dmg: x.dmg })).concat((t.bots || []).map((b) => { const c = HN.botProfile && HN.botProfile(HN.botUid(b)); return c ? { ...b, av: c.av, frame: c.frame, best: c.rating } : b; })).sort((a, b) => b.dmg - a.dmg);
       body = `<p class="muted small" style="margin:0">Damage on ${esc(HN.raidNow().name)} this week · ${t.fallen ? 'DEFEATED' : `${Math.round((t.left / t.pool) * 100)}% health left`}.</p>${board('raid', rows, (x) => x.dmg, 'damage', (x, pod) => (pod ? `${fmt(x.dmg)} dmg` : val(fmt(x.dmg), 'damage')))}`;
     } else {
       const rows = SO.G.guilds.slice().sort((a, b) => (b.xp || 0) - (a.xp || 0)).map((g) => ({ guild: g, xp: g.xp || 0 }));
       body = `<p class="muted small" style="margin:0">Guilds by guild XP.</p>${rows.length ? board('guilds', rows, (x) => x.xp, 'XP', (x, pod) => (pod ? `${fmt(x.xp)} XP` : val(fmt(x.xp), 'guild XP')), 25) : '<div class="hn-free"><span class="grow">No guilds yet. Found the first one!</span></div>'}`;
     }
-    return `${head('LEADERBOARDS', 'Tap a name to see their profile.', true)}
-      ${root.Update21 && root.Update21.on() ? '<button type="button" class="hn-btn ghost hv-find" data-hn="findpilot">Find a pilot by callsign ›</button>' : ''}
-      <div class="hn-seg hv-tabs" role="tablist">${tabs.map(([k, n]) => `<button type="button" class="${lbTab === k ? 'on' : ''}" data-hn="lbtab" data-k="${k}">${n}</button>`).join('')}</div>
-      ${body}`;
+    return `${head('LEADERBOARDS', 'Tap any pilot or guild to see their profile.', true)}
+      <div class="lb-wrap">
+      <div class="lb-bar"><div class="hn-seg hv-tabs" role="tablist">${tabs.map(([k, n]) => `<button type="button" class="${lbTab === k ? 'on' : ''}" data-hn="lbtab" data-k="${k}">${n}</button>`).join('')}</div>
+      ${root.Update21 && root.Update21.on() ? '<button type="button" class="lb-find" data-hn="findpilot" aria-label="Find a pilot by callsign"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M15 15l5 5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg><span>Find a pilot</span></button>' : ''}</div>
+      ${body}</div>`;
+  };
+  // A guild's card from the boards: emblem, motto, level, how to get in, and its members (tap one for their profile).
+  CL.gpeek = (b) => {
+    const g = SO.guildOf(b.dataset.id) || SO.G.guilds.find((x) => x.id === b.dataset.id);
+    if (!g) return;
+    const mem = SO.membersOf(g.id).map((u) => ({ u, p: SO.prof(u) })).sort((a, z) => z.p.rating - a.p.rating);
+    const lv = SO.guildLevel ? SO.guildLevel(g.id).lv : g.lvl || 1;
+    const mode = SO.MODES[SO.modeOf ? SO.modeOf(g) : 'open'] || '';
+    const m = openModal(`<div class="lb-gpeek" style="--gc:${g.color}">
+      <button type="button" class="pf-x" data-x aria-label="Close">✕</button>
+      <div class="top">${SO.emblem(g, 72)}<div><p class="eyebrow">Guild</p><h2 style="color:${g.color}">[${esc(g.tag)}] ${esc(g.name)}</h2><p class="muted small">${esc(g.motto || '')}</p></div></div>
+      <div class="pf-stats"><div><b>${lv}</b><span>Level</span></div><div><b>${fmt(g.xp || 0)}</b><span>Guild XP</span></div><div><b>${mem.length || g.n || 1}</b><span>Members</span></div><div><b>${esc(mode)}</b><span>Joining</span></div></div>
+      <h3 class="pf-h">Members</h3>
+      <div class="g-list">${mem.slice(0, 30).map(({ u, p }) => { const d = HN.divOf(p.rating); return `<div class="g-row lb-row">${SO.chip(u)}<span class="r">${A.badge(d.league, d.div)}<span class="v"><b>${fmt(p.rating)}</b><small>${esc(d.name)}</small></span></span><span class="lb-banner"></span></div>`; }).join('') || '<p class="muted small">No members to show right now.</p>'}</div>
+      <div class="modal-actions">${SO.myGuildId() ? '' : '<button type="button" class="btn" data-x="find">Find guilds</button>'}<button type="button" class="btn btn-primary" data-x>Close</button></div></div>`, { small: true });
+    m.root.addEventListener('click', (e) => {
+      const c = e.target.closest('[data-hn="prof"]');
+      if (c) { CL.prof(c); return; }
+      const x = e.target.closest('[data-x]');
+      if (!x) return;
+      m.close();
+      if (x.dataset.x === 'find') go('guild');
+    });
   };
   CL.lbtab = (b, render) => { lbTab = b.dataset.k; if (lbTab === 'guilds') SO.loadGuilds(); if (lbTab === 'duels') Net.want('duels'); render(); };
 
@@ -8864,6 +8985,19 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
 .g-pics .g-e { display: grid; justify-items: center; gap: 2px; padding: 4px 2px; }
 .g-pics .g-e small { font-size: 9px; line-height: 1.1; color: #bfe6f6; text-align: center; max-width: 64px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hv-bot { display: flex; align-items: center; gap: 8px; min-width: 0; }
+button.hv-bot { padding: 2px 8px 2px 0; border: 0; border-radius: 999px; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; } button.hv-bot:hover, button.hv-bot:focus-visible { background: rgba(95, 216, 255, 0.1); }
+.lb-wrap { display: grid; gap: 10px; width: 100%; max-width: 780px; margin: 0 auto; }
+.lb-bar { display: flex; gap: 8px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.lb-find { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 999px; border: 1px solid rgba(143, 232, 255, 0.6); background: #0e2434; color: #dff8ff; font: 700 12px var(--font-body, system-ui); letter-spacing: .06em; cursor: pointer; }
+.lb-find svg { width: 16px; height: 16px; } .lb-find:hover { background: #163a52; }
+.lb-wrap .g-row.lb-row { background: #102233; border-color: rgba(143, 232, 255, 0.22); color: #f2fbff; }
+.lb-wrap .g-row.lb-row:nth-child(even) { background: #0d1d2c; }
+.lb-wrap .g-row.lb-row.me { background: #173650; border-color: #8fe8ff; }
+.lb-wrap .g-row.lb-row.me .rk b { color: #8fe8ff; }
+.lb-wrap .lb-row .nm small, .lb-wrap .lb-row .pf-chip .nm small, .lb-wrap .lb-row .r .v small { color: #c4dcea; }
+.lb-wrap > .muted.small, .lb-wrap .hn-sec .muted.small { color: #c4dcea; }
+.lb-row[data-hn="gpeek"] { cursor: pointer; } .lb-row[data-hn="gpeek"]:hover { border-color: rgba(143, 232, 255, 0.5); }
+.lb-gpeek { display: grid; gap: 12px; } .lb-gpeek .top { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; align-items: center; } .lb-gpeek h2 { margin: 0; font-family: var(--font-display); letter-spacing: .06em; overflow-wrap: anywhere; } .lb-gpeek .lb-row { grid-template-columns: minmax(0, 14rem) auto minmax(0, 1fr); }
 .lb-row { display: grid; grid-template-columns: 34px minmax(0, 15rem) auto minmax(0, 1fr); gap: 10px; }
 .lb-row .rk { display: grid; justify-items: center; line-height: 1.05; } .lb-row .rk b { font: 700 14px var(--font-display); color: #cfefff; }
 .lb-row .rk i { font-style: normal; font-size: 9px; font-weight: 700; } .lb-row .rk .up { color: #6dffa0; } .lb-row .rk .dn { color: #ff7a7a; }
@@ -8878,7 +9012,7 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
 .lb-you .n { display: grid; justify-items: center; } .lb-you .n small { font-size: 9px; letter-spacing: .14em; color: #9fc4d8; } .lb-you .n b { font: 700 24px var(--font-display); color: #8fe8ff; }
 .lb-you .t { display: grid; min-width: 0; } .lb-you .t b { font-family: var(--font-display); letter-spacing: .04em; } .lb-you .t small { color: #9fc4d8; font-size: 11px; }
 .lb-you .pct { font: 700 12px var(--font-display); color: #ffd23f; letter-spacing: .06em; white-space: nowrap; }
-.lb-podium { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; align-items: end; margin-top: 4px; width: 100%; max-width: 620px; }
+.lb-podium { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; align-items: end; margin: 4px auto 0; width: 100%; max-width: 620px; }
 .lb-pod { position: relative; display: grid; justify-items: center; gap: 4px; padding: 10px 6px 0; border: 1px solid rgba(95, 216, 255, 0.2); border-radius: 14px 14px 6px 6px; background: linear-gradient(180deg, rgba(10, 30, 46, 0.9), rgba(6, 12, 22, 0.95)); color: #e6f6ff; font: inherit; text-align: center; min-width: 0; overflow: hidden; cursor: default; }
 button.lb-pod { cursor: pointer; }
 .lb-pod .pic { display: grid; place-items: center; }
@@ -9502,7 +9636,7 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
       return HN.setupProfile((ok) => { if (ok !== false && HN.hasProfile()) open(); }, false);
     }
     let tab = F.incoming().length ? 'req' : 'list';
-    const m = openModal('<div class="frp" data-frp></div>', { cls: 'frp-modal', onClose: () => { clearInterval(timer); F.view = null; F.chatWith = null; } });
+    const m = openModal('<div class="frp" data-frp></div>', { cls: 'frp-modal', onClose: () => { clearInterval(timer); F.view = null; F.chatWith = null; F.botChat = null; } });
     const host = m.root.querySelector('[data-frp]');
     let status = { msg: '', cls: '' };
     const st = (msg, cls) => { status = { msg, cls }; const n = host.querySelector('[data-st]'); if (n) { n.textContent = msg || ''; n.className = `pe-st ${cls || ''}`; } };
@@ -9512,9 +9646,32 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
       const live = isOnline(uid);
       const busy = live && o && o.busy;
       const pic = HN.fcard ? HN.fcard.pic(uid, F.otherName(r), 'sm') : '';
-      return `<div class="fr-row"><button type="button" class="fr-av ${pic ? 'pic' : ''}" data-f="prof" data-id="${esc(r.id)}" aria-label="${esc(F.otherName(r))}'s profile">${pic || esc(F.otherName(r).slice(0, 2).toUpperCase())}</button>
-        <span class="fr-who"><b>${esc(F.otherName(r))}</b><small class="${live ? (busy ? 'busy' : 'on') : ''}">${esc(doingNow(uid))}</small></span>
-        <span class="fr-go"><button type="button" class="btn fr-chat" data-f="chat" data-id="${esc(r.id)}">Chat${F.unread(r.id) ? `<i class="fr-n">${F.unread(r.id) > 9 ? '9+' : F.unread(r.id)}</i>` : ''}</button><button type="button" class="btn" data-f="ground" data-id="${esc(r.id)}" ${live && !busy ? '' : 'disabled'}>Ground</button><button type="button" class="btn" data-f="fleet" data-id="${esc(r.id)}" ${live && !busy ? '' : 'disabled'}>Fleet</button><button type="button" class="fr-x" data-f="remove" data-id="${esc(r.id)}" aria-label="Remove friend" title="Remove friend">✕</button></span></div>`;
+      return `<div class="fr-row ${isFav(uid) ? 'fav' : ''}"><button type="button" class="fr-av ${pic ? 'pic' : ''}" data-f="prof" data-id="${esc(r.id)}" aria-label="${esc(F.otherName(r))}'s profile">${pic || esc(F.otherName(r).slice(0, 2).toUpperCase())}</button>
+        <span class="fr-who"><b>${esc(F.otherName(r))}</b><small class="${live ? (busy ? 'busy' : 'on') : ''}"><i class="fr-pl" title="Real player">PLAYER</i>${esc(doingNow(uid))}</small></span>
+        <span class="fr-go">${star(uid)}<button type="button" class="btn fr-chat" data-f="chat" data-id="${esc(r.id)}">Chat${F.unread(r.id) ? `<i class="fr-n">${F.unread(r.id) > 9 ? '9+' : F.unread(r.id)}</i>` : ''}</button><button type="button" class="btn" data-f="ground" data-id="${esc(r.id)}" ${live && !busy ? '' : 'disabled'}>Ground</button><button type="button" class="btn" data-f="fleet" data-id="${esc(r.id)}" ${live && !busy ? '' : 'disabled'}>Fleet</button><button type="button" class="fr-x" data-f="remove" data-id="${esc(r.id)}" aria-label="Remove friend" title="Remove friend">✕</button></span></div>`;
+    };
+    const star = (uid) => `<button type="button" class="fr-star ${isFav(uid) ? 'on' : ''}" data-fstar="${esc(uid)}" aria-pressed="${isFav(uid)}" aria-label="${isFav(uid) ? 'Unpin from the top' : 'Favorite: pin to the top'}" title="${isFav(uid) ? 'Favorite' : 'Make favorite'}">★</button>`;
+    const botPic = (b) => { const e = BF()[b.uid] || {}; if (HN.botUid && b.uid.startsWith('bot:')) HN.botUid({ name: b.name, av: e.av, frame: e.frame, best: e.best }); return HN.avatarFor ? HN.avatarFor(b.uid) : ''; };
+    const botRow = (b) => {
+      const n = botNow(b.uid);
+      return `<div class="fr-row ${isFav(b.uid) ? 'fav' : ''}"><button type="button" class="fr-av pic" data-fbot="${esc(b.uid)}" aria-label="${esc(b.name)}'s profile">${botPic(b)}</button>
+        <span class="fr-who"><b>${esc(b.name)}</b><small class="${n.on ? 'busy' : ''}">${esc(n.txt)}</small></span>
+        <span class="fr-go">${star(b.uid)}<button type="button" class="btn fr-chat" data-fbotchat="${esc(b.uid)}">Chat</button><button type="button" class="btn" disabled>Ground</button><button type="button" class="btn" disabled>Fleet</button><button type="button" class="fr-x" data-fbotx="${esc(b.uid)}" aria-label="Remove friend" title="Remove friend">✕</button></span></div>`;
+    };
+    const renderBotChat = (uid) => {
+      const nm = (BF()[uid] || {}).name || Net.name(uid);
+      const lines = botChatLines(uid).map((m) => `<p class="${m.me ? 'me' : ''}"><span>${esc(m.x)}</span></p>`).join('');
+      const log0 = host.dataset.chat === uid && host.querySelector('[data-dmlog]');
+      if (log0) { log0.innerHTML = lines || '<p class="muted small fr-empty">No messages yet. Say hi!</p>'; log0.scrollTop = log0.scrollHeight; return; }
+      host.dataset.chat = uid;
+      host.innerHTML = `<div class="fr-head"><button type="button" class="btn" data-fbotback>‹ Friends</button><div class="fr-chatwho"><b>${esc(nm)}</b><small>${esc(botNow(uid).txt)}</small></div></div>
+        <div class="fr-dmlog" data-dmlog>${lines || '<p class="muted small fr-empty">No messages yet. Say hi!</p>'}</div>
+        <form class="fr-dmform" data-bdmform><input type="text" data-dmin maxlength="160" placeholder="Message ${esc(nm)}…" autocomplete="off" enterkeyhint="send"><button type="submit" class="btn btn-primary">Send</button></form>`;
+      const inp = host.querySelector('[data-dmin]');
+      const log = host.querySelector('[data-dmlog]');
+      log.scrollTop = log.scrollHeight;
+      host.querySelector('[data-bdmform]').addEventListener('submit', (e) => { e.preventDefault(); if (botSend(uid, inp.value)) { inp.value = ''; renderBotChat(uid); inp.focus(); } });
+      setTimeout(() => inp.focus(), 60);
     };
     const renderChat = (r) => {
       markSeen(r.id);
@@ -9552,15 +9709,22 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
     let hadFocus = false;
     const render = () => {
       hadFocus = !!(document.activeElement && document.activeElement.matches && document.activeElement.matches('.frp [data-q]'));
+      if (F.botChat) return renderBotChat(F.botChat);
       if (F.chatWith) { const cr = F.rows.get(F.chatWith); if (cr && cr.ok) return renderChat(cr); F.chatWith = null; }
-      const fr = F.friends().sort((x, y) => Number(isOnline(F.other(y))) - Number(isOnline(F.other(x))) || F.otherName(x).localeCompare(F.otherName(y)));
+      const fr = F.friends();
+      // Favorites first, then whoever's online, then A to Z.
+      const items = fr.map((r) => ({ uid: F.other(r), name: F.otherName(r), on: isOnline(F.other(r)), html: () => row(r) }))
+        .concat(botFriends().map((b) => ({ uid: b.uid, name: b.name, on: botNow(b.uid).on, html: () => botRow(b) })))
+        .sort((x, y) => Number(isFav(y.uid)) - Number(isFav(x.uid)) || Number(y.on) - Number(x.on) || x.name.localeCompare(y.name));
+      const nFav = items.filter((x) => isFav(x.uid)).length;
+      const bsent = botSent();
       const inc = F.incoming();
       const out = F.outgoing();
       const body = tab === 'list'
-        ? (fr.length ? `<div class="fr-list">${fr.map(row).join('')}</div>` : '<p class="muted small fr-empty">No friends yet. Tap <b>Add</b> and type a pilot\'s callsign.</p>')
+        ? (items.length ? `${nFav ? '<h4 class="fr-sub">★ Favorites</h4>' : ''}<div class="fr-list">${items.map((x, k) => `${nFav && k === nFav ? '</div><h4 class="fr-sub">Everyone</h4><div class="fr-list">' : ''}${x.html()}`).join('')}</div>` : '<p class="muted small fr-empty">No friends yet. Tap <b>Add</b> and type a pilot\'s callsign, or tap anyone on the leaderboards.</p>')
         : tab === 'req'
           ? `${inc.length ? `<h4>Wants to be friends</h4><div class="fr-list">${inc.map((r) => `<div class="fr-row"><span class="fr-av">${esc(F.otherName(r).slice(0, 2).toUpperCase())}</span><span class="fr-who"><b>${esc(F.otherName(r))}</b><small>Friend request</small></span><span class="fr-go"><button type="button" class="btn" data-f="decline" data-id="${esc(r.id)}">Decline</button><button type="button" class="btn btn-primary" data-f="accept" data-id="${esc(r.id)}">Accept</button></span></div>`).join('')}</div>` : '<p class="muted small fr-empty">No new requests.</p>'}
-            ${out.length ? `<h4>Sent</h4><div class="fr-list">${out.map((r) => `<div class="fr-row"><span class="fr-av">${esc(F.otherName(r).slice(0, 2).toUpperCase())}</span><span class="fr-who"><b>${esc(F.otherName(r))}</b><small>Waiting for them</small></span><span class="fr-go"><button type="button" class="btn" data-f="cancel" data-id="${esc(r.id)}">Cancel</button></span></div>`).join('')}</div>` : ''}`
+            ${out.length || bsent.length ? `<h4>Sent</h4><div class="fr-list">${bsent.map((b) => `<div class="fr-row"><span class="fr-av">${esc(b.name.slice(0, 2).toUpperCase())}</span><span class="fr-who"><b>${esc(b.name)}</b><small>Waiting for them</small></span><span class="fr-go"><button type="button" class="btn" data-fbotx="${esc(b.uid)}">Cancel</button></span></div>`).join('')}${out.map((r) => `<div class="fr-row"><span class="fr-av">${esc(F.otherName(r).slice(0, 2).toUpperCase())}</span><span class="fr-who"><b>${esc(F.otherName(r))}</b><small>Waiting for them</small></span><span class="fr-go"><button type="button" class="btn" data-f="cancel" data-id="${esc(r.id)}">Cancel</button></span></div>`).join('')}</div>` : ''}`
           : `<p class="muted small">Type a pilot's callsign to send them a friend request. They'll see it next time they open Friends.</p>
             <div class="fp-row"><input class="pf-in" data-q maxlength="16" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Search callsigns"><button type="button" class="btn btn-primary" data-f="add">Search</button></div>
             <div class="fr-sug" data-sug hidden></div>
@@ -9569,7 +9733,7 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
       host.innerHTML = `<div class="fr-head"><div><p class="eyebrow">Friends</p><h2>Friendly battles</h2></div><button type="button" class="btn" data-f="close">Close</button></div>
         <p class="muted small fr-blurb">Challenge a friend who's online to a Ground or Fleet battle: you each ban cards and build a squad. Just for fun: no rating, no rewards.</p>
         ${HN.Duel && HN.Duel.trueOn && HN.Duel.trueOn() ? `<div class="fr-mode" role="group" aria-label="Battle mode"><button type="button" class="${frMode() === 'even' ? 'on' : ''}" data-frmode="even"><b>Even</b><small>Every card at Level ${(HN.Duel && HN.Duel.LEVEL) || 20} ★${(HN.Duel && HN.Duel.STARS) || 3}</small></button><button type="button" class="${frMode() === 'true' ? 'on' : ''}" data-frmode="true"><b>True Strength</b><small>Real levels and stars</small></button></div>` : ''}
-        <div class="fr-tabs"><button type="button" class="${tab === 'list' ? 'on' : ''}" data-tab="list">Friends <i>${fr.length}</i></button><button type="button" class="${tab === 'req' ? 'on' : ''}" data-tab="req">Requests ${inc.length ? `<i class="hot">${inc.length}</i>` : ''}</button><button type="button" class="${tab === 'add' ? 'on' : ''}" data-tab="add">Add</button></div>
+        <div class="fr-tabs"><button type="button" class="${tab === 'list' ? 'on' : ''}" data-tab="list">Friends <i>${items.length}</i></button><button type="button" class="${tab === 'req' ? 'on' : ''}" data-tab="req">Requests ${inc.length ? `<i class="hot">${inc.length}</i>` : ''}</button><button type="button" class="${tab === 'add' ? 'on' : ''}" data-tab="add">Add</button></div>
         ${body}<p class="pe-st ${status.cls}" data-st>${esc(status.msg)}</p>`;
       if (tab === 'add') {
         const i = host.querySelector('[data-q]');
@@ -9630,6 +9794,15 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
       if (t) { tab = t.dataset.tab; status = { msg: '', cls: '' }; render(); return; }
       const gj = e.target.closest('[data-gjoin]');
       if (gj) { if (HN.fcard) HN.fcard.join(gj.dataset.gjoin, () => m.close()); return; }
+      const bc = e.target.closest('[data-fbotchat]');
+      if (bc) { F.botChat = bc.dataset.fbotchat; host.dataset.chat = ''; render(); return; }
+      if (e.target.closest('[data-fbotback]')) { F.botChat = null; render(); return; }
+      const sb = e.target.closest('[data-fstar]');
+      if (sb) { const on2 = toggleFav(sb.dataset.fstar); st(on2 ? 'Pinned to the top of your friends.' : 'Unpinned.', 'good'); render(); return; }
+      const bp = e.target.closest('[data-fbot]');
+      if (bp) { const C = HN.clicks || {}; if (C.prof) C.prof({ dataset: { uid: bp.dataset.fbot } }); return; }
+      const bx = e.target.closest('[data-fbotx]');
+      if (bx) { const u = bx.dataset.fbotx; const nm = (BF()[u] || {}).name || 'them'; delete BF()[u]; const f = favs(); if (f.includes(u)) f.splice(f.indexOf(u), 1); HN.save(); st(`${nm} removed.`, ''); render(); return; }
       const fm = e.target.closest('[data-frmode]');
       if (fm) { try { localStorage.setItem('swcg-fr-mode', fm.dataset.frmode); } catch (err) { /* storage blocked */ } host.querySelectorAll('[data-frmode]').forEach((x) => x.classList.toggle('on', x === fm)); return; }
       const b = e.target.closest('[data-f]');
@@ -9713,7 +9886,73 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
   }
   setTimeout(() => { inviterRequest(); }, 8000);
   setInterval(() => { if (!document.hidden) inviterRequest(); }, 5 * 60000);
-  HN.friends = { boot, open, addUid, sendCard, pairId, chatWith: (uid) => { const r = F.rows.get(pairId(Net.me, uid)); if (!r || !r.ok) return; F.chatWith = r.id; open(); }, badge: () => F.badge(), isFriend: (uid) => F.isFriend(uid), state: (uid) => { const r = F.rows.get(pairId(Net.me, uid)); return r ? (r.ok ? 'friends' : r.by === Net.me ? 'sent' : 'incoming') : ''; }, F };
+  // Pilots who aren't real players can be friends too: the request is accepted
+  // a little later, they show up in your list, and their profile opens from it.
+  const BF = () => { const h = HN.S(); h.botFr = h.botFr || {}; return h.botFr; };
+  const favs = () => { const h = HN.S(); h.favFr = h.favFr || []; return h.favFr; };
+  const isFav = (uid) => favs().includes(uid);
+  const toggleFav = (uid) => { const f = favs(); const k = f.indexOf(uid); if (k >= 0) f.splice(k, 1); else f.push(uid); HN.save(); return k < 0; };
+  const botState = (uid) => { const b = BF()[uid]; return !b ? '' : Date.now() >= b.acc ? 'friends' : 'sent'; };
+  const botAdd = (uid, nm) => {
+    const b = BF();
+    if (b[uid]) return Promise.resolve(botState(uid) === 'friends' ? 'Friends!' : 'Request sent');
+    const r = HN.rng((Date.now() % 1e9) + uid.length)();
+    const bp = HN.botProfile && uid.startsWith('bot:') ? HN.botProfile(uid) : null;
+    b[uid] = { name: nm || Net.name(uid), at: Date.now(), acc: Date.now() + Math.round(20000 + r * 100000), ...(bp ? { av: bp.av, frame: bp.frame, best: bp.rating } : {}) };
+    HN.save();
+    setTimeout(() => { dot(); redraw(); }, b[uid].acc - Date.now() + 200);
+    return Promise.resolve('Request sent');
+  };
+  const botFriends = () => Object.entries(BF()).filter(([u]) => botState(u) === 'friends').map(([uid, b]) => ({ uid, name: b.name, bot: true }));
+  const botSent = () => Object.entries(BF()).filter(([u]) => botState(u) === 'sent').map(([uid, b]) => ({ uid, name: b.name, bot: true }));
+  // Chat with computer pilots: they answer after a moment if they're on, later if not.
+  const BCH = () => { const h = HN.S(); h.botChat = h.botChat || {}; return h.botChat; };
+  const BOT_REPLY = {
+    hi: ['hey!', 'yo whats up', 'hey hey', 'sup pilot', 'hi! wanna raid later?'],
+    gg: ['gg!', 'ggs', 'gg that was close', 'gg wp'],
+    q: ['yeah for sure', 'hmm not sure tbh', 'probably lol', 'idk, maybe after this match', 'yep', 'nah not yet'],
+    raid: ['im in for the raid', 'raid boss is tanky this week', 'did like 40k on it earlier', 'lets hit it tonight'],
+    rank: ['grinding ranked rn', 'stuck in my division lol', 'almost promoted!', 'ranked is sweaty today'],
+    any: ['lol', 'nice', 'facts', 'haha yeah', 'true', 'same', 'thats sick', 'ok bet', 'brb one sec', 'good luck out there'],
+  };
+  const pickReply = (uid, text, n) => {
+    const t = String(text).toLowerCase();
+    const k = /\b(hi|hey|yo|hello|sup)\b/.test(t) ? 'hi' : /\bgg\b/.test(t) ? 'gg' : /raid|boss/.test(t) ? 'raid' : /rank|arena|legend|kyber|division/.test(t) ? 'rank' : /\?/.test(t) ? 'q' : 'any';
+    const list = BOT_REPLY[k];
+    return list[(uid.length * 7 + n * 13 + t.length) % list.length];
+  };
+  const botChatLines = (uid) => {
+    const c = BCH()[uid] || (BCH()[uid] = []);
+    let changed = false;
+    c.forEach((m) => { if (m.pend && Date.now() >= m.t) { delete m.pend; changed = true; } });
+    if (changed) HN.save();
+    return c.filter((m) => !m.pend);
+  };
+  const botSend = (uid, raw) => {
+    const text = String(raw || '').trim().slice(0, 160);
+    if (!text) return false;
+    const cl = HN.safe && HN.safe.clean ? HN.safe.clean(text) : { text };
+    if (cl.blocked || !String(cl.text || '').trim()) { toast('That message can\'t be sent.'); return false; }
+    const c = BCH()[uid] || (BCH()[uid] = []);
+    const now = Date.now();
+    c.push({ me: 1, x: cl.text.trim(), t: now });
+    const on2 = botNow(uid).on;
+    const wait = on2 ? 2500 + (text.length % 5) * 900 : 45000 + (text.length % 7) * 20000;
+    if (!c.some((m) => m.pend)) { c.push({ x: pickReply(uid, text, c.length), t: now + wait, pend: 1 }); setTimeout(() => redraw(), wait + 150); }
+    while (c.length > 40) c.shift();
+    HN.save();
+    return true;
+  };
+  // What a pilot is up to: some are in a battle, the rest were on a while ago. Changes through the day.
+  const botNow = (uid) => {
+    const slot = Math.floor(Date.now() / 600000);
+    const r = HN.rng([...uid].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, slot))();
+    if (r < 0.3) return { on: true, txt: 'Online · In a battle' };
+    if (r < 0.42) return { on: true, txt: 'Online · Upgrading cards' };
+    const hrs = 1 + Math.floor(r * 30);
+    return { on: false, txt: hrs < 24 ? `Last seen ${hrs}h ago` : 'Last seen yesterday' };
+  };
+  HN.friends = { boot, open, addUid: (uid, nm) => (HN.isBotUid && HN.isBotUid(uid) ? botAdd(uid, nm) : addUid(uid, nm)), sendCard, pairId, isFav, toggleFav, chatWith: (uid) => { const r = F.rows.get(pairId(Net.me, uid)); if (!r || !r.ok) return; F.chatWith = r.id; open(); }, badge: () => F.badge(), isFriend: (uid) => F.isFriend(uid), state: (uid) => { if (HN.isBotUid && HN.isBotUid(uid)) return botState(uid); const r = F.rows.get(pairId(Net.me, uid)); return r ? (r.ok ? 'friends' : r.by === Net.me ? 'sent' : 'incoming') : ''; }, F };
 
   const css = document.createElement('style');
   css.textContent = `.modal.frp-modal { width: min(560px, 100%); }
@@ -9767,6 +10006,9 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
 .fr-gi-ok { color: #7af0a0 !important; font-weight: 700; }
 .fr-dmlog .fr-gi.fr-new { animation: frIn .22s ease-out; }
 .fr-who { display: grid; min-width: 0; } .fr-who b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fr-pl { display: inline-block; margin-right: 6px; padding: 0 4px; border-radius: 4px; font: 700 8px var(--font-body, system-ui); letter-spacing: .08em; color: #8fe8ff; border: 1px solid rgba(143, 232, 255, 0.45); vertical-align: 2px; font-style: normal; }
+.fr-star { width: 30px; height: 30px; border-radius: 50%; border: 1px solid rgba(255, 210, 63, 0.35); background: none; color: #5d6b78; font-size: 16px; line-height: 1; cursor: pointer; } .fr-star.on { color: #ffd23f; border-color: #ffd23f; text-shadow: 0 0 8px rgba(255, 210, 63, 0.6); }
+.fr-row.fav { border-color: rgba(255, 210, 63, 0.45); } .fr-sub { margin: 8px 0 4px; font-size: 12px; letter-spacing: .1em; color: #ffd86a; }
 .fr-who small { font-size: 11px; color: #7a8a9a; } .fr-who small.on { color: #4ade80; } .fr-who small.busy { color: #ffb03a; }
 .fr-go { display: flex; gap: 6px; align-items: center; } .fr-go .btn { padding: 7px 10px; font-size: 12px; min-height: 34px; }
 .fr-x { width: 30px; height: 30px; border-radius: 50%; border: 1px solid rgba(255, 122, 90, 0.4); background: transparent; color: #ff9a8a; cursor: pointer; margin-left: 14px; opacity: 0.7; }

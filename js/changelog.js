@@ -90,6 +90,7 @@
         'NEW|Guild polls and blacklist: leaders can start polls in guild chat that the whole guild votes on, and remove and blacklist a player so they can\'t rejoin or ask to join. The leader decides whether co-leaders and elders can use them too.',
         'NEW|Win streaks catch fire: hit 3 wins in a row and a flame appears by your name, burning hotter every 10 wins. Your arena and duel win streaks show on your profile.',
         'IMPROVED|Leaderboards show the top 50 pilots, each with their picture, frame and current win streak, plus a top-3 podium, your own spot with how far it is to the next rank, and daily up and down arrows. Ratings now sit right next to every name, and the raid damage board shows everyone hitting the boss this week.',
+        'NEW|Tap anyone on the leaderboards to open their profile and add them as a friend, or tap a guild to see its members. Star your favorite friends to pin them to the top of your list.',
         'IMPROVED|Guild settings are tidier: who can join, requests, announcements, polls and the blacklist each fit on one line with simple switches.',
       ],
     },
