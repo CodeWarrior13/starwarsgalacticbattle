@@ -87,6 +87,7 @@
         'FIXED|Raids no longer end early: a raid only ends when its clock runs out, the boss falls or your squad does.',
         'IMPROVED|Guilds: leaders can now demote a co-leader or elder, the Manage button no longer covers a member\'s rank, and every member shows their profile frame.',
         'IMPROVED|Finding a guild: search sits at the top, Guilds you may like suggests ones you can join right now, more guilds are waiting to be found, and founding your own is tucked into a dropdown. Founding a guild now costs 100 Kyber and 500 Beskar.',
+        'NEW|Guild polls and blacklist: leaders can start polls in guild chat that the whole guild votes on, and remove and blacklist a player so they can\'t rejoin or ask to join. The leader decides whether co-leaders and elders can use them too.',
         'NEW|Win streaks catch fire: hit 3 wins in a row and a flame appears by your name, burning hotter every 10 wins. Your arena and duel win streaks show on your profile.',
         'IMPROVED|Leaderboards show the top 50 pilots, each with their picture, frame and current win streak.',
       ],
