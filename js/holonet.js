@@ -1700,6 +1700,14 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
 .hn-opp .minis .mini { width: 34px; height: 34px; }
 .hn-opp .go { display: grid; gap: 6px; justify-items: end; }
 .hn-opp-id { display: grid; justify-items: center; gap: 2px; } .hn-opp-id .pf-av { width: 44px; height: 44px; } .hn-opp-id .hn-badge { width: 30px; height: auto; margin-top: -10px; position: relative; z-index: 1; }
+.g-pollbtn { padding: 6px 10px; flex: none; }
+.g-chat .msg.poll { grid-template-columns: minmax(0, 1fr); } .g-chat .msg.poll .pf-chip { justify-self: start; }
+.g-poll { display: grid; gap: 6px; padding: 10px 12px; border-radius: 12px; background: rgba(95, 216, 255, .08); border: 1px solid rgba(95, 216, 255, .3); min-width: 0; flex: 1; }
+.g-poll > b { font-size: 15px; } .g-poll small { color: #9fc4d8; font-size: 11px; }
+.g-popt { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; border-radius: 9px; border: 1px solid rgba(255, 255, 255, .14); background: rgba(4, 12, 22, .6); color: #e8f4ff; overflow: hidden; text-align: left; font: inherit; cursor: pointer; }
+.g-popt i { position: absolute; left: 0; top: 0; bottom: 0; background: rgba(95, 216, 255, .22); transition: width .4s; }
+.g-popt span, .g-popt b { position: relative; } .g-popt i { position: absolute !important; margin: 0 !important; } .g-popt b { margin-left: auto; } .g-popt.mine { border-color: #5fd8ff; box-shadow: 0 0 0 1px #5fd8ff inset; } .g-popt.mine i { background: rgba(95, 216, 255, .38); }
+.g-pollform { display: grid; gap: 8px; } .g-unbl { border: 0; background: none; color: #ff8a8a; font-weight: 800; cursor: pointer; padding: 0 0 0 4px; }
 .hn-gt { font-size: .72em; color: #9fc4d8; font-weight: 700; }
 .hn-gain { font: 800 12px var(--font-display); letter-spacing: .04em; color: #7af0a0; background: rgba(122, 240, 160, .1); border: 1px solid rgba(122, 240, 160, .35); border-radius: 999px; padding: 2px 8px; white-space: nowrap; }
 .hn-flame { display: inline-flex; align-items: center; gap: 1px; font-weight: 800; color: #ffb35c; -webkit-text-fill-color: currentColor; background: none; white-space: nowrap; }
@@ -6469,22 +6477,62 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   // Their chatter: a few lines every few hours, plus a reply when you post.
   const NPC_LINES = ['Raid fronts are up, hit them when you can!', 'gg everyone, great week', 'Anyone got tips for the Fleet front?', 'Just pulled a legendary from a puck!!', 'Welcome to all the new pilots o7', 'Don\'t forget your arena battles today', 'Who else is grinding Beskar?', 'That Boss Trial is no joke', 'Ground front almost cleared, push!', 'Night shift checking in', 'Remember to use your raid runs', 'New season soon, who\'s going for Legend?', 'My squad finally hit level 40', 'Lol the Wampa just ate my whole team', 'Good luck in your duels everyone', 'Vault upgrades looking good this week', 'Anyone want a friendly battle?', 'May the Force be with you all'];
   const NPC_REPLY = ['Welcome aboard!', 'o7', 'Haha nice', 'Glad to have you here', 'gg!', 'Let\'s go!', 'Same here', 'Good luck out there', 'True', 'Hit the raid when you can, every hit counts'];
+  // A HoloNet-run guild's chat over the last two days. Each day has its own
+  // mood (dead, quiet, normal, active or super active); messages come in
+  // sessions, mostly afternoons and evenings Central time, as little
+  // conversations: someone says something and a few others answer.
+  const NPC_TALK = ['How was everyone\'s {day}?', 'Happy {day} everyone', 'gm guild', 'gn guys, see you tomorrow', 'Just got home, what did I miss?', 'Anyone else have school tomorrow lol', 'Pizza night 🍕', 'Bored, anyone want a friendly battle?', 'Back from vacation! What changed?', 'Rain all day here, perfect gaming weather', 'My cat just walked across my keyboard', 'It\'s so quiet in here today', 'Who\'s watching the new Star Wars show?', 'Long day, time to play', 'Weekend plan: raids and more raids', 'brb dinner', 'Who\'s the best Jedi? Wrong answers only', 'Anyone else up this late?', 'Morning everyone ☕', 'Finally done with homework'];
+  const NPC_ANS = ['lol', 'same', 'nice!', 'haha', 'gl!', 'o7', 'facts', 'yesss', 'gg', 'true', '😂', 'me too', 'let\'s gooo', 'agreed'];
+  // Replies that fit what was said: questions get answers, hellos get hellos.
+  const replyTo = (t, r) => {
+    const pick = (a) => a[Math.floor(r() * a.length)];
+    if (/how was|how\'s|how is/i.test(t)) return pick(['good, you?', 'not bad', 'pretty chill', 'busy day lol', 'long day 😴', 'great actually']);
+    if (/back from|just got home|what did i miss/i.test(t)) return pick(['welcome back!', 'not much lol', 'raid\'s going well', 'wb!']);
+    if (/^(gm|morning|happy)/i.test(t)) return pick(['gm!', 'morning ☕', 'you too!', 'hey hey']);
+    if (/^gn|see you tomorrow/i.test(t)) return pick(['gn!', 'night!', 'cya']);
+    if (/anyone|who\'s|who else/i.test(t)) return pick(['me!', 'I am lol', 'not me 😅', 'maybe later', 'sure, send it']);
+    if (/\?$/.test(t)) return pick(['good question', 'idk tbh', 'yeah', 'nah', 'probably']);
+    return pick(NPC_ANS);
+  };
+  const NPC_POLLS = [['Which raid front first this week?', ['Ground', 'Fleet']], ['Best HoloNet card?', ['Cad Bane', 'Dark Trooper', 'Hallway Vader', 'Paz Vizsla']], ['Guild vault: what do we upgrade next?', ['Beskar Haul', 'Lucky Pucks', 'Training Grounds']], ['Team Jedi or team Sith?', ['Jedi', 'Sith']], ['When do you usually play?', ['After school', 'Evenings', 'Late night', 'Weekends']]];
+  const MOODS = [['dead', 0.12, 0, 1], ['quiet', 0.23, 2, 4], ['normal', 0.35, 5, 9], ['active', 0.2, 10, 16], ['super', 0.1, 18, 28]];
+  const CT_MS = 6 * 3600000; // Central time (close enough for picking hours and day names)
+  const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   const npcChat = (gid) => {
     const crew = npcCrew(gid);
     if (!crew.length) return [];
-    const slot = 3 * 3600000;
     const now = Date.now();
     const out = [];
-    const gi = NPC_GUILDS.findIndex((g) => g.id === gid);
-    for (let k = 7; k >= 0; k--) {
-      const t = Math.floor(now / slot) - k;
-      const r = HN.rng(t * 31 + gi * 977);
-      const ts = t * slot + Math.floor(r() * slot);
-      if (ts > now) continue;
-      out.push({ g: gid, uid: crew[Math.floor(r() * crew.length)], t: npcSay(gid, r), ts });
+    const day0 = Math.floor((now - CT_MS) / 864e5);
+    for (const d of [day0 - 1, day0]) {
+      const r = HN.rng(hashS(gid) + d * 7919);
+      let x = r(); const mood = MOODS.find((m) => (x -= m[1]) <= 0) || MOODS[2];
+      let left = mood[2] + Math.floor(r() * (mood[3] - mood[2] + 1));
+      const dayName = DAY_NAMES[new Date(d * 864e5 + 12 * 3600000).getUTCDay()];
+      const sessions = Math.max(1, Math.min(4, Math.ceil(left / 5)));
+      const pollDay = r() < 0.18;
+      for (let k = 0; k < sessions && left > 0; k++) {
+        // Afternoon/evening Central most of the time, sometimes morning or late night.
+        const hr = r() < 0.75 ? 15 + r() * 8 : r() < 0.5 ? 7 + r() * 4 : 23 + r() * 2;
+        let ts = d * 864e5 + CT_MS + hr * 3600000;
+        const burst = Math.min(left, 2 + Math.floor(r() * 6));
+        left -= burst;
+        const opener = crew[Math.floor(r() * crew.length)];
+        const kind = r();
+        let first;
+        if (pollDay && k === 0) { const pq = NPC_POLLS[Math.floor(r() * NPC_POLLS.length)]; out.push({ g: gid, uid: crew[Math.floor(r() * Math.min(4, crew.length))], t: pq[0], p: pq[1], ts }); ts += 60000 * (2 + r() * 6); }
+        first = kind < 0.45 ? NPC_TALK[Math.floor(r() * NPC_TALK.length)].replace('{day}', dayName) : npcSay(gid, r);
+        out.push({ g: gid, uid: opener, t: first, ts });
+        for (let m = 1; m < burst; m++) {
+          ts += 30000 + r() * 240000;
+          let who = crew[Math.floor(r() * crew.length)];
+          if (who === opener && crew.length > 1) who = crew[(crew.indexOf(who) + 1) % crew.length];
+          out.push({ g: gid, uid: who, t: r() < 0.7 ? replyTo(first, r) : npcSay(gid, r), ts });
+        }
+      }
     }
     const mine = (S().npcChat || []).filter((m) => m.g === gid && m.ts <= now);
-    return out.concat(mine);
+    return out.map((m) => ({ ...m, ts: Math.round(m.ts) })).filter((m) => m.ts <= now).concat(mine);
   };
   // What the crew talks about follows what's going on: the raid, upgrades, ranks, the season.
   const npcSay = (gid, r) => {
@@ -6578,7 +6626,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     if (canReview(gid)) {
       Net.live('apps', { sig: gid, ref: Net.db.collection('arena').where('apply', '==', gid) }, Net.rows, (docs) => {
         const g = gmap.get(gid) || {};
-        G.apps = docs.map((d) => d.id).filter((uid) => !(g.no || []).includes(uid) && !(g.ok || []).includes(uid) && !(g.kicked || []).includes(uid));
+        G.apps = docs.map((d) => d.id).filter((uid) => !(g.no || []).includes(uid) && !(g.ok || []).includes(uid) && !(g.kicked || []).includes(uid) && !(g.bl || []).includes(uid));
         rerenderLive(); marks();
       });
     } else Net.stop('apps');
@@ -6715,6 +6763,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     if (S().guild) return toast('Leave your current guild first.');
     const ok = approved(g);
     if (sizeOf(gid) >= maxMembers(gid)) return toast('That guild is full.');
+    if ((g.bl || []).includes(Net.me)) return toast(`${g.name} isn't taking you back.`);
     if ((g.kicked || []).includes(Net.me) && !ok) return toast('You were removed from that guild. Ask its leader for an invite.');
     if (!ok && S().rating < (g.min || 0)) return toast(`${g.name} needs ${fmt(g.min)} rating to join.`);
     if (!ok && modeOf(g) === 'request') return applyGuild(gid);
@@ -6732,6 +6781,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   function applyGuild(gid) {
     const g = gmap.get(gid);
     if (!g || S().guild) return;
+    if ((g.bl || []).includes(Net.me)) return toast(`${safeGuild(g).name} isn't taking you back.`);
     S().apply = gid;
     HN.save(); Net.publish(); watchMyGuild();
     sound('click');
@@ -6847,12 +6897,19 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   let lastSay = 0;
   // Announcements: the leader can always post; the leader and co-leader
   // choose whether co-leaders and elders can too (guild doc annPerm).
+  // Polls and the blacklist: the leader always; the leader decides whether
+  // co-leaders (on by default) and elders (off by default) can too.
+  const canTools = (uid, gid) => {
+    const r = roleOf(uid, gid);
+    const perm = (gmap.get(gid) || {}).toolPerm || {};
+    return r === 'leader' || (r === 'co' && perm.co !== false) || (r === 'elder' && perm.elder === true);
+  };
   const canAnnounce = (uid, gid) => {
     const r = roleOf(uid, gid);
     const perm = (gmap.get(gid) || {}).annPerm || {};
     return r === 'leader' || (r === 'co' && perm.co !== false) || (r === 'elder' && perm.elder === true);
   };
-  async function sayLine(text, system, ann) {
+  async function sayLine(text, system, ann, poll) {
     const gid = S().guild;
     if (!gid || !Net.ready) return;
     const raw = cleanText(text, 140);
@@ -6865,8 +6922,9 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const mine = G.chat.find((c) => c.uid === Net.me);
     const msgs = ((mine && mine.msgs) || []).slice(-29);
     if (ann && !canAnnounce(Net.me, gid)) return toast('Your rank can\'t post announcements right now.');
-    msgs.push({ g: gid, t, ts: Date.now(), s: system ? 1 : 0, a: ann ? 1 : 0 });
-    try { await Net.db.doc(`gchat/${Net.me}`).set({ g: gid, msgs, rx: (mine && mine.g === gid && mine.rx) || {} }); } catch (e) { toast('Message not sent.'); }
+    if (poll && !canTools(Net.me, gid)) return toast('Your rank can\'t start polls right now.');
+    msgs.push({ g: gid, t, ts: Date.now(), s: system ? 1 : 0, a: ann ? 1 : 0, ...(poll ? { p: poll } : {}) });
+    try { await Net.db.doc(`gchat/${Net.me}`).set({ g: gid, msgs, rx: (mine && mine.g === gid && mine.rx) || {}, pv: (mine && mine.g === gid && mine.pv) || {} }); } catch (e) { toast('Message not sent.'); }
     if (isNpcG(gid) && !system && Math.random() < 0.7) npcReply(gid);
   }
   // 2.3: react to a guild message (one reaction each; tap it again to take it back).
@@ -6884,8 +6942,39 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const msgs = (mine && mine.g === gid && mine.msgs) || [];
     if (mine) mine.rx = out; else G.chat.push({ uid: Net.me, g: gid, msgs, rx: out });
     rerender();
-    try { await Net.db.doc(`gchat/${Net.me}`).set({ g: gid, msgs, rx: out }); } catch (err) { toast('Reaction not sent.'); }
+    try { await Net.db.doc(`gchat/${Net.me}`).set({ g: gid, msgs, rx: out, pv: (mine && mine.g === gid && mine.pv) || {} }); } catch (err) { toast('Reaction not sent.'); }
   }
+  // Poll votes live in each voter's own chat doc (pv), like reactions: one vote each, tap again to change it.
+  async function vote(uid, ts, i) {
+    const gid = S().guild;
+    if (!gid || !Net.ready) return;
+    const mine = G.chat.find((c) => c.uid === Net.me);
+    const pv = { ...((mine && mine.g === gid && mine.pv) || {}) };
+    const key = `${uid}_${ts}`;
+    if (pv[key] === i) delete pv[key]; else pv[key] = i;
+    const keep = Object.keys(pv).sort((a, b) => +b.split('_').pop() - +a.split('_').pop()).slice(0, 20);
+    const out = {}; for (const k of keep) out[k] = pv[k];
+    const msgs = (mine && mine.g === gid && mine.msgs) || [];
+    if (mine) mine.pv = out; else G.chat.push({ uid: Net.me, g: gid, msgs, rx: {}, pv: out });
+    rerender();
+    try { await Net.db.doc(`gchat/${Net.me}`).set({ g: gid, msgs, rx: (mine && mine.rx) || {}, pv: out }); } catch (err) { toast('Vote not sent.'); }
+  }
+  const pollTally = (gid, uid, ts, n) => {
+    const counts = Array(n).fill(0); let mineV = -1;
+    const key = `${uid}_${ts}`;
+    for (const c of G.chat) { const v = c && c.g === gid && c.pv ? c.pv[key] : undefined; if (typeof v === 'number' && v >= 0 && v < n) { counts[v]++; if (c.uid === Net.me) mineV = v; } }
+    // The crew of a HoloNet-run guild votes too, over the hours after a poll goes up.
+    if (isNpcG(gid)) {
+      const crew = npcCrew(gid);
+      const age = Math.max(0, (Date.now() - ts) / 3600000);
+      const share = Math.min(0.7, 0.08 + age * 0.06);
+      const r = HN.rng(hashS(key));
+      const bias = Array.from({ length: n }, () => 0.5 + r());
+      const tb = bias.reduce((a, x) => a + x, 0);
+      crew.forEach((u) => { const q = HN.rng(hashS(u + key))(); if (q > share) return; let x = HN.rng(hashS(key + u) + 3)() * tb; let k = 0; while (k < n - 1 && x > bias[k]) { x -= bias[k]; k++; } counts[k]++; });
+    }
+    return { counts, mineV, total: counts.reduce((a, x) => a + x, 0) };
+  };
   const reactsFor = (gid, uid, ts) => {
     const out = {}; let mineE = '';
     for (const c of G.chat) {
@@ -7245,7 +7334,9 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   };
   const canManageMember = (gid, uid) => {
     const me = roleOf(Net.me, gid); const them = roleOf(uid, gid);
-    return canManage(gid) && uid !== Net.me && uid !== 'me' && them !== 'leader' && !(me === 'co' && them === 'co');
+    if (uid === Net.me || uid === 'me' || NPC_ROWS.has(uid)) return false;
+    if (me === 'elder' && them === 'member' && canTools(Net.me, gid)) return true;
+    return canManage(gid) && them !== 'leader' && !(me === 'co' && them === 'co');
   };
   // Join requests: the applicant's profile at a glance (rating, arena and duel
   // record, cards collected), with Accept / Decline and a full-profile button.
@@ -7271,8 +7362,15 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   GP.chat = (gid) => {
     const lines = chatLines(gid);
     const rxRow = (l) => { if (!G23() || l.hid) return ''; const { out, mineE } = reactsFor(gid, l.uid, l.ts); return `<span class="g-rx">${REACTS.map((e) => `<button type="button" class="${out[e] ? 'has' : 'zero'} ${mineE === e ? 'mine' : ''}" data-hn="grx" data-u="${esc(l.uid)}" data-ts="${l.ts}" data-e="${e}">${e}${out[e] ? `<b>${out[e]}</b>` : ''}</button>`).join('')}<button type="button" class="more" data-hn="grxopen" aria-label="React">＋</button></span>`; };
-    return `<div class="g-chat" data-noswipe>${lines.length ? lines.map((l) => l.s ? `<p class="sys ${G23() ? 'act' : ''}"><b${(() => { const rk = rankOf(l.uid, gid); return rk ? ` style="color:${rk.c}"` : ''; })()}>${(() => { const rk = rankOf(l.uid, gid); return rk ? `<i class="g-rk">${rk.s}</i> ` : ''; })()}${esc(Net.name(l.uid))}</b> ${esc(l.t)}</p>` : `<div class="msg ${l.uid === Net.me ? 'me' : ''} ${l.a ? 'ann' : ''}">${chip(l.uid)}<p>${l.a ? '<em class="g-annflag">Announcement</em>' : ''}${esc(l.t)}<small>${ago(l.ts)}</small>${rxRow(l)}</p></div>`).join('') : '<p class="muted" style="text-align:center">No messages yet. Say hello!</p>'}</div>
-      <form class="g-say" data-noswipe><input class="pf-in" data-chat maxlength="140" placeholder="Message your guild…" autocomplete="off"><button type="submit" class="hn-btn">Send</button></form>`;
+    return `<div class="g-chat" data-noswipe>${lines.length ? lines.map((l) => l.s ? `<p class="sys ${G23() ? 'act' : ''}"><b${(() => { const rk = rankOf(l.uid, gid); return rk ? ` style="color:${rk.c}"` : ''; })()}>${(() => { const rk = rankOf(l.uid, gid); return rk ? `<i class="g-rk">${rk.s}</i> ` : ''; })()}${esc(Net.name(l.uid))}</b> ${esc(l.t)}</p>` : (Array.isArray(l.p) && l.p.length >= 2 ? pollCard(gid, l) : `<div class="msg ${l.uid === Net.me ? 'me' : ''} ${l.a ? 'ann' : ''}">${chip(l.uid)}<p>${l.a ? '<em class="g-annflag">Announcement</em>' : ''}${esc(l.t)}<small>${ago(l.ts)}</small>${rxRow(l)}</p></div>`)).join('') : '<p class="muted" style="text-align:center">No messages yet. Say hello!</p>'}</div>
+      <form class="g-say" data-noswipe>${canTools(Net.me, gid) && !isNpcG(gid) ? '<button type="button" class="hn-btn ghost g-pollbtn" data-hn="gpoll" title="Start a poll">📊</button>' : ''}<input class="pf-in" data-chat maxlength="140" placeholder="Message your guild…" autocomplete="off"><button type="submit" class="hn-btn">Send</button></form>`;
+  };
+  const pollCard = (gid, l) => {
+    const opts = l.p.slice(0, 4).map((o) => SAFE.clean(String(o).slice(0, 40)).text);
+    const t = pollTally(gid, l.uid, l.ts, opts.length);
+    return `<div class="msg poll ${l.uid === Net.me ? 'me' : ''}">${chip(l.uid)}<div class="g-poll"><em class="g-annflag">📊 Poll</em><b>${esc(l.t)}</b>
+      ${opts.map((o, i) => { const pct = t.total ? Math.round((t.counts[i] / t.total) * 100) : 0; return `<button type="button" class="g-popt ${t.mineV === i ? 'mine' : ''}" data-hn="gvote" data-u="${esc(l.uid)}" data-ts="${l.ts}" data-i="${i}"><i style="width:${pct}%"></i><span>${esc(o)}</span><b>${t.counts[i]}</b></button>`; }).join('')}
+      <small>${t.total} vote${t.total === 1 ? '' : 's'} · ${ago(l.ts)}${t.mineV < 0 ? ' · tap to vote' : ''}</small></div></div>`;
   };
   GP.raid = (gid) => {
     const g = graidNow();
@@ -7321,6 +7419,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       const mode = modeOf(g);
       const full = n >= maxMembers(g.id);
       if (S().apply === g.id) return '<button type="button" class="hn-btn ghost" data-hn="gapplyx">Cancel request</button>';
+      if ((g.bl || []).includes(Net.me)) return '<button type="button" class="hn-btn" disabled>Blocked</button>';
       if (full) return '<button type="button" class="hn-btn" disabled>Full</button>';
       if (ok) return `<button type="button" class="hn-btn gold" data-hn="gjoin" data-id="${esc(g.id)}">Accept invite</button>`;
       if (S().rating < (g.min || 0)) return `<button type="button" class="hn-btn" disabled>${fmt(g.min)}+ rating</button>`;
@@ -7460,6 +7559,27 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       setTimeout(() => { const i = document.querySelector('[data-gsearch]'); if (i) { i.value = q; i.dispatchEvent(new Event('input', { bubbles: true })); } }, 50);
     } catch (err) { toast('Search failed. Try again.'); }
   });
+  CL.gvote = (b) => vote(b.dataset.u, +b.dataset.ts, +b.dataset.i);
+  CL.gpoll = () => {
+    const gid = S().guild;
+    if (!gid || !canTools(Net.me, gid)) return;
+    const m = openModal(`<div class="hn-result g-pollform" data-noswipe><h3 style="margin:0 0 8px">📊 New poll</h3>
+      <input class="pf-in" data-pq maxlength="100" placeholder="Question (e.g. Which raid front first?)">
+      ${[0, 1, 2, 3].map((i) => `<input class="pf-in" data-po="${i}" maxlength="40" placeholder="Option ${i + 1}${i > 1 ? ' (optional)' : ''}">`).join('')}
+      <div class="modal-actions"><button type="button" class="btn" data-x="no">Cancel</button><button type="button" class="btn btn-primary" data-x="go">Post poll</button></div></div>`, { small: true });
+    m.root.addEventListener('click', (e) => {
+      const x = e.target.closest('[data-x]');
+      if (!x) return;
+      if (x.dataset.x === 'no') return m.close();
+      const q = cleanText(m.root.querySelector('[data-pq]').value, 100);
+      const opts = [...m.root.querySelectorAll('[data-po]')].map((n) => cleanText(n.value, 40)).filter(Boolean);
+      if (q.length < 3) return toast('Ask a question first.');
+      if (opts.length < 2) return toast('Give at least two options.');
+      if (opts.some((o) => SAFE.clean(o).blocked) || SAFE.clean(q).blocked) return toast('Keep it friendly: change the question or an option.');
+      m.close();
+      sayLine(q, false, false, opts).then(() => setTimeout(rerender, 300));
+    });
+  };
   CL.gcreate = (b) => {
     const root2 = b.closest('.g-form');
     const v = (k) => (root2.querySelector(`[data-gf="${k}"]`) || {}).value || '';
@@ -7502,7 +7622,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
 
   // Ranked duels report into guild points and the season.
   HN.social = { addGP, trackSeasonBest, guildOf, myGuildId, GRAIDS, graidNow, graidTotals, FRAMES, ownedFrames, frameSvg,
-    prof, avatar, chip, nameKey, emblem, GUILD_PICS, PICS, pickerHtml, setPickCat, canAnnounce, announcements, sayLine, ago, roleOf, ROLE_NAME, canManage, MAX_ELDERS, PERK_NEEDS, GLVL, cleanText, PERKS, PERK_COST, PIC_COST, G23, react, GLVL_COST, RANK_SYMBOLS, RANK_COLORS, RANK_DEF, rankOf, perkLevel, maxMembers, donors, bankOf, pushGuildStats, membersOf, guildLevel, guildWeekPoints, loadGuilds, G, gmap, setGuilds, rerender, SAFE, isMuted, editProfile, P2, seasonNo, seasonEnds, SEASON_REWARD, weekPoints, MAX_MEMBERS, COLORS, EMBLEMS, createGuild, joinGuild, watchMyGuild, GP, MODES, modeOf, approved, canReview, leaderOf, writeGuild, watchMembers, loadInvites, inviteTo, answerApp, applyGuild, cancelApply, unread, marks, markSeen, MKS, MEGA, setGtab: (t) => { gtab = t; }, gtabNow, sizeOf, chatLines, offlineGuild };
+    canTools, vote, prof, avatar, chip, nameKey, emblem, GUILD_PICS, PICS, pickerHtml, setPickCat, canAnnounce, announcements, sayLine, ago, roleOf, ROLE_NAME, canManage, MAX_ELDERS, PERK_NEEDS, GLVL, cleanText, PERKS, PERK_COST, PIC_COST, G23, react, GLVL_COST, RANK_SYMBOLS, RANK_COLORS, RANK_DEF, rankOf, perkLevel, maxMembers, donors, bankOf, pushGuildStats, membersOf, guildLevel, guildWeekPoints, loadGuilds, G, gmap, setGuilds, rerender, SAFE, isMuted, editProfile, P2, seasonNo, seasonEnds, SEASON_REWARD, weekPoints, MAX_MEMBERS, COLORS, EMBLEMS, createGuild, joinGuild, watchMyGuild, GP, MODES, modeOf, approved, canReview, leaderOf, writeGuild, watchMembers, loadInvites, inviteTo, answerApp, applyGuild, cancelApply, unread, marks, markSeen, MKS, MEGA, setGtab: (t) => { gtab = t; }, gtabNow, sizeOf, chatLines, offlineGuild };
 
   // ---------- tester hooks ----------
   Object.assign(HN.dev, {
@@ -8424,28 +8544,31 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
   CL.gmanage = (b) => {
     const gid = SO.myGuildId();
     const uid = b.dataset.uid;
-    if (!gid || !SO.canManage(gid)) return;
+    if (!gid || !(SO.canManage(gid) || SO.canTools(Net.me, gid))) return;
     const raw = SO.gmap.get(gid) || {};
     const me = SO.roleOf(Net.me, gid);
     const role = SO.roleOf(uid, gid);
     const elders = raw.elders || [];
     const acts = [];
+    const onlyBl = !SO.canManage(gid);
     if (role === 'member' && elders.length < SO.MAX_ELDERS) acts.push(['elder', '▲ Promote to Elder']);
     if (me === 'leader' && role !== 'co') acts.push(['co', raw.co ? '▲ Make Co-leader (replaces the current one)' : '▲ Make Co-leader']);
     if (me === 'leader' && role === 'co') acts.push(['co2elder', '▼ Demote to Elder']);
     if (me === 'leader' && role === 'co') acts.push(['unco', '▼ Demote to Member']);
     if (role === 'elder') acts.push(['member', '▼ Demote to Member']);
     if (me === 'leader') acts.push(['lead', 'Make leader (you become co-leader)']);
-    acts.push(['kick', 'Remove from guild']);
+    if (onlyBl) acts.length = 0; else acts.push(['kick', 'Remove from guild']);
+    if (SO.canTools(Net.me, gid)) acts.push(['bl', '⛔ Remove and blacklist']);
     const m = openModal(`<div class="hn-result"><h3 style="margin:0 0 6px">${esc(Net.name(uid))} · ${SO.ROLE_NAME[role]}</h3>
       <p class="muted small" style="margin:0 0 10px">Elders: ${elders.length}/${SO.MAX_ELDERS}</p>
-      <div style="display:grid;gap:8px">${acts.map(([k, n]) => `<button type="button" class="btn ${k === 'kick' ? 'danger' : ''}" data-act="${k}">${esc(n)}</button>`).join('')}<button type="button" class="btn" data-act="x">Cancel</button></div></div>`, { small: true });
+      <div style="display:grid;gap:8px">${acts.map(([k, n]) => `<button type="button" class="btn ${k === 'kick' || k === 'bl' ? 'danger' : ''}" data-act="${k}">${esc(n)}</button>`).join('')}<button type="button" class="btn" data-act="x">Cancel</button></div></div>`, { small: true });
     m.root.addEventListener('click', async (e) => {
       const a = e.target.closest('[data-act]');
       if (!a) return;
       m.close();
       const k = a.dataset.act;
       if (k === 'x') return;
+      if (k === 'bl' && !(await UI.confirmBox('Remove and blacklist?', `${Net.name(uid)} is removed and can't join or ask to join again unless you unblock them (Members, then Guild settings).`, 'Blacklist'))) return;
       if (k === 'kick' && !(await UI.confirmBox('Remove from guild?', `${Net.name(uid)} will be removed from the guild. You'll have a few seconds to undo it.`, 'Remove'))) return;
       if (k === 'lead' && !(await UI.confirmBox(`Make ${Net.name(uid)} the leader?`, 'They get full control of the guild, including disbanding it. You become the co-leader. Only they can give it back.', 'Hand over'))) return;
       if (k === 'co' && raw.co && !(await UI.confirmBox('Replace the co-leader?', `${Net.name(raw.co)} goes back to being a member.`, 'Replace'))) return;
@@ -8456,13 +8579,15 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
       if (k === 'co2elder') change.co = '';
       if (k === 'co') { change.co = uid; }
       if (k === 'unco' || (k === 'kick' && r.co === uid)) change.co = '';
-      if (k === 'kick') change.kicked = [...new Set([...(r.kicked || []), uid])];
+      if (k === 'kick' || k === 'bl') change.kicked = [...new Set([...(r.kicked || []), uid])];
+      if (k === 'bl') { change.bl = [...new Set([...(r.bl || []), uid])].slice(-40); if (r.co === uid) change.co = ''; }
       if (k === 'lead') { change.lead = uid; change.co = Net.me; change.leadSeen = Date.now(); }
       if (!(await spend(gid, 0, change))) return;
       if (k === 'kick') undoBar(`${Net.name(uid)} was removed.`, async () => {
         const g2 = SO.gmap.get(gid) || {};
         if (await SO.writeGuild(gid, { kicked: (g2.kicked || []).filter((x) => x !== uid) })) { toast(`${Net.name(uid)} is back in the guild.`); SO.rerender(); }
       });
+      else if (k === 'bl') toast(`${Net.name(uid)} was removed and blacklisted.`);
       else if (k === 'lead') { toast(`${Net.name(uid)} is now the leader.`); SO.sayLine(`handed leadership to ${Net.name(uid)}.`, true); }
       else { const lbl = { elder: 'promoted to Elder', co: 'made Co-leader', co2elder: 'demoted to Elder', unco: 'demoted to Member', member: 'demoted to Member' }[k]; toast(lbl ? `${Net.name(uid)} was ${lbl}.` : 'Ranks updated.'); }
       SO.rerender();
@@ -8656,7 +8781,24 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
       <div class="hv-perm"><span class="muted small">Elders review join requests and invite:</span><button type="button" class="hn-btn ${app.elder ? 'gold' : 'ghost'}" data-hn="gappperm">${app.elder ? 'ON' : 'OFF'}</button></div>
       <div class="hv-perm"><span class="muted small">Who can post announcements:</span> <span class="hn-chip">Leader</span>
         <button type="button" class="hn-btn ${ann.co !== false ? 'gold' : 'ghost'}" data-hn="annperm" data-k="co">Co-leader ${ann.co !== false ? 'ON' : 'OFF'}</button>
-        <button type="button" class="hn-btn ${ann.elder === true ? 'gold' : 'ghost'}" data-hn="annperm" data-k="elder">Elders ${ann.elder === true ? 'ON' : 'OFF'}</button></div></div>`;
+        <button type="button" class="hn-btn ${ann.elder === true ? 'gold' : 'ghost'}" data-hn="annperm" data-k="elder">Elders ${ann.elder === true ? 'ON' : 'OFF'}</button></div>
+      ${(() => { const tp = g.toolPerm || {}; const lead = SO.roleOf(Net.me, gid) === 'leader'; return `<div class="hv-perm"><span class="muted small">Who can start polls and blacklist players:</span> <span class="hn-chip">Leader</span>${lead ? `<button type="button" class="hn-btn ${tp.co !== false ? 'gold' : 'ghost'}" data-hn="toolperm" data-k="co">Co-leader ${tp.co !== false ? 'ON' : 'OFF'}</button><button type="button" class="hn-btn ${tp.elder === true ? 'gold' : 'ghost'}" data-hn="toolperm" data-k="elder">Elders ${tp.elder === true ? 'ON' : 'OFF'}</button>` : `<span class="hn-chip">${tp.co !== false ? 'Co-leader' : ''}${tp.elder === true ? ' · Elders' : ''}</span><span class="muted small">(the leader sets this)</span>`}</div>`; })()}
+      ${(g.bl || []).length ? `<div class="hv-perm g-bl"><span class="muted small">Blacklisted (${g.bl.length}):</span>${g.bl.map((u) => `<span class="hn-chip">${esc(Net.name(u))} ${SO.canTools(Net.me, gid) ? `<button type="button" class="g-unbl" data-hn="gunbl" data-uid="${esc(u)}" aria-label="Unblock">✕</button>` : ''}</span>`).join('')}</div>` : ''}</div>`;
+  };
+  CL.toolperm = async (b, render) => {
+    const gid = SO.myGuildId();
+    if (!gid || SO.roleOf(Net.me, gid) !== 'leader') return toast('Only the leader can change this.');
+    const raw = SO.gmap.get(gid) || {};
+    const perm = { co: true, elder: false, ...(raw.toolPerm || {}) };
+    perm[b.dataset.k] = !perm[b.dataset.k];
+    if (await SO.writeGuild(gid, { toolPerm: perm })) render(); else toast('Could not save. Try again.');
+  };
+  CL.gunbl = async (b, render) => {
+    const gid = SO.myGuildId();
+    if (!gid || !SO.canTools(Net.me, gid)) return;
+    const raw = SO.gmap.get(gid) || {};
+    const uid = b.dataset.uid;
+    if (await SO.writeGuild(gid, { bl: (raw.bl || []).filter((x) => x !== uid), kicked: (raw.kicked || []).filter((x) => x !== uid) })) { toast(`${Net.name(uid)} can join again.`); render(); } else toast('Could not save. Try again.');
   };
   const actions = (gid) => {
     const leader = SO.roleOf(Net.me, gid) === 'leader';
