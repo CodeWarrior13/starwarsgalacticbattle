@@ -83,6 +83,26 @@
     });
   }
 
+  // Elite Boss Trials: pilots who crush the first four games meet a squad
+  // built around a full synergy instead. Each one's stars and level were
+  // tuned in battle sims so a strong squad wins about 1 time in 5 (excellent)
+  // or 1 in 4 (very good): very hard, never impossible.
+  const ELITE = [
+    { name: 'The Sith Lords', ids: ['palpatine', 'darth_revan', 'kylo_ren', 'vader', 'darth_maul'], ex: [0, 5], good: [-6, 5] },
+    { name: 'The Inquisitorius', ids: ['grand_inquisitor', 'second_sister', 'fifth_brother', 'seventh_sister', 'eighth_brother'], ex: [0, 7], good: [-3, 6] },
+    { name: 'Clone Force 99', ids: ['hunter', 'wrecker', 'tech', 'crosshair', 'echo'], ex: [-3, 6], good: [-6, 5] },
+    { name: 'The Jedi Masters', ids: ['master_luke', 'yoda', 'mace_windu', 'ahsoka', 'obi_wan'], ex: [-6, 4], good: [-10, 4] },
+    { name: 'The Witches of Dathomir', ids: ['talzin', 'asajj_ventress', 'savage_opress', 'nightsister_acolyte', 'darth_maul'], ex: [0, 7], good: [0, 6] },
+  ];
+  function eliteTier(p) {
+    const g = p.games.slice(0, GAMES - 1);
+    if (g.length < GAMES - 1) return null;
+    const avg = g.reduce((a, x) => a + x.score, 0) / g.length;
+    const wins = g.filter((x) => x.won).length;
+    if (wins < 3 || !g[g.length - 1].won) return null;
+    return avg >= 80 ? 'ex' : avg >= 68 ? 'good' : null;
+  }
+
   let cache = null;
   function opponent() {
     const p = rec();
@@ -96,6 +116,20 @@
     const squad = mixSquad(H.botSquad(KIND, rating, r), r);
     const last = n === GAMES - 1;
     let lead = null;
+    const tierE = last ? eliteTier(p) : null;
+    if (tierE) {
+      const th = ELITE.filter((t) => t.ids.every((id) => D.UNIT_MAP[id]));
+      const pick = th[Math.floor(r() * th.length)];
+      const base = Math.round(squad.reduce((a, e) => a + e.level, 0) / Math.max(1, squad.length));
+      const [lv, st] = pick[tierE];
+      const elite = pick.ids.map((id) => ({ id, level: Math.max(1, base + lv), stars: st }));
+      const RK = ['common', 'rare', 'epic', 'legendary', 'mythic', 'secret'];
+      lead = elite.reduce((a, e) => (RK.indexOf(D.UNIT_MAP[e.id].rarity) > RK.indexOf(D.UNIT_MAP[a.id].rarity) ? e : a), elite[0]).id;
+      const names = (H.BOT_NAMES || []).concat(H.BOT_NAMES_2 || []);
+      const opp = { id: `pl:${n}`, real: false, rating: rating + (tierE === 'ex' ? 300 : 200), squad: elite, boss: lead, elite: tierE, theme: pick.name, name: names[Math.floor(r() * names.length)] || 'Rival', av: lead, frame: tierE === 'ex' ? 'legend' : 'kyber' };
+      cache = { key, opp };
+      return opp;
+    }
     if (last && squad.length) {
       const top = squad.reduce((a, e) => (e.level > a.level ? e : a), squad[0]);
       lead = top.id;

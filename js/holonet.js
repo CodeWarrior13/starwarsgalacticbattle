@@ -2658,7 +2658,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const boss = n === P.GAMES - 1;
     return `<div class="hn-sec pl-box">${top}
       <div class="hn-opp ${boss ? 'pl-boss' : ''}"><div class="hn-opp-id">${pic}</div>
-        <div class="who"><b>${esc(o.name)}</b><span class="tag">${boss ? 'BOSS TRIAL' : `PLACEMENT ${n + 1}`}</span><small>⚡ ${fmt(HN.squadPower(o.squad))}</small><div class="minis">${o.squad.map((e) => mini(e.id)).join('')}</div></div>
+        <div class="who"><b>${esc(o.name)}</b><span class="tag">${o.elite ? 'ELITE BOSS TRIAL' : boss ? 'BOSS TRIAL' : `PLACEMENT ${n + 1}`}</span><small>${o.theme ? `${esc(o.theme)} · ` : ''}⚡ ${fmt(HN.squadPower(o.squad))}</small><div class="minis">${o.squad.map((e) => mini(e.id)).join('')}</div></div>
         <div class="go"><button type="button" class="hn-btn ${boss ? 'gold' : ''}" data-hn="placego" ${ids.length ? '' : 'disabled'}>${boss ? 'Boss Trial' : 'Fight'}</button></div></div></div>`;
   }
   function placeAttack() {
@@ -2671,7 +2671,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     HNB.back = { view: 'arena', kind };
     hnStart({ type: 'hn', hn: 'place', kind, opp }, squad, opp.squad.map((e) => ({ ...e })), {
       name: `${P.label()} · vs ${opp.name}`, kind, planet: 'geonosis', boss: opp.boss || null,
-      intro: opp.boss ? 'The Boss Trial. Give it everything.' : 'Placement battle: every second counts.',
+      intro: opp.elite ? `Elite Boss Trial: ${opp.theme}. You earned the hardest fight there is.` : opp.boss ? 'The Boss Trial. Give it everything.' : 'Placement battle: every second counts.',
     });
   }
   function placeDone(p, b, won) {
