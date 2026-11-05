@@ -1212,10 +1212,10 @@
     legend: { epic: 30, legendary: 55, mythic: 15 },
   };
   const LEAGUE_IDS = ['bronze', 'silver', 'gold', 'kyber', 'legend'];
-  function botSquad22(kind, rating, r) {
+  function botSquad22(kind, rating, r, calm) {
     const dv = divOf(rating);
     const si = root.HN && root.HN.seasonInfo ? root.HN.seasonInfo() : null;
-    const sweat = !!(si && si.started >= 0 && si.started < 2 * 864e5);
+    const sweat = !calm && !!(si && si.started >= 0 && si.started < 2 * 864e5);
     const li = LEAGUE_IDS.indexOf(dv.league);
     const lg = sweat ? LEAGUE_IDS[Math.min(4, li + 1)] : dv.league;
     const [lo, hi, s0, s1] = (v24() ? BOT_BAND_24 : BOT_BAND_23)[dv.league];
@@ -1249,8 +1249,8 @@
       return { id, level: Math.max(1, Math.min(cap, lvl)), stars };
     });
   }
-  function botSquad(kind, rating, r) {
-    if (root.Update22 && (root.Update22.content || root.Update22.on)()) return botSquad22(kind, rating, r);
+  function botSquad(kind, rating, r, calm) {
+    if (root.Update22 && (root.Update22.content || root.Update22.on)()) return botSquad22(kind, rating, r, calm);
     const mine = squadEntries(kind);
     const f = Math.pow(rating / Math.max(600, S().rating), 0.8);
     const lvl = Math.max(1, Math.min(D.MAX_LEVEL || 30, Math.round(avgLevel(mine) * f + (r() - 0.5) * 2)));

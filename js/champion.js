@@ -26,7 +26,8 @@
   const state = () => { const h = HN() && HN().S && HN().S(); if (!h) return null; return h; };
   const save = () => { try { HN().save(); } catch (e) { /* not ready */ } };
   const me = () => (HN() && HN().Net && HN().Net.me) || null;
-  const myName = () => { try { const n = HN().Net.name(me() || 'me'); return n === 'You' ? 'Commander' : n; } catch (e) { return 'Commander'; } };
+  // Ackbar uses your callsign as-is: no "(you)" tag on it.
+  const myName = () => { try { const n = String(HN().Net.name(me() || 'me')).replace(/\s*\(you\)\s*$/i, ''); return !n || n === 'You' ? 'Commander' : n; } catch (e) { return 'Commander'; } };
   let open = false;
   let testMode = false;
 

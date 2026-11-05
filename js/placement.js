@@ -49,13 +49,16 @@
   const revealIn = () => (forced() ? 0 : brk());
   const ready = () => need() && rec().done && revealIn() <= 0;
 
+  // Tuning (set by battle simulations: see the notes in the 2.4 balance log).
+  // Tuned over 1,000+ simulated placements against pilots of known strength.
+  const CFG = { g1: -150, step: 60, adapt: 12, adaptMin: -300, adaptMax: 1100, bossHard: 240, bossMild: 40, perf: 12, mid: 43, lo: -250, hi: 1400, min: 600, max: 2300, upgrade: 0.2 };
   function nextRating(p) {
     const n = p.games.length;
-    const sum = p.games.reduce((a, g) => a + (g.score - 50) * 7, 0);
-    const adapt = clamp(sum, -300, 600);
-    if (n === 0) return p.base - 150;
-    if (n < GAMES - 1) return p.base + 60 * n + adapt;
-    return struggling(p) ? p.base + adapt + 40 : p.base + adapt + 240;
+    const sum = p.games.reduce((a, g) => a + (g.score - 50) * CFG.adapt, 0);
+    const adapt = clamp(sum, CFG.adaptMin, CFG.adaptMax);
+    if (n === 0) return p.base + CFG.g1;
+    if (n < GAMES - 1) return p.base + CFG.step * n + adapt;
+    return struggling(p) ? p.base + adapt + CFG.bossMild : p.base + adapt + CFG.bossHard;
   }
   function struggling(p) {
     const g = p.games;
@@ -64,20 +67,20 @@
     return avg < 45 || g[g.length - 1].score < 35;
   }
 
-  // Opponents come from every rarity in the game, secrets and mythics included.
-  function mixSquad(base, r) {
+  // Opponents follow their league's usual card mix, and now and then a card
+  // steps up a rarity (mythics, and secrets from Kyber up), so every rarity
+  // in the game can show up without making the fights a lottery.
+  const RK = ['common', 'rare', 'epic', 'legendary', 'mythic', 'secret'];
+  function mixSquad(base, r, rating) {
     const pool = D.UNITS.filter((u) => u.kind === KIND && !u.boss && !u.raid && !String(u.id).startsWith('raid_'));
-    const byR = {};
-    pool.forEach((u) => { (byR[u.rarity] = byR[u.rarity] || []).push(u.id); });
-    const rar = Object.keys(byR);
-    const used = new Set();
+    const used = new Set(base.map((e) => e.id));
     return base.map((e) => {
-      let id = e.id;
-      for (let k = 0; k < 8; k++) {
-        const list = byR[rar[Math.floor(r() * rar.length)]];
-        const pick = list[Math.floor(r() * list.length)];
-        if (!used.has(pick)) { id = pick; break; }
-      }
+      if (r() >= CFG.upgrade) return e;
+      const cur = RK.indexOf((D.UNIT_MAP[e.id] || {}).rarity);
+      const want = RK[Math.min(cur + 1, rating >= 1750 ? 5 : 4)];
+      const list = pool.filter((u) => u.rarity === want && !used.has(u.id));
+      if (!list.length) return e;
+      const id = list[Math.floor(r() * list.length)].id;
       used.add(id);
       return { ...e, id };
     });
@@ -113,7 +116,7 @@
     const seed = [...`place:${key}:${(H.Net && H.Net.me) || 'me'}`].reduce((a, c) => (Math.imul(a, 31) + c.charCodeAt(0)) >>> 0, 7);
     const r = H.rng(seed);
     const rating = Math.max(450, Math.round(nextRating(p)));
-    const squad = mixSquad(H.botSquad(KIND, rating, r), r);
+    const squad = mixSquad(H.botSquad(KIND, rating, r, true), r, rating);
     const last = n === GAMES - 1;
     let lead = null;
     const tierE = last ? eliteTier(p) : null;
@@ -166,8 +169,10 @@
 
   function placed(p) {
     let sum = 0; let w = 0;
-    p.games.forEach((g, i) => { const k = W[i] || 1; sum += (g.opp + (g.score - 50) * 9) * k; w += k; });
-    return Math.round(clamp(w ? sum / w : p.base, Math.max(500, p.base - 250), p.base + 1100));
+    p.games.forEach((g, i) => { const k = W[i] || 1; sum += (g.opp + (g.score - CFG.mid) * CFG.perf) * k; w += k; });
+    const r = clamp(w ? sum / w : p.base, p.base + CFG.lo, p.base + CFG.hi);
+    // Placement can start you in low Legend at best: the rest is earned by climbing.
+    return Math.round(clamp(r, CFG.min, CFG.max));
   }
 
   function record(params, b, won, quit) {
@@ -329,7 +334,7 @@
     return true;
   }
 
-  root.Placement = { GAMES, KIND, need, canPlay, openIn, revealIn, ready, rec, opponent, label, record, reveal, test };
+  root.Placement = { CFG, W, nextRating, placed, score, GAMES, KIND, need, canPlay, openIn, revealIn, ready, rec, opponent, label, record, reveal, test };
 
   const hook = () => {
     const H = UI() && UI().hooks;
