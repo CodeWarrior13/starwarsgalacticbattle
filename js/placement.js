@@ -8,7 +8,7 @@
 
   const GAMES = 5;
   const KIND = 'character';
-  const W = [1, 1, 1.2, 1.3, 1.6];
+  const W = [1, 1, 1.2, 1.3, 1.25];
   const TPS = 2.5;
   const DAY = 864e5;
 
@@ -51,7 +51,7 @@
 
   // Tuning (set by battle simulations: see the notes in the 2.4 balance log).
   // Tuned over 1,000+ simulated placements against pilots of known strength.
-  const CFG = { g1: -150, step: 60, adapt: 12, adaptMin: -300, adaptMax: 1100, bossHard: 240, bossMild: 40, perf: 12, mid: 43, lo: -250, hi: 1400, min: 600, max: 2300, upgrade: 0.2 };
+  const CFG = { g1: -150, step: 60, adapt: 12, adaptMin: -300, adaptMax: 1100, bossHard: 240, bossMild: 40, perf: 12, mid: 43, lo: -250, hi: 1400, min: 600, max: 1982, bossFloor: 220, upgrade: 0.2 };
   function nextRating(p) {
     const n = p.games.length;
     const sum = p.games.reduce((a, g) => a + (g.score - 50) * CFG.adapt, 0);
@@ -167,12 +167,18 @@
     return { won: !!won, score: Math.round(clamp(s, 0, 100)) };
   }
 
+  // Best possible placement: the top of Kyber II. Kyber III and Legend are earned by climbing.
+  const maxPlace = () => { const H = HN(); const k3 = H && H.DIVS && H.DIVS.find((d) => d.key === 'kyber3'); return Math.min(CFG.max, k3 ? k3.min - 1 : CFG.max); };
   function placed(p) {
     let sum = 0; let w = 0;
-    p.games.forEach((g, i) => { const k = W[i] || 1; sum += (g.opp + (g.score - CFG.mid) * CFG.perf) * k; w += k; });
+    const perf = p.games.map((g) => g.opp + (g.score - CFG.mid) * CFG.perf);
+    // The Boss Trial counts, but a crushing loss can only pull you so far below
+    // what your first four games showed.
+    if (perf.length === GAMES) { const pre = perf.slice(0, GAMES - 1); const m = pre.reduce((a, x) => a + x, 0) / pre.length; perf[GAMES - 1] = Math.max(perf[GAMES - 1], m - CFG.bossFloor); }
+    perf.forEach((x, i) => { const k = W[i] || 1; sum += x * k; w += k; });
     const r = clamp(w ? sum / w : p.base, p.base + CFG.lo, p.base + CFG.hi);
     // Placement can start you in low Legend at best: the rest is earned by climbing.
-    return Math.round(clamp(r, CFG.min, CFG.max));
+    return Math.round(clamp(r, CFG.min, maxPlace()));
   }
 
   function record(params, b, won, quit) {
