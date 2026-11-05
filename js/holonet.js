@@ -1288,7 +1288,8 @@
       const rating = v24() ? Math.max(400, Math.round(dv.min + r() * (divTop(dv) - dv.min))) : Math.max(400, Math.round(h.rating + offsets[i % offsets.length] + (r() - 0.5) * 60));
       const sq = botSquad(kind, rating, r);
       const lg = divOf(rating).league;
-      out.push({ id: `b:${i}`, name: BOT_NAMES.concat(BOT_NAMES_2)[Math.floor(r() * (BOT_NAMES.length + BOT_NAMES_2.length))], real: false, rating, squad: sq, av: BOT_AVS[Math.floor(r() * BOT_AVS.length)], frame: r() < 0.75 ? lg : r() < 0.5 ? 'guild' : 'linked', streak: Math.floor(r() * r() * 14) });
+      const face = root.HN && root.HN.npcFace && r() < 0.6 ? root.HN.npcFace(r) : null;
+      out.push({ id: `b:${i}`, name: face ? face.name : BOT_NAMES.concat(BOT_NAMES_2)[Math.floor(r() * (BOT_NAMES.length + BOT_NAMES_2.length))], real: false, rating, squad: sq, av: face ? face.av : BOT_AVS[Math.floor(r() * BOT_AVS.length)], gtag: face ? face.gtag : '', frame: r() < 0.75 ? lg : r() < 0.5 ? 'guild' : 'linked', streak: Math.floor(r() * r() * 14) });
     }
     return out.map((o) => ({ ...o, payout: payout(o.rating), gain: winGain(h.rating, o.rating), power: squadPower(o.squad) }));
   }
@@ -1699,6 +1700,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
 .hn-opp .minis .mini { width: 34px; height: 34px; }
 .hn-opp .go { display: grid; gap: 6px; justify-items: end; }
 .hn-opp-id { display: grid; justify-items: center; gap: 2px; } .hn-opp-id .pf-av { width: 44px; height: 44px; } .hn-opp-id .hn-badge { width: 30px; height: auto; margin-top: -10px; position: relative; z-index: 1; }
+.hn-gt { font-size: .72em; color: #9fc4d8; font-weight: 700; }
 .hn-gain { font: 800 12px var(--font-display); letter-spacing: .04em; color: #7af0a0; background: rgba(122, 240, 160, .1); border: 1px solid rgba(122, 240, 160, .35); border-radius: 999px; padding: 2px 8px; white-space: nowrap; }
 .hn-flame { display: inline-flex; align-items: center; gap: 1px; font-weight: 800; color: #ffb35c; -webkit-text-fill-color: currentColor; background: none; white-space: nowrap; }
 .hn-flame i { font-style: normal; font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; display: inline-block; transform-origin: 50% 90%; animation: hnFl 1.1s ease-in-out infinite alternate; will-change: transform; }
@@ -2709,7 +2711,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
         const d = HN.divOf(o.rating);
         const pic = !o.real && HN.avatarFor ? HN.avatarFor(null, o) : '';
         return `<div class="hn-opp"><div class="hn-opp-id">${pic}${A.badge(d.league, d.div)}</div>
-          <div class="who"><b>${esc(o.name)}</b>${o.real ? '<span class="tag">PLAYER</span>' : ''}${!o.real && o.streak >= 3 ? ` ${HN.streakFlame(o.streak)}` : ''}<small>${esc(d.name)} · ${fmt(o.rating)} · ⚡ ${fmt(o.power)}</small><div class="minis">${o.squad.map((e) => mini(e.id)).join('')}</div></div>
+          <div class="who"><b>${esc(o.name)}${o.gtag ? ` <small class="hn-gt">[${esc(o.gtag)}]</small>` : ''}</b>${o.real ? '<span class="tag">PLAYER</span>' : ''}${!o.real && o.streak >= 3 ? ` ${HN.streakFlame(o.streak)}` : ''}<small>${esc(d.name)} · ${fmt(o.rating)} · ⚡ ${fmt(o.power)}</small><div class="minis">${o.squad.map((e) => mini(e.id)).join('')}</div></div>
           <div class="go"><span class="hn-gain" title="Rating you gain with a win">▲ +${o.gain}</span>${bes(o.payout)}<button type="button" class="hn-btn" data-hn="attack" data-i="${i}" data-kind="${kind}" ${ids.length ? '' : 'disabled'}>Attack</button></div></div>`;
       }).join('')}</div>`}
 `;
@@ -5707,7 +5709,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const me = !uid || uid === Net.me || uid === 'me';
     const PC = root.PlayerCollections;
     if (me) { const h = S(); const p = myProfile(); return { uid: Net.me || 'me', me: true, ...p, rating: h.rating, level: Player.state.account.level, guild: h.guild || null, gpl: P2().soc.gpl, col: PC ? PC.encode() : '', use: PC ? PC.encodeUse() : '', ball: allBadges() }; }
-    const a = Net.arena.find((x) => x.uid === uid) || Net.rows.get(uid) || NPC_ROWS.get(uid) || {};
+    const a = Net.arena.find((x) => x.uid === uid) || Net.rows.get(uid) || (NPC_ROWS.has(uid) ? npcRow(uid) : null) || {};
     return { uid, me: false, col: a.col || '', use: a.use || '', ball: Array.isArray(a.ball) ? a.ball : null, tag: cleanTag(a.tag), av: a.av && D.UNIT_MAP[a.av] ? a.av : ((a.ground || [])[0] || {}).id || 'luke', frame: FRAMES[a.frame] ? a.frame : 'recruit', badges: Array.isArray(a.badges) ? a.badges.slice(0, 6) : [], nb: a.nb || 0, st: a.st || {}, rating: a.rating || 800, level: a.level || 1, guild: a.guild || null, gpl: a.gpl || 0 };
   }
   // Name shown everywhere: your callsign, else your account name.
@@ -6346,7 +6348,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const set = ((gmap.get(gid) || {}).ranks || {})[r] || {};
     return { r, s: RANK_SYMBOLS.includes(set.s) ? set.s : RANK_DEF[r].s, c: RANK_COLORS.includes(set.c) ? set.c : RANK_DEF[r].c };
   };
-  const weekPoints = (uid) => { if (uid === Net.me || uid === 'me') return P2().soc.gp; if (NPC_ROWS.has(uid)) return NPC_ROWS.get(uid).gp; const a = Net.arena.find((x) => x.uid === uid); return a && a.gpw === week() ? a.gp || 0 : 0; };
+  const weekPoints = (uid) => { if (uid === Net.me || uid === 'me') return P2().soc.gp; if (NPC_ROWS.has(uid)) return npcRow(uid).gp; const a = Net.arena.find((x) => x.uid === uid); return a && a.gpw === week() ? a.gp || 0 : 0; };
   const guildWeekPoints = (gid) => membersOf(gid).reduce((a, uid) => a + weekPoints(uid), 0);
   const MILESTONES = G23() ? [
     { pts: 250, beskar: 200, label: '200 Beskar' },
@@ -6390,18 +6392,80 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
         const uid = `npc:${g.id}:${i}`;
         const name = names[(k++ * 7 + gi * 3) % names.length];
         const rating = Math.round((g.min || 900) + r() * 900);
-        NPC_ROWS.set(uid, { uid, tag: name, av: avs[Math.floor(r() * avs.length)], frame: frames[Math.floor(r() * frames.length)], rating, guild: g.id, gpl: Math.round(r() * 4000), gp: Math.round(r() * 900), nb: 2 + Math.floor(r() * 12), bot: true });
+        NPC_ROWS.set(uid, { uid, tag: name, av: avs[Math.floor(r() * avs.length)], frame: frames[Math.floor(r() * frames.length)], rating, off: Math.round(((g.min || 900) - 1100) * 0.6 + (r() - 0.45) * 700), loff: Math.round((r() - 0.5) * 16), guild: g.id, gpl: Math.round(r() * 4000), gp: Math.round(r() * 900), nb: 2 + Math.floor(r() * 12), bot: true });
         Net.names[uid] = name;
       }
       g.lead = `npc:${g.id}:0`; g.co = `npc:${g.id}:1`; g.elders = [`npc:${g.id}:2`, `npc:${g.id}:3`];
       g.created = Date.UTC(2026, 9, 14) + gi * 3 * 86400000;
     });
   })();
-  const npcXp = (g) => Math.round(g.xp * (1 + Math.max(0, (Date.now() - Date.UTC(2026, 9, 14)) / (7 * 86400000)) * 0.06));
+  // They live on the game clock, so everyone sees the same guilds doing the
+  // same things, and their pace follows the real players': weekly points and
+  // ratings sit around the real median, raids fall over the week (sooner or
+  // later depending on the guild's week), and levels climb with activity.
+  const NPC_T0 = Date.UTC(2026, 9, 14);
+  const WK_MS = 7 * 864e5;
+  const hashS = (x) => [...String(x)].reduce((a, c) => (Math.imul(a, 31) + c.charCodeAt(0)) >>> 0, 7);
+  const clampN = (v, a, b) => Math.max(a, Math.min(b, v));
+  let paceCache = null;
+  function realPace() {
+    if (paceCache && Date.now() - paceCache.t < 600000) return paceCache;
+    const wk = week();
+    const rows = Net.arena.filter((a) => a && a.uid && !NPC_ROWS.has(a.uid) && a.uid !== Net.me);
+    const med = (xs, d) => { const v = xs.filter((x) => x > 0).sort((a, b) => a - b); return v.length >= 3 ? v[Math.floor(v.length / 2)] : d; };
+    paceCache = { t: Date.now(), gp: clampN(med(rows.map((a) => (a.gpw === wk ? a.gp : 0)), 320), 120, 1500), rating: clampN(med(rows.map((a) => a.rating), 1300), 900, 2100), level: clampN(med(rows.map((a) => a.level), 30), 20, 50) };
+    return paceCache;
+  }
+  // This week's pace for a guild: 0.75x to 1.3x the real players.
+  const npcPace = (gid, wk) => 0.75 + HN.rng(hashS(gid) + wk * 131)() * 0.55;
+  const weekFrac = () => { const x = (Date.now() + (S().weekShift || 0) * WK_MS) / WK_MS; return x - Math.floor(x); };
+  const weeksLive = () => Math.max(0, (Date.now() - NPC_T0) / WK_MS);
+  const npcLiveCache = new Map();
+  function npcRow(uid) {
+    const row = NPC_ROWS.get(uid);
+    if (!row) return null;
+    const wk = week();
+    const key = `${uid}:${wk}:${Math.floor(Date.now() / 600000)}`;
+    const c = npcLiveCache.get(uid);
+    if (c && c.key === key) return c.row;
+    const rp = realPace();
+    const r = HN.rng(hashS(uid) + wk * 7);
+    const pace = npcPace(row.guild, wk);
+    const share = 0.4 + r() * 1.2;
+    const sf = (() => { try { const si = HN.seasonInfo(); return clampN(1 - si.ends / si.length, 0, 1); } catch (e) { return 0.5; } })();
+    const rating = Math.round(clampN(rp.rating + row.off + 140 * sf * (0.6 + pace * 0.4), 700, 2350));
+    const level = Math.round(clampN(rp.level + row.loff + weeksLive() * 0.4, 20, 50));
+    const gp = Math.round(rp.gp * pace * share * Math.pow(weekFrac(), 0.9));
+    const sr = HN.rng(hashS(uid) + wk * 13);
+    const live = { ...row, rating, level, gp, gpw: wk, gpl: row.gpl + Math.round(weeksLive() * rp.gp * 0.8), nb: row.nb + Math.floor(weeksLive() * 0.6),
+      ground: HN.botSquad('character', rating, sr, true), fleet: HN.botSquad('ship', rating, sr, true), st: { ws: Math.floor(r() * r() * 9) } };
+    npcLiveCache.set(uid, { key, row: live });
+    return live;
+  }
+  // Guild raid damage: the crew chips away through the week; strong weeks clear by about day 4, slow ones may not clear at all.
+  function npcRaid(uid) {
+    const row = NPC_ROWS.get(uid);
+    if (!row || !graidNow) return null;
+    const g = graidNow();
+    const wk = week();
+    const crew = npcCrew(row.guild);
+    const pace = npcPace(row.guild, wk);
+    const w = crew.map((u) => 0.4 + HN.rng(hashS(u) + wk * 7)() * 1.2);
+    const tot = w.reduce((a, x) => a + x, 0) || 1;
+    const mine = w[crew.indexOf(uid)] / tot;
+    const days = weekFrac() * 7;
+    const F = (k) => Math.min(1.03, pace * k * Math.pow(days / 5.2, 1.15));
+    return { w: wk, b: g.id, d: Math.round(g.ground.pool * F(1) * mine), f: Math.round(g.fleet.pool * F(0.93) * mine) };
+  }
+  const npcXp = (g) => Math.round(g.xp + weeksLive() * realPace().gp * g.size * 0.55 * npcPace(g.id, week()));
+  const npcLvl = (g) => Math.min(10, g.lvl + Math.floor(weeksLive() * 0.28 * npcPace(g.id, Math.floor(NPC_T0 / WK_MS))));
   const setGuilds = () => {
-    NPC_GUILDS.forEach((g) => { gmap.set(g.id, { ...g, xp: npcXp(g) }); });
+    NPC_GUILDS.forEach((g) => { gmap.set(g.id, { ...g, xp: npcXp(g), lvl: npcLvl(g) }); });
     G.guilds = [...gmap.values()].filter((g) => g && g.name).map(safeGuild);
   };
+  // Faces for the HoloNet: crew members show up as arena opponents and on the boards under their guild tag.
+  HN.npcFace = (r) => { const ids = [...NPC_ROWS.keys()]; const row = NPC_ROWS.get(ids[Math.floor(r() * ids.length)]); const g = NPC_GUILDS.find((x) => x.id === row.guild); return { name: row.tag, av: row.av, frame: row.frame, gtag: g ? g.tag : '' }; };
+  HN.npcTagOf = (name) => { for (const row of NPC_ROWS.values()) if (row.tag === name) { const g = NPC_GUILDS.find((x) => x.id === row.guild); return g ? g.tag : ''; } return ''; };
   // Their chatter: a few lines every few hours, plus a reply when you post.
   const NPC_LINES = ['Raid fronts are up, hit them when you can!', 'gg everyone, great week', 'Anyone got tips for the Fleet front?', 'Just pulled a legendary from a puck!!', 'Welcome to all the new pilots o7', 'Don\'t forget your arena battles today', 'Who else is grinding Beskar?', 'That Boss Trial is no joke', 'Ground front almost cleared, push!', 'Night shift checking in', 'Remember to use your raid runs', 'New season soon, who\'s going for Legend?', 'My squad finally hit level 40', 'Lol the Wampa just ate my whole team', 'Good luck in your duels everyone', 'Vault upgrades looking good this week', 'Anyone want a friendly battle?', 'May the Force be with you all'];
   const NPC_REPLY = ['Welcome aboard!', 'o7', 'Haha nice', 'Glad to have you here', 'gg!', 'Let\'s go!', 'Same here', 'Good luck out there', 'True', 'Hit the raid when you can, every hit counts'];
@@ -6417,10 +6481,35 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       const r = HN.rng(t * 31 + gi * 977);
       const ts = t * slot + Math.floor(r() * slot);
       if (ts > now) continue;
-      out.push({ g: gid, uid: crew[Math.floor(r() * crew.length)], t: NPC_LINES[Math.floor(r() * NPC_LINES.length)], ts });
+      out.push({ g: gid, uid: crew[Math.floor(r() * crew.length)], t: npcSay(gid, r), ts });
     }
     const mine = (S().npcChat || []).filter((m) => m.g === gid && m.ts <= now);
     return out.concat(mine);
+  };
+  // What the crew talks about follows what's going on: the raid, upgrades, ranks, the season.
+  const npcSay = (gid, r) => {
+    const roll = r();
+    try {
+      if (roll < 0.25) {
+        const t = graidTotals(gid);
+        const pct = (f) => Math.min(100, Math.round((t[f].dealt / t[f].pool) * 100));
+        if (t.fallen) return ['Raid DOWN! gg everyone 🎉', 'We cleared both fronts, claim your rewards!', 'Raid beaten, nice work team'][Math.floor(r() * 3)];
+        const f = r() < 0.5 ? 'ground' : 'fleet';
+        return t[f].down ? `${f === 'ground' ? 'Ground' : 'Fleet'} front cleared! Now the ${f === 'ground' ? 'fleet' : 'ground'} one` : `${f === 'ground' ? 'Ground' : 'Fleet'} front at ${pct(f)}%, keep hitting it`;
+      }
+      if (roll < 0.45) {
+        const hn = (HN.HN_IDS || []).filter((id) => D.UNIT_MAP[id]);
+        const id = hn[Math.floor(r() * hn.length)];
+        const nm = id ? D.UNIT_MAP[id].name.split(' \u00b7 ')[0] : 'my squad';
+        return [`Just forged ${nm} to tier ${1 + Math.floor(r() * 4)} 🔨`, `Finally got ${nm} to ${4 + Math.floor(r() * 4)} stars`, `${nm} is so good after the upgrade`, `Saving Beskar for ${nm}'s next forge tier`][Math.floor(r() * 4)];
+      }
+      if (roll < 0.6) {
+        const lg = HN.divOf(realPace().rating + Math.round((r() - 0.3) * 500)).name;
+        return [`Made it to ${lg} 😎`, `Stuck at ${lg}, send help lol`, `Who else is in ${lg} right now?`][Math.floor(r() * 3)];
+      }
+      if (roll < 0.68 && HN.seasonBreak && HN.seasonBreak()) return ['Placements soon, good luck everyone', 'Got my squad ready for placements', 'Boss Trial is gonna be rough'][Math.floor(r() * 3)];
+    } catch (e) { /* fall back to small talk */ }
+    return NPC_LINES[Math.floor(r() * NPC_LINES.length)];
   };
   const npcReply = (gid) => {
     const crew = npcCrew(gid);
@@ -6825,6 +6914,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     for (const uid of membersOf(gid)) {
       let gr;
       if (uid === Net.me || uid === 'me') gr = P2().soc.gr;
+      else if (NPC_ROWS.has(uid)) gr = npcRaid(uid);
       else { const a = Net.arena.find((x) => x.uid === uid); gr = a && a.gr; }
       if (!gr || gr.w !== week() || gr.b !== g.id) continue;
       if (gr.d) { out.ground.dealt += gr.d; out.ground.rows.push({ uid, dmg: gr.d }); }
@@ -6840,7 +6930,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   }
   function allyFor(front, gid) {
     const key = front === 'fleet' ? 'fleet' : 'ground';
-    const mates = membersOf(gid).filter((u) => u !== Net.me && u !== 'me').map((uid) => ({ uid, a: Net.arena.find((x) => x.uid === uid) })).filter((x) => x.a && Array.isArray(x.a[key]) && x.a[key].length && x.a[key].every((e) => D.UNIT_MAP[e.id]));
+    const mates = membersOf(gid).filter((u) => u !== Net.me && u !== 'me').map((uid) => ({ uid, a: Net.arena.find((x) => x.uid === uid) || (NPC_ROWS.has(uid) ? npcRow(uid) : null) })).filter((x) => x.a && Array.isArray(x.a[key]) && x.a[key].length && x.a[key].every((e) => D.UNIT_MAP[e.id]));
     if (!mates.length) return null;
     const pick = mates[(P2().soc.gr.runs || 0) % mates.length];
     return { uid: pick.uid, name: Net.name(pick.uid), squad: pick.a[key] };
@@ -8185,7 +8275,7 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
     const me = x.me || x.uid === Net.me;
     const ws = x.bot ? x.ws : me ? (SO.P2().streak | 0) : ((Net.arena.find((a) => a.uid === x.uid) || {}).st || {}).ws | 0;
     const fl = HN.streakFlame && ws >= 3 ? HN.streakFlame(ws) : '';
-    const who = x.bot ? `<span class="hv-bot">${SO.avatar({ av: x.av, frame: x.frame }, 'sm')}<span class="nm"><b>${esc(x.name)}${fl ? ` ${fl}` : ''}</b><small>${esc(HN.divOf(x.best).name)}</small></span></span>` : SO.chip(me ? 'me' : x.uid).replace('</b>', `${fl ? ` ${fl}` : ''}</b>`);
+    const who = x.bot ? `<span class="hv-bot">${SO.avatar({ av: x.av, frame: x.frame }, 'sm')}<span class="nm"><b>${esc(x.name)}${fl ? ` ${fl}` : ''}</b><small>${(() => { const t = HN.npcTagOf ? HN.npcTagOf(x.name) : ''; return t ? `[${esc(t)}] ` : ''; })()}${esc(HN.divOf(x.best).name)}</small></span></span>` : SO.chip(me ? 'me' : x.uid).replace('</b>', `${fl ? ` ${fl}` : ''}</b>`);
     return `<div class="g-row ${me ? 'me' : ''}"><span class="rk">${i + 1}</span>${who}<span class="r">${right}</span></div>`;
   };
   V.leaders = () => {
