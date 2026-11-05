@@ -59,11 +59,11 @@
   const CAL = {
     hn_fang: 1.08, hn_ig11: 1.1, hn_outrider: 1.12, hn_nite_owl: 1.22, hn_zuckuss: 1.28, hn_fennec: 1.2,
     hn_krrsantan: 1.25, hn_aurra: 1.38, hn_embo: 1.32, hn_gauntlet: 1.28, hn_bossk: 1.35, hn_greef: 1.35,
-    hn_armorer: 1.55, hn_pre_vizsla: 1.3, hn_kelleran: 1.45, hn_cadbane: 1.5, hn_vader_hallway: 1.6, hn_dark_trooper: 1.65,
+    hn_armorer: 1.8, hn_pre_vizsla: 1.3, hn_kelleran: 1.45, hn_cadbane: 1.5, hn_vader_hallway: 1.6, hn_dark_trooper: 1.9,
   };
   // Kits that needed more than stats: harder hits (dmg) and a shorter main cooldown (cd).
   const KIT = {
-    hn_dark_trooper: { dmg: 1.55, cd: -1 }, hn_vader_hallway: { dmg: 1.2, cd: -1 }, hn_pre_vizsla: { dmg: 1.25, cd: -1 }, hn_armorer: { dmg: 1.45, cd: -1 }, hn_krrsantan: { dmg: 1.2, cd: -1 },
+    hn_dark_trooper: { dmg: 1.8, cd: -1 }, hn_vader_hallway: { dmg: 1.2, cd: -1 }, hn_pre_vizsla: { dmg: 1.25, cd: -1 }, hn_armorer: { dmg: 1.7, cd: -1 }, hn_krrsantan: { dmg: 1.2, cd: -1 },
     hn_gauntlet: { dmg: 1.2, cd: -1 }, hn_zuckuss: { dmg: 1.2, cd: 0 }, hn_kelleran: { dmg: 1.15, cd: -1 }, hn_embo: { dmg: 1.2, cd: 0 },
     hn_cadbane: { dmg: 1.25, cd: -1 }, hn_aurra: { dmg: 1.15, cd: 0 }, hn_greef: { dmg: 1.1, cd: -1 }, hn_fennec: { dmg: 1.15, cd: 0 },
   };
