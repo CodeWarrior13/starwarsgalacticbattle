@@ -1012,19 +1012,54 @@
   };
 
   // ---------- leagues ----------
-  const LEAGUES = [
+  // 2.3 ladder, and the 2.4 ladder: Legend at 2,500 and wider, even steps (100 a division
+  // through Silver, 150 from Gold up). The tables swap in place when 2.4 switches on.
+  const LEAGUES_23 = [
     { id: 'bronze', name: 'Bronze', min: 800 }, { id: 'silver', name: 'Silver', min: 1150 },
     { id: 'gold', name: 'Gold', min: 1450 }, { id: 'kyber', name: 'Kyber', min: 1750 }, { id: 'legend', name: 'Legend', min: 2100 },
   ];
-  const DIVS = [];
-  LEAGUES.forEach((l, i) => {
-    if (l.id === 'legend') { DIVS.push({ key: 'legend', league: l.id, name: 'Legend', div: 1, min: l.min }); return; }
-    const next = LEAGUES[i + 1].min;
-    const step = (next - l.min) / 3;
-    for (let d = 1; d <= 3; d++) DIVS.push({ key: `${l.id}${d}`, league: l.id, name: `${l.name} ${['I', 'II', 'III'][d - 1]}`, div: d, min: Math.round(l.min + step * (d - 1)) });
-  });
-  DIVS.forEach((d, i) => { d.beskar = d.league === 'legend' ? 2000 : Math.round(100 + (1100 * i) / 11); });
-  const divOf = (rating) => [...DIVS].reverse().find((d) => rating >= d.min) || DIVS[0];
+  const LEAGUES_24 = [
+    { id: 'bronze', name: 'Bronze', min: 1000 }, { id: 'silver', name: 'Silver', min: 1300 },
+    { id: 'gold', name: 'Gold', min: 1600 }, { id: 'kyber', name: 'Kyber', min: 2050 }, { id: 'legend', name: 'Legend', min: 2500 },
+  ];
+  const buildDivs = (leagues) => {
+    const out = [];
+    leagues.forEach((l, i) => {
+      if (l.id === 'legend') { out.push({ key: 'legend', league: l.id, name: 'Legend', div: 1, min: l.min }); return; }
+      const next = leagues[i + 1].min;
+      const step = (next - l.min) / 3;
+      for (let d = 1; d <= 3; d++) out.push({ key: `${l.id}${d}`, league: l.id, name: `${l.name} ${['I', 'II', 'III'][d - 1]}`, div: d, min: Math.round(l.min + step * (d - 1)) });
+    });
+    out.forEach((d, i) => { d.beskar = d.league === 'legend' ? 2000 : Math.round(100 + (1100 * i) / 11); });
+    return out;
+  };
+  const DIVS_23 = buildDivs(LEAGUES_23);
+  const DIVS_24 = buildDivs(LEAGUES_24);
+  const LEAGUES = LEAGUES_23.map((l) => ({ ...l }));
+  const DIVS = DIVS_23.map((d) => ({ ...d }));
+  let ladder24 = false;
+  const syncLadder = () => {
+    const on = v24();
+    if (on === ladder24) return;
+    ladder24 = on;
+    (on ? LEAGUES_24 : LEAGUES_23).forEach((l, i) => Object.assign(LEAGUES[i], l));
+    (on ? DIVS_24 : DIVS_23).forEach((d, i) => Object.assign(DIVS[i], d));
+  };
+  // The same spot on the other ladder (placement is tuned on the 2.3 numbers).
+  const remap = (x, from, to) => {
+    if (x < from[0].min) return Math.round(to[0].min - (from[0].min - x));
+    for (let i = from.length - 1; i >= 0; i--) {
+      if (x < from[i].min) continue;
+      const a0 = from[i].min; const a1 = from[i + 1] ? from[i + 1].min : a0 + 400;
+      const b0 = to[i].min; const b1 = to[i + 1] ? to[i + 1].min : b0 + 400;
+      return Math.round(b0 + ((x - a0) / (a1 - a0)) * (b1 - b0));
+    }
+    return x;
+  };
+  const toNewR = (x) => { syncLadder(); return ladder24 ? remap(x, DIVS_23, DIVS_24) : x; };
+  const toOldR = (x) => { syncLadder(); return ladder24 ? remap(x, DIVS_24, DIVS_23) : x; };
+  const divOf = (rating) => { syncLadder(); return divOf0(rating); };
+  const divOf0 = (rating) => [...DIVS].reverse().find((d) => rating >= d.min) || DIVS[0];
   const LEAGUE_REWARD = { silver: { puck: 'guild', card: 'hn_embo' }, gold: { puck: 'elite', card: 'hn_fennec' }, kyber: { puck: 'high' }, legend: { puck: 'legend', cards: ['hn_pre_vizsla', 'hn_gauntlet'] } };
 
   // ---------- squads ----------
@@ -1261,36 +1296,53 @@
     return picks.map((id) => ({ id, level: lvl, stars }));
   }
   function opponents(kind) {
+    syncLadder();
     const h = S();
     const key = kind === 'ship' ? 'fleet' : 'ground';
     const out = [];
-    const real = Net.arena.filter((a) => a.uid !== Net.me && Array.isArray(a[key]) && a[key].length && a[key].every((e) => D.UNIT_MAP[e.id]))
-      .sort((a, b) => Math.abs(a.rating - h.rating) - Math.abs(b.rating - h.rating)).slice(0, 2);
     const r = rng(h.seed * 7919 + (kind === 'ship' ? 13 : 0));
-    // 2.4: you only meet pilots from your own division or one either side
-    // (Gold II meets Gold I, II and III; Gold I can meet Silver III). The four
-    // rotate after every fight, recent opponents sit out, and there's no re-roll.
-    const di = DIVS.indexOf(divOf(h.rating));
-    const near = (x) => Math.abs(DIVS.indexOf(divOf(x)) - di) <= 1;
-    const recent = h.recentOpp || [];
-    if (v24()) {
-      const pool = Net.arena.filter((a) => a.uid !== Net.me && Array.isArray(a[key]) && a[key].length && a[key].every((e) => D.UNIT_MAP[e.id]) && near(a.rating || 0) && !recent.includes(`p:${a.uid}`));
-      real.length = 0;
-      while (real.length < 2 && pool.length) real.push(pool.splice(Math.floor(r() * pool.length), 1)[0]);
+    // You only meet pilots from your own division or one either side (Gold II
+    // meets Gold I, II and III); Legend only ever meets Legend. All four change
+    // after every fight: nobody from the last set comes straight back.
+    const me = divOf(h.rating);
+    const di = DIVS.indexOf(me);
+    const legend = me.league === 'legend';
+    const near = (x) => (legend ? divOf(x).league === 'legend' : Math.abs(DIVS.indexOf(divOf(x)) - di) <= 1);
+    h.oppSeen = h.oppSeen || {};
+    let seen = h.oppSeen[key];
+    if (!seen || seen.seed !== h.seed) { seen = h.oppSeen[key] = { seed: h.seed, prev: seen ? seen.ids : [], ids: [] }; }
+    const block = new Set([...(seen.prev || []), ...(h.recentOpp || [])]);
+    const used = new Set();
+    const pool = Net.arena.filter((a) => a.uid !== Net.me && Array.isArray(a[key]) && a[key].length && a[key].every((e) => D.UNIT_MAP[e.id]) && near(a.rating || 0) && !block.has(`p:${a.uid}`));
+    while (out.length < 2 && pool.length) {
+      const a = pool.splice(Math.floor(r() * pool.length), 1)[0];
+      out.push({ id: `p:${a.uid}`, name: Net.name(a.uid), real: true, rating: a.rating, squad: a[key] });
+      used.add(`p:${a.uid}`); used.add(`n:${Net.name(a.uid)}`);
     }
-    for (const a of real) out.push({ id: `p:${a.uid}`, name: Net.name(a.uid), real: true, rating: a.rating, squad: a[key] });
-    const offsets = [-140, 30, 210, 90];
-    const span = [DIVS[Math.max(0, di - 1)], DIVS[di], DIVS[Math.min(DIVS.length - 1, di + 1)]];
+    const span = legend ? [me, me, me] : [DIVS[Math.max(0, di - 1)], me, DIVS[Math.min(DIVS.length - 1, di + 1)]];
     const divTop = (d) => { const nx = DIVS[DIVS.indexOf(d) + 1]; return nx ? nx.min - 1 : d.min + 300; };
-    const order = [0, 1, 2, 1].map((x) => span[x]).sort(() => r() - 0.5);
+    const order = [0, 1, 2, r() < 0.5 ? 0 : 2].map((x) => span[x]).sort(() => r() - 0.5);
+    const allNames = BOT_NAMES.concat(BOT_NAMES_2);
+    const freshName = () => {
+      for (let t = 0; t < 14; t++) {
+        const face = root.HN && root.HN.npcFace && r() < 0.6 ? root.HN.npcFace(r) : null;
+        const name = face ? face.name : allNames[Math.floor(r() * allNames.length)];
+        if (!block.has(`n:${name}`) && !used.has(`n:${name}`)) return { name, face };
+      }
+      const name = allNames.find((n) => !block.has(`n:${n}`) && !used.has(`n:${n}`)) || allNames[0];
+      return { name, face: null };
+    };
     for (let i = 0; out.length < 4; i++) {
       const dv = order[i % order.length];
-      const rating = v24() ? Math.max(400, Math.round(dv.min + r() * (divTop(dv) - dv.min))) : Math.max(400, Math.round(h.rating + offsets[i % offsets.length] + (r() - 0.5) * 60));
+      // Legend has no ceiling, so Legend pilots meet Legends around their own rating.
+      const rating = legend ? Math.max(me.min, Math.round(h.rating - 120 + r() * 260)) : Math.max(400, Math.round(dv.min + r() * (divTop(dv) - dv.min)));
       const sq = botSquad(kind, rating, r);
       const lg = divOf(rating).league;
-      const face = root.HN && root.HN.npcFace && r() < 0.6 ? root.HN.npcFace(r) : null;
-      out.push({ id: `b:${i}`, name: face ? face.name : BOT_NAMES.concat(BOT_NAMES_2)[Math.floor(r() * (BOT_NAMES.length + BOT_NAMES_2.length))], real: false, rating, squad: sq, av: face ? face.av : BOT_AVS[Math.floor(r() * BOT_AVS.length)], gtag: face ? face.gtag : '', frame: r() < 0.75 ? lg : r() < 0.5 ? 'guild' : 'linked', streak: Math.floor(r() * r() * 14) });
+      const { name, face } = freshName();
+      used.add(`n:${name}`);
+      out.push({ id: `b:${i}`, name, real: false, rating, squad: sq, av: face ? face.av : BOT_AVS[Math.floor(r() * BOT_AVS.length)], gtag: face ? face.gtag : '', frame: r() < 0.75 ? lg : r() < 0.5 ? 'guild' : 'linked', streak: Math.floor(r() * r() * 14) });
     }
+    seen.ids = [...used].filter((x) => x.startsWith('p:') || x.startsWith('n:'));
     return out.map((o) => ({ ...o, payout: payout(o.rating), gain: winGain(h.rating, o.rating), power: squadPower(o.squad) }));
   }
   // payout = 40 × clamp((their ÷ yours)², 0.5, 2.5) × (1 + 0.05 × streak)
@@ -1302,9 +1354,10 @@
   };
   const expected = (a, b) => 1 / (1 + 10 ** ((b - a) / 400));
   // Higher leagues: wins are worth more rating (losses cost a little more too).
-  const LEAGUE_GAIN = { bronze: 1, silver: 1.1, gold: 1.25, kyber: 1.45, legend: 1.7 };
+  // 2.4: about 20 a win at par in Bronze up to about 30 in Legend, never more than 30.
+  const LEAGUE_GAIN = { bronze: 1, silver: 1.1, gold: 1.2, kyber: 1.35, legend: 1.5 };
   const gainMult = (rating) => (v24() ? LEAGUE_GAIN[divOf(rating).league] || 1 : 1);
-  const winGain = (mine, theirs) => Math.max(6, Math.round(36 * (1 - expected(mine, theirs)) * gainMult(mine)));
+  const winGain = (mine, theirs) => (v24() ? Math.min(30, Math.max(8, Math.round(40 * (1 - expected(mine, theirs)) * gainMult(mine)))) : Math.max(6, Math.round(36 * (1 - expected(mine, theirs)))));
   const lossCost = (mine, theirs) => Math.max(4, Math.round(28 * expected(mine, theirs) * (1 + (gainMult(mine) - 1) * 0.5)));
 
   // Record an arena result: rating, streak, Beskar, and any new division.
@@ -1366,9 +1419,36 @@
     const local = S().raids[`${w}:${boss}`] || { dmg: 0 };
     if (!rows.some((r) => r.uid === Net.me)) rows.push({ uid: Net.me || 'me', name: 'You', dmg: local.dmg });
     rows.sort((a, b) => b.dmg - a.dmg);
-    const dealt = rows.reduce((a, r) => a + r.dmg, 0) + (S().raidBonus || 0);
     const p = raidNow().pool;
-    return { rows, dealt: Math.min(p, dealt), left: Math.max(0, p - dealt), pool: p, mine: local.dmg, fallen: dealt >= p };
+    const bots = raidBots();
+    // The other pilots chip in through the week, but the last hits are always the real players'.
+    const botDmg = Math.min(Math.round(p * 0.85), bots.reduce((a, r) => a + r.dmg, 0));
+    const dealt = rows.reduce((a, r) => a + r.dmg, 0) + (S().raidBonus || 0) + botDmg;
+    return { rows, bots, dealt: Math.min(p, dealt), left: Math.max(0, p - dealt), pool: p, mine: local.dmg, fallen: dealt >= p };
+  }
+  // This week's other raiders: they hit through the week, a few runs a day, at their own pace.
+  let raidBotCache = null;
+  function raidBots() {
+    const w = week();
+    const R = raidNow();
+    const x = (Date.now() + (S().weekShift || 0) * WEEK) / WEEK;
+    const hr = Math.floor((x - Math.floor(x)) * 168);
+    const key = `${w}:${R.id}:${hr}`;
+    if (raidBotCache && raidBotCache.key === key) return raidBotCache.rows;
+    const r = rng(w * 7919 + 13);
+    const names = BOT_NAMES.concat(BOT_NAMES_2).sort(() => r() - 0.5).slice(0, 34);
+    const rows = names.map((name, i) => {
+      const keen = 1.6 - i * 0.035 + (r() - 0.5) * 0.4;
+      const start = r() * 30;
+      const runsPerDay = 0.6 + r() * 1.8;
+      const per = Math.round(R.pool * 0.003 * keen * (0.8 + r() * 0.4));
+      const runs = hr < start ? 0 : 1 + Math.floor(((hr - start) / 24) * runsPerDay);
+      const rs = rng(w * 31 + i * 7);
+      let dmg = 0; for (let k = 0; k < runs; k++) dmg += Math.round(per * (0.6 + rs() * 0.8));
+      return { bot: true, name, av: BOT_AVS[Math.floor(r() * BOT_AVS.length)], frame: ['bronze', 'silver', 'gold', 'kyber', 'legend', 'guild', 'squadron'][Math.floor(r() * 7)], best: toNewR(Math.round(1100 + keen * 700 + r() * 200)), dmg };
+    }).filter((b) => b.dmg > 0);
+    raidBotCache = { key, rows };
+    return rows;
   }
   function bankRaid(dmgDone) {
     const h = S();
@@ -1581,7 +1661,7 @@
     };
   }
 
-  root.HN = { BETA, v22, raidToughen, toughPool, xp, grantBase, HN_IDS, HOW, RAIDS, LEAGUES, DIVS, LEAGUE_REWARD, S, save, owns, card, grant, entry, pool, squad, squadEntries, squadPower, powerOf, avgLevel, divOf, opponents, payout, arenaResult, claimDivisions, week, raidNow, raidTotals, bankRaid, claimRaid, Net, rng, botSquad, BOT_NAMES, BOT_AVS, BOT_NAMES_2 };
+  root.HN = { BETA, v22, raidToughen, toughPool, xp, grantBase, HN_IDS, HOW, RAIDS, LEAGUES, DIVS, toNewR, toOldR, syncLadder, LEAGUE_REWARD, S, save, owns, card, grant, entry, pool, squad, squadEntries, squadPower, powerOf, avgLevel, divOf, opponents, payout, arenaResult, claimDivisions, week, raidNow, raidTotals, bankRaid, claimRaid, Net, rng, botSquad, BOT_NAMES, BOT_AVS, BOT_NAMES_2 };
   // Win-streak flame: one emoji plus a CSS glow, tier every 10 wins.
   root.HN.streakFlame = (n, big) => { n = n | 0; if (n < 1) return '0'; const t = Math.min(9, Math.floor(n / 10)); return `<span class="hn-flame t${t}${big ? ' big' : ''}" title="${n} win streak"><i>🔥</i>${n}</span>`; };
 })(window);
@@ -6421,7 +6501,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const wk = week();
     const rows = Net.arena.filter((a) => a && a.uid && !NPC_ROWS.has(a.uid) && a.uid !== Net.me);
     const med = (xs, d) => { const v = xs.filter((x) => x > 0).sort((a, b) => a - b); return v.length >= 3 ? v[Math.floor(v.length / 2)] : d; };
-    paceCache = { t: Date.now(), gp: clampN(med(rows.map((a) => (a.gpw === wk ? a.gp : 0)), 320), 120, 1500), rating: clampN(med(rows.map((a) => a.rating), 1300), 900, 2100), level: clampN(med(rows.map((a) => a.level), 30), 20, 50) };
+    paceCache = { t: Date.now(), gp: clampN(med(rows.map((a) => (a.gpw === wk ? a.gp : 0)), 320), 120, 1500), rating: clampN(med(rows.map((a) => a.rating), 1300), 900, root.Update24 && root.Update24.on() ? 2600 : 2100), level: clampN(med(rows.map((a) => a.level), 30), 20, 50) };
     return paceCache;
   }
   // This week's pace for a guild: 0.75x to 1.3x the real players.
@@ -6441,7 +6521,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const pace = npcPace(row.guild, wk);
     const share = 0.4 + r() * 1.2;
     const sf = (() => { try { const si = HN.seasonInfo(); return clampN(1 - si.ends / si.length, 0, 1); } catch (e) { return 0.5; } })();
-    const rating = Math.round(clampN(rp.rating + row.off + 140 * sf * (0.6 + pace * 0.4), 700, 2350));
+    const rating = Math.round(clampN(rp.rating + row.off + 140 * sf * (0.6 + pace * 0.4), 700, root.Update24 && root.Update24.on() ? 2800 : 2350));
     const level = Math.round(clampN(rp.level + row.loff + weeksLive() * 0.4, 20, 50));
     const gp = Math.round(rp.gp * pace * share * Math.pow(weekFrac(), 0.9));
     const sr = HN.rng(hashS(uid) + wk * 13);
@@ -8266,7 +8346,7 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
     const avs = HN.BOT_AVS || ['luke'];
     return names.map((name, i) => {
       const peak = 2380 - i * 26 + Math.round((r() - 0.5) * 30);
-      const best = Math.round(900 + (peak - 900) * (0.55 + 0.45 * frac));
+      const best = HN.toNewR(Math.round(900 + (peak - 900) * (0.55 + 0.45 * frac)));
       const lg = HN.divOf(best).league;
       const fr = i < 1 && frac > 0.5 ? 'champion' : i < 3 && frac > 0.5 ? 'podium' : r() < 0.7 ? lg : ['guild', 'linked', 'victor', 'squadron'][Math.floor(r() * 4)];
       const hot = r();
@@ -8391,38 +8471,87 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
   // Leaderboards
   // =====================================================================
   let lbTab = 'season';
-  const rowOf = (x, i, right) => {
-    const me = x.me || x.uid === Net.me;
-    const ws = x.bot ? x.ws : me ? (SO.P2().streak | 0) : ((Net.arena.find((a) => a.uid === x.uid) || {}).st || {}).ws | 0;
-    const fl = HN.streakFlame && ws >= 3 ? HN.streakFlame(ws) : '';
-    const who = x.bot ? `<span class="hv-bot">${SO.avatar({ av: x.av, frame: x.frame }, 'sm')}<span class="nm"><b>${esc(x.name)}${fl ? ` ${fl}` : ''}</b><small>${(() => { const t = HN.npcTagOf ? HN.npcTagOf(x.name) : ''; return t ? `[${esc(t)}] ` : ''; })()}${esc(HN.divOf(x.best).name)}</small></span></span>` : SO.chip(me ? 'me' : x.uid).replace('</b>', `${fl ? ` ${fl}` : ''}</b>`);
-    return `<div class="g-row ${me ? 'me' : ''}"><span class="rk">${i + 1}</span>${who}<span class="r">${right}</span></div>`;
+  const isMe = (x) => !!(x.me || (x.uid && (x.uid === Net.me || x.uid === 'me')));
+  const lbKey = (x) => (x.guild ? `g:${x.guild.id}` : x.bot ? `b:${x.name}` : isMe(x) ? 'me' : `u:${x.uid}`);
+  // Day-over-day movement: compared with where everyone stood the last time you looked on an earlier day.
+  function lbTrend(tab, rows) {
+    const h = SO.P2();
+    const day = Math.floor(Date.now() / 864e5);
+    h.lbT = h.lbT || {};
+    let t = h.lbT[tab];
+    if (!t || t.day !== day) { t = h.lbT[tab] = { day, prev: t ? t.cur : {}, cur: {} }; HN.save(); }
+    rows.slice(0, 60).forEach((x, i) => { t.cur[lbKey(x)] = i + 1; });
+    return (x, i) => { const was = t.prev[lbKey(x)]; if (!was) return ''; const d = was - (i + 1); return d > 0 ? `<i class="up">▲${d}</i>` : d < 0 ? `<i class="dn">▼${-d}</i>` : ''; };
+  }
+  const val = (b, sm, badge = '') => `${badge}<span class="v"><b>${b}</b><small>${sm}</small></span>`;
+  const whoOf = (x, fl = '') => {
+    if (x.guild) { const g = x.guild; return `<span class="hv-bot">${SO.emblem(g, 34)}<span class="nm"><b style="color:${g.color}">[${esc(g.tag)}] ${esc(g.name)}</b><small>${fmt(g.n || 1)} member${(g.n || 1) === 1 ? '' : 's'}${g.lvl ? ` · level ${g.lvl}` : ''}</small></span></span>`; }
+    if (x.bot) { const t = HN.npcTagOf ? HN.npcTagOf(x.name) : ''; return `<span class="hv-bot">${SO.avatar({ av: x.av, frame: x.frame }, 'sm')}<span class="nm"><b>${esc(x.name)}${fl ? ` ${fl}` : ''}</b><small>${t ? `[${esc(t)}] ` : ''}${esc(HN.divOf(x.best).name)}</small></span></span>`; }
+    return SO.chip(isMe(x) ? 'me' : x.uid).replace('</b>', `${fl ? ` ${fl}` : ''}</b>`);
   };
+  const flameOf = (x) => {
+    if (x.guild) return '';
+    const ws = x.bot ? x.ws : isMe(x) ? (SO.P2().streak | 0) : ((Net.arena.find((a) => a.uid === x.uid) || {}).st || {}).ws | 0;
+    return HN.streakFlame && ws >= 3 ? HN.streakFlame(ws) : '';
+  };
+  // Rank, name, value, then an open lane for banners.
+  const rowOf = (x, i, right, tr = '') => {
+    const me = x.guild ? x.guild.id === SO.myGuildId() : isMe(x);
+    return `<div class="g-row lb-row ${me ? 'me' : ''} ${i < 3 ? `t${i + 1}` : ''}"><span class="rk"><b>${i + 1}</b>${tr}</span><span class="lb-who">${whoOf(x, flameOf(x))}</span><span class="r">${right}</span><span class="lb-banner" aria-hidden="true"></span></div>`;
+  };
+  const podPic = (x) => (x.guild ? SO.emblem(x.guild, 64) : x.bot ? SO.avatar({ av: x.av, frame: x.frame }, 'md') : SO.avatar(SO.prof(isMe(x) ? 'me' : x.uid), 'md'));
+  const podName = (x) => (x.guild ? `[${x.guild.tag}] ${x.guild.name}` : x.bot ? x.name : isMe(x) ? myName() : Net.name(x.uid));
+  function podium(rows, valOf) {
+    if (rows.length < 3) return '';
+    const spot = (x, i) => {
+      const tag = !x.guild && !x.bot ? 'button type="button"' : 'div';
+      const end = tag === 'div' ? 'div' : 'button';
+      const link = !x.guild && !x.bot ? ` data-hn="prof" data-uid="${esc(isMe(x) ? 'me' : x.uid)}"` : '';
+      return `<${tag} class="lb-pod p${i + 1} ${(x.guild ? x.guild.id === SO.myGuildId() : isMe(x)) ? 'me' : ''}"${link}><span class="medal">${['1ST', '2ND', '3RD'][i]}</span><span class="pic">${podPic(x)}</span><b>${esc(podName(x))}</b>${valOf(x)}<span class="step"></span></${end}>`;
+    };
+    return `<div class="lb-podium">${spot(rows[1], 1)}${spot(rows[0], 0)}${spot(rows[2], 2)}</div>`;
+  }
+  // Where you stand and who's next.
+  function youCard(rows, num, unit) {
+    const i = rows.findIndex((x) => (x.guild ? x.guild.id === SO.myGuildId() : isMe(x)));
+    if (i < 0) return '';
+    const me = rows[i];
+    const ahead = i > 0 ? rows[i - 1] : null;
+    const gap = ahead ? Math.max(1, num(ahead) - num(me) + 1) : 0;
+    return `<div class="lb-you"><span class="n"><small>${rows[i].guild ? 'YOUR GUILD' : 'YOU'}</small><b>#${i + 1}</b></span><span class="t"><b>${fmt(num(me))} ${unit}</b><small>${ahead ? `${fmt(gap)} more to pass ${esc(podName(ahead))} for #${i}` : 'Top of the board. Hold it.'}</small></span><span class="pct">${i === 0 ? '👑' : `Top ${Math.max(1, Math.ceil(((i + 1) / rows.length) * 100))}%`}</span></div>`;
+  }
+  // One board: podium, your spot, then everyone from 4th down.
+  function board(tab, rows, num, unit, right, limit = 50) {
+    const tr = lbTrend(tab, rows);
+    const mine = rows.findIndex((x) => (x.guild ? x.guild.id === SO.myGuildId() : isMe(x)));
+    const shown = rows.slice(0, limit);
+    const list = shown.map((x, i) => (i < 3 && shown.length >= 3 ? '' : rowOf(x, i, right(x), tr(x, i)))).join('');
+    return `${youCard(rows, num, unit)}${podium(shown, (x) => `<small class="pv">${right(x, true)}</small>`)}<div class="g-list">${list}</div>
+      ${mine >= limit ? `<div class="g-list lb-mine">${rowOf(rows[mine], mine, right(rows[mine]), tr(rows[mine], mine))}</div>` : ''}`;
+  }
   V.leaders = () => {
     const tabs = [['season', 'Season'], ['duels', 'Duel wins'], ['raid', 'Raid damage'], ['guilds', 'Guilds']];
     let body = '';
     if (lbTab === 'season') {
       const rows = seasonRows();
-      const mine = rows.findIndex((x) => x.me);
-      const shown = rows.slice(0, 50);
       body = `<div class="hn-sec"><h3>Season ${HN.seasonLabel(SO.seasonNo())} rewards</h3><div class="sclock-big"><span>${HN.seasonBreak() ? `Season ${HN.seasonLabel(SO.seasonNo())} starts in` : 'Season ends in'}</span><b data-season-clock data-long>${HN.seasonClock(true)}</b></div>
           <div class="hv-rw">${LB_REWARD.map((r) => `<div><b>${r.label}</b><small>${esc(rewardText(r))}</small></div>`).join('')}</div>
           <p class="muted small" style="margin:0">Ranked by your best rating this season. Rewards are paid when the season ends.</p></div>
-        <div class="g-list">${shown.map((x, i) => { const d = HN.divOf(x.best); return rowOf(x, i, `${A.badge(d.league, d.div)}<b>${fmt(x.best)}</b><small>${esc(d.name)}</small>`); }).join('')}</div>
-        ${mine >= 50 ? `<div class="g-list" style="margin-top:6px">${rowOf(rows[mine], mine, `<b>${fmt(rows[mine].best)}</b>`)}</div>` : ''}`;
+        ${board('season', rows, (x) => x.best, 'rating', (x, pod) => { const d = HN.divOf(x.best); return pod ? `${fmt(x.best)} · ${esc(d.name)}` : val(fmt(x.best), esc(d.name), A.badge(d.league, d.div)); })}`;
     } else if (lbTab === 'duels') {
       const st = SO.prof().st || {};
       const rows = Net.arena.filter((a) => a.uid !== Net.me && (a.dw || 0) > 0).map((a) => ({ uid: a.uid, dw: a.dw }));
       rows.push({ uid: Net.me || 'me', me: true, dw: st.dw || 0 });
       rows.push(...bots(SO.seasonNo(), seasonFrac()).map((b) => ({ ...b })));
       rows.sort((a, b) => b.dw - a.dw);
-      body = `<p class="muted small" style="margin:0">Most Live Duel wins.</p><div class="g-list">${rows.slice(0, 50).map((x, i) => rowOf(x, i, `<b>${fmt(x.dw)}</b><small>wins</small>`)).join('')}</div>`;
+      body = `<p class="muted small" style="margin:0">Most Live Duel wins this season.</p>${board('duels', rows, (x) => x.dw, 'wins', (x, pod) => (pod ? `${fmt(x.dw)} wins` : val(fmt(x.dw), 'wins')))}`;
     } else if (lbTab === 'raid') {
       const t = HN.raidTotals();
-      body = `<p class="muted small" style="margin:0">Damage on ${esc(HN.raidNow().name)} this week.</p>${t.rows.length ? `<div class="g-list">${t.rows.slice(0, 25).map((x, i) => rowOf({ uid: x.uid === 'me' ? 'me' : x.uid, me: x.uid === Net.me || x.uid === 'me' }, i, `<b>${fmt(x.dmg)}</b><small>damage</small>`)).join('')}</div>` : '<div class="hn-free"><span class="grow">No damage yet this week. Be the first to hit the boss.</span></div>'}`;
+      const rows = t.rows.map((x) => ({ uid: x.uid === 'me' ? 'me' : x.uid, me: x.uid === Net.me || x.uid === 'me', dmg: x.dmg })).concat(t.bots || []).sort((a, b) => b.dmg - a.dmg);
+      body = `<p class="muted small" style="margin:0">Damage on ${esc(HN.raidNow().name)} this week · ${t.fallen ? 'DEFEATED' : `${Math.round((t.left / t.pool) * 100)}% health left`}.</p>${board('raid', rows, (x) => x.dmg, 'damage', (x, pod) => (pod ? `${fmt(x.dmg)} dmg` : val(fmt(x.dmg), 'damage')))}`;
     } else {
-      const list = SO.G.guilds.slice().sort((a, b) => (b.xp || 0) - (a.xp || 0));
-      body = `<p class="muted small" style="margin:0">Guilds by guild XP.</p>${list.length ? `<div class="g-list">${list.slice(0, 25).map((g, i) => `<div class="g-row ${g.id === SO.myGuildId() ? 'me' : ''}"><span class="rk">${i + 1}</span>${SO.emblem(g, 36)}<span class="nm"><b style="color:${g.color}">[${esc(g.tag)}] ${esc(g.name)}</b><small>${fmt(g.n || 1)} member${(g.n || 1) === 1 ? '' : 's'}</small></span><span class="r"><b>${fmt(g.xp || 0)}</b><small>XP</small></span></div>`).join('')}</div>` : '<div class="hn-free"><span class="grow">No guilds yet. Found the first one!</span></div>'}`;
+      const rows = SO.G.guilds.slice().sort((a, b) => (b.xp || 0) - (a.xp || 0)).map((g) => ({ guild: g, xp: g.xp || 0 }));
+      body = `<p class="muted small" style="margin:0">Guilds by guild XP.</p>${rows.length ? board('guilds', rows, (x) => x.xp, 'XP', (x, pod) => (pod ? `${fmt(x.xp)} XP` : val(fmt(x.xp), 'guild XP')), 25) : '<div class="hn-free"><span class="grow">No guilds yet. Found the first one!</span></div>'}`;
     }
     return `${head('LEADERBOARDS', 'Tap a name to see their profile.', true)}
       ${root.Update21 && root.Update21.on() ? '<button type="button" class="hn-btn ghost hv-find" data-hn="findpilot">Find a pilot by callsign ›</button>' : ''}
@@ -8712,6 +8841,19 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
 .hv-annl b { font-size: 13px; color: #ffd86a; } .hv-annl small { color: #c8b88a; font-weight: 500; } .hv-annl p { margin: 4px 0 0; font-size: 14px; }
 .g-ann { display: flex; gap: 8px; } .g-ann .pf-in { flex: 1; min-width: 0; }
 .hv-perm { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.g-set { gap: 0; }
+.g-setrow { display: grid; grid-template-columns: minmax(110px, 160px) minmax(0, 1fr); gap: 10px; align-items: center; padding: 8px 0; border-top: 1px solid rgba(95, 216, 255, 0.1); }
+.g-set h3 + .g-setrow { border-top: 0; }
+.g-setrow .lb { font: 700 12px var(--font-display); letter-spacing: .06em; color: #cfefff; }
+.g-seg { flex-wrap: wrap; } .g-seg button { padding: 6px 12px; font-size: 12px; }
+.g-sws { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; min-width: 0; }
+.g-fix { font-size: 11px; color: #9fc4d8; padding: 5px 10px; border-radius: 999px; background: rgba(95, 216, 255, 0.08); }
+.g-sw { display: inline-flex; align-items: center; gap: 7px; padding: 5px 11px 5px 6px; border-radius: 999px; border: 1px solid rgba(95, 216, 255, 0.3); background: rgba(8, 20, 32, 0.8); color: #9fc4d8; font: 600 12px var(--font-body, system-ui); cursor: pointer; }
+.g-sw i { width: 26px; height: 15px; border-radius: 999px; background: #2a3a48; position: relative; transition: background .15s; }
+.g-sw i::after { content: ''; position: absolute; top: 2px; left: 2px; width: 11px; height: 11px; border-radius: 50%; background: #9fb0c0; transition: transform .15s; }
+.g-sw.on { color: #ffe9a0; border-color: rgba(255, 210, 63, 0.6); } .g-sw.on i { background: #c99a10; } .g-sw.on i::after { transform: translateX(11px); background: #fff3c4; }
+.g-sw:disabled { opacity: .6; cursor: default; }
+@media (max-width: 520px) { .g-setrow { grid-template-columns: 1fr; gap: 6px; } }
 .g-chat .msg.ann p { border: 1px solid #ffd23f; background: rgba(60, 44, 6, 0.7); }
 [data-gpicker], .g-form, .pf-edit { min-width: 0; max-width: 100%; }
 .g-cats { max-width: 100%; min-width: 0;
@@ -8722,6 +8864,32 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
 .g-pics .g-e { display: grid; justify-items: center; gap: 2px; padding: 4px 2px; }
 .g-pics .g-e small { font-size: 9px; line-height: 1.1; color: #bfe6f6; text-align: center; max-width: 64px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hv-bot { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.lb-row { display: grid; grid-template-columns: 34px minmax(0, 15rem) auto minmax(0, 1fr); gap: 10px; }
+.lb-row .rk { display: grid; justify-items: center; line-height: 1.05; } .lb-row .rk b { font: 700 14px var(--font-display); color: #cfefff; }
+.lb-row .rk i { font-style: normal; font-size: 9px; font-weight: 700; } .lb-row .rk .up { color: #6dffa0; } .lb-row .rk .dn { color: #ff7a7a; }
+.lb-row .lb-who { display: flex; min-width: 0; } .lb-row .lb-who > * { flex: 1; min-width: 0; }
+.lb-row .pf-chip { padding: 0; } .lb-row .pf-chip .nm b, .lb-row .hv-bot .nm b { font: 700 14px var(--font-display); letter-spacing: .04em; }
+.lb-row .hv-bot .nm { min-width: 0; } .lb-row .hv-bot .nm b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lb-row .r { display: flex; align-items: center; gap: 6px; justify-self: start; }
+.lb-row .r .hn-badge { width: 28px; height: auto; flex: none; } .lb-row .r .v { display: grid; line-height: 1.1; } .lb-row .r .v b { font-family: var(--font-display); letter-spacing: .04em; white-space: nowrap; } .lb-row .r .v small { color: #9fc4d8; font-size: 10px; white-space: nowrap; }
+.lb-row .lb-banner { align-self: stretch; min-width: 0; border-radius: 8px; }
+.lb-mine { margin-top: 6px; }
+.lb-you { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 10px 14px; border-radius: 14px; border: 1px solid rgba(95, 216, 255, 0.45); background: linear-gradient(90deg, rgba(20, 70, 100, 0.55), rgba(8, 20, 32, 0.85)); }
+.lb-you .n { display: grid; justify-items: center; } .lb-you .n small { font-size: 9px; letter-spacing: .14em; color: #9fc4d8; } .lb-you .n b { font: 700 24px var(--font-display); color: #8fe8ff; }
+.lb-you .t { display: grid; min-width: 0; } .lb-you .t b { font-family: var(--font-display); letter-spacing: .04em; } .lb-you .t small { color: #9fc4d8; font-size: 11px; }
+.lb-you .pct { font: 700 12px var(--font-display); color: #ffd23f; letter-spacing: .06em; white-space: nowrap; }
+.lb-podium { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; align-items: end; margin-top: 4px; width: 100%; max-width: 620px; }
+.lb-pod { position: relative; display: grid; justify-items: center; gap: 4px; padding: 10px 6px 0; border: 1px solid rgba(95, 216, 255, 0.2); border-radius: 14px 14px 6px 6px; background: linear-gradient(180deg, rgba(10, 30, 46, 0.9), rgba(6, 12, 22, 0.95)); color: #e6f6ff; font: inherit; text-align: center; min-width: 0; overflow: hidden; cursor: default; }
+button.lb-pod { cursor: pointer; }
+.lb-pod .pic { display: grid; place-items: center; }
+.lb-pod > b { font-family: var(--font-display); font-size: 12px; letter-spacing: .04em; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lb-pod .pv { color: #9fc4d8; font-size: 10px; }
+.lb-pod .medal { font: 700 10px var(--font-display); letter-spacing: .14em; padding: 2px 8px; border-radius: 999px; background: #3a4a5a; color: #fff; }
+.lb-pod .step { display: block; width: 100%; height: 14px; margin-top: 4px; }
+.lb-pod.p1 { border-color: rgba(255, 210, 63, 0.7); box-shadow: 0 0 22px rgba(255, 210, 63, 0.18) inset; } .lb-pod.p1 .medal { background: linear-gradient(90deg, #ffd23f, #ffb020); color: #2a1c00; } .lb-pod.p1 .step { height: 34px; background: linear-gradient(180deg, rgba(255, 210, 63, 0.25), transparent); }
+.lb-pod.p2 .medal { background: linear-gradient(90deg, #dfe8f0, #9fb0c0); color: #1a2430; } .lb-pod.p2 .step { height: 20px; background: linear-gradient(180deg, rgba(200, 220, 240, 0.18), transparent); } .lb-pod.p2 { border-color: rgba(200, 220, 240, 0.5); }
+.lb-pod.p3 .medal { background: linear-gradient(90deg, #e8a060, #b06a30); color: #2a1400; } .lb-pod.p3 .step { height: 10px; background: linear-gradient(180deg, rgba(232, 160, 96, 0.2), transparent); } .lb-pod.p3 { border-color: rgba(232, 160, 96, 0.5); }
+.lb-pod.me { outline: 2px solid #5fd8ff; outline-offset: -2px; }
 .hv-bot .nm b { font-size: 13px; }
 .hv-botpic { display: grid; place-items: center; width: 100%; height: 100%; font: 700 14px var(--font-display); color: #8fe8ff; background: #0c2030; border-radius: 50%; }
 `;
@@ -8776,14 +8944,16 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
     const mode = SO.modeOf(g);
     const ann = g.annPerm || {};
     const app = g.appPerm || {};
-    return `<div class="hn-sec"><h3>Guild settings</h3>
-      <div class="hv-perm"><span class="muted small">Who can join:</span>${Object.entries(SO.MODES).map(([k, n]) => `<button type="button" class="hn-btn ${k === mode ? 'gold' : 'ghost'}" data-hn="gmode" data-k="${k}">${n}</button>`).join('')}</div>
-      <div class="hv-perm"><span class="muted small">Elders review join requests and invite:</span><button type="button" class="hn-btn ${app.elder ? 'gold' : 'ghost'}" data-hn="gappperm">${app.elder ? 'ON' : 'OFF'}</button></div>
-      <div class="hv-perm"><span class="muted small">Who can post announcements:</span> <span class="hn-chip">Leader</span>
-        <button type="button" class="hn-btn ${ann.co !== false ? 'gold' : 'ghost'}" data-hn="annperm" data-k="co">Co-leader ${ann.co !== false ? 'ON' : 'OFF'}</button>
-        <button type="button" class="hn-btn ${ann.elder === true ? 'gold' : 'ghost'}" data-hn="annperm" data-k="elder">Elders ${ann.elder === true ? 'ON' : 'OFF'}</button></div>
-      ${(() => { const tp = g.toolPerm || {}; const lead = SO.roleOf(Net.me, gid) === 'leader'; return `<div class="hv-perm"><span class="muted small">Who can start polls and blacklist players:</span> <span class="hn-chip">Leader</span>${lead ? `<button type="button" class="hn-btn ${tp.co !== false ? 'gold' : 'ghost'}" data-hn="toolperm" data-k="co">Co-leader ${tp.co !== false ? 'ON' : 'OFF'}</button><button type="button" class="hn-btn ${tp.elder === true ? 'gold' : 'ghost'}" data-hn="toolperm" data-k="elder">Elders ${tp.elder === true ? 'ON' : 'OFF'}</button>` : `<span class="hn-chip">${tp.co !== false ? 'Co-leader' : ''}${tp.elder === true ? ' · Elders' : ''}</span><span class="muted small">(the leader sets this)</span>`}</div>`; })()}
-      ${(g.bl || []).length ? `<div class="hv-perm g-bl"><span class="muted small">Blacklisted (${g.bl.length}):</span>${g.bl.map((u) => `<span class="hn-chip">${esc(Net.name(u))} ${SO.canTools(Net.me, gid) ? `<button type="button" class="g-unbl" data-hn="gunbl" data-uid="${esc(u)}" aria-label="Unblock">✕</button>` : ''}</span>`).join('')}</div>` : ''}</div>`;
+    const lead = SO.roleOf(Net.me, gid) === 'leader';
+    const tp = g.toolPerm || {};
+    const sw = (on, attrs, label, locked) => `<button type="button" class="g-sw ${on ? 'on' : ''}" ${locked ? 'disabled' : attrs} aria-pressed="${on}"><i></i>${label}</button>`;
+    const MODE_SHORT = { open: 'Open', request: 'Request', invite: 'Invite only' };
+    return `<div class="hn-sec g-set"><h3>Guild settings</h3>
+      <div class="g-setrow"><span class="lb">Joining</span><div class="hn-seg g-seg">${Object.keys(SO.MODES).map((k) => `<button type="button" class="${k === mode ? 'on' : ''}" data-hn="gmode" data-k="${k}" title="${esc(SO.MODES[k])}">${MODE_SHORT[k] || SO.MODES[k]}</button>`).join('')}</div></div>
+      <div class="g-setrow"><span class="lb">Requests &amp; invites</span><div class="g-sws"><span class="g-fix">Leader · Co-leader</span>${sw(app.elder, 'data-hn="gappperm"', 'Elders')}</div></div>
+      <div class="g-setrow"><span class="lb">Announcements</span><div class="g-sws"><span class="g-fix">Leader</span>${sw(ann.co !== false, 'data-hn="annperm" data-k="co"', 'Co-leader')}${sw(ann.elder === true, 'data-hn="annperm" data-k="elder"', 'Elders')}</div></div>
+      <div class="g-setrow"><span class="lb">Polls &amp; blacklist</span><div class="g-sws"><span class="g-fix">Leader</span>${sw(tp.co !== false, 'data-hn="toolperm" data-k="co"', 'Co-leader', !lead)}${sw(tp.elder === true, 'data-hn="toolperm" data-k="elder"', 'Elders', !lead)}</div></div>
+      ${(g.bl || []).length ? `<div class="g-setrow g-bl"><span class="lb">Blacklist (${g.bl.length})</span><div class="g-sws">${g.bl.map((u) => `<span class="hn-chip">${esc(Net.name(u))}${SO.canTools(Net.me, gid) ? `<button type="button" class="g-unbl" data-hn="gunbl" data-uid="${esc(u)}" aria-label="Unblock ${esc(Net.name(u))}">✕</button>` : ''}</span>`).join('')}</div></div>` : ''}</div>`;
   };
   CL.toolperm = async (b, render) => {
     const gid = SO.myGuildId();

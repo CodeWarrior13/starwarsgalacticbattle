@@ -23,12 +23,14 @@
   const seasonNo = () => { const H = HN(); return H && H.social && H.social.seasonNo ? H.social.seasonNo() : 0; };
   const st = () => HN().S();
   const on24 = () => !!(root.Update24 && root.Update24.on());
+  const newR = (x) => { const H = HN(); return H && H.toNewR ? H.toNewR(x) : x; };
+  const oldR = (x) => { const H = HN(); return H && H.toOldR ? H.toOldR(x) : x; };
   const brk = () => { const H = HN(); return (H && H.seasonBreak && H.seasonBreak()) || 0; };
 
   function rec() {
     const h = st();
     const sn = seasonNo();
-    if (!h.place || h.place.s !== sn) h.place = { s: sn, base: h.rating, games: [], done: false };
+    if (!h.place || h.place.s !== sn) h.place = { s: sn, base: oldR(h.rating), games: [], done: false };
     return h.place;
   }
   const forced = () => { const p = st().place; return !!(p && p.force && p.s === seasonNo()); };
@@ -116,7 +118,7 @@
     const seed = [...`place:${key}:${(H.Net && H.Net.me) || 'me'}`].reduce((a, c) => (Math.imul(a, 31) + c.charCodeAt(0)) >>> 0, 7);
     const r = H.rng(seed);
     const rating = Math.max(450, Math.round(nextRating(p)));
-    const squad = mixSquad(H.botSquad(KIND, rating, r, true), r, rating);
+    const squad = mixSquad(H.botSquad(KIND, newR(rating), r, true), r, rating);
     const last = n === GAMES - 1;
     let lead = null;
     const tierE = last ? eliteTier(p) : null;
@@ -140,7 +142,7 @@
     }
     const names = (H.BOT_NAMES || []).concat(H.BOT_NAMES_2 || []);
     const avs = H.BOT_AVS || ['luke'];
-    const opp = { id: `pl:${n}`, real: false, rating, squad, boss: lead, name: names[Math.floor(r() * names.length)] || 'Rival', av: avs[Math.floor(r() * avs.length)], frame: H.divOf(rating).league };
+    const opp = { id: `pl:${n}`, real: false, rating, squad, boss: lead, name: names[Math.floor(r() * names.length)] || 'Rival', av: avs[Math.floor(r() * avs.length)], frame: H.divOf(newR(rating)).league };
     cache = { key, opp };
     return opp;
   }
@@ -168,7 +170,8 @@
   }
 
   // Best possible placement: the top of Kyber II. Kyber III and Legend are earned by climbing.
-  const maxPlace = () => { const H = HN(); const k3 = H && H.DIVS && H.DIVS.find((d) => d.key === 'kyber3'); return Math.min(CFG.max, k3 ? k3.min - 1 : CFG.max); };
+  // (Placement works on the 2.3 numbers; the result moves onto the live ladder at the end.)
+  const maxPlace = () => CFG.max;
   function placed(p) {
     let sum = 0; let w = 0;
     const perf = p.games.map((g) => g.opp + (g.score - CFG.mid) * CFG.perf);
@@ -189,7 +192,7 @@
     g.boss = !!params.opp.boss;
     p.games.push(g);
     cache = null;
-    if (p.games.length >= GAMES) { p.done = true; p.to = placed(p); p.seen = false; }
+    if (p.games.length >= GAMES) { p.done = true; p.to = newR(placed(p)); p.seen = false; }
     HN().save();
     return { won: g.won };
   }
@@ -333,7 +336,7 @@
     const H = HN();
     if (!(H && H.S)) return false;
     const h = st();
-    h.place = { s: seasonNo(), base: h.rating, games: [], done: false, force: true };
+    h.place = { s: seasonNo(), base: oldR(h.rating), games: [], done: false, force: true };
     cache = null;
     H.save();
     if (root.UI && root.UI.App) root.UI.App.go('holonet', { view: 'arena', kind: KIND });

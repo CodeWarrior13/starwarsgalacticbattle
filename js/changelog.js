@@ -81,7 +81,7 @@
         'NEW|HoloNet card pairings: Kelleran Beq with Grogu, Krrsantan with Boba Fett, Hallway Vader with Darth Vader, and the Armorer with any Mandalorian each unlock a bonus together.',
         'IMPROVED|HoloNet card jobs: IG-11\'s Nurse Protocol also clears debuffs, Paz Vizsla shares his armor with the squad, Todo 360 repairs droid allies every turn, Greef Karga pays extra credits as well as Beskar, and the Armorer\'s Beskar Plating now blocks the next hit completely, and the Dark Trooper gains Phase III Reboot: once per battle he comes back from a finishing blow.',
         'FIXED|Every HoloNet card\'s passive now works in battle exactly as written on the card.',
-        'IMPROVED|Ranked rework: you only face pilots from your own division or one either side, with a fresh set after every fight. Each opponent shows what a win is worth in rating and Beskar, and the Gold, Kyber and Legend leagues fight harder and pay more.',
+        'IMPROVED|Ranked rework: you only face pilots from your own division or one either side (Legend faces only Legend), with four new opponents after every fight. The leagues are wider, with Legend now starting at 2,500 rating, and wins in the higher leagues are worth more. Each opponent shows what a win is worth in rating and Beskar, and the Gold, Kyber and Legend leagues fight harder and pay more.',
         'NEW|Placement battles: from Season 3, ranked opens with five Ground placement battles. They open on the last day of the season break (or whenever you arrive), each one adapts to how you fight, and the last is the Boss Trial (fight brilliantly and it becomes an Elite Boss Trial against a fully synergized squad). When the season starts, Admiral Ackbar reveals the league you start in. Fleet ranked opens once they\'re done.',
         'IMPROVED|Every raid, guild raids included, now has a 5-minute raid clock on screen.',
         'FIXED|Raids no longer end early: a raid only ends when its clock runs out, the boss falls or your squad does.',
@@ -89,7 +89,8 @@
         'IMPROVED|Finding a guild: search sits at the top, Guilds you may like suggests ones you can join right now, more guilds are waiting to be found, and founding your own is tucked into a dropdown. Founding a guild now costs 100 Kyber and 500 Beskar.',
         'NEW|Guild polls and blacklist: leaders can start polls in guild chat that the whole guild votes on, and remove and blacklist a player so they can\'t rejoin or ask to join. The leader decides whether co-leaders and elders can use them too.',
         'NEW|Win streaks catch fire: hit 3 wins in a row and a flame appears by your name, burning hotter every 10 wins. Your arena and duel win streaks show on your profile.',
-        'IMPROVED|Leaderboards show the top 50 pilots, each with their picture, frame and current win streak.',
+        'IMPROVED|Leaderboards show the top 50 pilots, each with their picture, frame and current win streak, plus a top-3 podium, your own spot with how far it is to the next rank, and daily up and down arrows. Ratings now sit right next to every name, and the raid damage board shows everyone hitting the boss this week.',
+        'IMPROVED|Guild settings are tidier: who can join, requests, announcements, polls and the blacklist each fit on one line with simple switches.',
       ],
     },
     {
