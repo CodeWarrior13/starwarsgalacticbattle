@@ -1232,25 +1232,27 @@
   // ---------- arena opponents ----------
   // Gamer tags like real players pick; opponents rotate through them.
   const BOT_AVS = ['luke', 'vader', 'leia', 'han_solo', 'boba_fett', 'grogu', 'yoda', 'obi_wan', 'kylo_ren', 'rey', 'ahsoka', 'din_djarin', 'darth_maul', 'chewbacca', 'r2d2', 'mace_windu', 'grievous', 'thrawn', 'stormtrooper', 'lando'];
-  const BOT_NAMES_2 = ['CoruscantCody', 'MillenniumMo', 'xwing_xander', 'Bespin_Bella', 'NabooNate', 'Kashyyyk_Kai', 'sith_happens', 'DeathStarDev', 'Ewok_Emma', 'Geonosis_Gus', 'JawaJuice', 'Mynock_Mia', 'Scarif_Sam', 'TuskenTess', 'Lothal_Leo', 'Bantha_Blake', 'Kamino_Kit', 'DagobahDrew', 'Carbonite_Cole', 'Holocron_Hal', 'Sarlacc_Sid', 'Jakku_Jade', 'Crait_Cruz', 'Exegol_Eli'];
+  const BOT_NAMES_2 = ['Kyle31', 'harper.j', 'colton5', 'Avery', 'tristan8', 'Bella.r', 'masonfn', 'izzy', 'brodie', 'Cooper22', 'landon.t', 'Jenna', 'ryderj', 'aubreyy', 'Easton', 'declan09', 'Mia.K', 'bentley', 'Coleman', 'addy.s', 'grantt', 'Lilyy', 'Sawyer4', 'jace.w'];
   // Callsigns for the computer-run guilds' members: one per pilot, never shared with anyone else on the boards.
+  const BOT_NAMES = ['jaxon2011', 'EthanP', 'mikey.r', 'Kaden09', 'brookelynn', 'noahplays', 'itsmasonn', 'ryguy', 'tylerw7', 'Ava.G', 'liamk', 'xDaniel', 'connorbb', 'Jordyn', 'calebm12', 'Gavinn', 'emmalee', 'BigDrew', 'Hunterr22', 'zachh', 'kaylee.x', 'Owen4', 'Sammy2k', 'Brennan', 'jakeyy', 'nate.d', 'Lucas10', 'maddox', 'camden.r', 'Ellie.b', 'dylanxo', 'Wyatt', 'ChaseM', 'gracie27', 'logangg', 'Rileyy', 'evan.p', 'jdawg', 'Parkerr', 'sophiam'];
   const BOT_NAMES_X = (() => {
-    const a = ['Rogue', 'Corellia', 'Bespin', 'Kyber', 'Ord', 'Mando', 'Hoth', 'Naboo', 'Tython', 'Ilum', 'Kessel', 'Ryloth', 'Dantooine', 'Jedha', 'Mustafar', 'Felucia', 'Mon', 'Wookie', 'Alderaan', 'Sullust', 'Utapau', 'Corran', 'Wedge', 'Bothan', 'Ahch', 'Zeffo', 'Bracca', 'Batuu', 'Taris', 'Vandor'];
-    const b = ['Ace', 'Rix', 'Nova', 'Vex', 'Kade', 'Jax', 'Lux', 'Rook', 'Zane', 'Tali', 'Bolt', 'Skye', 'Dax', 'Wren', 'Juno', 'Cass', 'Orin', 'Pax', 'Remy', 'Sol', 'Tess', 'Vale', 'Knox', 'Mira', 'Fynn', 'Isla', 'Quill', 'Rho', 'Shay', 'Tor'];
-    const sep = ['_', '', '_', ''];
+    const first = ['blake', 'carter', 'devin', 'eli', 'finn', 'gage', 'hayden', 'ian', 'jake', 'kai', 'levi', 'marcus', 'nolan', 'oscar', 'preston', 'quinn', 'reid', 'seth', 'trey', 'umar', 'vince', 'wes', 'xavier', 'yusuf', 'zeke', 'abby', 'brynn', 'chloe', 'dani', 'emma', 'faith', 'gia', 'hailey', 'ivy', 'jada', 'kenzie', 'lexi', 'maya', 'nora', 'olivia', 'paige', 'reese', 'sadie', 'tori', 'val', 'willow', 'zoey', 'andre', 'bryce', 'cody', 'drew', 'eric', 'gabe', 'hector', 'isaac', 'jonah', 'kevin', 'luis', 'max', 'nico', 'pablo', 'rafa', 'sam', 'tj', 'victor', 'will', 'alex', 'adrian', 'bradley', 'braxton', 'cam', 'colby', 'corbin', 'damian', 'dominic', 'elijah', 'ezra', 'felix', 'gunnar', 'holden', 'jayden', 'jesse', 'josiah', 'kash', 'keegan', 'kobe', 'lane', 'leo', 'malik', 'mateo', 'miles', 'nash', 'omar', 'phoenix', 'rowan', 'ruben', 'ryland', 'silas', 'tanner', 'theo', 'tucker', 'vaughn', 'waylon', 'zion', 'amara', 'bailey', 'callie', 'daisy', 'delilah', 'eden', 'elena', 'esme', 'fiona', 'harlow', 'hazel', 'iris', 'jasmine', 'josie', 'kara', 'kinsley', 'laila', 'leah', 'lola', 'lucy', 'luna', 'mackenzie', 'mila', 'nadia', 'nova', 'piper', 'quinnley', 'rosie', 'ruby', 'sage', 'sienna', 'skylar', 'stella', 'tessa', 'vivian', 'wren', 'yara', 'ace', 'bo', 'dex', 'fitz', 'gus', 'hank', 'jett', 'knox', 'milo', 'rex', 'rocco', 'tate', 'ty', 'zane', 'ari', 'bea', 'cleo', 'dot', 'evie', 'gemma', 'jo', 'kit', 'liv', 'mae', 'nell', 'penny', 'roo', 'sky', 'tia'];
+    const caps = (n) => n[0].toUpperCase() + n.slice(1);
+    const pat = [
+      (n, k) => `${n}${10 + (k % 89)}`, (n) => caps(n), (n, k) => `${caps(n)}${2008 + (k % 9)}`, (n, k) => `${n}.${'abcdefghjklmnprstw'[k % 18]}`,
+      (n) => `its${n}`, (n) => `${n}${n.slice(-1)}`, (n, k) => `${caps(n)}${'BCDGJKMPRST'[k % 11]}`, (n) => `x${n}`,
+      (n, k) => `${n}${k % 7}`, (n) => `${n}plays`, (n, k) => `${n}${'mkrsjt'[k % 6]}${k % 10}`, (n) => `${n}xo`,
+      (n) => n, (n, k) => `${caps(n)}${1 + (k % 9)}${k % 3}`, (n) => `${n}fn`, (n) => `real${n}`,
+    ];
     const out = [];
-    const seen = new Set();
-    let k = 0;
-    while (out.length < 240) {
-      const x = a[(k * 7) % a.length]; const y = b[(k * 11 + Math.floor(k / a.length)) % b.length];
-      let n = `${x}${sep[k % 4]}${y}`;
-      if (k % 5 === 3) n += String(10 + ((k * 37) % 89));
-      if (!seen.has(n)) { seen.add(n); out.push(n); }
-      k++;
+    const seen = new Set([...BOT_NAMES, ...BOT_NAMES_2].map((x) => x.toLowerCase()));
+    for (let k = 0; out.length < 240 && k < 5000; k++) {
+      const n = first[(k * 37) % first.length];
+      const name = pat[(k * 7 + Math.floor(k / first.length) * 3) % pat.length](n, k);
+      if (!seen.has(name.toLowerCase())) { seen.add(name.toLowerCase()); out.push(name); }
     }
     return out;
   })();
-  const BOT_NAMES = ['KesselRunner12', 'xXSithLordXx', 'MandoMike', 'wookiee_wendy', 'Lukewarm', 'DarthVapor99', 'jedi_jess', 'TIEfighterTom', 'NerfHerder', 'HanShotFirst', 'BobaFettish', 'rebel_rachel', 'ObiWanKenobae', 'Sabine_Fan', 'GrogusDad', 'ackbar_trapped', 'Tatooine_Tyler', 'kyber_kat', 'StormtrooperAim', 'Hoth_Hannah', 'R2_D2_Dee', 'MaulMadness', 'yoda_best', 'AhsokaNotSorry', 'BeskarBen', 'Endor_Ewoker', 'thrawn_tactics', 'Jango_Jen', 'Chewie_Chris', 'ForceGhostGabe', 'PadmeMe', 'Rancor_Ryan', 'Lando_Lewis', 'DinDjarinDan', 'Starkiller88', 'quigon_quinn', 'Ezra_Elli', 'PoeDameronFan', 'Mustafar_Max', 'Jyn_Erso_Jo'];
   // 2.2: opponents are built for their league, not from your own cards, with a
   // little randomness (one card above the rest now and then). For the first two
   // days of a season the field is much tougher.
