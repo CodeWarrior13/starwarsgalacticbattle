@@ -1426,7 +1426,7 @@
     const streakBefore = h.streak;
     h.rating = Math.max(0, h.rating + delta);
     h.best = Math.max(h.best, h.rating);
-    if (won) { h.wins += 1; h.streak += 1; } else { h.losses += 1; h.streak = 0; }
+    if (won) { h.wins += 1; h.streak += 1; h.wsMax = Math.max(h.wsMax || 0, h.streak); } else { h.losses += 1; h.streak = 0; }
     if (opp && opp.id && String(opp.id).startsWith('p:')) h.recentOpp = [opp.id, ...(h.recentOpp || []).filter((x) => x !== opp.id)].slice(0, 3);
     h.beskar += bes;
     h.seed += 1;
@@ -5774,8 +5774,62 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     squadron: { name: 'Squadron Leader', how: 'Invite 10 friends who reach level 5' },
     recruiter: { name: 'Recruiter Legend', how: 'Invite 50 friends who reach level 5 (limited time)' },
     tcrown: { name: 'Triple Crown', how: 'A secret', secret: true },
+    // 2.5 Cosmetic
+    gilded3: { name: 'Gilded Third', how: 'Reach Gold III', v25: true },
+    kyberheart: { name: 'Kyber Heart', how: 'Reach Kyber III', v25: true },
+    legendhalo: { name: "Legend's Halo", how: 'End a season in the Legend league', v25: true },
+    hotstreak: { name: 'Hot Streak', how: 'Win 25 ranked battles in a row', v25: true },
+    unstoppable: { name: 'Unstoppable', how: 'Win 50 ranked battles in a row', v25: true },
+    twinsabers: { name: 'Twin Sabers', how: 'Win 100 Live Duels', v25: true },
+    raidbreaker: { name: 'Raid Breaker', how: 'Deal the most damage in your guild on a guild raid boss that falls', v25: true },
+    citadel: { name: 'Citadel', how: 'Be in a guild that reaches level 5', v25: true },
+    wreath: { name: 'Season Wreath', how: 'Finish a season in the top 25 (its colours change every season)', v25: true },
+    holocron: { name: 'Holocron Keeper', how: 'Own 50 different cards', v25: true },
+    kessel: { name: 'Kessel Runner', how: 'Win 50 battles with an all-ship squad', v25: true },
+    jediorder: { name: 'Jedi Order', how: 'Win 200 battles with an all Light Side squad', v25: true },
+    sithlord: { name: 'Sith Lord', how: 'Win 200 battles with an all Dark Side squad', v25: true },
+    forge: { name: 'Beskar Forge', how: 'Buy for 600 Beskar', v25: true, cost: 600 },
+    mythosaur: { name: 'Mythosaur', how: 'Buy for 1,200 Beskar', v25: true, cost: 1200 },
   };
+  const on25 = () => !!(root.Update25 && root.Update25.on());
   let fseq = 0;
+
+  // ---------- 2.5 frames: 15 new, 5 redrawn ----------
+  const G25 = (u, a, b, c, id = '') => `<linearGradient id="${u}${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${a}"/><stop offset=".5" stop-color="${b}"/><stop offset="1" stop-color="${c}"/></linearGradient>`;
+  const rg25 = (s, w, r = 44, x = '') => `<circle r="${r}" fill="none" stroke="${s}" stroke-width="${w}" ${x}/>`;
+  const spin25 = (d, rev) => `<animateTransform attributeName="transform" type="rotate" from="0" to="${rev ? -360 : 360}" dur="${d}s" repeatCount="indefinite"/>`;
+  const pulse25 = (a, b, d) => `<animate attributeName="opacity" values="${a};${b};${a}" dur="${d}s" repeatCount="indefinite"/>`;
+  const rays25 = (n, r1, r2, w, fill, op = 1) => Array.from({ length: n }, (_, k) => `<path d="M0 -${k % 2 ? r1 : r2} L${w} -47 L-${w} -47Z" fill="${fill(k)}" opacity="${op}" transform="rotate(${(k * 360) / n})"/>`).join('');
+  const plaque25 = (t, fill, stroke, tc, y = 54, w = 24) => `<g transform="translate(0 ${y})"><rect x="${-w / 2}" y="-8" width="${w}" height="16" rx="5" fill="${fill}" stroke="${stroke}" stroke-width="1.4"/><text y="4" text-anchor="middle" font-size="10.5" font-weight="800" fill="${tc}" font-family="Oxanium,sans-serif">${t}</text></g>`;
+  const flame25 = (a, c1, c2, r, sc, delay) => `<g transform="rotate(${a}) translate(0 -${r})"><g><path d="M0 0 C${6 * sc} -8 ${5 * sc} -18 0 -${28 * sc} C-${5 * sc} -18 -${6 * sc} -8 0 0Z" fill="${c1}"/><path d="M0 0 C${3 * sc} -6 ${3 * sc} -12 0 -${18 * sc} C-${3 * sc} -12 -${3 * sc} -6 0 0Z" fill="${c2}"/><animateTransform attributeName="transform" type="scale" values="1 1;1.12 1.3;.94 .86;1 1" dur="${(0.7 + ((delay * 7) % 5) / 10).toFixed(2)}s" begin="${(delay % 1).toFixed(2)}s" repeatCount="indefinite"/></g></g>`;
+  const star25 = (x, y, r, f) => `<polygon points="${Array.from({ length: 10 }, (_, k) => { const a = -Math.PI / 2 + (k * Math.PI) / 5; const q = k % 2 ? r * 0.42 : r; return `${(x + Math.cos(a) * q).toFixed(1)},${(y + Math.sin(a) * q).toFixed(1)}`; }).join(' ')}" fill="${f}"/>`;
+  const gem25 = (x, y, c, sz = 5) => `<path d="M${x} ${y - sz} L${x + sz * 0.8} ${y} L${x} ${y + sz} L${x - sz * 0.8} ${y}Z" fill="${c}" stroke="#fff" stroke-width=".8"/>`;
+  const WREATH = [['#d8f4ff', '#5fb8ff', '#123a7a'], ['#ffe9b0', '#ff7a3a', '#6a1004'], ['#e8ffd0', '#58c85a', '#14501a'], ['#f2d8ff', '#b058ff', '#3a0a6a']];
+  const F25 = {
+    gilded3: (u) => `<defs>${G25(u, '#fff4b0', '#e8b830', '#7a4c06')}</defs>${rays25(24, 52, 58, 2.4, (k) => (k % 2 ? '#ffd86a' : '#fff0a0'), 0.85)}${rg25(`url(#${u})`, 8)}${rg25('#4a2e04', 1, 40.5)}${rg25('#fff6c8', 1, 48, 'stroke-dasharray="1 6" stroke-linecap="round"')}${[-14, 0, 14].map((x, i) => star25(x, -57 - (i === 1 ? 4 : 0), i === 1 ? 7 : 5.5, '#fff4b0')).join('')}${plaque25('III', '#4a2e04', '#ffd86a', '#ffe27a', 54, 28)}`,
+    kyberheart: (u) => `<defs>${G25(u, '#e8faff', '#5fd8ff', '#14509a')}</defs>${rg25('#5fd8ff', 13, 44, 'opacity=".22"')}${rg25(`url(#${u})`, 5)}${Array.from({ length: 10 }, (_, k) => `<g transform="rotate(${k * 36})"><path d="M0 -${k % 2 ? 58 : 66} L6 -50 L0 -43 L-6 -50Z" fill="${k % 2 ? '#9aeaff' : '#e8faff'}" stroke="#1a6ab8" stroke-width="1"><animate attributeName="opacity" values=".7;1;.7" dur="${1.6 + (k % 3) * 0.4}s" begin="${k * 0.15}s" repeatCount="indefinite"/></path><path d="M0 -${k % 2 ? 56 : 63} L2 -50 L0 -46Z" fill="#fff" opacity=".7"/></g>`).join('')}<g transform="translate(0 -2)"><path d="M0 -50 C-6 -56 -14 -52 -12 -46 C-10 -41 -4 -40 0 -36 C4 -40 10 -41 12 -46 C14 -52 6 -56 0 -50Z" fill="#9aeaff" stroke="#1a6ab8" stroke-width="1"/></g>${plaque25('III', '#0a2a50', '#9aeaff', '#e8faff', 54, 28)}`,
+    legendhalo: (u) => `<defs>${G25(u, '#ffe8a8', '#b070ff', '#3a0a6a')}</defs>${rg25('#b070ff', 16, 44, 'opacity=".18"')}${rg25(`url(#${u})`, 5)}${rg25('#ffe8a8', 1.2, 51)}${Array.from({ length: 36 }, (_, k) => `<path d="M0 -58 V-${k % 3 ? 55 : 53}" stroke="#ffe8a8" stroke-width="${k % 3 ? 0.8 : 1.4}" transform="rotate(${k * 10})"/>`).join('')}<g>${spin25(24)}${[0, 120, 240].map((a) => `<g transform="rotate(${a}) translate(0 -58)">${star25(0, 0, 5, '#ffe8a8')}</g>`).join('')}</g><path d="M-14 -50 L-10 -64 L-3 -55 L0 -68 L3 -55 L10 -64 L14 -50Z" fill="#ffd86a" stroke="#6a3a0a" stroke-width="1"/><circle cy="-62" r="2.2" fill="#b070ff"/>${plaque25('2,500', '#2a0a4a', '#ffe8a8', '#ffe8a8', 55, 34)}`,
+    hotstreak: (u) => `<defs>${G25(u, '#ffb060', '#e8481a', '#5a1004')}</defs>${Array.from({ length: 14 }, (_, k) => flame25((k * 360) / 14, k % 2 ? '#ff7a1a' : '#ff4a10', '#ffd84a', 44, k % 2 ? 0.9 : 1.15, k * 0.17)).join('')}${rg25(`url(#${u})`, 6)}${rg25('#2a0802', 1, 40.5)}${plaque25('25', '#3a0a02', '#ff9a3a', '#ffd84a', 54, 26)}`,
+    unstoppable: (u) => `<defs>${G25(u, '#ffffff', '#7ad8ff', '#2a4aa8')}</defs>${Array.from({ length: 18 }, (_, k) => flame25(k * 20, k % 2 ? '#4aa8ff' : '#9ae6ff', '#ffffff', 44, k % 2 ? 1.05 : 1.35, k * 0.13)).join('')}${rg25(`url(#${u})`, 6)}${Array.from({ length: 4 }, (_, k) => `<path d="M0 -48 L5 -40 L-2 -38 L4 -30" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" transform="rotate(${k * 90 + 45})"><animate attributeName="opacity" values="0;1;0;0" dur="1.6s" begin="${k * 0.4}s" repeatCount="indefinite"/></path>`).join('')}${plaque25('50', '#0a1a40', '#9ae6ff', '#ffffff', 54, 26)}`,
+    twinsabers: (u) => `<defs>${G25(u, '#e8faff', '#5fd8ff', '#1a56a8')}</defs>${rg25(`url(#${u})`, 5)}${rg25('#ff4a5a', 1.4, 49, 'stroke-dasharray="4 6" opacity=".8"')}<g transform="translate(0 52)">${[[-38, '#5fd8ff'], [38, '#ff4a5a']].map(([a, c]) => `<g transform="rotate(${a})"><rect x="-2.6" y="-30" width="5.2" height="30" rx="2.6" fill="${c}" opacity=".35"><animate attributeName="opacity" values=".25;.55;.25" dur="1.4s" repeatCount="indefinite"/></rect><rect x="-1.4" y="-30" width="2.8" height="30" rx="1.4" fill="#fff"/><rect x="-3.4" y="0" width="6.8" height="12" rx="1.5" fill="#6a7484" stroke="#12161c"/><rect x="-4.2" y="3" width="8.4" height="2.2" fill="#d8dee8"/></g>`).join('')}</g>${[-1, 0, 1].map((i) => star25(i * 14, -56, i ? 4 : 5.5, '#e8faff')).join('')}`,
+    raidbreaker: (u) => `<defs>${G25(u, '#c8ccd6', '#5a6272', '#1a1e28')}</defs>${rg25('#ff3a2a', 12, 44, 'opacity=".2"')}${rg25(`url(#${u})`, 8)}${[20, 80, 150, 215, 280, 330].map((a) => `<path d="M0 -48 L3 -44 L-2 -41 L2 -38" fill="none" stroke="#ff4a3a" stroke-width="2.2" stroke-linecap="round" transform="rotate(${a})"/>`).join('')}<g transform="translate(0 -56)"><circle r="8" fill="#1a0a0a" stroke="#ff4a3a" stroke-width="1.6"/><path d="M-11 0H11M0 -11V11" stroke="#ff4a3a" stroke-width="1.4"/><circle r="2.4" fill="#ff4a3a"><animate attributeName="r" values="2;3.4;2" dur="1.2s" repeatCount="indefinite"/></circle></g>${[-1, 1].map((sd) => `<path d="M${sd * 30} 44 L${sd * 42} 56 L${sd * 34} 58 L${sd * 38} 66 L${sd * 24} 56Z" fill="#7a2a22" stroke="#1a0a0a" stroke-width="1"/>`).join('')}`,
+    citadel: (u, color) => `<defs>${G25(u, '#d8dde6', '#8a93a3', '#3a4252')}</defs>${rg25(`url(#${u})`, 9)}${Array.from({ length: 12 }, (_, k) => `<rect x="-3.4" y="-58" width="6.8" height="9" fill="url(#${u})" stroke="#1a1e28" stroke-width="1" transform="rotate(${k * 30})"/>`).join('')}${[45, 135, 225, 315].map((a) => `<g transform="rotate(${a})"><rect x="-6" y="-66" width="12" height="20" fill="url(#${u})" stroke="#1a1e28" stroke-width="1.2"/><path d="M-6 -66 l3 -4 l3 4 l3 -4 l3 4" fill="#8a93a3" stroke="#1a1e28" stroke-width="1"/><path d="M0 -70 V-78 L9 -75 L0 -72Z" fill="${color || '#5fd8ff'}" stroke="#06121e" stroke-width=".8"/><rect x="-1.4" y="-60" width="2.8" height="6" fill="#06121e"/></g>`).join('')}${rg25('#1a1e28', 1.2, 39.5)}${plaque25('5', '#1a1e28', '#d8dde6', '#ffffff', 55, 20)}`,
+    wreath: (u) => { const sn = (() => { try { return seasonNo(); } catch (e) { return 1; } })(); const pal = WREATH[sn % WREATH.length]; return `<defs>${G25(u, ...pal)}</defs>${rg25(pal[1], 12, 44, 'opacity=".2"')}${rg25(`url(#${u})`, 5)}<g>${spin25(40)}${Array.from({ length: 12 }, (_, k) => `<path d="M0 -48 Q6 -56 0 -66 Q-6 -56 0 -48Z" fill="${pal[k % 2 ? 1 : 0]}" stroke="${pal[2]}" stroke-width="1" transform="rotate(${k * 30})"/>`).join('')}</g>${rg25(pal[0], 1, 38.5, 'stroke-dasharray="2 4"')}${plaque25(`S${HN.seasonLabel ? HN.seasonLabel(sn) : sn}`, pal[2], pal[0], pal[0], 54, 26)}`; },
+    holocron: (u) => `<defs>${G25(u, '#e8faff', '#5fd8ff', '#14509a')}</defs>${rg25('#5fd8ff', 10, 44, 'opacity=".2"')}${rg25(`url(#${u})`, 4)}<g>${spin25(18)}${[[0, '#7ad8ff'], [90, '#ff6a7a'], [180, '#7ad8ff'], [270, '#ff6a7a']].map(([a, c]) => `<g transform="rotate(${a}) translate(0 -55)"><path d="M0 -10 L9 -5 L9 5 L0 10 L-9 5 L-9 -5Z" fill="${c}" fill-opacity=".35" stroke="${c}" stroke-width="1.4"/><path d="M-9 -5 L0 0 L9 -5 M0 0 V10" stroke="${c}" stroke-width="1" fill="none"/><circle r="2.6" fill="#fff"/></g>`).join('')}</g>`,
+    kessel: (u) => `<defs>${G25(u, '#fff6d0', '#ffb040', '#8a3a04')}</defs>${Array.from({ length: 30 }, (_, k) => `<path d="M0 -48 V-${58 + (k % 3) * 4}" stroke="${k % 2 ? '#bfe8ff' : '#ffffff'}" stroke-width="${k % 3 ? 1 : 1.8}" stroke-linecap="round" transform="rotate(${k * 12})"><animate attributeName="opacity" values="0;1;0" dur="${(0.9 + (k % 4) * 0.25).toFixed(2)}s" begin="${((k % 7) * 0.12).toFixed(2)}s" repeatCount="indefinite"/></path>`).join('')}${rg25(`url(#${u})`, 6)}${rg25('#2a1a04', 1, 40.5)}<g transform="translate(0 -56)"><path d="M-17 4 Q-17 -4 0 -6 Q17 -4 17 4 Q10 8 0 8 Q-10 8 -17 4Z" fill="#dfe6ee" stroke="#2a3040" stroke-width="1.4"/><circle cx="9" cy="-3" r="3" fill="#3a9ed0" stroke="#2a3040"/><path d="M-12 2H8" stroke="#8a93a0" stroke-width="1"/></g>${plaque25('12', '#2a1a04', '#ffb040', '#ffe0a0', 54, 24)}`,
+    jediorder: (u) => `<defs>${G25(u, '#ffffff', '#fff0b0', '#c89a30')}</defs>${rg25('#fff6c8', 13, 44, 'opacity=".22"')}${rg25(`url(#${u})`, 5.5)}${[-1, 1].map((sd) => `<g transform="scale(${sd} 1)">${[0, 1, 2, 3].map((i) => `<path d="M44 ${-6 + i * 7} Q${62 + i * 2} ${-24 + i * 8} ${68 - i * 3} ${-30 + i * 13} Q${58 - i} ${-8 + i * 7} 46 ${0 + i * 7}Z" fill="${i % 2 ? '#e8f4ff' : '#ffffff'}" stroke="#a88a30" stroke-width=".9"/>`).join('')}</g>`).join('')}<g transform="translate(0 55)"><rect x="-3" y="-8" width="6" height="16" rx="2" fill="#8a93a0" stroke="#2a3040"/><rect x="-3.6" y="-2" width="7.2" height="2.4" fill="#d8dee8"/><path d="M0 -8 V-18" stroke="#5fd8ff" stroke-width="3" stroke-linecap="round"/></g>${gem25(0, -56, '#7ad8ff', 6)}`,
+    sithlord: (u) => `<defs>${G25(u, '#ff6a5a', '#9a0a1a', '#1a0206')}</defs>${rg25('#ff1a2a', 14, 44, 'opacity=".22"')}<g>${pulse25(0.7, 1, 1.4)}${rays25(20, 53, 62, 3.4, (k) => (k % 2 ? '#c8101e' : '#7a0a14'), 0.95)}</g>${rg25(`url(#${u})`, 7)}${rg25('#ff3a4a', 1.2, 40, 'stroke-dasharray="3 5"')}${[-1, 1].map((sd) => `<path d="M${sd * 10} -50 Q${sd * 22} -54 ${sd * 26} -70 Q${sd * 14} -62 ${sd * 6} -56Z" fill="#12060a" stroke="#ff3a4a" stroke-width="1.2"/>`).join('')}<g transform="translate(0 -52)"><path d="M-9 8 L-12 -2 L-4 2 L0 -10 L4 2 L12 -2 L9 8Z" fill="#1a0206" stroke="#ff3a4a" stroke-width="1.2"/><circle cy="2" r="2" fill="#ff3a4a"/></g>`,
+    forge: (u) => `<defs>${G25(u, '#f2f5f9', '#8a93a0', '#2e3540')}</defs>${rg25('#ff7a1a', 12, 44, 'opacity=".25"')}${rg25(`url(#${u})`, 9)}${rg25('#ff9a3a', 1.8, 39.5)}<g>${pulse25(0.5, 1, 1.6)}${rg25('#ff7a1a', 4, 40, 'opacity=".6"')}</g>${Array.from({ length: 8 }, (_, k) => `<circle cy="-44" r="2.4" fill="#d8dee8" stroke="#2e3540" transform="rotate(${k * 45 + 22})"/>`).join('')}${[0, 1, 2, 3, 4, 5].map((i) => `<circle cx="${(Math.cos(i) * 50).toFixed(1)}" cy="${(Math.sin(i * 1.7) * 50).toFixed(1)}" r="1.6" fill="#ffb060"><animate attributeName="opacity" values="0;1;0" dur="${(1.1 + i * 0.2).toFixed(1)}s" begin="${(i * 0.3).toFixed(1)}s" repeatCount="indefinite"/></circle>`).join('')}<g transform="translate(0 55)"><path d="M-14 -5 H14 L10 2 H-10Z" fill="#5a6272" stroke="#12161c" stroke-width="1.2"/><rect x="-8" y="2" width="16" height="6" fill="#3a414c" stroke="#12161c"/><path d="M-3 -14 L3 -14 L5 -5 H-5Z" fill="#8a93a0" stroke="#12161c"/></g>`,
+    mythosaur: (u) => `<defs>${G25(u, '#fff6d0', '#c8d0dc', '#4a5462')}</defs>${rg25('#5fd8ff', 10, 44, 'opacity=".18"')}${rg25(`url(#${u})`, 7)}${rg25('#2a3240', 1, 39.5)}<g transform="translate(0 -58)"><path d="M-8 -2 Q-26 -6 -30 -22 Q-22 -14 -12 -14Z" fill="url(#${u})" stroke="#12161c" stroke-width="1.2"/><path d="M8 -2 Q26 -6 30 -22 Q22 -14 12 -14Z" fill="url(#${u})" stroke="#12161c" stroke-width="1.2"/><path d="M-14 -4 Q-14 -22 0 -22 Q14 -22 14 -4 L10 6 L6 12 H-6 L-10 6Z" fill="url(#${u})" stroke="#12161c" stroke-width="1.4"/><ellipse cx="-5.4" cy="-4" rx="3.6" ry="4.6" fill="#07090c"/><ellipse cx="5.4" cy="-4" rx="3.6" ry="4.6" fill="#07090c"/><ellipse cx="-5.4" cy="-4" rx="1.8" ry="2.4" fill="#5fd8ff"/><ellipse cx="5.4" cy="-4" rx="1.8" ry="2.4" fill="#5fd8ff"/><path d="M-1.6 4 L0 7 L1.6 4Z" fill="#07090c"/><path d="M-4 9V12M0 9V12M4 9V12" stroke="#07090c" stroke-width="1.2"/></g>${[-1, 1].map((sd) => `<g transform="translate(${sd * 38} 36) rotate(${sd * 30})"><rect x="-8" y="-3" width="16" height="6" rx="3" fill="url(#${u})" stroke="#12161c"/></g>`).join('')}`,
+  };
+  // Redrawn: Bronze, Silver, Guild Banner, Season Victor and Podium.
+  const R25 = {
+    bronze: (u) => `<defs>${G25(u, '#ffd9aa', '#b8702e', '#4a240c')}</defs>${rg25('#b8702e', 10, 44, 'opacity=".18"')}${Array.from({ length: 8 }, (_, k) => `<path d="M0 -48.5 A48.5 48.5 0 0 1 ${(Math.sin(Math.PI / 4 - 0.12) * 48.5).toFixed(1)} ${(-Math.cos(Math.PI / 4 - 0.12) * 48.5).toFixed(1)} L${(Math.sin(Math.PI / 4 - 0.12) * 39.5).toFixed(1)} ${(-Math.cos(Math.PI / 4 - 0.12) * 39.5).toFixed(1)} A39.5 39.5 0 0 0 0 -39.5Z" fill="url(#${u})" stroke="#3a1a08" stroke-width="1.2" transform="rotate(${k * 45 + 6})"/>`).join('')}${Array.from({ length: 8 }, (_, k) => `<circle cy="-44" r="1.9" fill="#fff0d8" stroke="#4a240c" stroke-width=".8" transform="rotate(${k * 45 + 28})"/>`).join('')}<g><path d="M0 -48 A48 48 0 0 1 34 -34" fill="none" stroke="#fff6e8" stroke-width="2.4" stroke-linecap="round" opacity=".8">${spin25(6)}</path></g>${plaque25('II', '#3a1a08', '#ffd9aa', '#ffd9aa', 54, 24)}`,
+    silver: (u) => `<defs>${G25(u, '#ffffff', '#b0bccc', '#46505f')}</defs>${rg25('#a8b4c4', 10, 44, 'opacity=".2"')}${[-1, 1].map((sd) => `<g transform="scale(${sd} 1)">${[0, 1, 2, 3, 4].map((i) => `<path d="M45 ${-12 + i * 6} Q${58 + i * 3} ${-26 + i * 7} ${70 - i * 2} ${-30 + i * 10} Q${60 - i} ${-12 + i * 7} 47 ${-6 + i * 6}Z" fill="url(#${u})" stroke="#2a3240" stroke-width=".9"/>`).join('')}</g>`).join('')}${rg25(`url(#${u})`, 6.5)}${rg25('#2a3240', 1, 40)}<g><path d="M-34 -34 A48 48 0 0 1 0 -48" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" opacity=".85">${spin25(7)}</path></g>${gem25(0, -52, '#cfe0ff', 5)}`,
+    guild: (u, color) => { const c = color || '#5fd8ff'; return `${rg25(c, 8, 44, 'opacity=".25"')}${rg25(c, 6)}${rg25('#06121e', 1.2, 40)}${rg25('#06121e', 1.2, 48)}${[-1, 1].map((sd) => `<g transform="translate(${sd * 30} 40)"><rect x="-1.4" y="-6" width="2.8" height="20" fill="#cfd6e0" stroke="#06121e" stroke-width=".8"/><path d="M${sd * 1.4} 0 H${sd * 15} L${sd * 11} 8 L${sd * 15} 16 H${sd * 1.4}Z" fill="${c}" stroke="#06121e" stroke-width="1.2"/></g>`).join('')}<path d="M-14 56 L14 56 L14 70 L0 64 L-14 70Z" fill="${c}" stroke="#06121e" stroke-width="1.4"/><path d="M-6 60 L0 63 L6 60" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>`; },
+    victor: (u) => `<defs>${G25(u, '#fff0b0', '#ff6a3a', '#7a1a0a')}</defs>${rg25('#ff5a3a', 11, 44, 'opacity=".2"')}${rg25(`url(#${u})`, 7)}${[-1, 1].map((sd) => Array.from({ length: 8 }, (_, k) => { const a = Math.PI / 2 + sd * (0.32 + k * 0.25); const x = Math.cos(a) * 52; const y = Math.sin(a) * 52; const rot = (a * 180) / Math.PI + 90 + sd * 28; return `<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${rot.toFixed(0)})"><path d="M0 0 Q5 -5 0 -13 Q-5 -5 0 0Z" fill="${k % 2 ? '#ffd86a' : '#ffe9a0'}" stroke="#7a4a06" stroke-width=".9"/></g>`; }).join('')).join('')}${rg25('#3a0a04', 1, 40.5)}<g transform="translate(0 -52)"><path d="M-9 4 L-9 -4 L-4 0 L0 -8 L4 0 L9 -4 L9 4Z" fill="#ffd86a" stroke="#7a3a08" stroke-width="1.1"/></g>${gem25(0, 56, '#ff5a3a', 6)}`,
+    podium: (u) => `<defs>${G25(u, '#f6f9ff', '#9ab0d8', '#34425e')}</defs>${rg25(`url(#${u})`, 7)}${rg25('#1a2236', 1, 40.5)}${Array.from({ length: 3 }, (_, k) => star25((k - 1) * 17, -57 - (k === 1 ? 4 : 0), k === 1 ? 7 : 5.5, '#ffe27a')).join('')}<g transform="translate(0 52)"><path d="M-22 14 V2 H-9 V14Z" fill="#a8b4c4" stroke="#1a2236" stroke-width="1.2"/><path d="M-9 14 V-6 H9 V14Z" fill="#ffd23f" stroke="#1a2236" stroke-width="1.2"/><path d="M9 14 V6 H22 V14Z" fill="#c8844a" stroke="#1a2236" stroke-width="1.2"/><text x="0" y="8" text-anchor="middle" font-size="9" font-weight="800" fill="#3a2408" font-family="Oxanium,sans-serif">1</text><text x="-15.5" y="11" text-anchor="middle" font-size="7" font-weight="800" fill="#1a2236" font-family="Oxanium,sans-serif">2</text><text x="15.5" y="12" text-anchor="middle" font-size="7" font-weight="800" fill="#2a1408" font-family="Oxanium,sans-serif">3</text></g>`,
+  };
   function frameSvg(id, color) {
     const u = `fr${++fseq}`;
     const ring = (stroke, w, extra = '') => `<circle r="44" fill="none" stroke="${stroke}" stroke-width="${w}" ${extra}/>`;
@@ -5805,7 +5859,9 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       + `<g transform="translate(0 -52)"><path d="M-20 8 L-23 -10 L-11 -1 L0 -17 L11 -1 L23 -10 L20 8Z" fill="url(#${u})" stroke="#5a3404" stroke-width="1.4"/><rect x="-20" y="7" width="40" height="6" rx="2" fill="url(#${u})" stroke="#5a3404" stroke-width="1.2"/>`
       + `<circle cx="-11" cy="10" r="2.6" fill="#ff4a5a"/><circle cx="0" cy="10" r="2.6" fill="#ffffff"/><circle cx="11" cy="10" r="2.6" fill="#b070ff"/><circle cy="-17" r="3" fill="#fff6c8"/></g>`
       + `${[[-40, 40, '#ffd23f'], [40, 40, '#ff4a5a'], [0, 57, '#b070ff']].map(([x, y, c]) => `<path d="M${x} ${y - 6} L${x + 5} ${y} L${x} ${y + 6} L${x - 5} ${y}Z" fill="${c}" stroke="#fff" stroke-width="1"/>`).join('')}`;
+    else if (F25[id]) body = F25[id](u, color);
     else body = ring('#5a6a7e', 4);
+    if (on25() && R25[id]) body = R25[id](u, color);
     return still(`<svg class="pf-frame" viewBox="-70 -70 140 140" aria-hidden="true">${body}</svg>`);
   }
   // Frames you own: from your best league, your guild and your seasons.
@@ -5820,6 +5876,21 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     if (iv.squad) out.add('squadron');
     if (iv.recruiter) out.add('recruiter');
     if (Array.isArray(Player.state.crowns) && Player.state.crowns.length) out.add('tcrown');
+    if (on25()) {
+      const hh = S();
+      const c = Player.state.c25 || {};
+      if ((hh.divs || []).includes('gold3')) out.add('gilded3');
+      if ((hh.divs || []).includes('kyber3')) out.add('kyberheart');
+      if ((hh.wsMax || 0) >= 25) out.add('hotstreak');
+      if ((hh.wsMax || 0) >= 50) out.add('unstoppable');
+      if (((hh.duels || {}).w || 0) >= 100) out.add('twinsabers');
+      const gid = myGuildId();
+      try { if (gid && guildLevel(gid).lv >= 5) out.add('citadel'); } catch (e) { /* no guild data yet */ }
+      if (Object.keys(Player.state.units || {}).length >= 50) out.add('holocron');
+      if ((c.fleet || 0) >= 50) out.add('kessel');
+      if ((c.light || 0) >= 200) out.add('jediorder');
+      if ((c.dark || 0) >= 200) out.add('sithlord');
+    } else for (const id of Object.keys(FRAMES)) if (FRAMES[id].v25) out.delete(id);
     return [...out];
   }
   // The saved-account frame stays out of the list until saved accounts are out (or you have it).
@@ -5829,6 +5900,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     return Object.entries(FRAMES).filter(([id]) => {
       if (own.includes(id)) return true;
       if (FRAMES[id].secret) return false;
+      if (FRAMES[id].v25 && !on25()) return false;
       if (!['linked', 'squadron', 'recruiter'].includes(id)) return true;
       if (id === 'recruiter') return v21() && !!(root.Invite && root.Invite.recruiterOpen());
       return v21();
@@ -6246,7 +6318,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const preview = () => `${avatar({ av, frame, guild: h.guild }, 'lg')}`;
     const summary = () => `${nm(av)} · ${esc(FRAMES[frame].name)} frame · ${feat.length} badge${feat.length === 1 ? '' : 's'}`;
     const pane = () => {
-      if (peTab === 'frame') return `<div class="pf-frames pe-frames">${shownFrames().sort(([a], [c]) => frames.includes(c) - frames.includes(a)).map(([id, f]) => { const own = frames.includes(id); return `<button type="button" class="pf-fr ${id === frame ? 'on' : ''} ${own ? '' : 'locked'}" data-fr="${id}" ${own ? '' : 'disabled'}>${avatar({ av, frame: id, guild: h.guild }, 'md')}<b>${esc(f.name)}</b><small>${own ? 'Unlocked' : esc(f.how)}</small></button>`; }).join('')}</div>`;
+      if (peTab === 'frame') return `<div class="pf-frames pe-frames">${shownFrames().sort(([a], [c]) => frames.includes(c) - frames.includes(a)).map(([id, f]) => { const own = frames.includes(id); if (!own && f.cost) return `<button type="button" class="pf-fr locked buy" data-frbuy="${id}">${avatar({ av, frame: id, guild: h.guild }, 'md')}<b>${esc(f.name)}</b><small>Buy · ${fmt(f.cost)} Beskar</small></button>`; return `<button type="button" class="pf-fr ${id === frame ? 'on' : ''} ${own ? '' : 'locked'}" data-fr="${id}" ${own ? '' : 'disabled'}>${avatar({ av, frame: id, guild: h.guild }, 'md')}<b>${esc(f.name)}</b><small>${own ? 'Unlocked' : esc(f.how)}</small></button>`; }).join('')}</div>`;
       if (peTab === 'badge') return `<p class="muted small pe-note">Pick up to 6 to show on your profile · <b data-featn>${feat.length}/6</b></p><div class="pf-bdgs pick">${b.all.map((x) => { const k = x.id || x.name; return `<button type="button" class="pf-bdg ${feat.includes(k) ? 'on' : ''}" data-ft="${esc(k)}">${still(UI.featBadge(x))}<span>${esc(x.name)}</span></button>`; }).join('') || '<p class="muted small">Earn badges around the game and show them off here.</p>'}</div>`;
       const f = (CATS.find(([k]) => k === peCat) || CATS[0])[2];
       return `<div class="pe-cats" data-noswipe>${CATS.map(([k, n, ff]) => `<button type="button" class="${k === peCat ? 'on' : ''}" data-pcat="${k}">${n} <small>${cards.filter((id) => ff(D.UNIT_MAP[id])).length}</small></button>`).join('')}</div>
@@ -6286,6 +6358,16 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     m.root.addEventListener('click', async (e) => {
       const tb = e.target.closest('[data-ptab]'); if (tb) { peTab = tb.dataset.ptab; showPane(); $('.pe-tabs').scrollIntoView({ block: 'nearest' }); return; }
       const pc = e.target.closest('[data-pcat]'); if (pc) { peCat = pc.dataset.pcat; peChose = true; return showPane(); }
+      const fb = e.target.closest('[data-frbuy]');
+      if (fb) {
+        const id = fb.dataset.frbuy; const cost = (FRAMES[id] || {}).cost || 0; const hh = S();
+        if ((hh.beskar || 0) < cost) return toast(`You need ${fmt(cost)} Beskar for the ${FRAMES[id].name} frame.`);
+        hh.beskar -= cost; const soc = P2().soc; soc.frames = [...new Set([...(soc.frames || []), id])]; HN.save();
+        fb.removeAttribute('data-frbuy'); fb.dataset.fr = id; fb.classList.remove('locked', 'buy'); fb.querySelector('small').textContent = 'Unlocked';
+        if (root.Sound) root.Sound.play('coins');
+        toast(`${FRAMES[id].name} frame unlocked.`);
+        frame = id; m.root.querySelectorAll('[data-fr]').forEach((n) => n.classList.toggle('on', n === fb)); return refreshTop();
+      }
       const f = e.target.closest('[data-fr]'); if (f && !f.disabled) { frame = f.dataset.fr; m.root.querySelectorAll('[data-fr]').forEach((n) => n.classList.toggle('on', n === f)); return refreshTop(); }
       const a = e.target.closest('[data-av]'); if (a) { av = a.dataset.av; m.root.querySelectorAll('[data-av]').forEach((n) => n.classList.toggle('on', n === a)); return refreshTop(); }
       const t = e.target.closest('[data-ft]');
@@ -7254,6 +7336,11 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       out[f].rows.sort((a, b) => b.dmg - a.dmg);
     }
     out.fallen = out.ground.down && out.fleet.down;
+    // 2.5: top damage in your guild on a boss that falls earns Raid Breaker.
+    if (on25() && gid === myGuildId() && ['ground', 'fleet'].some((f) => out[f].down && out[f].rows[0] && (out[f].rows[0].uid === Net.me || out[f].rows[0].uid === 'me'))) {
+      const soc = P2().soc;
+      if (!(soc.frames || []).includes('raidbreaker')) { soc.frames = [...(soc.frames || []), 'raidbreaker']; HN.save(); }
+    }
     return out;
   }
   function allyFor(front, gid) {
@@ -8551,6 +8638,12 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
       h.beskar += rw.beskar;
       h.freePucks = (h.freePucks || []).concat(rw.puck);
       if (rw.frame && !(h.soc.frames || []).includes(rw.frame)) h.soc.frames = [...(h.soc.frames || []), rw.frame];
+    }
+    if (root.Update25 && root.Update25.on()) {
+      const add = [];
+      if (rank <= 25) add.push('wreath');
+      if (HN.divOf(prev.best).league === 'legend') add.push('legendhalo');
+      if (add.length) h.soc.frames = [...new Set([...(h.soc.frames || []), ...add])];
     }
     const card = rw && rw.card ? HN.grant(rw.card) : null;
     HN.save(); Net.publish();

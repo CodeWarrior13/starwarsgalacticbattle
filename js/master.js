@@ -10,7 +10,7 @@
   const UI = root.UI;
   if (!UI || !UI.hooks) return;
   const KEY = 'swcg-master';
-  const SWITCHES = ['swcg-fr-test', 'swcg-pf2', 'swcg-v23-test', 'swcg-wg-test', 'swcg-v24-test', 'swcg-main-test', 'swcg-pv-test', 'swcg-xq-test'];
+  const SWITCHES = ['swcg-fr-test', 'swcg-pf2', 'swcg-v23-test', 'swcg-wg-test', 'swcg-v24-test', 'swcg-main-test', 'swcg-pv-test', 'swcg-xq-test', 'swcg-v25-test'];
   const KEEP = ['swcg-fr-test', 'swcg-pf2']; // HOLOSAVE21's: always left on
   const code = () => String.fromCharCode(77, 65, 83, 84, 69, 82, 75, 69, 89, 83);
   const get = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
