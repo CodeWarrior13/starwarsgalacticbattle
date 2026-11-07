@@ -951,16 +951,52 @@
   const RAID_BOSS_ATK = 1.6;
   const RAID_GUARD_ATK = 1.25;
   // 2.4 raids ship after 2.2, so they always get the 2.2 toughness.
+  // From the raid week starting Wed Nov 11, 6 p.m. Central (Thu Nov 12 UTC), raid bosses are built to last
+  // the week: about 150 million health (by boss), 3 runs a day each, with the other raiders taking about half.
+  const BIG_RAID_WK = Math.floor(Date.UTC(2026, 10, 12) / (7 * 24 * 3600 * 1000));
+  const bigRaid = () => { try { return week() >= BIG_RAID_WK || !!(root.__bigRaidTest); } catch (e) { return false; } };
+  const BIG_HP = 150e6;
+  const BOT_SHARE = 0.5;
+  const RAID_DAY_RUNS = 3;
   const toughPool = (r) => {
     const base = r.pool;
-    Object.defineProperty(r, 'pool', { enumerable: true, get: () => (v22() || r.v24 ? Math.max(RAID_HP_MIN, base * 7) : base) });
+    Object.defineProperty(r, 'pool', { enumerable: true, get: () => (bigRaid() ? Math.round(((base / 800000) * BIG_HP) / 1e6) * 1e6 : v22() || r.v24 ? Math.max(RAID_HP_MIN, base * 7) : base) });
   };
+  // Runs a day on the community raid (days roll over at midnight Central).
+  const raidDay = () => Math.floor((Date.now() - 6 * 3600e3) / 864e5);
+  const raidRunsLeft = () => { const h = S(); const d = h.raidDay || {}; return RAID_DAY_RUNS - (d.d === raidDay() ? d.n | 0 : 0); };
+  const useRaidRun = () => { const h = S(); const d = h.raidDay && h.raidDay.d === raidDay() ? h.raidDay : (h.raidDay = { d: raidDay(), n: 0 }); d.n += 1; save(); };
   for (const r of RAIDS) toughPool(r);
   // Applied in the raid battle setup.
   const raidToughen = (b, bossId) => {
     if (!v22() && !RAIDS.some((r) => r.v24 && r.id === bossId)) return;
     b.side('enemy').forEach((u) => { u.atk = Math.round(u.atk * (u.id === bossId ? RAID_BOSS_ATK : RAID_GUARD_ATK)); });
+    if (!(bigRaid() || root.__raidHuntTest)) return;
+    const T = root.__raidTune || RAID_TUNE;
+    b.side('enemy').forEach((u) => { u.atk = Math.round(u.atk * (u.id === bossId ? T.boss : T.guard)); });
+    // The boss and its guards go after anyone who can bring the fallen back.
+    const revives = (u) => (u.abilities || []).some((a) => (a.effects || []).some((e) => e.type === 'revive'));
+    if (b.__hunt) return;
+    b.__hunt = true;
+    const base = b.chooseAction.bind(b);
+    b.chooseAction = (u) => {
+      const a = base(u);
+      if (u.side !== 'enemy' || !a.targetUid) return a;
+      const rv = b.validTargets(u, a.abilityIndex).filter(revives);
+      if (rv.length && b.rng() < T.hunt) { rv.sort((x, y) => x.hp / x.maxHp - y.hp / y.maxHp); a.targetUid = rv[0].uid; }
+      return a;
+    };
+    // …and hit them harder when they get there.
+    const act = b.act.bind(b);
+    b.act = (u, i, t) => {
+      const tg = t && b.units.find((x) => x.uid === t);
+      if (u.side !== 'enemy' || !tg || !revives(tg) || !(T.rv > 1)) return act(u, i, t);
+      const a0 = u.atk;
+      u.atk = Math.round(a0 * T.rv);
+      try { return act(u, i, t); } finally { u.atk = a0; }
+    };
   };
+  const RAID_TUNE = { boss: 2, guard: 1.6, hunt: 0.85, rv: 1.8 };
   const BOSS_KIT = {
     raid_jabba: { role: 'tank', spd: 88, abilities: [ab('Tail Slam', 0, 'enemy', [dmg(1.3)], 'Crushes one enemy.'), ab('Mocking Laughter', 3, 'allEnemies', [debuff('offDown', 2, 0.7)], 'Ho ho ho. Offense Down on every enemy.')], ultimate: ult('Bounty on Your Heads', 'allEnemies', [dmg(1.7), debuff('defDown', 2)], 'Puts a price on everyone: heavy damage and Defense Down.', 'Bo shuda!') },
     raid_nihilus: { role: 'attacker', spd: 136, abilities: [ab('Void Strike', 0, 'enemy', [dmg(1.4)], 'A strike that empties the target.'), ab('Drain Life', 3, 'enemy', [dmg(1.8), { ...heal(0.04), on: 'self' }], 'Drinks one enemy\'s life.')], ultimate: ult('Feast on the World', 'allEnemies', [dmg(2.0), { ...heal(0.06), on: 'self' }], 'Tears the life out of every enemy and feeds on it.', '…') },
@@ -1441,8 +1477,19 @@
     const p = raidNow().pool;
     const bots = raidBots();
     // The other pilots chip in through the week, but the last hits are always the real players'.
-    const botDmg = Math.min(Math.round(p * 0.85), bots.reduce((a, r) => a + r.dmg, 0));
+    const botDmg = Math.min(Math.round(p * (bigRaid() ? BOT_SHARE : 0.85)), bots.reduce((a, r) => a + r.dmg, 0));
     const dealt = rows.reduce((a, r) => a + r.dmg, 0) + (S().raidBonus || 0) + botDmg;
+    // Who's on top this week (for the Triple Crown): your damage against the best anyone else has shown.
+    try {
+      const h = S();
+      h.rtop = h.rtop || {};
+      const prev = h.rtop[w] || { me: 0, top: 0 };
+      const otherReal = rows.filter((r) => r.uid !== Net.me && r.uid !== 'me').reduce((a, r) => Math.max(a, r.dmg), 0);
+      const botEnd = bots.reduce((a, b) => Math.max(a, b.end || b.dmg), 0);
+      const sn = root.HN && root.HN.social && root.HN.social.seasonNo ? root.HN.social.seasonNo() : 0;
+      const nx = { me: local.dmg, top: Math.max(prev.top, otherReal, botEnd), s: prev.s || sn };
+      if (nx.me !== prev.me || nx.top !== prev.top || nx.s !== prev.s) { h.rtop[w] = nx; const ks = Object.keys(h.rtop).map(Number).sort((a, b) => a - b); while (ks.length > 12) delete h.rtop[ks.shift()]; }
+    } catch (e) { /* bookkeeping only */ }
     return { rows, bots, dealt: Math.min(p, dealt), left: Math.max(0, p - dealt), pool: p, mine: local.dmg, fallen: dealt >= p };
   }
   // This week's other raiders: they hit through the week, a few runs a day, at their own pace.
@@ -1459,16 +1506,18 @@
     const rows = names.map((name, i) => {
       const keen = 1.6 - i * 0.035 + (r() - 0.5) * 0.4;
       const start = r() * 30;
-      const runsPerDay = 0.6 + r() * 1.8;
+      const runsPerDay = Math.min(3, 0.6 + r() * 1.8);
       const per = Math.round(R.pool * 0.003 * keen * (0.8 + r() * 0.4));
-      const runs = hr < start ? 0 : 1 + Math.floor(((hr - start) / 24) * runsPerDay);
-      const rs = rng(w * 31 + i * 7);
-      let dmg = 0; for (let k = 0; k < runs; k++) dmg += Math.round(per * (0.6 + rs() * 0.8));
+      const runsAt = (h2) => (h2 < start ? 0 : 1 + Math.floor(((h2 - start) / 24) * runsPerDay));
+      const dmgAt = (h2) => { const rs = rng(w * 31 + i * 7); let d = 0; for (let k = 0, n = runsAt(h2); k < n; k++) d += Math.round(per * (0.6 + rs() * 0.8)); return d; };
       const fx = r();
-      return { bot: true, name, av: BOT_AVS[Math.floor(r() * BOT_AVS.length)], fx, best: toNewR(Math.round(1100 + keen * 700 + r() * 200)), dmg };
-    }).filter((b) => b.dmg > 0).map((b) => ({ ...b, frame: b.fx < 0.75 ? divOf(b.best).league : ['guild', 'linked', 'squadron'][Math.floor(b.fx * 37) % 3] }));
-    raidBotCache = { key, rows };
-    return rows;
+      return { bot: true, name, av: BOT_AVS[Math.floor(r() * BOT_AVS.length)], fx, best: toNewR(Math.round(1100 + keen * 700 + r() * 200)), dmg: dmgAt(hr), end: dmgAt(167) };
+    });
+    // Big raids (from the Nov 12 raid week): the other raiders chip in about half the boss over the whole week, a few runs a day like everyone.
+    if (bigRaid()) { const tot = rows.reduce((a, b) => a + b.end, 0) || 1; const k = (R.pool * BOT_SHARE) / tot; rows.forEach((b) => { b.dmg = Math.round(b.dmg * k); b.end = Math.round(b.end * k); }); }
+    const out = rows.filter((b) => b.dmg > 0).map((b) => ({ ...b, frame: b.fx < 0.75 ? divOf(b.best).league : ['guild', 'linked', 'squadron'][Math.floor(b.fx * 37) % 3] }));
+    raidBotCache = { key, rows: out };
+    return out;
   }
   function bankRaid(dmgDone) {
     const h = S();
@@ -1681,7 +1730,7 @@
     };
   }
 
-  root.HN = { BETA, v22, raidToughen, toughPool, xp, grantBase, HN_IDS, HOW, RAIDS, LEAGUES, DIVS, toNewR, toOldR, syncLadder, LEAGUE_REWARD, S, save, owns, card, grant, entry, pool, squad, squadEntries, squadPower, powerOf, avgLevel, divOf, opponents, payout, arenaResult, claimDivisions, week, raidNow, raidTotals, bankRaid, claimRaid, Net, rng, botSquad, BOT_NAMES, BOT_AVS, BOT_NAMES_2, BOT_NAMES_X };
+  root.HN = { BETA, v22, bigRaid, raidRunsLeft, useRaidRun, RAID_DAY_RUNS, raidToughen, toughPool, xp, grantBase, HN_IDS, HOW, RAIDS, LEAGUES, DIVS, toNewR, toOldR, syncLadder, LEAGUE_REWARD, S, save, owns, card, grant, entry, pool, squad, squadEntries, squadPower, powerOf, avgLevel, divOf, opponents, payout, arenaResult, claimDivisions, week, raidNow, raidTotals, bankRaid, claimRaid, Net, rng, botSquad, BOT_NAMES, BOT_AVS, BOT_NAMES_2, BOT_NAMES_X };
   // Win-streak flame: one emoji plus a CSS glow, tier every 10 wins.
   root.HN.streakFlame = (n, big) => { n = n | 0; if (n < 1) return '0'; const t = Math.min(9, Math.floor(n / 10)); return `<span class="hn-flame t${t}${big ? ' big' : ''}" title="${n} win streak"><i>🔥</i>${n}</span>`; };
 })(window);
@@ -2865,10 +2914,10 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
           <ul>${r.mech.map(([n, d]) => `<li><b>${esc(n)}</b>${esc(d)}</li>`).join('')}</ul></div>
       </div>
       ${t.fallen ? `<div class="hn-free"><span class="grow"><b>${esc(r.name)} has fallen!</b> ${rec && rec.dmg ? (rec.claimed ? 'Rewards claimed. A new boss arrives next week.' : 'You helped: claim your rewards.') : 'You didn\'t land a hit this week.'}</span>${rec && rec.dmg && !rec.claimed ? '<button type="button" class="hn-btn gold" data-hn="claim">Claim</button>' : ''}</div>` : ''}
-      <div class="hn-sec"><h3>Damage this week</h3><div class="hn-board">${t.rows.slice(0, 8).map((x, i) => `<div class="${x.name === 'You' ? 'me' : ''}"><span>${i + 1}. ${esc(x.name)}</span><b>${fmt(x.dmg)}</b></div>`).join('')}</div><p class="muted small" style="margin:0">Top damage when the boss falls earns Krrsantan. Everyone who hit it gets 500 Beskar and an Elite bounty puck, with a chance at Aurra Sing or the Fang Fighter.</p></div>
+      <div class="hn-sec"><h3>Damage this week</h3><div class="hn-board">${t.rows.concat(t.bots || []).sort((a, b2) => b2.dmg - a.dmg).slice(0, 10).map((x, i) => `<div class="${x.name === 'You' || x.uid === HN.Net.me ? 'me' : ''}"><span>${i + 1}. ${esc(x.name)}</span><b>${fmt(x.dmg)}</b></div>`).join('')}</div><p class="muted small" style="margin:0">Top damage when the boss falls earns Krrsantan. Everyone who hit it gets 500 Beskar and an Elite bounty puck, with a chance at Aurra Sing or the Fang Fighter.</p></div>
       ${squadBox(ids, kind, HN.squadPower(HN.squadEntries(kind)), kind === 'ship' ? 'Your fleet' : 'Your 5')}
       <div class="hn-sec"><h3>Fight alongside</h3><div class="hn-allies">${al.map((a) => `<button type="button" class="hn-ally ${a.id === allyPick ? 'on' : ''}" data-hn="ally" data-id="${a.id}"><b>${esc(a.name)} ${a.real ? '<span class="hn-chip">player</span>' : ''}</b><div class="minis">${a.squad.map((e) => mini(e.id)).join('')}</div></button>`).join('')}</div></div>
-      <button type="button" class="hn-btn gold" data-hn="raidgo" style="justify-self:center;padding:12px 28px" ${t.fallen || !ids.length ? 'disabled' : ''}>${t.fallen ? 'Boss defeated' : 'Start raid'}</button>`;
+      ${(() => { const big = HN.bigRaid(); const left = big ? HN.raidRunsLeft() : 1; const out = big && left <= 0; return `<button type="button" class="hn-btn gold" data-hn="raidgo" style="justify-self:center;padding:12px 28px" ${t.fallen || !ids.length || out ? 'disabled' : ''}>${t.fallen ? 'Boss defeated' : out ? 'No runs left today' : 'Start raid'}</button>${big && !t.fallen ? `<small class="muted" style="display:block;text-align:center;margin-top:4px">${Math.max(0, left)} of ${HN.RAID_DAY_RUNS} runs left today · 5 minutes each</small>` : ''}`; })()}`;
   };
 
   // ---------- forge ----------
@@ -3119,6 +3168,8 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const kind = raidKind(r);
     const mine = HN.squadEntries(kind);
     if (!mine.length) return toast(kind === 'ship' ? 'You need ships for a fleet raid. Pick your fleet first.' : 'Pick a squad first.');
+    if (HN.bigRaid() && HN.raidRunsLeft() <= 0) return toast(`No raid runs left today. You get ${HN.RAID_DAY_RUNS} a day: they come back at midnight Central.`);
+    if (HN.bigRaid()) HN.useRaidRun();
     const al = allies(kind);
     const ally = al.find((a) => a.id === allyPick) || al[0];
     const used = new Set(mine.map((e) => e.id));
@@ -5722,6 +5773,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     linked: { name: 'Holo Link', how: 'Save your game to an account (Settings)' },
     squadron: { name: 'Squadron Leader', how: 'Invite 10 friends who reach level 5' },
     recruiter: { name: 'Recruiter Legend', how: 'Invite 50 friends who reach level 5 (limited time)' },
+    tcrown: { name: 'Triple Crown', how: 'A secret', secret: true },
   };
   let fseq = 0;
   function frameSvg(id, color) {
@@ -5745,6 +5797,14 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     else if (id === 'squadron') body = `<defs>${grad('#ffffff', '#ff7a5a', '#8a1a0a')}</defs>${ring(`url(#${u})`, 6)}${ring('#ffd9cc', 1.2, 'r="39"')}${[0, 90, 180, 270].map((a) => `<g transform="rotate(${a + 45}) translate(0 -52)"><path d="M0 -8 L2.2 -1 L9 2 L9 4.5 L2.2 3 L1.6 7 L4 9 L-4 9 L-1.6 7 L-2.2 3 L-9 4.5 L-9 2 L-2.2 -1Z" fill="#f2f4f8" stroke="#8a1a0a" stroke-width="1"/><circle cy="-2" r="1.3" fill="#ff5a3a"/></g>`).join('')}<g transform="translate(0 50)"><path d="M-18 -6 L18 -6 L14 0 L18 6 L-18 6 L-14 0Z" fill="#c8301a" stroke="#ffd9cc" stroke-width="1.2"/><path d="M-6 -2 L0 2.5 L6 -2" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></g>`;
     // …and a gold-and-violet crown of rays for 50 (limited time).
     else if (id === 'recruiter') body = `<defs>${grad('#fff6c8', '#ffb938', '#7a3a08')}<linearGradient id="${u}v" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e8c8ff"/><stop offset="1" stop-color="#5a1aa8"/></linearGradient></defs>${Array.from({ length: 20 }, (_, k) => `<path d="M0 -${k % 2 ? 58 : 66} L3 -47 L-3 -47Z" fill="${k % 2 ? '#c890ff' : '#ffd86a'}" opacity=".9" transform="rotate(${k * 18})"/>`).join('')}${ring(`url(#${u}v)`, 10, 'opacity=".55"')}${ring(`url(#${u})`, 6)}<circle r="50" fill="none" stroke="#fff2b0" stroke-width="1" stroke-dasharray="2 4"/>${[-1, 1].map((sx) => `<path d="M${sx * 30} 40 Q${sx * 44} 52 ${sx * 50} 62 L${sx * 40} 60 L${sx * 36} 68 Q${sx * 30} 54 ${sx * 20} 46Z" fill="url(#${u}v)" stroke="#2a0a4a" stroke-width="1"/>`).join('')}<g transform="translate(0 -56)"><path d="M-12 6 L-12 -4 L-6 1 L0 -9 L6 1 L12 -4 L12 6Z" fill="url(#${u})" stroke="#7a3a08" stroke-width="1.2"/><circle cy="-9" r="2" fill="#e8c8ff"/></g><g transform="translate(0 50)"><circle r="8" fill="#2a0a4a" stroke="#ffd86a" stroke-width="1.6"/><text y="3.4" text-anchor="middle" font-size="9" font-weight="800" fill="#ffd86a" font-family="Oxanium, sans-serif">50</text></g>`;
+    // Triple Crown: gold, crimson and violet rings bound by laurels, three gems and a crown on top.
+    else if (id === 'tcrown') body = `<defs>${grad('#fff8d8', '#ffd23f', '#8a5208')}<linearGradient id="${u}r" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffb0b8"/><stop offset="1" stop-color="#8a0818"/></linearGradient><linearGradient id="${u}p" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ead0ff"/><stop offset="1" stop-color="#4a10a0"/></linearGradient></defs>`
+      + `${Array.from({ length: 36 }, (_, k) => `<path d="M0 -${k % 3 ? 58 : 67} L2.2 -49 L-2.2 -49Z" fill="${['#ffe27a', '#ff6a7a', '#c890ff'][k % 3]}" opacity=".9" transform="rotate(${k * 10})"/>`).join('')}`
+      + `${ring(`url(#${u}p)`, 3, 'r="50"')}${ring(`url(#${u}r)`, 3, 'r="47.5"')}${ring(`url(#${u})`, 6)}${ring('#3a2400', 1, 'r="40.5"')}`
+      + `${[-1, 1].map((sd) => Array.from({ length: 7 }, (_, k) => { const a = Math.PI / 2 + sd * (0.35 + k * 0.27); const x = Math.cos(a) * 46; const y = Math.sin(a) * 46; return `<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="6" ry="2.6" fill="#ffd86a" stroke="#6a4206" stroke-width=".8" transform="rotate(${((a * 180) / Math.PI + 90 + sd * 35).toFixed(0)} ${x.toFixed(1)} ${y.toFixed(1)})"/>`; }).join('')).join('')}`
+      + `<g transform="translate(0 -52)"><path d="M-20 8 L-23 -10 L-11 -1 L0 -17 L11 -1 L23 -10 L20 8Z" fill="url(#${u})" stroke="#5a3404" stroke-width="1.4"/><rect x="-20" y="7" width="40" height="6" rx="2" fill="url(#${u})" stroke="#5a3404" stroke-width="1.2"/>`
+      + `<circle cx="-11" cy="10" r="2.6" fill="#ff4a5a"/><circle cx="0" cy="10" r="2.6" fill="#ffffff"/><circle cx="11" cy="10" r="2.6" fill="#b070ff"/><circle cy="-17" r="3" fill="#fff6c8"/></g>`
+      + `${[[-40, 40, '#ffd23f'], [40, 40, '#ff4a5a'], [0, 57, '#b070ff']].map(([x, y, c]) => `<path d="M${x} ${y - 6} L${x + 5} ${y} L${x} ${y + 6} L${x - 5} ${y}Z" fill="${c}" stroke="#fff" stroke-width="1"/>`).join('')}`;
     else body = ring('#5a6a7e', 4);
     return still(`<svg class="pf-frame" viewBox="-70 -70 140 140" aria-hidden="true">${body}</svg>`);
   }
@@ -5759,6 +5819,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const iv = Player.state.invites || {};
     if (iv.squad) out.add('squadron');
     if (iv.recruiter) out.add('recruiter');
+    if (Array.isArray(Player.state.crowns) && Player.state.crowns.length) out.add('tcrown');
     return [...out];
   }
   // The saved-account frame stays out of the list until saved accounts are out (or you have it).
@@ -5766,7 +5827,9 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   const shownFrames = () => {
     const own = ownedFrames();
     return Object.entries(FRAMES).filter(([id]) => {
-      if (own.includes(id) || !['linked', 'squadron', 'recruiter'].includes(id)) return true;
+      if (own.includes(id)) return true;
+      if (FRAMES[id].secret) return false;
+      if (!['linked', 'squadron', 'recruiter'].includes(id)) return true;
       if (id === 'recruiter') return v21() && !!(root.Invite && root.Invite.recruiterOpen());
       return v21();
     });
@@ -6576,7 +6639,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const mine = w[crew.indexOf(uid)] / tot;
     const days = weekFrac() * 7;
     const F = (k) => Math.min(1.03, pace * k * Math.pow(days / 5.2, 1.15));
-    return { w: wk, b: g.id, d: Math.round(g.ground.pool * F(1) * mine), f: Math.round(g.fleet.pool * F(0.93) * mine) };
+    return { w: wk, b: g.id, d: Math.round(gpool(g, 'ground', row.guild) * F(1) * mine), f: Math.round(gpool(g, 'fleet', row.guild) * F(0.93) * mine) };
   }
   const npcXp = (g) => Math.round(g.xp + weeksLive() * realPace().gp * g.size * 0.55 * npcPace(g.id, week()));
   const npcLvl = (g) => Math.min(10, g.lvl + Math.floor(weeksLive() * 0.28 * npcPace(g.id, Math.floor(NPC_T0 / WK_MS))));
@@ -6633,7 +6696,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const use = picks.slice(0, 10).map((u, k) => { const b = Math.round((120 - k * 9) * (0.6 + r())); return `${u.id}.${b}.${Math.round(b * (0.45 + r() * 0.25))}`; });
     let ach = [];
     try { ach = UI.achievements().filter((a) => !a.secret); } catch (e) { ach = []; }
-    const nb = Math.round(clampN(level * 0.9 + r() * 10, 3, Math.max(3, ach.length)));
+    const nb = Math.round(clampN(2 + level * 0.22 + r() * 7, 2, Math.max(2, ach.length)));
     const got = ach.slice().sort(() => r() - 0.5).slice(0, nb).sort((a, b) => (b.tier || 1) - (a.tier || 1));
     const badges = got.slice(0, 6).map((a) => ({ id: a.id || '', tier: a.tier || 1, icon: a.icon, name: a.name, desc: String(a.desc || '').slice(0, 90), level: a.level }));
     const games = Math.round(60 + level * 9 + r() * 200);
@@ -7171,6 +7234,8 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   const ago = (ts) => { const s = Math.max(0, (Date.now() - ts) / 1000); return s < 60 ? 'now' : s < 3600 ? `${Math.floor(s / 60)}m` : s < 86400 ? `${Math.floor(s / 3600)}h` : `${Math.floor(s / 86400)}d`; };
 
   // ---------- guild raid ----------
+  // Big raids (from the Nov 12 raid week): about 14 million ground and 10 million fleet health per member (at least 4), so a guild's raid takes its week.
+  const gpool = (g, f, gid) => (HN.bigRaid && HN.bigRaid() ? Math.max(4, membersOf(gid).length) * (f === 'fleet' ? 10e6 : 14e6) : g[f].pool);
   function graidTotals(gid) {
     const g = graidNow();
     const out = { ground: { dealt: 0, rows: [] }, fleet: { dealt: 0, rows: [] } };
@@ -7184,7 +7249,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       if (gr.f) { out.fleet.dealt += gr.f; out.fleet.rows.push({ uid, dmg: gr.f }); }
     }
     for (const f of ['ground', 'fleet']) {
-      const pool = g[f].pool;
+      const pool = gpool(g, f, gid);
       out[f].pool = pool; out[f].left = Math.max(0, pool - out[f].dealt); out[f].down = out[f].dealt >= pool;
       out[f].rows.sort((a, b) => b.dmg - a.dmg);
     }
@@ -7221,7 +7286,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       setup(b) {
         b.hnRaid = { boss: F.boss, turn: 0, limit: 100, guild: true };
         const boss = b.units.find((u) => u.id === F.boss);
-        boss.maxHp = F.pool; boss.hp = Math.max(1, t.left);
+        boss.maxHp = t.pool; boss.hp = Math.max(1, t.left);
         HN.raidToughen(b, F.boss);
         if (boss.hp <= boss.maxHp / 2) { boss.enraged = true; boss.statuses.offUp = 99; }
         b.hnStartHp = boss.hp;
@@ -7672,9 +7737,10 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   V.raid = (p) => {
     let html = baseRaid(p);
     const t = HN.raidTotals();
-    t.rows.slice(0, 8).forEach((x, i) => {
-      const uid = x.uid === 'me' ? 'me' : x.uid;
-      html = html.replace(`<span>${i + 1}. ${esc(x.name)}</span>`, `<span class="rk">${i + 1}.</span>${chip(uid)}`);
+    t.rows.concat(t.bots || []).sort((a, b2) => b2.dmg - a.dmg).slice(0, 10).forEach((x, i) => {
+      let who;
+      if (x.bot) { const u = HN.botUid(x); const bp = HN.botProfile(u) || x; who = `<button type="button" class="hv-bot" data-hn="prof" data-uid="${esc(u)}">${avatar({ av: bp.av, frame: bp.frame }, 'sm')}<span class="nm"><b>${esc(x.name)}</b><small>${bp.nb || 0} badges</small></span></button>`; } else who = chip(x.uid === 'me' ? 'me' : x.uid);
+      html = html.replace(`<span>${i + 1}. ${esc(x.name)}</span>`, `<span class="rk">${i + 1}.</span>${who}`);
     });
     return html;
   };
@@ -7824,6 +7890,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
 .pf-chip .nm small { color: #9fc4d8; font-size: 11px; white-space: nowrap; }
 .hn-board .rk, .g-row .rk { color: #9fc4d8; min-width: 18px; align-self: center; }
 .hn-board > div { align-items: center; }
+.hn-board > div > .pf-chip, .hn-board > div > .hv-bot { flex: 1; min-width: 0; margin-left: 6px; } .hv-bot .nm { display: grid; min-width: 0; line-height: 1.15; } .hv-bot .nm small { color: #9fc4d8; font-size: 11px; }
 .pf-me { display: flex; align-items: center; gap: 14px; padding: 10px 14px; border-radius: 14px; border: 1px solid rgba(95, 216, 255, 0.3); background: rgba(8, 20, 32, 0.9); color: #e6f6ff; font: inherit; text-align: left; cursor: pointer; }
 .pf-me b { display: block; font-family: var(--font-display); letter-spacing: .08em; } .pf-me small { color: #9fc4d8; }
 .pf-card { display: grid; gap: 14px; }
@@ -8489,7 +8556,18 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
     HN.save(); Net.publish();
     paying = false;
     // 2.4: first in the world in the Legend league designs a card (js/champion.js).
-    const champ = () => { if (rank === 1 && HN.divOf(prev.best).league === 'legend' && root.Champion) root.Champion.earned(prev.season); };
+    // The Triple Crown: first on this board, first in duel wins, and first in at least one raid week, all this season.
+    const crown = (() => {
+      if (rank !== 1 || !(root.Update24 && root.Update24.on()) || !root.Crown) return false;
+      const myDw = ((SO.prof().st || {}).dw) | 0;
+      const otherDw = Math.max(0, ...Net.arena.filter((a) => a.uid !== Net.me).map((a) => a.dw | 0), ...bots(prev.season, 1).map((b) => b.dw | 0));
+      const raid1 = Object.values(h.rtop || {}).some((v) => v && v.s === prev.season && v.me > 0 && v.me >= v.top);
+      return myDw > 0 && myDw > otherDw && raid1;
+    })();
+    const champ = async () => {
+      if (crown) { h.soc.frames = [...new Set([...(h.soc.frames || []), 'tcrown'])]; HN.save(); try { await root.Crown.award(prev.season); } catch (e) { /* scene only */ } SO.rerender(); }
+      if (rank === 1 && HN.divOf(prev.best).league === 'legend' && root.Champion) root.Champion.earned(prev.season);
+    };
     const collect = async () => {
       if (card && card.isNew) await UI.walkout(D.UNIT_MAP[rw.card], D.UNIT_MAP[rw.card].rarity, false, { holonet: true, isNew: true, shards: 0 });
       else if (card) toast(`${D.UNIT_MAP[rw.card].name} +${card.shards} shards`);

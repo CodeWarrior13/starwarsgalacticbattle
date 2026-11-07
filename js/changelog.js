@@ -85,6 +85,8 @@
         'NEW|Placement battles: from Season 3, ranked opens with five Ground placement battles. They open on the last day of the season break (or whenever you arrive), each one adapts to how you fight, and the last is the Boss Trial (fight brilliantly and it becomes an Elite Boss Trial against a fully synergized squad). When the season starts, Admiral Ackbar reveals the league you start in. Fleet ranked opens once they\'re done.',
         'IMPROVED|Every raid, guild raids included, now has a 5-minute raid clock on screen.',
         'FIXED|Raids no longer end early: a raid only ends when its clock runs out, the boss falls or your squad does.',
+        'BALANCE|Raid bosses are built to last the week: far more health (about 150 million on the HoloNet raid, and guild raids grow with your guild), 3 runs a day each, and every raider\'s damage counts on the board.',
+        'NEW|Some say a pilot who stands first everywhere at once earns something no one else can wear.',
         'IMPROVED|Guilds: leaders can now demote a co-leader or elder, the Manage button no longer covers a member\'s rank, and every member shows their profile frame.',
         'IMPROVED|Finding a guild: search sits at the top, Guilds you may like suggests ones you can join right now, more guilds are waiting to be found, and founding your own is tucked into a dropdown. Founding a guild now costs 100 Kyber and 500 Beskar.',
         'NEW|Guild polls and blacklist: leaders can start polls in guild chat that the whole guild votes on, and remove and blacklist a player so they can\'t rejoin or ask to join. The leader decides whether co-leaders and elders can use them too.',
