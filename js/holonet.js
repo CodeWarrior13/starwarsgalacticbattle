@@ -2867,7 +2867,10 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       ${root.Placement && root.Placement.need() ? placePanel(kind, ids) : `<div class="hn-opps">${opps.map((o, i) => {
         const d = HN.divOf(o.rating);
         const pic = !o.real && HN.avatarFor ? HN.avatarFor(null, o) : '';
-        return `<div class="hn-opp"><div class="hn-opp-id">${pic}${A.badge(d.league, d.div)}</div>
+        const SOc = HN.social;
+        const og = SOc && SOc.gban ? (o.real ? SOc.guildFor(String(o.id).slice(2)) : SOc.guildByTag(o.gtag)) : null;
+        const ob = og ? SOc.gban(og, 'opp') : '';
+        return `<div class="hn-opp${ob ? ' gb-host' : ''}">${ob}<div class="hn-opp-id">${pic}${A.badge(d.league, d.div)}</div>
           <div class="who"><b>${esc(o.name)}${o.gtag ? ` <small class="hn-gt">[${esc(o.gtag)}]</small>` : ''}</b>${o.real ? '<span class="tag">PLAYER</span>' : ''}${!o.real && o.streak >= 3 ? ` ${HN.streakFlame(o.streak)}` : ''}<small>${esc(d.name)} · ${fmt(o.rating)} · ⚡ ${fmt(o.power)}</small><div class="minis">${o.squad.map((e) => mini(e.id)).join('')}</div></div>
           <div class="go"><span class="hn-gain" title="Rating you gain with a win">▲ +${o.gain}</span>${bes(o.payout)}<button type="button" class="hn-btn" data-hn="attack" data-i="${i}" data-kind="${kind}" ${ids.length ? '' : 'disabled'}>Attack</button></div></div>`;
       }).join('')}</div>`}
@@ -6018,7 +6021,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const badges = p.badges.length ? p.badges.map((x) => `<button type="button" class="pf-bdg" data-bdg='${esc(JSON.stringify(x.secret ? { ...x, desc: '' } : x))}'>${still(UI.featBadge(x))}<span>${esc(x.name)}</span></button>`).join('') : '<p class="muted small">No badges yet.</p>';
     const m = openModal(`<div class="pf-card" style="--gc:${g ? g.color : '#5fd8ff'}">
       <button type="button" class="pf-x" data-x="ok" aria-label="Close">✕</button>
-      <div class="pf-top">${avatar(p, 'lg')}<div class="pf-id"><p class="eyebrow">${p.me ? 'Your HoloNet profile' : 'HoloNet profile'}</p><h2>${esc(Net.name(p.uid).replace(' (you)', ''))}</h2>
+      <div class="pf-top${on25() && guildFor(p.uid) ? ' gb-host' : ''}">${gban(guildFor(p.uid), 'hero')}${avatar(p, 'lg')}<div class="pf-id"><p class="eyebrow">${p.me ? 'Your HoloNet profile' : 'HoloNet profile'}</p><h2>${esc(Net.name(p.uid).replace(' (you)', ''))}</h2>
         <p class="muted small">Level ${p.level} · ${esc(FRAMES[p.frame].name)} frame${g ? ` · <b style="color:${g.color}">[${esc(g.tag)}] ${esc(g.name)}</b>` : ''}</p></div>
         <div class="pf-lg">${A.badge(d.league, d.div)}<small>${esc(d.name)}</small></div></div>
       <div class="pf-stats">
@@ -6134,7 +6137,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       return `<div class="pc-stats">${cell('Rating', fmt(p.rating))}${cell('Best rating', fmt(st.best || p.rating))}${cell('League', esc(d.name))}${cell('Arena W–L', `${fmt(st.w || 0)}–${fmt(st.l || 0)} · ${wr}%`)}${cell('Live duels', `${fmt(st.dw || 0)}–${fmt(st.dl || 0)}`)}${cell('Arena win streak', HN.streakFlame(st.ws | 0))}${cell('Duel win streak', HN.streakFlame(st.ds | 0))}${cell('Raid damage', fmt(st.raid || 0))}${cell('Bosses beaten', fmt(st.bosses || 0))}${cell('Cards', `${fmt(owned.length)}`)}${cell('HoloNet cards', `${HN.HN_IDS.filter((id) => col[id]).length} / ${HN.HN_IDS.length}`)}${cell('Seasons played', fmt(st.seasons || 0))}${cell('Favorite card', fav ? `${esc(D.UNIT_MAP[fav].name)} · ${fmt(use[fav].b)}` : '—')}${cell('Battles tracked', fmt(totalB))}${cell('Guild', g ? `[${esc(g.tag)}]` : '—')}${cell('Account level', fmt(p.level))}</div>`;
     };
     const head = () => `<button type="button" class="pf-x" data-x="ok" aria-label="Close">✕</button>
-      <div class="pf-top">${avatar(p, 'lg')}<div class="pf-id"><p class="eyebrow">${p.me ? 'Your HoloNet profile' : 'HoloNet profile'}</p><h2>${esc(Net.name(p.uid).replace(' (you)', ''))}</h2>
+      <div class="pf-top${on25() && guildFor(p.uid) ? ' gb-host' : ''}">${gban(guildFor(p.uid), 'hero')}${avatar(p, 'lg')}<div class="pf-id"><p class="eyebrow">${p.me ? 'Your HoloNet profile' : 'HoloNet profile'}</p><h2>${esc(Net.name(p.uid).replace(' (you)', ''))}</h2>
         <p class="muted small">Level ${p.level} · ${esc(FRAMES[p.frame].name)} frame${g ? ` · <b style="color:${g.color}">[${esc(g.tag)}] ${esc(g.name)}</b>` : ''}</p></div>
         <div class="pf-lg">${A.badge(d.league, d.div)}<small>${esc(d.name)}</small></div></div>`;
     const actions = () => `<div class="modal-actions">${p.me ? '<button type="button" class="btn" data-x="edit">Edit profile</button>' : `${HN.duelChat ? HN.duelChat.friendBtn(p.uid) : ''}${canInvite(p) ? `<button type="button" class="btn" data-x="invite">${((gmap.get(myGuildId()) || {}).ok || []).includes(p.uid) ? 'Invited' : 'Invite to guild'}</button>` : ''}<button type="button" class="btn" data-x="mute">${isMuted(p.uid) ? 'Unmute' : 'Mute in chat'}</button>`}<button type="button" class="btn btn-primary" data-x="ok">Close</button></div>`;
@@ -7671,7 +7674,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   GP.hero = (gid) => {
     const g = guildOf(gid);
     const lv = guildLevel(gid);
-    return `<div class="g-hero" style="--gc:${g.color}">${emblem(g, 64)}<div><h2>${esc(g.name)} <small>[${esc(g.tag)}]</small></h2><p class="muted">${esc(g.motto || 'No motto yet.')}</p>
+    return `<div class="g-hero${on25() ? ' gb-host' : ''}" style="--gc:${g.color}">${gban(g, 'hero')}${emblem(g, 64)}<div><h2>${esc(g.name)} <small>[${esc(g.tag)}]</small></h2><p class="muted">${esc(g.motto || 'No motto yet.')}</p>
         ${G23() ? `<div class="g-lv"><b>Level ${lv.lv}<small> / 10</small></b><div class="hn-hp" style="--rc:${g.color}"><i style="width:${lv.cost ? Math.min(100, (bankOf(gid) / lv.cost) * 100) : 100}%"></i><span>${lv.cost ? `Vault ${fmt(bankOf(gid))} / ${fmt(lv.cost)} Beskar for level ${lv.lv + 1}` : 'Max level'}</span></div></div>` : `<div class="g-lv"><b>Level ${lv.lv}</b><div class="hn-hp" style="--rc:${g.color}"><i style="width:${lv.next ? Math.min(100, (lv.xp / lv.next) * 100) : 100}%"></i><span>${fmt(lv.xp)}${lv.next ? ` / ${fmt(lv.next)}` : ''} guild XP</span></div></div>`}
         <small class="muted">${membersOf(gid).length}/${maxMembers(gid)} members · ${MODES[modeOf(g)]}${g.min ? ` · ${fmt(g.min)}+ rating` : ''}</small></div></div>`;
   };
@@ -7784,7 +7787,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       if (mode === 'request') return `<button type="button" class="hn-btn" data-hn="gjoin" data-id="${esc(g.id)}" ${S().apply ? 'disabled' : ''}>Request to join</button>`;
       return `<button type="button" class="hn-btn" data-hn="gjoin" data-id="${esc(g.id)}">Join</button>`;
     };
-    const row = (g, n) => `<div class="g-row" data-gkey="${esc(`${g.name} ${g.tag}`.toLowerCase())}">${emblem(g, 40)}<span class="nm"><b style="color:${g.color}">[${esc(g.tag)}] ${esc(g.name)}</b><small>${esc(g.motto || '')}</small><small>Level ${guildLevel(g.id).lv} · ${n}/${maxMembers(g.id)} members · ${MODES[modeOf(g)]}${g.min ? ` · ${fmt(g.min)}+ rating` : ''}</small></span>${btn(g, n)}</div>`;
+    const row = (g, n, still) => `<div class="g-row${on25() ? ' gb-host' : ''}" data-gkey="${esc(`${g.name} ${g.tag}`.toLowerCase())}">${gban(g, 'row', still)}${emblem(g, 40)}<span class="nm"><b style="color:${g.color}">[${esc(g.tag)}] ${esc(g.name)}</b><small>${esc(g.motto || '')}</small><small>Level ${guildLevel(g.id).lv} · ${n}/${maxMembers(g.id)} members · ${MODES[modeOf(g)]}${g.min ? ` · ${fmt(g.min)}+ rating` : ''}</small></span>${btn(g, n)}</div>`;
     // Guilds you may like: open to you, not full, then the liveliest first.
     const fits = ({ g, n }) => g.id !== S().apply && !inv.some((x) => x.id === g.id) && n < maxMembers(g.id) && modeOf(g) !== 'invite' && S().rating >= (g.min || 0);
     const liked = list.filter(fits).sort((a, b) => (b.n / maxMembers(b.g.id)) - (a.n / maxMembers(a.g.id)) || b.xp - a.xp).slice(0, 4);
@@ -7794,7 +7797,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       ${inv.length ? `<div class="hn-sec g-inv"><h3>Invites for you</h3><div class="g-list">${inv.map((g) => row(g, sizeOf(g.id))).join('')}</div></div>` : ''}
       ${appG ? `<div class="hn-sec"><h3>Your request</h3><div class="g-list">${row(appG, sizeOf(appG.id))}</div><p class="muted small" style="margin:0">Waiting for its leader. You'll join automatically when they accept, even if you're offline.</p></div>` : ''}
       ${liked.length ? `<div class="hn-sec"><h3>Guilds you may like</h3><div class="g-list">${liked.map(({ g, n }) => row(g, n)).join('')}</div></div>` : ''}
-      ${rest.length ? `<div class="hn-sec"><h3>More guilds</h3><div class="g-list">${rest.map(({ g, n }) => row(g, n)).join('')}</div></div>` : ''}
+      ${rest.length ? `<div class="hn-sec"><h3>More guilds</h3><div class="g-list">${rest.map(({ g, n }, i) => row(g, n, i >= 6)).join('')}</div></div>` : ''}
       <details class="hn-sec g-found"><summary><span><b>Or create your own guild</b><small>Lead it, name it, pick its look</small></span><span class="g-cost">${HN.ui.kyb(FOUND_COST)}${HN.ui.bes(FOUND_BESKAR)}</span></summary>
       <div><p class="muted small" style="margin:0 0 8px">Founding a guild costs ${FOUND_COST} Kyber and ${fmt(FOUND_BESKAR)} Beskar. You have ${fmt(Player.state.crystals)} Kyber and ${fmt(S().beskar)} Beskar.</p>
         <div class="g-form" data-noswipe>
@@ -7979,7 +7982,52 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   HN.Net.on(() => { const c = document.querySelector('.g-chat'); if (c) c.scrollTop = c.scrollHeight; });
 
   // Ranked duels report into guild points and the season.
-  HN.social = { addGP, trackSeasonBest, guildOf, myGuildId, GRAIDS, graidNow, graidTotals, FRAMES, ownedFrames, frameSvg,
+  // ---------- 2.5 animated guild banners ----------
+  // A guild's banner plays softly behind its name wherever the guild shows up.
+  // It always sits under a dark scrim and the text keeps a shadow, so names,
+  // numbers, frames and cards read the same on every style.
+  const BANNERS = {
+    cloth: { name: 'Guild Cloth', how: 'Every guild has it' },
+    holo: { name: 'Holo Projection', how: 'Guild level 2', lv: 2 },
+    stars: { name: 'Star Drift', how: 'Guild level 3', lv: 3 },
+    hyper: { name: 'Hyperspace', how: 'Guild level 4', lv: 4 },
+    forge: { name: 'Beskar Forge', how: 'Guild level 5', lv: 5 },
+    dunes: { name: 'Twin Suns', how: '1,500 Beskar from the Vault', cost: 1500 },
+    sith: { name: 'Sith Lightning', how: '1,500 Beskar from the Vault', cost: 1500 },
+    jedi: { name: 'Jedi Temple', how: '1,500 Beskar from the Vault', cost: 1500 },
+    raid: { name: 'Raid Trophy', how: 'Beat both fronts of a guild raid', raid: true },
+    champ: { name: 'Golden Laurel', how: 'Guild level 8', lv: 8 },
+  };
+  const NPC_BANNER = { npc_rogue: 'hyper', npc_echo: 'holo', npc_mando: 'forge', npc_kessel: 'stars', npc_jedi: 'jedi', npc_sith: 'sith', npc_ewok: 'cloth', npc_hutt: 'dunes' };
+  const bannerOwned = (gid, id) => {
+    const b = BANNERS[id];
+    if (!b) return false;
+    if (isNpcG(gid)) return NPC_BANNER[gid] === id;
+    const g = gmap.get(gid) || guildOf(gid) || {};
+    if ((g.bown || []).includes(id)) return true;
+    if (b.lv) return guildLevel(gid).lv >= b.lv;
+    if (b.raid) return gid === myGuildId() && !!graidTotals(gid).fallen;
+    return !b.cost;
+  };
+  const bannerOf = (g) => {
+    if (!g) return '';
+    if (isNpcG(g.id)) return NPC_BANNER[g.id] || 'cloth';
+    return BANNERS[g.banner] ? g.banner : 'cloth';
+  };
+  // where: row | hero | tile | step | opp | card. still: no motion (long lists).
+  const gban = (g, where = 'row', still = false) => {
+    if (!on25() || !g) return '';
+    const id = bannerOf(g);
+    return `<span class="gb gb-${id} gb-${where}${still ? ' still' : ''}" style="--gc:${esc(g.color || '#5fd8ff')}" aria-hidden="true"><i class="a"></i><i class="b"></i><i class="c"></i></span>`;
+  };
+  const guildFor = (uid) => {
+    const p = uid ? prof(uid) : null;
+    const id = p && p.guild;
+    return id ? gmap.get(id) || guildOf(id) || NPC_GUILDS.find((x) => x.id === id) || null : null;
+  };
+  const guildByTag = (tag) => (tag ? NPC_GUILDS.find((g) => g.tag === tag) || null : null);
+  HN.gban = gban;
+  HN.social = { BANNERS, bannerOwned, bannerOf, gban, guildFor, guildByTag, on25, addGP, trackSeasonBest, guildOf, myGuildId, GRAIDS, graidNow, graidTotals, FRAMES, ownedFrames, frameSvg,
     canTools, vote, prof, avatar, chip, nameKey, emblem, GUILD_PICS, PICS, pickerHtml, setPickCat, canAnnounce, announcements, sayLine, ago, roleOf, ROLE_NAME, canManage, MAX_ELDERS, PERK_NEEDS, GLVL, cleanText, PERKS, PERK_COST, PIC_COST, G23, react, GLVL_COST, RANK_SYMBOLS, RANK_COLORS, RANK_DEF, rankOf, perkLevel, maxMembers, donors, bankOf, pushGuildStats, membersOf, guildLevel, guildWeekPoints, loadGuilds, G, gmap, setGuilds, rerender, SAFE, isMuted, editProfile, P2, seasonNo, seasonEnds, SEASON_REWARD, weekPoints, MAX_MEMBERS, COLORS, EMBLEMS, createGuild, joinGuild, watchMyGuild, GP, MODES, modeOf, approved, canReview, leaderOf, writeGuild, watchMembers, loadInvites, inviteTo, answerApp, applyGuild, cancelApply, unread, marks, markSeen, MKS, MEGA, setGtab: (t) => { gtab = t; }, gtabNow, sizeOf, chatLines, offlineGuild };
 
   // ---------- tester hooks ----------
@@ -8754,7 +8802,7 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
       <h3 class="hv-h">Together</h3>
       <div class="hn-tiles">
         <button type="button" class="hn-tile" data-hn="raid" style="border-color:${r.color}"><div class="bg">${art(r.id)}</div><em>Community raid · ${t.fallen ? 'DEFEATED' : `${Math.round((t.left / t.pool) * 100)}% health left`}</em><b>${esc(r.name)}</b><span>Everyone in the HoloNet chips away at this week's boss.</span></button>
-        <button type="button" class="hn-tile hv-guild ${g && gt.fallen && !SO.P2().soc.gr.claimed ? 'dot' : ''}" data-hn="guild" style="--gc:${g ? g.color : '#5fd8ff'}"><div class="bg">${g ? `<div class="hv-gemb">${SO.emblem(g, 120)}</div>` : art('bo_katan')}</div><em>${g ? `Guild · level ${SO.guildLevel(gid).lv} · ${SO.membersOf(gid).length} members` : 'Guilds'}</em><b>${g ? esc(g.name) : 'Join a Guild'}</b><span>${g ? (gt.fallen ? 'Guild raid beaten!' : `Guild raid: ${esc(SO.graidNow().name)}`) : 'Guild chat, guild raids and weekly rewards.'}</span></button>
+        <button type="button" class="hn-tile hv-guild ${g && gt.fallen && !SO.P2().soc.gr.claimed ? 'dot' : ''}" data-hn="guild" style="--gc:${g ? g.color : '#5fd8ff'}"><div class="bg${g && SO.gban(g) ? ' gb-host' : ''}">${g ? `${SO.gban(g, 'tile')}<div class="hv-gemb">${SO.emblem(g, 120)}</div>` : art('bo_katan')}</div><em>${g ? `Guild · level ${SO.guildLevel(gid).lv} · ${SO.membersOf(gid).length} members` : 'Guilds'}</em><b>${g ? esc(g.name) : 'Join a Guild'}</b><span>${g ? (gt.fallen ? 'Guild raid beaten!' : `Guild raid: ${esc(SO.graidNow().name)}`) : 'Guild chat, guild raids and weekly rewards.'}</span></button>
       </div>
       <h3 class="hv-h">More</h3>
       <div class="hn-mini-tiles">
@@ -8794,21 +8842,25 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
     return HN.streakFlame && ws >= 3 ? HN.streakFlame(ws) : '';
   };
   // Rank, name, value, then an open lane for banners.
+  // 2.5: the guild behind a row (the guild itself, or the pilot's guild).
+  const gOfRow = (x) => { if (!SO.gban) return null; if (x.guild) { const raw = SO.gmap.get(x.guild.id); return raw ? { ...x.guild, ...raw } : x.guild; } return SO.guildFor(x.bot ? HN.botUid(x) : isMe(x) ? 'me' : x.uid); };
   const rowOf = (x, i, right, tr = '') => {
     const me = x.guild ? x.guild.id === SO.myGuildId() : isMe(x);
-    return `<div class="g-row lb-row ${me ? 'me' : ''} ${i < 3 ? `t${i + 1}` : ''}" ${x.guild ? `data-hn="gpeek" data-id="${esc(x.guild.id)}" role="button" tabindex="0"` : ''}><span class="rk"><b>${i + 1}</b>${tr}</span><span class="lb-who">${whoOf(x, flameOf(x))}</span><span class="r">${right}</span><span class="lb-banner" aria-hidden="true"></span></div>`;
+    const bn = SO.gban ? SO.gban(gOfRow(x), 'row', i >= 10 && !me) : '';
+    return `<div class="g-row lb-row ${me ? 'me' : ''} ${i < 3 ? `t${i + 1}` : ''}${bn ? ' gb-host' : ''}" ${x.guild ? `data-hn="gpeek" data-id="${esc(x.guild.id)}" role="button" tabindex="0"` : ''}>${bn}<span class="rk"><b>${i + 1}</b>${tr}</span><span class="lb-who">${whoOf(x, flameOf(x))}</span><span class="r">${right}</span><span class="lb-banner" aria-hidden="true"></span></div>`;
   };
   const podPic = (x) => (x.guild ? SO.emblem(x.guild, 64) : x.bot ? SO.avatar({ av: x.av, frame: x.frame }, 'md') : SO.avatar(SO.prof(isMe(x) ? 'me' : x.uid), 'md'));
   const podName = (x) => (x.guild ? `[${x.guild.tag}] ${x.guild.name}` : x.bot ? x.name : isMe(x) ? myName() : Net.name(x.uid));
+  const podStep = (x) => { const bn = SO.gban ? SO.gban(gOfRow(x), 'step') : ''; return `<span class="step${bn ? ' gb-host' : ''}">${bn}</span>`; };
   function podium(rows, valOf) {
     if (rows.length < 3) return '';
     const spot = (x, i) => {
       const tag = 'button type="button"';
       const end = 'button';
       const link = x.guild ? ` data-hn="gpeek" data-id="${esc(x.guild.id)}"` : ` data-hn="prof" data-uid="${esc(x.bot ? HN.botUid(x) : isMe(x) ? 'me' : x.uid)}"`;
-      return `<${tag} class="lb-pod p${i + 1} ${(x.guild ? x.guild.id === SO.myGuildId() : isMe(x)) ? 'me' : ''}"${link}><span class="medal">${['1ST', '2ND', '3RD'][i]}</span><span class="pic">${podPic(x)}</span><b>${esc(podName(x))}</b>${valOf(x)}<span class="step"></span></${end}>`;
+      return `<${tag} class="lb-pod p${i + 1} ${(x.guild ? x.guild.id === SO.myGuildId() : isMe(x)) ? 'me' : ''}"${link}><span class="medal">${['1ST', '2ND', '3RD'][i]}</span><span class="pic">${podPic(x)}</span><b>${esc(podName(x))}</b>${valOf(x)}${podStep(x)}</${end}>`;
     };
-    return `<div class="lb-podium">${spot(rows[1], 1)}${spot(rows[0], 0)}${spot(rows[2], 2)}</div>`;
+    return `<div class="lb-podium${SO.on25 && SO.on25() ? ' v25' : ''}">${spot(rows[1], 1)}${spot(rows[0], 0)}${spot(rows[2], 2)}</div>`;
   }
   // Where you stand and who's next.
   function youCard(rows, num, unit) {
@@ -8869,7 +8921,7 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
     const mode = SO.MODES[SO.modeOf ? SO.modeOf(g) : 'open'] || '';
     const m = openModal(`<div class="lb-gpeek" style="--gc:${g.color}">
       <button type="button" class="pf-x" data-x aria-label="Close">✕</button>
-      <div class="top">${SO.emblem(g, 72)}<div><p class="eyebrow">Guild</p><h2 style="color:${g.color}">[${esc(g.tag)}] ${esc(g.name)}</h2><p class="muted small">${esc(g.motto || '')}</p></div></div>
+      <div class="top${SO.gban && SO.gban(g) ? ' gb-host' : ''}">${SO.gban ? SO.gban(g, 'card') : ''}${SO.emblem(g, 72)}<div><p class="eyebrow">Guild</p><h2 style="color:${g.color}">[${esc(g.tag)}] ${esc(g.name)}</h2><p class="muted small">${esc(g.motto || '')}</p></div></div>
       <div class="pf-stats"><div><b>${lv}</b><span>Level</span></div><div><b>${fmt(g.xp || 0)}</b><span>Guild XP</span></div><div><b>${mem.length || g.n || 1}</b><span>Members</span></div><div><b>${esc(mode)}</b><span>Joining</span></div></div>
       <h3 class="pf-h">Members</h3>
       <div class="g-list">${mem.slice(0, 30).map(({ u, p }) => { const d = HN.divOf(p.rating); return `<div class="g-row lb-row">${SO.chip(u)}<span class="r">${A.badge(d.league, d.div)}<span class="v"><b>${fmt(p.rating)}</b><small>${esc(d.name)}</small></span></span><span class="lb-banner"></span></div>`; }).join('') || '<p class="muted small">No members to show right now.</p>'}</div>
@@ -8968,6 +9020,7 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
     if (!ok) toast('Could not save. Try again.');
     return ok;
   }
+  SO.spendVault = spend;
   CL.annperm = async (b, render) => {
     const gid = SO.myGuildId();
     if (!gid || !SO.canManage(gid)) return;
@@ -9230,6 +9283,118 @@ button.lb-pod { cursor: pointer; }
 .lb-pod.me { outline: 2px solid #5fd8ff; outline-offset: -2px; }
 .hv-bot .nm b { font-size: 13px; }
 .hv-botpic { display: grid; place-items: center; width: 100%; height: 100%; font: 700 14px var(--font-display); color: #8fe8ff; background: #0c2030; border-radius: 50%; }
+/* ---------- 2.5 animated guild banners ---------- */
+.gb-host { position: relative; isolation: isolate; text-shadow: 0 1px 2px rgba(0, 0, 0, .95), 0 0 8px rgba(0, 0, 0, .7); }
+.gb { position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; border-radius: inherit; background: #06101a; --s1: .8; --s2: .6; --s3: .26; }
+.gb > i { position: absolute; inset: 0; display: block; }
+.gb::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(3, 7, 14, var(--s1)) 0%, rgba(3, 7, 14, var(--s2)) 48%, rgba(3, 7, 14, var(--s3)) 100%); }
+.gb-hero, .gb-card { --s1: .82; --s2: .66; --s3: .3; }
+.gb-opp { --s1: .82; --s2: .7; --s3: .5; }
+@media (max-width: 560px) { .gb-row, .gb-card, .gb-hero { --s2: .66; --s3: .48; } .gb-opp { --s3: .6; } }
+.gb-tile { --s1: .2; --s2: .1; --s3: .2; }
+.gb-tile::after { background: radial-gradient(circle at 50% 50%, rgba(3, 7, 14, .55), rgba(3, 7, 14, .1) 60%); }
+.gb-step { --s1: 0; --s2: 0; --s3: 0; }
+.gb-step::after { background: linear-gradient(180deg, rgba(3, 7, 14, .35), transparent 40%); }
+.gb.still.gb-sith .b, .gb.still.gb-sith .c, body.perf-on .gb-sith .b, body.perf-on .gb-sith .c { opacity: .35; }
+.pf-top > .gb { --s1: .66; --s2: .74; --s3: .5; }
+.g-row.gb-host .hn-btn:disabled { background: #0c1824; color: #c8d8e4; opacity: 1; }
+.lb-podium.v25 .lb-pod .step:not(.gb-host) { position: relative; overflow: hidden; }
+.lb-podium.v25 .lb-pod .step:not(.gb-host)::after { content: ''; position: absolute; inset: 0; background: linear-gradient(110deg, transparent 35%, rgba(255, 255, 255, .35) 50%, transparent 65%); animation: gbShine 4s ease-in-out infinite; }
+.lb-podium.v25 .lb-pod.p1 .step:not(.gb-host) { height: 44px; background: linear-gradient(180deg, #ffd23f, #8a5a08); } .lb-podium.v25 .lb-pod.p2 .step:not(.gb-host) { height: 32px; background: linear-gradient(180deg, #e6eef6, #6a7a8a); } .lb-podium.v25 .lb-pod.p3 .step:not(.gb-host) { height: 24px; background: linear-gradient(180deg, #f0a868, #7a3a12); }
+@media (prefers-reduced-motion: reduce) { .lb-podium.v25 .step::after { animation: none !important; } }
+.gb.still *, body.perf-on .gb *, .gb.still::before, body.perf-on .gb::before { animation: none !important; }
+@media (prefers-reduced-motion: reduce) { .gb * { animation: none !important; } }
+@keyframes gbWave { from { transform: translateX(-40px) skewX(-7deg); } to { transform: translateX(0) skewX(7deg); } }
+@keyframes gbSweep { from { transform: translateX(-120%); } to { transform: translateX(420%); } }
+@keyframes gbScan { to { transform: translateY(3px); } }
+@keyframes gbFlick { 0%, 100% { opacity: .55; } 46% { opacity: .55; } 48% { opacity: .2; } 50% { opacity: .7; } 70% { opacity: .45; } }
+@keyframes gbDriftA { to { transform: translateX(-140px); } }
+@keyframes gbDriftB { to { transform: translateX(-230px); } }
+@keyframes gbPulse { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
+@keyframes gbWarp { 0% { opacity: 0; transform: scale(.55); } 35% { opacity: 1; } 100% { opacity: 0; transform: scale(1.5); } }
+@keyframes gbRise { to { transform: translateY(-80px); } }
+@keyframes gbShine { 0%, 30% { transform: translateX(-110%); } 70%, 100% { transform: translateX(110%); } }
+@keyframes gbSink { to { transform: translateY(7%); } }
+@keyframes gbHaze { to { transform: translateX(-60px); } }
+@keyframes gbBolt { 0%, 50%, 100% { opacity: 0; } 51% { opacity: 1; } 53% { opacity: .15; } 55% { opacity: .95; } 60% { opacity: 0; } }
+@keyframes gbSway { from { transform: rotate(-4deg); } to { transform: rotate(4deg); } }
+@keyframes gbSpin { to { transform: rotate(360deg); } }
+@keyframes gbTwinkle { 0%, 100% { opacity: .15; } 50% { opacity: 1; } }
+/* 1. Guild Cloth: the guild's colours on a slow, waving flag */
+.gb-cloth { background: linear-gradient(135deg, color-mix(in srgb, var(--gc) 62%, #0a1420), color-mix(in srgb, var(--gc) 26%, #050a12)); }
+.gb-cloth .a { background: repeating-linear-gradient(115deg, transparent 0 26px, color-mix(in srgb, var(--gc) 45%, #fff 10%) 26px 31px, transparent 31px 40px, rgba(0, 0, 0, .25) 40px 44px); opacity: .5; }
+.gb-cloth .b { inset: -20% -60px; background: repeating-linear-gradient(90deg, rgba(255, 255, 255, .16) 0, rgba(0, 0, 0, .32) 40px, rgba(255, 255, 255, .16) 80px); animation: gbWave 5s ease-in-out infinite alternate; }
+.gb-cloth .c { background: linear-gradient(180deg, rgba(255, 255, 255, .14), transparent 30%, transparent 70%, rgba(0, 0, 0, .35)); }
+/* 2. Holo Projection: blue hologram, scan lines and a sweeping beam */
+.gb-holo { background: radial-gradient(ellipse at 72% 50%, color-mix(in srgb, var(--gc) 40%, #2ae0ff) 0%, #06364a 38%, #02121c 75%); }
+.gb-holo .a { inset: -4px 0 0; background: repeating-linear-gradient(0deg, rgba(150, 245, 255, .16) 0 1px, transparent 1px 3px); animation: gbScan .5s linear infinite; }
+.gb-holo .b { right: auto; width: 26%; background: linear-gradient(90deg, transparent, rgba(160, 250, 255, .38), transparent); animation: gbSweep 4.5s linear infinite; }
+.gb-holo .c { background: radial-gradient(circle, rgba(150, 245, 255, .3) 1px, transparent 1.6px) 0 0 / 12px 12px; animation: gbFlick 3.2s steps(1) infinite; }
+/* 3. Star Drift: deep space, stars sliding past */
+.gb-stars { background: radial-gradient(ellipse at 75% 40%, color-mix(in srgb, var(--gc) 34%, #0c1238) 0%, #050820 45%, #010208 80%); }
+.gb-stars .a { right: -140px; background-image: radial-gradient(1px 1px at 20px 14px, #fff, transparent), radial-gradient(1px 1px at 70px 40px, #cfe8ff, transparent), radial-gradient(1.2px 1.2px at 110px 22px, #fff, transparent), radial-gradient(1px 1px at 46px 60px, #ffe9c0, transparent); background-size: 140px 70px; animation: gbDriftA 28s linear infinite; }
+.gb-stars .b { right: -230px; background-image: radial-gradient(2px 2px at 60px 30px, #fff, transparent), radial-gradient(1.6px 1.6px at 180px 80px, #bfe0ff, transparent); background-size: 230px 110px; animation: gbDriftB 22s linear infinite; }
+.gb-stars .c { background: radial-gradient(ellipse 30% 70% at 82% 40%, color-mix(in srgb, var(--gc) 45%, transparent), transparent 70%), radial-gradient(ellipse 22% 50% at 60% 80%, rgba(180, 120, 255, .25), transparent 70%); animation: gbPulse 7s ease-in-out infinite; }
+/* 4. Hyperspace: streaks pouring out of a bright core */
+.gb-hyper { background: radial-gradient(circle at 74% 50%, #e6f4ff 0, #6aa8ff 5%, #12306e 24%, #040a20 60%, #01030a); }
+.gb-hyper .a, .gb-hyper .b { inset: -50%; transform-origin: 62% 50%; background: repeating-conic-gradient(from 0deg at 62% 50%, rgba(210, 235, 255, .6) 0 .5deg, transparent .5deg 6deg); animation: gbWarp 1.4s linear infinite; }
+.gb-hyper .b { background: repeating-conic-gradient(from 3deg at 62% 50%, color-mix(in srgb, var(--gc) 60%, #9fd0ff) 0 .35deg, transparent .35deg 7deg); animation-delay: -.7s; }
+.gb-hyper .c { background: radial-gradient(circle at 74% 50%, rgba(255, 255, 255, .55), transparent 14%); animation: gbPulse 1.4s ease-in-out infinite; }
+/* 5. Beskar Forge: dark steel, molten glow, sparks rising */
+.gb-forge { background: linear-gradient(180deg, #23272e, #101216 55%, #3c1606); }
+.gb-forge .a { background: radial-gradient(ellipse 60% 90% at 72% 125%, #ff8a2a 0, #d14400 30%, transparent 70%), repeating-linear-gradient(90deg, rgba(210, 220, 230, .09) 0 1px, transparent 1px 56px); animation: gbPulse 2.6s ease-in-out infinite; }
+.gb-forge .b { bottom: -80px; background-image: radial-gradient(2.4px 2.4px at 20px 70px, #ffd36a, transparent), radial-gradient(2px 2px at 64px 30px, #ff9a3a, transparent), radial-gradient(2.2px 2.2px at 44px 52px, #fff0b0, transparent), radial-gradient(1.8px 1.8px at 80px 10px, #ffb050, transparent); background-size: 90px 80px; -webkit-mask-image: linear-gradient(to top, #000 30%, transparent); mask-image: linear-gradient(to top, #000 30%, transparent); animation: gbRise 2.4s linear infinite; }
+.gb-forge .c { background: linear-gradient(110deg, transparent 38%, rgba(230, 240, 255, .2) 50%, transparent 62%); animation: gbShine 6s ease-in-out infinite; }
+/* 6. Twin Suns: desert dusk, two suns setting over the dunes */
+.gb-dunes { background: linear-gradient(180deg, #ffb25a 0%, #e8743a 46%, #8a321c 100%); }
+.gb-dunes .a { background: radial-gradient(circle closest-side at 78% 38%, #fff7d6 0 20%, rgba(255, 232, 160, .5) 26%, transparent 46%), radial-gradient(circle closest-side at 90% 52%, #ffe2a6 0 13%, rgba(255, 205, 130, .45) 18%, transparent 32%); animation: gbSink 9s ease-in-out infinite alternate; }
+.gb-dunes .b { background: radial-gradient(ellipse 55% 42% at 26% 112%, #7a2c16 97%, transparent 100%), radial-gradient(ellipse 50% 36% at 76% 118%, #5e2010 97%, transparent 100%), radial-gradient(ellipse 40% 30% at 100% 104%, #8c3a1c 97%, transparent 100%); }
+.gb-dunes .c { right: -60px; background: repeating-linear-gradient(90deg, rgba(255, 240, 200, .1) 0 2px, transparent 2px 30px); -webkit-mask-image: linear-gradient(to top, transparent, #000 40%, transparent 80%); mask-image: linear-gradient(to top, transparent, #000 40%, transparent 80%); animation: gbHaze 6s linear infinite; }
+/* 7. Sith Lightning: red dark, lightning crackling now and then */
+.gb-sith { background: radial-gradient(ellipse at 76% 50%, #6a0014 0%, #1a0008 55%, #050003); }
+.gb-sith .a { background: radial-gradient(ellipse 40% 80% at 78% 50%, rgba(255, 40, 70, .45), transparent 70%); animation: gbPulse 3s ease-in-out infinite; }
+.gb-sith .b, .gb-sith .c { left: 34%; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 60' preserveAspectRatio='none'%3E%3Cpolyline points='0,30 26,20 40,34 66,12 88,30 114,10 134,28 162,14 200,26' fill='none' stroke='%23d070ff' stroke-opacity='.5' stroke-width='5'/%3E%3Cpolyline points='0,30 26,20 40,34 66,12 88,30 114,10 134,28 162,14 200,26' fill='none' stroke='%23fff' stroke-width='1.4'/%3E%3Cpolyline points='88,30 98,44 92,58' fill='none' stroke='%23f0c0ff' stroke-width='1'/%3E%3C/svg%3E") center / 100% 70% no-repeat; animation: gbBolt 2.8s linear infinite; }
+.gb-sith .c { left: 50%; transform: scaleY(-1); background-size: 100% 50%; animation-duration: 3.7s; animation-delay: -1.2s; }
+/* 8. Jedi Temple: golden light over the temple spires */
+.gb-jedi { background: linear-gradient(180deg, #23365c 0%, #7c6040 62%, #3a2a16 100%); }
+.gb-jedi .a { inset: -60% -20% -20% 30%; transform-origin: 70% 0; background: repeating-conic-gradient(from 150deg at 70% 0, rgba(255, 232, 160, .2) 0 3deg, transparent 3deg 10deg); animation: gbSway 8s ease-in-out infinite alternate; }
+.gb-jedi .b { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 60'%3E%3Cpath d='M0 60 L0 44 L30 40 L34 28 L38 40 L58 36 L62 14 L66 4 L70 14 L74 36 L92 38 L96 24 L100 38 L120 42 L124 30 L128 42 L160 46 L160 60Z' fill='%23140c06' fill-opacity='.85'/%3E%3Ccircle cx='66' cy='4' r='2' fill='%23ffe9a6'/%3E%3C/svg%3E") right 6% bottom / auto 92% no-repeat; }
+.gb-jedi .c { background: radial-gradient(ellipse 35% 60% at 78% 30%, rgba(255, 220, 140, .35), transparent 70%); animation: gbPulse 5s ease-in-out infinite; }
+/* 9. Raid Trophy: purple rays behind a boss trophy */
+.gb-raid { background: radial-gradient(ellipse at 78% 50%, #4c1264 0%, #16041f 58%, #060208); }
+.gb-raid .a { inset: -100%; transform-origin: 59% 50%; background: repeating-conic-gradient(from 0deg at 59% 50%, rgba(210, 130, 255, .2) 0 8deg, transparent 8deg 20deg); animation: gbSpin 30s linear infinite; }
+.gb-raid .b { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-30 -30 60 60'%3E%3Cpath d='M-14 -20 L14 -20 L12 -4 C10 6 4 10 0 10 C-4 10 -10 6 -12 -4Z' fill='%23ffd23f' stroke='%23fff3b0' stroke-width='1'/%3E%3Cpath d='M-14 -16 C-24 -16 -24 -4 -12 -2 M14 -16 C24 -16 24 -4 12 -2' fill='none' stroke='%23ffd23f' stroke-width='2.4'/%3E%3Crect x='-3' y='10' width='6' height='8' fill='%23d9a520'/%3E%3Crect x='-10' y='18' width='20' height='5' rx='1.5' fill='%23ffd23f'/%3E%3Ccircle cx='-4' cy='-10' r='2.2' fill='%233a0a4a'/%3E%3Ccircle cx='4' cy='-10' r='2.2' fill='%233a0a4a'/%3E%3C/svg%3E") 78% 50% / auto 78% no-repeat; opacity: .8; }
+.gb-raid .c { bottom: -80px; background-image: radial-gradient(1.6px 1.6px at 30px 60px, #e0a0ff, transparent), radial-gradient(1.2px 1.2px at 70px 20px, #ffd23f, transparent); background-size: 100px 80px; animation: gbRise 3.2s linear infinite; }
+/* 10. Golden Laurel: gold rays, a laurel and twinkling glitter */
+.gb-champ { background: linear-gradient(135deg, #4a3000, #1a1000 60%, #0a0600); }
+.gb-champ .a { inset: -100%; transform-origin: 59% 50%; background: repeating-conic-gradient(from 0deg at 59% 50%, rgba(255, 214, 90, .22) 0 6deg, transparent 6deg 16deg); animation: gbSpin 40s linear infinite reverse; }
+.gb-champ .b { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-30 -30 60 60'%3E%3Cg fill='%23ffd23f'%3E%3Cellipse cx='-17' cy='6' rx='3' ry='6' transform='rotate(-30 -17 6)'/%3E%3Cellipse cx='-20' cy='-4' rx='3' ry='6' transform='rotate(-10 -20 -4)'/%3E%3Cellipse cx='-18' cy='-14' rx='3' ry='6' transform='rotate(15 -18 -14)'/%3E%3Cellipse cx='17' cy='6' rx='3' ry='6' transform='rotate(30 17 6)'/%3E%3Cellipse cx='20' cy='-4' rx='3' ry='6' transform='rotate(10 20 -4)'/%3E%3Cellipse cx='18' cy='-14' rx='3' ry='6' transform='rotate(-15 18 -14)'/%3E%3Cpolygon points='0,-12 3.5,-3 13,-3 5,3 8,12 0,6 -8,12 -5,3 -13,-3 -3.5,-3' fill='%23fff3b0'/%3E%3C/g%3E%3C/svg%3E") 78% 50% / auto 82% no-repeat; }
+.gb-champ .c { background-image: radial-gradient(1.4px 1.4px at 14px 10px, #fff6c0, transparent), radial-gradient(1px 1px at 50px 34px, #ffd23f, transparent), radial-gradient(1.2px 1.2px at 34px 44px, #fff, transparent); background-size: 64px 52px; animation: gbTwinkle 2.2s ease-in-out infinite; }
+/* banner picker in guild settings */
+.gb-pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.gb-opt { position: relative; isolation: isolate; display: grid; gap: 2px; min-height: 58px; padding: 8px 10px; border-radius: 10px; border: 1px solid rgba(143, 232, 255, .25); background: #0b1a28; color: #f2fbff; font: inherit; text-align: left; cursor: pointer; text-shadow: 0 1px 2px #000, 0 0 6px rgba(0, 0, 0, .8); }
+.gb-opt b { font: 700 12px var(--font-display); letter-spacing: .05em; } .gb-opt small { font-size: 10px; color: #d8ecf6; }
+.gb-opt.on { border-color: #ffd23f; box-shadow: 0 0 0 1px #ffd23f inset; }
+.gb-opt.locked b, .gb-opt.locked small { opacity: .9; } .gb-opt.locked::before { content: '🔒'; position: absolute; top: 6px; right: 8px; font-size: 11px; }
+.gb-opt:disabled { cursor: default; }
+/* placements */
+.hv-guild .bg.gb-host { background: none; }
+.lb-wrap .g-row.lb-row.gb-host, .lb-gpeek .g-row.lb-row.gb-host { background: #0a1622; }
+.lb-row.gb-host .rk b { color: #ffffff; }
+.lb-row.gb-host .nm small, .lb-row.gb-host .r .v small, .g-row.gb-host .nm small, .gb-host .muted { color: #e2f2fb !important; }
+.g-hero.gb-host .muted, .pf-top.gb-host .muted, .pf-top.gb-host .eyebrow, .lb-gpeek .top.gb-host .muted, .lb-gpeek .top.gb-host .eyebrow { color: #e8f6ff !important; }
+.lb-gpeek .top.gb-host { padding: 12px; border-radius: 14px; border: 1px solid var(--gc); }
+.hn-opp.gb-host .who small { color: #e2f2fb; }
+.hn-opp.gb-host .hn-gt { color: #fff; }
+.g-row.gb-host .hn-btn { text-shadow: none; }
+.lb-pod .step.gb-host { overflow: hidden; border-radius: 0 0 5px 5px; }
+.lb-pod.p1 .step.gb-host { height: 44px; } .lb-pod.p2 .step.gb-host { height: 32px; } .lb-pod.p3 .step.gb-host { height: 24px; }
+.lb-podium.v25 .lb-pod.p1 { background: linear-gradient(180deg, #5a4108 0%, #241800 70%); border-color: #ffd23f; box-shadow: 0 0 24px rgba(255, 210, 63, .3); }
+.lb-podium.v25 .lb-pod.p2 { background: linear-gradient(180deg, #3e4c5c 0%, #141c26 70%); border-color: #dfe8f0; }
+.lb-podium.v25 .lb-pod.p3 { background: linear-gradient(180deg, #5a3218 0%, #221006 70%); border-color: #e8a060; }
+.lb-podium.v25 .lb-pod > b { color: #fff; font-size: 13px; text-shadow: 0 1px 2px #000; }
+.lb-podium.v25 .lb-pod .pv { color: #fff3c8; font-weight: 700; }
+.lb-podium.v25 .lb-pod.p2 .pv { color: #eef4fa; } .lb-podium.v25 .lb-pod.p3 .pv { color: #ffe0c4; }
 `;
   const st = document.createElement('style');
   st.textContent = css;
@@ -9258,7 +9423,7 @@ button.lb-pod { cursor: pointer; }
   const strip = (gid) => {
     const g = SO.guildOf(gid);
     const lv = SO.guildLevel(gid);
-    return `<div class="g-strip" style="--gc:${g.color}">${SO.emblem(g, 34)}<b>${esc(g.name)} <small>[${esc(g.tag)}]</small></b><span>Level ${lv.lv} · ${SO.membersOf(gid).length}/${SO.maxMembers(gid)}</span></div>`;
+    return `<div class="g-strip${SO.gban(g) ? ' gb-host' : ''}" style="--gc:${g.color}">${SO.gban(g, 'hero')}${SO.emblem(g, 34)}<b>${esc(g.name)} <small>[${esc(g.tag)}]</small></b><span>Level ${lv.lv} · ${SO.membersOf(gid).length}/${SO.maxMembers(gid)}</span></div>`;
   };
   const raidLine = (gid) => {
     const t = SO.graidTotals(gid);
@@ -9274,6 +9439,32 @@ button.lb-pod { cursor: pointer; }
     const days = Math.floor((Date.now() - seen) / 86400000);
     const note = role === 'co' ? ' If the leader is away for 7 days, you take over automatically.' : role === 'leader' ? ' If you\'re away for 7 days, your co-leader takes over (no co-leader: your senior elder after 14 days).' : '';
     return `<p class="muted small" style="margin:0">Leader: <b>${esc(Net.name(lead))}</b>${lead === Net.me ? '' : ` · last active ${days < 1 ? 'today' : `${days} day${days === 1 ? '' : 's'} ago`}`}.${note}</p>`;
+  };
+  // 2.5: pick the guild's animated banner.
+  const bannerRow = (gid, g) => {
+    const cur = SO.bannerOf({ ...g, id: gid });
+    return `<div class="g-setrow"><span class="lb">Banner</span><div class="gb-pick">${Object.entries(SO.BANNERS).map(([k, b]) => {
+      const own = SO.bannerOwned(gid, k);
+      const on = cur === k;
+      return `<button type="button" class="gb-opt ${on ? 'on' : ''} ${own ? '' : 'locked'}" data-hn="gbanner" data-k="${k}" ${!own && !b.cost ? 'aria-disabled="true"' : ''}>${SO.gban({ ...g, id: gid, banner: k }, 'row')}<b>${esc(b.name)}</b><small>${on ? 'Showing now' : own ? 'Tap to use' : b.cost ? `${fmt(b.cost)} Beskar · Vault` : esc(b.how)}</small></button>`;
+    }).join('')}</div></div>`;
+  };
+  CL.gbanner = async (b, render) => {
+    const gid = SO.myGuildId();
+    if (!gid || !SO.canManage(gid)) return toast('Only the leader and co-leader can change the banner.');
+    const k = b.dataset.k;
+    const B = SO.BANNERS[k];
+    const raw = SO.gmap.get(gid) || {};
+    if (!B || SO.bannerOf({ ...raw, id: gid }) === k) return;
+    const own = raw.bown || [];
+    if (!SO.bannerOwned(gid, k)) {
+      if (!B.cost) return toast(`${B.name}: ${B.how}.`);
+      if (await SO.spendVault(gid, B.cost, { bown: [...own, k], banner: k }, `The ${B.name} banner`)) { if (root.Sound) root.Sound.play('coins'); toast(`${B.name} is your guild's banner now.`); render(); }
+      return;
+    }
+    const change = { banner: k };
+    if (B.raid && !own.includes(k)) change.bown = [...own, k];
+    if (await SO.writeGuild(gid, change)) { toast(`${B.name} is your guild's banner now.`); render(); } else toast('Could not save. Try again.');
   };
   // Leader and co-leader settings: who can join, who reviews requests, who can announce.
   const settings = (gid) => {
@@ -9291,6 +9482,7 @@ button.lb-pod { cursor: pointer; }
       <div class="g-setrow"><span class="lb">Requests &amp; invites</span><div class="g-sws"><span class="g-fix">Leader · Co-leader</span>${sw(app.elder, 'data-hn="gappperm"', 'Elders')}</div></div>
       <div class="g-setrow"><span class="lb">Announcements</span><div class="g-sws"><span class="g-fix">Leader</span>${sw(ann.co !== false, 'data-hn="annperm" data-k="co"', 'Co-leader')}${sw(ann.elder === true, 'data-hn="annperm" data-k="elder"', 'Elders')}</div></div>
       <div class="g-setrow"><span class="lb">Polls &amp; blacklist</span><div class="g-sws"><span class="g-fix">Leader</span>${sw(tp.co !== false, 'data-hn="toolperm" data-k="co"', 'Co-leader', !lead)}${sw(tp.elder === true, 'data-hn="toolperm" data-k="elder"', 'Elders', !lead)}</div></div>
+      ${SO.on25() ? bannerRow(gid, g) : ''}
       ${(g.bl || []).length ? `<div class="g-setrow g-bl"><span class="lb">Blacklist (${g.bl.length})</span><div class="g-sws">${g.bl.map((u) => `<span class="hn-chip">${esc(Net.name(u))}${SO.canTools(Net.me, gid) ? `<button type="button" class="g-unbl" data-hn="gunbl" data-uid="${esc(u)}" aria-label="Unblock ${esc(Net.name(u))}">✕</button>` : ''}</span>`).join('')}</div></div>` : ''}</div>`;
   };
   CL.toolperm = async (b, render) => {
