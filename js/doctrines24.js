@@ -72,6 +72,8 @@
     ig88: ['Assassin Protocol', 'A', 'Allies deal +22% damage to enemies below 35% health.', { x: 'assassin' }],
     ig11: ['Nurse Mode', 'D', 'Once per battle, when an ally drops below 50% health, the weakest ally heals 20%.', { x: 'nurse' }],
     barriss: ['Jedi Healer', 'D', 'Healing on allies +22%.', { x: 'heal22' }],
+    // 2.5 (only shows up once Marrok is in the game).
+    marrok: ['Pack Hunter', 'A', 'Bounty Hunter allies +6% attack and +4% speed.', { a: { s: 'bounty', m: { atk: 0.06, spd: 0.04 } } }],
     hunter: ['Enhanced Senses', 'A', 'Allies +6% crit chance and +10% crit damage.', { a: { s: 'all', m: { crit: 0.06, critDmg: 0.1 } } }],
     wrecker: ['Lift Heavy', 'D', 'Allies +9% health.', { a: { s: 'all', m: { hp: 0.09 } } }],
     tech: ['Calculated', 'G', '+10% XP from the battle, and allies +4% speed.', { r: { xp: 0.1 }, a: { s: 'all', m: { spd: 0.04 } } }],

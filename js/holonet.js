@@ -5511,8 +5511,16 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   }
   for (const [id, [unit, name]] of Object.entries(ART_PICS)) if (D.UNIT_MAP[unit]) POOL.push({ id, name, cat: unit.includes('star') || unit === 'death_star' ? 'thing' : 'creature', use: 'guild', unit });
   for (const [id, p] of Object.entries(DRAWN)) POOL.push({ id, name: p.name, cat: CAT(id), use: 'guild', draw: p.draw });
+  // 2.5 Cosmetic: 100 more for guilds: more cards (2.4 worlds and 2.5 included), the bosses and raid bosses.
+  const CARD25 = ['rebel_soldier', 'clone_trooper', 'battle_droid', 'tusken_raider', 'tarkin', 'z95', 'lambda_shuttle', 'b2_droid', 'chopper', 'droideka', 'magnaguard', 'k2so', 'ig88', 'ig11', 'vulture_droid', 'rebel_medic', 'two_onebee', 'nightsister_acolyte', 'barriss', 'talzin',
+    'hunter', 'wrecker', 'tech', 'crosshair', 'echo', 'second_sister', 'fifth_brother', 'seventh_sister', 'eighth_brother', 'lando', 'asajj_ventress', 'sith_infiltrator', 'arc_170', 'tie_defender', 'tie_silencer', 'hondo', 'savage_opress', 'u_wing', 'upsilon_shuttle', 'cassian_haulcraft',
+    'mando_n1', 'starkiller', 'master_luke', 'ghost', 'gamorrean_guard', 'snowtrooper', 'wing_guard', 'scout_trooper', 'shoretrooper', 'cf66_trooper', 'geonosian_warrior', 'purge_trooper', 'knight_of_ren', 'commando_droid', 'havoc', 'embo', 'marrok'];
+  const BOSS25 = ['krayt_dragon', 'lord_vader', 'dragonsnake', 'death_star_2', 'acklay', 'executor', 'sith_legion', 'zillo_beast', 'carbon_vader', 'darth_sidious', 'wampa', 'bossk', 'atst', 'krennic', 'commander_cody', 'jango_arena', 'grievous_warlord',
+    'raid_nihilus', 'raid_snoke', 'raid_xyston', 'raid_invisible', 'gr_gideon', 'gr_cruiser', 'gr_thrawn', 'gr_chimaera', 'gr_darktrooper', 'cave_vision', 'emperor_reborn'];
+  for (const id of CARD25) { const def = D.UNIT_MAP[id]; if (!def || def.rarity === 'secret' || POOL.some((q) => q.card === id)) continue; POOL.push({ id, name: def.name, cat: def.kind === 'ship' ? 'ship' : 'character', use: 'guild', card: id, v25: true }); }
+  for (const id of BOSS25) { const def = D.UNIT_MAP[id]; if (!def) continue; POOL.push({ id: `b_${id}`, name: def.name, cat: 'boss', use: 'guild', unit: id, v25: true }); }
   const BY_ID = Object.fromEntries(POOL.map((p) => [p.id, p]));
-  const CATS = [['character', 'Characters'], ['ship', 'Ships'], ['planet', 'Planets'], ['creature', 'Creatures'], ['vehicle', 'Vehicles'], ['symbol', 'Symbols'], ['thing', 'Famous things'], ['scene', 'Scenes']];
+  const CATS = [['boss', 'Bosses'], ['character', 'Characters'], ['ship', 'Ships'], ['planet', 'Planets'], ['creature', 'Creatures'], ['vehicle', 'Vehicles'], ['symbol', 'Symbols'], ['thing', 'Famous things'], ['scene', 'Scenes']];
 
   // Inner SVG for a picture (no outer <svg>), or a full <svg> with `wrap`.
   const cache = new Map();
@@ -5526,7 +5534,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     return cache.get(id).replace(/id="px/g, `id="${u}px`).replace(/url\(#px/g, `url(#${u}px`);
   }
   const svg = (id, attrs = '') => `<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" ${attrs}>${inner(id)}</svg>`;
-  const list = (use) => POOL.filter((p) => p.use === 'both' || p.use === use);
+  const list = (use) => POOL.filter((p) => (p.use === 'both' || p.use === use) && (!p.v25 || (root.Update25 && root.Update25.on())));
 
   HN.PICS = { POOL, BY_ID, CATS, inner, svg, list, has: (id) => !!BY_ID[id] };
 })(window);
@@ -6503,7 +6511,30 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     '<ellipse rx="22" ry="16"/><circle cx="-8" cy="-4" r="3" fill="#06121e"/><circle cx="8" cy="-4" r="3" fill="#06121e"/>',
     '<circle r="22" fill="none" stroke-width="4"/>' + Array.from({ length: 8 }, (_, k) => `<path d="M0 -20 L4 -6 L-4 -6Z" transform="rotate(${k * 45})"/>`).join(''),
     '<path d="M-24 0 L-8 -6 L0 -24 L8 -6 L24 0 L8 6 L0 24 L-8 6Z"/>',
+    // 2.5 Cosmetic crests
+    '<path d="M-3 -24 L3 -24 L4 -4 L24 -2 L24 4 L4 6 L3 22 L-3 22 L-4 6 L-24 4 L-24 -2 L-4 -4Z"/><rect x="-26" y="-12" width="3" height="10"/><rect x="23" y="-12" width="3" height="10"/>',
+    '<circle r="7"/><path d="M-24 -20 L-14 -10 L-14 10 L-24 20Z M24 -20 L14 -10 L14 10 L24 20Z"/><rect x="-14" y="-1.5" width="28" height="3"/>',
+    '<g stroke-width="4" stroke-linecap="round"><path d="M-18 18 L14 -14"/><path d="M18 18 L-14 -14"/></g><rect x="-22" y="15" width="8" height="8" rx="1" transform="rotate(-45 -18 19)"/><rect x="14" y="15" width="8" height="8" rx="1" transform="rotate(45 18 19)"/>',
+    '<circle r="23"/><circle cx="-8" cy="-8" r="7" fill="#06121e"/><circle cx="-8" cy="-8" r="2.6"/><rect x="-23" y="-1" width="46" height="2" fill="#06121e"/>',
+    '<path d="M-18 -10 C-18 -26 18 -26 18 -10 L18 12 L8 22 L-8 22 L-18 12Z"/><path d="M-12 -6 H12 V0 H3 V16 H-3 V0 H-12Z" fill="#06121e"/>',
+    '<path d="M-17 -6 C-17 -24 17 -24 17 -6 L15 10 L6 20 L-6 20 L-15 10Z"/><path d="M-12 -4 L-3 -2 L-5 4 L-12 3Z M12 -4 L3 -2 L5 4 L12 3Z" fill="#06121e"/><path d="M-4 12 H4 L2 17 H-2Z" fill="#06121e"/>',
+    '<path d="M0 -26 L10 -8 L6 22 L-6 22 L-10 -8Z"/><path d="M0 -26 L3 -6 L0 22" fill="none" stroke="#06121e" stroke-width="1.2"/>',
+    '<path d="M0 -24 L22 -12 L22 12 L0 24 L-22 12 L-22 -12Z"/><path d="M-22 -12 L0 0 L22 -12 M0 0 V24" fill="none" stroke="#06121e" stroke-width="2"/><circle r="4" fill="#06121e"/>',
+    '<path d="M-10 -14 Q-30 -16 -26 -28 Q-22 -18 -12 -20Z M10 -14 Q30 -16 26 -28 Q22 -18 12 -20Z"/><path d="M-14 -16 Q-14 -24 0 -24 Q14 -24 14 -16 L10 8 L4 20 H-4 L-10 8Z"/><ellipse cx="-6" cy="-8" rx="3.5" ry="5" fill="#06121e"/><ellipse cx="6" cy="-8" rx="3.5" ry="5" fill="#06121e"/>',
+    '<circle cx="-7" cy="-4" r="12"/><circle cx="12" cy="6" r="7"/><path d="M-26 20 H26" stroke-width="3"/>',
+    '<path d="M-20 -12 L6 -16 L22 -6 L22 4 L6 8 L-20 6Z"/><rect x="-26" y="-6" width="8" height="8" rx="2"/><rect x="-8" y="8" width="5" height="16"/><rect x="6" y="8" width="5" height="16"/><circle cx="12" cy="-6" r="2.5" fill="#06121e"/>',
+    '<path d="M-24 -4 H10 L14 -10 H24 V0 L14 4 H-2 L-6 20 H-16 L-12 4 H-24Z"/>',
+    '<path d="M0 -24 C14 -24 24 -14 24 0 C24 14 14 22 0 22 C-14 22 -24 14 -24 0 C-24 -14 -14 -24 0 -24Z M6 -8 L24 -14 L24 -2 L8 0Z" fill-rule="evenodd"/><circle cx="-6" cy="2" r="6" fill="#06121e"/><path d="M14 -8 L26 -14 L26 -2Z" fill="#06121e"/>',
+    '<path d="M-14 -20 Q0 -28 14 -20 L14 -4 L-14 -4Z"/><rect x="-16" y="-2" width="32" height="20" rx="3"/><circle cx="-2" cy="-12" r="4" fill="#06121e"/><circle cx="-2" cy="-12" r="1.6"/><rect x="-10" y="4" width="20" height="3" fill="#06121e"/><rect x="-10" y="10" width="8" height="3" fill="#06121e"/>',
+    '<circle cx="-4" r="21"/><circle cx="6" cy="-4" r="17" fill="#06121e" stroke="none"/><path d="M16 -8 L18 -2 L24 -2 L19 2 L21 8 L16 4 L11 8 L13 2 L8 -2 L14 -2Z"/>',
+    '<path d="M4 -26 L-14 2 L-2 2 L-8 26 L14 -6 L2 -6 L10 -26Z"/>',
+    '<path d="M0 -26 C10 -14 20 -6 16 8 C14 18 6 24 0 24 C-6 24 -14 18 -16 8 C-18 -2 -10 -8 -8 -16 C-6 -8 -4 -6 0 -4 C2 -12 0 -18 0 -26Z"/><path d="M0 6 C4 10 6 14 4 18 C2 21 -2 21 -4 18 C-6 14 -4 10 0 6Z" fill="#06121e"/>',
+    '<rect x="-14" y="-22" width="28" height="40" rx="4" transform="rotate(-10)"/><path d="M-4 -8 L0 -14 L4 -8 L0 -2Z M-4 6 L0 0 L4 6 L0 12Z" fill="#06121e" transform="rotate(-10)"/>',
+    '<path d="M-12 26 L-12 -2 L-16 -6 L-16 -18 L-10 -22 L-6 -18 L-6 -24 L0 -26 L4 -22 L6 -24 L12 -22 L12 -14 L16 -12 L16 4 L10 10 L10 26Z"/>',
+    '<circle r="6"/>' + Array.from({ length: 16 }, (_, k) => `<path d="M0 -${k % 2 ? 16 : 26} L1.6 -8 L-1.6 -8Z" transform="rotate(${k * 22.5})"/>`).join(''),
   ];
+  // The first 8 are the original crests; the rest arrive with 2.5 (shown in the picker only when it's on).
+  const crestCount = () => (root.Update25 && root.Update25.on() ? EMBLEMS.length : 8);
   // Pictures come from the HoloNet picture pool (hn-pics.js): the 50 card
   // portraits for profiles, all 100 pictures for guilds. Nothing outside the
   // pool can be picked, so every picture is family-friendly.
@@ -6524,7 +6555,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   const pickerHtml = (sel, color, crest) => {
     const cats = HN.PICS.CATS.filter(([k]) => GUILD_PICS.some((id) => HN.PICS.BY_ID[id].cat === k));
     const items = pickCat === 'crest'
-      ? EMBLEMS.map((_, i) => `<button type="button" class="g-e ${!sel && (crest | 0) === i ? 'on' : ''}" data-ge="${i}">${emblem({ emblem: i, color }, 44)}</button>`).join('')
+      ? EMBLEMS.slice(0, crestCount()).map((_, i) => `<button type="button" class="g-e ${!sel && (crest | 0) === i ? 'on' : ''}" data-ge="${i}">${emblem({ emblem: i, color }, 44)}</button>`).join('')
       : GUILD_PICS.filter((id) => HN.PICS.BY_ID[id].cat === pickCat).map((id) => `<button type="button" class="g-e ${sel === id ? 'on' : ''}" data-gp="${id}" title="${esc(HN.PICS.BY_ID[id].name)}">${emblem({ pic: id, color }, 44)}<small>${esc(HN.PICS.BY_ID[id].name)}</small></button>`).join('');
     return `<div class="g-cats" data-noswipe>${cats.map(([k, n]) => `<button type="button" class="${k === pickCat ? 'on' : ''}" data-gcat="${k}">${n}</button>`).join('')}<button type="button" class="${pickCat === 'crest' ? 'on' : ''}" data-gcat="crest">Crests</button></div><div class="g-pick g-pics">${items}</div>`;
   };
