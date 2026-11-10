@@ -94,7 +94,7 @@
     ['holocron', 'Holocron', '#5ad0ff', (s) => [s.units, 100], 'Own 100 cards'], ['carbonite', 'Carbonite Thaw', '#8fe8ff', { kyber: 230 }, "Luthen's Gallery · 230 Kyber"],
     ['sithvault', 'Sith Vault', '#ff5a6a', (s) => [s.c.dark || 0, 200], 'Win 200 Dark Side battles'], ['droid', 'Droid Delivery', '#ffd23f', (s) => [s.P.stats.packsOpened || 0, 50], 'Open 50 crates'],
   ].map(([id, n, c, get, how]) => ({ id, n, c, get, how }));
-  const CRATES = [['recruit', 'Recruit Crate'], ['contraband', 'Contraband Crate']];
+  const CRATES = (D.PACKS || []).map((p) => [p.id, p.name]);
   const getProg = (x) => { if (!x.get || x.get === 'event' || (typeof x.get === 'object' && !Array.isArray(x.get) && typeof x.get !== 'function')) return null; try { const r = x.get(st()); if (Array.isArray(r)) return { have: Math.min(r[0], r[1]), need: r[1], done: r[0] >= r[1] }; return { done: !!r }; } catch (e) { return { done: false }; } };
   const ownsItem = (kind, x) => { if (kind === 'po') return !!(C().mvp || {})[x.id] || !!C().own['po:' + x.id]; if (!x.get) return true; if (C().own[kind + ':' + x.id]) return true; const p = getProg(x); return !!(p && p.done); };
   const posesOwned = () => POSES.filter((p) => ownsItem('po', p));
@@ -144,7 +144,7 @@
     // Anything owned that has never been seen gets a dot; the first visit marks the starting kit as seen.
     if (!c.seenInit) { for (const [k] of KINDS) for (const x of items(k)) if (x.own) c.seen[k + ':' + x.id] = 1; c.seenInit = 1; save(); }
     for (const [k] of KINDS) for (const x of items(k)) if (x.own && c.seen[k + ':' + x.id] == null) c.seen[k + ':' + x.id] = 0;
-    let kind = 'fr', filt = 'all', crate = 'recruit', sel = null;
+    let kind = 'fr', filt = 'all', crate = (CRATES[0] || ['recruit'])[0], sel = null;
     const me = HN().cos25.me();
     const m = UI.openModal(`<div class="c25" role="dialog" aria-label="Cosmetics"><div class="c25-head"><h2>Cosmetics</h2><button type="button" class="btn btn-small" data-c25x>Close</button></div>
       <div class="c25-prev"><div class="c25-card" data-card><span class="c25-av" data-av></span><div class="c25-id"><small>YOUR PROFILE CARD</small><b>${esc(me.tag || 'You')}</b><span data-ti></span><span class="c25-sub">Level ${Player.state.account.level}</span></div></div>
@@ -163,7 +163,7 @@
       $('[data-po]').textContent = po ? po.n + (pv && pv.kind === 'po' && !pv.x.own ? ' (preview)' : '') : 'Your MVP\'s own type';
       const wi = WINS.find((x) => x.id === (pv && pv.kind === 'wi' ? pv.x.id : eq.wi()));
       $('[data-wi]').textContent = wi.n + (pv && pv.kind === 'wi' && !pv.x.own ? ' (preview)' : '');
-      $('[data-pa]').textContent = CRATES.map(([id, n]) => n.replace(' Crate', '') + ': ' + (PACKS.find((x) => x.id === (pv && pv.kind === 'pa' && id === crate ? pv.x.id : eq.pa(id))) || PACKS[0]).n).join(' · ');
+      $('[data-pa]').textContent = CRATES.map(([id, n]) => n + ': ' + (PACKS.find((x) => x.id === (pv && pv.kind === 'pa' && id === crate ? pv.x.id : eq.pa(id))) || PACKS[0]).n).join(' · ');
       const card = $('[data-card]'); card.classList.remove('pop'); void card.offsetWidth; card.classList.add('pop');
     };
     const swatch = (k, x) => {

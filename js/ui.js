@@ -3441,7 +3441,11 @@
     let doneAuto = null;
     const closed = auto ? new Promise((res) => { doneAuto = res; }) : null;
     const best = results.reduce((b, r) => (R_ORDER[D.UNIT_MAP[r.id].rarity] > R_ORDER[b] ? D.UNIT_MAP[r.id].rarity : b), 'common');
-    if (packId) await crateCinematic(packId, best);
+    if (packId) {
+      // 2.5: an equipped pack theme plays instead of the usual crate opening.
+      const fx = !auto && HOOKS.crateFx ? HOOKS.crateFx(packId, best, results) : null;
+      if (fx) await fx; else await crateCinematic(packId, best);
+    }
     const cards = results.map((r, i) => {
       const def = D.UNIT_MAP[r.id];
       // 2.2: a new card gets a small "NEW CARD" ribbon in its top-left corner
