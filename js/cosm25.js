@@ -310,7 +310,7 @@
               UI.App.ui.shop25 = 'luthen'; UI.App.go('market');
               setTimeout(() => tourStep('<b>Luthen\'s Gallery</b> sells titles, win screens and crate themes, and upgrades title colours. It\'s the only shop that takes Beskar.', '[data-s25="luthen"]', 'Next', () => {
                 UI.App.ui.shop25 = 'casino'; UI.App.go('market');
-                setTimeout(() => tourStep('And this is <b>Watto\'s casino</b>: Holo-Chess, podraces and Pazaak. Every minute his payout board pays one pilot. Keep an eye out for your name!', '.wp25-board, [data-s25="casino"]', 'Got it', () => {
+                setTimeout(() => tourStep('And this is <b>Watto\'s Wagers</b>: Holo-Chess, podraces and Pazaak. The brass plaque on his counter is his payout board: every minute he pays one pilot. Keep an eye out for your name!', '.wp25-plq, [data-s25="casino"]', 'Got it', () => {
                   T().clearCoach(); root.Player.state.cos25tour = 1; root.Player.save(); touring = false;
                 }), 500);
               }), 500);
