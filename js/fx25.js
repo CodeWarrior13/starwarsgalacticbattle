@@ -70,6 +70,7 @@
             const real = Math.min(e.amount, Math.max(0, t.maxHp - (hp[e.uid] || 0)));
             hp[e.uid] = e.hp;
             add(e.source === 'lifesteal' ? e.uid : unit.uid, real);
+            if (t.side === 'player') this.__healT = (this.__healT || 0) + real;
           } else if (e.type === 'status' && e.uid !== unit.uid) {
             const t = this.get(e.uid);
             if (t && t.side === unit.side && D.STATUS_INFO && D.STATUS_INFO[e.status] && D.STATUS_INFO[e.status].kind === 'buff') add(unit.uid, t.maxHp * 0.04);
@@ -132,7 +133,7 @@
   }
   if (UI.hooks && !UI.hooks.__fx25) {
     UI.hooks.__fx25 = true;
-    UI.hooks.battleEnd.push((battle, params, won) => { if (on() && won && battle && !battle.tutorial) victory(battle, params); });
+    UI.hooks.battleEnd.push((battle, params, won) => { if (!on() || !battle) return; try { const c = C(); if (c && battle.__healT) { c.heal = (c.heal || 0) + battle.__healT; battle.__healT = 0; root.Cos25.save(); root.Cos25.sync(); } } catch (e) { /* ignore */ } if (won && !battle.tutorial) victory(battle, params); });
   }
   // ---------- Duel intro ----------
   function intro(me, them) {
