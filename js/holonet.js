@@ -6035,10 +6035,10 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   function prof(uid) {
     const me = !uid || uid === Net.me || uid === 'me';
     const PC = root.PlayerCollections;
-    if (me) { const h = S(); const p = myProfile(); return { uid: Net.me || 'me', me: true, ...p, rating: h.rating, level: Player.state.account.level, guild: h.guild || null, gpl: P2().soc.gpl, col: PC ? PC.encode() : '', use: PC ? PC.encodeUse() : '', ball: allBadges() }; }
+    if (me) { const h = S(); const p = myProfile(); return { uid: Net.me || 'me', me: true, ...p, ti: on25() && P2().prof.ti ? P2().prof.ti : null, rating: h.rating, level: Player.state.account.level, guild: h.guild || null, gpl: P2().soc.gpl, col: PC ? PC.encode() : '', use: PC ? PC.encodeUse() : '', ball: allBadges() }; }
     if (HN.botProfile && (String(uid).startsWith('bot:') || NPC_ROWS.has(uid))) { const bp = HN.botProfile(uid); if (bp) return bp; }
     const a = Net.arena.find((x) => x.uid === uid) || Net.rows.get(uid) || (NPC_ROWS.has(uid) ? npcRow(uid) : null) || {};
-    return { uid, me: false, col: a.col || '', use: a.use || '', ball: Array.isArray(a.ball) ? a.ball : null, tag: cleanTag(a.tag), av: a.av && D.UNIT_MAP[a.av] ? a.av : ((a.ground || [])[0] || {}).id || 'luke', frame: FRAMES[a.frame] ? a.frame : 'recruit', ban: typeof a.ban === 'string' && a.ban.length < 12 ? a.ban : '', badges: Array.isArray(a.badges) ? a.badges.slice(0, 6) : [], nb: a.nb || 0, st: a.st || {}, rating: a.rating || 800, level: a.level || 1, guild: a.guild || null, gpl: a.gpl || 0 };
+    return { uid, me: false, col: a.col || '', use: a.use || '', ball: Array.isArray(a.ball) ? a.ball : null, tag: cleanTag(a.tag), av: a.av && D.UNIT_MAP[a.av] ? a.av : ((a.ground || [])[0] || {}).id || 'luke', frame: FRAMES[a.frame] ? a.frame : 'recruit', ban: typeof a.ban === 'string' && a.ban.length < 12 ? a.ban : '', ti: a.ti && typeof a.ti === 'object' && typeof a.ti.n === 'string' ? a.ti : null, badges: Array.isArray(a.badges) ? a.badges.slice(0, 6) : [], nb: a.nb || 0, st: a.st || {}, rating: a.rating || 800, level: a.level || 1, guild: a.guild || null, gpl: a.gpl || 0 };
   }
   // Name shown everywhere: your callsign, else your account name.
   const baseName = Net.name.bind(Net);
@@ -6094,7 +6094,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const badges = p.badges.length ? p.badges.map((x) => `<button type="button" class="pf-bdg" data-bdg='${esc(JSON.stringify(x.secret ? { ...x, desc: '' } : x))}'>${still(UI.featBadge(x))}<span>${esc(x.name)}</span></button>`).join('') : '<p class="muted small">No badges yet.</p>';
     const m = openModal(`<div class="pf-card" style="--gc:${g ? g.color : '#5fd8ff'}">
       <button type="button" class="pf-x" data-x="ok" aria-label="Close">✕</button>
-      <div class="pf-top${bannerForUid(p.uid) ? ' gb-host' : ''}">${gban(bannerForUid(p.uid), 'hero')}${avatar(p, 'lg')}<div class="pf-id"><p class="eyebrow">${p.me ? 'Your HoloNet profile' : 'HoloNet profile'}</p><h2>${esc(Net.name(p.uid).replace(' (you)', ''))}</h2>
+      <div class="pf-top${bannerForUid(p.uid) ? ' gb-host' : ''}">${gban(bannerForUid(p.uid), 'hero')}${avatar(p, 'lg')}<div class="pf-id"><p class="eyebrow">${p.me ? 'Your HoloNet profile' : 'HoloNet profile'}</p><h2>${esc(Net.name(p.uid).replace(' (you)', ''))}</h2>${HN.titleHtml ? HN.titleHtml(p.ti) : ''}
         <p class="muted small">Level ${p.level} · ${esc(FRAMES[p.frame].name)} frame${g ? ` · <b style="color:${g.color}">[${esc(g.tag)}] ${esc(g.name)}</b>` : ''}</p></div>
         <div class="pf-lg">${A.badge(d.league, d.div)}<small>${esc(d.name)}</small></div></div>
       <div class="pf-stats">
@@ -6210,7 +6210,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       return `<div class="pc-stats">${cell('Rating', fmt(p.rating))}${cell('Best rating', fmt(st.best || p.rating))}${cell('League', esc(d.name))}${cell('Arena W–L', `${fmt(st.w || 0)}–${fmt(st.l || 0)} · ${wr}%`)}${cell('Live duels', `${fmt(st.dw || 0)}–${fmt(st.dl || 0)}`)}${cell('Arena win streak', HN.streakFlame(st.ws | 0))}${cell('Duel win streak', HN.streakFlame(st.ds | 0))}${cell('Raid damage', fmt(st.raid || 0))}${cell('Bosses beaten', fmt(st.bosses || 0))}${cell('Cards', `${fmt(owned.length)}`)}${cell('HoloNet cards', `${HN.HN_IDS.filter((id) => col[id]).length} / ${HN.HN_IDS.length}`)}${cell('Seasons played', fmt(st.seasons || 0))}${cell('Favorite card', fav ? `${esc(D.UNIT_MAP[fav].name)} · ${fmt(use[fav].b)}` : '—')}${cell('Battles tracked', fmt(totalB))}${cell('Guild', g ? `[${esc(g.tag)}]` : '—')}${cell('Account level', fmt(p.level))}</div>`;
     };
     const head = () => `<button type="button" class="pf-x" data-x="ok" aria-label="Close">✕</button>
-      <div class="pf-top${bannerForUid(p.uid) ? ' gb-host' : ''}">${gban(bannerForUid(p.uid), 'hero')}${avatar(p, 'lg')}<div class="pf-id"><p class="eyebrow">${p.me ? 'Your HoloNet profile' : 'HoloNet profile'}</p><h2>${esc(Net.name(p.uid).replace(' (you)', ''))}</h2>
+      <div class="pf-top${bannerForUid(p.uid) ? ' gb-host' : ''}">${gban(bannerForUid(p.uid), 'hero')}${avatar(p, 'lg')}<div class="pf-id"><p class="eyebrow">${p.me ? 'Your HoloNet profile' : 'HoloNet profile'}</p><h2>${esc(Net.name(p.uid).replace(' (you)', ''))}</h2>${HN.titleHtml ? HN.titleHtml(p.ti) : ''}
         <p class="muted small">Level ${p.level} · ${esc(FRAMES[p.frame].name)} frame${g ? ` · <b style="color:${g.color}">[${esc(g.tag)}] ${esc(g.name)}</b>` : ''}</p></div>
         <div class="pf-lg">${A.badge(d.league, d.div)}<small>${esc(d.name)}</small></div></div>`;
     const actions = () => `<div class="modal-actions">${p.me ? '<button type="button" class="btn" data-x="edit">Edit profile</button>' : `${HN.duelChat ? HN.duelChat.friendBtn(p.uid) : ''}${canInvite(p) ? `<button type="button" class="btn" data-x="invite">${((gmap.get(myGuildId()) || {}).ok || []).includes(p.uid) ? 'Invited' : 'Invite to guild'}</button>` : ''}<button type="button" class="btn" data-x="mute">${isMuted(p.uid) ? 'Unmute' : 'Mute in chat'}</button>`}<button type="button" class="btn btn-primary" data-x="ok">Close</button></div>`;
@@ -6553,6 +6553,8 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   // For the main game's Commander profile: your picture in its frame.
   HN.avatarHtml = (p, size) => avatar({ av: p.av || defaultAv(), frame: FRAMES[p.frame] ? p.frame : 'recruit', guild: P2().guild }, size || 'md');
   HN.frameName = (id) => (FRAMES[id] || FRAMES.recruit).name;
+  // 2.5 Cosmetics tab: frames are read and worn through here.
+  HN.cos25 = { FRAMES, owned: () => ownedFrames(), shown: () => shownFrames(), avatar: (p, size) => avatar(p, size), me: () => myProfile(), prof: () => P2().prof, worn: () => P2().prof.frame, wear: (id) => { if (!ownedFrames().includes(id)) return false; P2().prof.frame = id; HN.save(); try { Net.publish(); } catch (e) { /* offline */ } return true; }, publish: () => { try { Net.publish(); } catch (e) { /* offline */ } }, role: () => { try { const g = myGuildId(); return g ? { g, r: roleOf('me', g) } : null; } catch (e) { return null; } } };
   HN.hasProfile = () => hasName();
 
   // =====================================================================
@@ -6565,7 +6567,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const p = myProfile();
     const body = {
       rating: h.rating, ground: HN.squadEntries('character'), fleet: HN.squadEntries('ship'), level: Player.state.account.level,
-      tag: !this.db.firestore || (h.prof.key && h.prof.key === nameKey(p.tag) && (!h.prof.kuid || h.prof.kuid === this.me)) ? p.tag : '', av: p.av, frame: p.frame, ban: p.ban || '', badges: p.badges, nb: p.nb, st: p.st, dw: p.st.dw || 0,
+      tag: !this.db.firestore || (h.prof.key && h.prof.key === nameKey(p.tag) && (!h.prof.kuid || h.prof.kuid === this.me)) ? p.tag : '', av: p.av, frame: p.frame, ban: p.ban || '', ti: on25() && h.prof.ti ? h.prof.ti : null, badges: p.badges, nb: p.nb, st: p.st, dw: p.st.dw || 0,
       ss: seasonNo() * 1e5 + Math.max(h.soc.sBest || 0, h.rating),
       guild: h.guild || null, apply: (!h.guild && h.apply) || null, gp: h.soc.gp, gpw: h.soc.gpw, gpl: h.soc.gpl, don: h.soc.don && h.soc.don.g ? { g: h.soc.don.g, a: h.soc.don.a | 0 } : null, gr: { w: h.soc.gr.w, b: h.soc.gr.b, d: h.soc.gr.d, f: h.soc.gr.f },
     };
