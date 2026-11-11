@@ -9855,6 +9855,7 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
   const HN = root.HN;
   const UI = root.UI;
   const { esc, toast, openModal } = UI;
+  const App = UI.App;
   const Net = HN.Net;
   const MAX = 50;
   const ONLINE_MS = 150000;
@@ -10327,6 +10328,7 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
 
   // A player who joined from someone's invite link (or QR code) sends that
   // player a friend request, once, as soon as they have Friends and a callsign.
+  let asking = false;
   async function inviterRequest() {
     const inv = root.Player && root.Player.state && root.Player.state.invite;
     if (!inv || !inv.key || inv.fr || !on()) return;
@@ -10336,12 +10338,23 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
       const d = await Net.db.doc(`names/${inv.key}`).get();
       const uid = d.exists ? d.data().uid : null;
       if (!uid || uid === Net.me) { inv.fr = 1; root.Player.save(); return; }
+      // Level 5: ask once, one tap sends it. Waits for a clear screen.
+      const lvl = (root.Player.state.account && root.Player.state.account.level) || 1;
+      if (lvl < 5) return;
+      if (!inv.asked) {
+        if (asking || App.battleActive || document.querySelector('.app-splash, .modal-backdrop, .tut-intro, .tut-coach, .walkout, .feat-show, .feat-cine, .rank-up, .hc, .crate-cine, .lib-spin')) return;
+        asking = true;
+        let ok = false;
+        try { ok = await UI.confirmBox(`${inv.code} invited you!`, `Send ${inv.code} a friend request? Once they accept, you can chat, swap squads and battle each other.`, 'Send request'); } finally { asking = false; }
+        inv.asked = 1; root.Player.save();
+        if (!ok) { inv.fr = 1; root.Player.save(); return; }
+      }
       const msg = await addUid(uid, inv.code);
-      if (/sent|Friends|Already/.test(msg || '')) { inv.fr = 1; root.Player.save(); }
+      if (/sent|Friends|Already/.test(msg || '')) { inv.fr = 1; root.Player.save(); if (/sent/.test(msg)) toast(`Friend request sent to ${inv.code}.`); }
     } catch (e) { /* try again next time */ }
   }
   setTimeout(() => { inviterRequest(); }, 8000);
-  setInterval(() => { if (!document.hidden) inviterRequest(); }, 5 * 60000);
+  setInterval(() => { if (!document.hidden) inviterRequest(); }, 45000);
   // Pilots who aren't real players can be friends too: the request is accepted
   // a little later, they show up in your list, and their profile opens from it.
   const BF = () => { const h = HN.S(); h.botFr = h.botFr || {}; return h.botFr; };

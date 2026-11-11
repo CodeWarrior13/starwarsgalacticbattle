@@ -3588,5 +3588,24 @@
     }
   }
 
+  // Keyboard: A and D step left and right through the main tabs (Galaxy,
+  // Collection, Black Market, HoloNet). Off while typing, in battle or with
+  // anything open over the screen.
+  document.addEventListener('keydown', (e) => {
+    const k = e.key && e.key.toLowerCase();
+    if ((k !== 'a' && k !== 'd') || e.repeat || e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
+    const t = e.target;
+    if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+    if (App.battleActive || document.querySelector('.app-splash, .modal-backdrop, .tut-intro, .tut-coach, .tut-skip, .walkout, .feat-show, .feat-cine, .rank-up, .hc, .crate-cine, .lib-spin, .code-entry')) return;
+    const tabs = $$('.main-nav [data-nav]').filter((b) => b.offsetParent !== null);
+    const cur = ['squad', 'campaign', 'secret'].includes(App.current) ? 'home' : App.current;
+    const i = tabs.findIndex((b) => b.dataset.nav === cur);
+    if (i < 0) return;
+    const next = tabs[i + (k === 'd' ? 1 : -1)];
+    if (!next) return;
+    e.preventDefault();
+    next.click();
+  });
+
   root.UI = { codeEntry: () => codeEntry(), hooks: HOOKS, achievements, featBadge, secretPeek, badgePeek, stillSvg, packReveal, motionOK, walkout, settings, profile, playFeat, celebrateFeat, markFeatSeen, soundSettings: settings, homeworldOf, $, $$, el, esc, fmt, cur, portrait, stars, unitCard, toast, openModal, confirmBox, updateWallet, inspect, synergyBanner, App, Screens };
 })(window);
