@@ -331,11 +331,17 @@
   let touring = false;
   const waitFor = (test, cb) => { const t = setInterval(() => { if (test()) { clearInterval(t); cb(); } }, 250); };
   function tourStep(text, glow, label, next) { T().coach(text, glow, { tour: true, next, label: label || 'Next' }); }
+  // The pose the welcome kit gives: the type of your strongest card.
+  function kitPose() {
+    try { let best = null, bp = -1; for (const [id, u] of Object.entries(Player.state.units || {})) { const d = D.UNIT_MAP[id]; if (!d) continue; const p = D.power ? D.power(d, u.level, u.stars) : 0; if (p > bp) { bp = p; best = id; } } return best && root.Cos25FX ? root.Cos25FX.typeOf(best) : 'trooperl'; } catch (e) { return 'trooperl'; }
+  }
+  // Replaying the tutorial (Settings) replays this briefing too, once the tutorial ends.
+  if (Player.replayTutorial && !Player.__c25r) { Player.__c25r = true; const rt = Player.replayTutorial.bind(Player); Player.replayTutorial = function () { const r = rt(); if (on()) { Player.state.cos25tour = 0; Player.save(); } return r; }; }
   function tour() {
     if (touring || !T() || !T().coach) return;
     touring = true;
     const rex = D.UNIT_MAP.captain_rex;
-    const lines = ['Commander! Quick briefing. The galaxy just got a lot more stylish.', 'You can wear frames and titles, strike a victory pose when your card is MVP, and pick your own win screens and crate openings.', 'Here, a welcome kit from me: the Recruit frame, the Rookie title and the Squad Salute pose. Let\'s go try them on.'];
+    const lines = ['Commander! Quick briefing. The galaxy just got a lot more stylish.', 'You can wear frames and titles, strike a victory pose when your card is MVP, and pick your own win screens and crate openings.', 'Here, a welcome kit from me: the Recruit frame, the Rookie title, and the victory pose for your strongest card. Let\'s go try them on.'];
     const node = UI.el(`<div class="tut-intro" role="dialog" aria-label="Captain Rex"><div class="ti-glow"></div><p class="eyebrow ti-eye">Captain Rex · Update 2.5</p><div class="ti-mentor">${rex ? UI.portrait(rex, { plate: false }) : ''}</div><div class="ti-box"><b>${rex ? esc(rex.name) : 'Captain Rex'}</b><p data-line></p><span class="ti-next" data-next>Tap to continue</span></div></div>`);
     document.body.appendChild(node);
     let i = 0;
@@ -343,7 +349,7 @@
     const show = () => { line.textContent = lines[i]; line.classList.remove('in'); void line.offsetWidth; line.classList.add('in'); if (i === lines.length - 1) node.querySelector('[data-next]').outerHTML = '<button class="btn btn-primary ti-go" type="button" data-go>Show me</button>'; };
     show();
     node.addEventListener('click', (e) => {
-      if (e.target.closest('[data-go]')) { const c = C(); c.kit = 1; c.own['po:trooperl'] = 1; c.seen['po:trooperl'] = 0; save(); sync(); node.classList.add('out'); setTimeout(() => node.remove(), 350); return steps(); }
+      if (e.target.closest('[data-go]')) { const c = C(); const kitDone = !!c.kit; c.kit = 1; c.kitDone = kitDone; const kp = kitPose(); c.kitPose = kp; if (c.kitDone) { c.kitPose = c.kitPose || kp; } else if (!ownsItem('po', POSES.find((x) => x.id === kp))) { c.own['po:' + kp] = 1; c.seen['po:' + kp] = 0; } save(); sync(); node.classList.add('out'); setTimeout(() => node.remove(), 350); return steps(); }
       if (i < lines.length - 1) { i++; show(); }
     });
   }
@@ -355,14 +361,15 @@
         tourStep('Each tab holds one kind of cosmetic: <b>frames, titles, poses, win screens</b> and <b>pack themes</b>.', '.c25-tabs', 'Next', () => {
           T().coach('Open the <b>Poses</b> tab.', '[data-ck="po"]', { tour: true });
           waitFor(() => qs('[data-ck="po"].on'), () => {
-            T().coach('Your new <b>Squad Salute</b> is here, with a little red dot because it\'s new. Tap it.', '.c25-it[data-id="trooperl"]', { tour: true });
+            const kp = C().kitPose || 'trooperl'; const kn = (POSES.find((x) => x.id === kp) || {}).n || 'pose';
+            T().coach(`Your <b>${kn}</b> is here. It\'s the pose your strongest card strikes as MVP. Tap it.`, `.c25-it[data-id="${kp}"]`, { tour: true });
             waitFor(() => qs('.c25-pop'), () => {
               T().coach('Tap <b>Try it on</b> to see the real pose.', '[data-ptry]', { tour: true });
               let tried = false; const tb = qs('[data-ptry]'); if (tb) tb.addEventListener('click', () => { tried = true; }, { once: true });
               waitFor(() => tried || !qs('.c25-pop'), () => {
                 T().coach('Looks sharp. Now tap <b>Equip</b>. Locked items can be tried on too; you just can\'t equip them until you earn them.', '[data-peq]', { tour: true });
-                waitFor(() => C().eq.po === 'trooperl' || !qs('.c25-pop'), () => {
-                  tourStep('Equipped! Your MVP will salute after every win. Titles show only on your profile card, and some have colours you can upgrade.', '.c25-tabs', 'Next', () => {
+                waitFor(() => C().eq.po === (C().kitPose || 'trooperl') || !qs('.c25-pop'), () => {
+                  tourStep('Equipped! Your MVP will strike it after every win. Titles show only on your profile card, and some have colours you can upgrade.', '.c25-tabs', 'Next', () => {
               document.querySelectorAll('.modal-backdrop').forEach((n) => n.remove());
               UI.App.ui.shop25 = 'luthen'; UI.App.go('market');
               setTimeout(() => tourStep('<b>Luthen\'s Gallery</b> sells titles, win screens and crate themes, and upgrades title colours. It\'s the only shop that takes Beskar.', '[data-s25="luthen"]', 'Next', () => {
@@ -384,7 +391,7 @@
   // If the tour's window ever vanishes (a reload of the screen, another pop-up), it starts again later.
   let lost = 0;
   setInterval(() => { if (touring && !root.Player.state.cos25tour && !qs('.tut-intro, .tut-coach, .c25, .c25-pop')) { if (++lost > 5) { touring = false; lost = 0; } } else lost = 0; }, 2000);
-  setInterval(() => { if (!touring && ready() && !root.Player.state.cos25tour && clearScreen() && (UI.App.current === 'home' || UI.App.current === 'campaign')) tour(); }, 2000);
+  setInterval(() => { if (!touring && ready() && !root.Player.state.cos25tour && root.Player.state.tutorial && root.Player.state.tutorial.done && clearScreen() && (UI.App.current === 'home' || UI.App.current === 'campaign')) tour(); }, 2000);
   if (root.Shops25) root.Shops25.add('luthen', gallery);
   // Casino wins feed the casino titles.
   root.Cos25 = { ready, open, sync, tour, titleScene, titleHtml, TITLES, TIERS, POSES, WINS, PACKS, eq, ownsItem, C: () => C(), save };
