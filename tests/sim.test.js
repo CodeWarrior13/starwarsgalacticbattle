@@ -848,8 +848,8 @@ test('2.4 Liberation: off until 2.4; then 10-stage worlds, 22 bosses, new cards 
   Player.state.planets.hoth = 10;
   const a0 = Player.state.aurodium;
   const w1 = Player.completeEncounter({ type: 'boss', boss: 'wampa' }, true, rng);
-  assert.ok(w1.holocron && w1.cards.length === 3 && w1.aurodium === 0, 'first win opens a Holocron');
-  assert.strictEqual(w1.holocron, 'Sith Holocron opened');
+  assert.ok(w1.holocron && w1.holoPack === 'strongbox' && Player.state.lib24.holoQ.cards.length === 3 && w1.aurodium === 0, 'first win earns a Holocron, queued for the opening');
+  assert.strictEqual(w1.holocron, 'Sith Holocron earned');
   const w2 = Player.completeEncounter({ type: 'boss', boss: 'wampa' }, true, () => 0.01);
   assert.ok(!w2.holocron && w2.base === 1500 && w2.aurodium === 1 && Player.state.aurodium === a0 + 1, 'repeat pay');
   // Liberation: stages AND the main boss.
