@@ -9,6 +9,22 @@
 // is your callsign.
 (function (root) {
   'use strict';
+
+  // Copy text: the clipboard API first; where that's blocked (school and
+  // managed Chromebooks, older browsers, in-app browsers) the older copy
+  // command through a hidden text box; last, select the visible link.
+  async function copyText(text, input) {
+    try { if (navigator.clipboard && window.isSecureContext) { await navigator.clipboard.writeText(text); return true; } } catch (e) { /* blocked: try the old way */ }
+    try {
+      const t = document.createElement('textarea');
+      t.value = text; t.setAttribute('readonly', ''); t.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0';
+      document.body.appendChild(t); t.focus(); t.select(); t.setSelectionRange(0, text.length);
+      const ok = document.execCommand('copy'); t.remove();
+      if (ok) return true;
+    } catch (e) { /* fall through */ }
+    if (input) { try { input.focus(); input.select(); input.setSelectionRange(0, input.value.length); } catch (e) { /* ignore */ } }
+    return false;
+  }
   // The owner sets the end of the 50-friend frame window (null = open).
   const RECRUITER_UNTIL = null;
   const GIFT = { credits: 1000, crystals: 25 };
@@ -301,12 +317,13 @@
       if (!b) return;
       if (b.dataset.i === 'close') return m.close();
       if (b.dataset.i === 'copy') {
-        try { await navigator.clipboard.writeText(link); toast('Invite link copied.'); } catch (err) { const i = $('[data-link]'); i.select(); toast('Select the link and copy it.'); }
+        const ok = await copyText(link, $('[data-link]'));
+        if (ok) { b.textContent = 'Copied!'; setTimeout(() => { b.textContent = 'Copy'; }, 1800); toast('Invite link copied.'); } else toast('Hold on the link to copy it.');
         return;
       }
       if (b.dataset.i === 'share') {
         const text = `Join my squadron in Galactic Card Battles! Use my code ${prof.tag} for 1,000 credits and 25 Kyber.`;
-        if (navigator.share) { try { await navigator.share({ title: 'Galactic Card Battles', text, url: link }); } catch (err) { /* closed */ } } else { try { await navigator.clipboard.writeText(`${text} ${link}`); toast('Invite copied. Paste it anywhere.'); } catch (err) { toast('Copy the link above to share it.'); } }
+        if (navigator.share) { try { await navigator.share({ title: 'Galactic Card Battles', text, url: link }); } catch (err) { /* closed */ } } else { try { if (!(await copyText(`${text} ${link}`))) throw new Error('blocked'); toast('Invite copied. Paste it anywhere.'); } catch (err) { toast('Copy the link above to share it.'); } }
       }
     });
   }
