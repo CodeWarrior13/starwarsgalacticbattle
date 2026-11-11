@@ -189,10 +189,37 @@
       + R(-1.4, 2.8, 0.8, 1, '#2a2e36') + R(0.6, 2.8, 0.8, 1, '#2a2e36') + (fire ? glow(-1, 4.2, 0.6, '#5aff6a', 0.7) + glow(1, 4.2, 0.6, '#5aff6a', 0.7) : '')
       + R(3, -0.8, 5, 1.6, '#4a4e58', 'stroke="#1a1c22" stroke-width=".2"') + R(4.2, -1.1, 1.2, 2.2, '#3a3e46') + wing(8, 0.55), a);
   };
-  // A TIE Bomber side-on: the twin pods between the bent hexagonal wings.
-  const tieBomber = (x, y, s, a = 0) => g(x, y, s, 1,
-    P('M-5 -9 L-3 -10 L-2 -2 L-3 10 L-5 9 L-4 0Z M5 -9 L3 -10 L2 -2 L3 10 L5 9 L4 0Z', '#2c3038', 'stroke="#0e1014" stroke-width=".3"') + [-1, 1].map((sd) => P(`M${sd * 3} -10 L${sd * 2} -2 L${sd * 3} 10 M${sd * 4.6} -8 L${sd * 3.4} 0 L${sd * 4.6} 8`, 'none', 'stroke="#4a4e58" stroke-width=".22"')).join('')
-    + R(-3, -2.6, 6, 1.2, '#4a4e56') + E(0, -3.6, 2.4, 1.9, '#6a6e76', 'stroke="#2a2e36" stroke-width=".25"') + C(0, -3.6, 1, '#0c1016') + L(-0.8, -3.6, 0.8, -3.6, '#6a6e76', 0.15) + E(0, 2, 2.4, 2.8, '#5a5e66', 'stroke="#2a2e36" stroke-width=".25"') + [1, 2.2, 3.4].map((yy) => L(-1.8, yy, 1.8, yy, '#3a3e46', 0.2)).join(''), a);
+  // A TIE Bomber, three-quarter view: the two bent hexagonal wings (each
+  // folded along its middle, the tips leaning in) with their frames, ribs
+  // and dark solar panels; between them the ball cockpit with its spoked
+  // window on one pylon and the long ordnance pod on the other.
+  const tieBomber = (x, y, s, a = 0) => {
+    const wing = (cx, dir) => {
+      const w = 3.2; const lean = dir * 2.2;
+      const half = (sy) => {
+        const pts = [[cx - w, 0], [cx + w, 0], [cx + w * 0.62 + lean, sy * 10.6], [cx - w * 0.62 + lean, sy * 10.6]];
+        const inner = pts.map(([px, py]) => [cx + lean * Math.abs(py) / 10.6 * 0.5 + (px - cx - lean * Math.abs(py) / 10.6 * 0.5) * 0.82, py * 0.9]);
+        return P(`M${pts.map((q) => q.map((v) => v.toFixed(2)).join(' ')).join(' L')}Z`, '#1c1e24', 'stroke="#0a0a0e" stroke-width=".45" stroke-linejoin="round"')
+          + P(`M${inner.map((q) => q.map((v) => v.toFixed(2)).join(' ')).join(' L')}Z`, sy < 0 ? '#2e323a' : '#262a32')
+          + [0.2, 0.5, 0.8].map((t) => { const ex = cx - w * 0.62 + lean + t * w * 1.24; return L(cx, 0, ex.toFixed(2), sy * 9.6, '#4a4e58', 0.28); }).join('')
+          + L(cx - w * 0.82, (sy * 3.4).toFixed(2), cx + w * 0.82, (sy * 3.4).toFixed(2), '#3c4048', 0.22) + L((cx - w * 0.7 + lean * 0.6).toFixed(2), (sy * 6.8).toFixed(2), (cx + w * 0.7 + lean * 0.6).toFixed(2), (sy * 6.8).toFixed(2), '#3c4048', 0.22);
+      };
+      return half(-1) + half(1) + L(cx - w, 0, cx + w, 0, '#5a5e68', 0.5) + C(cx, 0, 1.3, '#3a3e46', 'stroke="#14161a" stroke-width=".25"') + C(cx, 0, 0.5, '#5a5e68');
+    };
+    // the ordnance pod: a long cylinder seen at an angle, its blunt nose toward us
+    const bombPod = R(1.6, -1.6, 7.4, 3.6, '#4e525c', 'rx="1.6" stroke="#1e2026" stroke-width=".3"') + R(1.6, -1.6, 7.4, 1.2, '#6a707a', 'rx=".6" opacity=".6"')
+      + [3.6, 5.6, 7.6].map((px) => L(px, -1.5, px, 1.9, '#2a2e36', 0.22)).join('') + E(1.8, 0.2, 1.5, 1.85, '#5e646e', 'stroke="#22262e" stroke-width=".3"') + E(1.8, 0.2, 0.8, 1.05, '#1a1d24') + C(1.6, -0.2, 0.25, '#ff5a3a', 'opacity=".8"');
+    // the cockpit: ball and short tube, spoked front window and twin cannons
+    const cockpit = R(-6.2, -2.2, 4.4, 4.4, '#565c66', 'rx="2.2"') + C(-6, 0, 3, '#6e747e', 'stroke="#2a2e36" stroke-width=".3"') + P('M-4 -2.2 A3 3 0 0 1 -8.2 2 A3.2 3.2 0 0 0 -4 -2.2Z', '#40454e', 'opacity=".7"')
+      + C(-6, 0, 2.1, '#0c1016') + Array.from({ length: 8 }, (_, k) => { const an = (k / 8) * Math.PI * 2; return L((-6 + Math.cos(an) * 0.45).toFixed(2), (Math.sin(an) * 0.45).toFixed(2), (-6 + Math.cos(an) * 2.1).toFixed(2), (Math.sin(an) * 2.1).toFixed(2), '#8a909a', 0.2); }).join('')
+      + C(-6, 0, 0.45, '#8a909a') + P('M-8.4 -1.2 A2.6 2.6 0 0 1 -7 -2.6', 'none', 'stroke="#c8ccd4" stroke-width=".35" opacity=".75"') + R(-7.2, 2.7, 0.7, 1.2, '#2a2e36') + R(-5.5, 2.7, 0.7, 1.2, '#2a2e36');
+    return g(x, y, s, 1,
+      wing(-13, 1)
+      + R(-10.2, -0.7, 2.4, 1.4, '#4a4e58', 'stroke="#1a1c22" stroke-width=".2"') + cockpit
+      + R(-2.6, -0.6, 4.6, 1.2, '#4a4e58', 'stroke="#1a1c22" stroke-width=".2"') + bombPod
+      + R(9, -0.7, 2.6, 1.4, '#4a4e58', 'stroke="#1a1c22" stroke-width=".2"')
+      + wing(14, -1), a);
+  };
   // The Millennium Falcon on the landing pad, seen from the front and above:
   // the saucer with its plating rings and panels, the mandibles pointing at
   // you, the cockpit tube on the near side, the dish and turret, landing legs,
@@ -356,7 +383,7 @@
       + cloudCity(140, 74, 0.5) + clouds(86, '#ffe0c0', '#f0a880', 0.8, 10, 10, 0.9)
       + bolt(47, 60, 92, 26, '#ff4a2a') + bolt(44, 61, 88, 30, '#ff4a2a') + bolt(76, 64, 104, 34, '#ff4a2a') + bolt(30, 48, 90, 32, '#3aff6a') + bolt(100, 22, 70, 46, '#ff4a2a')
       + (kit.falcon ? kit.falcon(106, 22, 1.6, -28) : '')
-      + `<g transform="translate(104 0) scale(-1 1)">${hounds(52, 58, 1.15, 26)}</g>` + slave1(80, 60, 0.95, 16) + tieBomber(26, 50, 1, 60)
+      + `<g transform="translate(104 0) scale(-1 1)">${hounds(52, 58, 1.15, 26)}</g>` + slave1(80, 60, 0.95, 16) + tieBomber(26, 48, 1.05, -12)
       + glow(92, 26, 2, '#ffb070', 0.5),
 
     // 10 · The Freezing Chamber: the carbon-freezing chamber. The ring of red

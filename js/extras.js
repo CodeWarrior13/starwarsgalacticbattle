@@ -920,12 +920,13 @@ const polaroid = () => {
   const d = new Date(ph.at || Date.now());
   return `<div class="xq-polaroid shot"><div class="xq-shotbg">${UI.featBadge(ph)}</div><span>${esc(ph.name.split(' · ')[0])}<small>${d.toLocaleDateString()}</small></span></div>`;
 };
+const ssIris = (cls = '') => el(`<div class="xq-iris ${cls}" aria-hidden="true"><div class="ic">${[' ', ' sm'].map((c) => Array.from({ length: 8 }, (_, k) => `<div class="iw" style="transform:rotate(${k * 45}deg)"><div class="ib${c.trim() ? c : ''}"></div></div>`).join('')).join('')}</div></div>`);
 const sceneSS = (x, onDone) => {
   const stage = `<div class="xq-vf big"><b></b><b></b><b></b><b></b><span>● REC</span><em>1/8000</em></div><div class="xq-irisslot"></div>
     ${polaroid()}
     <p class="xq-line" style="top:74%;--t:3.4s;color:#d9a8ff">"Most people miss the moment."</p><p class="xq-line" style="top:80%;--t:4.6s">"You captured it."</p>`;
   const p = scene(x, 'xq-ss', stage, 6600, onDone, (S, at) => { at(300, () => S.play('click')); at(900, () => S.play('glitch')); at(1500, () => S.play('saber')); at(2200, () => S.play('reveal_epic')); });
-  setTimeout(() => { const slot = document.querySelector('.feat-cine.xq-ss .xq-irisslot'); if (slot) slot.replaceWith(iris('big')); }, 0);
+  setTimeout(() => { const slot = document.querySelector('.feat-cine.xq-ss .xq-irisslot'); if (slot) slot.replaceWith(ssIris('big')); }, 0);
   return p;
 };
 H.scenes.xq_ss = (x) => sceneSS(x);
@@ -1330,8 +1331,8 @@ function journal() {
         <div class="xq-row">${WORD.split('').map((ch, k) => `<span class="xq-l ${z.hp || hf.includes(k) ? '' : 'no'}">${z.hp || hf.includes(k) ? ch : '?'}<small>${ROMAN[k]}</small></span>`).join('')}</div>
         ${cineOn() && !z.hp && hf.length >= WORD.length ? '<button class="btn xq-go xq-go-holo" type="button" data-xq-go="holo">Open the holocron</button>' : ''}</div>
       <div class="xq-jsec cchip ${solved || z.cc ? 'solved' : ''}"><h3>Vekko's Hot Chips</h3>
-        ${z.cc ? '<p class="xq-done">Cashed. Vekko remembers your face.</p>' : `<p>${chipFound().length} of ${CHIP.length} found. They don't say where they go: tap two chips to swap them until the word makes sense.</p>`}
-        <div class="xq-row">${(z.cc ? CHIP.split('').map((_, k) => k) : order).map((i, k) => `<button type="button" class="xq-l ${i < 0 ? 'no' : ''} ${sel === k ? 'sel' : ''}" data-slot="${k}" ${z.cc ? 'disabled' : ''}>${i < 0 ? '?' : CHIP[i]}</button>`).join('')}</div>
+        ${z.cc ? '<p class="xq-done">Cashed. Vekko remembers your face.</p>' : `<p>${chipFound().length} of ${CHIP.length} found. Tap two chips to swap them. A chip glows gold when it sits in its place.</p>`}
+        <div class="xq-row">${(z.cc ? CHIP.split('').map((_, k) => k) : order).map((i, k) => `<button type="button" class="xq-l ${i < 0 ? 'no' : ''} ${!z.cc && i >= 0 && CHIP[i] === CHIP[k] ? 'ok' : ''} ${sel === k ? 'sel' : ''}" data-slot="${k}" ${z.cc ? 'disabled' : ''}>${i < 0 ? '?' : CHIP[i]}</button>`).join('')}</div>
         ${solved ? `<p class="xq-done">The chips click into place.${cineOn() ? '' : ' Try it as a code.'}</p>` : ''}
         ${cineOn() && solved ? '<button class="btn xq-go xq-go-chip" type="button" data-xq-go="chip">Cash the chips</button>' : ''}</div>
       ${kyHtml(ksel)}
@@ -1648,6 +1649,8 @@ document.head.appendChild(Object.assign(document.createElement('style'), { textC
 .xq-jsec.ky .xq-l { border: 1px solid #1e4a6a; background: linear-gradient(180deg, #0c2236, #050d18); color: #e8f8ff; cursor: pointer; transition: transform .15s, box-shadow .3s; }
 .xq-jsec.ky .xq-l.no { color: #24405a; }
 .xq-jsec.ky .xq-l.sel { transform: translateY(-5px); border-color: #9fe8ff; }
+.xq-jsec.cchip .xq-l.ok { border-color: #ffd23f; color: #fff3c0; box-shadow: 0 0 12px rgba(255, 210, 63, .65), inset 0 0 10px rgba(255, 210, 63, .25); animation: chip-ok 2.4s ease-in-out infinite; }
+@keyframes chip-ok { 50% { box-shadow: 0 0 18px rgba(255, 210, 63, .9), inset 0 0 14px rgba(255, 210, 63, .35); } }
 .xq-jsec.ky .xq-l.hum { border-color: #7fe0ff; box-shadow: 0 0 12px rgba(127, 224, 255, .65), inset 0 0 10px rgba(127, 224, 255, .25); animation: ky-hum 2.4s ease-in-out infinite; }
 @keyframes ky-hum { 50% { box-shadow: 0 0 18px rgba(127, 224, 255, .9), inset 0 0 14px rgba(127, 224, 255, .35); } }
 .xq-jsec.ky.solved .xq-l { border-color: #bff2ff; background: linear-gradient(180deg, #1a5a8a, #0c2236); }
