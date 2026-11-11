@@ -17,9 +17,9 @@
   // The guild overhaul went live straight away on October 28, 2026.
   const LAUNCH_221 = root.__v22Test != null ? root.__v22Test : Date.UTC(2026, 9, 28, 12, 5, 0);
   const LAUNCH_23 = root.__v23Test != null ? root.__v23Test : Date.UTC(2026, 10, 4, 13, 5, 0);
-  // Update 2.4 has no date yet, so its entry stays hidden. When the date is set,
-  // put it in js/gate24.js (REL24) and fill in `date` below.
-  const LAUNCH_24 = root.__v24Test != null ? root.__v24Test : root.REL24 != null ? root.REL24 : null;
+  // Update 2.4 went live at 6:50 a.m. Central on November 11, 2026. This file
+  // loads before js/gate24.js, so the date is written here too.
+  const LAUNCH_24 = root.__v24Test != null ? root.__v24Test : root.REL24 != null ? root.REL24 : Date.UTC(2026, 10, 11, 12, 50, 0);
   const ALL_UPDATES = [
     {
       v: '2.4', date: 'November 11, 2026', title: 'Liberation', from: LAUNCH_24 == null ? Infinity : LAUNCH_24,
@@ -81,8 +81,8 @@
         'NEW|HoloNet card pairings: Kelleran Beq with Grogu, Krrsantan with Boba Fett, Hallway Vader with Darth Vader, and the Armorer with any Mandalorian each unlock a bonus together.',
         'IMPROVED|HoloNet card jobs: IG-11\'s Nurse Protocol also clears debuffs, Paz Vizsla shares his armor with the squad, Todo 360 repairs droid allies every turn, Greef Karga pays extra credits as well as Beskar, and the Armorer\'s Beskar Plating now blocks the next hit completely, and the Dark Trooper gains Phase III Reboot: once per battle he comes back from a finishing blow.',
         'FIXED|Every HoloNet card\'s passive now works in battle exactly as written on the card.',
-        'IMPROVED|Ranked rework: you only face pilots from your own division or one either side (Legend faces only Legend), with four new opponents after every fight. The leagues are wider, with Legend now starting at 2,500 rating, and wins in the higher leagues are worth more. Each opponent shows what a win is worth in rating and Beskar, and the Gold, Kyber and Legend leagues fight harder and pay more.',
-        'NEW|Placement battles: from Season 3, ranked opens with five Ground placement battles. They open on the last day of the season break (or whenever you arrive), each one adapts to how you fight, and the last is the Boss Trial (fight brilliantly and it becomes an Elite Boss Trial against a fully synergized squad). When the season starts, Admiral Ackbar reveals the league you start in. Fleet ranked opens once they\'re done.',
+        'IMPROVED|Ranked rework: you only face pilots from your own division or one either side (Legend faces only Legend), with four new opponents after every fight. From next season, the leagues are wider, with Legend now starting at 2,500 rating, and wins in the higher leagues are worth more. Each opponent shows what a win is worth in rating and Beskar, and the Gold, Kyber and Legend leagues fight harder and pay more.',
+        'NEW|Placement battles: from next season, ranked opens with five Ground placement battles. They open on the last day of the season break (or whenever you arrive), each one adapts to how you fight, and the last is the Boss Trial (fight brilliantly and it becomes an Elite Boss Trial against a fully synergized squad). When the season starts, Admiral Ackbar reveals the league you start in. Fleet ranked opens once they\'re done.',
         'IMPROVED|Every raid, guild raids included, now has a 5-minute raid clock on screen.',
         'FIXED|Raids no longer end early: a raid only ends when its clock runs out, the boss falls or your squad does.',
         'BALANCE|Raid bosses are built to last the week: far more health (about 150 million on the HoloNet raid, and guild raids grow with your guild), 3 runs a day each, and every raider\'s damage counts on the board.',

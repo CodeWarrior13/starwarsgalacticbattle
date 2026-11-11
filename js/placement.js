@@ -22,7 +22,7 @@
 
   const seasonNo = () => { const H = HN(); return H && H.social && H.social.seasonNo ? H.social.seasonNo() : 0; };
   const st = () => HN().S();
-  const on24 = () => !!(root.Update24 && root.Update24.on());
+  const on24 = () => { const H = HN(); return H && H.rank24 ? H.rank24() : !!(root.Update24 && root.Update24.on()); };
   const newR = (x) => { const H = HN(); return H && H.toNewR ? H.toNewR(x) : x; };
   const oldR = (x) => { const H = HN(); return H && H.toOldR ? H.toOldR(x) : x; };
   const brk = () => { const H = HN(); return (H && H.seasonBreak && H.seasonBreak()) || 0; };

@@ -423,7 +423,7 @@
       if (first) {
         const packId = def.faction === 'light' ? 'holocron' : 'strongbox';
         const res = this.openPack(packId, rng, { free: true });
-        if (res && res.length) { out.cards = res; out.card = null; out.holocron = packId === 'holocron' ? 'Jedi Holocron opened' : 'Sith Holocron opened'; }
+        if (res && res.length) { out.card = null; out.holoPack = packId; out.holocron = packId === 'holocron' ? 'Jedi Holocron earned' : 'Sith Holocron earned'; lib().holoQ = { pack: packId, cards: res }; }
       }
       this.state.credits += out.credits;
       this.state.aurodium += out.aurodium;
@@ -518,6 +518,20 @@
       return [{ id: 'liberator', tier: 7, icon: 'planet', name: 'Liberator of the Galaxy', desc: `Beat all ${ALL_BOSSES.length} bosses, main and optional. Reward: ???`, have, need: ALL_BOSSES.length }];
     });
     if (root.Lib24Crest) H.crests.liberator = () => root.Lib24Crest();
+    // An optional boss's first-win Holocron opens with the full crate opening
+    // once the results screen is closed (and again on the next launch if the
+    // game was closed first).
+    const openHolo = () => {
+      const q = Player.state && Player.state.lib24 && Player.state.lib24.holoQ;
+      if (!q || openHolo.busy) return;
+      openHolo.busy = true;
+      whenFree(() => {
+        delete Player.state.lib24.holoQ; Player.save();
+        try { const r = UI.packReveal(q.cards, q.pack); if (r && r.finally) r.finally(() => { openHolo.busy = false; }); else openHolo.busy = false; } catch (e) { openHolo.busy = false; }
+      });
+    };
+    H.battleEnd.push((battle, params, won) => { if (won && params && params.type === 'boss') setTimeout(openHolo, 1500); });
+    setTimeout(openHolo, 4000);
     // The final main boss's Holocron spin plays once the results screen is closed.
     H.battleEnd.push((battle, params, won) => {
       if (!won || !params || params.type !== 'boss' || params.boss !== FINAL_BOSS) return;
@@ -554,7 +568,7 @@
   // badge shows the scene alone).
   let benduWaiting = false;
   const whenFree = (fn) => {
-    const busy = () => (UI.App && UI.App.battleActive) || document.querySelector('.result-modal, .feat-show, .feat-cine, .walkout, .modal-backdrop');
+    const busy = () => (UI.App && UI.App.battleActive) || document.querySelector('.result-modal, .feat-show, .feat-cine, .walkout, .modal-backdrop, .hc, .lib-spin, .tut-intro, .tut-coach, .rank-up, .pack-reveal, .crate-cine');
     const tick = () => (busy() ? setTimeout(tick, 600) : fn());
     setTimeout(tick, 800);
   };

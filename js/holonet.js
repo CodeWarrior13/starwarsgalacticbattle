@@ -943,6 +943,14 @@
     },
   ];
   const v24 = () => !!(root.Update24 && root.Update24.on());
+  // The 2.4 ranked ladder (wider leagues, new gains) and placement battles wait
+  // for the first season that starts after 2.4 went live; testers see them now.
+  const rank24 = () => {
+    if (!v24()) return false;
+    const at = root.Update24 && root.Update24.at;
+    if (at == null || Date.now() < at) return true;
+    try { const H = root.HN; const i = H && H.seasonInfo && H.seasonInfo(); return !!i && Date.now() - i.started >= at - 36e5; } catch (e) { return false; }
+  };
   D.STATUS_INFO.breach = { label: 'Hull Breach', icon: '✷', kind: 'mech', desc: 'The hull is burning: loses health every turn, but hits much harder.' };
   // Update 2.2 (switch in js/friends.js, off until the 2.2 date is set): raid bosses get at
   // least 5,000,000 health and hit much harder; their guards hit a bit harder.
@@ -1075,7 +1083,7 @@
   const DIVS = DIVS_23.map((d) => ({ ...d }));
   let ladder24 = false;
   const syncLadder = () => {
-    const on = v24();
+    const on = rank24();
     if (on === ladder24) return;
     ladder24 = on;
     (on ? LEAGUES_24 : LEAGUES_23).forEach((l, i) => Object.assign(LEAGUES[i], l));
@@ -1308,7 +1316,7 @@
     const sweat = !calm && !!(si && si.started >= 0 && si.started < 2 * 864e5);
     const li = LEAGUE_IDS.indexOf(dv.league);
     const lg = sweat ? LEAGUE_IDS[Math.min(4, li + 1)] : dv.league;
-    const [lo, hi, s0, s1] = (v24() ? BOT_BAND_24 : BOT_BAND_23)[dv.league];
+    const [lo, hi, s0, s1] = (rank24() ? BOT_BAND_24 : BOT_BAND_23)[dv.league];
     const cap = D.MAX_LEVEL || 40;
     // Divisions I-III sit low, middle and high in the league's level band.
     const t = dv.league === 'legend' ? 0.5 : (dv.div - 1) / 2;
@@ -1411,8 +1419,8 @@
   // Higher leagues: wins are worth more rating (losses cost a little more too).
   // 2.4: about 20 a win at par in Bronze up to about 30 in Legend, never more than 30.
   const LEAGUE_GAIN = { bronze: 1, silver: 1.1, gold: 1.2, kyber: 1.35, legend: 1.5 };
-  const gainMult = (rating) => (v24() ? LEAGUE_GAIN[divOf(rating).league] || 1 : 1);
-  const winGain = (mine, theirs) => (v24() ? Math.min(30, Math.max(8, Math.round(40 * (1 - expected(mine, theirs)) * gainMult(mine)))) : Math.max(6, Math.round(36 * (1 - expected(mine, theirs)))));
+  const gainMult = (rating) => (rank24() ? LEAGUE_GAIN[divOf(rating).league] || 1 : 1);
+  const winGain = (mine, theirs) => (rank24() ? Math.min(30, Math.max(8, Math.round(40 * (1 - expected(mine, theirs)) * gainMult(mine)))) : Math.max(6, Math.round(36 * (1 - expected(mine, theirs)))));
   const lossCost = (mine, theirs) => Math.max(4, Math.round(28 * expected(mine, theirs) * (1 + (gainMult(mine) - 1) * 0.5)));
 
   // Record an arena result: rating, streak, Beskar, and any new division.
@@ -1730,7 +1738,8 @@
     };
   }
 
-  root.HN = { BETA, v22, bigRaid, raidRunsLeft, useRaidRun, RAID_DAY_RUNS, raidToughen, toughPool, xp, grantBase, HN_IDS, HOW, RAIDS, LEAGUES, DIVS, toNewR, toOldR, syncLadder, LEAGUE_REWARD, S, save, owns, card, grant, entry, pool, squad, squadEntries, squadPower, powerOf, avgLevel, divOf, opponents, payout, arenaResult, claimDivisions, week, raidNow, raidTotals, bankRaid, claimRaid, Net, rng, botSquad, BOT_NAMES, BOT_AVS, BOT_NAMES_2, BOT_NAMES_X };
+  const divOf23 = (rating) => [...DIVS_23].reverse().find((d) => rating >= d.min) || DIVS_23[0];
+  root.HN = { rank24, divOf23, BETA, v22, bigRaid, raidRunsLeft, useRaidRun, RAID_DAY_RUNS, raidToughen, toughPool, xp, grantBase, HN_IDS, HOW, RAIDS, LEAGUES, DIVS, toNewR, toOldR, syncLadder, LEAGUE_REWARD, S, save, owns, card, grant, entry, pool, squad, squadEntries, squadPower, powerOf, avgLevel, divOf, opponents, payout, arenaResult, claimDivisions, week, raidNow, raidTotals, bankRaid, claimRaid, Net, rng, botSquad, BOT_NAMES, BOT_AVS, BOT_NAMES_2, BOT_NAMES_X };
   // Win-streak flame: one emoji plus a CSS glow, tier every 10 wins.
   root.HN.streakFlame = (n, big) => { n = n | 0; if (n < 1) return '0'; const t = Math.min(9, Math.floor(n / 10)); return `<span class="hn-flame t${t}${big ? ' big' : ''}" title="${n} win streak"><i>🔥</i>${n}</span>`; };
 })(window);
@@ -6793,7 +6802,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const wk = week();
     const rows = Net.arena.filter((a) => a && a.uid && !NPC_ROWS.has(a.uid) && a.uid !== Net.me);
     const med = (xs, d) => { const v = xs.filter((x) => x > 0).sort((a, b) => a - b); return v.length >= 3 ? v[Math.floor(v.length / 2)] : d; };
-    paceCache = { t: Date.now(), gp: clampN(med(rows.map((a) => (a.gpw === wk ? a.gp : 0)), 320), 120, 1500), rating: clampN(med(rows.map((a) => a.rating), 1300), 900, root.Update24 && root.Update24.on() ? 2600 : 2100), level: clampN(med(rows.map((a) => a.level), 30), 20, 50) };
+    paceCache = { t: Date.now(), gp: clampN(med(rows.map((a) => (a.gpw === wk ? a.gp : 0)), 320), 120, 1500), rating: clampN(med(rows.map((a) => a.rating), 1300), 900, root.HN && root.HN.rank24 && root.HN.rank24() ? 2600 : 2100), level: clampN(med(rows.map((a) => a.level), 30), 20, 50) };
     return paceCache;
   }
   // This week's pace for a guild: 0.75x to 1.3x the real players.
@@ -6813,7 +6822,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const pace = npcPace(row.guild, wk);
     const share = 0.4 + r() * 1.2;
     const sf = (() => { try { const si = HN.seasonInfo(); return clampN(1 - si.ends / si.length, 0, 1); } catch (e) { return 0.5; } })();
-    const rating = Math.round(clampN(rp.rating + row.off + 140 * sf * (0.6 + pace * 0.4), 700, root.Update24 && root.Update24.on() ? 2800 : 2350));
+    const rating = Math.round(clampN(rp.rating + row.off + 140 * sf * (0.6 + pace * 0.4), 700, root.HN && root.HN.rank24 && root.HN.rank24() ? 2800 : 2350));
     const level = Math.round(clampN(rp.level + row.loff + weeksLive() * 0.4, 20, 50));
     const gp = Math.round(rp.gp * pace * share * Math.pow(weekFrac(), 0.9));
     const sr = HN.rng(hashS(uid) + wk * 13);
@@ -7702,7 +7711,10 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   function checkSeason() {
     const h = P2();
     if (h.soc.season === seasonNo() || h.soc.pendingSeason) return;
-    const best = HN.divOf(Math.max(h.soc.sBest || 0, h.rating));
+    // A season that started before the 2.4 ladder went live pays on the old ladder.
+    const at = root.Update24 && root.Update24.at;
+    const oldLadder = at != null && HN.divOf23 && seasonStartWeek(h.soc.season) * WEEK_MS < at - 36e5;
+    const best = (oldLadder ? HN.divOf23 : HN.divOf)(Math.max(h.soc.sBest || 0, h.rating));
     h.soc.pendingSeason = { no: h.soc.season, league: best.league, div: best.div, name: best.name };
     h.soc.season = seasonNo();
     h.soc.seasonsDone = (h.soc.seasonsDone || 0) + 1;
