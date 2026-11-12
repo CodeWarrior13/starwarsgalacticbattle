@@ -44,7 +44,7 @@
         'NEW|The Black Market opens three shops: Vekko the Fence for cards and crates, Luthen\'s Gallery for cosmetics, and Watto\'s Wagers for casino games. Switch between them with the tabs at the top.',
         'NEW|Luthen\'s Gallery, Coruscant\'s finest antiquities: titles, win screens and crate themes, with new pieces every Monday. While you browse, the top bar shows your Beskar, Kyber and Aurodium.',
         'NEW|36 gallery pieces rotate through the Gallery week by week: 22 banners, 7 win screens and 7 battle intros, each with its own animated scene.',
-        'NEW|New on Luthen\'s plinth: the Boonta Eve Finish win screen, and the Kyber Geode, Bacta Tank and Sarlacc Pit crate themes.',
+        'NEW|New on Luthen\'s plinth: the Boonta Eve Finish win screen, and the Kyber Geode, Bacta Tank and Sarlacc Pit crate themes. Win 150 all-ship battles for the Hyperspace Drop crate theme.',
         'NEW|The Cosmetics tab in your profile: frames, titles, poses, win screens and crate themes in one place. Preview anything on your card, equip what you own, and new items carry a red dot until you look.',
         'NEW|40 profile titles, 20 to earn and 20 to buy, each in up to 6 colours: Silver, Gold, Kyber, Crimson, Aurora and Holo.',
         'NEW|15 new profile frames, and the Bronze, Silver, Guild, Victor and Podium frames redrawn from scratch.',
