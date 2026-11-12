@@ -964,7 +964,8 @@
   const BIG_RAID_WK = Math.floor(Date.UTC(2026, 10, 12) / (7 * 24 * 3600 * 1000));
   const bigRaid = () => { try { return week() >= BIG_RAID_WK || !!(root.__bigRaidTest); } catch (e) { return false; } };
   // Raised from 150 million (Nov 12): one strong pilot did 107 million in a day's three runs.
-  const BIG_HP = 1e9;
+  // Raised again to 9 billion (9x, same day): one pilot did 365 million to Snoke in a single run.
+  const BIG_HP = 9e9;
   const BOT_SHARE = 0.5;
   const RAID_DAY_RUNS = 3;
   const toughPool = (r) => {
@@ -1005,7 +1006,7 @@
       try { return act(u, i, t); } finally { u.atk = a0; }
     };
   };
-  const RAID_TUNE = { boss: 2, guard: 1.6, hunt: 0.85, rv: 1.8 };
+  const RAID_TUNE = { boss: 2.2, guard: 2, hunt: 0.85, rv: 1.8 };
   const BOSS_KIT = {
     raid_jabba: { role: 'tank', spd: 88, abilities: [ab('Tail Slam', 0, 'enemy', [dmg(1.3)], 'Crushes one enemy.'), ab('Mocking Laughter', 3, 'allEnemies', [debuff('offDown', 2, 0.7)], 'Ho ho ho. Offense Down on every enemy.')], ultimate: ult('Bounty on Your Heads', 'allEnemies', [dmg(1.7), debuff('defDown', 2)], 'Puts a price on everyone: heavy damage and Defense Down.', 'Bo shuda!') },
     raid_nihilus: { role: 'attacker', spd: 136, abilities: [ab('Void Strike', 0, 'enemy', [dmg(1.4)], 'A strike that empties the target.'), ab('Drain Life', 3, 'enemy', [dmg(1.8), { ...heal(0.04), on: 'self' }], 'Drinks one enemy\'s life.')], ultimate: ult('Feast on the World', 'allEnemies', [dmg(2.0), { ...heal(0.06), on: 'self' }], 'Tears the life out of every enemy and feeds on it.', '…') },
@@ -1267,7 +1268,7 @@
       const same = mine && mine.week === wk && mine.boss === boss;
       const dmg = Math.max(local ? local.dmg : 0, (same ? mine.dmg : 0) + amount);
       // score sorts this week's damage above every older week in one ordered query.
-      const body = { week: wk, boss, dmg, best: Math.max(same ? mine.best || 0 : 0, amount), score: wk * 1e9 + dmg, updated: Date.now() };
+      const body = { week: wk, boss, dmg, best: Math.max(same ? mine.best || 0 : 0, amount), score: wk * 1e12 + dmg, updated: Date.now() };
       this.raidRows.set(this.me, { ...body, uid: this.me });
       this.sync();
       try { await this.db.doc(`raid/${this.me}`).set(body); } catch (e) { /* ignore */ }
