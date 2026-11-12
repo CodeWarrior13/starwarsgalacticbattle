@@ -28,7 +28,7 @@
       v: '2.5', date: 'Coming soon', title: 'Cosmetic', from: LAUNCH_25,
       // Bigger than Liberation: a grand-opening marquee for the three shops.
       theme: 'cosmetic',
-      stats: [['3', 'shops'], ['3', 'new cards'], ['40', 'titles'], ['6', 'title colours'], ['15', 'new frames'], ['42', 'banners'], ['14', 'victory poses'], ['16', 'win screens'], ['9', 'crate themes'], ['7', 'battle intros'], ['36', 'gallery pieces'], ['100+', 'guild pictures']],
+      stats: [['3', 'shops'], ['3', 'new cards'], ['40', 'titles'], ['6', 'title colours'], ['15', 'new frames'], ['42', 'banners'], ['14', 'victory poses'], ['16', 'win screens'], ['9', 'crate themes'], ['8', 'battle intros'], ['36', 'gallery pieces'], ['100+', 'guild pictures']],
       decos: ['shops', 'wear', 'cards', 'casino', 'squad', 'holonet', 'credits', 'secret'],
       groups: [
         ['Three Shops Open', '⌂', 'Black Market opens|Luthen\'s Gallery, Coruscant|gallery pieces|New on Luthen'],
@@ -52,7 +52,7 @@
         'NEW|Victory poses: after every win, the MVP (the card that did the most real work) strikes one of 14 poses.',
         'NEW|9 win screens play after the pose, from the Medal Ceremony to the Jedi Temple, with 7 more in Luthen\'s rotation. Tap to skip.',
         'NEW|9 crate themes: set one for a crate and it opens with its own scene, from the Sith Vault to a Sarlacc that spits your crate out.',
-        'NEW|Live duels, wagers and friendly battles open with a VS intro, and you can swap it for one of 7 battle intros from the Gallery, from Bounty Posters to Sith vs Jedi, in the new Intros tab.',
+        'NEW|Live duels, wagers and friendly battles open with a VS intro, and you can swap it for one of 8 battle intros from the Gallery, from Bounty Posters to Sith vs Jedi and the Trench Run on the Featured plinth, in the new Intros tab.',
         'NEW|More than 100 new guild pictures: cards, bosses, world scenes and crests.',
         'NEW|Captain Rex walks you through cosmetics the first time you visit.',
         'NEW|The Havoc (Legendary ship): six forward cannons, a dorsal ball turret that fires a free shot after every action, and a bomb bay that never runs dry.',
