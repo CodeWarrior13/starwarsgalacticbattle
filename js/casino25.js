@@ -142,6 +142,8 @@ for(const w of ['p','h']){const box=$('pz-'+w+'c');for(let i=0;i<9;i++){const s=
   const TABS = [['vekko', 'Vekko the Fence', 'Cards & crates', 'Vekko'], ['luthen', "Luthen's Gallery", 'Cosmetics', 'Gallery'], ['casino', "Watto's Wagers", 'Casino games', "Watto's"]];
   const panes = {};
   root.Shops25 = { add(id, fn) { panes[id] = fn; }, on };
+  (root.__shops25q || []).forEach((q) => { panes[q[0]] = q[1]; });
+  root.__shops25q = null;
   let wattoTimer = null;
   function watto(host) {
     const b = host.querySelector('#wodds');
