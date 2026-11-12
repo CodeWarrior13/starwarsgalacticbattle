@@ -4222,7 +4222,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const rng = HN.rng(cfg.seed);
     HN.B.back = cfg.fr ? { friends: true } : { view: 'duels' };
     HN.hnStart({ type: 'hn', hn: 'duel', kind: cfg.kind }, cfg.mine.map(levelOf(cfg.ts)), cfg.theirs.map(levelOf(cfg.ts)), {
-      name: `${cfg.ts ? 'True Strength' : cfg.fr ? 'Friendly Battle' : 'Live Duel'} · vs ${cfg.name}`, kind: cfg.kind, planet: cfg.kind === 'ship' ? 'coruscant' : 'geonosis', rng,
+      name: `${cfg.ts ? 'True Strength' : cfg.fr ? 'Friendly Battle' : 'Live Duel'} · vs ${cfg.name}`, kind: cfg.kind, peer: cfg.peer, planet: cfg.kind === 'ship' ? 'coruscant' : 'geonosis', rng,
       intro: `${cfg.fr ? 'Friendly battle (unranked, no rewards)' : 'Live'}: ${cfg.ts ? 'True Strength, every card fights at its real level and stars' : `every card fights at Level ${DUEL_LEVEL} ★${DUEL_STARS}`}.${(cfg.bans || []).length ? ` Banned: ${cfg.bans.map(unitName).join(' and ')}.` : ''} You play your squad, they play theirs. 45 seconds per move.`,
       setup(b) {
         b.duel = M;

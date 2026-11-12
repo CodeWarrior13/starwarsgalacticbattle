@@ -148,7 +148,7 @@
       const o = overlay('intro');
       const c = C(); const lid = c && c.eq && c.eq.in && c.eq.in !== 'vs' && L5() && L5().BY[c.eq.in] ? c.eq.in : null;
       if (lid && L5().cached(lid)) {
-        play(o, `<div class="fx25-intro l5in">${L5().html(lid, 'l5-li-stage', { a: me.name, b: them.name, play: true })}</div>`, 3600).then(() => { o.classList.add('out'); setTimeout(() => o.remove(), 300); res(); });
+        play(o, `<div class="fx25-intro l5in">${L5().html(lid, 'l5-li-stage', { a: me.name, b: them.name, play: true, va: me.pic, vb: them.pic })}</div>`, 3600).then(() => { o.classList.add('out'); setTimeout(() => o.remove(), 300); res(); });
         L5().fill(o);
         return;
       }
@@ -167,8 +167,10 @@
           const meP = HN.cos25 ? HN.cos25.me() : {};
           const name = String((opts && opts.name) || '').split(' · vs ')[1] || 'Opponent';
           const oppDef = D.UNIT_MAP[(enemies[0] || {}).id];
-          await intro({ name: meP.tag || 'You', sub: (opts && opts.name || '').split(' · ')[0], av: HN.cos25 ? HN.cos25.avatar(meP, 'md') : '', ban: meP.ban },
-            { name, sub: 'Challenger', av: oppDef ? `<span class="fx25-oav">${portrait(oppDef)}</span>` : '' });
+          // Intros that show the players use their pictures in their frames (the opponent's from their HoloNet profile).
+          let vb = ''; try { vb = (opts && opts.peer && HN.avatarFor ? HN.avatarFor(opts.peer) : '') || (oppDef && HN.avatarFor ? HN.avatarFor(null, { av: oppDef.id }) : ''); } catch (e) { vb = ''; }
+          await intro({ name: meP.tag || 'You', sub: (opts && opts.name || '').split(' · ')[0], av: HN.cos25 ? HN.cos25.avatar(meP, 'md') : '', pic: HN.cos25 ? HN.cos25.avatar(meP, 'md') : '', ban: meP.ban },
+            { name, sub: 'Challenger', av: oppDef ? `<span class="fx25-oav">${portrait(oppDef)}</span>` : '', pic: vb });
         } catch (e) { /* straight into the duel */ }
       }
       return base.apply(this, arguments);
