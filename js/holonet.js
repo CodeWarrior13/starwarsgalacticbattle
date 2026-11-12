@@ -963,7 +963,8 @@
   // the week: about 150 million health (by boss), 3 runs a day each, with the other raiders taking about half.
   const BIG_RAID_WK = Math.floor(Date.UTC(2026, 10, 12) / (7 * 24 * 3600 * 1000));
   const bigRaid = () => { try { return week() >= BIG_RAID_WK || !!(root.__bigRaidTest); } catch (e) { return false; } };
-  const BIG_HP = 150e6;
+  // Raised from 150 million (Nov 12): one strong pilot did 107 million in a day's three runs.
+  const BIG_HP = 1e9;
   const BOT_SHARE = 0.5;
   const RAID_DAY_RUNS = 3;
   const toughPool = (r) => {
@@ -1510,12 +1511,13 @@
     const key = `${w}:${R.id}:${hr}`;
     if (raidBotCache && raidBotCache.key === key) return raidBotCache.rows;
     const r = rng(w * 7919 + 13);
-    const names = BOT_NAMES.concat(BOT_NAMES_2).sort(() => r() - 0.5).slice(0, 34);
+    // Fewer, stronger raiders: their runs hit like real pilots' instead of a few hundred thousand each.
+    const names = BOT_NAMES.concat(BOT_NAMES_2).sort(() => r() - 0.5).slice(0, bigRaid() ? 14 : 34);
     const rows = names.map((name, i) => {
       const keen = 1.6 - i * 0.035 + (r() - 0.5) * 0.4;
       const start = r() * 30;
       const runsPerDay = Math.min(3, 0.6 + r() * 1.8);
-      const per = Math.round(R.pool * 0.003 * keen * (0.8 + r() * 0.4));
+      const per = Math.round(R.pool * 0.003 * (bigRaid() ? keen * keen : keen) * (0.8 + r() * 0.4));
       const runsAt = (h2) => (h2 < start ? 0 : 1 + Math.floor(((h2 - start) / 24) * runsPerDay));
       const dmgAt = (h2) => { const rs = rng(w * 31 + i * 7); let d = 0; for (let k = 0, n = runsAt(h2); k < n; k++) d += Math.round(per * (0.6 + rs() * 0.8)); return d; };
       const fx = r();
@@ -1740,6 +1742,22 @@
 
   const divOf23 = (rating) => [...DIVS_23].reverse().find((d) => rating >= d.min) || DIVS_23[0];
   root.HN = { rank24, divOf23, BETA, v22, bigRaid, raidRunsLeft, useRaidRun, RAID_DAY_RUNS, raidToughen, toughPool, xp, grantBase, HN_IDS, HOW, RAIDS, LEAGUES, DIVS, toNewR, toOldR, syncLadder, LEAGUE_REWARD, S, save, owns, card, grant, entry, pool, squad, squadEntries, squadPower, powerOf, avgLevel, divOf, opponents, payout, arenaResult, claimDivisions, week, raidNow, raidTotals, bankRaid, claimRaid, Net, rng, botSquad, BOT_NAMES, BOT_AVS, BOT_NAMES_2, BOT_NAMES_X };
+  // Revivers: cards that can bring a fallen ally back. Boss raids are the one place
+  // two of them may share a squad (never more than two).
+  const REV_CAP = 2;
+  const isReviver = (id) => { const def = D.UNIT_MAP[id]; if (!def) return false; try { return D.abilitiesFor(def).some((a) => (a.effects || []).some((e) => e.type === 'revive')); } catch (e) { return false; } };
+  const capRevivers = (ids, have = 0) => { let n = have; return ids.filter((id) => { if (!isReviver(id)) return true; if (n >= REV_CAP) return false; n++; return true; }); };
+  const raidKey = (kind) => `raid_${kind}`;
+  function raidSquad(kind) {
+    const saved = (S().squads[raidKey(kind)] || []).filter((id) => D.UNIT_MAP[id] && D.UNIT_MAP[id].kind === kind && entry(id));
+    return saved.length ? capRevivers(saved).slice(0, 5) : squad(kind);
+  }
+  const raidEntries = (kind) => raidSquad(kind).map(entry).filter(Boolean).map((e) => { const t = root.HNBonus && root.HNBonus.on() ? root.HNBonus.tierOf(e.id) : 0; return t ? { ...e, forge: t } : e; });
+  // The next strongest cards after your defense squad: raid allies bring these when a card is already taken.
+  const bench = (kind) => { const sq = new Set(squad(kind)); return pool(kind).filter((u) => !sq.has(u.id)).sort((a, b) => powerOf(b.id) - powerOf(a.id)).slice(0, 8).map((u) => entry(u.id)).filter(Boolean); };
+  // In a raid battle: mark revivers (the boss goes for them) and soften them a touch.
+  const markRevivers = (b) => { b.units.forEach((u) => { if (u.side === 'player' && isReviver(u.id || (u.def && u.def.id))) { u.reviver = true; u.atk = Math.round(u.atk * 0.9); } }); };
+  Object.assign(root.HN, { REV_CAP, isReviver, capRevivers, raidSquad, raidEntries, raidKey, bench, markRevivers });
   // Win-streak flame: one emoji plus a CSS glow, tier every 10 wins.
   root.HN.streakFlame = (n, big) => { n = n | 0; if (n < 1) return '0'; const t = Math.min(9, Math.floor(n / 10)); return `<span class="hn-flame t${t}${big ? ' big' : ''}" title="${n} win streak"><i>🔥</i>${n}</span>`; };
 })(window);
@@ -2763,7 +2781,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     </div>${back ? '<button type="button" class="hn-back" data-hn="hub">‹ HoloNet</button>' : ''}`;
   };
   const go = (view, extra) => App.go('holonet', { view, ...(extra || {}) });
-  const squadBox = (ids, kind, pow, label) => `<div class="hn-sq"><div class="top"><b>${label || 'Your squad'}</b><span class="pw">⚡ ${fmt(pow)}</span><button type="button" class="hn-btn ghost" data-hn="pick" data-kind="${kind}">Edit</button></div>
+  const squadBox = (ids, kind, pow, label, raid) => `<div class="hn-sq"><div class="top"><b>${label || 'Your squad'}</b><span class="pw">⚡ ${fmt(pow)}</span><button type="button" class="hn-btn ghost" data-hn="pick" data-kind="${kind}"${raid ? ' data-raid="1"' : ''}>Edit</button></div>
     <div class="row">${[0, 1, 2, 3, 4].map((i) => (ids[i] ? mini(ids[i]) : '<span class="empty"></span>')).join('')}</div></div>`;
 
   // ---------- the HoloNet screen ----------
@@ -2896,7 +2914,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   function allies(kind = 'character') {
     const key = kind === 'ship' ? 'fleet' : 'ground';
     const out = HN.Net.arena.filter((a) => a.uid !== HN.Net.me && Array.isArray(a[key]) && a[key].length && a[key].every((e) => D.UNIT_MAP[e.id])).slice(0, 5)
-      .map((a) => ({ id: `p:${a.uid}`, name: HN.Net.name(a.uid), real: true, squad: a[key] }));
+      .map((a) => ({ id: `p:${a.uid}`, name: HN.Net.name(a.uid), real: true, squad: a[key], bench: a[key === 'fleet' ? 'fb' : 'gb'] || [] }));
     const r = HN.rng(HN.week() * 31 + (S().allySeed || 0) * 7919 + 7);
     const mine = HN.squadEntries(kind);
     const lvl = Math.max(1, Math.round(HN.avgLevel(mine)));
@@ -2907,8 +2925,8 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     for (let k = 0; out.length < 3 && k < 3; k++) {
       const picks = [];
       const pool = avail.slice();
-      while (picks.length < 5 && pool.length) picks.push(pool.splice(Math.floor(r() * pool.length), 1)[0].id);
-      out.push({ id: `m:${k}`, name: names[k], real: false, squad: picks.map((id) => ({ id, level: lvl, stars: 3 })) });
+      while (picks.length < 10 && pool.length) picks.push(pool.splice(Math.floor(r() * pool.length), 1)[0].id);
+      out.push({ id: `m:${k}`, name: names[k], real: false, squad: picks.slice(0, 5).map((id) => ({ id, level: lvl, stars: 3 })), bench: picks.slice(5).map((id) => ({ id, level: lvl, stars: 3 })) });
     }
     return out;
   }
@@ -2930,7 +2948,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       </div>
       ${t.fallen ? `<div class="hn-free"><span class="grow"><b>${esc(r.name)} has fallen!</b> ${rec && rec.dmg ? (rec.claimed ? 'Rewards claimed. A new boss arrives next week.' : 'You helped: claim your rewards.') : 'You didn\'t land a hit this week.'}</span>${rec && rec.dmg && !rec.claimed ? '<button type="button" class="hn-btn gold" data-hn="claim">Claim</button>' : ''}</div>` : ''}
       <div class="hn-sec"><h3>Damage this week</h3><div class="hn-board">${t.rows.concat(t.bots || []).sort((a, b2) => b2.dmg - a.dmg).slice(0, 10).map((x, i) => `<div class="${x.name === 'You' || x.uid === HN.Net.me ? 'me' : ''}"><span>${i + 1}. ${esc(x.name)}</span><b>${fmt(x.dmg)}</b></div>`).join('')}</div><p class="muted small" style="margin:0">Top damage when the boss falls earns Krrsantan. Everyone who hit it gets 500 Beskar and an Elite bounty puck, with a chance at Aurra Sing or the Fang Fighter.</p></div>
-      ${squadBox(ids, kind, HN.squadPower(HN.squadEntries(kind)), kind === 'ship' ? 'Your fleet' : 'Your 5')}
+      ${squadBox(HN.raidSquad(kind), kind, HN.squadPower(HN.raidEntries(kind)), kind === 'ship' ? 'Your raid fleet' : 'Your raid squad', true)}
       <div class="hn-sec"><h3>Fight alongside</h3><div class="hn-allies">${al.map((a) => `<button type="button" class="hn-ally ${a.id === allyPick ? 'on' : ''}" data-hn="ally" data-id="${a.id}"><b>${esc(a.name)} ${a.real ? '<span class="hn-chip">player</span>' : ''}</b><div class="minis">${a.squad.map((e) => mini(e.id)).join('')}</div></button>`).join('')}</div></div>
       ${(() => { const big = HN.bigRaid(); const left = big ? HN.raidRunsLeft() : 1; const out = big && left <= 0; return `<button type="button" class="hn-btn gold" data-hn="raidgo" style="justify-self:center;padding:12px 28px" ${t.fallen || !ids.length || out ? 'disabled' : ''}>${t.fallen ? 'Boss defeated' : out ? 'No runs left today' : 'Start raid'}</button>${big && !t.fallen ? `<small class="muted" style="display:block;text-align:center;margin-top:4px">${Math.max(0, left)} of ${HN.RAID_DAY_RUNS} runs left today · 5 minutes each</small>` : ''}`; })()}`;
   };
@@ -3051,7 +3069,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     if (HN.clicks[a]) return HN.clicks[a](b, render);
     if (['vault', 'leagues', 'captured', 'leaders', 'forge', 'raid', 'duels'].includes(a)) return go(a);
     if (a === 'arena') return go('arena', { kind: b.dataset.kind });
-    if (a === 'pick') return pickSquad(b.dataset.kind, render);
+    if (a === 'pick') return pickSquad(b.dataset.kind, render, b.dataset.raid === '1');
     if (a === 'attack') return attack(b.dataset.kind, oppCache[b.dataset.kind][+b.dataset.i]);
     if (a === 'placego') return placeAttack();
     if (a === 'placeshow') return root.Placement.reveal().then(() => go('arena', { kind: 'character' }));
@@ -3065,10 +3083,11 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     if (a === 'direct') return direct(b.dataset.id, render);
   }
 
-  function pickSquad(kind, after) {
+  function pickSquad(kind, after, raid) {
     const list = HN.pool(kind).sort((x, y) => HN.powerOf(y.id) - HN.powerOf(x.id));
-    let sel = HN.squad(kind).slice();
-    const body = () => `<div class="hn-pick-head"><b>${kind === 'ship' ? 'Fleet' : 'Ground'} squad · ${sel.length}/5</b><span class="muted small">HoloNet cards can join here, and only here.</span></div>
+    let sel = (raid ? HN.raidSquad(kind) : HN.squad(kind)).slice();
+    const label = () => `${raid ? 'Raid ' : ''}${kind === 'ship' ? 'fleet' : 'squad'} · ${sel.length}/5`.replace(/^./, (c) => c.toUpperCase());
+    const body = () => `<div class="hn-pick-head"><b>${label()}</b><span class="muted small">${raid ? `Boss raids only: up to ${HN.REV_CAP} revivers can fight together here.` : 'HoloNet cards can join here, and only here.'}</span></div>
       <div class="hn-pick" data-noswipe>${list.map((u) => (u.hn ? hnCard(u, { selected: sel.includes(u.id) }) : UI.unitCard(u, { tag: 'div', hideShards: true, selected: sel.includes(u.id) })).replace('class="ucard', `data-pick="${u.id}" class="ucard`)).join('')}</div>
       <div class="modal-actions"><button type="button" class="btn" data-x="auto">Auto-pick</button><button type="button" class="btn btn-primary" data-x="save">Save</button></div>`;
     const m = openModal(`<div data-body>${body()}</div>`, { cls: 'hn-pick-modal' });
@@ -3077,14 +3096,15 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const mark = () => {
       m.root.querySelectorAll('.hn-pick [data-pick]').forEach((n) => n.classList.toggle('selected', sel.includes(n.dataset.pick)));
       const hd = m.root.querySelector('.hn-pick-head b');
-      if (hd) hd.textContent = `${kind === 'ship' ? 'Fleet' : 'Ground'} squad · ${sel.length}/5`;
+      if (hd) hd.textContent = label();
     };
     m.root.addEventListener('click', (e) => {
       const c = e.target.closest('[data-pick]');
-      if (c) { const id = c.dataset.pick; if (!sel.includes(id) && D.clashWith(sel, id)) return toast(D.apartLine(id, D.clashWith(sel, id))); sel = sel.includes(id) ? sel.filter((x) => x !== id) : sel.length < 5 ? [...sel, id] : sel; return mark(); }
+      if (c) { const id = c.dataset.pick; if (raid && !sel.includes(id) && HN.isReviver(id) && sel.filter(HN.isReviver).length >= HN.REV_CAP) return toast(`Up to ${HN.REV_CAP} revivers in a raid squad.`); if (!raid && !sel.includes(id) && D.clashWith(sel, id)) return toast(D.apartLine(id, D.clashWith(sel, id))); sel = sel.includes(id) ? sel.filter((x) => x !== id) : sel.length < 5 ? [...sel, id] : sel; return mark(); }
       const x = e.target.closest('[data-x]');
       if (!x) return;
-      if (x.dataset.x === 'auto') { sel = D.keepApart(list.map((u) => u.id)).slice(0, 5); return redraw(); }
+      if (x.dataset.x === 'auto') { sel = (raid ? HN.capRevivers(list.map((u) => u.id)) : D.keepApart(list.map((u) => u.id))).slice(0, 5); return redraw(); }
+      if (raid) { S().squads[HN.raidKey(kind)] = sel; HN.save(); m.close(); after(); return; }
       S().squads[kind] = sel;
       HN.save();
       HN.Net.publish();
@@ -3179,16 +3199,23 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
 
   // Always ten in a raid: cards the ally shares with you (or a short ally squad)
   // are covered by substitutes at the ally's level.
-  HN.fillAlly = (allyEntries, used, kind, lvl, seed) => {
-    if (allyEntries.length >= 5) return allyEntries;
+  // Always ten in a raid, all different: cards the ally shares with you are covered by the
+  // ally's own next cards (their bench), then by stand-ins at their level. Two revivers at most.
+  HN.fillAlly = (allyEntries, used, kind, lvl, seed, benchList, mine) => {
+    const revs = () => (mine || []).concat(allyEntries).filter((e) => HN.isReviver(e.id)).length;
+    for (let k = allyEntries.length - 1; k >= 0; k--) if (HN.isReviver(allyEntries[k].id) && revs() > HN.REV_CAP) allyEntries.splice(k, 1);
     allyEntries.forEach((e) => used.add(e.id));
+    const ok = (id) => !used.has(id) && D.UNIT_MAP[id] && D.UNIT_MAP[id].kind === kind && !(HN.isReviver(id) && revs() >= HN.REV_CAP);
+    for (const e of benchList || []) { if (allyEntries.length >= 5) break; if (e && ok(e.id)) { allyEntries.push({ ...e }); used.add(e.id); } }
+    if (allyEntries.length >= 5) return allyEntries;
     const al2 = allyEntries.length ? Math.max(1, Math.round(HN.avgLevel(allyEntries))) : lvl;
     const st2 = allyEntries.length ? Math.max(1, Math.round(allyEntries.reduce((a, e) => a + (e.stars || 3), 0) / allyEntries.length)) : 3;
     const rr = HN.rng(HN.week() * 53 + String(seed || '').length * 977 + allyEntries.length);
-    const pool = D.UNITS.filter((u) => u.kind === kind && !u.exclusive && !u.boss && !used.has(u.id));
+    const pool = D.UNITS.filter((u) => u.kind === kind && !u.exclusive && !u.boss && ok(u.id));
     while (allyEntries.length < 5 && pool.length) {
       const u = pool.splice(Math.floor(rr() * pool.length), 1)[0];
       allyEntries.push({ id: u.id, level: al2, stars: st2 });
+      used.add(u.id);
     }
     return allyEntries;
   };
@@ -3196,7 +3223,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const r = HN.raidNow();
     const t = HN.raidTotals();
     const kind = raidKind(r);
-    const mine = HN.squadEntries(kind);
+    const mine = HN.raidEntries(kind);
     if (!mine.length) return toast(kind === 'ship' ? 'You need ships for a fleet raid. Pick your fleet first.' : 'Pick a squad first.');
     if (HN.bigRaid() && HN.raidRunsLeft() <= 0) return toast(`No raid runs left today. You get ${HN.RAID_DAY_RUNS} a day: they come back at midnight Central.`);
     if (HN.bigRaid()) HN.useRaidRun();
@@ -3205,7 +3232,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const used = new Set(mine.map((e) => e.id));
     const allyEntries = ally.squad.filter((e) => !used.has(e.id) && D.UNIT_MAP[e.id]).map((e) => ({ ...e }));
     const lvl = Math.max(1, Math.round(HN.avgLevel(mine)));
-    HN.fillAlly(allyEntries, used, kind, lvl, ally.id);
+    HN.fillAlly(allyEntries, used, kind, lvl, ally.id, ally.bench, mine);
     const enemies = r.slots.map((id) => ({ id, level: id === r.id ? lvl + 4 : lvl, stars: id === r.id ? 7 : 3 }));
     HNB.back = { view: 'raid' };
     hnStart({ type: 'hn', hn: 'raid', boss: r.id }, [...mine, ...allyEntries], enemies, {
@@ -3213,6 +3240,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       intro: `${allyEntries.length ? `${ally.name} fights beside you. ` : ''}Deal as much damage as you can: every hit counts toward the shared health bar.`,
       setup(b) {
         b.hnRaid = { boss: r.id, turn: 0, limit: HN.startRaidClock ? Infinity : 100 };
+        HN.markRevivers(b);
         const boss = b.units.find((u) => u.id === r.id);
         boss.maxHp = t.pool; boss.hp = Math.max(1, t.left);
         HN.raidToughen(b, r.id);
@@ -6594,7 +6622,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const h = P2();
     const p = myProfile();
     const body = {
-      rating: h.rating, ground: HN.squadEntries('character'), fleet: HN.squadEntries('ship'), level: Player.state.account.level,
+      rating: h.rating, ground: HN.squadEntries('character'), fleet: HN.squadEntries('ship'), gb: HN.bench ? HN.bench('character') : [], fb: HN.bench ? HN.bench('ship') : [], level: Player.state.account.level,
       tag: !this.db.firestore || (h.prof.key && h.prof.key === nameKey(p.tag) && (!h.prof.kuid || h.prof.kuid === this.me)) ? p.tag : '', av: p.av, frame: p.frame, ban: p.ban || '', ti: on25() && h.prof.ti ? h.prof.ti : null, badges: p.badges, nb: p.nb, st: p.st, dw: p.st.dw || 0,
       ss: seasonNo() * 1e5 + (HN.unplaced && HN.unplaced() ? 0 : Math.max(h.soc.sBest || 0, h.rating)),
       guild: h.guild || null, apply: (!h.guild && h.apply) || null, gp: h.soc.gp, gpw: h.soc.gpw, gpl: h.soc.gpl, don: h.soc.don && h.soc.don.g ? { g: h.soc.don.g, a: h.soc.don.a | 0 } : null, gr: { w: h.soc.gr.w, b: h.soc.gr.b, d: h.soc.gr.d, f: h.soc.gr.f },
@@ -7494,7 +7522,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const mates = membersOf(gid).filter((u) => u !== Net.me && u !== 'me').map((uid) => ({ uid, a: Net.arena.find((x) => x.uid === uid) || (NPC_ROWS.has(uid) ? npcRow(uid) : null) })).filter((x) => x.a && Array.isArray(x.a[key]) && x.a[key].length && x.a[key].every((e) => D.UNIT_MAP[e.id]));
     if (!mates.length) return null;
     const pick = mates[(P2().soc.gr.runs || 0) % mates.length];
-    return { uid: pick.uid, name: Net.name(pick.uid), squad: pick.a[key] };
+    return { uid: pick.uid, name: Net.name(pick.uid), squad: pick.a[key], bench: pick.a[key === 'fleet' ? 'fb' : 'gb'] || [] };
   }
   function startGuildRaid(front) {
     const gid = myGuildId();
@@ -7505,13 +7533,13 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     if (t.down) return toast('That front is already cleared. Hit the other one!');
     if (G23() && raidRunsLeft(front) <= 0) return toast(`No ${front} runs left today. You get ${RAID_RUNS} ground and ${RAID_RUNS} fleet runs a day.`);
     const kind = front === 'fleet' ? 'ship' : 'character';
-    const mine = HN.squadEntries(kind);
+    const mine = HN.raidEntries(kind);
     if (!mine.length) return toast(front === 'fleet' ? 'You need ships for the fleet front.' : 'Pick a squad first.');
     const ally = allyFor(front, gid);
     const used = new Set(mine.map((e) => e.id));
     const allyEntries = ally ? ally.squad.filter((e) => !used.has(e.id) && D.UNIT_MAP[e.id]).map((e) => ({ ...e })) : [];
     const lvl = Math.max(1, Math.round(HN.avgLevel(mine)));
-    if (ally && HN.fillAlly) HN.fillAlly(allyEntries, used, kind, lvl, ally.id || ally.name);
+    if (ally && HN.fillAlly) HN.fillAlly(allyEntries, used, kind, lvl, ally.uid || ally.name, ally.bench, mine);
     const enemies = F.slots.map((id) => ({ id, level: id === F.boss ? lvl + 4 : lvl, stars: id === F.boss ? 7 : 3 }));
     HN.B.back = { view: 'graid' };
     HN.hnStart({ type: 'hn', hn: 'graid', front, boss: F.boss }, [...mine, ...allyEntries], enemies, {
@@ -7519,6 +7547,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       intro: `${ally && allyEntries.length ? `${ally.name} (guildmate) fights beside you. ` : ''}Every hit counts toward your guild's shared health bar.`,
       setup(b) {
         b.hnRaid = { boss: F.boss, turn: 0, limit: 100, guild: true };
+        HN.markRevivers(b);
         const boss = b.units.find((u) => u.id === F.boss);
         boss.maxHp = t.pool; boss.hp = Math.max(1, t.left);
         HN.raidToughen(b, F.boss);
@@ -7860,7 +7889,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       const F = g[f];
       const T = t[f];
       const def = D.UNIT_MAP[F.boss];
-      const ids = HN.squad(kind);
+      const ids = HN.raidSquad(kind);
       const ally = allyFor(f, gid);
       return `<div class="g-front" style="--rc:${g.color}">
         <div class="art">${root.Art.unitArt(def)}</div>
@@ -7875,7 +7904,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     return `<p class="muted" style="margin:0">${esc(g.name)} · new target every week. Your whole guild shares these health bars. Clear <b>both</b> fronts to beat the raid: your ground squad hits the ground front, your fleet hits the fleet front, and a guildmate's squad fights beside you.</p>
       ${t.fallen ? `<div class="hn-free"><span class="grow"><b>Raid beaten!</b> ${h.soc.gr.claimed ? 'Rewards claimed. A new target arrives next week.' : (h.soc.gr.d + h.soc.gr.f) ? 'You helped: 800 Beskar, a High-value puck, 50 guild points and a 1% shot at the Dark Trooper.' : 'You didn\'t land a hit this week.'}</span>${!h.soc.gr.claimed && (h.soc.gr.d + h.soc.gr.f) ? '<button type="button" class="hn-btn gold" data-hn="gclaim" data-k="raid">Claim</button>' : ''}</div>` : ''}
       ${front('ground', 'character')}${front('fleet', 'ship')}
-      <div class="hn-sec"><h3>Squads</h3><div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="hn-btn ghost" data-hn="pick" data-kind="character">Edit ground squad</button><button type="button" class="hn-btn ghost" data-hn="pick" data-kind="ship">Edit fleet</button></div></div>`;
+      <div class="hn-sec"><h3>Squads</h3><div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="hn-btn ghost" data-hn="pick" data-kind="character" data-raid="1">Edit raid squad</button><button type="button" class="hn-btn ghost" data-hn="pick" data-kind="ship" data-raid="1">Edit raid fleet</button></div></div>`;
   };
   const offlineGuild = () => `${HN.ui.head('GUILDS', 'Your clan in the HoloNet', true)}${HN.ui.offline ? HN.ui.offline() : '<div class="hn-free"><span class="grow"><b>Guilds need an internet connection.</b></span></div>'}`;
   // Until hn-guild.js replaces it: the plain guild home.

@@ -346,10 +346,12 @@
       for (const eff of ab.effects) {
         // Revive brings back the first fallen ally instead of targeting the living.
         if (eff.type === 'revive') {
-          const fallen = this.units.find((u) => u.side === unit.side && !u.alive && u !== unit);
+          // Raids: a reviver brings everyone else back before another reviver.
+          const down = this.units.filter((u) => u.side === unit.side && !u.alive && u !== unit);
+          const fallen = this.hnRaid ? (down.find((u) => !u.reviver) || down[0]) : down[0];
           if (fallen) {
             fallen.alive = true;
-            fallen.hp = Math.round(fallen.maxHp * eff.pct);
+            fallen.hp = Math.round(fallen.maxHp * eff.pct * (this.hnRaid && unit.reviver ? 0.8 : 1));
             fallen.tm = 0;
             fallen.statuses = {};
             events.push({ type: 'revive', uid: fallen.uid, hp: fallen.hp });
@@ -497,6 +499,7 @@
         if (tx.shield) amount *= 1 - 0.06 * this.docF(target.side, 'shield');
         if (tx.high && !target.docHigh) { target.docHigh = true; amount *= 1 - 0.5 * this.docF(target.side, 'high'); }
       }
+      if (this.hnRaid && target.reviver && source.side !== target.side) amount *= 1.12;
       return { amount: Math.max(1, Math.round(amount)), crit };
     }
 
@@ -588,7 +591,11 @@
       let targetUid = null;
       if (this.needsTarget(unit, choice)) {
         const valid = this.validTargets(unit, choice);
-        if (this.rng() < 0.7) {
+        const rev = this.hnRaid && unit.side === 'enemy' ? valid.filter((v) => v.reviver) : [];
+        if (rev.length && this.rng() < 0.85) {
+          rev.sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp);
+          targetUid = rev[0].uid;
+        } else if (this.rng() < 0.7) {
           valid.sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp);
           targetUid = valid[0].uid;
         } else {

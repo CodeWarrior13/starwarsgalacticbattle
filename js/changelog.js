@@ -22,6 +22,17 @@
   const LAUNCH_24 = root.__v24Test != null ? root.__v24Test : root.REL24 != null ? root.REL24 : Date.UTC(2026, 10, 11, 12, 50, 0);
   const ALL_UPDATES = [
     {
+      v: '2.4.1', date: 'November 12, 2026', title: 'Raids & fixes', from: LAUNCH_24 == null ? Infinity : LAUNCH_24,
+      items: [
+        'FIXED|Raids: when the pilot fighting beside you shares cards with your squad, they now bring their own next-best cards instead, so you always fight with 10 different cards.',
+        'NEW|Raid squads: the HoloNet raid and guild raids now use their own squad (Edit on the raid screen), so you can bring a different team without touching your arena defense.',
+        'BALANCE|The HoloNet raid boss now has about 1 billion health, and the other raiders on the board hit like real pilots.',
+        'IMPROVED|Between seasons, the Season leaderboard shows a countdown to the new season instead of last season\'s board, and it fills up as pilots finish their placement battles.',
+        'FIXED|Until your placement battles are revealed you show as Unplaced, instead of carrying a league over from last season.',
+        'IMPROVED|The Black Market and the menus run smoother: lighter glows and animations that use less battery.',
+      ],
+    },
+    {
       v: '2.4', date: 'November 11, 2026', title: 'Liberation', from: LAUNCH_24 == null ? Infinity : LAUNCH_24,
       // The biggest update yet gets its own log: a liberation banner and themed sections.
       theme: 'liberation',
