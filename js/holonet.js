@@ -5876,10 +5876,13 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     raid: { name: 'Raid Trophy', how: 'Beat both fronts of a guild raid', raid: true },
     champ: { name: 'Golden Laurel', how: 'Guild level 8', lv: 8 },
   };
+  // 2.5: Luthen's Gallery banners (js/lib25.js), bought by pilots for themselves, never by guilds.
+  if (root.Lib25) for (const x of root.Lib25.CAT) if (x.k === 'bn') BANNERS['lib_' + x.id] = { name: x.n, how: "Luthen's Gallery", lib: x.id };
+  const libOwn = (b) => { try { return !!(((root.HN.S().cos || {}).own) || {})['bn:' + b.lib]; } catch (e) { return false; } };
   const NPC_BANNER = { npc_rogue: 'hyper', npc_echo: 'holo', npc_mando: 'forge', npc_kessel: 'stars', npc_jedi: 'jedi', npc_sith: 'sith', npc_ewok: 'cloth', npc_hutt: 'dunes' };
   function bannerOwned(gid, id) {
     const b = BANNERS[id];
-    if (!b || !gid) return false;
+    if (!b || !gid || b.lib) return false;
     if (isNpcG(gid)) return NPC_BANNER[gid] === id;
     const g = gmap.get(gid) || guildOf(gid) || {};
     if ((g.bown || []).includes(id)) return true;
@@ -5903,6 +5906,8 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   function gban(g, where = 'row', still = false) {
     if (!on25() || !g) return '';
     const id = bannerOf(g);
+    const lb = BANNERS[id] && BANNERS[id].lib;
+    if (lb && root.Lib25) return `<span class="gb gb-lib gb-${where}${still ? ' still' : ''}" aria-hidden="true">${root.Lib25.html(lb, 'l5-bn')}</span>`;
     return `<span class="gb gb-${id} gb-${where}${still ? ' still' : ''}${gbIO ? ' gb-off' : ''}" style="--gc:${esc(g.color || '#5fd8ff')}" aria-hidden="true"><i class="a"></i><i class="b"></i><i class="c"></i></span>`;
   }
   function guildFor(uid) {
@@ -5912,7 +5917,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   }
   const guildByTag = (tag) => (tag ? NPC_GUILDS.find((g) => g.tag === tag) || null : null);
   // Pilots show their own banner pick (any banner their guild owns), else their guild's.
-  function playerBanOk(k) { try { return !!BANNERS[k] && bannerOwned(myGuildId(), k); } catch (e) { return false; } }
+  function playerBanOk(k) { try { const b = BANNERS[k]; if (b && b.lib) return libOwn(b); return !!b && bannerOwned(myGuildId(), k); } catch (e) { return false; } }
   function bannerForUid(uid) {
     if (!on25() || !uid) return null;
     const p = prof(uid);
@@ -6464,7 +6469,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
         const gid = myGuildId();
         const g = gid ? guildOf(gid) : null;
         const opt = (k, name, sub, own) => `<button type="button" class="gb-opt ${k === ban ? 'on' : ''} ${own ? '' : 'locked'}" data-pban="${k}" ${own ? '' : 'aria-disabled="true"'}>${gban(k ? { id: '_p', color: g ? g.color : '#5fd8ff', banner: k } : g || { id: '_p', color: '#5fd8ff' }, 'row')}<b>${esc(name)}</b><small>${esc(sub)}</small></button>`;
-        return `<p class="muted small pe-note">Your banner plays behind your name on the boards, in the arena and on your profile. You can use any banner your guild owns.</p><div class="pe-bans">${opt('', g ? 'My guild\'s banner' : 'Guild Cloth', g ? `Follows ${g.name}` : 'Join a guild to unlock banners', true)}${Object.entries(BANNERS).map(([k, b]) => { const own = !!g && bannerOwned(gid, k); return opt(k, b.name, own ? 'Your guild owns it' : g ? `Guild unlock: ${b.how}` : 'Join a guild first', own); }).join('')}</div>`;
+        return `<p class="muted small pe-note">Your banner plays behind your name on the boards, in the arena and on your profile. You can use any banner your guild owns.</p><div class="pe-bans">${opt('', g ? 'My guild\'s banner' : 'Guild Cloth', g ? `Follows ${g.name}` : 'Join a guild to unlock banners', true)}${Object.entries(BANNERS).filter(([, b]) => !b.lib).map(([k, b]) => { const own = !!g && bannerOwned(gid, k); return opt(k, b.name, own ? 'Your guild owns it' : g ? `Guild unlock: ${b.how}` : 'Join a guild first', own); }).join('')}${Object.entries(BANNERS).filter(([, b]) => b.lib && libOwn(b)).map(([k, b]) => opt(k, b.name, "Yours, from Luthen's Gallery", true)).join('')}</div>`;
       }
       if (peTab === 'badge') return `<p class="muted small pe-note">Pick up to 6 to show on your profile · <b data-featn>${feat.length}/6</b></p><div class="pf-bdgs pick">${b.all.map((x) => { const k = x.id || x.name; return `<button type="button" class="pf-bdg ${feat.includes(k) ? 'on' : ''}" data-ft="${esc(k)}">${still(UI.featBadge(x))}<span>${esc(x.name)}</span></button>`; }).join('') || '<p class="muted small">Earn badges around the game and show them off here.</p>'}</div>`;
       const f = (CATS.find(([k]) => k === peCat) || CATS[0])[2];
@@ -6517,7 +6522,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       }
       const f = e.target.closest('[data-fr]'); if (f && !f.disabled) { frame = f.dataset.fr; m.root.querySelectorAll('[data-fr]').forEach((n) => n.classList.toggle('on', n === f)); return refreshTop(); }
       const pb = e.target.closest('[data-pban]');
-      if (pb) { const k = pb.dataset.pban; if (k && !playerBanOk(k)) { const B = BANNERS[k]; return toast(myGuildId() ? `Your guild unlocks ${B.name} with: ${B.how}.` : 'Join a guild to use banners.'); } ban = k; m.root.querySelectorAll('[data-pban]').forEach((n) => n.classList.toggle('on', n === pb)); return; }
+      if (pb) { const k = pb.dataset.pban; if (k && !playerBanOk(k)) { const B = BANNERS[k]; if (B && B.lib) return toast(`${B.name} is sold in Luthen's Gallery.`); return toast(myGuildId() ? `Your guild unlocks ${B.name} with: ${B.how}.` : 'Join a guild to use banners.'); } ban = k; m.root.querySelectorAll('[data-pban]').forEach((n) => n.classList.toggle('on', n === pb)); return; }
       const a = e.target.closest('[data-av]'); if (a) { av = a.dataset.av; m.root.querySelectorAll('[data-av]').forEach((n) => n.classList.toggle('on', n === a)); return refreshTop(); }
       const t = e.target.closest('[data-ft]');
       if (t) {
@@ -9428,6 +9433,9 @@ button.lb-pod { cursor: pointer; }
 @media (max-width: 560px) { .gb-row, .gb-card, .gb-hero { --s2: .6; --s3: .66; } .gb-opp { --s2: .62; --s3: .72; } }
 .gb-off > i { display: none; }
 .gb.still > i { animation: none !important; }
+.gb-lib > .l5 { position: absolute; inset: 0; opacity: .78; }
+.gb-lib > .l5 > svg, .gb-lib > .l5 > div > svg { width: 100%; height: 100%; }
+.gb-lib.still .l5 *, .gb-lib.gb-off .l5 * { animation-play-state: paused !important; }
 body.perf-on .gb > .c { display: none; }
 body.perf-on .gb > i { animation-duration: 12s !important; }
 @media (prefers-reduced-motion: reduce) { .gb > i { animation: none !important; } }
@@ -9576,7 +9584,7 @@ body.perf-on .gb > i { animation-duration: 12s !important; }
   // 2.5: pick the guild's animated banner.
   const bannerRow = (gid, g) => {
     const cur = SO.bannerOf({ ...g, id: gid });
-    return `<div class="g-setrow"><span class="lb">Banner</span><div class="gb-pick">${Object.entries(SO.BANNERS).map(([k, b]) => {
+    return `<div class="g-setrow"><span class="lb">Banner</span><div class="gb-pick">${Object.entries(SO.BANNERS).filter(([, b]) => !b.lib).map(([k, b]) => {
       const own = SO.bannerOwned(gid, k);
       const on = cur === k;
       return `<button type="button" class="gb-opt ${on ? 'on' : ''} ${own ? '' : 'locked'}" data-hn="gbanner" data-k="${k}" ${!own && !b.cost ? 'aria-disabled="true"' : ''}>${SO.gban({ ...g, id: gid, banner: k }, 'row')}<b>${esc(b.name)}</b><small>${on ? 'Showing now' : own ? 'Tap to use' : b.cost ? `${fmt(b.cost)} Beskar · Vault` : esc(b.how)}</small></button>`;
