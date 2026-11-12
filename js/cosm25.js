@@ -336,7 +336,7 @@
     try { let best = null, bp = -1; for (const [id, u] of Object.entries(Player.state.units || {})) { const d = D.UNIT_MAP[id]; if (!d) continue; const p = D.power ? D.power(d, u.level, u.stars) : 0; if (p > bp) { bp = p; best = id; } } return best && root.Cos25FX ? root.Cos25FX.typeOf(best) : 'trooperl'; } catch (e) { return 'trooperl'; }
   }
   // Replaying the tutorial (Settings) replays this briefing too, once the tutorial ends.
-  if (Player.replayTutorial && !Player.__c25r) { Player.__c25r = true; const rt = Player.replayTutorial.bind(Player); Player.replayTutorial = function () { const r = rt(); if (on()) { Player.state.cos25tour = 0; Player.save(); try { if (root.__hnStartLive) root.__hnStartLive(); } catch (e) { /* offline */ } } return r; }; }
+  // Replaying the tutorial replays the battle tutorial and its badge only; the cosmetics briefing stays done.
   function tour() {
     if (touring || !T() || !T().coach) return;
     touring = true;

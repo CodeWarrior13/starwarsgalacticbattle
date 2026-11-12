@@ -1420,6 +1420,7 @@ const cineOn = () => xqLive() || xqTester();
 document.head.appendChild(Object.assign(document.createElement('style'), { textContent: `
 .xc { position: fixed; inset: 0; z-index: 420; overflow: hidden; display: grid; place-items: center; cursor: pointer; animation: fade-in .25s; contain: strict; }
 .xc.out { opacity: 0; transition: opacity .35s; }
+.xc-hint { display: block; margin-bottom: 6px; font-style: italic; color: #ffe8a0; }
 .xc-bg { position: absolute; inset: 0; }
 .xc.k-chip .xc-bg { background: radial-gradient(circle at 50% 42%, #3a2406 0, #120a02 45%, #040201 80%); }
 .xc.k-holo .xc-bg { background: radial-gradient(circle at 50% 42%, #0c2c52 0, #06142a 45%, #010309 80%); }
@@ -1518,11 +1519,14 @@ const runesSvg = () => {
     <circle cx="100" cy="100" r="58" stroke-width=".6" opacity=".35"/></g></svg>`;
 };
 
+// A one-off line shown above the next find scene's caption (the guided finds).
+const HINT = { v: null };
 function cine(kind, opts) {
+  const hint = HINT.v; HINT.v = null;
   const row = opts.row.map((t, k) => `<span class="xc-t ${t.ch ? '' : 'no'}" data-k="${k}">${t.ch || '?'}${t.sub ? `<small>${t.sub}</small>` : ''}</span>`).join('');
   const node = el(`<div class="xc k-${kind}" role="dialog" aria-label="${esc(opts.label)}"><div class="xc-bg"></div>
     <div class="xc-stage"><div class="xc-hero">${opts.hero}</div>${opts.fx || ''}</div>
-    <div class="xc-row">${row}</div><p class="xc-cap">${opts.cap}</p></div>`);
+    <div class="xc-row">${row}</div><p class="xc-cap">${hint ? `<span class="xc-hint">${hint}</span>` : ''}${opts.cap}</p></div>`);
   document.body.appendChild(node);
   const hero = node.querySelector('.xc-hero');
   const stage = node.querySelector('.xc-stage');
@@ -1791,4 +1795,79 @@ root.__xq.ky = () => sceneKY(FEAT_KY);
 root.__xq.cineKy = (i = 2, letter) => cineKy(i, null, null, letter);
 root.__xq.kyReset = () => { const z = Z(); delete z.kf; delete z.ka; delete z.kc; Player.save(); };
 
+
+// ---------- a right guess before every piece is found ----------
+// Enter the right word early and the missing pieces come to you instead, one
+// at a time, each with its own find scene and a line about where it hid.
+// Then the reward plays as usual.
+{
+  const SHARD_LINES = [
+    'I sense some knowledge… it was orbiting the Galaxy map.',
+    'This one hid in your Collection. Knowledge loves good company.',
+    'Found by the daily reward. It showed up every single day.',
+    'By your squad screen. It wanted to join the team.',
+    'On your profile. It knew you better than you thought.',
+    'Tucked in Settings. Some knowledge likes to be configured.',
+    'In a card\'s details, reading the fine print.',
+    'On the battle results. Knowledge comes after the fight.',
+    'Up the Endless Tower. Higher learning, literally.',
+    'In a crate summary. An open-and-shut case.',
+  ];
+  const CHIP_LINES = [
+    'Hear that jingle? Credits… over by the Black Market.',
+    'Next to the Lucky Charms. Luck had nothing to do with it.',
+    'Under the Sabacc cups. Vekko\'s oldest trick.',
+    'Stuck to a boss portrait. Bold place to stash cash.',
+    'In the luck spin. Round and round it went.',
+    'Pinned to your achievements. Credit where credit\'s due.',
+    'Riding your XP bar. Experience pays.',
+    'Rattling around a crate reveal. Cha-ching.',
+    'On the daily streak, saving up one day at a time.',
+    'Behind a stage\'s info, hidden in plain sight.',
+  ];
+  const KY_LINES = [
+    'A crystal hums… right by the VS. Tuned for a fight.',
+    'Humming at the Endless Tower. It likes the high notes.',
+    'Singing over your roster. A real crowd-pleaser.',
+    'By a card\'s power number. A power ballad.',
+    'On your profile header. Crystal clear who it belongs to.',
+    'On the battle results. Victory has a ring to it.',
+    'In the update log, always in tune with the latest.',
+    'In Settings. Every crystal needs fine-tuning.',
+    'By the Elite promotion, hitting the high notes.',
+    'On the Turn Meter. Perfect timing.',
+  ];
+  let guiding = false;
+  const guide = (missing, play, onDone) => {
+    guiding = true;
+    const step = (k) => {
+      if (k >= missing.length) { guiding = false; return onDone(); }
+      play(missing[k], () => setTimeout(() => step(k + 1), 350));
+    };
+    step(0);
+  };
+  const busy = () => (UI.App && UI.App.battleActive) || document.querySelector('.xc, .feat-cine, .walkout');
+  const redeemGuided = H.redeem;
+  H.redeem = (code) => {
+    const z = Z();
+    if (guiding) return true;
+    let kind = null;
+    if (code === WORD && !z.hp) kind = 'holo';
+    else if (code === CHIP && !z.cc) kind = 'chip';
+    else if (code === KY && kyOn() && !z.kc) kind = 'ky';
+    if (!kind || busy()) return redeemGuided ? redeemGuided(code) : false;
+    const len = 10;
+    const have = kind === 'holo' ? found() : kind === 'chip' ? chipFound() : kyFound();
+    const missing = Array.from({ length: len }, (_, i) => i).filter((i) => !have.includes(i));
+    if (!missing.length) return redeemGuided ? redeemGuided(code) : false;
+    const play = (i, next) => {
+      if (kind === 'holo') { have.push(i); Player.save(); HINT.v = SHARD_LINES[i]; cineHolo(i, null, next); }
+      else if (kind === 'chip') { have.push(i); chipOrder(); Player.save(); HINT.v = CHIP_LINES[i]; cineChip(i, null, next); }
+      else { have.push(i); kyOrder(); Player.save(); HINT.v = KY_LINES[i]; cineKy(i, null, next); }
+    };
+    UI.toast(kind === 'holo' ? 'You know the word… the missing shards answer the call.' : kind === 'chip' ? 'Right code! The missing chips come jingling in.' : 'Right word! The missing crystals start to hum.');
+    setTimeout(() => guide(missing, play, () => { if (redeemGuided) redeemGuided(code); }), 600);
+    return true;
+  };
+}
 })(window);
