@@ -20,7 +20,55 @@
   // Update 2.4 went live at 6:50 a.m. Central on November 11, 2026. This file
   // loads before js/gate24.js, so the date is written here too.
   const LAUNCH_24 = root.__v24Test != null ? root.__v24Test : root.REL24 != null ? root.REL24 : Date.UTC(2026, 10, 11, 12, 50, 0);
+  // Update 2.5 "Cosmetic": hidden until 2.5 ships, but testers with the 2.5 switch
+  // see it now. When the 2.5 date is set (js/cosmetic25.js RELEASE25), set it here too.
+  const LAUNCH_25 = (() => { try { if (localStorage.getItem('swcg-v25-test') === '1') return 0; } catch (e) { /* storage blocked */ } return root.__v25Test != null ? root.__v25Test : Infinity; })();
   const ALL_UPDATES = [
+    {
+      v: '2.5', date: 'Coming soon', title: 'Cosmetic', from: LAUNCH_25,
+      // Bigger than Liberation: a grand-opening marquee for the three shops.
+      theme: 'cosmetic',
+      stats: [['3', 'shops'], ['3', 'new cards'], ['40', 'titles'], ['6', 'title colours'], ['15', 'new frames'], ['20', 'banners'], ['14', 'victory poses'], ['9', 'win screens'], ['6', 'crate themes'], ['4', 'casino games'], ['36', 'gallery pieces'], ['100+', 'guild pictures']],
+      decos: ['shops', 'wear', 'cards', 'casino', 'squad', 'credits', 'secret'],
+      groups: [
+        ['Three Shops Open', '⌂', 'Black Market opens|Luthen\'s Gallery, Coruscant|gallery pieces|Two new pieces'],
+        ['Make It Yours', '✦', 'Cosmetics tab|titles|frames|banners|poses|win screens|crate themes|VS intro|guild pictures|Captain Rex'],
+        ['Three New Cards', '⚔', 'Havoc|Embo|Marrok'],
+        ['Watto\'s Wagers', '◈', 'Watto|Sabacc|casino|Shell Game'],
+        ['Squads & Friends', '⚑', 'Favourite squads|Friends see|Guild ranks'],
+        ['Smoother', '▲', 'smoother'],
+        ['One more thing…', '✧', ''],
+      ],
+      items: [
+        'NEW|The Black Market opens three shops: Vekko the Fence for cards and crates, Luthen\'s Gallery for cosmetics, and Watto\'s Wagers for casino games. Switch between them with the tabs at the top.',
+        'NEW|Luthen\'s Gallery, Coruscant\'s finest antiquities: titles, win screens and crate themes, with new pieces every Monday. While you browse, the top bar shows your Beskar, Kyber and Aurodium.',
+        'NEW|36 gallery pieces rotate through the Gallery week by week, each with its own scene.',
+        'NEW|Two new pieces on Luthen\'s plinth: the Boonta Eve Finish win screen and the Kyber Geode crate theme.',
+        'NEW|The Cosmetics tab in your profile: frames, titles, poses, win screens and crate themes in one place. Preview anything on your card, equip what you own, and new items carry a red dot until you look.',
+        'NEW|40 profile titles, 20 to earn and 20 to buy, each in up to 6 colours: Silver, Gold, Kyber, Crimson, Aurora and Holo.',
+        'NEW|15 new profile frames, and the Bronze, Silver, Guild, Victor and Podium frames redrawn from scratch.',
+        'NEW|20 animated banners for guilds and pilots, flying on guild pages, leaderboards and profiles.',
+        'NEW|Victory poses: after every win, the MVP (the card that did the most real work) strikes one of 14 poses.',
+        'NEW|9 win screens play after the pose, from the Medal Ceremony to the Jedi Temple. Tap to skip.',
+        'NEW|6 crate themes: set one for a crate and it opens with its own scene, from the Sith Vault to Droid Delivery.',
+        'NEW|Live duels, wagers and friendly battles open with a VS intro.',
+        'NEW|More than 100 new guild pictures: cards, bosses, world scenes and crests.',
+        'NEW|Captain Rex walks you through cosmetics the first time you visit.',
+        'NEW|The Havoc (Legendary ship): six forward cannons, a dorsal ball turret that fires a free shot after every action, and a bomb bay that never runs dry.',
+        'NEW|Embo (Legendary bounty hunter): throws his shield-hat through two enemies, raises it as a shield and sets his anooba on the weak. Ultimate: The Hunt.',
+        'NEW|Marrok (Epic): Embo\'s anooba. Pounces and bleeds, howls the squad up and hunts as a pair with Embo. Ultimate: Savage Frenzy.',
+        'NEW|Watto runs the tables now, with 4 games: Sabacc on his brand-new table, Holo-Chess Wager, Podrace Bets and Pazaak.',
+        'NEW|Watto\'s Payout: every 5 minutes Watto pays one lucky pilot 1,000 credits. Check the board to see who won.',
+        'IMPROVED|The Legendary Exchange has a new host: Watto, haggling over every card.',
+        'IMPROVED|Every casino game takes the same bets (100, 250, 500 and 1,000) with the same credit chips.',
+        'BALANCE|The Shell Game retires. Watto had it rigged anyway.',
+        'NEW|Favourite squads: save up to 6 Ground or Fleet squads with a name, an emblem and a colour, and swap with one tap.',
+        'IMPROVED|Friends see exactly what you\'re doing: a raid boss, a duel opponent, a campaign stage or a casino game.',
+        'IMPROVED|Guild ranks: the leader\'s gold name shimmers, and chat bubbles carry the sender\'s rank colour.',
+        'IMPROVED|Everything new runs smoother: scenes load only when you open them, pause when they\'re off screen and go easy on the battery.',
+        'NEW|Luthen never puts everything on the plinth. Some pieces wait for the right buyer.',
+      ],
+    },
     {
       v: '2.4.1', date: 'November 12, 2026', title: 'Raids & fixes', from: LAUNCH_24 == null ? Infinity : LAUNCH_24,
       items: [
@@ -400,11 +448,18 @@
       const take = (re) => { const out = []; for (let i = 0; i < left.length; i++) if (re && re.test(left[i])) { out.push(left[i]); left.splice(i--, 1); } return out; };
       const secs = u.groups.map(([title, icon, pat], k) => [title, icon, k === u.groups.length - 1 ? null : take(pat ? new RegExp(pat, 'i') : null)]);
       secs[secs.length - 1][2] = left;
-      return `<div class="lbl ${compact ? 'compact' : ''}">
-        <div class="lbl-hero"><div class="lbl-stars"></div><div class="lbl-worlds">${worlds}</div>
-          <p class="lbl-kick">Update ${esc(u.v)}</p><h2 class="lbl-title">${esc(u.title).toUpperCase()}</h2><p class="lbl-date">${esc(u.date)} · The biggest update yet</p></div>
-        <div class="lbl-stats">${(u.stats || []).map(([n, l], i) => `<div style="--i:${i}"><b>${esc(n)}</b><span>${esc(l)}</span></div>`).join('')}</div>
-        ${secs.filter((x) => x[2].length).map(([title, icon, items], k, arr) => `<section class="lbl-sec deco-${['galaxy', 'cards', 'squad', 'holonet', 'ranked', 'credits', 'secret'][u.groups.findIndex((g) => g[0] === title)] || 'galaxy'} ${k === arr.length - 1 ? 'last' : ''}" style="--i:${k}"><h3><i>${icon}</i><span>${esc(title)}</span><em class="lbl-deco" aria-hidden="true"><b></b><b></b><b></b></em></h3>${this.itemsHtml(items, true)}</section>`).join('')}
+      const decos = u.decos || ['galaxy', 'cards', 'squad', 'holonet', 'ranked', 'credits', 'secret'];
+      const bulbs = (n) => `<div class="cos-bulbs">${Array.from({ length: n }, (_, i) => `<i style="--i:${i % 4}"></i>`).join('')}</div>`;
+      const hero = u.theme === 'cosmetic'
+        ? `<div class="lbl-hero cos">${bulbs(22)}<div class="cos-spot l"></div><div class="cos-spot r"></div>
+          <div class="cos-signs"><span class="cs vk">VEKKO<small>THE FENCE</small></span><span class="cs lu"><i></i>LUTHEN'S GALLERY<i></i></span><span class="cs wa">WATTO'S<small>WAGERS</small></span></div>
+          <p class="lbl-kick">Update ${esc(u.v)} · Grand Opening</p><h2 class="lbl-title cos-t">${esc(u.title).toUpperCase()}</h2><p class="lbl-date">${esc(u.date)} · Bigger than Liberation</p>${bulbs(22)}</div>`
+        : `<div class="lbl-hero"><div class="lbl-stars"></div><div class="lbl-worlds">${worlds}</div>
+          <p class="lbl-kick">Update ${esc(u.v)}</p><h2 class="lbl-title">${esc(u.title).toUpperCase()}</h2><p class="lbl-date">${esc(u.date)} · The biggest update yet</p></div>`;
+      return `<div class="lbl ${compact ? 'compact' : ''} ${u.theme === 'cosmetic' ? 'cosm' : ''}">
+        ${hero}
+        <div class="lbl-stats ${(u.stats || []).length > 6 ? 'many' : ''}">${(u.stats || []).map(([n, l], i) => `<div style="--i:${i}"><b>${esc(n)}</b><span>${esc(l)}</span></div>`).join('')}</div>
+        ${secs.filter((x) => x[2].length).map(([title, icon, items], k, arr) => `<section class="lbl-sec deco-${decos[u.groups.findIndex((g) => g[0] === title)] || 'galaxy'} ${k === arr.length - 1 ? 'last' : ''}" style="--i:${k}"><h3><i>${icon}</i><span>${esc(title)}</span><em class="lbl-deco" aria-hidden="true"><b></b><b></b><b></b></em></h3>${this.itemsHtml(items, true)}</section>`).join('')}
       </div>`;
     },
 
@@ -429,7 +484,7 @@
       // fills the panel, and the others are a scroll away.
       const list = m.root.querySelector('.ul-list');
       this.paintWorlds(m.root);
-      m.root.querySelectorAll('.ul-entry.th-liberation').forEach(() => this.animate(list));
+      m.root.querySelectorAll('.ul-entry.th-liberation, .ul-entry.th-cosmetic').forEach(() => this.animate(list));
       m.root.querySelectorAll('.ul-entry').forEach((d) => d.addEventListener('toggle', () => {
         if (!d.open) return;
         m.root.querySelectorAll('.ul-entry[open]').forEach((o) => { if (o !== d) o.open = false; });
@@ -454,7 +509,7 @@
         ${this.itemsHtml(u.items)}`}
         <p class="ul-safe">Your progress is safe: updates never reset your save.</p>
         ${RELOAD_NOTE}
-        <div class="modal-actions"><button class="btn" type="button" data-all>Full update log</button><button class="btn btn-primary" type="button" data-close>${u.theme === 'liberation' ? 'Liberate the galaxy' : "Let's go"}</button></div>
+        <div class="modal-actions"><button class="btn" type="button" data-all>Full update log</button><button class="btn btn-primary" type="button" data-close>${u.theme === 'liberation' ? 'Liberate the galaxy' : u.theme === 'cosmetic' ? 'Open the shops' : "Let's go"}</button></div>
         ${u.theme ? '<div class="lbl-foot"><button type="button" class="lbl-more" data-more>Keep scrolling ↓</button><div class="lbl-prog" aria-hidden="true"><i></i></div></div>' : ''}`, { small: true, cls: `update-modal ${u.theme ? `th-${u.theme}` : ''}`, dismissable: !u.theme });
       this.paintWorlds(m.root);
       // The biggest update: you read to the end before you can close it. The
