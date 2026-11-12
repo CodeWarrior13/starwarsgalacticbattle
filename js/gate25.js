@@ -6,7 +6,7 @@
 (function (root) {
   if (!(root.Update25 && root.Update25.on())) return;
   var v = function (p) { return root.__ver ? root.__ver(p) : p; };
-  var files = ['js/lib25.js', 'js/cosm25.js', 'js/social25.js'];
+  var files = ['js/lib25.js', 'js/cb25.js', 'js/cosm25.js', 'js/social25.js'];
   for (var i = 0; i < files.length; i++) document.write('<script src="' + v(files[i]) + '"><\/script>');
   var later = function () { var s = document.createElement('script'); s.src = v('js/fx25.js'); s.async = true; document.head.appendChild(s); };
   // Watto's casino (the biggest file) loads right after the game is up instead

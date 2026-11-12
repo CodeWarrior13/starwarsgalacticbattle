@@ -2912,22 +2912,39 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   let allyPick = null;
   // A fleet raid (the 2.4 Xyston) fights with ships: your fleet and an ally fleet.
   const raidKind = (r) => r.kind || 'character';
+  // Four allies to pick from on every run, all different: real pilots first (a fresh
+  // shuffle after each run), then computer crews fill the rest. No card shows up in two
+  // of the four, so each pick brings a different set of characters.
+  const ALLY_OPTIONS = 4;
   function allies(kind = 'character') {
     const key = kind === 'ship' ? 'fleet' : 'ground';
-    const out = HN.Net.arena.filter((a) => a.uid !== HN.Net.me && Array.isArray(a[key]) && a[key].length && a[key].every((e) => D.UNIT_MAP[e.id])).slice(0, 5)
-      .map((a) => ({ id: `p:${a.uid}`, name: HN.Net.name(a.uid), real: true, squad: a[key], bench: a[key === 'fleet' ? 'fb' : 'gb'] || [] }));
     const r = HN.rng(HN.week() * 31 + (S().allySeed || 0) * 7919 + 7);
+    const shuffle = (L) => { const a = L.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+    const taken = new Set();
+    const out = [];
+    const real = shuffle(HN.Net.arena.filter((a) => a.uid !== HN.Net.me && Array.isArray(a[key]) && a[key].length && a[key].every((e) => D.UNIT_MAP[e.id])));
+    for (const a of real) {
+      if (out.length >= ALLY_OPTIONS) break;
+      // Skip a pilot whose squad is mostly the same cards as one already offered.
+      const ids = a[key].map((e) => e.id);
+      if (ids.filter((id) => taken.has(id)).length > Math.floor(ids.length / 2)) continue;
+      ids.forEach((id) => taken.add(id));
+      out.push({ id: `p:${a.uid}`, name: HN.Net.name(a.uid), real: true, squad: a[key], bench: a[key === 'fleet' ? 'fb' : 'gb'] || [] });
+    }
     const mine = HN.squadEntries(kind);
     const lvl = Math.max(1, Math.round(HN.avgLevel(mine)));
-    const avail = D.UNITS.filter((u) => u.kind === kind && !u.exclusive && !u.boss && !mine.some((e) => e.id === u.id));
+    const avail = shuffle(D.UNITS.filter((u) => u.kind === kind && !u.exclusive && !u.boss && !mine.some((e) => e.id === u.id)).map((u) => u.id));
+    const fresh = avail.filter((id) => !taken.has(id));
     const crews = kind === 'ship' ? ['Rogue Squadron', 'Phoenix Squadron', 'Black Squadron', 'Gold Squadron', 'Smuggler convoy', 'Mandalorian Fang wing', 'Clone starfighter wing', 'Bounty hunter fleet', 'Partisan raiders', 'Hutt patrol']
       : ['Mandalorian mercenaries', 'Rebel strike team', 'Bounty hunter crew', 'Clone veterans', 'Smuggler\'s gang', 'Jedi survivors', 'Inquisitor cell', 'Hutt enforcers', 'Partisan cell', 'Imperial deserters'];
-    const names = crews.slice().sort(() => r() - 0.5);
-    for (let k = 0; out.length < 3 && k < 3; k++) {
-      const picks = [];
-      const pool = avail.slice();
-      while (picks.length < 10 && pool.length) picks.push(pool.splice(Math.floor(r() * pool.length), 1)[0].id);
-      out.push({ id: `m:${k}`, name: names[k], real: false, squad: picks.slice(0, 5).map((id) => ({ id, level: lvl, stars: 3 })), bench: picks.slice(5).map((id) => ({ id, level: lvl, stars: 3 })) });
+    const names = shuffle(crews);
+    for (let k = 0; out.length < ALLY_OPTIONS && k < ALLY_OPTIONS; k++) {
+      // Five starters and a five-card bench, none shared with another option when the pool allows.
+      const pool = fresh.length >= 10 ? fresh : avail.filter((id) => !out.some((o) => o.squad.some((e) => e.id === id)));
+      const picks = pool.splice(0, 10);
+      if (pool !== fresh) picks.forEach((id) => { const i = fresh.indexOf(id); if (i >= 0) fresh.splice(i, 1); });
+      if (!picks.length) break;
+      out.push({ id: `m:${k}`, name: names[k % names.length], real: false, squad: picks.slice(0, 5).map((id) => ({ id, level: lvl, stars: 3 })), bench: picks.slice(5).map((id) => ({ id, level: lvl, stars: 3 })) });
     }
     return out;
   }

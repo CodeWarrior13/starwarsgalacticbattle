@@ -3446,6 +3446,8 @@
       const fx = !auto && HOOKS.crateFx ? HOOKS.crateFx(packId, best, results) : null;
       if (fx) await fx; else await crateCinematic(packId, best);
     }
+    // 2.5: a crate can wear its own card back (Cosmetics > Card backs).
+    const back25 = packId && HOOKS.cardBack ? HOOKS.cardBack(packId) : '';
     const cards = results.map((r, i) => {
       const def = D.UNIT_MAP[r.id];
       // 2.2: a new card gets a small "NEW CARD" ribbon in its top-left corner
@@ -3453,7 +3455,7 @@
       const corner = r.isNew && v22();
       const tag = corner ? NEW_CORNER : r.isNew ? '<span class="reveal-tag">NEW!</span>' : `<span class="reveal-tag dup">+${r.shards} shards</span>`;
       return `<div class="flip glow-${def.rarity} r-${def.rarity} side-${def.faction} ${r.holo ? 'is-holo' : ''} ${i > 0 ? 'stack-hidden' : ''}" style="--rc:${R_COLOR[def.rarity]};--i:${i};--fc:${def.faction === 'dark' ? '#ff2a3a' : '#5ab4ff'}" data-i="${i}" tabindex="0" role="button" aria-label="Reveal card">
-        <div class="flip-face flip-back">${Art.cardBack(def.faction)}</div>
+        <div class="flip-face flip-back">${back25 || Art.cardBack(def.faction)}</div>
         <div class="flip-face flip-front">${tag}${r.holo ? `<span class="holo-tag${corner ? ' right' : ''}">HOLO</span>` : ''}${r.pity ? '<span class="holo-tag pity">PITY</span>' : ''}${unitCard(def, { tag: 'div', hideShards: true, holo: r.holo })}</div>
       </div>`;
     }).join('');
