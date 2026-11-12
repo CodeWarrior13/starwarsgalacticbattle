@@ -212,6 +212,8 @@
     if (kind === 'wi') h = `<div class="ws">${uniq(WS[WIN_KEY[id] || 'hall'] || WS.hall)}</div>`;
     else if (kind === 'pa') { if (!PACK_KEY[id]) h = `<div class="pstage holocron"></div>`; else h = `<div class="packs"><div class="pack"><div class="pstage ${PACK_KEY[id]}">${uniq(PK[PACK_KEY[id]])}</div></div></div>`; }
     else if (kind === 'po') { typeOf('luke'); const ex = Object.keys(TYPE).find((u) => TYPE[u] === id && D.UNIT_MAP[u]) || 'luke'; h = poseHtml(id, D.UNIT_MAP[ex]); }
+    // Stills: drop the SVG's own animations too (CSS can't pause those), so a grid of thumbnails costs nothing per frame.
+    h = h.replace(/<(animate|animateTransform|animateMotion|set)\b[^>]*\/>/g, '').replace(/<(animate|animateTransform|animateMotion|set)\b[^>]*>[\s\S]*?<\/\1>/g, '');
     return h ? `<span class="fx25 c25-th ${kind}"><span class="c25-thi">${h}</span></span>` : '';
   }
   // Fetch the equipped library win screen and intro early, so they're ready when needed.
