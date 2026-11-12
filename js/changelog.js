@@ -29,13 +29,14 @@
       // Bigger than Liberation: a grand-opening marquee for the three shops.
       theme: 'cosmetic',
       stats: [['3', 'shops'], ['3', 'new cards'], ['40', 'titles'], ['6', 'title colours'], ['15', 'new frames'], ['20', 'banners'], ['14', 'victory poses'], ['9', 'win screens'], ['6', 'crate themes'], ['4', 'casino games'], ['36', 'gallery pieces'], ['100+', 'guild pictures']],
-      decos: ['shops', 'wear', 'cards', 'casino', 'squad', 'credits', 'secret'],
+      decos: ['shops', 'wear', 'cards', 'casino', 'squad', 'holonet', 'credits', 'secret'],
       groups: [
         ['Three Shops Open', '⌂', 'Black Market opens|Luthen\'s Gallery, Coruscant|gallery pieces|Two new pieces'],
         ['Make It Yours', '✦', 'Cosmetics tab|titles|frames|banners|poses|win screens|crate themes|VS intro|guild pictures|Captain Rex'],
         ['Three New Cards', '⚔', 'Havoc|Embo|Marrok'],
         ['Watto\'s Wagers', '◈', 'Watto|Sabacc|casino|Shell Game'],
         ['Squads & Friends', '⚑', 'Favourite squads|Friends see|Guild ranks'],
+        ['Raids & Ranked', '⚔', 'Raid|raid|leaderboard|placement|Unplaced'],
         ['Smoother', '▲', 'smoother'],
         ['One more thing…', '✧', ''],
       ],
@@ -65,19 +66,14 @@
         'NEW|Favourite squads: save up to 6 Ground or Fleet squads with a name, an emblem and a colour, and swap with one tap.',
         'IMPROVED|Friends see exactly what you\'re doing: a raid boss, a duel opponent, a campaign stage or a casino game.',
         'IMPROVED|Guild ranks: the leader\'s gold name shimmers, and chat bubbles carry the sender\'s rank colour.',
-        'IMPROVED|Everything new runs smoother: scenes load only when you open them, pause when they\'re off screen and go easy on the battery.',
-        'NEW|Luthen never puts everything on the plinth. Some pieces wait for the right buyer.',
-      ],
-    },
-    {
-      v: '2.4.1', date: 'November 12, 2026', title: 'Raids & fixes', from: LAUNCH_24 == null ? Infinity : LAUNCH_24,
-      items: [
         'FIXED|Raids: when the pilot fighting beside you shares cards with your squad, they now bring their own next-best cards instead, so you always fight with 10 different cards.',
         'NEW|Raid squads: the HoloNet raid and guild raids now use their own squad (Edit on the raid screen), so you can bring a different team without touching your arena defense.',
         'BALANCE|The HoloNet raid boss now has about 1 billion health, and the other raiders on the board hit like real pilots.',
         'IMPROVED|Between seasons, the Season leaderboard shows a countdown to the new season instead of last season\'s board, and it fills up as pilots finish their placement battles.',
         'FIXED|Until your placement battles are revealed you show as Unplaced, instead of carrying a league over from last season.',
         'IMPROVED|The Black Market and the menus run smoother: lighter glows and animations that use less battery.',
+        'IMPROVED|Everything new runs smoother: scenes load only when you open them, pause when they\'re off screen and go easy on the battery.',
+        'NEW|Luthen never puts everything on the plinth. Some pieces wait for the right buyer.',
       ],
     },
     {
@@ -451,9 +447,9 @@
       const decos = u.decos || ['galaxy', 'cards', 'squad', 'holonet', 'ranked', 'credits', 'secret'];
       const bulbs = (n) => `<div class="cos-bulbs">${Array.from({ length: n }, (_, i) => `<i style="--i:${i % 4}"></i>`).join('')}</div>`;
       const hero = u.theme === 'cosmetic'
-        ? `<div class="lbl-hero cos">${bulbs(22)}<div class="cos-spot l"></div><div class="cos-spot r"></div>
+        ? `<div class="lbl-hero cos">${bulbs(22)}
           <div class="cos-signs"><span class="cs vk">VEKKO<small>THE FENCE</small></span><span class="cs lu"><i></i>LUTHEN'S GALLERY<i></i></span><span class="cs wa">WATTO'S<small>WAGERS</small></span></div>
-          <p class="lbl-kick">Update ${esc(u.v)} · Grand Opening</p><h2 class="lbl-title cos-t">${esc(u.title).toUpperCase()}</h2><p class="lbl-date">${esc(u.date)} · Bigger than Liberation</p>${bulbs(22)}</div>`
+          <p class="lbl-kick">Update ${esc(u.v)} · Grand Opening</p><h2 class="lbl-title cos-t">${esc(u.title).toUpperCase()}</h2>${bulbs(22)}</div>`
         : `<div class="lbl-hero"><div class="lbl-stars"></div><div class="lbl-worlds">${worlds}</div>
           <p class="lbl-kick">Update ${esc(u.v)}</p><h2 class="lbl-title">${esc(u.title).toUpperCase()}</h2><p class="lbl-date">${esc(u.date)} · The biggest update yet</p></div>`;
       return `<div class="lbl ${compact ? 'compact' : ''} ${u.theme === 'cosmetic' ? 'cosm' : ''}">
@@ -540,7 +536,8 @@
     },
 
     seen() {
-      try { return localStorage.getItem(SEEN_KEY); } catch (e) { return this.latest; }
+      // 2.4.1's notes moved into 2.5: anyone who opened 2.4.1 has seen 2.4.
+      try { const v = localStorage.getItem(SEEN_KEY); return v === '2.4.1' && this.latest === '2.4' ? '2.4' : v; } catch (e) { return this.latest; }
     },
 
     markSeen() {
