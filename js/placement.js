@@ -206,7 +206,8 @@
     p.applied = true;
     h.rating = p.to;
     h.best = Math.max(h.best || 0, p.to);
-    if (h.soc) h.soc.sBest = Math.max(h.soc.sBest || 0, p.to);
+    // The season best starts at the placement (last season's carried rating doesn't count).
+    if (h.soc) h.soc.sBest = p.to;
     h.streak = 0;
     if (H.claimDivisions) H.claimDivisions();
     H.save();

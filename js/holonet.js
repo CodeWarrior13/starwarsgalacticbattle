@@ -1773,9 +1773,11 @@
 .main-nav [data-nav="holonet"] { display: none; }
 body.hn-on .main-nav [data-nav="holonet"] { display: inline-flex; }
 body.hn-on .main-nav [data-nav="holonet"] .nav-lbl { color: #8fe8ff; text-shadow: 0 0 8px rgba(95, 216, 255, 0.7); }
-body.hn-on .main-nav [data-nav="holonet"] .nav-ico { color: #8fe8ff; animation: hn-pulse 2.4s ease-in-out infinite; }
+body.hn-on .main-nav [data-nav="holonet"] .nav-ico { color: #8fe8ff; position: relative; }
+body.hn-on .main-nav [data-nav="holonet"] .nav-ico::before { content: ""; position: absolute; inset: -6px; border-radius: 50%; background: radial-gradient(circle, rgba(95, 216, 255, 0.45), rgba(95, 216, 255, 0) 70%); opacity: 0; animation: hn-pulse 2.4s ease-in-out infinite; will-change: opacity; pointer-events: none; }
+body.perf-on.hn-on .main-nav [data-nav="holonet"] .nav-ico::before { animation: none; opacity: 0.5; }
 @media (min-width: 761px) { body.hn-on .main-nav [data-nav="holonet"].active { background: linear-gradient(180deg, #a8f0ff, #3ab8e8 60%, #1a6a9a) !important; color: #031018; } }
-@keyframes hn-pulse { 50% { filter: drop-shadow(0 0 6px #5fd8ff); } }
+@keyframes hn-pulse { 50% { opacity: 1; } }
 .main-nav[data-tab="3"] { --sc: #5fd8ff; }
 @media (max-width: 760px) and (orientation: portrait) {
   body.hn-on .main-nav { grid-template-columns: repeat(4, 1fr); background: linear-gradient(90deg, transparent calc(25% - 1px), rgba(255,255,255,.06) calc(25% - 1px) 25%, transparent 25% calc(50% - 1px), rgba(255,255,255,.06) calc(50% - 1px) 50%, transparent 50% calc(75% - 1px), rgba(255,255,255,.06) calc(75% - 1px) 75%, transparent 75%), linear-gradient(180deg, #1b2232, #0a0e17 70%); }
@@ -2753,9 +2755,10 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   const head = (title, sub, back) => {
     const h = S();
     const d = HN.divOf(h.rating);
+    const un = HN.unplaced();
     return `<div class="hn-head">
-      <button type="button" class="hn-badge-wrap" data-hn="leagues" title="Your league">${A.badge(d.league, d.div)}<small>${esc(d.name)} ›</small></button>
-      <div><h2>${esc(title)}</h2><p>${sub || `${esc(d.name)} · ${fmt(h.rating)} rating${h.streak ? ` · <span class="hn-chip hot">${h.streak}-win streak · +${Math.min(5, h.streak) * 5}% Beskar</span>` : ''}`}</p></div>
+      <button type="button" class="hn-badge-wrap" data-hn="leagues" title="Your league">${un ? HN.unplacedBadge() : A.badge(d.league, d.div)}<small>${un ? 'Unplaced' : esc(d.name)} ›</small></button>
+      <div><h2>${esc(title)}</h2><p>${sub || `${un ? 'Unplaced · placement battles decide your league' : `${esc(d.name)} · ${fmt(h.rating)} rating`}${h.streak ? ` · <span class="hn-chip hot">${h.streak}-win streak · +${Math.min(5, h.streak) * 5}% Beskar</span>` : ''}`}</p></div>
       <div class="hn-wallet">${bes(h.beskar)}${kyb(HN.BETA ? h.kyber : Player.state.crystals)}</div>
     </div>${back ? '<button type="button" class="hn-back" data-hn="hub">‹ HoloNet</button>' : ''}`;
   };
@@ -3174,6 +3177,21 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     });
   }
 
+  // Always ten in a raid: cards the ally shares with you (or a short ally squad)
+  // are covered by substitutes at the ally's level.
+  HN.fillAlly = (allyEntries, used, kind, lvl, seed) => {
+    if (allyEntries.length >= 5) return allyEntries;
+    allyEntries.forEach((e) => used.add(e.id));
+    const al2 = allyEntries.length ? Math.max(1, Math.round(HN.avgLevel(allyEntries))) : lvl;
+    const st2 = allyEntries.length ? Math.max(1, Math.round(allyEntries.reduce((a, e) => a + (e.stars || 3), 0) / allyEntries.length)) : 3;
+    const rr = HN.rng(HN.week() * 53 + String(seed || '').length * 977 + allyEntries.length);
+    const pool = D.UNITS.filter((u) => u.kind === kind && !u.exclusive && !u.boss && !used.has(u.id));
+    while (allyEntries.length < 5 && pool.length) {
+      const u = pool.splice(Math.floor(rr() * pool.length), 1)[0];
+      allyEntries.push({ id: u.id, level: al2, stars: st2 });
+    }
+    return allyEntries;
+  };
   function startRaid() {
     const r = HN.raidNow();
     const t = HN.raidTotals();
@@ -3185,8 +3203,9 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const al = allies(kind);
     const ally = al.find((a) => a.id === allyPick) || al[0];
     const used = new Set(mine.map((e) => e.id));
-    const allyEntries = ally.squad.filter((e) => !used.has(e.id)).map((e) => ({ ...e }));
+    const allyEntries = ally.squad.filter((e) => !used.has(e.id) && D.UNIT_MAP[e.id]).map((e) => ({ ...e }));
     const lvl = Math.max(1, Math.round(HN.avgLevel(mine)));
+    HN.fillAlly(allyEntries, used, kind, lvl, ally.id);
     const enemies = r.slots.map((id) => ({ id, level: id === r.id ? lvl + 4 : lvl, stars: id === r.id ? 7 : 3 }));
     HNB.back = { view: 'raid' };
     hnStart({ type: 'hn', hn: 'raid', boss: r.id }, [...mine, ...allyEntries], enemies, {
@@ -6577,7 +6596,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const body = {
       rating: h.rating, ground: HN.squadEntries('character'), fleet: HN.squadEntries('ship'), level: Player.state.account.level,
       tag: !this.db.firestore || (h.prof.key && h.prof.key === nameKey(p.tag) && (!h.prof.kuid || h.prof.kuid === this.me)) ? p.tag : '', av: p.av, frame: p.frame, ban: p.ban || '', ti: on25() && h.prof.ti ? h.prof.ti : null, badges: p.badges, nb: p.nb, st: p.st, dw: p.st.dw || 0,
-      ss: seasonNo() * 1e5 + Math.max(h.soc.sBest || 0, h.rating),
+      ss: seasonNo() * 1e5 + (HN.unplaced && HN.unplaced() ? 0 : Math.max(h.soc.sBest || 0, h.rating)),
       guild: h.guild || null, apply: (!h.guild && h.apply) || null, gp: h.soc.gp, gpw: h.soc.gpw, gpl: h.soc.gpl, don: h.soc.don && h.soc.don.g ? { g: h.soc.don.g, a: h.soc.don.a | 0 } : null, gr: { w: h.soc.gr.w, b: h.soc.gr.b, d: h.soc.gr.d, f: h.soc.gr.f },
     };
     // Player collections: what you own, your most-used cards and every badge.
@@ -7490,8 +7509,9 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     if (!mine.length) return toast(front === 'fleet' ? 'You need ships for the fleet front.' : 'Pick a squad first.');
     const ally = allyFor(front, gid);
     const used = new Set(mine.map((e) => e.id));
-    const allyEntries = ally ? ally.squad.filter((e) => !used.has(e.id)).map((e) => ({ ...e })) : [];
+    const allyEntries = ally ? ally.squad.filter((e) => !used.has(e.id) && D.UNIT_MAP[e.id]).map((e) => ({ ...e })) : [];
     const lvl = Math.max(1, Math.round(HN.avgLevel(mine)));
+    if (ally && HN.fillAlly) HN.fillAlly(allyEntries, used, kind, lvl, ally.id || ally.name);
     const enemies = F.slots.map((id) => ({ id, level: id === F.boss ? lvl + 4 : lvl, stars: id === F.boss ? 7 : 3 }));
     HN.B.back = { view: 'graid' };
     HN.hnStart({ type: 'hn', hn: 'graid', front, boss: F.boss }, [...mine, ...allyEntries], enemies, {
@@ -7693,6 +7713,10 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     return left > 0 ? left : 0;
   }
   HN.seasonBreak = seasonBreak;
+  // No league until placement battles are done: the old season's rating doesn't carry over to the display.
+  HN.seasonClockShort = (ms) => { const m = Math.ceil(ms / 60000); const h = Math.floor(m / 60); const d = Math.floor(h / 24); return d ? `${d}d ${h % 24}h` : h ? `${h}h ${m % 60}m` : `${m}m`; };
+  HN.unplaced = () => { try { const P = root.Placement; return !!(P && P.need()); } catch (e) { return false; } };
+  HN.unplacedBadge = () => '<span class="hn-unpl" aria-label="Unplaced"><svg viewBox="0 0 40 46" aria-hidden="true"><path d="M20 2 37 11v14c0 10-8 16-17 19C11 41 3 35 3 25V11Z" fill="#0d1a26" stroke="#5f7a90" stroke-width="2.4" stroke-dasharray="4 3"/><text x="20" y="31" text-anchor="middle" font-size="20" font-weight="800" fill="#8fb4cc">?</text></svg></span>';
   HN.breakNote = () => `Season ${HN.seasonLabel(seasonNo())} starts in ${HN.seasonClock()}. Ranked battles open then; raids, guilds and friendly battles are on now.`;
   HN.seasonInfo = () => ({ no: seasonNo(), ends: seasonEnds(), length: seasonLength(), started: seasonLength() - seasonEnds() });
   // Season countdown: "1w 3d 05:12:09" (long: "1 week 3 days 05:12:09").
@@ -8733,14 +8757,16 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
       return { bot: true, name, best, av: avs[Math.floor(r() * avs.length)], frame: fr, ws: Math.floor(hot * hot * hot * (i < 10 ? 48 : 22)), ds: Math.floor(r() * r() * 12), dw: Math.max(0, Math.round((58 - i * 1.1) * (0.25 + 0.75 * frac))) };
     });
   }
-  const mySeasonBest = () => { const h = SO.P2(); return Math.max(h.soc.sBest || 0, h.rating); };
+  const mySeasonBest = () => { const h = SO.P2(); return HN.unplaced && HN.unplaced() ? 0 : Math.max(h.soc.sBest || 0, h.rating); };
   function seasonRows() {
     const sn = SO.seasonNo();
     const rows = Net.arena.filter((a) => a.uid !== Net.me && typeof a.ss === 'number' && Math.floor(a.ss / 1e5) === sn).map((a) => ({ uid: a.uid, best: a.ss % 1e5 }));
     rows.push({ uid: Net.me || 'me', me: true, best: mySeasonBest() });
-    rows.push(...bots(sn, seasonFrac()));
+    // Bots join the board over the first day or so, as their own placements finish.
+    const fr = seasonFrac();
+    rows.push(...bots(sn, fr).filter((b, i) => HN.rng(sn * 131 + i * 7 + 3)() * 0.06 <= fr));
     if (HN.npcBoard) rows.push(...HN.npcBoard());
-    return rows.sort((a, b) => b.best - a.best);
+    return rows.filter((x) => x.best > 0).sort((a, b) => b.best - a.best);
   }
 
   // Pay last season's leaderboard spot once, when the new season starts.
@@ -8830,7 +8856,7 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
     return `<button type="button" class="hv-me" data-hn="prof" data-uid="me" style="--gc:${g ? g.color : '#5fd8ff'}">
       ${SO.avatar(me, 'md')}
       <span class="id"><small>HOLONET PROFILE</small><b>${esc(myName())}</b><em>${g ? `[${esc(g.tag)}] ${esc(g.name)}` : 'No guild yet'} · Level ${Player.state.account.level}</em></span>
-      <span class="lg">${A.badge(d.league, d.div)}<span><b>${fmt(h.rating)}</b><small>${esc(d.name)}</small></span></span>
+      <span class="lg">${HN.unplaced() ? `${HN.unplacedBadge()}<span><b>—</b><small>Unplaced</small></span>` : `${A.badge(d.league, d.div)}<span><b>${fmt(h.rating)}</b><small>${esc(d.name)}</small></span>`}</span>
       <span class="wal">${bes(h.beskar)}</span>
     </button>`;
   };
@@ -8936,7 +8962,21 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
     // The season board's pilots are the canonical ones: same picture, frame and profile on every board.
     if (HN.botUid) bots(SO.seasonNo(), seasonFrac()).forEach((b) => HN.botUid(b, false));
     let body = '';
-    if (lbTab === 'season') {
+    if (lbTab === 'season' && HN.seasonBreak()) {
+      // Between seasons the ranked board is empty: nobody has a rating yet, players or bots.
+      const no = HN.seasonLabel(SO.seasonNo());
+      const P = root.Placement;
+      const pl = P && P.need() ? (P.rec().done ? 'Your placement battles are done. Your league is revealed when the season opens.' : P.openIn() > 0 ? `Placement battles open in <b>${HN.seasonClockShort(P.openIn())}</b>, on the last day of the break.` : 'Placement battles are open now in the Ground Arena.') : '';
+      body = `<div class="hn-sec lb-soon">
+          <div class="lbs-radar" aria-hidden="true"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="56" fill="#061420" stroke="#1f4a66" stroke-width="2"/><circle cx="60" cy="60" r="38" fill="none" stroke="#173a52" stroke-width="1.5"/><circle cx="60" cy="60" r="20" fill="none" stroke="#173a52" stroke-width="1.5"/><path d="M60 4v112M4 60h112" stroke="#123044" stroke-width="1"/><g class="lbs-sweep"><path d="M60 60 60 4A56 56 0 0 1 108 32Z" fill="url(#lbsg)"/></g><defs><linearGradient id="lbsg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5fd8ff" stop-opacity=".05"/><stop offset="1" stop-color="#5fd8ff" stop-opacity=".55"/></linearGradient></defs><circle cx="60" cy="60" r="4" fill="#5fd8ff"/></svg></div>
+          <small class="lbs-kick">RANKED · SEASON ${no}</small>
+          <h3>Coming soon</h3>
+          <div class="sclock-big"><span>Season ${no} starts in</span><b data-season-clock data-long>${HN.seasonClock(true)}</b></div>
+          <p class="muted small" style="margin:0">The ranked board opens when the season starts. Every pilot starts unranked and climbs from their placement.</p>
+          ${pl ? `<p class="lbs-pl">${pl}</p>` : ''}
+          <div class="hv-rw">${LB_REWARD.map((r) => `<div><b>${r.label}</b><small>${esc(rewardText(r))}</small></div>`).join('')}</div>
+        </div>`;
+    } else if (lbTab === 'season') {
       const rows = seasonRows();
       body = `<div class="hn-sec"><h3>Season ${HN.seasonLabel(SO.seasonNo())} rewards</h3><div class="sclock-big"><span>${HN.seasonBreak() ? `Season ${HN.seasonLabel(SO.seasonNo())} starts in` : 'Season ends in'}</span><b data-season-clock data-long>${HN.seasonClock(true)}</b></div>
           <div class="hv-rw">${LB_REWARD.map((r) => `<div><b>${r.label}</b><small>${esc(rewardText(r))}</small></div>`).join('')}</div>
@@ -9320,6 +9360,18 @@ button.hv-bot { padding: 2px 8px 2px 0; border: 0; border-radius: 999px; backgro
 .lb-you .n { display: grid; justify-items: center; } .lb-you .n small { font-size: 9px; letter-spacing: .14em; color: #9fc4d8; } .lb-you .n b { font: 700 24px var(--font-display); color: #8fe8ff; }
 .lb-you .t { display: grid; min-width: 0; } .lb-you .t b { font-family: var(--font-display); letter-spacing: .04em; } .lb-you .t small { color: #9fc4d8; font-size: 11px; }
 .lb-you .pct { font: 700 12px var(--font-display); color: #ffd23f; letter-spacing: .06em; white-space: nowrap; }
+.lb-soon { display: grid; justify-items: center; gap: 6px; text-align: center; padding: 18px 14px; background: radial-gradient(ellipse at 50% 0%, rgba(95, 216, 255, .12), transparent 70%), var(--panel, #0c1622); }
+.lb-soon h3 { margin: 0; font-size: 26px; letter-spacing: .06em; color: #cfefff; text-shadow: 0 0 12px rgba(95, 216, 255, .5); }
+.lbs-kick { color: #5fd8ff; font-weight: 800; letter-spacing: .18em; font-size: 11px; }
+.lbs-radar { width: 110px; height: 110px; }
+.lbs-radar svg { width: 100%; height: 100%; display: block; }
+.lbs-sweep { transform-origin: 60px 60px; animation: lbsSweep 4s steps(32) infinite; }
+@keyframes lbsSweep { to { transform: rotate(360deg); } }
+body.perf-on .lbs-sweep { animation: none; }
+.lbs-pl { margin: 2px 0 6px; padding: 8px 12px; border-radius: 10px; background: rgba(255, 210, 63, .08); border: 1px solid rgba(255, 210, 63, .3); font-size: 13px; }
+.lb-soon .hv-rw { width: 100%; }
+.hn-unpl { display: inline-block; width: 100%; max-width: 56px; }
+.hn-unpl svg { width: 100%; height: auto; display: block; }
 .lb-podium { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; align-items: end; margin: 4px auto 0; width: 100%; max-width: 620px; }
 .lb-pod { position: relative; display: grid; justify-items: center; gap: 4px; padding: 10px 6px 0; border: 1px solid rgba(95, 216, 255, 0.2); border-radius: 14px 14px 6px 6px; background: linear-gradient(180deg, rgba(10, 30, 46, 0.9), rgba(6, 12, 22, 0.95)); color: #e6f6ff; font: inherit; text-align: center; min-width: 0; overflow: hidden; cursor: default; }
 button.lb-pod { cursor: pointer; }

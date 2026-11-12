@@ -2302,7 +2302,7 @@ button.account:hover { border-color: var(--crawl); box-shadow: 0 0 14px rgba(255
 .settings-btn .swi { width: 22px; height: 22px; transition: transform 0.6s cubic-bezier(.2,.9,.3,1.2); }
 .settings-btn:hover .swi { transform: rotate(120deg); }
 .main-nav button.has-dot { position: relative; }
-.main-nav button.has-dot::after { content: ''; position: absolute; top: 4px; right: 6px; width: 8px; height: 8px; border-radius: 50%; background: #ff4a5a; box-shadow: 0 0 8px #ff4a5a; animation: dot-pulse 1.4s ease-in-out infinite; will-change: transform, opacity; }
+.main-nav button.has-dot::after { content: ''; position: absolute; top: 4px; right: 6px; width: 8px; height: 8px; border-radius: 50%; background: #ff4a5a; box-shadow: 0 0 8px #ff4a5a; animation: dot-pulse 1.4s steps(5) infinite; will-change: transform, opacity; }
 @keyframes dot-pulse { 50% { opacity: 0.45; transform: scale(0.8); } }
 
 /* ---------- Settings ---------- */
@@ -3973,3 +3973,5 @@ body.perf-on .lbl-deco b, body.perf-on .lbl-deco b::after, body.perf-on .lbl-mor
   .rx-say p { font-size: 12px; margin: 0; }
   .rx-tabs button { padding: 5px; font-size: 11px; }
 }
+/* Crate art: the glows and wobbles inside the drawings repaint the whole crate, so they move in steps. */
+.crate-art .crate-scan, .crate-art .crate-glow, .crate-art .crate-core, .crate-art .relic-wobble, .crate-art .crate-float { animation-timing-function: steps(8); }
