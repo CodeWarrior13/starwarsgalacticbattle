@@ -70,10 +70,12 @@
           <p class="muted small">${title(a.level)} · Level ${a.level}${lg ? ` · ${esc(lg.name)}` : ''}</p>
           <button type="button" class="p2-lvbtn" data-p2="level" aria-label="Level ${a.level}: what's coming up"><span class="p2-xp"><i style="width:${pct}%"></i></span>
           <span class="muted small">${a.level >= D.MAX_ACCOUNT_LEVEL ? 'Maximum rank reached.' : `${fmt(a.xp)} / ${fmt(need)} XP to level ${a.level + 1}`} · <b class="p2-more">Coming up ›</b></span></button>
-          <div class="p2-codes">${root.Cos25 && root.Cos25.ready() ? '<button type="button" class="p2-codex p2-cos" data-p2="cos"><i aria-hidden="true">✦</i>Cosmetics</button>' : ''}${root.__xq && root.__xq.hasCodex && root.__xq.hasCodex() ? '<button type="button" class="p2-codex" data-p2="codex"><i aria-hidden="true">✧</i>Seeker\'s Codex</button>' : ''}</div></div>
+          <div class="p2-codes">${root.__xq && root.__xq.hasCodex && root.__xq.hasCodex() ? '<button type="button" class="p2-codex" data-p2="codex"><i aria-hidden="true">✧</i>Seeker\'s Codex</button>' : ''}</div></div>
       </div>`;
     };
-    const tabs = () => `<div class="pc-tabs p2-tabs" role="tablist">${[['overview', 'Overview'], ['collection', 'Collection'], ['worlds', 'Worlds'], ['badges', 'Badges'], ['friends', 'Friends'], ['stats', 'Stats']].map(([k, n]) => `<button type="button" role="tab" aria-selected="${tab === k}" class="${tab === k ? 'on' : ''}" data-p2t="${k}">${n}</button>`).join('')}</div>`;
+    const tabs = () => `<div class="pc-tabs p2-tabs${cosOn() ? ' has-cos' : ''}" role="tablist">${[['overview', 'Overview'], ['collection', 'Collection'], ['worlds', 'Worlds'], ['badges', 'Badges'], ['friends', 'Friends'], ['stats', 'Stats']].map(([k, n]) => `<button type="button" role="tab" aria-selected="${tab === k}" class="${tab === k ? 'on' : ''}" data-p2t="${k}">${n}</button>`).join('')}${cosOn() ? '<button type="button" class="p2-cos" data-p2="cos"><i aria-hidden="true">✦</i> Cosmetics</button>' : ''}</div>`;
+    // 2.5: Cosmetics sits with the tabs (it opens its own screen).
+    function cosOn() { return !!(root.Cos25 && root.Cos25.ready()); }
 
     const overview = () => {
       const won = st.battlesWon, lost = st.battlesLost;
@@ -255,7 +257,9 @@
 .p2-codex { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px 6px 6px; border-radius: 999px; border: 1px solid rgba(124, 208, 255, .55); background: linear-gradient(90deg, rgba(18, 64, 110, .9), rgba(8, 18, 36, .9)); color: #cfeeff; font: 700 11px var(--font-display); letter-spacing: .14em; text-transform: uppercase; cursor: pointer; box-shadow: 0 0 14px rgba(74, 168, 255, .3); }
 .p2-codex i { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; font-style: normal; color: #06142a; background: radial-gradient(circle, #e8f8ff, #4aa8ff); box-shadow: 0 0 10px #4aa8ff; }
 .p2-tabs { grid-template-columns: repeat(6, minmax(0, 1fr)); } .p2-tabs button { font-size: 12px; padding: 8px 2px; }
-@media (max-width: 480px) { .p2-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.p2-tabs.has-cos { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.p2-tabs .p2-cos { color: #2a1c00; background: linear-gradient(180deg, #ffe27a, #d8a028); border-radius: 8px; font-weight: 800; }
+@media (max-width: 480px) { .p2-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); } .p2-tabs.has-cos { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 .p2-next { display: grid; gap: 6px; } .p2-next div { display: grid; grid-template-columns: 70px 1fr; gap: 8px; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.03); font-size: 12.5px; } .p2-next b { color: #ffd23f; } .p2-next em { font-style: normal; font-weight: 700; }
 .p2-bico *, .p2-bico *::before, .p2-bico *::after { animation: none !important; transition: none !important; }
 .p2-bdg { content-visibility: auto; contain-intrinsic-size: auto 96px; }
