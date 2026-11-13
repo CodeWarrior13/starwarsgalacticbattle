@@ -136,8 +136,12 @@
     ['bounty', 'Bounty Board', '#d8a060', { beskar: 1200 }, "Luthen's Gallery · 1,200 Beskar"],
     ['stationplans', 'Battle Station Plans', '#8fc8ff', (s) => [s.P.stats.packsOpened || 0, 150], 'Open 150 crates'],
     ['mustafar', 'Mustafar Ember', '#ff8a2a', { beskar: 1500 }, "Luthen's Gallery · 1,500 Beskar"],
-  ].map(([id, n, c, get, how]) => ({ id, n, c, get, how })).filter((x) => x.id === 'default' || (root.CB25 && root.CB25.has(x.id)));
-  const cbArt = (id) => (id !== 'default' && root.CB25 ? root.CB25.svg(id) : (root.Art && root.Art.cardBack ? root.Art.cardBack('light') : ''));
+    ['jediarch', 'Jedi Archives', '#8fd8ff', (s) => [s.c.light || 0, 300], 'Win 300 Light Side battles'],
+    ['carbonite', 'Carbonite Block', '#c8dcec', { kyber: 180 }, "Luthen's Gallery · 180 Kyber"],
+    ['cloudcity', 'Cloud City Sunset', '#ffb38a', { beskar: 1200 }, "Luthen's Gallery · 1,200 Beskar"],
+    ['coruscant', 'Coruscant Nights', '#c8a0ff', { kyber: 180 }, "Luthen's Gallery · 180 Kyber"],
+  ].map(([id, n, c, get, how]) => ({ id, n, c, get, how }));
+  const cbArt = (id) => (id !== 'default' && root.CB25 && root.CB25.has(id) ? root.CB25.svg(id) : (root.Art && root.Art.cardBack ? root.Art.cardBack('light') : ''));
   // Three cards dealt face down in the back, then flipped: the Try it on for a card back.
   const cbDemo = (id) => `<div class="c25-cbd">${['luke', 'vader', 'grogu'].map((u, i) => { const d = D.UNIT_MAP[u] || D.UNIT_MAP.luke; return `<span class="c25-cbf" style="--i:${i}"><span class="in"><span class="bk">${cbArt(id)}</span><span class="fr">${root.Art.unitArt(d)}</span></span></span>`; }).join('')}</div>`;
   // Luthen's library (js/lib25.js): win screens join the list, battle intros get their own tab.
