@@ -2846,7 +2846,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     }).join('');
     const top = `<h3>Placement battles · ${n} of ${P.GAMES}</h3><p class="muted small" style="margin:0">Before you can climb this season, ${P.GAMES} placement battles decide the league you start in. The last one is the Boss Trial.</p><div class="pl-pips">${pips}</div>`;
     if (pr.done && P.ready()) return `<div class="hn-sec pl-box">${top}${ackSay('Your results are in, Commander. Come to the bridge.')}<button type="button" class="hn-btn gold" data-hn="placeshow">See your placement</button></div>`;
-    if (pr.done) return `<div class="hn-sec pl-box">${top}${ackSay(`Well fought, Commander. Your scores are in. I'll reveal your league when Season ${HN.seasonLabel(pr.s)} opens in <b>${waitTxt(P.revealIn())}</b>.`)}</div>`;
+    if (pr.done) return `<div class="hn-sec pl-box">${top}${ackSay(`Well fought, Commander. Your league goes live when Season ${HN.seasonLabel(pr.s)} opens in <b>${waitTxt(P.revealIn())}</b>.`)}</div>`;
     if (P.openIn() > 0) return `<div class="hn-sec pl-box">${top}${ackSay(`Placement battles open in <b>${waitTxt(P.openIn())}</b>, on the last day of the break. Get your Ground squad ready.`)}</div>`;
     const o = P.opponent();
     const pic = HN.avatarFor ? HN.avatarFor(null, o) : '';
@@ -9050,7 +9050,7 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
       // Between seasons the ranked board is empty: nobody has a rating yet, players or bots.
       const no = HN.seasonLabel(SO.seasonNo());
       const P = root.Placement;
-      const pl = P && P.need() ? (P.rec().done ? 'Your placement battles are done. Your league is revealed when the season opens.' : P.openIn() > 0 ? `Placement battles open in <b>${HN.seasonClockShort(P.openIn())}</b>, on the last day of the break.` : 'Placement battles are open now in the Ground Arena.') : '';
+      const pl = P && P.need() ? (P.rec().done ? 'Your placement battles are done. Admiral Ackbar has your result in the Ground Arena; it goes live when the season opens.' : P.openIn() > 0 ? `Placement battles open in <b>${HN.seasonClockShort(P.openIn())}</b>, on the last day of the break.` : 'Placement battles are open now in the Ground Arena.') : '';
       body = `<div class="hn-sec lb-soon">
           <div class="lbs-radar" aria-hidden="true"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="56" fill="#061420" stroke="#1f4a66" stroke-width="2"/><circle cx="60" cy="60" r="38" fill="none" stroke="#173a52" stroke-width="1.5"/><circle cx="60" cy="60" r="20" fill="none" stroke="#173a52" stroke-width="1.5"/><path d="M60 4v112M4 60h112" stroke="#123044" stroke-width="1"/><g class="lbs-sweep"><path d="M60 60 60 4A56 56 0 0 1 108 32Z" fill="url(#lbsg)"/></g><defs><linearGradient id="lbsg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5fd8ff" stop-opacity=".05"/><stop offset="1" stop-color="#5fd8ff" stop-opacity=".55"/></linearGradient></defs><circle cx="60" cy="60" r="4" fill="#5fd8ff"/></svg></div>
           <small class="lbs-kick">RANKED · SEASON ${no}</small>

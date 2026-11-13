@@ -1,8 +1,9 @@
 // Placement battles (2.4, from Season 3): before ranked opens for a pilot,
 // five Ground placement battles decide where they start. They open on the
 // second day of the season break; anyone late plays them whenever they
-// arrive. Finishing early means waiting for the season, then Admiral Ackbar
-// reveals the starting league. Fleet ranked opens once they're done.
+// arrive. Admiral Ackbar reveals the starting league as soon as the fifth
+// battle is done, but the rating only lands on the leaderboards and the
+// profile when the season itself opens. Fleet ranked opens once they're done.
 (function (root) {
   'use strict';
 
@@ -47,9 +48,16 @@
   // Battles can be played: the last day of the break, or any time after.
   const openIn = () => (forced() ? 0 : Math.max(0, brk() - DAY));
   const canPlay = () => need() && !rec().done && openIn() <= 0;
-  // The league can be revealed once the season itself has started.
+  // Ackbar reveals the result straight away; the rating itself goes live when the season opens.
   const revealIn = () => (forced() ? 0 : brk());
-  const ready = () => need() && rec().done && revealIn() <= 0;
+  const ready = () => need() && rec().done;
+  // A placement seen during the break is applied the moment the season opens.
+  function settle() {
+    const H = HN();
+    if (!H || !H.S) return;
+    const p = st().place;
+    if (p && p.done && p.seen && !p.applied && p.s === seasonNo() && revealIn() <= 0) apply();
+  }
 
   // Tuning (set by battle simulations: see the notes in the 2.4 balance log).
   // Tuned over 1,000+ simulated placements against pilots of known strength.
@@ -253,7 +261,9 @@
       const C = root.Champion && root.Champion.kit;
       const p = st().place;
       if (!C || !H || !p || !p.done) return resolve(false);
-      apply();
+      // Before the season opens, the result is only shown: it goes live (leaderboards, profile) at the start.
+      const early = revealIn() > 0;
+      if (!early) apply();
       C.css();
       if (!document.getElementById('pl-css')) document.head.appendChild(Object.assign(document.createElement('style'), { id: 'pl-css', textContent: css }));
       const A = root.HNArt;
@@ -278,7 +288,7 @@
             <div class="pl-reveal"><svg class="pl-ring" viewBox="0 0 190 190"><circle class="bg" cx="95" cy="95" r="${R}"/><circle class="fg" cx="95" cy="95" r="${R}" stroke-dasharray="${CIRC}" stroke-dashoffset="${CIRC}"/></svg><div class="bdg">${A && A.badge ? A.badge(d.league, d.div) : ''}</div></div>
             <div class="pl-num">0</div>
             <div class="pl-name">${esc(d.name.toUpperCase())}</div>
-            <button type="button" class="btn btn-primary pl-go" data-pl-go>Begin the season</button>
+            <button type="button" class="btn btn-primary pl-go" data-pl-go>${revealIn() > 0 ? 'Got it' : 'Begin the season'}</button>
           </div>
         </div>
         <div class="cp-say"><span class="cp-face">${H.ui.ACKBAR}</span><b>Admiral Ackbar</b><p data-line></p><span class="cp-tap">Tap to continue</span></div>
@@ -320,7 +330,9 @@
         node.classList.add('hit');
         const fl = node.querySelector('.cp-flash'); fl.classList.remove('go'); void fl.offsetWidth; fl.classList.add('go');
         sound('reveal_legendary');
-        await C.talk(node, [`${d.name}! You start the season in the ${lg.name} league at ${fmt(p.to)} rating. Fleet ranked is open to you now too. Climb, pilot. The galaxy is watching.`]);
+        await C.talk(node, early
+          ? [`${d.name}! You will start Season ${H.seasonLabel(p.s)} in the ${lg.name} league at ${fmt(p.to)} rating.`, `It stays between us until the season opens in ${H.seasonClockShort ? H.seasonClockShort(revealIn()).replace(/<[^>]+>/g, '') : 'a few hours'}. Then it goes on the leaderboards and your profile, and ranked opens. Rest up, pilot.`]
+          : [`${d.name}! You start the season in the ${lg.name} league at ${fmt(p.to)} rating. Fleet ranked is open to you now too. Climb, pilot. The galaxy is watching.`]);
         node.querySelector('[data-pl-go]').classList.add('on');
       })();
       node.querySelector('[data-pl-go]').addEventListener('click', () => {
@@ -344,7 +356,10 @@
     return true;
   }
 
-  root.Placement = { CFG, W, nextRating, placed, score, GAMES, KIND, need, canPlay, openIn, revealIn, ready, rec, opponent, label, record, reveal, test };
+  root.Placement = { CFG, W, nextRating, placed, score, GAMES, KIND, need, canPlay, openIn, revealIn, ready, rec, opponent, label, record, reveal, test, settle };
+  const tick = () => { try { settle(); } catch (e) { /* offline */ } };
+  const startTick = () => { tick(); setInterval(tick, 60000); };
+  if (root.HN && root.HN.S) startTick(); else if (root.addEventListener) root.addEventListener('hn-ready', startTick, { once: true });
 
   const hook = () => {
     const H = UI() && UI().hooks;
