@@ -57,6 +57,17 @@
     if (!H || !H.S) return;
     const p = st().place;
     if (p && p.done && p.seen && !p.applied && p.s === seasonNo() && revealIn() <= 0) apply();
+    // Repair (Nov 13): the season-start reset could run after the placement landed and halve it.
+    // Put the placement back once if the rating is exactly that halved number.
+    const h = st();
+    if (p && p.applied && !p.fixed && p.s === seasonNo() && p.to > 800 && h.rating === Math.round(800 + (p.to - 800) * 0.5)) {
+      p.fixed = true;
+      h.rating = p.to;
+      h.best = Math.max(h.best || 0, p.to);
+      if (h.soc) h.soc.sBest = Math.max(h.soc.sBest || 0, p.to);
+      H.save();
+      try { H.Net.publish(); } catch (e) { /* offline */ }
+    }
   }
 
   // Tuning (set by battle simulations: see the notes in the 2.4 balance log).

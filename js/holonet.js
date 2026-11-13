@@ -2892,8 +2892,10 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const kind = p.kind || 'character';
     const h = S();
     const ids = HN.squad(kind);
-    // Rebuild the list once fresh player data arrives (a new fetch stamp).
-    if (oppCache.stamp !== HN.Net.fetched.arena) oppCache = { stamp: HN.Net.fetched.arena };
+    // Rebuild the list once fresh player data arrives, or your rating moves (placement results,
+    // a season reset, a fight): opponents always come from the division you're in now.
+    const stamp = `${HN.Net.fetched.arena}|${h.rating}|${h.seed}`;
+    if (oppCache.stamp !== stamp) oppCache = { stamp };
     const opps = oppCache[kind] || (oppCache[kind] = HN.opponents(kind));
     const myPow = HN.squadPower(HN.squadEntries(kind));
     return `${head(kind === 'ship' ? 'FLEET ARENA' : 'GROUND ARENA', null, true)}
@@ -7826,9 +7828,11 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     h.soc.pendingSeason = { no: h.soc.season, league: best.league, div: best.div, name: best.name };
     h.soc.season = seasonNo();
     h.soc.seasonsDone = (h.soc.seasonsDone || 0) + 1;
-    if (h.rating > 800) h.rating = Math.round(800 + (h.rating - 800) * 0.5);
+    // Placement results already set this season's rating: the reset never touches them.
+    const placed = h.place && h.place.s === seasonNo() && h.place.applied;
+    if (!placed && h.rating > 800) h.rating = Math.round(800 + (h.rating - 800) * 0.5);
     h.streak = 0;
-    h.soc.sBest = h.rating;
+    if (!placed) h.soc.sBest = h.rating;
     HN.save(); Net.publish();
   }
   async function claimSeason() {
