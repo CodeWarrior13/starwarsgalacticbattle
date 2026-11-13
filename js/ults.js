@@ -923,16 +923,28 @@
       const wall = el(`<div class="sig-wall wall-${spec.prop}" style="--c:${spec.color}"></div>`);
       S.layer.appendChild(wall);
       const ltr = actor.side === 'player';
-      wall.animate([{ transform: `translateX(${ltr ? '-110%' : '110%'})` }, { transform: `translateX(${ltr ? '110%' : '-110%'})` }], { duration: 1100 / S.speed, easing: 'cubic-bezier(.4,0,.6,1)' });
-      T.forEach((t) => setTimeout(() => {
-        const card = this.cards[t.uid];
-        if (!card) return;
-        const shield = el(`<div class="sig-shield" style="left:${t.x}px;top:${t.y}px;--c:${spec.color}"></div>`);
-        S.layer.appendChild(shield);
-        card.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.08)' }, { transform: 'scale(1)' }], { duration: 500 });
-        this.env.light(this.toField(t).x, this.toField(t).y, spec.color, 140, 0.6);
-      }, ((ltr ? t.x : S.W - t.x) / S.W) * (1100 / S.speed)));
-      await this.wait(1250);
+      const sweep = 1100 / S.speed;
+      // Keep the wall off screen once it has passed (it used to snap back across the field).
+      const run = wall.animate([{ transform: `translateX(${ltr ? '-110%' : '110%'})` }, { transform: `translateX(${ltr ? '110%' : '-110%'})` }], { duration: sweep, easing: 'cubic-bezier(.4,0,.6,1)', fill: 'both' });
+      run.onfinish = () => wall.remove();
+      const W = S.W || window.innerWidth;
+      T.forEach((t) => {
+        // The wall reaches each card as it passes; never later than the effect lasts.
+        const frac = Math.max(0, Math.min(0.85, (ltr ? t.x : W - t.x) / W));
+        setTimeout(() => {
+          const card = this.cards[t.uid];
+          if (!card || !card.isConnected || !S.layer.isConnected) return;
+          const p = this.vp(t.uid);
+          const w = Math.max(70, (p.w || 120) * 1.25);
+          const h = Math.max(84, (p.h || 150) * 1.12);
+          const shield = el(`<div class="sig-shield" style="left:${p.x}px;top:${p.y}px;width:${w}px;height:${h}px;margin:${-h / 2}px 0 0 ${-w / 2}px;--c:${spec.color}"></div>`);
+          S.layer.appendChild(shield);
+          shield.addEventListener('animationend', () => shield.remove(), { once: true });
+          card.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.08)' }, { transform: 'scale(1)' }], { duration: 500 });
+          this.env.light(this.toField(p).x, this.toField(p).y, spec.color, 140, 0.6);
+        }, frac * sweep);
+      });
+      await this.wait(Math.max(1250, sweep + 300));
     },
 
     async mv_rally(S, actor, from, T, spec) {
