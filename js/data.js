@@ -215,28 +215,28 @@
 
     // ---------- Ships: Light Side ----------
     {
-      id: 'a_wing', name: 'RZ-1 A-wing', kind: 'ship', faction: 'light', rarity: 'common', role: 'attacker', shape: 'awing', spd: 170,
+      id: 'a_wing', name: 'A-wing', kind: 'ship', faction: 'light', rarity: 'common', role: 'attacker', shape: 'awing', spd: 170,
       abilities: [
         { name: 'Rapid Fire', cd: 0, target: 'enemy', effects: [dmg(1.0), { ...tm(10), on: 'self' }], desc: 'Deal damage and gain 10% Turn Meter.' },
         { name: 'Target Lock', cd: 3, target: 'enemy', effects: [dmg(1.8), debuff('defDown', 2)], desc: 'Deal heavy damage and inflict Defense Down.' },
       ],
     },
     {
-      id: 'y_wing', name: 'BTL Y-wing', kind: 'ship', faction: 'light', rarity: 'common', role: 'tank', shape: 'ywing',
+      id: 'y_wing', name: 'Y-wing', kind: 'ship', faction: 'light', rarity: 'common', role: 'tank', shape: 'ywing',
       abilities: [
         { name: 'Ion Cannon', cd: 0, target: 'enemy', effects: [dmg(0.9), debuff('stun', 1, 0.3)], desc: 'Deal damage with a 30% chance to Stun.' },
         { name: 'Deflector Shields', cd: 3, target: 'self', effects: [buff('taunt', 2), buff('defUp', 2)], desc: 'Gain Taunt and Defense Up.' },
       ],
     },
     {
-      id: 'x_wing', name: 'T-65 X-wing', kind: 'ship', faction: 'light', rarity: 'rare', role: 'attacker', shape: 'xwing',
+      id: 'x_wing', name: 'X-wing', kind: 'ship', faction: 'light', rarity: 'rare', role: 'attacker', shape: 'xwing',
       abilities: [
         { name: 'Laser Cannons', cd: 0, target: 'enemy', effects: [dmg(1.1)], desc: 'Deal damage to one enemy.' },
         { name: 'Proton Torpedoes', cd: 3, target: 'enemy', effects: [dmg(2.1)], desc: 'Deal heavy damage to one enemy.' },
       ],
     },
     {
-      id: 'b_wing', name: 'A/SF-01 B-wing', kind: 'ship', faction: 'light', rarity: 'epic', role: 'tank', shape: 'bwing',
+      id: 'b_wing', name: 'B-wing', kind: 'ship', faction: 'light', rarity: 'epic', role: 'tank', shape: 'bwing',
       abilities: [
         { name: 'Heavy Ion Burst', cd: 0, target: 'enemy', effects: [dmg(1.0), debuff('offDown', 2, 0.4)], desc: 'Deal damage with a 40% chance of Offense Down.' },
         { name: 'Shield Relay', cd: 4, target: 'self', effects: [buff('taunt', 2), buff('defUp', 2), { ...heal(0.12), on: 'allies' }], desc: 'Gain Taunt and Defense Up; heal all allies 12%.' },
@@ -289,7 +289,7 @@
       ],
     },
     {
-      id: 'tie_advanced', name: 'TIE Advanced x1', kind: 'ship', faction: 'dark', rarity: 'legendary', role: 'attacker', shape: 'tieadv', spd: 158,
+      id: 'tie_advanced', name: 'TIE Advanced', kind: 'ship', faction: 'dark', rarity: 'legendary', role: 'attacker', shape: 'tieadv', spd: 158,
       abilities: [
         { name: 'Targeted Fire', cd: 0, target: 'enemy', effects: [dmg(1.2)], desc: 'Deal damage to one enemy.' },
         { name: 'I Have You Now', cd: 3, target: 'enemy', effects: [dmg(2.3), debuff('defDown', 2)], desc: 'Deal massive damage and inflict Defense Down.' },
@@ -703,7 +703,7 @@
       ],
     },
     {
-      id: 'u_wing', name: 'U-Wing', kind: 'ship', faction: 'light', rarity: 'epic', role: 'support', shape: 'uwing', spd: 140,
+      id: 'u_wing', name: 'U-wing', kind: 'ship', faction: 'light', rarity: 'epic', role: 'support', shape: 'uwing', spd: 140,
       abilities: [
         { name: 'Ion Cannons', cd: 0, target: 'enemy', effects: [dmg(1.0), debuff('offDown', 2, 0.3)], desc: 'Deal damage with a 30% chance of Offense Down.' },
         { name: 'Drop Commandos', cd: 3, target: 'allAllies', effects: [buff('offUp', 2), tm(15)], desc: 'All allies gain Offense Up and 15% Turn Meter.' },
@@ -1152,7 +1152,7 @@
     z95: 'A tough old fighter from the Clone Wars era, still flown by Rebel cells and freelancers across the Outer Rim.',
     a_wing: 'The fastest starfighter in the Rebel fleet. Built for interception and hit-and-run strikes.',
     y_wing: 'A rugged Rebel bomber. Slow, heavily armored, and packing an ion cannon that shuts ships down.',
-    x_wing: 'The legendary T-65 starfighter that destroyed the first Death Star. Balanced, deadly and iconic.',
+    x_wing: 'The legendary starfighter that destroyed the first Death Star. Balanced, deadly and iconic.',
     b_wing: 'A heavy assault fighter with a rotating cockpit and enough firepower to cripple capital ships.',
     falcon: 'The fastest hunk of junk in the galaxy. Made the Kessel Run in less than twelve parsecs.',
     razor_crest: 'The Mandalorian\'s armored gunship. Old, patched up, and always somehow still flying.',
