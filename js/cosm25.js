@@ -125,6 +125,16 @@
     ['bacta', 'Bacta Tank', '#5affc8', { beskar: 3000 }, "Luthen's Gallery · 3,000 Beskar"],
     ['sarlacc', 'Sarlacc Pit', '#e8a060', { kyber: 230 }, "Luthen's Gallery · 230 Kyber"],
   ].map(([id, n, c, get, how]) => ({ id, n, c, get, how }));
+  // Event exclusives: on sale on Luthen's Exclusives shelf only while their event runs
+  // (midnight to midnight Central), then gone for good. Owners keep them.
+  const EVENTS = {
+    thanksgiving: { n: 'Thanksgiving', at: [[2026, 10, 23, 2026, 10, 30], [2027, 10, 22, 2027, 10, 29]] },
+    lifeday: { n: 'Life Day', at: [[2026, 11, 15, 2027, 0, 2], [2027, 11, 15, 2028, 0, 2]] },
+    easter: { n: 'Easter', at: [[2027, 2, 22, 2027, 2, 29]] },
+    starwars: { n: 'Star Wars Day', at: [[2027, 4, 1, 2027, 4, 8]] },
+  };
+  const evOn = (ev) => { const E = EVENTS[ev]; if (!E) return false; const t = Date.now(); return E.at.some(([y, m, d, y2, m2, d2]) => t >= Date.UTC(y, m, d, 6) && t < Date.UTC(y2, m2, d2, 6)); };
+  const evNow = () => Object.keys(EVENTS).filter(evOn);
   // Card backs (art in js/cb25.js): each crate type wears its own, like pack themes.
   const CBACKS = [
     ['default', 'Default', '#9aa4ae', null, 'Everyone has it'],
@@ -140,6 +150,11 @@
     ['carbonite', 'Carbonite Block', '#c8dcec', { kyber: 180 }, "Luthen's Gallery · 180 Kyber"],
     ['cloudcity', 'Cloud City Sunset', '#ffb38a', { beskar: 1200 }, "Luthen's Gallery · 1,200 Beskar"],
     ['coruscant', 'Coruscant Nights', '#c8a0ff', { kyber: 180 }, "Luthen's Gallery · 180 Kyber"],
+    ['hoth', 'Hoth Blizzard', '#eef6ff', { beskar: 1500 }, "Luthen's Gallery · 1,500 Beskar"],
+    ['exegol', 'Exegol Storm', '#b07aff', { kyber: 180 }, "Luthen's Gallery · 180 Kyber"],
+    ['kessel', 'Kessel Maelstrom', '#ffb35a', { kyber: 180 }, "Luthen's Gallery · 180 Kyber"],
+    ['endor', 'Endor Celebration', '#ffd23f', { kyber: 200, ev: 'starwars' }, "Event exclusive · Star Wars Day"],
+    ['lifeday', 'Life Day Lights', '#7affa0', { kyber: 200, ev: 'lifeday' }, "Event exclusive · Life Day"],
   ].map(([id, n, c, get, how]) => ({ id, n, c, get, how }));
   const cbArt = (id) => (id !== 'default' && root.CB25 && root.CB25.has(id) ? root.CB25.svg(id) : (root.Art && root.Art.cardBack ? root.Art.cardBack('light') : ''));
   // Three cards dealt face down in the back, then flipped: the Try it on for a card back.
@@ -364,8 +379,8 @@
       ${(() => { const L = INTROS.filter((x) => x.lib && root.Lib25.BY[x.lib] && !root.Lib25.BY[x.lib].wk); return L.length ? `<div class="section-head"><h2 class="section-title">Battle intros</h2><span class="muted">Play before your live duels · equip in Cosmetics</span></div><div class="lu25-grid lu25-fg">${L.map((x) => card('in', x, x.get, !!x.get.kyber, 'Battle intro' + (x.get.kyber ? ' · premium' : ''), 'NEW')).join('')}</div>` : ''; })()}
       ${libShelf(c)}
       <div class="section-head"><h2 class="section-title">This week's titles</h2><span class="muted">New titles every Monday</span></div><div class="lu25-grid">${stock().map((t) => card('ti', t, t.cost, !!t.fix && !!t.cost.kyber, t.fix ? 'Profile title · fixed ' + TIERS.find((q) => q[0] === t.fix)[1] : 'Profile title · Silver, upgradable')).join('')}</div>
-      ${(() => { const L = CBACKS.filter((x) => x.get && typeof x.get === 'object'); return L.length ? `<div class="section-head"><h2 class="section-title">Card backs</h2><span class="muted">Give each crate its own back in Cosmetics</span></div><div class="lu25-grid">${L.map((x) => card('cb', x, x.get, !!x.get.kyber, 'Card back' + (x.get.kyber ? ' · premium' : ''), false)).join('')}</div>` : ''; })()}
-      <div class="lu25-note ex"><b>Exclusives</b><span>Event exclusives appear here during events only, and never come back.</span></div>
+      ${(() => { const L = CBACKS.filter((x) => x.get && typeof x.get === 'object' && !x.get.ev); return L.length ? `<div class="section-head"><h2 class="section-title">Card backs</h2><span class="muted">Give each crate its own back in Cosmetics</span></div><div class="lu25-grid">${L.map((x) => card('cb', x, x.get, !!x.get.kyber, 'Card back' + (x.get.kyber ? ' · premium' : ''), false)).join('')}</div>` : ''; })()}
+      ${(() => { const L = CBACKS.filter((x) => x.get && x.get.ev && evOn(x.get.ev)); return L.length ? `<div class="section-head"><h2 class="section-title">Exclusives</h2><span class="muted">${esc(evNow().map((e) => EVENTS[e].n).join(' · '))} · gone when the event ends</span></div><div class="lu25-grid">${L.map((x) => card('cb', x, { kyber: x.get.kyber }, true, 'Card back · exclusive', 'EXCLUSIVE')).join('')}</div>` : '<div class="lu25-note ex"><b>Exclusives</b><span>Event exclusives appear here during events only, and never come back.</span></div>'; })()}
       <div class="section-head"><h2 class="section-title">Colour upgrades</h2><span class="muted">For titles you own</span></div>${(() => { const mine = TITLES.filter((t) => tiersOf(t.id).length && !t.fix); return mine.length ? `<div class="lu25-ups">${mine.map((t) => `<div class="lu25-up"><b>${esc(t.n)}</b><div class="c25-tiers">${TIERS.map(([tid, tn, , cost]) => tiersOf(t.id).includes(tid) ? `<span class="c25-tier on">${titleHtml({ n: tn, t: tid })}<small>Owned</small></span>` : `<button type="button" class="c25-tier" data-up25="${t.id}:${tid}">${titleHtml({ n: tn, t: tid })}<small>${priceHtml(cost)}</small></button>`).join('')}</div></div>`).join('')}</div>` : '<div class="lu25-note"><span>Earn or buy a title first, then upgrade its colour here.</span></div>'; })()}
       <div class="lu25-note"><b>Your collection</b><span>Equip what you own in the Cosmetics tab of your profile.</span><button type="button" class="lu25-try" data-opencos>Open Cosmetics</button></div>`;
     };
@@ -382,6 +397,7 @@
       if (b) {
         const [k, id] = b.dataset.buy25.split(':');
         const x = k === 'ti' ? TMAP[id] : k === 'wi' ? WINS.find((y) => y.id === id) : k === 'in' ? INTROS.find((y) => y.id === id) : k === 'cb' ? CBACKS.find((y) => y.id === id) : PACKS.find((y) => y.id === id);
+        if (x && x.get && x.get.ev && !evOn(x.get.ev)) { toast('That exclusive is no longer on sale.'); return; }
         const cost = k === 'ti' ? x.cost : x.get;
         const go = () => { if (!pay(cost)) return; if (k === 'ti') C().t[id] = [baseTier(x)]; else C().own[k + ':' + id] = 1; C().seen[k + ':' + id] = 0; save(); toast(`${x.n} is yours. Equip it in Cosmetics.`); draw(); };
         ask(`Buy ${x.n} for ${cost.kyber ? fmt(cost.kyber) + ' Kyber' : fmt(cost.beskar) + ' Beskar'}?`, 'Buy', go);

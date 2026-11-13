@@ -28,7 +28,7 @@
       v: '2.5', date: 'Coming soon', title: 'Cosmetic', from: LAUNCH_25,
       // Bigger than Liberation: a grand-opening marquee for the three shops.
       theme: 'cosmetic',
-      stats: [['3', 'shops'], ['3', 'new cards'], ['40', 'titles'], ['6', 'title colours'], ['15', 'new frames'], ['42', 'banners'], ['14', 'victory poses'], ['16', 'win screens'], ['9', 'crate themes'], ['12', 'card backs'], ['11', 'battle intros'], ['100+', 'guild pictures']],
+      stats: [['3', 'shops'], ['3', 'new cards'], ['40', 'titles'], ['6', 'title colours'], ['15', 'new frames'], ['42', 'banners'], ['14', 'victory poses'], ['16', 'win screens'], ['9', 'crate themes'], ['15', 'card backs'], ['11', 'battle intros'], ['100+', 'guild pictures']],
       decos: ['shops', 'wear', 'cards', 'casino', 'squad', 'holonet', 'credits', 'secret'],
       groups: [
         ['Three Shops Open', '⌂', 'Black Market opens|Luthen\'s Gallery, Coruscant|gallery pieces|New on Luthen'],
@@ -44,7 +44,7 @@
         'NEW|The Black Market opens three shops: Vekko the Fence for cards and crates, Luthen\'s Gallery for cosmetics, and Watto\'s Wagers for casino games. Switch between them with the tabs at the top.',
         'NEW|Luthen\'s Gallery, Coruscant\'s finest antiquities: titles, win screens, crate themes and card backs, with new pieces every Monday. While you browse, the top bar shows your Beskar, Kyber and Aurodium.',
         'NEW|36 gallery pieces rotate through the Gallery week by week: 22 banners, 7 win screens and 7 battle intros, each with its own animated scene.',
-        'NEW|12 card backs for the face-down cards in every crate opening, from Twin Suns and Cloud City Sunset to Coruscant Nights and Battle Station Plans. Give each crate its own back in the new Card backs tab: earn some by playing, and buy the rest at Luthen\'s Gallery.',
+        'NEW|15 card backs for the face-down cards in every crate opening, from Twin Suns and Hoth Blizzard to Exegol Storm and Battle Station Plans, plus event exclusives on Luthen\'s Exclusives shelf. Give each crate its own back in the new Card backs tab: earn some by playing, and buy the rest at Luthen\'s Gallery.',
         'NEW|New on Luthen\'s plinth: the Boonta Eve Finish win screen, and the Kyber Geode, Bacta Tank and Sarlacc Pit crate themes. Win 150 all-ship battles for the Hyperspace Drop crate theme.',
         'NEW|The Cosmetics tab in your profile: frames, titles, poses, win screens and crate themes in one place. Preview anything on your card, equip what you own, and new items carry a red dot until you look.',
         'NEW|40 profile titles, 20 to earn and 20 to buy, each in up to 6 colours: Silver, Gold, Kyber, Crimson, Aurora and Holo.',
