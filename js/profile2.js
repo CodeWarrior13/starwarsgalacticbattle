@@ -62,7 +62,9 @@
 
     const head = () => {
       const hn = hnOn() && root.HN.S ? root.HN.S() : null;
-      const lg = hn && root.HN.divOf ? root.HN.divOf(hn.rating) : null;
+      // No league shown before this season's placements (or between seasons).
+      const unpl25 = !!(root.HN && ((root.HN.unplaced && root.HN.unplaced()) || (root.HN.seasonBreak && root.HN.seasonBreak())));
+      const lg = hn && root.HN.divOf && !unpl25 ? root.HN.divOf(hn.rating) : null;
       return `<button type="button" class="pf-x p2-x" data-p2="close" aria-label="Close">✕</button>
       <div class="p2-top">
         <div class="p2-av"><button type="button" class="p2-pic" data-p2="pic" aria-label="Change your picture"><span class="p2-face">${pic}</span><span class="p2-edit" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4z" fill="currentColor"/></svg></span></button><button type="button" class="acct-ring p2-ring" data-p2="level" style="--p:${pct}" aria-label="Level ${a.level}: what's coming up"><b>${a.level}</b></button></div>
@@ -157,7 +159,7 @@
       const luck = s.luck;
       const hn = hnOn() && root.HN.S ? root.HN.S() : null;
       return `<div class="pc-stats">${cell('Battles won', fmt(st.battlesWon))}${cell('Battles lost', fmt(st.battlesLost))}${cell('Cards collected', `${owned.length}/${D.UNITS.length}`)}${cell('Bosses defeated', `${Object.keys(s.bosses).length}/${D.BOSS_ENCOUNTERS.length}`)}${cell('Best tower floor', s.tower.best || 0)}${cell('Crates opened', fmt(st.packsOpened))}${cell('Mythics pulled', st.mythics || 0)}${cell('Holo cards', st.holos || 0)}${cell('Best luck spin', `${st.bestSpin}×`)}${cell('Legendary pity', `${luck.pity}/${D.LUCK.pityCrates}`)}
-        ${hn ? `${cell('HoloNet rating', fmt(hn.rating))}${cell('Arena W–L', `${fmt(hn.wins || 0)}–${fmt(hn.losses || 0)}`)}` : ''}</div>
+        ${hn ? `${root.HN && ((root.HN.unplaced && root.HN.unplaced()) || (root.HN.seasonBreak && root.HN.seasonBreak())) ? cell('HoloNet rating', 'Placements') : cell('HoloNet rating', fmt(hn.rating))}${cell('Arena W–L', `${fmt(hn.wins || 0)}–${fmt(hn.losses || 0)}`)}` : ''}</div>
         ${hn ? '' : '<p class="pc-empty" style="margin-top:8px">HoloNet stats (rating, league, arena) appear here once you unlock the HoloNet at level 25.</p>'}`;
     };
 

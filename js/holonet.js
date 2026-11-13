@@ -6119,6 +6119,18 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     return { tag: cleanTag(h.prof.tag), av: h.prof.av && D.UNIT_MAP[h.prof.av] ? h.prof.av : defaultAv(), frame: ownedFrames().includes(h.prof.frame) ? h.prof.frame : 'recruit', ban: playerBanOk(h.prof.ban) ? h.prof.ban : '', badges: b.top, nb: b.n, st: myStats() };
   }
   // A row from the database, or me, in one shape.
+  // No current-season rank before a pilot's placements (or between seasons): profiles then show
+  // only their all-time Best, never last season's league as if it were this one.
+  function noSeasonFor(p) {
+    try {
+      if (HN.seasonBreak && HN.seasonBreak()) return true;
+      if (p.me) return !!(HN.unplaced && HN.unplaced());
+      const si = HN.seasonInfo();
+      if (p.bot || String(p.uid).startsWith('bot:') || NPC_ROWS.has(p.uid)) { const fr = Math.max(0, Math.min(1, si.started / si.length)); return ((hashS(p.uid) % 1000) / 1000) * 0.06 > fr; }
+      const a = Net.arena.find((x) => x.uid === p.uid) || {};
+      return !(typeof a.ss === 'number' && Math.floor(a.ss / 1e5) === si.no && a.ss % 1e5 > 0);
+    } catch (e) { return false; }
+  }
   function prof(uid) {
     const me = !uid || uid === Net.me || uid === 'me';
     const PC = root.PlayerCollections;
@@ -6178,14 +6190,15 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const g = p.guild && guildOf(p.guild);
     const st = p.st || {};
     const wr = (st.w || 0) + (st.l || 0) ? Math.round(((st.w || 0) / ((st.w || 0) + (st.l || 0))) * 100) : 0;
+    const unpl = noSeasonFor(p);
     const badges = p.badges.length ? p.badges.map((x) => `<button type="button" class="pf-bdg" data-bdg='${esc(JSON.stringify(x.secret ? { ...x, desc: '' } : x))}'>${still(UI.featBadge(x))}<span>${esc(x.name)}</span></button>`).join('') : '<p class="muted small">No badges yet.</p>';
     const m = openModal(`<div class="pf-card" style="--gc:${g ? g.color : '#5fd8ff'}">
       <button type="button" class="pf-x" data-x="ok" aria-label="Close">✕</button>
       <div class="pf-top${bannerForUid(p.uid) ? ' gb-host' : ''}">${gban(bannerForUid(p.uid), 'hero')}${avatar(p, 'lg')}<div class="pf-id"><p class="eyebrow">${p.me ? 'Your HoloNet profile' : 'HoloNet profile'}</p><h2>${esc(Net.name(p.uid).replace(' (you)', ''))}</h2>${HN.titleHtml ? HN.titleHtml(p.ti) : ''}
         <p class="muted small">Level ${p.level} · ${esc(FRAMES[p.frame].name)} frame${g ? ` · <b style="color:${g.color}">[${esc(g.tag)}] ${esc(g.name)}</b>` : ''}</p></div>
-        <div class="pf-lg">${A.badge(d.league, d.div)}<small>${esc(d.name)}</small></div></div>
+        ${unpl ? '<div class="pf-lg"><small>Placements</small></div>' : `<div class="pf-lg">${A.badge(d.league, d.div)}<small>${esc(d.name)}</small></div>`}</div>
       <div class="pf-stats">
-        <div><b>${fmt(p.rating)}</b><span>Rating</span></div><div><b>${fmt(st.best || p.rating)}</b><span>Best</span></div>
+        ${unpl ? '' : `<div><b>${fmt(p.rating)}</b><span>Rating</span></div>`}<div><b>${fmt(st.best || p.rating)}</b><span>Best</span></div>
         <div><b>${fmt(st.w || 0)}–${fmt(st.l || 0)}</b><span>Arena W–L · ${wr}%</span></div><div><b>${fmt(st.dw || 0)}–${fmt(st.dl || 0)}</b><span>Live duels</span></div>
         <div><b>${HN.streakFlame ? HN.streakFlame(st.ws | 0, true) : fmt(st.ws | 0)}</b><span>Arena win streak</span></div><div><b>${HN.streakFlame ? HN.streakFlame(st.ds | 0, true) : fmt(st.ds | 0)}</b><span>Duel win streak</span></div>
         <div><b>${fmt(st.raid || 0)}</b><span>Raid damage</span></div><div><b>${fmt(st.bosses || 0)}</b><span>Bosses beaten</span></div>
@@ -6243,12 +6256,13 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     let chip = 'ground';
     let sort = 'power';
     let pick = null;
+    const unpl = noSeasonFor(p);
     const ball = p.ball || p.badges;
     const tabs = () => `<div class="pc-tabs" role="tablist">${[['overview', 'Overview'], ['collection', 'Collection'], ['badges', 'Badges'], ['stats', 'Stats']].map(([k, n]) => `<button type="button" role="tab" aria-selected="${tab === k}" class="${tab === k ? 'on' : ''}" data-pct="${k}">${n}</button>`).join('')}</div>`;
     const overview = () => {
       const f = fav && col[fav];
       const fu = fav && use[fav];
-      return `<div class="pc-tiles"><div><b>${fmt(p.rating)}</b><span>Rating</span></div><div><b>${fmt(st.best || p.rating)}</b><span>Best</span></div><div><b>${fmt(st.w || 0)}–${fmt(st.l || 0)}</b><span>Arena · ${wr}%</span></div><div><b>${fmt(st.dw || 0)}–${fmt(st.dl || 0)}</b><span>Live duels</span></div><div><b>${HN.streakFlame(st.ws | 0, true)}</b><span>Arena win streak</span></div><div><b>${HN.streakFlame(st.ds | 0, true)}</b><span>Duel win streak</span></div></div>
+      return `<div class="pc-tiles">${unpl ? '' : `<div><b>${fmt(p.rating)}</b><span>Rating</span></div>`}<div><b>${fmt(st.best || p.rating)}</b><span>Best</span></div><div><b>${fmt(st.w || 0)}–${fmt(st.l || 0)}</b><span>Arena · ${wr}%</span></div><div><b>${fmt(st.dw || 0)}–${fmt(st.dl || 0)}</b><span>Live duels</span></div><div><b>${HN.streakFlame(st.ws | 0, true)}</b><span>Arena win streak</span></div><div><b>${HN.streakFlame(st.ds | 0, true)}</b><span>Duel win streak</span></div></div>
         <h3 class="pc-h">Favorite card <small>most used</small></h3>
         ${f ? `<div class="pc-fav"><div class="pt">${UI.portrait(D.UNIT_MAP[fav])}</div><div><h4>${esc(D.UNIT_MAP[fav].name)}</h4><div class="sub">${esc(D.RARITIES[D.UNIT_MAP[fav].rarity].label)} · Lv ${f.level} · ${'★'.repeat(f.stars)}</div>
           <div class="nums"><div><b>${fmt(fu.b)}</b><span>battles</span></div><div><b>${fu.b ? Math.round((fu.w / fu.b) * 100) : 0}%</b><span>win rate</span></div><div><b>${fmt(power(fav, f))}</b><span>power</span></div></div></div></div>` : '<p class="pc-empty">Not enough battles yet to pick a favorite.</p>'}
@@ -6294,12 +6308,12 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const stats = () => {
       const cell = (n, v) => `<div><span>${n}</span><b>${v}</b></div>`;
       const totalB = Object.values(use).reduce((a, u) => a + u.b, 0);
-      return `<div class="pc-stats">${cell('Rating', fmt(p.rating))}${cell('Best rating', fmt(st.best || p.rating))}${cell('League', esc(d.name))}${cell('Arena W–L', `${fmt(st.w || 0)}–${fmt(st.l || 0)} · ${wr}%`)}${cell('Live duels', `${fmt(st.dw || 0)}–${fmt(st.dl || 0)}`)}${cell('Arena win streak', HN.streakFlame(st.ws | 0))}${cell('Duel win streak', HN.streakFlame(st.ds | 0))}${cell('Raid damage', fmt(st.raid || 0))}${cell('Bosses beaten', fmt(st.bosses || 0))}${cell('Cards', `${fmt(owned.length)}`)}${cell('HoloNet cards', `${HN.HN_IDS.filter((id) => col[id]).length} / ${HN.HN_IDS.length}`)}${cell('Seasons played', fmt(st.seasons || 0))}${cell('Favorite card', fav ? `${esc(D.UNIT_MAP[fav].name)} · ${fmt(use[fav].b)}` : '—')}${cell('Battles tracked', fmt(totalB))}${cell('Guild', g ? `[${esc(g.tag)}]` : '—')}${cell('Account level', fmt(p.level))}</div>`;
+      return `<div class="pc-stats">${unpl ? '' : cell('Rating', fmt(p.rating))}${cell('Best rating', fmt(st.best || p.rating))}${cell('League', unpl ? 'Placements' : esc(d.name))}${cell('Arena W–L', `${fmt(st.w || 0)}–${fmt(st.l || 0)} · ${wr}%`)}${cell('Live duels', `${fmt(st.dw || 0)}–${fmt(st.dl || 0)}`)}${cell('Arena win streak', HN.streakFlame(st.ws | 0))}${cell('Duel win streak', HN.streakFlame(st.ds | 0))}${cell('Raid damage', fmt(st.raid || 0))}${cell('Bosses beaten', fmt(st.bosses || 0))}${cell('Cards', `${fmt(owned.length)}`)}${cell('HoloNet cards', `${HN.HN_IDS.filter((id) => col[id]).length} / ${HN.HN_IDS.length}`)}${cell('Seasons played', fmt(st.seasons || 0))}${cell('Favorite card', fav ? `${esc(D.UNIT_MAP[fav].name)} · ${fmt(use[fav].b)}` : '—')}${cell('Battles tracked', fmt(totalB))}${cell('Guild', g ? `[${esc(g.tag)}]` : '—')}${cell('Account level', fmt(p.level))}</div>`;
     };
     const head = () => `<button type="button" class="pf-x" data-x="ok" aria-label="Close">✕</button>
       <div class="pf-top${bannerForUid(p.uid) ? ' gb-host' : ''}">${gban(bannerForUid(p.uid), 'hero')}${avatar(p, 'lg')}<div class="pf-id"><p class="eyebrow">${p.me ? 'Your HoloNet profile' : 'HoloNet profile'}</p><h2>${esc(Net.name(p.uid).replace(' (you)', ''))}</h2>${HN.titleHtml ? HN.titleHtml(p.ti) : ''}
         <p class="muted small">Level ${p.level} · ${esc(FRAMES[p.frame].name)} frame${g ? ` · <b style="color:${g.color}">[${esc(g.tag)}] ${esc(g.name)}</b>` : ''}</p></div>
-        <div class="pf-lg">${A.badge(d.league, d.div)}<small>${esc(d.name)}</small></div></div>`;
+        ${unpl ? '<div class="pf-lg"><small>Placements</small></div>' : `<div class="pf-lg">${A.badge(d.league, d.div)}<small>${esc(d.name)}</small></div>`}</div>`;
     const actions = () => `<div class="modal-actions">${p.me ? '<button type="button" class="btn" data-x="edit">Edit profile</button>' : `${HN.duelChat ? HN.duelChat.friendBtn(p.uid) : ''}${canInvite(p) ? `<button type="button" class="btn" data-x="invite">${((gmap.get(myGuildId()) || {}).ok || []).includes(p.uid) ? 'Invited' : 'Invite to guild'}</button>` : ''}<button type="button" class="btn" data-x="mute">${isMuted(p.uid) ? 'Unmute' : 'Mute in chat'}</button>`}<button type="button" class="btn btn-primary" data-x="ok">Close</button></div>`;
     const body = () => `${head()}${tabs()}<div data-pcbody>${({ overview, collection, badges, stats })[tab]()}</div>${actions()}`;
     const m = openModal(`<div class="pf-card pc-card" style="--gc:${g ? g.color : '#5fd8ff'}">${body()}</div>`, { small: true, cls: 'pf-modal' });
@@ -6958,6 +6972,16 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   };
   HN.isBotUid = (uid) => typeof uid === 'string' && (uid.startsWith('bot:') || uid.startsWith('npc:'));
   const NPC_FULL = new Map();
+  // Bots can only hold badges a real pilot could have earned by now: a calendar badge
+  // (May the 4th, Revenge of the Fifth) needs that day to have happened since the game opened.
+  const GAME_OPENED = Date.UTC(2026, 8, 1);
+  const CAL_BADGE = { xq_m4: [4, 4], xq_m5: [4, 5] };
+  const botCanHave = (a) => {
+    const d = CAL_BADGE[a && a.id]; if (!d) return true;
+    const now = new Date(); let y = now.getUTCFullYear();
+    if (Date.UTC(y, d[0], d[1]) > now.getTime()) y -= 1;
+    return Date.UTC(y, d[0], d[1]) >= GAME_OPENED;
+  };
   function botProfile(uid) {
     let row = BOT_ROWS.get(uid);
     if (!row && NPC_ROWS.has(uid)) {
@@ -6982,7 +7006,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const col = picks.map((u) => `${u.id}.${Math.max(1, Math.min(cap, Math.round(level - r() * 12)))}.${stars(u)}`);
     const use = picks.slice(0, 10).map((u, k) => { const b = Math.round((120 - k * 9) * (0.6 + r())); return `${u.id}.${b}.${Math.round(b * (0.45 + r() * 0.25))}`; });
     let ach = [];
-    try { ach = UI.achievements().filter((a) => !a.secret); } catch (e) { ach = []; }
+    try { ach = UI.achievements().filter((a) => !a.secret && botCanHave(a)); } catch (e) { ach = []; }
     const nb = Math.round(clampN(2 + level * 0.22 + r() * 7, 2, Math.max(2, ach.length)));
     const got = ach.slice().sort(() => r() - 0.5).slice(0, nb).sort((a, b) => (b.tier || 1) - (a.tier || 1));
     const badges = got.slice(0, 6).map((a) => ({ id: a.id || '', tier: a.tier || 1, icon: a.icon, name: a.name, desc: String(a.desc || '').slice(0, 90), level: a.level }));
