@@ -2361,6 +2361,11 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
 .hn-bounty .go .hb-card, .hn-bounty .go .hb-tint, .hn-bounty .go .hb-sw { will-change: transform, opacity; }
 .hn-bounty .go .hb-puck::after { animation: hb-lens 1.2s ease-out forwards; }
 .hn-bounty .go .hb-card { animation: hb-proj .6s cubic-bezier(.2,.8,.3,1) .12s forwards; }
+.hn-bounty .hb-back25 { position: absolute; inset: 0; z-index: 6; border-radius: 12px; overflow: hidden; pointer-events: none; }
+.hn-bounty .hb-back25 svg { width: 100%; height: 100%; display: block; }
+.hn-bounty .go .hb-back25 { animation: hb-back25 .55s ease-in .7s forwards; }
+.hn-bounty .skip .hb-back25 { display: none; }
+@keyframes hb-back25 { to { transform: perspective(600px) rotateY(90deg); opacity: 0; } }
 .hn-bounty .go .hb-beam { animation: hb-beam 1.5s ease-out forwards; }
 .hn-bounty .go .hb-tint { animation: hb-decrypt .55s ease-in var(--dt) forwards; }
 .hn-bounty .go .hb-sw { animation: hb-sweep .55s ease-in var(--dt) forwards; }
@@ -3573,6 +3578,8 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
         <div class="hb-act"><span class="hb-hint" data-hint>Tap the card</span><button type="button" class="btn btn-primary" data-done hidden>Done</button></div>
       </div>`);
       const $ = (q) => node.querySelector(q);
+      // 2.5: Beskar pucks can wear a card back (Cosmetics > Card backs); it flips away as each card decrypts.
+      const back25 = (UI.hooks && UI.hooks.cardBack ? UI.hooks.cardBack('puck') : '').replace('<svg ', '<svg preserveAspectRatio="xMidYMid slice" ');
       const puck = `<div class="hb-beam"></div><div class="hb-puck"><svg viewBox="0 0 100 100">${A.puck(tier, out.target || null, { bare: true })}</svg></div>`;
       document.body.appendChild(node);
       let i = -1;
@@ -3590,7 +3597,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
         $('[data-n]').textContent = res.length > 1 ? `CARD ${i + 1} OF ${res.length}` : '';
         $('[data-t]').textContent = 'Decrypting bounty data…';
         const hv = rank >= 3;
-        $('[data-stage]').innerHTML = `<div class="hb-card" style="--rc:${R_COL[def.rarity]};--dt:${dt}s"><span class="glow"></span>${hv ? '<span class="hb-ring"></span>' : ''}${cardOf(def, r)}<span class="hb-tint"></span><span class="hb-sw"><i></i></span><span class="hb-stamp ${r.isNew ? '' : 'dup'}">${tagOf(r)}</span>${hv ? `<span class="hb-hv">${rank >= 4 ? 'MOST WANTED' : 'HIGH-VALUE TARGET'}</span>` : ''}</div>${puck}`;
+        $('[data-stage]').innerHTML = `<div class="hb-card" style="--rc:${R_COL[def.rarity]};--dt:${dt}s">${back25 ? `<span class="hb-back25">${back25}</span>` : ''}<span class="glow"></span>${hv ? '<span class="hb-ring"></span>' : ''}${cardOf(def, r)}<span class="hb-tint"></span><span class="hb-sw"><i></i></span><span class="hb-stamp ${r.isNew ? '' : 'dup'}">${tagOf(r)}</span>${hv ? `<span class="hb-hv">${rank >= 4 ? 'MOST WANTED' : 'HIGH-VALUE TARGET'}</span>` : ''}</div>${puck}`;
         const stage = $('[data-stage]');
         stage.className = 'hb-stage';
         stage.style.setProperty('--dt', `${dt}s`);
@@ -3696,6 +3703,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
 
   // ---------- tester hooks ----------
   HN.dev = {
+    puck: (tier = 'elite') => { const roster = Object.entries(A.ROSTER).filter(([, v]) => v.tier === tier); return capture(tier, roster[0][0], 0.5); },
     arrive: () => { S().seen = false; HN.save(); arriving = false; if (App.current === 'holonet') App.go('home'); else maybeArrive(); },
     beskar: (n) => { S().beskar += n; HN.save(); },
     rating: (n) => { const h = S(); h.rating = n; h.best = Math.max(h.best, n); const r = HN.claimDivisions(); HN.save(); HN.Net.publish(); return r; },

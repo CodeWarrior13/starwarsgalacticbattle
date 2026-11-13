@@ -164,6 +164,9 @@
   for (const x of LIB) if (x.k === 'wi') WINS.push({ id: 'lib_' + x.id, n: x.n, c: x.c, get: x.cost, how: "Luthen's Gallery · weekly rotation", lib: x.id });
   const INTROS = [{ id: 'vs', n: 'Lightsaber VS', c: '#8fe8ff', get: null, how: 'Everyone has it' }].concat(LIB.filter((x) => x.k === 'in').map((x) => ({ id: x.id, n: x.n, c: x.c, get: x.cost, how: x.wk ? "Luthen's Gallery · weekly rotation" : "Luthen's Gallery · " + (x.cost.kyber ? fmt(x.cost.kyber) + ' Kyber' : fmt(x.cost.beskar) + ' Beskar'), lib: x.id })));
   const CRATES = (D.PACKS || []).map((p) => [p.id, p.name]);
+  // Card backs also dress the HoloNet's Beskar pucks, once pucks open up at level 25.
+  const CBCRATES = () => CRATES.concat(((Player.state.account || {}).level || 0) >= 25 ? [['puck', 'Beskar Pucks']] : []);
+  const crateIcon = (id) => (id === 'puck' ? (root.HNArt && root.HNArt.puck ? `<svg viewBox="0 0 100 100">${root.HNArt.puck('elite', null, { bare: true })}</svg>` : '') : (root.Art && root.Art.crateArt ? root.Art.crateArt(id) : ''));
   const getProg = (x) => { if (!x.get || x.get === 'event' || (typeof x.get === 'object' && !Array.isArray(x.get) && typeof x.get !== 'function')) return null; try { const r = x.get(st()); if (Array.isArray(r)) return { have: Math.min(r[0], r[1]), need: r[1], done: r[0] >= r[1] }; return { done: !!r }; } catch (e) { return { done: false }; } };
   const ownsItem = (kind, x) => { if (kind === 'po') return !!(C().mvp || {})[x.id] || !!C().own['po:' + x.id]; if (!x.get) return true; if (C().own[kind + ':' + x.id]) return true; const p = getProg(x); return !!(p && p.done); };
   const posesOwned = () => POSES.filter((p) => ownsItem('po', p));
@@ -227,7 +230,7 @@
       <div class="c25-prev"><div class="c25-card" data-card><span class="c25-av" data-av></span><div class="c25-id"><small>YOUR PROFILE CARD</small><b>${esc(me.tag || 'You')}</b><span data-ti></span><span class="c25-sub">Level ${Player.state.account.level}</span></div></div>
       <dl class="c25-eq"><div><dt>Pose</dt><dd data-po></dd></div><div><dt>Win screen</dt><dd data-wi></dd></div><div><dt>Pack themes</dt><dd data-pa></dd></div>${CBACKS.length > 1 ? '<div><dt>Card backs</dt><dd data-cb></dd></div>' : ''}</dl></div>
       <div class="c25-tabs" role="tablist">${KINDS.map(([k, n]) => `<button type="button" role="tab" data-ck="${k}">${n} <i></i><u class="c25-dot" hidden></u></button>`).join('')}</div>
-      <div class="c25-bar"><div class="c25-seg">${['All', 'Owned', 'Locked'].map((n) => `<button type="button" data-cf="${n.toLowerCase()}">${n}</button>`).join('')}</div><div class="c25-seg" data-crates hidden>${CRATES.map(([id, n]) => `<button type="button" data-cc="${id}">${n}</button>`).join('')}</div></div>
+      <div class="c25-bar"><div class="c25-seg">${['All', 'Owned', 'Locked'].map((n) => `<button type="button" data-cf="${n.toLowerCase()}">${n}</button>`).join('')}</div><div class="c25-seg" data-crates hidden>${CBCRATES().map(([id, n]) => `<button type="button" data-cc="${id}">${n}</button>`).join('')}</div></div>
       <div class="c25-grid" data-grid></div><div class="c25-det" data-det></div></div>`, { wide: true });
     const R = m.root;
     const $ = (s) => R.querySelector(s);
@@ -242,7 +245,7 @@
       $('[data-wi]').textContent = wi.n + (pv && pv.kind === 'wi' && !pv.x.own ? ' (preview)' : '');
       $('[data-pa]').textContent = CRATES.map(([id, n]) => n + ': ' + (PACKS.find((x) => x.id === (pv && pv.kind === 'pa' && id === crate ? pv.x.id : eq.pa(id))) || PACKS[0]).n).join(' · ');
       // Card backs as pictures: each crate next to the back it wears (tap one to jump to that crate).
-      const cbd = $('[data-cb]'); if (cbd) cbd.innerHTML = '<span class="c25-cms">' + CRATES.map(([id, n]) => { const b = CBACKS.find((x) => x.id === (pv && pv.kind === 'cb' && id === crate ? pv.x.id : eq.cb(id))) || CBACKS[0]; return `<button type="button" class="c25-cm${kind === 'cb' && id === crate ? ' on' : ''}" data-cmc="${esc(id)}" title="${esc(n)}: ${esc(b.n)}" aria-label="${esc(n)}: ${esc(b.n)}"><span class="c25-cmc">${root.Art && root.Art.crateArt ? root.Art.crateArt(id) : ''}</span><span class="c25-cma" aria-hidden="true">›</span><span class="c25-cmb">${cbArt(b.id)}</span></button>`; }).join('') + '</span>';
+      const cbd = $('[data-cb]'); if (cbd) cbd.innerHTML = '<span class="c25-cms">' + CBCRATES().map(([id, n]) => { const b = CBACKS.find((x) => x.id === (pv && pv.kind === 'cb' && id === crate ? pv.x.id : eq.cb(id))) || CBACKS[0]; return `<button type="button" class="c25-cm${kind === 'cb' && id === crate ? ' on' : ''}" data-cmc="${esc(id)}" title="${esc(n)}: ${esc(b.n)}" aria-label="${esc(n)}: ${esc(b.n)}"><span class="c25-cmc">${crateIcon(id)}</span><span class="c25-cma" aria-hidden="true">›</span><span class="c25-cmb">${cbArt(b.id)}</span></button>`; }).join('') + '</span>';
       const card = $('[data-card]'); card.classList.remove('pop'); void card.offsetWidth; card.classList.add('pop');
     };
     const swatch = (k, x) => {
@@ -283,11 +286,13 @@
     const counts = () => R.querySelectorAll('[data-ck]').forEach((b) => { const L = items(b.dataset.ck); b.querySelector('i').textContent = L.filter((x) => x.own).length + '/' + L.length; b.querySelector('.c25-dot').hidden = !L.some((x) => isNew(b.dataset.ck, x)); b.classList.toggle('on', b.dataset.ck === kind); b.setAttribute('aria-selected', b.dataset.ck === kind); });
     const grid = () => {
       const L = items(kind).filter((x) => filt === 'all' || (filt === 'owned' ? x.own : !x.own));
+      if (kind === 'pa' && crate === 'puck') crate = CRATES[0][0];
       const curPa = PER(kind) ? eqFor(kind, crate) : null;
       $('[data-grid]').innerHTML = L.length ? L.map((x) => { const isEq = PER(kind) ? curPa === x.id : x.eq; return `<button type="button" class="c25-it ${x.own ? 'own' : 'lock'}${isEq ? ' eq' : ''}${sel === x.id ? ' sel' : ''}" data-id="${esc(x.id)}">${isNew(kind, x) ? '<u class="c25-dot" aria-label="New"></u>' : ''}${x.own ? '' : '<span class="c25-lk" aria-hidden="true"></span>'}${swatch(kind, x)}${kind !== 'ti' ? `<b>${esc(x.n)}</b>` : ''}<small>${isEq ? 'Equipped' : x.own ? esc(x.sub || 'Owned') : esc(x.how)}</small>${x.p ? `<span class="c25-bar2"><i style="width:${Math.round((x.p.have / x.p.need) * 100)}%"></i></span><small>${fmt(x.p.have)} / ${fmt(x.p.need)}</small>` : ''}</button>`; }).join('') : '<p class="muted">Nothing here yet.</p>';
       R.querySelectorAll('[data-cf]').forEach((b) => b.classList.toggle('on', b.dataset.cf === filt));
       R.querySelectorAll('[data-cc]').forEach((b) => b.classList.toggle('on', b.dataset.cc === crate));
       $('[data-crates]').hidden = !PER(kind);
+      const pk = R.querySelector('[data-cc="puck"]'); if (pk) pk.hidden = kind !== 'cb';
       counts();
     };
     const detail = (x) => {
