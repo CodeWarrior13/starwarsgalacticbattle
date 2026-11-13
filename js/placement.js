@@ -57,14 +57,17 @@
     if (!H || !H.S) return;
     const p = st().place;
     if (p && p.done && p.seen && !p.applied && p.s === seasonNo() && revealIn() <= 0) apply();
-    // Repair (Nov 13): the season-start reset could run after the placement landed and halve it.
-    // Put the placement back once if the rating is exactly that halved number.
+    // Repair (Nov 13): the season-start reset could run after the placement landed and cut it roughly in half.
+    // Once the placement lands, the season best equals it and only ever rises, so a season best below
+    // the placement means the reset hit it. Add back what the reset took, keeping any games played since.
     const h = st();
-    if (p && p.applied && !p.fixed && p.s === seasonNo() && p.to > 800 && h.rating === Math.round(800 + (p.to - 800) * 0.5)) {
+    if (p && p.applied && !p.fixed && !p.appliedAt && p.s === seasonNo() && h.soc && p.to > 800 && (h.soc.sBest || 0) < p.to && h.rating < p.to * 0.85) {
       p.fixed = true;
-      h.rating = p.to;
-      h.best = Math.max(h.best || 0, p.to);
-      if (h.soc) h.soc.sBest = Math.max(h.soc.sBest || 0, p.to);
+      const lost = p.to - Math.round(800 + (p.to - 800) * 0.5);
+      h.rating = Math.max(0, h.rating + lost);
+      h.best = Math.max(h.best || 0, h.rating, p.to);
+      h.soc.sBest = Math.max(h.soc.sBest + lost, p.to, h.rating);
+      try { if (H.claimDivisions) H.claimDivisions(); } catch (e) { /* ok */ }
       H.save();
       try { H.Net.publish(); } catch (e) { /* offline */ }
     }
@@ -223,6 +226,7 @@
     const p = h.place;
     if (!p || !p.done || p.applied) return;
     p.applied = true;
+    p.appliedAt = Date.now();
     h.rating = p.to;
     h.best = Math.max(h.best || 0, p.to);
     // The season best starts at the placement (last season's carried rating doesn't count).

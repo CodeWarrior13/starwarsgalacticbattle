@@ -70,7 +70,7 @@
         'FIXED|Raids: when the pilot fighting beside you shares cards with your squad, they now bring their own next-best cards instead, so you always fight with 10 different cards.',
         'FIXED|Ranked: profiles no longer show a league or rating for the new season before your placement battles; until then they show your best rating.',
         'Ranked: Admiral Ackbar now reveals your placement result as soon as your fifth placement battle is done. It goes on the leaderboards and your profile when the season opens.',
-        'FIXED|Ranked: after your placement battles, the arena now matches you with pilots from your new league straight away (it could keep showing Bronze opponents), and the new-season reset no longer lowers a placement you have already finished.',
+        'FIXED|Ranked: after your placement battles, the arena now matches you with pilots from your new league straight away (it could keep showing Bronze opponents), and the new-season reset no longer lowers a placement you have already finished. Pilots it already hit get their placement rating back automatically.',
         'IMPROVED|Simpler ship names: the A-wing, B-wing, X-wing, Y-wing and TIE Advanced no longer carry their factory model codes.',
         'IMPROVED|Raids: pick from 4 different allies on every run, real pilots first, with a fresh line-up after each run and no card shared between them.',
         'NEW|Raid squads: the HoloNet raid and guild raids now use their own squad (Edit on the raid screen), so you can bring a different team without touching your arena defense.',
