@@ -356,6 +356,12 @@
             fallen.statuses = {};
             events.push({ type: 'revive', uid: fallen.uid, hp: fallen.hp });
             events.push({ type: 'log', text: `${fallen.def.name} is back in the fight!`, side: unit.side });
+          } else {
+            // Nobody to bring back: a small heal (5%, at most 2,000) and Defense Up + Offense Up for the team.
+            const team = this.units.filter((u) => u.side === unit.side && u.alive);
+            for (const a of team) this.applyEffect(unit, a, { type: 'heal', pct: Math.min(0.05, 2000 / Math.max(1, a.maxHp)) }, events);
+            for (const a of team) { this.applyEffect(unit, a, { type: 'status', status: 'defUp', turns: 2, chance: 1 }, events); this.applyEffect(unit, a, { type: 'status', status: 'offUp', turns: 2, chance: 1 }, events); }
+            events.push({ type: 'log', text: `No one to revive: ${unit.def.name} rallies the squad instead.`, side: unit.side });
           }
           continue;
         }
