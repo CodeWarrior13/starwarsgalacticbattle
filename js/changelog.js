@@ -22,10 +22,10 @@
   const LAUNCH_24 = root.__v24Test != null ? root.__v24Test : root.REL24 != null ? root.REL24 : Date.UTC(2026, 10, 11, 12, 50, 0);
   // Update 2.5 "Cosmetic": hidden until 2.5 ships, but testers with the 2.5 switch
   // see it now. When the 2.5 date is set (js/cosmetic25.js RELEASE25), set it here too.
-  const LAUNCH_25 = (() => { try { if (localStorage.getItem('swcg-v25-test') === '1') return 0; } catch (e) { /* storage blocked */ } return root.__v25Test != null ? root.__v25Test : Infinity; })();
+  const LAUNCH_25 = (() => { try { if (localStorage.getItem('swcg-v25-test') === '1') return 0; } catch (e) { /* storage blocked */ } return root.__v25Test != null ? root.__v25Test : Date.UTC(2026, 10, 22, 12, 0, 0); })();
   const ALL_UPDATES = [
     {
-      v: '2.5', date: 'Coming soon', title: 'Cosmetic', from: LAUNCH_25,
+      v: '2.5', date: 'November 22, 2026', title: 'Cosmetic', from: LAUNCH_25,
       // Bigger than Liberation: a grand-opening marquee for the three shops.
       theme: 'cosmetic',
       stats: [['3', 'shops'], ['3', 'new cards'], ['40', 'titles'], ['6', 'title colours'], ['15', 'new frames'], ['42', 'banners'], ['14', 'victory poses'], ['16', 'win screens'], ['9', 'crate themes'], ['15', 'card backs'], ['11', 'battle intros'], ['100+', 'guild pictures']],

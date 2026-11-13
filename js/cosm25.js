@@ -128,7 +128,7 @@
   // Event exclusives: on sale on Luthen's Exclusives shelf only while their event runs
   // (midnight to midnight Central), then gone for good. Owners keep them.
   const EVENTS = {
-    thanksgiving: { n: 'Thanksgiving', at: [[2026, 10, 23, 2026, 10, 30], [2027, 10, 22, 2027, 10, 29]] },
+    thanksgiving: { n: 'Thanksgiving', at: [[2026, 10, 23, 2026, 11, 2], [2027, 10, 22, 2027, 11, 1]] },
     lifeday: { n: 'Life Day', at: [[2026, 11, 15, 2027, 0, 2], [2027, 11, 15, 2028, 0, 2]] },
     easter: { n: 'Easter', at: [[2027, 2, 22, 2027, 2, 29]] },
     starwars: { n: 'Star Wars Day', at: [[2027, 4, 1, 2027, 4, 8]] },

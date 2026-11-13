@@ -17,7 +17,8 @@
   if (!D || !UI || !Player || !root.Battle) return;
 
   // ---------- Release switch ----------
-  const RELEASE25 = root.__v25Test != null ? root.__v25Test : null;
+  // 2.5 goes live Sunday, Nov 22, 2026 at 6:00 AM Central (12:00 UTC), the day before the Harvest Hunt.
+  const RELEASE25 = root.__v25Test != null ? root.__v25Test : Date.UTC(2026, 10, 22, 12, 0, 0);
   const TEST_KEY = 'swcg-v25-test';
   const test = (v) => {
     try {
