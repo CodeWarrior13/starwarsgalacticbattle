@@ -193,8 +193,8 @@
     if (dayNo() >= 5 && !h.d[5] && screen === clocheAt()[0] && !box.querySelector('.hv-cloche')) {
       const c = document.createElement('button'); c.type = 'button'; c.className = 'hv-cloche'; c.setAttribute('aria-label', 'A covered dish');
       c.innerHTML = '<svg viewBox="0 0 60 50"><ellipse cx="30" cy="44" rx="26" ry="4" fill="#8a6a3a"/><g class="hv-lid"><path d="M6 42 Q6 12 30 12 Q54 12 54 42Z" fill="#d8dce4" stroke="#7a8494" stroke-width="1.6"/><circle cx="30" cy="9" r="4" fill="#c8a050"/><path d="M14 30 Q20 18 30 17" stroke="#fff" stroke-width="2" fill="none" opacity=".7"/></g></svg>';
-      const kids = [...box.children]; const at = kids[Math.min(kids.length - 1, 1 + (seed() % 3))];
-      if (at && at.parentNode) at.parentNode.insertBefore(c, at.nextSibling); else box.appendChild(c);
+      const host = box.querySelector('.view') || box; const kids = [...host.children].filter((k) => k.offsetHeight > 0 && k.offsetHeight < 600); const at = kids[Math.min(kids.length - 1, 1 + (seed() % 3))];
+      if (at && at.parentNode) at.parentNode.insertBefore(c, at.nextSibling); else host.insertBefore(c, host.firstChild);
       c.onclick = () => { c.classList.add('open'); setTimeout(() => { c.remove(); complete(5); }, 900); };
     }
   }
