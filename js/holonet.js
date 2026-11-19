@@ -329,6 +329,8 @@
     { id: 'raid_jabba', name: 'Jabba the Hutt', kind: 'character', faction: 'dark', rarity: 'legendary', role: 'tank', spd: 90, traits: ['scoundrel', 'leader'], home: 'tatooine', bio: 'Raid boss.' },
     { id: 'raid_nihilus', name: 'Darth Nihilus', kind: 'character', faction: 'dark', rarity: 'legendary', role: 'attacker', spd: 140, traits: ['sith'], home: 'coruscant', bio: 'Raid boss.' },
     { id: 'raid_sarlacc', name: 'The Sarlacc', kind: 'character', faction: 'dark', rarity: 'legendary', role: 'tank', spd: 70, traits: [], home: 'tatooine', bio: 'Raid boss.' },
+    // Update 2.5 Harvest Hunt: the Thanksgiving-week community raid (only that week, see raidNow).
+    { id: 'raid_nuna', name: 'The Grand Nuna', kind: 'character', faction: 'dark', rarity: 'legendary', role: 'tank', spd: 92, traits: [], home: 'tatooine', bio: 'Raid boss. The Harvest Hunt, Thanksgiving week.' },
     { id: 'raid_snoke', name: 'Supreme Leader Snoke', kind: 'character', faction: 'dark', rarity: 'legendary', role: 'support', spd: 120, traits: ['leader'], home: 'coruscant', bio: 'Raid boss.' },
     // Update 2.4: the first fleet raid boss. The card shows the Exegol portrait drawn in bosses22.js.
     { id: 'raid_xyston', name: 'Xyston Star Destroyer', kind: 'ship', faction: 'dark', rarity: 'legendary', role: 'tank', shape: 'xyston', portrait: 'xyston_22', spd: 96, traits: ['capital'], home: 'exegol', bio: 'Raid boss. A Sith Eternal Star Destroyer of the Final Order, built in secret under Exegol, with a planet-killing axial superlaser down its keel.' },
@@ -888,6 +890,8 @@
 
   const MINIONS = [
     { id: 'hn_chest', name: 'Jabba\'s Credit Chest', role: 'tank', spd: 40, abilities: [ab('Gilded Lock', 0, 'self', [buff('defUp', 2)], 'Hardens its lock.')], ultimate: ult('Hoard', 'self', [heal(0.2)], 'Counts its credits.', '') },
+    { id: 'hn_feast', name: 'The Feast Table', role: 'tank', spd: 40, abilities: [ab('Heaped High', 0, 'self', [buff('defUp', 2)], 'More food arrives.')], ultimate: ult('Second Helpings', 'self', [heal(0.2)], 'Refills itself.', '') },
+    { id: 'hn_nuna_chick', name: 'Nuna Chick', role: 'attacker', spd: 124, abilities: [ab('Peck', 0, 'enemy', [dmg(0.8)], 'A sharp little peck.')], ultimate: ult('Flock', 'enemy', [dmg(1.4)], 'The whole clutch piles on.', '') },
     { id: 'hn_husk', name: 'Husk', role: 'attacker', spd: 110, abilities: [ab('Hollow Claw', 0, 'enemy', [dmg(0.9)], 'An empty, hungry strike.')], ultimate: ult('Feed the Master', 'enemy', [dmg(1.6)], 'Tears at one enemy.', '') },
     { id: 'hn_tentacle', name: 'Sarlacc Tentacle', role: 'tank', spd: 90, abilities: [ab('Lash', 0, 'enemy', [dmg(0.8)], 'Whips one enemy.')], ultimate: ult('Constrict', 'enemy', [dmg(1.4), debuff('stun', 1, 0.5)], 'Squeezes one enemy.', '') },
     { id: 'hn_praetorian', name: 'Praetorian Guard', role: 'tank', spd: 128, abilities: [ab('Vibro-Voulge', 0, 'enemy', [dmg(1.0)], 'Precise, crimson strike.'), ab('Guard Stance', 3, 'self', [buff('taunt', 2), buff('defUp', 2)], 'Protects the Supreme Leader.')], ultimate: ult('Bladestorm', 'allEnemies', [dmg(1.0)], 'Spinning blades.', '') },
@@ -942,6 +946,12 @@
       mech: [['Droid Tri-Fighters', 'Every 2 turns the Invisible Hand launches a fresh wave of Droid Tri-Fighters.'], ['Hull Breach', 'Below 50% health the hull burns: it loses health every turn, but hits much harder.']],
     },
   ];
+    // 2.5 Harvest Hunt: the Grand Nuna is the community raid for Thanksgiving week only (event: true keeps it out of the rotation).
+  RAIDS.push({
+    id: 'raid_nuna', name: 'The Grand Nuna', sub: 'Harvest Hunt · Thanksgiving week', planet: 'tatooine', pool: 850000, color: '#ff8a3a', event: true,
+    slots: ['hn_nuna_chick', 'hn_nuna_chick', 'raid_nuna', 'hn_feast', 'hn_nuna_chick'], start: [2, 3],
+    mech: [['Gobble', 'Every turn it gobbles one buff off one of your cards.'], ['Feather Storm', 'Its tail fan hits every card.'], ['Stuffed', 'Every 4th turn it eats from the feast table and heals back much of the damage you dealt, unless you smash the table first.'], ['Nuna Chicks', 'A clutch hatches: a new chick joins every 3 turns.']],
+  });
   const v24 = () => !!(root.Update24 && root.Update24.on());
   // The 2.4 ranked ladder (wider leagues, new gains) and placement battles wait
   // for the first season that starts after 2.4 went live; testers see them now.
@@ -1009,6 +1019,7 @@
   const RAID_TUNE = { boss: 2.2, guard: 2, hunt: 0.85, rv: 1.8 };
   const BOSS_KIT = {
     raid_jabba: { role: 'tank', spd: 88, abilities: [ab('Tail Slam', 0, 'enemy', [dmg(1.3)], 'Crushes one enemy.'), ab('Mocking Laughter', 3, 'allEnemies', [debuff('offDown', 2, 0.7)], 'Ho ho ho. Offense Down on every enemy.')], ultimate: ult('Bounty on Your Heads', 'allEnemies', [dmg(1.7), debuff('defDown', 2)], 'Puts a price on everyone: heavy damage and Defense Down.', 'Bo shuda!') },
+    raid_nuna: { role: 'tank', spd: 92, abilities: [ab('Peck and Gobble', 0, 'enemy', [dmg(1.3)], 'Pecks one card and gobbles one of its buffs.'), ab('Feather Storm', 3, 'allEnemies', [dmg(0.9)], 'The tail fan whips a storm of feathers into every card.')], ultimate: ult('Thunderous Gobble', 'allEnemies', [dmg(1.4), debuff('offDown', 2, 0.7)], 'A gobble so loud every card loses its nerve.', 'GOBBLE!') },
     raid_nihilus: { role: 'attacker', spd: 136, abilities: [ab('Void Strike', 0, 'enemy', [dmg(1.4)], 'A strike that empties the target.'), ab('Drain Life', 3, 'enemy', [dmg(1.8), { ...heal(0.04), on: 'self' }], 'Drinks one enemy\'s life.')], ultimate: ult('Feast on the World', 'allEnemies', [dmg(2.0), { ...heal(0.06), on: 'self' }], 'Tears the life out of every enemy and feeds on it.', '…') },
     raid_sarlacc: { role: 'tank', spd: 70, abilities: [ab('Acid Spray', 0, 'allEnemies', [dmg(0.8), debuff('burn', 2, 0.4)], 'Digestive acid over everyone.'), ab('Quake', 3, 'allEnemies', [dmg(0.6), debuff('stun', 1, 0.3)], 'The pit heaves.')], ultimate: ult('Swallow', 'allEnemies', [dmg(2.0)], 'The beak opens and the whole pit pulls inward.', '') },
     raid_snoke: { role: 'support', spd: 120, abilities: [ab('Force Lightning', 0, 'enemy', [dmg(1.3), debuff('stun', 1, 0.25)], 'Lightning from the throne.'), ab('Supreme Command', 3, 'allAllies', [buff('offUp', 2)], 'His guards strike harder.')], ultimate: ult('Bow Before Me', 'allEnemies', [dmg(1.8), debuff('offDown', 2)], 'Pulls every enemy to its knees.', 'Pathetic.') },
@@ -1474,9 +1485,11 @@
   const raidList = (w = week()) => {
     const at = root.Update24 && root.Update24.at;
     const ready = v24() && (at == null || Date.now() < at || w > Math.floor(at / WEEK));
-    return ready ? RAIDS : RAIDS.filter((r) => !r.v24);
+    return (ready ? RAIDS : RAIDS.filter((r) => !r.v24)).filter((r) => !r.event);
   };
-  const raidNow = () => { const w = week(); const list = raidList(w); return list[w % list.length]; };
+  // Raid weeks start Wednesday 6 p.m. Central: the Grand Nuna holds the week that has Thanksgiving in it (2.5 only).
+  const nunaWeek = (w) => { try { if (localStorage.getItem('swcg-nuna-test') === '1') return true; } catch (e) { /* storage blocked */ } return !!(root.Update25 && root.Update25.on()) && [Date.UTC(2026, 10, 26, 18), Date.UTC(2027, 10, 25, 18)].some((t) => Math.floor(t / WEEK) === w); };
+  const raidNow = () => { const w = week(); if (nunaWeek(w)) return RAIDS.find((r) => r.id === 'raid_nuna'); const list = raidList(w); return list[w % list.length]; };
   function raidTotals() {
     const w = week();
     const boss = raidNow().id;
@@ -1632,6 +1645,20 @@
           const chest = enemies.find((u) => u.id === 'hn_chest');
           if (chest && chest.alive) { for (const u of enemies.filter((x) => !x.alive && !x.def.raid && x.id !== 'hn_chest')) spawn(this, u, ev); ev.push({ type: 'log', text: 'Bargain! Jabba buys back his fallen henchmen.', side: 'enemy' }, { type: 'hnfx', fx: 'credits' }); }
           else ev.push({ type: 'log', text: 'Jabba reaches for his credit chest… it\'s broken. No deal!', side: 'player' });
+        }
+      } else if (unit.def.raid === 'raid_nuna') {
+        // Gobble: one buff off one card.
+        const buffed = this.living('player').filter((u) => Object.keys(u.statuses).some((k) => (D.STATUS_INFO[k] || {}).kind === 'buff'));
+        if (buffed.length) { const t = pick(this, buffed); const k = Object.keys(t.statuses).find((x) => (D.STATUS_INFO[x] || {}).kind === 'buff'); delete t.statuses[k]; ev.push({ type: 'statusEnd', uid: t.uid, status: k }, { type: 'log', text: 'Gobble! The Grand Nuna eats ' + t.def.name + '\'s ' + ((D.STATUS_INFO[k] || {}).label || k) + '.', side: 'enemy' }); }
+        // Nuna Chicks: a new one every 3 turns.
+        const eggs = enemies.filter((u) => !u.alive && u.id === 'hn_nuna_chick');
+        if (T % 3 === 0 && eggs.length) spawn(this, pick(this, eggs), ev, 'Crack! A Nuna chick hatches and joins the fight.');
+        // Stuffed: every 4th turn it eats from the feast table, unless the table is smashed.
+        if (T % 4 === 0) {
+          const table = enemies.find((u) => u.id === 'hn_feast');
+          const dealt = Math.max(0, (this.hnStartHp || unit.hp) - unit.hp);
+          if (table && table.alive && dealt > 0) { const back = Math.round(dealt * 0.4); unit.hp = Math.min(unit.maxHp, unit.hp + back); ev.push({ type: 'heal', uid: unit.uid, amount: back, hp: unit.hp }, { type: 'log', text: 'Stuffed! The Grand Nuna feasts and heals back ' + back.toLocaleString('en-US') + '.', side: 'enemy' }); }
+          else if (table && !table.alive) ev.push({ type: 'log', text: 'The Grand Nuna reaches for the feast… the table is smashed. No seconds!', side: 'player' });
         }
       } else if (unit.def.raid === 'raid_nihilus') {
         const pct = unit.enraged ? 0.1 : 0.05;
