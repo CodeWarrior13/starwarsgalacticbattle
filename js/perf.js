@@ -100,10 +100,48 @@
         });
       });
       scope.addEventListener('change', (e) => {
-        if (e.target.matches('[data-perf-mode]')) this.set('mode', e.target.checked);
+        if (!e.target.matches('[data-perf-mode]')) return;
+        this.set('mode', e.target.checked);
+        if (e.target.checked) ripple(e.target.closest('label') || e.target);
       });
     },
   };
+
+  // 2.5: switching Performance mode on drops a stone in the water: three rings
+  // spread from the switch across the screen and the window pops out and
+  // settles. Plays once (under a second), only transforms and opacity, then
+  // the nodes are removed. Skipped when the device asks for less motion.
+  function ripple(from) {
+    try {
+      if (!(root.Update25 && root.Update25.on())) return;
+      if (root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      const r = from.getBoundingClientRect();
+      const n = document.createElement('div');
+      n.className = 'pm-ripple';
+      n.setAttribute('aria-hidden', 'true');
+      n.style.setProperty('--x', `${Math.round(r.left + Math.min(r.width, 44) / 2)}px`);
+      n.style.setProperty('--y', `${Math.round(r.top + r.height / 2)}px`);
+      n.innerHTML = '<b></b><i></i><i></i><i></i>';
+      document.body.appendChild(n);
+      const box = from.closest('.modal');
+      if (box) { box.classList.remove('pm-pop'); void box.offsetWidth; box.classList.add('pm-pop'); }
+      setTimeout(() => { n.remove(); if (box) box.classList.remove('pm-pop'); }, 1200);
+    } catch (e) { /* only a flourish */ }
+  }
+  if (!document.getElementById('pm-css')) {
+    const st = document.createElement('style');
+    st.id = 'pm-css';
+    st.textContent = `.pm-ripple{position:fixed;inset:0;z-index:100000;pointer-events:none;overflow:hidden}
+.pm-ripple i,.pm-ripple b{position:absolute;left:var(--x);top:var(--y);width:190vmax;height:190vmax;margin:-95vmax 0 0 -95vmax;border-radius:50%;transform:scale(0);opacity:0}
+.pm-ripple i{background:radial-gradient(circle closest-side,rgba(124,230,255,0) 84%,rgba(124,230,255,.55) 92%,rgba(220,250,255,.85) 96%,rgba(124,230,255,0) 100%);animation:pm-ring 1.15s cubic-bezier(.25,.55,.35,1) forwards}
+.pm-ripple i:nth-child(3){animation-delay:.16s;filter:opacity(.65)}.pm-ripple i:nth-child(4){animation-delay:.32s;filter:opacity(.4)}
+.pm-ripple b{width:90px;height:90px;margin:-45px 0 0 -45px;background:radial-gradient(circle,rgba(220,250,255,.95),rgba(124,230,255,0) 70%);animation:pm-drop .55s ease-out forwards}
+@keyframes pm-ring{0%{transform:scale(0);opacity:1}100%{transform:scale(1);opacity:0}}
+@keyframes pm-drop{0%{transform:scale(.2);opacity:1}100%{transform:scale(3);opacity:0}}
+.modal.pm-pop{animation:pm-pop .7s cubic-bezier(.3,1.6,.5,1) .08s}
+@keyframes pm-pop{0%{transform:none}35%{transform:scale(1.035)}65%{transform:scale(.995)}100%{transform:none}}`;
+    (document.head || document.documentElement).appendChild(st);
+  }
 
   // Looping effects (crate lights, card shines, button sweeps) only run while
   // they're on screen; scrolled away, they pause until they come back.

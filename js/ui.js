@@ -2508,6 +2508,55 @@
   }
 
   // ---------- Settings: sound, music and save data ----------
+  function settings25(S, p, track, a) {
+    const I = (n) => root.Icons.svg(n);
+    const v = root.Changelog ? root.Changelog.UPDATES[0].v : '?';
+    const tabs = [['sound', 'speaker', 'Sound'], ['display', 'settings', 'Display'], ['account', 'holocron', 'Account'], ['more', 'cubes', 'More']];
+    let cur = 'sound';
+    try { cur = sessionStorage.getItem('swcg-set-tab') || 'sound'; } catch (e) { /* storage blocked */ }
+    if (!tabs.some((t) => t[0] === cur)) cur = 'sound';
+    const pane = (k, html) => `<div class="st5-pane" data-pane="${k}" ${k === cur ? '' : 'hidden'}>${html}</div>`;
+    const row = (k, icon, title, sub) => `<button class="st5-link" type="button" ${k}><span class="st5-li">${I(icon)}</span><span><b>${title}</b><small>${sub}</small></span><i aria-hidden="true">›</i></button>`;
+    const sound = S ? `<section class="set-sec">
+        <h3>${I('speaker')} Sound</h3>
+        <div class="snd-row"><label class="switch"><input type="checkbox" data-pref="sfx" ${p.sfx ? 'checked' : ''}><i></i> Effects</label><input type="range" min="0" max="1" step="0.05" value="${p.sfxVol}" data-vol="sfxVol" aria-label="Effects volume"></div>
+        <div class="snd-row"><label class="switch"><input type="checkbox" data-pref="music" ${p.music ? 'checked' : ''}><i></i> Music</label><input type="range" min="0" max="1" step="0.05" value="${p.musicVol}" data-vol="musicVol" aria-label="Music volume"></div>
+        <button class="btn btn-small st5-ghost" type="button" data-test-sfx>${I('speaker')} Test sound</button>
+      </section>
+      <section class="set-sec">
+        <h3>${I('sabacc')} Your own music</h3>
+        <p class="muted small">Pick any audio file on this device to replace the built-in themes. It stays in this browser.</p>
+        ${track('menu', 'Galaxy & menus')}
+        ${track('battle', 'Battles')}
+      </section>` : '<p class="muted small">Sound isn\'t available in this browser.</p>';
+    const display = `${root.Perf ? root.Perf.settingsHtml() : ''}${root.FriendActivity ? root.FriendActivity.settingsHtml() : ''}${root.Install ? root.Install.settingsHtml() : ''}`;
+    const account = `${root.Account ? root.Account.settingsHtml() : ''}
+      <section class="set-sec"><h3>${I('holocron')} Your game</h3>
+        <div class="st5-tiles"><div><b>${a.level}</b><span>Commander level</span></div><div><b>${Object.keys(Player.state.units).length}<small>/${D.UNITS.length}</small></b><span>Cards</span></div><div><b>v${v}</b><span>Version</span></div><div><b>${root.Account && root.Account.meta() ? 'Cloud' : 'Device'}</b><span>${root.Account && root.Account.meta() ? 'Saved to your account' : 'Saved in this browser'}</span></div></div>
+      </section>`;
+    const more = `<section class="set-sec"><div class="st5-list">
+        ${row('data-update-log', 'holocron', 'Update log', `What's new in v${v}`)}
+        ${row('data-replay-tut', 'rank', 'Replay tutorial', 'Play the first missions again')}
+        ${row('data-code-entry', 'kyber', 'Enter a code', 'Redeem a gift code')}
+        ${root.Suggest && root.Suggest.settingsHtml() ? row('data-suggest', 'sabacc', 'Suggestion box', 'Send an idea to the team') : ''}
+      </div></section>
+      <section class="set-sec st5-danger"><h3>Danger zone</h3><p class="muted small">Wipes every card, currency and badge on this device. This can't be undone.</p><button class="btn btn-danger btn-small" type="button" data-reset>Reset all progress</button></section>`;
+    const m = openModal(`<div class="st5">
+      <div class="set-head">${I('settings')}<div><p class="eyebrow">Command console</p><h2>Settings</h2></div></div>
+      <div class="st5-tabs" role="tablist">${tabs.map(([k, ic, n]) => `<button type="button" role="tab" data-st5="${k}" aria-selected="${k === cur}">${I(ic)}<span>${n}</span></button>`).join('')}</div>
+      <div class="st5-body">${pane('sound', sound)}${pane('display', display)}${pane('account', account)}${pane('more', more)}</div>
+      <div class="modal-actions"><button class="btn btn-primary" type="button" data-close>Done</button></div></div>`, { cls: 'settings-modal st5-modal' });
+    m.root.addEventListener('click', (e) => {
+      const t = e.target.closest('[data-st5]');
+      if (!t) return;
+      cur = t.dataset.st5;
+      try { sessionStorage.setItem('swcg-set-tab', cur); } catch (err) { /* storage blocked */ }
+      m.root.querySelectorAll('[data-st5]').forEach((x) => x.setAttribute('aria-selected', x === t));
+      m.root.querySelectorAll('[data-pane]').forEach((x) => { x.hidden = x.dataset.pane !== cur; });
+    });
+    bindSettings(m, S);
+  }
+
   function settings() {
     const S = root.Sound;
     const p = S ? S.prefs : {};
@@ -2515,6 +2564,8 @@
       <label class="btn btn-small">Choose file<input type="file" accept="audio/*" data-file="${key}" hidden></label>
       <button class="btn btn-small" type="button" data-clear="${key}" ${S.hasCustom(key) ? '' : 'disabled'}>Reset</button></div>`;
     const a = Player.state.account;
+    // 2.5: the same settings, sorted into four tabs (only one shows at a time).
+    if (root.Update25 && root.Update25.on()) return settings25(S, p, track, a);
     const m = openModal(`
       <div class="set-head">${root.Icons.svg('settings')}<div><p class="eyebrow">Command console</p><h2>Settings</h2></div></div>
       ${S ? `<section class="set-sec">
@@ -2550,6 +2601,10 @@
         </div>
       </section>
       <div class="modal-actions"><button class="btn btn-primary" type="button" data-close>Done</button></div>`, { small: true, cls: 'settings-modal' });
+    bindSettings(m, S);
+  }
+
+  function bindSettings(m, S) {
     m.root.addEventListener('change', async (e) => {
       const pref = e.target.dataset.pref;
       if (pref) S.set(pref, e.target.checked);
