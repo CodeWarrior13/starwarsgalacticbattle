@@ -5906,6 +5906,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     raidbreaker: { name: 'Raid Breaker', how: 'Deal the most damage in your guild on a guild raid boss that falls', v25: true },
     citadel: { name: 'Citadel', how: 'Be in a guild that reaches level 5', v25: true },
     wreath: { name: 'Season Wreath', how: 'Win 50 arena battles in one season (its colours change every season)', v25: true },
+    galactic: { name: 'Galactic Holocron', how: 'MAX OUT', v25: true, secret: true },
     holocron: { name: 'Holocron Keeper', how: 'Own 75 different cards', v25: true },
     kessel: { name: 'Kessel Runner', how: 'Win 50 battles with an all-ship squad', v25: true },
     jediorder: { name: 'Jedi Order', how: 'Win 150 battles with an all Light Side squad', v25: true },
@@ -5932,7 +5933,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     champ: { name: 'Golden Laurel', how: 'Guild level 8', lv: 8 },
   };
   // 2.5: Luthen's Gallery banners (js/lib25.js), bought by pilots for themselves, never by guilds.
-  if (root.Lib25) for (const x of root.Lib25.CAT) if (x.k === 'bn') BANNERS['lib_' + x.id] = { name: x.n, how: "Luthen's Gallery", lib: x.id };
+  if (root.Lib25) for (const x of root.Lib25.CAT) if (x.k === 'bn') BANNERS['lib_' + x.id] = { name: x.n, how: x.max ? 'MAX OUT' : "Luthen's Gallery", lib: x.id, max: !!x.max };
   const libOwn = (b) => { try { return !!(((root.HN.S().cos || {}).own) || {})['bn:' + b.lib]; } catch (e) { return false; } };
   const NPC_BANNER = { npc_rogue: 'hyper', npc_echo: 'holo', npc_mando: 'forge', npc_kessel: 'stars', npc_jedi: 'jedi', npc_sith: 'sith', npc_ewok: 'cloth', npc_hutt: 'dunes' };
   function bannerOwned(gid, id) {
@@ -6006,6 +6007,8 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   const gem25 = (x, y, c, sz = 5) => `<path d="M${x} ${y - sz} L${x + sz * 0.8} ${y} L${x} ${y + sz} L${x - sz * 0.8} ${y}Z" fill="${c}" stroke="#fff" stroke-width=".8"/>`;
   const WREATH = [['#d8f4ff', '#5fb8ff', '#123a7a'], ['#ffe9b0', '#ff7a3a', '#6a1004'], ['#e8ffd0', '#58c85a', '#14501a'], ['#f2d8ff', '#b058ff', '#3a0a6a']];
   const F25 = {
+    // MAX OUT (js/max25.js draws it once its art is loaded; a plain galaxy ring stands in until then).
+    galactic: (u) => (root.MX25 && root.MX25.frame ? root.MX25.frame() : `<circle r="44" fill="none" stroke="#7a5cff" stroke-width="6"/><circle r="44" fill="none" stroke="#5ae8ff" stroke-width="2" stroke-dasharray="18 8"/>`),
     gilded3: (u) => `<defs>${G25(u, '#fff4b0', '#e8b830', '#7a4c06')}</defs>${rays25(24, 52, 58, 2.4, (k) => (k % 2 ? '#ffd86a' : '#fff0a0'), 0.85)}${rg25(`url(#${u})`, 8)}${rg25('#4a2e04', 1, 40.5)}${rg25('#fff6c8', 1, 48, 'stroke-dasharray="1 6" stroke-linecap="round"')}${[-14, 0, 14].map((x, i) => star25(x, -57 - (i === 1 ? 4 : 0), i === 1 ? 7 : 5.5, '#fff4b0')).join('')}${plaque25('III', '#4a2e04', '#ffd86a', '#ffe27a', 54, 28)}`,
     kyberheart: (u) => `<defs>${G25(u, '#e8faff', '#5fd8ff', '#14509a')}</defs>${rg25('#5fd8ff', 13, 44, 'opacity=".22"')}${rg25(`url(#${u})`, 5)}${Array.from({ length: 10 }, (_, k) => `<g transform="rotate(${k * 36})"><path d="M0 -${k % 2 ? 58 : 66} L6 -50 L0 -43 L-6 -50Z" fill="${k % 2 ? '#9aeaff' : '#e8faff'}" stroke="#1a6ab8" stroke-width="1"><animate attributeName="opacity" values=".7;1;.7" dur="${1.6 + (k % 3) * 0.4}s" begin="${k * 0.15}s" repeatCount="indefinite"/></path><path d="M0 -${k % 2 ? 56 : 63} L2 -50 L0 -46Z" fill="#fff" opacity=".7"/></g>`).join('')}<g transform="translate(0 -2)"><path d="M0 -50 C-6 -56 -14 -52 -12 -46 C-10 -41 -4 -40 0 -36 C4 -40 10 -41 12 -46 C14 -52 6 -56 0 -50Z" fill="#9aeaff" stroke="#1a6ab8" stroke-width="1"/></g>${plaque25('III', '#0a2a50', '#9aeaff', '#e8faff', 54, 28)}`,
     legendhalo: (u) => `<defs>${G25(u, '#ffe8a8', '#b070ff', '#3a0a6a')}</defs>${rg25('#b070ff', 16, 44, 'opacity=".18"')}${rg25(`url(#${u})`, 5)}${rg25('#ffe8a8', 1.2, 51)}${Array.from({ length: 36 }, (_, k) => `<path d="M0 -58 V-${k % 3 ? 55 : 53}" stroke="#ffe8a8" stroke-width="${k % 3 ? 0.8 : 1.4}" transform="rotate(${k * 10})"/>`).join('')}<g>${spin25(24)}${[0, 120, 240].map((a) => `<g transform="rotate(${a}) translate(0 -58)">${star25(0, 0, 5, '#ffe8a8')}</g>`).join('')}</g><path d="M-14 -50 L-10 -64 L-3 -55 L0 -68 L3 -55 L10 -64 L14 -50Z" fill="#ffd86a" stroke="#6a3a0a" stroke-width="1"/><circle cy="-62" r="2.2" fill="#b070ff"/>${plaque25('2,500', '#2a0a4a', '#ffe8a8', '#ffe8a8', 55, 34)}`,
@@ -6091,6 +6094,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       if ((c.light || 0) >= 150) out.add('jediorder');
       if (root.Col25 && (root.Col25.B().asBest | 0) >= 50) out.add('wreath');
       if ((c.dark || 0) >= 200) out.add('sithlord');
+      if (root.Max25 && root.Max25.done()) out.add('galactic');
     } else for (const id of Object.keys(FRAMES)) if (FRAMES[id].v25) out.delete(id);
     return [...out];
   }
@@ -6542,7 +6546,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
         const gid = myGuildId();
         const g = gid ? guildOf(gid) : null;
         const opt = (k, name, sub, own) => `<button type="button" class="gb-opt ${k === ban ? 'on' : ''} ${own ? '' : 'locked'}" data-pban="${k}" ${own ? '' : 'aria-disabled="true"'}>${gban(k ? { id: '_p', color: g ? g.color : '#5fd8ff', banner: k } : g || { id: '_p', color: '#5fd8ff' }, 'row')}<b>${esc(name)}</b><small>${esc(sub)}</small></button>`;
-        return `<p class="muted small pe-note">Your banner plays behind your name on the boards, in the arena and on your profile. You can use any banner your guild owns.</p><div class="pe-bans">${opt('', g ? 'My guild\'s banner' : 'Guild Cloth', g ? `Follows ${g.name}` : 'Join a guild to unlock banners', true)}${Object.entries(BANNERS).filter(([, b]) => !b.lib).map(([k, b]) => { const own = !!g && bannerOwned(gid, k); return opt(k, b.name, own ? 'Your guild owns it' : g ? `Guild unlock: ${b.how}` : 'Join a guild first', own); }).join('')}${Object.entries(BANNERS).filter(([, b]) => b.lib && libOwn(b)).map(([k, b]) => opt(k, b.name, "Yours, from Luthen's Gallery", true)).join('')}</div>`;
+        return `<p class="muted small pe-note">Your banner plays behind your name on the boards, in the arena and on your profile. You can use any banner your guild owns.</p><div class="pe-bans">${opt('', g ? 'My guild\'s banner' : 'Guild Cloth', g ? `Follows ${g.name}` : 'Join a guild to unlock banners', true)}${Object.entries(BANNERS).filter(([, b]) => !b.lib).map(([k, b]) => { const own = !!g && bannerOwned(gid, k); return opt(k, b.name, own ? 'Your guild owns it' : g ? `Guild unlock: ${b.how}` : 'Join a guild first', own); }).join('')}${Object.entries(BANNERS).filter(([, b]) => b.lib && libOwn(b)).map(([k, b]) => opt(k, b.name, b.max ? 'Yours, from MAX OUT' : "Yours, from Luthen's Gallery", true)).join('')}</div>`;
       }
       if (peTab === 'badge') return `<p class="muted small pe-note">Pick up to 6 to show on your profile · <b data-featn>${feat.length}/6</b></p><div class="pf-bdgs pick">${b.all.map((x) => { const k = x.id || x.name; return `<button type="button" class="pf-bdg ${feat.includes(k) ? 'on' : ''}" data-ft="${esc(k)}">${still(UI.featBadge(x))}<span>${esc(x.name)}</span></button>`; }).join('') || '<p class="muted small">Earn badges around the game and show them off here.</p>'}</div>`;
       const f = (CATS.find(([k]) => k === peCat) || CATS[0])[2];

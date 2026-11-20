@@ -136,15 +136,17 @@
     ['harvest', 'Harvest', '#e8742a', '#fff0c8', '#ffc04a', { badge: ['harvest', 0] }, 'harvest'],
     ['egg', 'Egg Hunt', '#ff9ad8', '#ffffff', '#9ae8ff', { badge: ['easter', 0] }, 'egg'],
     ['endor', 'Endor Fireworks', '#ffd23f', '#fff4c8', '#ff5ad0', { badge: ['endor', 0] }, 'endor'],
+    ['galactic', 'Galactic', '#7a5cff', '#ffffff', '#5ae8ff', { max: 1 }, 'galactic'],
   ].map(([id, n, glow, core, spark, get, fx]) => ({ id, n, glow, core, spark, get, fx: fx || null }));
   const COL = Object.fromEntries(COLOURS.map((c) => [c.id, c]));
   const badge = (id) => BADGES.find((b) => b[0] === id);
   const howOf = (c) => {
     if (c.get.free) return 'Everyone has it';
     if (c.get.beskar) return `Luthen's Gallery · ${fmt(c.get.beskar)} Beskar`;
+    if (c.get.max) return 'MAX OUT';
     const b = badge(c.get.badge[0]); return `${b[1]} badge · ${b[2][c.get.badge[1]][0]}`;
   };
-  const owns = (c) => !!c && (c.get.free || !!B().own[c.id] || (c.get.badge && tierDone(badge(c.get.badge[0]), c.get.badge[1])));
+  const owns = (c) => !!c && (c.get.free || !!B().own[c.id] || (c.get.badge && tierDone(badge(c.get.badge[0]), c.get.badge[1])) || (c.get.max && !!(root.Max25 && root.Max25.done())));
   const equipped = () => { const c = COL[B().col]; return c && owns(c) ? c : COL.default; };
   const buy = (c) => {
     const h = H();
@@ -155,12 +157,12 @@
   // A little sample of the colour: a bolt with its glow, for the picker.
   const swatch = (c, big) => {
     if (!c.glow) return `<svg viewBox="0 0 120 40" class="col25-sw${big ? ' big' : ''}" aria-hidden="true"><path d="M12 20 H82" stroke="#ff8a3a" stroke-width="7" stroke-linecap="round" opacity=".5"/><path d="M12 20 H82" stroke="#fff4c8" stroke-width="2.6" stroke-linecap="round"/><path d="M12 30 H66" stroke="#3bff6a" stroke-width="5" stroke-linecap="round" opacity=".45"/><path d="M12 30 H66" stroke="#e8ffe8" stroke-width="2" stroke-linecap="round"/><circle cx="96" cy="20" r="6" fill="#ff8a3a" opacity=".8"/><circle cx="106" cy="26" r="5" fill="#3bff6a" opacity=".7"/></svg>`;
-    const g = c.fx === 'prism' ? 'url(#col25pr)' : c.glow;
+    const g = c.fx === 'prism' ? 'url(#col25pr)' : c.fx === 'galactic' ? 'url(#col25ga)' : c.glow;
     const deco = { lifeday: '<path d="M100 10 l2.4 5 5.4.6-4 3.8 1 5.4-4.8-2.6-4.8 2.6 1-5.4-4-3.8 5.4-.6z" fill="#fff6c8"/>', harvest: '<path d="M100 12 l2 4 4.4-1-1.6 4 3.4 2.4-4.4 .6-.6 4.4-3.2-3-3.2 3-.6-4.4-4.4-.6 3.4-2.4-1.6-4 4.4 1z" fill="#e8742a"/>', egg: '<ellipse cx="100" cy="20" rx="6" ry="8" fill="#ff9ad8"/><path d="M94 20 q6 -3 12 0" stroke="#9ae8ff" stroke-width="2" fill="none"/>', endor: '<g stroke="#ffd23f" stroke-width="1.6">' + [0, 45, 90, 135].map((a) => `<path d="M100 20 l${(Math.cos(a * Math.PI / 180) * 8).toFixed(1)} ${(Math.sin(a * Math.PI / 180) * 8).toFixed(1)} M100 20 l${(-Math.cos(a * Math.PI / 180) * 8).toFixed(1)} ${(-Math.sin(a * Math.PI / 180) * 8).toFixed(1)}"/>`).join('') + '</g>', dune: '<circle cx="96" cy="16" r="4" fill="#ffd27a"/><circle cx="106" cy="20" r="3" fill="#ffb04a"/>' }[c.fx] || `<circle cx="100" cy="20" r="7" fill="${c.spark}" opacity=".9"/><circle cx="100" cy="20" r="3" fill="${c.core}"/>`;
-    return `<svg viewBox="0 0 120 40" class="col25-sw${big ? ' big' : ''}" aria-hidden="true"><defs><linearGradient id="col25pr" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ff4a9a"/><stop offset=".33" stop-color="#ffd23f"/><stop offset=".66" stop-color="#3ac8ff"/><stop offset="1" stop-color="#b06aff"/></linearGradient></defs><path d="M10 20 H88" stroke="${g}" stroke-width="9" stroke-linecap="round" opacity=".55"/><path d="M10 20 H88" stroke="${g}" stroke-width="5" stroke-linecap="round"/><path d="M12 20 H86" stroke="${c.core}" stroke-width="2" stroke-linecap="round"/>${deco}</svg>`;
+    return `<svg viewBox="0 0 120 40" class="col25-sw${big ? ' big' : ''}" aria-hidden="true"><defs><linearGradient id="col25pr" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ff4a9a"/><stop offset=".33" stop-color="#ffd23f"/><stop offset=".66" stop-color="#3ac8ff"/><stop offset="1" stop-color="#b06aff"/></linearGradient><linearGradient id="col25ga" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#2a1470"/><stop offset=".35" stop-color="#7a5cff"/><stop offset=".7" stop-color="#ff5ad0"/><stop offset="1" stop-color="#5ae8ff"/></linearGradient></defs><path d="M10 20 H88" stroke="${g}" stroke-width="9" stroke-linecap="round" opacity=".55"/><path d="M10 20 H88" stroke="${g}" stroke-width="5" stroke-linecap="round"/><path d="M12 20 H86" stroke="${c.core}" stroke-width="2" stroke-linecap="round"/>${deco}</svg>`;
   };
   // For the Cosmetics tab (js/cosm25.js).
-  const items = () => { const eq = equipped().id; return COLOURS.map((c) => { const p = c.get.badge ? prog(badge(c.get.badge[0])[2][c.get.badge[1]][1]) : null; return { id: c.id, n: c.n, how: howOf(c), own: owns(c), eq: eq === c.id, c: c.glow || '#ffd27a', cost: c.get.beskar ? { beskar: c.get.beskar } : null, p: Array.isArray(p) && !done(p) ? { have: p[0], need: p[1] } : null }; }); };
+  const items = () => { const eq = equipped().id; return COLOURS.filter((c) => !c.get.max || owns(c)).map((c) => { const p = c.get.badge ? prog(badge(c.get.badge[0])[2][c.get.badge[1]][1]) : null; return { id: c.id, n: c.n, how: howOf(c), own: owns(c), eq: eq === c.id, c: c.glow || '#ffd27a', cost: c.get.beskar ? { beskar: c.get.beskar } : null, p: Array.isArray(p) && !done(p) ? { have: p[0], need: p[1] } : null }; }); };
   const wear = (id) => { if (!owns(COL[id])) return false; B().col = id; save(); return true; };
 
   // ---------- In battle ----------
@@ -168,7 +170,8 @@
   const perf = () => !!(root.Perf && root.Perf.on);
   let cur = null; let prismI = 0;
   const PRISM = ['#ff4a9a', '#ffd23f', '#5aff9a', '#3ac8ff', '#b06aff'];
-  const paint = () => (cur.fx === 'prism' ? PRISM[prismI++ % PRISM.length] : cur.glow);
+  const GAL = ['#7a5cff', '#5ae8ff', '#ff5ad0', '#b8a8ff'];
+  const paint = () => (cur.fx === 'prism' ? PRISM[prismI++ % PRISM.length] : cur.fx === 'galactic' ? GAL[prismI++ % GAL.length] : cur.glow);
   // Holiday colours leave a few little shapes where they hit: Life Day stars, Harvest leaves, eggs, fireworks, sand.
   const GLYPH = {
     lifeday: (i) => (i % 2 ? '<path d="M0 -6 l1.8 3.8 4.2.4-3.2 2.8.9 4.2-3.7-2.2-3.7 2.2.9-4.2-3.2-2.8 4.2-.4z" fill="#fff6c8"/>' : `<circle r="2.4" fill="${i % 4 ? '#2ad84a' : '#ff2a2a'}"/>`),
@@ -176,6 +179,7 @@
     egg: (i) => `<ellipse rx="3.2" ry="4.2" fill="${['#ff9ad8', '#9ae8ff', '#ffe07a', '#b8ff9a'][i % 4]}"/><path d="M-3 0 q3 -1.6 6 0" stroke="#fff" stroke-width="1" fill="none"/>`,
     endor: (i) => `<g stroke="${['#ffd23f', '#ff5ad0', '#5ad0ff'][i % 3]}" stroke-width="1.4"><path d="M-5 0 H5 M0 -5 V5 M-3.5 -3.5 L3.5 3.5 M3.5 -3.5 L-3.5 3.5"/></g>`,
     dune: () => `<circle r="${(1 + Math.random() * 1.6).toFixed(1)}" fill="#e8c890"/>`,
+    galactic: (i) => `<path d="M0 -5 L1.2 -1.2 L5 0 L1.2 1.2 L0 5 L-1.2 1.2 L-5 0 L-1.2 -1.2Z" fill="${['#ffffff', '#5ae8ff', '#ff5ad0', '#b8a8ff'][i % 4]}"/>`,
   };
   const burst = (ui, pos) => {
     if (!cur || !cur.fx || !GLYPH[cur.fx] || perf() || !ui.fx || !pos) return;
@@ -226,13 +230,14 @@
   const PF = [['pf25_ld_elder', 'Life Day Elder', 'lifeday', '#c84a3a'], ['pf25_ld_cub', 'Wookiee Cub', 'lifeday', '#8a5a2a'], ['pf25_ld_tree', 'Tree of Life', 'lifeday', '#2a8a4a'],
     ['pf25_tg_nuna', 'The Grand Nuna', 'harvest', '#e8742a'], ['pf25_tg_farmer', 'Moisture Farmer', 'harvest', '#d8a860'], ['pf25_tg_milk', 'Blue Milk Toast', 'harvest', '#5ab0f0'],
     ['pf25_ea_hatch', 'Kyber Hatchling', 'easter', '#5ad0ff'], ['pf25_ea_cat', 'Loth-cat Basket', 'easter', '#ff9ad8'], ['pf25_ea_droid', 'Egg-Painter Droid', 'easter', '#ffd23f'],
-    ['pf25_en_drum', 'Ewok Drummer', 'endor', '#8a5a2a'], ['pf25_en_ds', 'Death Star Falls', 'endor', '#ffd23f'], ['pf25_en_helm', 'Helmet Drums', 'endor', '#c8d4e0']];
+    ['pf25_en_drum', 'Ewok Drummer', 'endor', '#8a5a2a'], ['pf25_en_ds', 'Death Star Falls', 'endor', '#ffd23f'], ['pf25_en_helm', 'Helmet Drums', 'endor', '#c8d4e0'],
+    ['pf25_galaxy', 'The Galaxy Holocron', 'max', '#7a5cff']];
   for (const [id, name, ev, c] of PF) {
     if (D.UNIT_MAP[id]) continue;
     D.UNIT_MAP[id] = { id, name, kind: 'character', faction: 'none', rarity: 'common', role: 'support', traits: [], spd: 0, pf25: ev, bio: 'A holiday profile picture.' };
     if (root.Art && root.Art.addArt && !(root.PF25ART && root.PF25ART[id])) root.Art.addArt('char', id, () => `<rect width="100" height="100" fill="#0b1020"/><circle cx="50" cy="50" r="34" fill="${c}" opacity=".85"/><text x="50" y="58" text-anchor="middle" font-family="sans-serif" font-weight="800" font-size="22" fill="#fff">${name[0]}</text>`);
   }
-  const pfOwned = () => PF.filter(([, , ev]) => B().ev[ev]).map(([id]) => id);
+  const pfOwned = () => PF.filter(([, , ev]) => (ev === 'max' ? !!(root.Max25 && root.Max25.done()) : B().ev[ev])).map(([id]) => id);
 
   // ---------- Styles ----------
   const st = document.createElement('style');

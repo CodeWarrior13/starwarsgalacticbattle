@@ -33,6 +33,8 @@
     ['holo', 'Holo', 'Flickering hologram', { kyber: 300 }],
   ];
   const TIER = Object.fromEntries(TIERS.map((t) => [t[0], t]));
+  // MAX OUT's title wears its own Galactic colour: never sold, never offered as an upgrade.
+  TIER.galactic = ['galactic', 'Galactic', 'A turning galaxy', {}];
   const TCOL = { silver: '#c8d4e0', gold: '#ffd23f', kyber: '#5ad0ff', crimson: '#ff4a5a', aurora: '#b07aff', holo: '#7affe0' };
   const st = () => { const h = H(); const P = Player.state; const c = P.c25 || {}; const cz = P.czw || {}; return { h, P, c, cz, duels: (h.duels || {}).w || 0, ws: h.wsMax || 0, units: Object.keys(P.units || {}).length, soc: h.soc || {} }; };
   const forged = (h) => Object.values(h.forge || {}).reduce((a, b) => a + (b | 0), 0);
@@ -162,7 +164,7 @@
   // Luthen's library (js/lib25.js): win screens join the list, battle intros get their own tab.
   const LIB = root.Lib25 ? root.Lib25.CAT : [];
   for (const x of LIB) if (x.k === 'wi') WINS.push({ id: 'lib_' + x.id, n: x.n, c: x.c, get: x.cost, how: "Luthen's Gallery · weekly rotation", lib: x.id });
-  const INTROS = [{ id: 'vs', n: 'Lightsaber VS', c: '#8fe8ff', get: null, how: 'Everyone has it' }].concat(LIB.filter((x) => x.k === 'in').map((x) => ({ id: x.id, n: x.n, c: x.c, get: x.cost, how: x.wk ? "Luthen's Gallery · weekly rotation" : "Luthen's Gallery · " + (x.cost.kyber ? fmt(x.cost.kyber) + ' Kyber' : fmt(x.cost.beskar) + ' Beskar'), lib: x.id })));
+  const INTROS = [{ id: 'vs', n: 'Lightsaber VS', c: '#8fe8ff', get: null, how: 'Everyone has it' }].concat(LIB.filter((x) => x.k === 'in').map((x) => (x.max ? { id: x.id, n: x.n, c: '#b8a8ff', get: () => !!(root.Max25 && root.Max25.done()), max: true, how: 'MAX OUT', lib: x.id } : { id: x.id, n: x.n, c: x.c, get: x.cost, how: x.wk ? "Luthen's Gallery · weekly rotation" : "Luthen's Gallery · " + (x.cost.kyber ? fmt(x.cost.kyber) + ' Kyber' : fmt(x.cost.beskar) + ' Beskar'), lib: x.id })));
   const CRATES = (D.PACKS || []).map((p) => [p.id, p.name]);
   // Card backs also dress the HoloNet's Beskar pucks, once pucks open up at level 25.
   const CBCRATES = () => CRATES.concat(((Player.state.account || {}).level || 0) >= 25 ? [['puck', 'Beskar Pucks']] : []);
@@ -208,10 +210,10 @@
     }
     if (kind === 'ti') {
       const w = eq.ti();
-      return TITLES.filter((t) => t.earn || tiersOf(t.id).length).map((t) => { const tiers = tiersOf(t.id); const p = prog(t); const best = TIERS.map((x) => x[0]).filter((x) => tiers.includes(x)).pop() || 'silver'; return { id: t.id, n: t.n, how: t.how, own: tiers.length > 0, eq: !!(w && w.id === t.id), tier: w && w.id === t.id ? w.t : best, p: p && !p.done && p.need ? p : null, t }; });
+      return TITLES.filter((t) => (t.earn && !t.max) || tiersOf(t.id).length).map((t) => { const tiers = tiersOf(t.id); const p = prog(t); const best = TIERS.map((x) => x[0]).filter((x) => tiers.includes(x)).pop() || 'silver'; return { id: t.id, n: t.n, how: t.how, own: tiers.length > 0, eq: !!(w && w.id === t.id), tier: w && w.id === t.id ? w.t : best, p: p && !p.done && p.need ? p : null, t }; });
     }
-    if (kind === 'po') return POSES.map((x) => ({ id: x.id, n: x.n, how: x.how, sub: x.ty, c: x.c, own: ownsItem('po', x), eq: eq.po() === x.id }));
-    const shopOnly = (x) => x.get === 'event' || (x.get && typeof x.get === 'object');
+    if (kind === 'po') return POSES.filter((x) => !x.max || ownsItem('po', x)).map((x) => ({ id: x.id, n: x.n, how: x.how, sub: x.ty, c: x.c, own: ownsItem('po', x), eq: eq.po() === x.id }));
+    const shopOnly = (x) => x.max || x.get === 'event' || (x.get && typeof x.get === 'object');
     if (kind === 'wi') return WINS.filter((x) => !shopOnly(x) || ownsItem('wi', x)).map((x) => { const p = getProg(x); return { id: x.id, n: x.n, how: x.how, c: x.c, own: ownsItem('wi', x), eq: eq.wi() === x.id, p: p && !p.done && p.need ? p : null }; });
     if (kind === 'cb') return CBACKS.filter((x) => !shopOnly(x) || ownsItem('cb', x)).map((x) => { const p = getProg(x); return { id: x.id, n: x.n, how: x.how, c: x.c, own: ownsItem('cb', x), p: p && !p.done && p.need ? p : null }; });
     if (kind === 'in') return INTROS.filter((x) => !shopOnly(x) || ownsItem('in', x)).map((x) => ({ id: x.id, n: x.n, how: x.how, c: x.c, own: ownsItem('in', x), eq: eq.in() === x.id }));
@@ -268,7 +270,7 @@
       else if (k === 'co') big = `<div class="col25-demo">${root.Col25.swatch(root.Col25.COL[x.id], true)}</div><p class="muted small" style="margin:0">Your own cards' basic attacks, the shield ultimate and your selection outline. Other ultimates keep their own look.</p>`;
       else big = '<div class="c25-try"></div>';
       let tiers = '';
-      if (k === 'ti' && x.own) { const have = tiersOf(x.id); tiers = x.t.fix ? `<div class="c25-tiers"><span class="c25-tier on">${titleHtml({ n: TIERS.find((q) => q[0] === x.t.fix)[1], t: x.t.fix })}<small>Fixed colour</small></span></div>` : '<div class="c25-tiers">' + TIERS.map(([tid, tn]) => have.includes(tid) ? `<button type="button" class="c25-tier" data-ptier="${tid}">${titleHtml({ n: tn, t: tid })}</button>` : `<span class="c25-tier lockd">${titleHtml({ n: tn, t: tid })}<small>Luthen's Gallery</small></span>`).join('') + '</div>'; }
+      if (k === 'ti' && x.own) { const have = tiersOf(x.id); tiers = x.t.fix ? `<div class="c25-tiers"><span class="c25-tier on">${titleHtml({ n: TIER[x.t.fix][1], t: x.t.fix })}<small>Fixed colour</small></span></div>` : '<div class="c25-tiers">' + TIERS.map(([tid, tn]) => have.includes(tid) ? `<button type="button" class="c25-tier" data-ptier="${tid}">${titleHtml({ n: tn, t: tid })}</button>` : `<span class="c25-tier lockd">${titleHtml({ n: tn, t: tid })}<small>Luthen's Gallery</small></span>`).join('') + '</div>'; }
       const pm = UI.openModal(`<div class="c25 c25-pop"><h2>${esc(x.n)}</h2>${big}<p class="c25-pst">${x.own ? (isEq ? 'Equipped' : 'You own this') : 'Locked · ' + esc(x.how) + (x.p ? ' (' + fmt(x.p.have) + ' / ' + fmt(x.p.need) + ')' : '')}</p>${tiers}<div class="c25-pbtns"><button type="button" class="c25-tbtn" data-ptry>Try it on</button>${x.own ? `<button type="button" class="c25-btn" data-peq ${isEq && k !== 'ti' ? 'disabled' : ''}>${isEq && k !== 'ti' ? 'Equipped' : 'Equip'}</button>` : k === 'co' && x.cost ? `<button type="button" class="c25-btn" data-pbuy>Buy · ${fmt(x.cost.beskar)} Beskar</button>` : ''}<button type="button" class="c25-ghost" data-pback>Back to mine</button></div></div>`, { wide: true });
       const Rp = pm.root;
       let tier = x.tier;
@@ -306,7 +308,7 @@
       let act = '';
       if (kind === 'ti' && x.own) {
         const have = tiersOf(x.id);
-        act = x.t.fix ? `<div class="c25-tiers"><button type="button" class="c25-tier ${x.eq ? 'on' : ''}" data-wear="${x.t.fix}">${titleHtml({ n: TIERS.find((q) => q[0] === x.t.fix)[1], t: x.t.fix })}<small>Fixed colour</small></button></div>` : '<div class="c25-tiers">' + TIERS.map(([tid, tn, , cost]) => have.includes(tid) ? `<button type="button" class="c25-tier ${x.eq && x.tier === tid ? 'on' : ''}" data-wear="${tid}">${titleHtml({ n: tn, t: tid })}</button>` : `<span class="c25-tier lockd" title="${esc(tn)}">${titleHtml({ n: tn, t: tid })}<small>Luthen's Gallery</small></span>`).join('') + '</div>';
+        act = x.t.fix ? `<div class="c25-tiers"><button type="button" class="c25-tier ${x.eq ? 'on' : ''}" data-wear="${x.t.fix}">${titleHtml({ n: TIER[x.t.fix][1], t: x.t.fix })}<small>Fixed colour</small></button></div>` : '<div class="c25-tiers">' + TIERS.map(([tid, tn, , cost]) => have.includes(tid) ? `<button type="button" class="c25-tier ${x.eq && x.tier === tid ? 'on' : ''}" data-wear="${tid}">${titleHtml({ n: tn, t: tid })}</button>` : `<span class="c25-tier lockd" title="${esc(tn)}">${titleHtml({ n: tn, t: tid })}<small>Luthen's Gallery</small></span>`).join('') + '</div>';
       } else if (x.own) {
         const isEq = kind === 'pa' ? eq.pa(crate) === x.id : x.eq;
         act = `<button type="button" class="c25-btn" data-equip ${isEq ? 'disabled' : ''}>${isEq ? 'Equipped' : 'Equip'}</button>`;
@@ -526,7 +528,7 @@
   // Casino wins feed the casino titles.
   // The crate opening asks which back each crate wears (js/ui.js packReveal).
   if (UI.hooks) UI.hooks.cardBack = (packId) => { try { if (!on() || !packId || !root.CB25) return ''; const id = C().cbk[packId]; const x = CBACKS.find((y) => y.id === id); if (!x || id === 'default' || !ownsItem('cb', x)) return ''; return root.CB25.svg(id); } catch (e) { return ''; } };
-  root.Cos25 = { ready, open, sync, tour, titleScene, titleHtml, TITLES, TIERS, POSES, WINS, PACKS, INTROS, eq, ownsItem, C: () => C(), save };
+  root.Cos25 = { ready, open, sync, tour, titleScene, titleHtml, TITLES, TIERS, POSES, WINS, PACKS, INTROS, CBACKS, eq, ownsItem, C: () => C(), save };
   if (HN()) HN().titleHtml = titleHtml;
   // The HoloNet loads later on most devices: hook in once it's there.
   let tries = 0;

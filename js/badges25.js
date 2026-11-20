@@ -63,9 +63,10 @@
     const L = BADGES();
     const done = L.reduce((a, b) => a + tier(b), 0); const all = L.reduce((a, b) => a + b[2].length, 0);
     const m = UI.openModal(`<div class="bd" role="dialog" aria-label="Badges"><div class="bd-head"><div><h2>Badges</h2><p class="muted small">${fmt(done)} / ${fmt(all)} steps · tap a badge for its steps and rewards</p></div><button type="button" class="btn btn-small" data-bdx>Close</button></div>
-      <div class="bd-wall">${L.map((b) => { const t = tier(b); const n = next(b); return `<button type="button" class="bd-cell${t ? '' : ' none'}${B().pin === b[0] ? ' pin' : ''}" data-bd="${b[0]}">${medal(b[0], t ? t - 1 : 0, !t)}<b>${esc(b[1])}</b><small>${t ? stepName(b, t - 1) + (b[2].length > 1 ? ` · ${t}/${b[2].length}` : '') : holiday(b) ? 'Holiday' : 'Not started'}</small>${n && !n.flag ? `<i class="bd-bar"><u style="width:${Math.round((n.have / n.need) * 100)}%"></u></i>` : ''}</button>`; }).join('')}</div></div>`, { wide: true });
+      <div class="bd-wall">${L.map((b) => { const t = tier(b); const n = next(b); return `<button type="button" class="bd-cell${t ? '' : ' none'}${B().pin === b[0] ? ' pin' : ''}" data-bd="${b[0]}">${medal(b[0], t ? t - 1 : 0, !t)}<b>${esc(b[1])}</b><small>${t ? stepName(b, t - 1) + (b[2].length > 1 ? ` · ${t}/${b[2].length}` : '') : holiday(b) ? 'Holiday' : 'Not started'}</small>${n && !n.flag ? `<i class="bd-bar"><u style="width:${Math.round((n.have / n.need) * 100)}%"></u></i>` : ''}</button>`; }).join('')}${root.Max25 ? root.Max25.cell() : ''}</div></div>`, { wide: true });
     m.root.addEventListener('click', (e) => {
       if (e.target.closest('[data-bdx]')) { m.close(); return; }
+      if (e.target.closest('[data-mx]') && root.Max25) { root.Max25.detail(); return; }
       const c = e.target.closest('[data-bd]'); if (c) detail(c.dataset.bd, () => { m.close(); sheet(); });
     });
     if (focus) detail(focus, () => { m.close(); sheet(); });

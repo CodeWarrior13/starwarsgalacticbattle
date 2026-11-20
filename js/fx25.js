@@ -220,5 +220,12 @@
   }
   // Fetch the equipped library win screen and intro early, so they're ready when needed.
   setTimeout(() => { try { const c = C(); if (!c || !L5()) return; if (/^lib_/.test(c.eq.wi || '')) L5().load(c.eq.wi.slice(4)); if (c.eq.in && c.eq.in !== 'vs') L5().load(c.eq.in); } catch (e) { /* later */ } }, 4000);
-  root.Cos25FX = { preview, victory, intro, mvpOf, typeOf, thumb };
+  // Other 2.5 files (MAX OUT) add their own pose, win screen and crate theme here.
+  const add = (kind, id, svg, extraCss) => {
+    if (kind === 'po') POSE[id] = svg;
+    else if (kind === 'wi') { WS['x_' + id] = svg; WIN_KEY[id] = 'x_' + id; }
+    else if (kind === 'pa') { PK['x_' + id] = svg; PACK_KEY[id] = 'x_' + id; }
+    if (extraCss) { const st = document.createElement('style'); st.textContent = extraCss; document.head.appendChild(st); }
+  };
+  root.Cos25FX = { preview, victory, intro, mvpOf, typeOf, thumb, add };
 })(typeof window !== 'undefined' ? window : globalThis);
