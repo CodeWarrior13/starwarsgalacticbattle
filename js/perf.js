@@ -107,39 +107,58 @@
     },
   };
 
-  // 2.5: switching Performance mode on drops a stone in the water: three rings
-  // spread from the switch across the screen and the window pops out and
-  // settles. Plays once (under a second), only transforms and opacity, then
-  // the nodes are removed. Skipped when the device asks for less motion.
+  // 2.5: switching Performance mode on plays one short effect (under a
+  // second, transforms and opacity only), then the window pops out, settles
+  // with a small bounce and its edge lights up. The nodes are removed after.
+  // Skipped when the device asks for less motion. FX picks the effect.
+  const FX = 'scan'; // 'scan' | 'glow' | 'hyper' | 'pop'
   function ripple(from) {
     try {
       if (!(root.Update25 && root.Update25.on())) return;
       if (root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
       const r = from.getBoundingClientRect();
-      const n = document.createElement('div');
-      n.className = 'pm-ripple';
-      n.setAttribute('aria-hidden', 'true');
-      n.style.setProperty('--x', `${Math.round(r.left + Math.min(r.width, 44) / 2)}px`);
-      n.style.setProperty('--y', `${Math.round(r.top + r.height / 2)}px`);
-      n.innerHTML = '<b></b><i></i><i></i><i></i>';
-      document.body.appendChild(n);
+      const x = Math.round(r.left + Math.min(r.width, 44) / 2);
+      const y = Math.round(r.top + r.height / 2);
+      let h = '';
+      if (FX === 'scan') h = '<i class="tint"></i><i class="scan"></i>';
+      else if (FX === 'glow') h = '<i class="edge"></i><i class="burst"></i>';
+      else if (FX === 'hyper') { h = '<i class="flash"></i>'; for (let k = 0; k < 24; k++) h += `<i class="streak" style="--a:${k * 15 + (k % 3) * 4}deg;animation-delay:${(k % 4) * 0.03}s"></i>`; }
+      let n = null;
+      if (h) {
+        n = document.createElement('div');
+        n.className = 'pm-fx';
+        n.setAttribute('aria-hidden', 'true');
+        n.style.setProperty('--x', `${x}px`);
+        n.style.setProperty('--y', `${y}px`);
+        n.style.setProperty('--d', `${Math.ceil(Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y)) * 2.2)}px`);
+        n.style.setProperty('--h', `${innerHeight + 160}px`);
+        n.innerHTML = h;
+        document.body.appendChild(n);
+      }
       const box = from.closest('.modal');
       if (box) { box.classList.remove('pm-pop'); void box.offsetWidth; box.classList.add('pm-pop'); }
-      setTimeout(() => { n.remove(); if (box) box.classList.remove('pm-pop'); }, 1200);
+      setTimeout(() => { if (n) n.remove(); if (box) box.classList.remove('pm-pop'); }, 1250);
     } catch (e) { /* only a flourish */ }
   }
   if (!document.getElementById('pm-css')) {
     const st = document.createElement('style');
     st.id = 'pm-css';
-    st.textContent = `.pm-ripple{position:fixed;inset:0;z-index:100000;pointer-events:none;overflow:hidden}
-.pm-ripple i,.pm-ripple b{position:absolute;left:var(--x);top:var(--y);width:190vmax;height:190vmax;margin:-95vmax 0 0 -95vmax;border-radius:50%;transform:scale(0);opacity:0}
-.pm-ripple i{background:radial-gradient(circle closest-side,rgba(124,230,255,0) 84%,rgba(124,230,255,.55) 92%,rgba(220,250,255,.85) 96%,rgba(124,230,255,0) 100%);animation:pm-ring 1.15s cubic-bezier(.25,.55,.35,1) forwards}
-.pm-ripple i:nth-child(3){animation-delay:.16s;filter:opacity(.65)}.pm-ripple i:nth-child(4){animation-delay:.32s;filter:opacity(.4)}
-.pm-ripple b{width:90px;height:90px;margin:-45px 0 0 -45px;background:radial-gradient(circle,rgba(220,250,255,.95),rgba(124,230,255,0) 70%);animation:pm-drop .55s ease-out forwards}
-@keyframes pm-ring{0%{transform:scale(0);opacity:1}100%{transform:scale(1);opacity:0}}
-@keyframes pm-drop{0%{transform:scale(.2);opacity:1}100%{transform:scale(3);opacity:0}}
-.modal.pm-pop{animation:pm-pop .7s cubic-bezier(.3,1.6,.5,1) .08s}
-@keyframes pm-pop{0%{transform:none}35%{transform:scale(1.035)}65%{transform:scale(.995)}100%{transform:none}}`;
+    st.textContent = `.pm-fx{position:fixed;inset:0;z-index:100000;pointer-events:none;overflow:hidden}
+.pm-fx .scan{position:absolute;left:0;right:0;top:0;height:120px;background:linear-gradient(180deg,rgba(124,230,255,0),rgba(124,230,255,.28) 75%,rgba(124,230,255,.5) 96%,rgba(124,230,255,0));transform:translateY(-130px);animation:pm-scan .9s cubic-bezier(.45,0,.35,1) forwards}
+.pm-fx .scan::after{content:'';position:absolute;left:0;right:0;bottom:3px;height:3px;background:#e6fcff;box-shadow:0 0 12px 3px rgba(124,230,255,.9)}
+@keyframes pm-scan{to{transform:translateY(var(--h))}}
+.pm-fx .tint,.pm-fx .edge,.pm-fx .flash{position:absolute;inset:0;opacity:0;animation:pm-tint .9s ease-out forwards}
+.pm-fx .tint{background:rgba(124,230,255,.08)}
+.pm-fx .edge{box-shadow:inset 0 0 70px rgba(124,230,255,.55);animation-duration:1s}
+.pm-fx .flash{background:radial-gradient(ellipse at center,rgba(220,250,255,.25),rgba(124,230,255,0) 70%);animation-duration:.7s;animation-delay:.1s}
+@keyframes pm-tint{0%{opacity:0}30%{opacity:1}100%{opacity:0}}
+.pm-fx .burst{position:absolute;left:var(--x);top:var(--y);width:var(--d);height:var(--d);margin:calc(var(--d) / -2) 0 0 calc(var(--d) / -2);border-radius:50%;background:radial-gradient(circle,rgba(220,250,255,.55),rgba(124,230,255,.18) 40%,rgba(124,230,255,0) 70%);transform:scale(.1);animation:pm-burst .9s cubic-bezier(.2,.7,.3,1) forwards}
+@keyframes pm-burst{to{transform:scale(1);opacity:0}}
+.pm-fx .streak{position:absolute;left:50%;top:50%;width:55vmax;height:2px;margin-top:-1px;transform-origin:0 50%;background:linear-gradient(90deg,rgba(220,250,255,0),rgba(220,250,255,.95));opacity:0;animation:pm-streak .65s cubic-bezier(.3,0,.2,1) forwards}
+@keyframes pm-streak{0%{opacity:0;transform:rotate(var(--a)) translateX(10%) scaleX(.05)}35%{opacity:1}100%{opacity:0;transform:rotate(var(--a)) translateX(70%) scaleX(1)}}
+.modal.pm-pop{animation:pm-pop 1s cubic-bezier(.25,.8,.3,1) .05s,pm-edge 1s ease-out .05s}
+@keyframes pm-pop{0%{transform:none}28%{transform:scale(1.05)}55%{transform:scale(.985)}78%{transform:scale(1.008)}100%{transform:none}}
+@keyframes pm-edge{0%{box-shadow:0 0 0 0 rgba(124,230,255,0)}25%{box-shadow:0 0 0 1px rgba(124,230,255,.9),0 0 28px rgba(124,230,255,.55)}100%{box-shadow:0 0 0 0 rgba(124,230,255,0)}}`;
     (document.head || document.documentElement).appendChild(st);
   }
 

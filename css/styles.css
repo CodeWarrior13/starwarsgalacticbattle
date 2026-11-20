@@ -4055,3 +4055,8 @@ body.perf-on .cos-bulbs i, body.perf-on .cos-signs .vk, body.perf-on .lbl-title.
 }
 .st5-list > .btn { margin: 8px 0 2px; justify-self: stretch; }
 .st5-tabs button:focus-visible { outline: none; box-shadow: inset 0 0 0 1px rgba(255, 210, 63, .7); }
+.st5 button, .st5 label, .st5 input, .st5 a { -webkit-tap-highlight-color: transparent; }
+/* Opening Settings gives the gear a light quarter-turn (once). */
+.st5 .set-head > .swi { animation: st5-gear .9s cubic-bezier(.2, 1.25, .4, 1); }
+@keyframes st5-gear { from { transform: rotate(-90deg); } to { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .st5 .set-head > .swi { animation: none; } }
