@@ -6,7 +6,7 @@
 (function (root) {
   if (!(root.Update25 && root.Update25.on())) return;
   var v = function (p) { return root.__ver ? root.__ver(p) : p; };
-  var files = ['js/lib25.js', 'js/col25.js', 'js/holo25.js', 'js/badges25.js', 'js/cosm25.js', 'js/max25.js', 'js/social25.js'];
+  var files = ['js/lib25.js', 'js/col25.js', 'js/holo25.js', 'js/ships25.js', 'js/badges25.js', 'js/cosm25.js', 'js/max25.js', 'js/social25.js'];
   // The Harvest Hunt (Thanksgiving week) and its Grand Nuna raid art: only downloaded around the event.
   var t = Date.now(), ls = function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } };
   var hv = (t >= Date.UTC(2026, 10, 22, 6) && t < Date.UTC(2026, 11, 3, 6)) || (t >= Date.UTC(2027, 10, 21, 6) && t < Date.UTC(2027, 11, 2, 6));
