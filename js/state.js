@@ -106,6 +106,16 @@
         }
       }
       delete this.state.progress;
+      // The tutorial belongs to the account: once a save has finished or skipped it, it never
+      // starts again by itself (after a reload, signing out and back in, or loading the account
+      // on another device). It only plays again when you pick Replay tutorial, for that session.
+      {
+        const t = this.state.tutorial;
+        let replaying = false; try { replaying = sessionStorage.getItem('swcg-tut-replay') === '1'; } catch (e) { /* storage blocked */ }
+        let acct = null; try { const m = JSON.parse(store.getItem('swcg-acct') || 'null'); const rec = JSON.parse(store.getItem('swcg-tut-acct') || '{}'); acct = m && m.uid ? rec[m.uid] : null; } catch (e) { /* no account */ }
+        const played = t.badge || acct;
+        if (!t.done && played && !replaying) { t.done = true; t.how = t.how || acct || 'completed'; t.fresh = false; t.badge = true; }
+      }
       // Saves from before account levels: grant XP for past victories (no rewards).
       if (loaded && !loaded.account) {
         const pastXp = this.totalCleared() * 80 + Object.values(this.state.bosses).reduce((a, n) => a + n * 150, 0);
@@ -148,6 +158,7 @@
     replayTutorial() {
       const t = this.state.tutorial;
       this.state.tutorial = { done: false, how: null, fresh: false, badge: !!(t.badge || t.done), replays: t.replays || 0 };
+      try { sessionStorage.setItem('swcg-tut-replay', '1'); } catch (e) { /* storage blocked */ }
       this.save();
     },
 
@@ -202,6 +213,9 @@
       t.how = how;
       t.fresh = false;
       t.badge = true;
+      try { sessionStorage.removeItem('swcg-tut-replay'); } catch (e) { /* storage blocked */ }
+      // Remember it for the signed-in account on this device too.
+      try { const st = storage(); const m = JSON.parse(st.getItem('swcg-acct') || 'null'); if (m && m.uid) { const rec = JSON.parse(st.getItem('swcg-tut-acct') || '{}'); rec[m.uid] = how; st.setItem('swcg-tut-acct', JSON.stringify(rec)); } } catch (e) { /* no account */ }
       this.save();
       return out;
     },

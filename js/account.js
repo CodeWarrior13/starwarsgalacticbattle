@@ -332,7 +332,7 @@
     try { await F.auth.signOut(); } catch (e) { /* signed out locally anyway */ }
     root.Player.startOver();
     applying = true;
-    try { for (const k of Object.keys(localStorage)) if (k.startsWith('swcg-') && ![SAVE_KEY, 'swcg-battle-prefs', DEV, ASKED].includes(k)) localStorage.removeItem(k); } catch (e) { /* ignore */ }
+    try { for (const k of Object.keys(localStorage)) if (k.startsWith('swcg-') && ![SAVE_KEY, 'swcg-battle-prefs', 'swcg-tut-acct', DEV, ASKED].includes(k)) localStorage.removeItem(k); } catch (e) { /* ignore */ }
     ls('swcg-acct-msg', 'Signed out. Sign in from Settings any time to load your saved game.');
     location.reload();
   }
