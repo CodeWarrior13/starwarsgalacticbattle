@@ -225,10 +225,12 @@
       this.fx = $('[data-fx]', view);
       this.cards = {};
       for (const u of b.units) {
-        const card = el(`<div class="bcard ${u.side} ${u.def.kind} ${u.boss ? 'boss' : ''}" data-uid="${u.uid}" style="--bob:${(u.index * 0.37).toFixed(2)}s">
+        // 2.5 holo foil (js/holo25.js) on your own cards.
+        const foil = u.side === 'player' && !u.boss && root.HoloCard && root.Player.owns(u.def.id) ? root.HoloCard : null;
+        const card = el(`<div class="bcard ${u.side} ${u.def.kind} ${u.boss ? 'boss' : ''}${foil ? foil.cls(u.def.id) : ''}" data-uid="${u.uid}" style="--bob:${(u.index * 0.37).toFixed(2)}s">
           <span class="blevel">${u.boss ? 'BOSS' : 'Lv ' + u.level}</span>
           <div class="statuses"></div>
-          ${portrait(u.def)}
+          ${portrait(u.def)}${foil ? foil.fx(u.def.id) : ''}
           <div class="bars">
             <div class="bar hp"><i class="lag"></i><i class="fill"></i></div>
             <div class="hp-num"><span data-hp></span><span>${fmt(u.maxHp)}</span></div>

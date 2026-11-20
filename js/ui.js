@@ -71,9 +71,11 @@
       shard = `<div class="shardbar ${u.shards >= need ? 'ready' : ''}" title="${u.shards}/${need} shards"><i style="width:${pct}%"></i></div>`;
     }
     const tag = opts.tag || 'button';
-    return `<${tag} class="ucard rarity-${def.rarity} ${owned ? '' : 'locked'} ${opts.selected ? 'selected' : ''} ${opts.holo ? 'holo' : ''} ${u && u.elite && !opts.level ? 'elite' : ''}" data-id="${def.id}" ${tag === 'button' ? `type="button" aria-label="${esc(def.name)}"` : ''}>
+    // 2.5 holo foil (js/holo25.js), on your own cards only.
+    const foil = owned && !opts.level && root.HoloCard ? root.HoloCard : null;
+    return `<${tag} class="ucard rarity-${def.rarity} ${owned ? '' : 'locked'} ${opts.selected ? 'selected' : ''} ${opts.holo ? 'holo' : ''} ${u && u.elite && !opts.level ? 'elite' : ''}${foil ? foil.cls(def.id) : ''}" data-id="${def.id}" ${tag === 'button' ? `type="button" aria-label="${esc(def.name)}"` : ''}>
       ${opts.badge ? `<span class="sel-badge">${opts.badge}</span>` : ''}
-      ${portrait(def)}
+      ${portrait(def)}${foil ? foil.fx(def.id) : ''}
       <div class="ucard-body">
         <div class="ucard-meta"><span class="rar">${D.RARITIES[def.rarity].label}${u && u.elite && !opts.level ? ' <b class="elite-tag">Elite</b>' : ''}</span><span>${owned ? 'Lv ' + level : 'Locked'}</span></div>
         ${owned ? stars(starCount) : '<span class="muted" style="font-size:12px">Find in the Black Market</span>'}
@@ -1761,9 +1763,9 @@
       const u = Player.unit(id) || { level: 1, stars: 1 };
       const abilities = D.abilitiesFor(def);
       return `<div class="bigcard-wrap">
-        <div class="bigcard rarity-${def.rarity} ${flipped ? 'flipped' : ''} ${owned ? '' : 'locked'}" data-flip tabindex="0" role="button" aria-label="Flip card">
+        <div class="bigcard rarity-${def.rarity} ${flipped ? 'flipped' : ''} ${owned ? '' : 'locked'}${owned && root.HoloCard ? root.HoloCard.cls(def.id) : ''}" data-flip tabindex="0" role="button" aria-label="Flip card">
           <div class="bigface front">
-            ${portrait(def)}
+            ${portrait(def)}${owned && root.HoloCard ? root.HoloCard.fx(def.id) : ''}
             <div class="bigcard-foot"><span class="rar">${D.RARITIES[def.rarity].label}</span>${owned ? stars(u.stars) : '<span class="muted">Not recruited</span>'}</div>
           </div>
           <div class="bigface back">
@@ -1775,7 +1777,7 @@
             <ul class="mini-abilities">${abilities.map((ab, i) => `<li class="${ab.ultimate ? 'ult' : ''}"><b>${ab.ultimate ? '★ ' : ''}${esc(ab.name)}</b><span>${ab.ultimate ? 'Ultimate' : ab.cd ? `${ab.cd}-turn cooldown` : 'Basic'}</span><p>${esc(ab.desc)}</p>${ab.quote ? `<q>${esc(ab.quote)}</q>` : ''}</li>`).join('')}</ul>
           </div>
         </div>
-        <p class="hint">Tap the card to flip it · swipe or use ‹ › for stats</p>
+        <p class="hint">Tap the card to flip it · swipe or use ‹ › for stats</p>${owned && root.HoloCard ? root.HoloCard.panel(def.id) : ''}
       </div>`;
     }
 
