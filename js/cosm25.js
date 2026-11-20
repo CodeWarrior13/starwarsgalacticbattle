@@ -227,7 +227,7 @@
     for (const [k] of KINDS) for (const x of items(k)) if (x.own && c.seen[k + ':' + x.id] == null) c.seen[k + ':' + x.id] = 0;
     let kind = 'fr', filt = 'all', crate = (CRATES[0] || ['recruit'])[0], sel = null;
     const me = HN().cos25.me();
-    const m = UI.openModal(`<div class="c25" role="dialog" aria-label="Cosmetics"><div class="c25-head"><h2>Cosmetics</h2><button type="button" class="btn btn-small" data-c25x>Close</button></div>
+    const m = UI.openModal(`<div class="c25" role="dialog" aria-label="Cosmetics"><div class="c25-head"><h2>Cosmetics</h2>${root.Badges25 ? '<button type="button" class="btn btn-small" style="margin-left:auto" data-c25bd>Badges</button>' : ''}<button type="button" class="btn btn-small" data-c25x>Close</button></div>
       <div class="c25-prev"><div class="c25-card" data-card><span class="c25-av" data-av></span><div class="c25-id"><small>YOUR PROFILE CARD</small><b>${esc(me.tag || 'You')}</b><span data-ti></span><span class="c25-sub">Level ${Player.state.account.level}</span></div></div>
       <dl class="c25-eq"><div><dt>Pose</dt><dd data-po></dd></div><div><dt>Win screen</dt><dd data-wi></dd></div><div><dt>Pack themes</dt><dd data-pa></dd></div>${CBACKS.length > 1 ? '<div><dt>Card backs</dt><dd data-cb></dd></div>' : ''}</dl></div>
       <div class="c25-tabs" role="tablist">${KINDS.map(([k, n]) => `<button type="button" role="tab" data-ck="${k}">${n} <i></i><u class="c25-dot" hidden></u></button>`).join('')}</div>
@@ -316,6 +316,7 @@
     };
     R.addEventListener('click', (e) => {
       if (e.target.closest('[data-c25x]')) { m.close(); if (back) back(); return; }
+      if (e.target.closest('[data-c25bd]')) { root.Badges25.sheet(); return; }
       const k = e.target.closest('[data-ck]'); if (k) { kind = k.dataset.ck; sel = null; paint(); grid(); detail(null); return; }
       const f = e.target.closest('[data-cf]'); if (f) { filt = f.dataset.cf; grid(); return; }
       const cc = e.target.closest('[data-cc]'); if (cc) { crate = cc.dataset.cc; sel = null; paint(); grid(); detail(null); return; }
