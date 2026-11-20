@@ -120,8 +120,13 @@
   const PEN = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M11.3 1.7a1.6 1.6 0 0 1 2.3 0l.7.7a1.6 1.6 0 0 1 0 2.3L5.6 13.4 2 14l.6-3.6z" fill="currentColor"/></svg>';
   const KI = { character: '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="5" r="3" fill="currentColor"/><path d="M2 15c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5z" fill="currentColor"/></svg>', ship: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1 10 9l5 3v2l-5-1.5L8 15l-2-2.5L1 14v-2l5-3z" fill="currentColor"/></svg>' };
   MT.ui = {
+    // Your fleet: the gold Star Destroyer (your Flagship) leads, a lit
+    // starfighter for each other unlocked plan, dark outlines for locked ones.
     pips(n, flag) {
-      return `<span class="bp-pips" role="img" aria-label="${n} of 6 plans unlocked">${PLAN_LEVELS.map((l, i) => `<i class="${i >= n ? 'lk' : i === flag ? 'fl' : 'on'}"></i>`).join('')}</span>`;
+      const fighter = (c) => `<svg class="bp-sf ${c}" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1 11 4.5 11 10 17 11.5 17 9 18.6 9 18.6 16 17 16 17 14 11 14.6 10.6 18 9.4 18 9 14.6 3 14 3 16 1.4 16 1.4 9 3 9 3 11.5 9 10 9 4.5z"/></svg>`;
+      const lead = flag >= 0 && flag < n;
+      const ships = (lead ? [MT.flagIcon.replace('class="fs-ico"', 'class="fs-ico bp-sd"')] : []).concat(Array.from({ length: n - (lead ? 1 : 0) }, () => fighter('on')), Array.from({ length: PLAN_LEVELS.length - n }, () => fighter('lk')));
+      return `<span class="bp-pips" role="img" aria-label="${n} of 6 plans unlocked${lead ? ', Flagship set' : ''}">${ships.join('')}</span>`;
     },
     strip(ids, mini) {
       const size = Player.slots();
@@ -238,10 +243,12 @@
 .bp-title { display: flex; align-items: center; gap: 6px 12px; flex-wrap: wrap; min-width: 0; }
 .bp-title b { font: 800 14px var(--font-display); letter-spacing: .1em; text-transform: uppercase; color: #ffe81f; }
 .bp-sub { display: inline-flex; align-items: center; gap: 8px; font: 700 11px var(--font-display); letter-spacing: .08em; text-transform: uppercase; color: #9fb3cc; }
-.bp-pips { display: inline-flex; gap: 3px; }
-.bp-pips i { width: 9px; height: 9px; transform: rotate(45deg); border-radius: 2px; background: #3ab8ff; box-shadow: 0 0 6px rgba(58, 184, 255, .55); }
-.bp-pips i.fl { background: #ffe81f; box-shadow: 0 0 7px rgba(255, 232, 31, .7); }
-.bp-pips i.lk { background: transparent; box-shadow: none; border: 1px solid #3a4658; }
+.bp-pips { display: inline-flex; align-items: center; gap: 4px; }
+.bp-sf { width: 15px; height: 15px; flex: 0 0 auto; }
+.bp-sf.on { fill: #7cd0ff; stroke: #d8f6ff; stroke-width: .8; filter: drop-shadow(0 0 3px rgba(124, 208, 255, .75)); }
+.bp-sf.lk { fill: none; stroke: #3a4658; stroke-width: .9; }
+.bp-pips .bp-sd { width: 24px; height: 12px; color: #ffd23f; filter: drop-shadow(0 0 3px rgba(255, 210, 63, .8)); }
+body.perf-on .bp-sf.on, body.perf-on .bp-pips .bp-sd { filter: none; }
 .bp-acts { display: flex; gap: 6px; justify-content: flex-end; flex-wrap: wrap; }
 .btn.bp-hb { padding: 6px 12px; font-size: 11px; border-radius: 999px; border-color: rgba(124, 208, 255, .35); background: linear-gradient(180deg, rgba(124, 208, 255, .14), rgba(124, 208, 255, .04)); color: #cfeaff; }
 .btn.bp-hb:hover:not(:disabled) { border-color: #7cd0ff; box-shadow: 0 0 12px rgba(124, 208, 255, .35); }
