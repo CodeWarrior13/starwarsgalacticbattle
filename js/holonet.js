@@ -6285,7 +6285,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const strong = owned.slice().sort((a, b) => power(b, col[b]) - power(a, col[a])).slice(0, 5);
     const all = D.UNITS.filter((u) => !u.boss && (!u.exclusive || u.rarity === 'secret') && !u.raid && (D.UNIT_MAP[u.id] === u));
     const pool = [...all.filter((u) => !hnSet.has(u.id)), ...HN.HN_IDS.map((id) => D.UNIT_MAP[id]).filter(Boolean)];
-    const mini = (id, c) => UI.unitCard(D.UNIT_MAP[id], { tag: 'div', owned: true, level: c.level, stars: c.stars, hideShards: true }).replace('class="ucard', `data-pc="${id}" class="ucard`);
+    const mini = (id, c) => UI.unitCard(D.UNIT_MAP[id], { tag: 'div', owned: true, level: c.level, stars: c.stars, hideShards: true, holoCode: c.h }).replace('class="ucard', `data-pc="${id}" class="ucard`);
     let tab = 'overview';
     let chip = 'ground';
     let sort = 'power';
@@ -6298,7 +6298,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       const fu = fav && use[fav];
       return `<div class="pc-tiles">${unpl ? '' : `<div><b>${fmt(p.rating)}</b><span>Rating</span></div>`}<div><b>${fmt(st.best || p.rating)}</b><span>Best</span></div><div><b>${fmt(st.w || 0)}–${fmt(st.l || 0)}</b><span>Arena · ${wr}%</span></div><div><b>${fmt(st.dw || 0)}–${fmt(st.dl || 0)}</b><span>Live duels</span></div><div><b>${HN.streakFlame(st.ws | 0, true)}</b><span>Arena win streak</span></div><div><b>${HN.streakFlame(st.ds | 0, true)}</b><span>Duel win streak</span></div></div>
         <h3 class="pc-h">Favorite card <small>most used</small></h3>
-        ${f ? `<div class="pc-fav"><div class="pt">${UI.portrait(D.UNIT_MAP[fav])}</div><div><h4>${esc(D.UNIT_MAP[fav].name)}</h4><div class="sub">${esc(D.RARITIES[D.UNIT_MAP[fav].rarity].label)} · Lv ${f.level} · ${'★'.repeat(f.stars)}</div>
+        ${f ? `<div class="pc-fav"><div class="pt${f.h && root.HoloCard && root.HoloCard.clsT ? root.HoloCard.clsT(f.h) : ''}">${UI.portrait(D.UNIT_MAP[fav])}${f.h && root.HoloCard && root.HoloCard.fxT ? root.HoloCard.fxT(f.h) : ''}</div><div><h4>${esc(D.UNIT_MAP[fav].name)}</h4><div class="sub">${esc(D.RARITIES[D.UNIT_MAP[fav].rarity].label)} · Lv ${f.level} · ${'★'.repeat(f.stars)}</div>
           <div class="nums"><div><b>${fmt(fu.b)}</b><span>battles</span></div><div><b>${fu.b ? Math.round((fu.w / fu.b) * 100) : 0}%</b><span>win rate</span></div><div><b>${fmt(power(fav, f))}</b><span>power</span></div></div></div></div>` : '<p class="pc-empty">Not enough battles yet to pick a favorite.</p>'}
         <h3 class="pc-h">Strongest cards <small>by power</small></h3>
         ${strong.length ? `<div class="pc-strong pc-grid">${strong.map((id) => mini(id, col[id])).join('')}</div>` : '<p class="pc-empty">No cards to show yet.</p>'}

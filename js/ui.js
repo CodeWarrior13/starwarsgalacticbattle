@@ -73,9 +73,11 @@
     const tag = opts.tag || 'button';
     // 2.5 holo foil (js/holo25.js), on your own cards only.
     const foil = owned && !opts.level && root.HoloCard ? root.HoloCard : null;
-    return `<${tag} class="ucard rarity-${def.rarity} ${owned ? '' : 'locked'} ${opts.selected ? 'selected' : ''} ${opts.holo ? 'holo' : ''} ${u && u.elite && !opts.level ? 'elite' : ''}${foil ? foil.cls(def.id) : ''}" data-id="${def.id}" ${tag === 'button' ? `type="button" aria-label="${esc(def.name)}"` : ''}>
+    // Someone else's holo card (profiles): the frame letter they shared.
+    const hT = !foil && opts.holoCode && root.HoloCard && root.HoloCard.clsT ? opts.holoCode : '';
+    return `<${tag} class="ucard rarity-${def.rarity} ${owned ? '' : 'locked'} ${opts.selected ? 'selected' : ''} ${opts.holo ? 'holo' : ''} ${u && u.elite && !opts.level ? 'elite' : ''}${foil ? foil.cls(def.id) : ''}${hT ? root.HoloCard.clsT(hT) : ''}" data-id="${def.id}" ${tag === 'button' ? `type="button" aria-label="${esc(def.name)}"` : ''}>
       ${opts.badge ? `<span class="sel-badge">${opts.badge}</span>` : ''}
-      ${portrait(def)}${foil ? foil.fx(def.id) : ''}
+      ${portrait(def)}${foil ? foil.fx(def.id) : ''}${hT ? root.HoloCard.fxT(hT) : ''}
       <div class="ucard-body">
         <div class="ucard-meta"><span class="rar">${D.RARITIES[def.rarity].label}${u && u.elite && !opts.level ? ' <b class="elite-tag">Elite</b>' : ''}</span><span>${owned ? 'Lv ' + level : 'Locked'}</span></div>
         ${owned ? stars(starCount) : '<span class="muted" style="font-size:12px">Find in the Black Market</span>'}

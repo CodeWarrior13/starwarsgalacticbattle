@@ -38,7 +38,11 @@
     return auto[auto.length - 1] || null;
   };
   // Everything sits in one clipped layer over the art, so the card's own layout never changes.
-  const fxHtml = (t) => `<span class="f39-box" aria-hidden="true"><i class="f39-sheen"></i><i class="f39-glint g1"></i><i class="f39-glint g2"></i><i class="f39-glint g3"></i>${FR[t]}</span>`;
+  // The small HOLO tag in the card's corner, in the frame's colour (rainbow for Prism and Galactic). It never moves.
+  const fxHtml = (t) => `<span class="f39-box" aria-hidden="true"><i class="f39-sheen"></i><i class="f39-glint g1"></i><i class="f39-glint g2"></i><i class="f39-glint g3"></i>${FR[t]}<b class="h25-tag h25-${t}">HOLO</b></span>`;
+  // One letter per frame, for the shared profile row (other players' cards).
+  const CODE = { silver: 's', gold: 'g', kyber: 'k', prism: 'p', galactic: 'x' };
+  const FROM = { s: 'silver', g: 'gold', k: 'kyber', p: 'prism', x: 'galactic' };
 
   // ---------- Hooks used by js/ui.js and js/battle-ui.js ----------
   // cls(id): classes for the card; fx(id): the foil layers to put inside it.
@@ -46,6 +50,10 @@
     cls: (id) => { const t = frameOf(id); return t ? ` foil-on f39-${t}` : ''; },
     fx: (id) => { const t = frameOf(id); return t ? fxHtml(t) : ''; },
     panel: (id) => panel(id),
+    // Someone else's card, from the frame letter on their profile.
+    code: (id) => { const t = frameOf(id); return t ? CODE[t] : ''; },
+    clsT: (c) => (FROM[c] ? ` foil-on f39-${FROM[c]}` : ''),
+    fxT: (c) => (FROM[c] ? fxHtml(FROM[c]) : ''),
   };
 
   // ---------- Recording holos ----------
@@ -118,6 +126,10 @@
   const st = document.createElement('style');
   st.textContent = ".f39-frame{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}\n.f39-sheen{position:absolute;inset:-40% -120%;background:linear-gradient(115deg,transparent 38%,rgba(255,60,160,.28) 43%,rgba(255,210,60,.3) 46%,rgba(80,255,160,.3) 49%,rgba(60,190,255,.3) 52%,rgba(180,90,255,.28) 55%,transparent 60%);mix-blend-mode:color-dodge;will-change:transform;animation:f39S 4.2s ease-in-out infinite;pointer-events:none}\n.f39-gold .f39-sheen{animation-duration:3.8s}.f39-kyber .f39-sheen{background:linear-gradient(115deg,transparent 36%,rgba(90,200,255,.35) 44%,rgba(220,250,255,.45) 49%,rgba(140,120,255,.32) 54%,transparent 62%)}.f39-prism .f39-sheen{animation-duration:3.2s;background:linear-gradient(115deg,transparent 30%,rgba(255,60,160,.32) 37%,rgba(255,210,60,.34) 42%,rgba(80,255,160,.34) 47%,rgba(60,190,255,.34) 52%,rgba(180,90,255,.32) 57%,rgba(255,60,160,.3) 62%,transparent 68%)}\n@keyframes f39S{0%{transform:translateX(-30%)}55%,100%{transform:translateX(30%)}}\n.f39-glint{position:absolute;width:10px;height:10px;pointer-events:none;background:radial-gradient(circle,#fff 0 20%,transparent 60%);opacity:0;animation:f39G 3.6s ease-in-out infinite}.f39-glint::before{content:'';position:absolute;left:50%;top:-6px;bottom:-6px;width:1px;background:linear-gradient(transparent,#fff,transparent)}.f39-glint::after{content:'';position:absolute;top:50%;left:-6px;right:-6px;height:1px;background:linear-gradient(90deg,transparent,#fff,transparent)}\n.f39-glint.g1{left:18%;top:14%}.f39-glint.g2{left:72%;top:32%;animation-delay:1.2s}.f39-glint.g3{left:40%;top:62%;animation-delay:2.4s}@keyframes f39G{0%,70%,100%{opacity:0;transform:scale(.4)}80%{opacity:1;transform:scale(1)}}\n.f39-silver .f39-glint{display:none}\n@media (prefers-reduced-motion:reduce){.f39-sheen,.f39-glint{animation:none!important}}" + `
 .f39-box{position:absolute;inset:0;overflow:hidden;border-radius:inherit;pointer-events:none;z-index:5;contain:paint}
+.h25-tag{position:absolute;top:9px;left:9px;z-index:2;padding:2px 5px 1px;border-radius:5px;font:800 8.5px/1.1 var(--font-display,Oxanium,sans-serif);letter-spacing:.14em;color:#0a0f1a;background:#c8d0dc;box-shadow:0 1px 4px rgba(0,0,0,.45)}
+.h25-gold{background:#ffcf5a}.h25-kyber{background:#5ad0ff}.h25-prism{background:linear-gradient(90deg,#ff6ad5,#ffd23f,#5aff9a,#5ad0ff,#b06aff)}.h25-galactic{background:linear-gradient(90deg,#7a5cff,#ff5ad0,#5ae8ff,#ffd8f4);}
+.bigcard .h25-tag{top:10px;left:10px;font-size:11px;padding:3px 7px 2px;border-radius:6px}
+.pc-fav .pt{position:relative}
 .ucard.foil-on .f39-sheen,.ucard.foil-on .f39-glint{animation-play-state:paused}.ucard.foil-on:hover .f39-sheen,.ucard.foil-on:hover .f39-glint,.ucard.foil-on:focus-visible .f39-sheen{animation-play-state:running}
 body.perf-on .f39-sheen,body.perf-on .f39-glint{animation:none!important}
 .hp25{margin:12px auto 0;max-width:420px;background:rgba(10,16,30,.92);border:1px solid #2a3448;border-radius:14px;padding:12px;display:grid;gap:10px;color:#e8ecf3;font-size:13px;text-align:left}

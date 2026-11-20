@@ -30,7 +30,9 @@
   // Compact text for the arena row: "id.level.stars" per card, comma separated.
   function encode() {
     const s = P().state;
-    const out = Object.entries(s.units || {}).filter(([id]) => D.UNIT_MAP[id]).map(([id, u]) => `${id}.${u.level}.${u.stars}`);
+    // 2.5: a 4th part, the holo frame the card shows (s/g/k/p/x), only on holo cards. Older games ignore it.
+    const HC = root.HoloCard;
+    const out = Object.entries(s.units || {}).filter(([id]) => D.UNIT_MAP[id]).map(([id, u]) => { const h = HC && HC.code ? HC.code(id) : ''; return `${id}.${u.level}.${u.stars}${h ? '.' + h : ''}`; });
     const HN = root.HN;
     if (HN && HN.HN_IDS) for (const id of HN.HN_IDS) { const c = HN.card && HN.card(id); if (c && D.UNIT_MAP[id]) out.push(`${id}.${c.level}.${c.stars}`); }
     return out.join(',');
@@ -43,8 +45,8 @@
   const decode = (str) => {
     const map = {};
     for (const part of String(str || '').split(',')) {
-      const [id, a, b] = part.split('.');
-      if (id && D.UNIT_MAP[id]) map[id] = { level: +a || 1, stars: +b || 1 };
+      const [id, a, b, h] = part.split('.');
+      if (id && D.UNIT_MAP[id]) map[id] = { level: +a || 1, stars: +b || 1, h: /^[sgkpx]$/.test(h || '') ? h : '' };
     }
     return map;
   };
