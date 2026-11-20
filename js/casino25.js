@@ -57,7 +57,7 @@ $('hc-go').onclick=async()=>{if(busy)return;if(!hcPick){say('Pick a monster firs
 let prPick=null;root.querySelectorAll('[data-pr]').forEach(b=>b.onclick=()=>{if(busy)return;prPick=b.dataset.pr;root.querySelectorAll('[data-pr]').forEach(x=>x.classList.toggle('on',x===b));$('pr-msg').textContent='You backed '+POD[prPick].n+' at '+ol(POD[prPick].o)+'.';payLine();});
 const fx=(k,cls,ms)=>{const p=$('pp-'+k).firstElementChild;p.classList.remove(cls);void p.offsetWidth;p.classList.add(cls);setTimeout(()=>p.classList.remove(cls),ms);};
 const obstacle=(k,x,v)=>{const lane=$('pp-'+k).parentNode;if(!lane)return;x=Math.max(24,Math.min((lane.clientWidth||400)-40,x));const o=document.createElement('span');o.className='pr-obs '+(v||'rock');o.style.left=x+'px';lane.appendChild(o);setTimeout(()=>o.remove(),1400);};
-$('pr-go').onclick=()=>{if(busy)return;if(!prPick){$('pr-msg').textContent='Pick a racer first.';return;}if(P.state.credits<bet.pr){$('pr-msg').textContent='Not enough credits.';return;}if(!lim('pr'))return;busy=true;setCr(-bet.pr);
+$('pr-go').onclick=()=>{if(busy)return;if(!prPick){$('pr-msg').textContent='Pick a racer first.';return;}if(P.state.credits<bet.pr){$('pr-msg').textContent='Not enough credits.';return;}if(!lim('pr'))return;busy=true;setCr(-bet.pr);P.state.czw=P.state.czw||{};P.state.czw.bets=(P.state.czw.bets|0)+1;
  const ks=Object.keys(POD);const win=pickW(POD);const N=900;const dur=9000;
  // plan random events (0 to 3, sometimes none)
  const r=Math.random();const nEv=r<.08?1:r<.3?2:r<.62?3:r<.88?4:5;const plan=[];const used=new Set();

@@ -6,14 +6,14 @@
 (function (root) {
   if (!(root.Update25 && root.Update25.on())) return;
   var v = function (p) { return root.__ver ? root.__ver(p) : p; };
-  var files = ['js/lib25.js', 'js/cosm25.js', 'js/social25.js'];
+  var files = ['js/lib25.js', 'js/col25.js', 'js/cosm25.js', 'js/social25.js'];
   // The Harvest Hunt (Thanksgiving week) and its Grand Nuna raid art: only downloaded around the event.
   var t = Date.now(), ls = function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } };
   var hv = (t >= Date.UTC(2026, 10, 22, 6) && t < Date.UTC(2026, 11, 3, 6)) || (t >= Date.UTC(2027, 10, 21, 6) && t < Date.UTC(2027, 11, 2, 6));
   if (hv || ls('swcg-hv-test') || ls('swcg-nuna-test')) files.push('js/harvest25.js', 'js/nuna25.js');
   for (var i = 0; i < files.length; i++) document.write('<script src="' + v(files[i]) + '"><\/script>');
   // Scenes and card backs: only needed once you win, open a crate or browse cosmetics.
-  var later = function () { ['js/fx25.js', 'js/cb25.js'].forEach(function (f) { var s = document.createElement('script'); s.src = v(f); s.async = true; document.head.appendChild(s); }); };
+  var later = function () { ['js/fx25.js', 'js/cb25.js', 'js/pf25.js'].forEach(function (f) { var s = document.createElement('script'); s.src = v(f); s.async = true; document.head.appendChild(s); }); };
   // Watto's casino (the biggest file) loads right after the game is up instead
   // of holding up the start; if you're already in the Black Market it redraws.
   var casino = function () { var s = document.createElement('script'); s.src = v('js/casino25.js'); s.async = true; s.onload = function () { try { var A = root.UI && root.UI.App; if (A && A.current === 'market' && !A.battleActive) A.refresh(); } catch (e) { /* ignore */ } }; document.head.appendChild(s); };

@@ -5905,10 +5905,10 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     twinsabers: { name: 'Twin Sabers', how: 'Win 100 Live Duels', v25: true },
     raidbreaker: { name: 'Raid Breaker', how: 'Deal the most damage in your guild on a guild raid boss that falls', v25: true },
     citadel: { name: 'Citadel', how: 'Be in a guild that reaches level 5', v25: true },
-    wreath: { name: 'Season Wreath', how: 'Finish a season in the top 25 (its colours change every season)', v25: true },
-    holocron: { name: 'Holocron Keeper', how: 'Own 50 different cards', v25: true },
+    wreath: { name: 'Season Wreath', how: 'Win 50 arena battles in one season (its colours change every season)', v25: true },
+    holocron: { name: 'Holocron Keeper', how: 'Own 75 different cards', v25: true },
     kessel: { name: 'Kessel Runner', how: 'Win 50 battles with an all-ship squad', v25: true },
-    jediorder: { name: 'Jedi Order', how: 'Win 200 battles with an all Light Side squad', v25: true },
+    jediorder: { name: 'Jedi Order', how: 'Win 150 battles with an all Light Side squad', v25: true },
     sithlord: { name: 'Sith Lord', how: 'Win 200 battles with an all Dark Side squad', v25: true },
     forge: { name: 'Beskar Forge', how: 'Buy for 600 Beskar', v25: true, cost: 600 },
     mythosaur: { name: 'Mythosaur', how: 'Buy for 1,200 Beskar', v25: true, cost: 1200 },
@@ -6086,9 +6086,10 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       if (((hh.duels || {}).w || 0) >= 100) out.add('twinsabers');
       const gid = myGuildId();
       try { if (gid && guildLevel(gid).lv >= 5) out.add('citadel'); } catch (e) { /* no guild data yet */ }
-      if (Object.keys(Player.state.units || {}).length >= 50) out.add('holocron');
+      if (Object.keys(Player.state.units || {}).length >= 75) out.add('holocron');
       if ((c.fleet || 0) >= 50) out.add('kessel');
-      if ((c.light || 0) >= 200) out.add('jediorder');
+      if ((c.light || 0) >= 150) out.add('jediorder');
+      if (root.Col25 && (root.Col25.B().asBest | 0) >= 50) out.add('wreath');
       if ((c.dark || 0) >= 200) out.add('sithlord');
     } else for (const id of Object.keys(FRAMES)) if (FRAMES[id].v25) out.delete(id);
     return [...out];
@@ -6520,12 +6521,15 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     let feat = (h.prof.feat || []).slice(0, 6);
     let ban = playerBanOk(h.prof.ban) ? h.prof.ban : '';
     let saving = false;
-    const cards = [...new Set([...PICS, ...HN.HN_IDS.filter(HN.owns)])].filter((id) => D.UNIT_MAP[id] && D.UNIT_MAP[id].rarity !== 'secret');
+    // 2.5: the holiday pictures you've earned (js/col25.js) get their own tab.
+    const holPics = root.Col25 && on25() ? root.Col25.pfOwned() : [];
+    const cards = [...new Set([...PICS, ...HN.HN_IDS.filter(HN.owns), ...holPics])].filter((id) => D.UNIT_MAP[id] && D.UNIT_MAP[id].rarity !== 'secret');
     const CATS = [
       ['light', 'Light side', (u) => u.kind !== 'ship' && u.faction === 'light' && !/^hn_/.test(u.id)],
-      ['dark', 'Dark side', (u) => u.kind !== 'ship' && u.faction !== 'light' && !/^hn_/.test(u.id)],
+      ['dark', 'Dark side', (u) => u.kind !== 'ship' && u.faction !== 'light' && !/^hn_/.test(u.id) && !u.pf25],
       ['ship', 'Ships', (u) => u.kind === 'ship' && !/^hn_/.test(u.id)],
       ['hn', 'HoloNet', (u) => /^hn_/.test(u.id)],
+      ['hol', 'Holiday', (u) => !!u.pf25],
     ].filter(([, , f]) => cards.some((id) => f(D.UNIT_MAP[id])));
     if (!CATS.some(([k]) => k === peCat)) peCat = CATS[0][0];
     if (D.UNIT_MAP[av]) { const c = CATS.find(([, , f]) => f(D.UNIT_MAP[av])); if (c && !peChose) peCat = c[0]; }
@@ -8912,7 +8916,7 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
     }
     if (root.Update25 && root.Update25.on()) {
       const add = [];
-      if (rank <= 25) add.push('wreath');
+      if (rank <= 25) { add.push('wreath'); h.top25 = 1; }
       if (HN.divOf(prev.best).league === 'legend') add.push('legendhalo');
       if (add.length) h.soc.frames = [...new Set([...(h.soc.frames || []), ...add])];
     }

@@ -41,27 +41,27 @@
   const bossesBeat = () => { const b = Player.state.bosses || {}; return (D.BOSS_ENCOUNTERS || []).filter((x) => b[x.id]).length; };
   const EARNED = [
     ['rookie', 'Rookie', 'Captain Rex\'s welcome kit', () => !!C().kit],
-    ['raid_breaker', 'Raid Breaker', 'Top raid damage in your guild', () => frames().includes('raidbreaker')],
+    ['raid_breaker', 'Raid Breaker', 'Fight 10 guild raid bosses', () => [root.Col25 ? root.Col25.B().rf | 0 : 0, 10]],
     ['kessel_runner', 'Kessel Runner', 'Win 50 all-ship battles', (s) => [s.c.fleet || 0, 50]],
-    ['duelist', 'Duelist', 'Win 25 live duels', (s) => [s.duels, 25]],
-    ['beskar_smith', 'Beskar Smith', 'Forge 20 times', (s) => [forged(s.h), 20]],
-    ['holocron_keeper', 'Holocron Keeper', 'Own 100 cards', (s) => [s.units, 100]],
-    ['streak_master', 'Streak Master', 'Reach a 25-win streak', (s) => [s.ws, 25]],
+    ['duelist', 'Duelist', 'Win 10 live duels in a row', (s) => [root.Col25 ? Math.max(root.Col25.B().dmax | 0, ((s.h.duels || {}).s | 0)) : 0, 10]],
+    ['beskar_smith', 'Beskar Smith', 'Forge 10 times', (s) => [forged(s.h), 10]],
+    ['holocron_keeper', 'Holocron Keeper', 'Own 50 different cards', (s) => [s.units, 50]],
+    ['streak_master', 'Streak Master', 'Win 15 ranked battles in a row', (s) => [s.ws, 15]],
     ['legend', 'Legend', 'Reach the Legend league', (s) => (s.h.leagues || []).includes('legend')],
     ['guild_founder', 'Guild Founder', 'Lead a guild', () => { const r = HN().cos25.role(); return !!(r && r.r === 'leader'); }],
-    ['jedi_knight', 'Jedi Knight', 'Win 200 battles with an all Light Side squad', (s) => [s.c.light || 0, 200]],
-    ['sith_lord', 'Sith Lord', 'Win 200 battles with an all Dark Side squad', (s) => [s.c.dark || 0, 200]],
+    ['jedi_knight', 'Jedi Knight', 'Win 100 battles with an all Light Side squad', (s) => [s.c.light || 0, 100]],
+    ['sith_lord', 'Sith Lord', 'Win 100 battles with an all Dark Side squad', (s) => [s.c.dark || 0, 100]],
     ['season_veteran', 'Season Veteran', 'Finish 5 seasons', (s) => [s.soc.seasonsDone || 0, 5]],
     ['loyal', 'Loyal', 'Stay in one guild for 3 seasons', (s) => { const l = C().lg; return [l && s.h.guild === l.g ? (s.soc.seasonsDone || 0) - l.s : 0, 3]; }],
     ['liberator', 'Liberator', 'Clear every world', () => allPlanets()],
     ['monster_hunter', 'Monster Hunter', 'Beat every boss', () => [bossesBeat(), (D.BOSS_ENCOUNTERS || []).length || 1]],
-    ['fleet_admiral', 'Fleet Admiral', 'Win 200 all-ship battles', (s) => [s.c.fleet || 0, 200]],
+    ['fleet_admiral', 'Fleet Admiral', 'Win 150 all-ship battles', (s) => [s.c.fleet || 0, 150]],
     ['pazaak_champion', 'Pazaak Champion', 'Win 50 Pazaak matches', (s) => [s.cz.pz || 0, 50]],
     ['podrace_prophet', 'Podrace Prophet', 'Win 10 long-shot podrace bets', (s) => [s.cz.long || 0, 10]],
     ['dejarik_master', 'Dejarik Master', 'Win 25 Holo-Chess wagers', (s) => [s.cz.hc || 0, 25]],
     ['recruiter', 'Recruiter', 'Invite 10 friends who reach level 5', (s) => !!(s.P.invites || {}).squad],
     ['collector', 'Collector', 'Own 25 frames', () => [frames().length, 25]],
-    ['high_roller', 'High Roller', 'Win 25 games in the casino', (s) => [s.cz.w || 0, 25]],
+    ['high_roller', 'High Roller', "Play 25 Sabacc hands at Watto's", () => [root.Col25 ? root.Col25.B().sab | 0 : 0, 25]],
     ['guardian', 'Guardian', 'Heal 1,000,000 health in battles', () => [Math.round(C().heal || 0), 1000000]],
   ];
   const SHOP_T = ['Smuggler', 'Scoundrel', 'Bounty Hunter', 'Rebel Ace', 'Imperial Officer', 'Mandalorian', 'Sith Apprentice', 'Jedi Master', 'Clone Commander', 'Droid Whisperer', 'Cantina Regular', 'Sabacc Shark', 'Spice Runner', 'Moisture Farmer', 'Holo Star', 'Kyber Seeker', 'Outer Rim Legend', 'Nerf Herder', 'Lucky Star', 'The Chosen One'];
@@ -117,11 +117,11 @@
     ['boonta', 'Boonta Eve Finish', '#ffb347', { beskar: 1500 }, "Luthen's Gallery · 1,500 Beskar"],
   ].map(([id, n, c, get, how]) => ({ id, n, c, get, how }));
   const PACKS = [
-    ['default', 'Default', '#9aa4ae', null, 'Everyone has it'], ['beskar', 'Beskar Crate', '#c8d4e0', (s) => [forged(s.h), 10], 'Forge 10 times'],
+    ['default', 'Default', '#9aa4ae', null, 'Everyone has it'], ['beskar', 'Beskar Crate', '#c8d4e0', (s) => [forged(s.h), 40], 'Forge 40 times'],
     ['holocron', 'Holocron', '#5ad0ff', (s) => [s.units, 100], 'Own 100 cards'], ['carbonite', 'Carbonite Thaw', '#8fe8ff', { kyber: 230 }, "Luthen's Gallery · 230 Kyber"],
-    ['sithvault', 'Sith Vault', '#ff5a6a', (s) => [s.c.dark || 0, 200], 'Win 200 Dark Side battles'], ['droid', 'Droid Delivery', '#ffd23f', (s) => [s.P.stats.packsOpened || 0, 50], 'Open 50 crates'],
+    ['sithvault', 'Sith Vault', '#ff5a6a', (s) => [s.c.dark || 0, 500], 'Win 500 Dark Side battles'], ['droid', 'Droid Delivery', '#ffd23f', (s) => [s.P.stats.packsOpened || 0, 400], 'Open 400 crates'],
     ['geode', 'Kyber Geode', '#b07aff', { kyber: 230 }, "Luthen's Gallery · 230 Kyber"],
-    ['hyper', 'Hyperspace Drop', '#8fb8ff', (s) => [s.c.fleet || 0, 150], 'Win 150 all-ship battles'],
+    ['hyper', 'Hyperspace Drop', '#8fb8ff', (s) => [s.c.fleet || 0, 200], 'Win 200 all-ship battles'],
     ['bacta', 'Bacta Tank', '#5affc8', { beskar: 3000 }, "Luthen's Gallery · 3,000 Beskar"],
     ['sarlacc', 'Sarlacc Pit', '#e8a060', { kyber: 230 }, "Luthen's Gallery · 230 Kyber"],
   ].map(([id, n, c, get, how]) => ({ id, n, c, get, how }));
@@ -195,12 +195,13 @@
     HN().cos25.prof().ti = { n: t.n, t: tier, id }; save(); HN().cos25.publish(); return true;
   }
   // ---------- Cosmetics tab ----------
-  const KINDS = [['fr', 'Frames'], ['ti', 'Titles'], ['po', 'Poses'], ['wi', 'Win screens'], ['pa', 'Pack themes']].concat(CBACKS.length > 1 ? [['cb', 'Card backs']] : []).concat(INTROS.length > 1 ? [['in', 'Intros']] : []);
+  const KINDS = [['fr', 'Frames'], ['ti', 'Titles']].concat(root.Col25 ? [['co', 'Attack colours']] : []).concat([['po', 'Poses'], ['wi', 'Win screens'], ['pa', 'Pack themes']]).concat(CBACKS.length > 1 ? [['cb', 'Card backs']] : []).concat(INTROS.length > 1 ? [['in', 'Intros']] : []);
   const PER = (k) => k === 'pa' || k === 'cb';
   const eqFor = (k, crate) => (k === 'cb' ? eq.cb(crate) : eq.pa(crate));
   const setFor = (k, crate, id) => { if (k === 'cb') C().cbk[crate] = id; else C().pk[crate] = id; };
   function items(kind) {
     const c = C();
+    if (kind === 'co') return root.Col25.items();
     if (kind === 'fr') {
       const own = frames(); const F = HN().cos25.FRAMES;
       return HN().cos25.shown().map(([id, f]) => ({ id, n: f.name, how: f.how, own: own.includes(id), eq: eq.fr() === id }));
@@ -252,6 +253,7 @@
       if (k === 'fr') return '<span class="c25-fr">' + HN().cos25.avatar({ ...me, frame: x.id }, 'md') + '</span>';
       if (k === 'ti') return titleHtml({ n: x.n, t: x.tier });
       if (k === 'cb') return '<span class="c25-cb">' + cbArt(x.id) + '</span>';
+      if (k === 'co') return root.Col25.swatch(root.Col25.COL[x.id]);
       if (root.Cos25FX && root.Cos25FX.thumb) { const th = root.Cos25FX.thumb(k, x.id); if (th) return th; }
       return '<span class="c25-sw ' + k + '" style="--c:' + x.c + '"></span>';
     };
@@ -263,21 +265,24 @@
       if (k === 'fr') big = `<div class="c25-card pop"><span class="c25-av">${HN().cos25.avatar({ ...me, frame: x.id }, 'lg')}</span><div class="c25-id"><small>FRAME</small><b>${esc(me.tag || 'You')}</b><span class="c25-sub">${esc(x.n)}</span></div></div>`;
       else if (k === 'ti') big = `<div class="c25-card pop"><span class="c25-av">${HN().cos25.avatar(me, 'lg')}</span><div class="c25-id"><small>TITLE</small><b>${esc(me.tag || 'You')}</b>${titleHtml({ n: x.n, t: x.tier })}</div></div>`;
       else if (k === 'cb') big = cbDemo(x.id);
+      else if (k === 'co') big = `<div class="col25-demo">${root.Col25.swatch(root.Col25.COL[x.id], true)}</div><p class="muted small" style="margin:0">Your own cards' basic attacks, the shield ultimate and your selection outline. Other ultimates keep their own look.</p>`;
       else big = '<div class="c25-try"></div>';
       let tiers = '';
       if (k === 'ti' && x.own) { const have = tiersOf(x.id); tiers = x.t.fix ? `<div class="c25-tiers"><span class="c25-tier on">${titleHtml({ n: TIERS.find((q) => q[0] === x.t.fix)[1], t: x.t.fix })}<small>Fixed colour</small></span></div>` : '<div class="c25-tiers">' + TIERS.map(([tid, tn]) => have.includes(tid) ? `<button type="button" class="c25-tier" data-ptier="${tid}">${titleHtml({ n: tn, t: tid })}</button>` : `<span class="c25-tier lockd">${titleHtml({ n: tn, t: tid })}<small>Luthen's Gallery</small></span>`).join('') + '</div>'; }
-      const pm = UI.openModal(`<div class="c25 c25-pop"><h2>${esc(x.n)}</h2>${big}<p class="c25-pst">${x.own ? (isEq ? 'Equipped' : 'You own this') : 'Locked · ' + esc(x.how) + (x.p ? ' (' + fmt(x.p.have) + ' / ' + fmt(x.p.need) + ')' : '')}</p>${tiers}<div class="c25-pbtns"><button type="button" class="c25-tbtn" data-ptry>Try it on</button>${x.own ? `<button type="button" class="c25-btn" data-peq ${isEq && k !== 'ti' ? 'disabled' : ''}>${isEq && k !== 'ti' ? 'Equipped' : 'Equip'}</button>` : ''}<button type="button" class="c25-ghost" data-pback>Back to mine</button></div></div>`, { wide: true });
+      const pm = UI.openModal(`<div class="c25 c25-pop"><h2>${esc(x.n)}</h2>${big}<p class="c25-pst">${x.own ? (isEq ? 'Equipped' : 'You own this') : 'Locked · ' + esc(x.how) + (x.p ? ' (' + fmt(x.p.have) + ' / ' + fmt(x.p.need) + ')' : '')}</p>${tiers}<div class="c25-pbtns"><button type="button" class="c25-tbtn" data-ptry>Try it on</button>${x.own ? `<button type="button" class="c25-btn" data-peq ${isEq && k !== 'ti' ? 'disabled' : ''}>${isEq && k !== 'ti' ? 'Equipped' : 'Equip'}</button>` : k === 'co' && x.cost ? `<button type="button" class="c25-btn" data-pbuy>Buy · ${fmt(x.cost.beskar)} Beskar</button>` : ''}<button type="button" class="c25-ghost" data-pback>Back to mine</button></div></div>`, { wide: true });
       const Rp = pm.root;
       let tier = x.tier;
       const show = () => { if (['po', 'wi', 'pa', 'in'].includes(k) && root.Cos25FX) root.Cos25FX.preview(k, x.id, Rp); };
       show();
       Rp.addEventListener('click', (e) => {
         const pt = e.target.closest('[data-ptier]'); if (pt) { tier = pt.dataset.ptier; Rp.querySelectorAll('[data-ptier]').forEach((b) => b.classList.toggle('on', b === pt)); const ti = Rp.querySelector('.c25-id .t25'); if (ti) ti.outerHTML = titleHtml({ n: x.n, t: tier }); return; }
+        if (e.target.closest('[data-pbuy]') && k === 'co') { if (root.Col25.buy(root.Col25.COL[x.id])) { toast(x.n + ' is yours.'); pm.close(); grid(); pop(items('co').find((y) => y.id === x.id)); } return; }
+        if (e.target.closest('[data-ptry]') && k === 'co') { const o = Rp.querySelector('.col25-demo'); if (o) { o.classList.remove('go'); void o.offsetWidth; o.classList.add('go'); } return; }
         if (e.target.closest('[data-ptry]') && k === 'cb') { const o = Rp.querySelector('.c25-cbd'); if (o) o.outerHTML = cbDemo(x.id); return; }
         if (e.target.closest('[data-ptry]')) { if (['po', 'wi', 'pa', 'in'].includes(k)) { const old = Rp.querySelector('.fx25-prev'); if (old) old.outerHTML = '<div class="c25-try"></div>'; show(); } else { paint({ kind: k, x: { ...x, tier } }); pm.close(); } return; }
         if (e.target.closest('[data-pback]')) { pm.close(); sel = null; paint(); grid(); return; }
         if (e.target.closest('[data-peq]')) {
-          if (k === 'fr') HN().cos25.wear(x.id); else if (k === 'ti') wearTitle(x.id, tiersOf(x.id).includes(tier) ? tier : tiersOf(x.id)[0]); else if (k === 'po') C().eq.po = x.id; else if (k === 'wi') C().eq.wi = x.id; else if (k === 'in') C().eq.in = x.id; else if (PER(k)) setFor(k, crate, x.id);
+          if (k === 'co') { root.Col25.wear(x.id); root.Col25.outline(); } else if (k === 'fr') HN().cos25.wear(x.id); else if (k === 'ti') wearTitle(x.id, tiersOf(x.id).includes(tier) ? tier : tiersOf(x.id)[0]); else if (k === 'po') C().eq.po = x.id; else if (k === 'wi') C().eq.wi = x.id; else if (k === 'in') C().eq.in = x.id; else if (PER(k)) setFor(k, crate, x.id);
           if (k === 'wi' && x.id.startsWith('lib_') && root.Lib25) root.Lib25.load(x.id.slice(4)); if (k === 'in' && root.Lib25 && x.id !== 'vs') root.Lib25.load(x.id);
           save(); toast(x.n + ' equipped.'); pm.close(); paint(); grid(); detail(null);
         }
@@ -320,6 +325,7 @@
       const x = items(kind).find((y) => y.id === sel); if (!x) return;
       if (e.target.closest('[data-equip]')) {
         if (kind === 'fr') HN().cos25.wear(x.id);
+        else if (kind === 'co') { root.Col25.wear(x.id); root.Col25.outline(); }
         else if (kind === 'po') C().eq.po = x.id;
         else if (kind === 'wi') C().eq.wi = x.id;
         else if (kind === 'in') C().eq.in = x.id;
