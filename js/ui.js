@@ -955,7 +955,7 @@
         if (!squad.length) return toast('Add some units first.');
         const M = MT();
         const m = openModal(`<h2>Save to a battle plan</h2><p class="muted small">Saves this ${kind === 'ship' ? 'Fleet' : 'Ground'} squad into the plan you pick. Its other squad stays as it is.</p>
-          <div class="bp-list">${M.plans().slice(0, M.planCount()).map((p, i) => `<button type="button" class="bp-card ${M.flag() === i ? 'flag' : ''}" data-ps="${i}" style="cursor:pointer;text-align:left;color:inherit;font:inherit"><div class="bp-top"><b>${esc(M.planName(i))}</b>${M.flag() === i ? `<span class="bp-flag">${M.flagIcon} Flagship</span>` : ''}</div><div class="bp-row"><span>${kind === 'ship' ? 'Fleet' : 'Ground'}</span><span class="mt-minis">${M.planTeam(i, kind).map((id) => miniPortrait(D.UNIT_MAP[id])).join('') || '<span class="muted small">Empty</span>'}</span></div></button>`).join('')}</div>
+          <div class="bp-list">${M.plans().slice(0, M.planCount()).map((p, i) => `<button type="button" class="bp-card ${M.flag() === i ? 'flag' : ''}" data-ps="${i}" style="cursor:pointer;text-align:left;color:inherit;font:inherit"><div class="bp-top"><b>${esc(M.planName(i))}</b>${M.flag() === i ? `<span class="bp-flag">${M.flagIcon}Flagship</span>` : ''}</div><div class="bp-row"><span class="bp-k">${kind === 'ship' ? 'Fleet' : 'Ground'}</span><span class="mt-minis">${M.planTeam(i, kind).map((id) => miniPortrait(D.UNIT_MAP[id])).join('') || '<span class="muted small">Empty</span>'}</span></div></button>`).join('')}</div>
           <div class="modal-actions"><button class="btn" type="button" data-close>Cancel</button></div>`, { small: true });
         m.root.addEventListener('click', (ev) => {
           const b = ev.target.closest('[data-ps]');
@@ -1479,19 +1479,29 @@
         const flag = M.flag();
         box.classList.add('bp-panel');
         const open = !!ui.bpOpen;
+        const acts = (more) => `<div class="bp-acts"><button class="btn bp-hb" type="button" data-bp-manage>Edit plans</button>${more}</div>`;
         if (M.hidden()) {
-          box.innerHTML = `<div class="bp-head"><b>Battle Plans</b><span class="muted small">Hidden</span><span style="margin-left:auto;display:flex;gap:10px"><button class="linkish" type="button" data-bp-manage>Edit plans</button><button class="linkish" type="button" data-bp-hide="0">Show ▾</button></span></div>`;
+          box.innerHTML = `<div class="bp-head"><div class="bp-title"><b>Battle Plans</b><span class="bp-sub">Hidden</span></div>${acts('<button class="btn bp-hb" type="button" data-bp-hide="0">Show ▾</button>')}</div>`;
           return;
         }
-        box.innerHTML = `<div class="bp-head"><b>Battle Plans</b><span class="muted small">${n} of 6 unlocked · Auto-continue flies your Flagship</span><span style="margin-left:auto;display:flex;gap:10px;flex-wrap:wrap"><button class="linkish" type="button" data-bp-manage>Edit plans</button><button class="linkish" type="button" data-bp-toggle>${open ? 'Flagship only ▴' : `All plans (${n}) ▾`}</button><button class="linkish" type="button" data-bp-hide="1">Hide</button></span></div>
-          <div class="bp-list">${M.plans().map((p, i) => {
-            if (!open && i !== (flag >= 0 ? flag : 0)) return '';
-            if (i >= n) return `<div class="bp-card locked">🔒 Unlocks at level ${M.PLAN_LEVELS[i]}</div>`;
-            const row = (k) => `<div class="bp-row"><span>${k === 'ship' ? 'Fleet' : 'Ground'}</span><span class="mt-minis">${minis(M.planTeam(i, k))}</span><button class="btn" type="button" data-plan-edit="${i}" data-k="${k}">${M.planTeam(i, k).length ? 'Edit' : 'Set'}</button></div>`;
-            return `<div class="bp-card ${flag === i ? 'flag' : ''}"><div class="bp-top"><b>${esc(M.planName(i))}</b><button class="linkish" type="button" data-plan-name="${i}">Rename</button>${flag === i ? `<span class="bp-flag">${M.flagIcon} Flagship</span>` : ''}</div>
-              ${row('character')}${row('ship')}
-              ${flag === i ? '' : `<button class="btn bp-make" type="button" data-plan-flag="${i}">${M.flagIcon} Make Flagship</button>`}</div>`;
-          }).join('')}</div>`;
+        const head = `<div class="bp-head"><div class="bp-title"><b>Battle Plans</b><span class="bp-sub">${M.ui.pips(n, flag)}${n} of 6 unlocked</span></div>
+          ${acts(`<button class="btn bp-hb" type="button" data-bp-toggle aria-expanded="${open}">${open ? 'Fewer ▴' : 'All plans ▾'}</button><button class="btn bp-hb ghost" type="button" data-bp-hide="1">Hide</button>`)}
+          <p class="bp-tip">${M.flagIcon}Auto-continue flies your <b>Flagship</b></p></div>`;
+        const o = { mini: (id) => miniPortrait(D.UNIT_MAP[id]), edit: 'data-plan-edit', name: 'data-plan-name', flag: 'data-plan-flag' };
+        const all = M.plans().map((p, i) => i);
+        if (open) {
+          box.innerHTML = `${head}<div class="bp-list">${all.map((i) => (i >= n ? M.ui.locked(i) : M.ui.card(i, o))).join('')}</div>`;
+          return;
+        }
+        // Closed: one plan up front (the Flagship unless you tapped another),
+        // and a dock with every plan so they're all one tap away.
+        let sel = ui.bpSel != null && ui.bpSel < n ? ui.bpSel : (flag >= 0 ? flag : 0);
+        const tabs = all.map((i) => {
+          if (i >= n) return `<button type="button" class="bp-tab lk" disabled><b>🔒 Plan ${esc(M.planName(i).replace(/^Plan /, ''))}</b><small>Level ${M.PLAN_LEVELS[i]}</small></button>`;
+          const g = M.planTeam(i, 'character').length; const f = M.planTeam(i, 'ship').length;
+          return `<button type="button" class="bp-tab${i === flag ? ' fl' : ''}${i === sel ? ' sel' : ''}" data-bp-sel="${i}" aria-pressed="${i === sel}"><b>${i === flag ? M.flagIcon : ''}${esc(M.planName(i))}</b><small>${g || f ? `Ground ${g} · Fleet ${f}` : 'Empty'}</small></button>`;
+        }).join('');
+        box.innerHTML = `${head}${flag < 0 ? `<p class="bp-noflag">${M.flagIcon}No Flagship yet. Pick one so auto-continue knows which squads to fly.</p>` : ''}<div class="bp-closed">${M.ui.card(sel, o)}<div class="bp-dock">${tabs}</div></div>`;
         return;
       }
       box.classList.remove('bp-panel');
@@ -1620,6 +1630,8 @@
         return;
       }
       if (e.target.closest('[data-bp-toggle]')) { ui.bpOpen = !ui.bpOpen; renderMT(); return; }
+      const bps = e.target.closest('[data-bp-sel]');
+      if (bps) { ui.bpSel = Number(bps.dataset.bpSel); renderMT(); return; }
       const bph = e.target.closest('[data-bp-hide]');
       if (bph) { MT().setHidden(bph.dataset.bpHide === '1'); renderMT(); return; }
       if (e.target.closest('[data-bp-manage]')) { MT().manager({ onClose: () => render(true) }); return; }
@@ -1632,6 +1644,7 @@
           Object.assign(ui, { mtPick: k, planIdx: i, mtDraft: M.planTeam(i, k), collectionKind: k, collectionClass: 'all' });
         } else if (pb.dataset.planFlag != null) {
           M.makeFlag(Number(pb.dataset.planFlag));
+          ui.bpSel = null;
           toast(`${M.planName(Number(pb.dataset.planFlag))} is your Flagship plan.`);
         } else {
           const i = Number(pb.dataset.planName);

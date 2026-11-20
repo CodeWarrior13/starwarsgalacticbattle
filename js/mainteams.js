@@ -115,6 +115,31 @@
   // The Flagship marker: a Star Destroyer wedge with its bridge tower.
   MT.flagIcon = '<svg class="fs-ico" viewBox="0 0 28 14" aria-hidden="true"><path d="M1 9.5 27 3v10H1z" fill="currentColor" opacity=".55"/><path d="M1 9.5 27 3v4L1 10.5z" fill="currentColor"/><path d="M17 3.2h5V1.4h3v2.4h-8z" fill="currentColor"/></svg>';
 
+  // One look for plan cards, in the Collection panel and in the manager.
+  // a: the data attributes each place uses for edit / rename / flag.
+  const PEN = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M11.3 1.7a1.6 1.6 0 0 1 2.3 0l.7.7a1.6 1.6 0 0 1 0 2.3L5.6 13.4 2 14l.6-3.6z" fill="currentColor"/></svg>';
+  const KI = { character: '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="5" r="3" fill="currentColor"/><path d="M2 15c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5z" fill="currentColor"/></svg>', ship: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1 10 9l5 3v2l-5-1.5L8 15l-2-2.5L1 14v-2l5-3z" fill="currentColor"/></svg>' };
+  MT.ui = {
+    pips(n, flag) {
+      return `<span class="bp-pips" role="img" aria-label="${n} of 6 plans unlocked">${PLAN_LEVELS.map((l, i) => `<i class="${i >= n ? 'lk' : i === flag ? 'fl' : 'on'}"></i>`).join('')}</span>`;
+    },
+    strip(ids, mini) {
+      const size = Player.slots();
+      return `<span class="bp-slots">${ids.map(mini).join('')}${Array.from({ length: Math.max(0, size - ids.length) }, () => '<i class="bp-empty"></i>').join('')}</span>`;
+    },
+    card(i, o) {
+      const esc = root.UI.esc;
+      const flag = MT.flag();
+      const nm = planName(i);
+      const row = (k) => `<div class="bp-row"><span class="bp-k">${KI[k]}${k === 'ship' ? 'Fleet' : 'Ground'}</span>${MT.ui.strip(planTeam(i, k), o.mini)}${o.extra ? o.extra(i, k) : ''}<button class="btn bp-sb" type="button" ${o.edit}="${i}" data-k="${k}">${planTeam(i, k).length ? 'Edit' : 'Set'}</button></div>`;
+      const top = o.naming === i ? o.nameBox(i) : `<b>${esc(nm)}</b><button class="bp-ico" type="button" ${o.name}="${i}" title="Rename" aria-label="Rename ${esc(nm)}">${PEN}</button>`;
+      return `<div class="bp-card ${flag === i ? 'flag' : ''}"><div class="bp-top">${top}${flag === i ? `<span class="bp-flag">${MT.flagIcon}Flagship</span>` : ''}</div>
+        ${row('character')}${row('ship')}
+        ${flag === i ? '' : `<button class="btn bp-make" type="button" ${o.flag}="${i}">${MT.flagIcon}Make Flagship</button>`}</div>`;
+    },
+    locked: (i) => `<div class="bp-card locked"><span class="bp-lock">🔒</span><b>Plan ${PLAN_NAMES[i]}</b><small>Unlocks at level ${PLAN_LEVELS[i]}</small></div>`,
+  };
+
   // Hide the Battle Plans panel in the Collection (remembered on this save).
   MT.hidden = () => !!st().plansHidden;
   MT.setHidden = (v) => { st().plansHidden = !!v; Player.save(); };
@@ -149,14 +174,12 @@
           <div class="modal-actions"><button class="btn" type="button" data-bx="clear">Clear</button><button class="btn" type="button" data-bx="back">Cancel</button><button class="btn btn-primary" type="button" data-bx="save">Save squad</button></div>`;
         return;
       }
-      box.innerHTML = `<div class="bpm-top"><h2>Battle Plans</h2><span class="muted small">${n} of 6 unlocked · Auto-continue flies your Flagship</span></div>
-        <div class="bp-list">${plans().map((p, i) => {
-          if (i >= n) return `<div class="bp-card locked">🔒 Unlocks at level ${PLAN_LEVELS[i]}</div>`;
-          const row = (k) => `<div class="bp-row"><span>${kN(k)}</span><span class="mt-minis">${planTeam(i, k).map(mini).join('') || '<span class="muted small">Not set</span>'}</span>${opts.kind === k && planTeam(i, k).length ? `<button class="btn btn-primary" type="button" data-bl="${i}">Load</button>` : ''}<button class="btn" type="button" data-be="${i}" data-k="${k}">${planTeam(i, k).length ? 'Edit' : 'Set'}</button></div>`;
-          return `<div class="bp-card ${flag === i ? 'flag' : ''}"><div class="bp-top">${naming === i ? `<input class="bpm-name" data-nm="${i}" maxlength="18" value="${esc(planName(i))}" aria-label="Plan name"><button class="btn" type="button" data-bn-ok="${i}">OK</button>` : `<b>${esc(planName(i))}</b><button class="linkish" type="button" data-bn="${i}">Rename</button>`}${flag === i ? `<span class="bp-flag">${MT.flagIcon} Flagship</span>` : ''}</div>
-            ${row('character')}${row('ship')}
-            ${flag === i ? '' : `<button class="btn bp-make" type="button" data-bf="${i}">${MT.flagIcon} Make Flagship</button>`}</div>`;
-        }).join('')}</div>
+      box.innerHTML = `<div class="bpm-top"><h2>Battle Plans</h2><div class="bp-sub">${MT.ui.pips(n, flag)}<span>${n} of 6 unlocked</span></div><p class="bp-tip">${MT.flagIcon}Auto-continue flies your <b>Flagship</b></p></div>
+        <div class="bp-list">${plans().map((p, i) => (i >= n ? MT.ui.locked(i) : MT.ui.card(i, {
+          mini, edit: 'data-be', name: 'data-bn', flag: 'data-bf', naming,
+          nameBox: (j) => `<input class="bpm-name" data-nm="${j}" maxlength="18" value="${esc(planName(j))}" aria-label="Plan name"><button class="btn bp-sb" type="button" data-bn-ok="${j}">OK</button>`,
+          extra: (j, k) => (opts.kind === k && planTeam(j, k).length ? `<button class="btn btn-primary bp-sb" type="button" data-bl="${j}">Load</button>` : ''),
+        }))).join('')}</div>
         <div class="modal-actions"><button class="btn" type="button" data-bx="close">Done</button></div>`;
       const inp = box.querySelector('[data-nm]');
       if (inp) { inp.focus(); inp.select(); }
@@ -211,22 +234,74 @@
   if (!document.getElementById('bp-css')) {
     document.head.appendChild(Object.assign(document.createElement('style'), { id: 'bp-css', textContent: `
 .bp-panel { display: grid; gap: 8px; margin: 0 0 12px; }
-.bp-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
-.bp-head b { font: 800 14px var(--font-display); letter-spacing: .06em; text-transform: uppercase; color: #ffe81f; }
-.bp-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px; }
-.bp-card { display: grid; gap: 6px; padding: 10px 12px; border-radius: 12px; border: 1px solid rgba(124, 208, 255, .22); background: rgba(124, 208, 255, .04); }
-.bp-card.flag { border-color: rgba(255, 232, 31, .55); background: linear-gradient(135deg, rgba(255, 232, 31, .1), rgba(255, 232, 31, .02)); }
-.bp-card.locked { opacity: .55; border-style: dashed; place-items: center; min-height: 64px; font-size: 13px; }
-.bp-top { display: flex; align-items: center; gap: 8px; }
-.bp-top b { flex: 1; min-width: 0; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.bp-top .linkish { font-size: 12px; }
-.bp-flag { display: inline-flex; align-items: center; gap: 4px; font: 800 10px var(--font-display); letter-spacing: .14em; text-transform: uppercase; color: #ffe81f; }
+.bp-head { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 6px 10px; }
+.bp-title { display: flex; align-items: center; gap: 6px 12px; flex-wrap: wrap; min-width: 0; }
+.bp-title b { font: 800 14px var(--font-display); letter-spacing: .1em; text-transform: uppercase; color: #ffe81f; }
+.bp-sub { display: inline-flex; align-items: center; gap: 8px; font: 700 11px var(--font-display); letter-spacing: .08em; text-transform: uppercase; color: #9fb3cc; }
+.bp-pips { display: inline-flex; gap: 3px; }
+.bp-pips i { width: 9px; height: 9px; transform: rotate(45deg); border-radius: 2px; background: #3ab8ff; box-shadow: 0 0 6px rgba(58, 184, 255, .55); }
+.bp-pips i.fl { background: #ffe81f; box-shadow: 0 0 7px rgba(255, 232, 31, .7); }
+.bp-pips i.lk { background: transparent; box-shadow: none; border: 1px solid #3a4658; }
+.bp-acts { display: flex; gap: 6px; justify-content: flex-end; flex-wrap: wrap; }
+.btn.bp-hb { padding: 6px 12px; font-size: 11px; border-radius: 999px; border-color: rgba(124, 208, 255, .35); background: linear-gradient(180deg, rgba(124, 208, 255, .14), rgba(124, 208, 255, .04)); color: #cfeaff; }
+.btn.bp-hb:hover:not(:disabled) { border-color: #7cd0ff; box-shadow: 0 0 12px rgba(124, 208, 255, .35); }
+.btn.bp-hb.ghost { background: transparent; border-color: var(--line); color: var(--muted); }
+.bp-tip { grid-column: 1 / -1; margin: 0; display: flex; align-items: center; gap: 6px; font-size: 12px; color: #9fb3cc; }
+.bp-tip b { color: #ffe81f; }
+.bp-tip .fs-ico, .bp-noflag .fs-ico { color: #ffe81f; }
+.bp-noflag { margin: 0; display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 10px; border: 1px dashed rgba(255, 232, 31, .5); background: rgba(255, 232, 31, .06); font-size: 12px; color: #ffe9a8; }
+.bp-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 8px; }
+.bp-closed { display: grid; grid-template-columns: minmax(0, 340px) minmax(0, 1fr); gap: 10px; align-items: start; }
+.bp-dock { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.bp-tab { display: grid; gap: 2px; text-align: left; padding: 8px 10px; border-radius: 10px; border: 1px solid rgba(124, 208, 255, .2); background: rgba(124, 208, 255, .04); color: inherit; font: inherit; cursor: pointer; min-width: 0; transition: transform .12s, border-color .2s, background .2s; }
+.bp-tab:hover:not(:disabled) { transform: translateY(-1px); border-color: rgba(124, 208, 255, .5); }
+.bp-tab b { display: flex; align-items: center; gap: 4px; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bp-tab small { font-size: 10px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bp-tab.fl { border-color: rgba(255, 232, 31, .45); }
+.bp-tab.fl b { color: #ffe81f; }
+.bp-tab.sel { background: rgba(124, 208, 255, .14); border-color: #7cd0ff; box-shadow: 0 0 0 1px #7cd0ff inset; }
+.bp-tab.fl.sel { background: rgba(255, 232, 31, .12); border-color: #ffe81f; box-shadow: 0 0 0 1px #ffe81f inset; }
+.bp-tab.lk { opacity: .5; border-style: dashed; cursor: default; }
+.bp-card { position: relative; display: grid; gap: 8px; padding: 10px 12px; border-radius: 12px; border: 1px solid rgba(124, 208, 255, .22); background: rgba(124, 208, 255, .04); min-width: 0; }
+.bp-card.flag { border-color: rgba(255, 232, 31, .6); background: linear-gradient(135deg, rgba(255, 232, 31, .11), rgba(255, 232, 31, .02)); overflow: hidden; }
+.bp-card.flag::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(105deg, transparent 40%, rgba(255, 232, 31, .14) 50%, transparent 60%); transform: translateX(-100%); animation: bp-glint 6s ease-in-out infinite; }
+@keyframes bp-glint { 0%, 70% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+.bp-card.locked { opacity: .55; border-style: dashed; place-items: center; align-content: center; gap: 2px; min-height: 64px; font-size: 13px; text-align: center; }
+.bp-card.locked small { color: var(--muted); font-size: 11px; }
+.bp-top { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.bp-top b { min-width: 0; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bp-ico { flex: 0 0 auto; width: 26px; height: 26px; display: grid; place-items: center; padding: 0; border-radius: 8px; border: 1px solid transparent; background: transparent; color: var(--muted); cursor: pointer; transition: color .2s, border-color .2s, background .2s; }
+.bp-ico svg { width: 13px; height: 13px; }
+.bp-ico:hover { color: #cfeaff; border-color: rgba(124, 208, 255, .35); background: rgba(124, 208, 255, .08); }
+.bp-flag { margin-left: auto; display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; border-radius: 999px; background: rgba(255, 232, 31, .14); border: 1px solid rgba(255, 232, 31, .5); font: 800 10px var(--font-display); letter-spacing: .14em; text-transform: uppercase; color: #ffe81f; white-space: nowrap; }
 .fs-ico { width: 22px; height: 11px; flex: 0 0 auto; vertical-align: middle; }
-.bp-row { display: flex; align-items: center; gap: 8px; }
-.bp-row > span:first-child { width: 44px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.bp-row { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto auto; align-items: center; gap: 8px; }
+.bp-k { display: inline-flex; align-items: center; gap: 5px; font: 700 10px var(--font-display); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.bp-k svg { width: 12px; height: 12px; flex: 0 0 auto; opacity: .8; }
+.bp-slots { display: flex; gap: 4px; min-width: 0; overflow: hidden; }
+.bp-slots .mini, .bp-empty { width: 30px; height: 30px; flex: 0 0 30px; }
 .bp-row .mt-minis .mini { width: 30px; height: 30px; }
-.bp-row .btn { padding: 4px 10px; font-size: 12px; }
-.bp-make { justify-self: start; padding: 4px 10px; font-size: 12px; }
+.bp-empty { display: block; border-radius: 8px; border: 1px dashed #3a4658; background: rgba(255, 255, 255, .02); }
+.btn.bp-sb { padding: 5px 12px; font-size: 11px; min-width: 56px; }
+.btn.bp-make { justify-self: start; padding: 6px 12px; font-size: 11px; gap: 6px; border-color: rgba(255, 232, 31, .45); color: #ffe9a8; background: linear-gradient(180deg, rgba(255, 232, 31, .12), rgba(255, 232, 31, .03)); }
+.btn.bp-make:hover:not(:disabled) { border-color: #ffe81f; box-shadow: 0 0 14px rgba(255, 232, 31, .3); }
+body.perf-on .bp-card.flag::after { animation: none; display: none; }
+@media (max-width: 640px) {
+  .bp-head { grid-template-columns: 1fr; }
+  .bp-acts { justify-content: flex-start; }
+  .bp-closed { grid-template-columns: 1fr; }
+  .bp-list { grid-template-columns: 1fr; }
+  .bp-row { grid-template-columns: 62px minmax(0, 1fr) auto auto; gap: 6px; }
+  .bp-k svg { display: none; }
+  .bp-slots { gap: 3px; }
+  .bp-slots .mini, .bp-empty { width: 27px; height: 27px; flex-basis: 27px; }
+}
+@media (max-width: 400px) {
+  .bp-row { grid-template-columns: minmax(0, 1fr) auto auto; row-gap: 3px; }
+  .bp-k { grid-column: 1 / -1; }
+  .bp-slots .mini, .bp-empty { width: 30px; height: 30px; flex-basis: 30px; }
+}
+@media (max-width: 360px) { .bp-dock { grid-template-columns: repeat(2, minmax(0, 1fr)); } .bp-slots .mini, .bp-empty { width: 27px; height: 27px; flex-basis: 27px; } }
 .bp-pick { display: inline-flex; align-items: center; gap: 6px; }
 .bpm-modal { width: min(760px, calc(100vw - 20px)); }
 .bpm-top { display: grid; gap: 2px; margin-bottom: 10px; }
