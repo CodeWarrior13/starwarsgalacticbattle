@@ -28,16 +28,18 @@
       v: '2.5', date: 'November 22, 2026', title: 'Cosmetic', from: LAUNCH_25,
       // Bigger than Liberation: a grand-opening marquee for the three shops.
       theme: 'cosmetic',
-      stats: [['3', 'shops'], ['3', 'new cards'], ['40', 'titles'], ['6', 'title colours'], ['15', 'new frames'], ['42', 'banners'], ['14', 'victory poses'], ['16', 'win screens'], ['9', 'crate themes'], ['15', 'card backs'], ['11', 'battle intros'], ['100+', 'guild pictures']],
-      decos: ['shops', 'wear', 'cards', 'casino', 'squad', 'holonet', 'credits', 'secret'],
+      stats: [['3', 'shops'], ['3', 'new cards'], ['40', 'titles'], ['6', 'title colours'], ['15', 'new frames'], ['42', 'banners'], ['14', 'victory poses'], ['16', 'win screens'], ['9', 'crate themes'], ['15', 'card backs'], ['11', 'battle intros'], ['100+', 'guild pictures'], ['29', 'badges'], ['21', 'attack colours']],
+      decos: ['shops', 'secret', 'wear', 'cards', 'holonet', 'casino', 'squad', 'holonet', 'credits', 'secret'],
       groups: [
         ['Three Shops Open', '⌂', 'Black Market opens|Luthen\'s Gallery, Coruscant|gallery pieces|New on Luthen'],
+        ['Badges & Holo', '★', '29 badges|Attack colours|Holo cards|HOLO tag'],
         ['Make It Yours', '✦', 'Cosmetics tab|titles|frames|banners|poses|win screens|crate themes|card backs|VS intro|guild pictures|Captain Rex'],
-        ['Three New Cards', '⚔', 'Havoc|Embo|Marrok'],
+        ['Cards & Ships', '⚔', 'Havoc|Embo|Marrok|B-wing and the Ebon Hawk'],
+        ['Holidays', '❄', 'Harvest Hunt|Grand Nuna|holiday'],
         ['Watto\'s Wagers', '◈', 'Watto|Sabacc|Every casino|Shell Game'],
         ['Squads & Friends', '⚑', 'Favourite squads|Friends see|Guild ranks'],
         ['Raids & Ranked', '⚔', 'Raid|raid|leaderboard|placement|Unplaced'],
-        ['Smoother', '▲', 'smoother'],
+        ['Smoother & Tidier', '▲', 'smoother|Settings|Performance mode|Battle Plans|tutorial'],
         ['One more thing…', '✧', ''],
       ],
       items: [
@@ -78,9 +80,23 @@
         'BALANCE|The HoloNet raid boss now has about 9 billion health, hits harder and so do its guards, and the other raiders on the board hit like real pilots.',
         'IMPROVED|Between seasons, the Season leaderboard shows a countdown to the new season instead of last season\'s board, and it fills up as pilots finish their placement battles.',
         'FIXED|Until your placement battles are revealed you show as Unplaced, instead of carrying a league over from last season.',
+        'NEW|29 badges to earn, each climbing from Silver to Gold, Beskar and Kyber, and paying out titles, frames, win screens, card backs, attack colours and Kyber as it tiers up. Open the badge sheet from the Cosmetics tab and pin one to keep track of it at home and in battle.',
+        'NEW|Attack colours: give your squad\'s attacks and ultimates one of 21 colours. Kyber Blue and Sith Red are free, two more are in Luthen\'s Gallery, and the rest come from badges and holidays.',
+        'NEW|Holo cards: pull a holo once and that card is holo for good. Its foil grows with the card: Silver when you pull it, Gold at level 50, Kyber at 7★ and Prism after 100 wins with it. Pick any frame you\'ve unlocked, or turn holo off, on the card\'s screen.',
+        'NEW|Other pilots see your holo cards on your profile, marked with a small HOLO tag in the corner.',
+        'NEW|The Harvest Hunt, November 23 to December 1: find a new relic every day (missed one? catch it up later) and finish the set for the Relic Hunter badge and 150 Kyber.',
+        'NEW|The Grand Nuna lands for a community raid during Thanksgiving week, and everyone who plays on Thanksgiving Day gets 75 Kyber and 750 Beskar.',
+        'NEW|Play during Life Day, the Harvest Hunt, the Egg Hunt or May the 4th week to earn that holiday\'s attack colour and profile pictures.',
+        'NEW|The loading screens and the app icon change for each holiday on their own.',
+        'IMPROVED|The B-wing and the Ebon Hawk are redrawn with new attack animations. The Ebon Hawk also gets a new kit: Dorsal Turrets hit three times and lower Defense, HK-47 Protocol finishes off weakened enemies, and a tractor-beam ultimate.',
+        'IMPROVED|Battle Plans got a cleaner look: your Flagship up front, every plan one tap away, and a row of starfighters that light up as you unlock plans.',
+        'IMPROVED|Settings are sorted into four tabs: Sound, Display, Account and More.',
+        'NEW|Turning on Performance mode sends a light burst across the screen.',
+        'FIXED|Finished the tutorial already? Signing in on a new device no longer starts it again.',
         'IMPROVED|The Black Market and the menus run smoother: lighter glows and animations that use less battery.',
         'IMPROVED|Everything new runs smoother: scenes load only when you open them, pause when they\'re off screen and go easy on the battery.',
         'NEW|Luthen never puts everything on the plinth. Some pieces wait for the right buyer.',
+        'NEW|Collect everything, everywhere, and the galaxy notices.',
       ],
     },
     {
@@ -551,13 +567,20 @@
       try { localStorage.setItem(SEEN_KEY, this.latest); } catch (e) { /* storage unavailable */ }
     },
 
-    // Called at startup. Brand-new players (tutorial still pending) are not
-    // shown old news; they simply start on the current version.
-    check() {
-      if (root.Player.tutorialPending()) { if (!this.seen()) this.markSeen(); return; }
+    // Called at startup. Brand-new players (tutorial still pending) see the
+    // log once the tutorial is over, after Captain Rex's cosmetics briefing
+    // that follows it (given up to 5 minutes). It never opens over another
+    // window, a cutscene or a battle.
+    check(fresh = false, waited = 0) {
+      const P = root.Player;
       if (this.seen() === this.latest) return;
+      if (P.tutorialPending()) { setTimeout(() => this.check(true, 0), 4000); return; }
+      // (The briefing needs the HoloNet, which loads from level 25.)
+      const briefing = fresh && waited < 300000 && root.Update25 && root.Update25.on() && root.Cos25 && root.HN && root.HN.cos25 && P.state && !P.state.cos25tour;
+      if (briefing) { setTimeout(() => this.check(true, waited + 4000), 4000); return; }
       setTimeout(() => {
-        if (document.querySelector('.modal-backdrop, .feat-cine, .feat-show, .tut-intro')) return setTimeout(() => this.check(), 1500);
+        const App = root.UI && root.UI.App;
+        if (document.querySelector('.modal-backdrop, .feat-cine, .feat-show, .tut-intro, .tut-coach, .walkout, .crate-cine, .hc, .rank-up') || (App && App.battleActive)) return setTimeout(() => this.check(fresh, waited), 1500);
         this.showWhatsNew();
       }, 1200);
     },
