@@ -3,6 +3,8 @@
 // step help on iPhone and iPad, where Apple only allows Share > Add to Home Screen).
 (function (root) {
   'use strict';
+  // During a holiday the install screens show that holiday's app icon (set by the date check in index.html).
+  const appIcon = () => (root.__HOLIC ? `icons/hol/${root.__HOLIC}-192.png` : 'icons/icon-192.png');
 
   const DISMISS_KEY = 'swcg-install-dismissed';
   const ua = navigator.userAgent;
@@ -66,7 +68,7 @@
       };
       const steps = `<ol class="inst-steps">${(HELP[browser] || HELP.chrome).join('')}</ol>
         <p class="muted small">${isIOS ? 'The app opens full screen from your home screen. On iPhone and iPad it keeps its own save, separate from the one in the browser.' : 'The app opens full screen with its own icon and keeps your progress.'}</p>`;
-      const m = UI.openModal(`<div class="inst-head"><img src="icons/icon-192.png" alt="" class="inst-logo"><div><p class="eyebrow">Get the app</p><h2>Install Galactic Card Battles</h2></div></div>
+      const m = UI.openModal(`<div class="inst-head"><img src="${appIcon()}" alt="" class="inst-logo"><div><p class="eyebrow">Get the app</p><h2>Install Galactic Card Battles</h2></div></div>
         ${steps}
         <div class="modal-actions"><button class="btn btn-primary" type="button" data-close>Got it</button></div>`, { small: true, cls: 'install-modal' });
       m.root.addEventListener('click', (e) => { if (e.target.closest('[data-close]')) m.close(); });
@@ -92,7 +94,7 @@
         return;
       }
       const b = root.UI.el(`<div class="inst-banner" role="dialog" aria-label="Install the app">
-        <img src="icons/icon-192.png" alt="">
+        <img src="${appIcon()}" alt="">
         <div><b>Get the app</b><span>Play from your home screen, full screen.</span></div>
         <button class="btn btn-primary btn-small" type="button" data-install>Install</button>
         <button class="inst-x" type="button" aria-label="Not now">✕</button>
