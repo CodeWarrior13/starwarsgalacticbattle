@@ -4054,3 +4054,4 @@ body.perf-on .cos-bulbs i, body.perf-on .cos-signs .vk, body.perf-on .lbl-title.
   .st5-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 .st5-list > .btn { margin: 8px 0 2px; justify-self: stretch; }
+.st5-tabs button:focus-visible { outline: none; box-shadow: inset 0 0 0 1px rgba(255, 210, 63, .7); }

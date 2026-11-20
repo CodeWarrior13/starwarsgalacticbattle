@@ -2529,8 +2529,8 @@
         ${track('menu', 'Galaxy & menus')}
         ${track('battle', 'Battles')}
       </section>` : '<p class="muted small">Sound isn\'t available in this browser.</p>';
-    const display = `${root.Perf ? root.Perf.settingsHtml() : ''}${root.FriendActivity ? root.FriendActivity.settingsHtml() : ''}${root.Install ? root.Install.settingsHtml() : ''}`;
-    const account = `${root.Account ? root.Account.settingsHtml() : ''}
+    const display = `${root.Perf ? root.Perf.settingsHtml() : ''}${root.Install ? root.Install.settingsHtml() : ''}`;
+    const account = `${root.Account ? root.Account.settingsHtml() : ''}${root.FriendActivity ? root.FriendActivity.settingsHtml() : ''}
       <section class="set-sec"><h3>${I('holocron')} Your game</h3>
         <div class="st5-tiles"><div><b>${a.level}</b><span>Commander level</span></div><div><b>${Object.keys(Player.state.units).length}<small>/${D.UNITS.length}</small></b><span>Cards</span></div><div><b>v${v}</b><span>Version</span></div><div><b>${root.Account && root.Account.meta() ? 'Cloud' : 'Device'}</b><span>${root.Account && root.Account.meta() ? 'Saved to your account' : 'Saved in this browser'}</span></div></div>
       </section>`;
