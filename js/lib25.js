@@ -46,9 +46,13 @@
   const html = (id, cls = '', o = {}) => `<span class="l5 ${cls}" data-l5="${esc(id)}"${o.a ? ` data-l5a="${esc(o.a)}"` : ''}${o.b ? ` data-l5b="${esc(o.b)}"` : ''}${o.play ? ' data-l5play="1"' : ''}${o.va || o.vb ? ` data-l5v="${(AVS[++avn] = { a: o.va, b: o.vb }), avn}"` : ''} aria-hidden="true"></span>`;
   const play = (el) => { el.classList.remove('l5-go'); void el.offsetWidth; el.classList.add('l5-go'); };
   let io = null;
+  // Pieces are drawn only when they come near the screen (a long shop page no longer draws everything at once).
+  let near = null;
+  try { if (typeof IntersectionObserver === 'function') near = new IntersectionObserver((es) => { let any = false; for (const e of es) if (e.isIntersecting) { e.target.dataset.l5near = '1'; near.unobserve(e.target); any = true; } if (any) schedule(); }, { rootMargin: '900px 0px' }); } catch (e) { near = null; }
   function fill(scope) {
     css();
     (scope || document).querySelectorAll('[data-l5]:not([data-l5done])').forEach((el) => {
+      if (near && !el.dataset.l5near) { if (!el.dataset.l5watch) { el.dataset.l5watch = '1'; near.observe(el); } return; }
       const id = el.dataset.l5;
       if (!art[id]) { load(id); return; }
       el.innerHTML = names(art[id], el.dataset.l5a, el.dataset.l5b, AVS[el.dataset.l5v]);
@@ -59,7 +63,19 @@
     });
   }
   let q = 0;
-  function schedule() { if (q) return; q = requestAnimationFrame(() => { q = 0; fill(document); }); }
+  function schedule() { if (q) return; q = requestAnimationFrame(() => { q = 0; fill(document); idleFill(); }); }
+  // While nothing else is happening, draw the next waiting piece (one at a time), so it's ready before you scroll to it.
+  let iq = 0;
+  const ric = typeof requestIdleCallback === 'function' ? requestIdleCallback : (f) => setTimeout(() => f({ timeRemaining: () => 8 }), 120);
+  function idleFill() {
+    if (iq || !near) return;
+    iq = ric((dl) => {
+      iq = 0;
+      const el = [...document.querySelectorAll('[data-l5watch]:not([data-l5near]):not([data-l5done])')].find((x) => x.offsetParent !== null);
+      if (!el || dl.timeRemaining() < 4) { if (el) idleFill(); return; }
+      el.dataset.l5near = '1'; near.unobserve(el); schedule();
+    }, { timeout: 1500 });
+  }
   if (typeof document !== 'undefined') {
     css();
     try { if (typeof IntersectionObserver === 'function') io = new IntersectionObserver((es) => { for (const e of es) e.target.classList.toggle('l5-off', !e.isIntersecting); }, { rootMargin: '120px 0px' }); } catch (e) { io = null; }

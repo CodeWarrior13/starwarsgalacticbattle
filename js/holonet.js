@@ -2157,6 +2157,8 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
 .hc-klaxon { position: absolute; top: 9%; left: 0; right: 0; text-align: center; font: 900 clamp(16px, 4.6vw, 34px) var(--font-display, system-ui); letter-spacing: .18em; color: #ff3a3a; text-shadow: 0 0 20px #ff0000; opacity: 0; }
 .hc.p1 .hc-klaxon { animation: hc-blink .45s steps(2) 10; }
 @keyframes hc-blink { 50% { opacity: 1; } }
+.hc *, .hc *::before, .hc *::after { pointer-events: none; }
+.hc button, .hc button * { pointer-events: auto; }
 .hc-comm { position: absolute; left: 50%; top: 50%; width: min(86vw, 420px); transform: translate(-50%, -40%) scale(.8); opacity: 0; display: grid; justify-items: center; gap: 8px; padding: 14px 14px 18px; border-radius: 16px; background: linear-gradient(180deg, rgba(8, 30, 52, 0.95), rgba(4, 12, 22, 0.95)); border: 1px solid #5fd8ff; box-shadow: 0 0 40px rgba(95, 216, 255, 0.35); transition: transform .5s cubic-bezier(.2,.9,.3,1.2), opacity .4s, top .6s, left .6s, width .6s; }
 .hc.p1b .hc-comm { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 .hc.p2 .hc-comm, .hc.p3 .hc-comm, .hc.p4 .hc-comm { opacity: 0; transform: translate(-50%, -50%) scale(.6); }
