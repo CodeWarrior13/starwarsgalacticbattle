@@ -4140,3 +4140,30 @@ html, body, button, a, label, summary, [role="button"], [role="tab"], [data-ck],
 .c25-rn input { width: 100%; }
 .c25-sets *, .c25-sets *::before, .c25-sets *::after { animation-delay: -1.2s !important; animation-play-state: paused !important; }
 .c25-padlock { width: 22px; height: 26px; display: block; }
+/* 2.6 Equip Sets: five backdrop colours (still, no animation) and the Shuffle switch. */
+.c25-set[class*="sbg-"] { border-color: var(--sb); background: radial-gradient(120% 90% at 0% 0%, var(--sg), transparent 60%), linear-gradient(160deg, var(--sd) 0%, #08101c 80%); }
+.c25-set.sbg-blue { --sb: rgba(74, 168, 255, .6); --sg: rgba(74, 168, 255, .32); --sd: #12325a; }
+.c25-set.sbg-green { --sb: rgba(63, 210, 122, .6); --sg: rgba(63, 210, 122, .3); --sd: #0f3a26; }
+.c25-set.sbg-yellow { --sb: rgba(242, 194, 48, .65); --sg: rgba(242, 194, 48, .3); --sd: #3e3108; }
+.c25-set.sbg-orange { --sb: rgba(255, 138, 42, .62); --sg: rgba(255, 138, 42, .32); --sd: #45210a; }
+.c25-set.sbg-purple { --sb: rgba(169, 122, 255, .62); --sg: rgba(169, 122, 255, .32); --sd: #2c1a52; }
+.c25-set[class*="sbg-"] .c25-snm b { color: #fff; text-shadow: 0 1px 2px rgba(0, 0, 0, .7); }
+.c25-set[class*="sbg-"] .c25-snm small, .c25-set[class*="sbg-"] .c25-srow small { color: #e6eef8; text-shadow: 0 1px 2px rgba(0, 0, 0, .7); }
+.c25-set[class*="sbg-"] .c25-sc { background: rgba(4, 8, 16, .62); }
+.c25-set[class*="sbg-"] .c25-sc b { color: #fff; }
+.c25-set[class*="sbg-"] .c25-ghost { background: rgba(4, 8, 16, .45); color: #e6eef8; }
+.c25-set.on[class*="sbg-"] { border-color: #ffd23f; }
+.c25-sbg { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.c25-sbg small { font: 700 11px var(--font-display); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-right: 2px; }
+.c25-set[class*="sbg-"] .c25-sbg small { color: #e6eef8; }
+.c25-sdot { width: 26px; height: 26px; border-radius: 50%; padding: 0; border: 2px solid rgba(255, 255, 255, .25); background: radial-gradient(circle at 35% 30%, #fff8 0 18%, transparent 19%), var(--c); cursor: pointer; flex: none; }
+.c25-sdot.on { border-color: #fff; box-shadow: 0 0 0 2px var(--c); }
+.c25-shuf { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; text-align: left; padding: 11px 14px; border-radius: 14px; border: 1px solid rgba(143, 232, 255, .2); background: rgba(14, 28, 42, .9); color: inherit; cursor: pointer; }
+.c25-shuf span { display: grid; gap: 2px; min-width: 0; }
+.c25-shuf b { font: 800 14px var(--font-display); }
+.c25-shuf small { color: var(--muted); font-size: 12px; }
+.c25-tg { flex: none; width: 44px; height: 24px; border-radius: 99px; background: #2a3644; position: relative; }
+.c25-tg::after { content: ""; position: absolute; left: 3px; top: 3px; width: 18px; height: 18px; border-radius: 50%; background: #a8c0d0; transition: transform .15s; }
+.c25-shuf.on { border-color: rgba(255, 210, 63, .6); }
+.c25-shuf.on .c25-tg { background: #ffd23f; }
+.c25-shuf.on .c25-tg::after { transform: translateX(20px); background: #1a1204; }

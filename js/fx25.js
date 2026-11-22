@@ -162,6 +162,7 @@
     if (!HN || !HN.hnStart || HN.hnStart.__fx25) return !!(HN && HN.hnStart && HN.hnStart.__fx25);
     const base = HN.hnStart;
     const wrapped = async function (params, squad, enemies, opts) {
+      try { if (root.Cos25 && root.Cos25.shuffle) root.Cos25.shuffle(); } catch (e) { /* keep the look */ }
       if (on() && params && params.hn === 'duel') {
         try {
           const meP = HN.cos25 ? HN.cos25.me() : {};

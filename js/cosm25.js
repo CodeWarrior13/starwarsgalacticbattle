@@ -226,6 +226,22 @@
   }
   const sameLook = (a, b) => !!a && !!b && JSON.stringify(a) === JSON.stringify(b);
   const cleanSetName = (t) => { const v = String(t || '').replace(/[^A-Za-z0-9_ '.-]/g, '').trim().slice(0, 16); return v && (!HN().safe || HN().safe.ok(v)) ? v : ''; };
+  // 2.6: each set can wear one of five backdrop colours, and Shuffle wears a random saved set before every battle.
+  const v26 = () => !!(root.Update26 && root.Update26.on());
+  const SET_BG = [['blue', 'Blue', '#4aa8ff'], ['green', 'Green', '#4ade80'], ['yellow', 'Yellow', '#ffd23f'], ['orange', 'Orange', '#ff9a3a'], ['purple', 'Purple', '#b98aff']];
+  const savedSets = () => sets().slice(0, setSlots()).map((x, i) => (x ? i : -1)).filter((i) => i >= 0);
+  let lastShuf = 0;
+  function shuffle() {
+    try {
+      if (!on() || !v26() || !ready() || !C().shuf) return null;
+      if (Date.now() - lastShuf < 15000) return null; // one pick per battle, even when two hooks fire
+      const list = savedSets(); if (!list.length) return null;
+      const now = lookNow();
+      const pool = list.length > 1 ? list.filter((i) => !sameLook(sets()[i].look, now)) : list;
+      const i = pool[Math.floor(Math.random() * pool.length)];
+      lastShuf = Date.now(); wearLook(sets()[i].look); return sets()[i].n;
+    } catch (e) { return null; }
+  }
   // ---------- Cosmetics tab ----------
   const KINDS = [['set', 'Sets'], ['fr', 'Frames'], ['ti', 'Titles']].concat(root.Col25 ? [['co', 'Attack colours']] : []).concat([['po', 'Poses'], ['wi', 'Win screens'], ['pa', 'Pack themes']]).concat(CBACKS.length > 1 ? [['cb', 'Card backs']] : []).concat(INTROS.length > 1 ? [['in', 'Intros']] : []);
   const PER = (k) => k === 'pa' || k === 'cb';
@@ -343,12 +359,13 @@
         if (!x) return `<div class="c25-set empty"><span class="c25-snum">${i + 1}</span><p>Empty slot</p><small>Dress up in the other tabs, then save that look here.</small><button type="button" class="c25-btn" data-sset="${i}">Save my look here</button></div>`;
         const L = x.look; const wearing = sameLook(L, now);
         const ti = L.ti ? TMAP[L.ti.id] : null; const col = root.Col25 && L.co ? root.Col25.COL[L.co] : null;
-        return `<div class="c25-set${wearing ? ' on' : ''}"><div class="c25-stop"><span class="c25-snum">${i + 1}</span><span class="c25-sav">${HN().cos25.avatar({ ...me, frame: L.fr }, 'md')}</span><div class="c25-snm"><b>${esc(x.n)}</b><small>${wearing ? 'Wearing now' : 'Saved'}</small></div><button type="button" class="c25-sren" data-rset="${i}" aria-label="Rename ${esc(x.n)}">✎</button></div>
+        return `<div class="c25-set${wearing ? ' on' : ''}${v26() && x.bg ? ' sbg-' + x.bg : ''}"><div class="c25-stop"><span class="c25-snum">${i + 1}</span><span class="c25-sav">${HN().cos25.avatar({ ...me, frame: L.fr }, 'md')}</span><div class="c25-snm"><b>${esc(x.n)}</b><small>${wearing ? 'Wearing now' : 'Saved'}</small></div><button type="button" class="c25-sren" data-rset="${i}" aria-label="Rename ${esc(x.n)}">✎</button></div>
           <div class="c25-schips">${chip('Title', ti ? ti.n + (L.ti.t ? ' · ' + (TIER[L.ti.t] ? TIER[L.ti.t][1] : '') : '') : 'None', ti ? (TCOL[L.ti.t] || '#d8b46a') : '#5a6a7e')}${chip('Pose', L.po ? nm(POSES, L.po, 'Your MVP\'s type') : 'Your MVP\'s type', '#ff8ad8')}${chip('Win screen', nm(WINS, L.wi, 'Medal Ceremony'), '#7ac8ff')}${chip('Intro', nm(INTROS, L.in, 'Lightsaber VS'), '#9affc0')}${col ? chip('Attack colour', col.n || L.co, col.glow || col.c || '#ffd23f') : ''}</div>
           <div class="c25-srow"><small>Crates</small>${CRATES.map(([cid, cn]) => `<span class="c25-scr" title="${esc(cn)}: ${esc(nm(PACKS, (L.pk || {})[cid], 'Default'))}">${crateIcon(cid)}</span>`).join('')}<small>Backs</small>${CBCRATES().map(([cid, cn]) => `<span class="c25-sbk" title="${esc(cn)}: ${esc(nm(CBACKS, (L.cbk || {})[cid], 'Default'))}">${cbArt((L.cbk || {})[cid] || 'default')}</span>`).join('')}</div>
-          <div class="c25-sbtns">${wearing ? '<button type="button" class="c25-btn" disabled>Wearing</button>' : `<button type="button" class="c25-btn" data-wset="${i}">Wear this set</button>`}<button type="button" class="c25-ghost" data-sset="${i}">Save over</button></div></div>`;
+          <div class="c25-sbtns">${wearing ? '<button type="button" class="c25-btn" disabled>Wearing</button>' : `<button type="button" class="c25-btn" data-wset="${i}">Wear this set</button>`}<button type="button" class="c25-ghost" data-sset="${i}">Save over</button></div>${v26() ? `<div class="c25-sbg" role="group" aria-label="Set colour"><small>Colour</small>${SET_BG.map(([id, nm, c]) => `<button type="button" class="c25-sdot${x.bg === id ? ' on' : ''}" style="--c:${c}" data-sbg="${i}:${id}" aria-label="${nm}" aria-pressed="${x.bg === id}"></button>`).join('')}</div>` : ''}</div>`;
       };
-      $('[data-grid]').innerHTML = `<div class="c25-sets"><p class="c25-shint">Save your whole look and switch with one tap: frame, title, pose, win screen, intro, attack colour, and every crate's theme and card back.</p>${sets().map(card).join('')}</div>`;
+      const shuf = v26() && n ? `<button type="button" class="c25-shuf${C().shuf ? ' on' : ''}" data-shuf aria-pressed="${!!C().shuf}"><span><b>Shuffle in battles</b><small>${savedSets().length > 1 ? 'Wears a random saved set before every battle' : 'Save at least two sets to shuffle between them'}</small></span><i class="c25-tg"></i></button>` : '';
+      $('[data-grid]').innerHTML = `<div class="c25-sets"><p class="c25-shint">Save your whole look and switch with one tap: frame, title, pose, win screen, intro, attack colour, and every crate's theme and card back.</p>${shuf}${sets().map(card).join('')}</div>`;
       $('[data-grid]').querySelectorAll('svg').forEach((v) => { try { if (v.pauseAnimations) { v.pauseAnimations(); v.setCurrentTime(1.2); } } catch (e) { /* not animated */ } });
       R.querySelector('.c25-bar').style.display = 'none'; $('[data-det]').style.display = 'none';
       counts();
@@ -399,6 +416,8 @@
       const cm = e.target.closest('[data-cmc]'); if (cm) { kind = 'cb'; crate = cm.dataset.cmc; sel = null; paint(); grid(); detail(null); return; }
       const ws = e.target.closest('[data-wset]'); if (ws) { const x = sets()[+ws.dataset.wset]; if (!x) return; const missed = wearLook(x.look); toast(missed ? `${x.n} is on. ${missed} piece${missed > 1 ? 's' : ''} you no longer own ${missed > 1 ? 'were' : 'was'} swapped for the default.` : `${x.n} is on.`); paint(); grid(); return; }
       const ss = e.target.closest('[data-sset]'); if (ss) { const i = +ss.dataset.sset; if (i >= setSlots()) return; const old = sets()[i]; const go = () => { sets()[i] = { n: old ? old.n : `Set ${i + 1}`, look: lookNow(), at: Date.now() }; save(); toast(old ? `${old.n} saved over with your current look.` : `Saved to slot ${i + 1}.`); grid(); }; if (old) ask(`Save your current look over ${old.n}?`, 'Save over', go); else go(); return; }
+      const sb = e.target.closest('[data-sbg]'); if (sb) { const [i, id] = sb.dataset.sbg.split(':'); const x = sets()[+i]; if (!x) return; x.bg = x.bg === id ? null : id; save(); grid(); return; }
+      if (e.target.closest('[data-shuf]')) { C().shuf = !C().shuf; save(); toast(C().shuf ? 'Shuffle is on: a random saved set goes on before each battle.' : 'Shuffle is off.'); grid(); return; }
       const rs = e.target.closest('[data-rset]'); if (rs) { const i = +rs.dataset.rset; const x = sets()[i]; if (!x) return; renameSet(i, x); return; }
       const it = e.target.closest('.c25-it');
       if (it) { const x = items(kind).find((y) => y.id === it.dataset.id); if (!x) return; sel = x.id; if (C().seen[kind + ':' + x.id] === 0) { C().seen[kind + ':' + x.id] = 1; save(); } grid(); pop(x); return; }
@@ -613,7 +632,13 @@
   // Casino wins feed the casino titles.
   // The crate opening asks which back each crate wears (js/ui.js packReveal).
   if (UI.hooks) UI.hooks.cardBack = (packId) => { try { if (!on() || !packId || !root.CB25) return ''; const id = C().cbk[packId]; const x = CBACKS.find((y) => y.id === id); if (!x || id === 'default' || !ownsItem('cb', x)) return ''; return root.CB25.svg(id); } catch (e) { return ''; } };
-  root.Cos25 = { SET_LV, setSlots, sets, lookNow, wearLook, ready, open, sync, tour, titleScene, titleHtml, TITLES, TIERS, POSES, WINS, PACKS, INTROS, CBACKS, eq, ownsItem, C: () => C(), save };
+  // Shuffle: wear a random saved set as each battle starts (tutorial battles keep your look).
+  if (root.BattleUI && root.BattleUI.start && !root.BattleUI.start.__c26) {
+    const st = root.BattleUI.start.bind(root.BattleUI);
+    root.BattleUI.start = function (params) { if (!params || params.type !== 'tutorial') shuffle(); return st(params); };
+    root.BattleUI.start.__c26 = true;
+  }
+  root.Cos25 = { SET_BG, shuffle, SET_LV, setSlots, sets, lookNow, wearLook, ready, open, sync, tour, titleScene, titleHtml, TITLES, TIERS, POSES, WINS, PACKS, INTROS, CBACKS, eq, ownsItem, C: () => C(), save };
   if (HN()) HN().titleHtml = titleHtml;
   // The HoloNet loads later on most devices: hook in once it's there.
   let tries = 0;
