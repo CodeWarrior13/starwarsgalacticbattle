@@ -428,7 +428,17 @@
       const esc = root.UI.esc;
       const LABEL = { NEW: 'New', IMPROVED: 'Improved', BALANCE: 'Balance', FIXED: 'Fixed' };
       const ICON = { NEW: '✦', IMPROVED: '▲', BALANCE: '⚖', FIXED: '✚' };
-      const glow = (t) => esc(t).replace(/(?<![#\d])(\d+(?:[.,]\d+)*(?:%|×|★)?)/g, '<b class="lbl-num">$1</b>');
+      // Only real amounts glow. Names (HK-47, K-2SO, R2-D2), dates (November 23), times,
+      // versions (2.5) and ordinals stay plain text.
+      const MONTH = /(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\.?\s+$/i;
+      const glow = (t) => esc(t).replace(/(\d+(?:[.,]\d+)*)(%|×|★)?/g, (m, n, unit, i, str) => {
+        const prev = str[i - 1] || ''; const next = str[i + m.length] || '';
+        if (/[A-Za-z#\d.\-:/]/.test(prev) || /[A-Za-z\-:/]/.test(next)) return m;
+        if (MONTH.test(str.slice(Math.max(0, i - 12), i))) return m;
+        if (!unit && /\.\d/.test(n) && /(?:update|version|v)\s*$/i.test(str.slice(Math.max(0, i - 10), i))) return m;
+        if (!unit && /^(?:19|20)\d\d$/.test(n)) return m;
+        return `<b class="lbl-num">${m}</b>`;
+      });
       return `<ul class="ul-items">${items.map((line, k) => {
         const [tag, text] = line.includes('|') ? line.split('|') : ['NEW', line];
         return `<li class="ul-item t-${tag.toLowerCase()}" style="--k:${k}"><span class="ul-tag">${themed ? `<i>${ICON[tag] || '✦'}</i>` : ''}${LABEL[tag] || tag}</span><span class="ul-text">${themed ? glow(text) : esc(text)}</span></li>`;
@@ -439,13 +449,28 @@
     // reaches the screen, and section headers draw their line and wake their
     // little animation. A bar at the top shows how far down you are.
     animate(scroller) {
-      const box = scroller.querySelector('.lbl');
-      if (!box) return;
-      box.classList.add('anim');
-      const io = 'IntersectionObserver' in root ? new IntersectionObserver((list) => {
+      const boxes = scroller.querySelectorAll('.lbl');
+      if (!boxes.length || scroller.dataset.lblAnim) return;
+      scroller.dataset.lblAnim = '1';
+      const hasIO = 'IntersectionObserver' in root;
+      const io = hasIO ? new IntersectionObserver((list) => {
         for (const e of list) if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
       }, { root: scroller, threshold: 0.12 }) : null;
-      box.querySelectorAll('.ul-item, .lbl-sec h3').forEach((n) => (io ? io.observe(n) : n.classList.add('in')));
+      // Little looping decorations only play while their part of the log is on screen.
+      const live = hasIO ? new IntersectionObserver((list) => {
+        for (const e of list) e.target.classList.toggle('live', e.isIntersecting);
+      }, { root: scroller, rootMargin: '40px 0px' }) : null;
+      boxes.forEach((box) => {
+        box.classList.add('anim');
+        box.querySelectorAll('.ul-item, .lbl-sec h3').forEach((n) => (io ? io.observe(n) : n.classList.add('in')));
+        box.querySelectorAll('.lbl-hero, .lbl-sec').forEach((n) => (live ? live.observe(n) : n.classList.add('live')));
+      });
+      // While the finger is moving, everything decorative holds still so scrolling stays smooth.
+      let idle = 0;
+      scroller.addEventListener('scroll', () => {
+        if (!idle) scroller.classList.add('lbl-busy'); else clearTimeout(idle);
+        idle = setTimeout(() => { idle = 0; scroller.classList.remove('lbl-busy'); }, 160);
+      }, { passive: true });
     },
 
     entryHtml(u, open) {
@@ -503,7 +528,7 @@
       // fills the panel, and the others are a scroll away.
       const list = m.root.querySelector('.ul-list');
       this.paintWorlds(m.root);
-      m.root.querySelectorAll('.ul-entry.th-liberation, .ul-entry.th-cosmetic').forEach(() => this.animate(list));
+      if (m.root.querySelector('.ul-entry.th-liberation, .ul-entry.th-cosmetic')) this.animate(list);
       m.root.querySelectorAll('.ul-entry').forEach((d) => d.addEventListener('toggle', () => {
         if (!d.open) return;
         m.root.querySelectorAll('.ul-entry[open]').forEach((o) => { if (o !== d) o.open = false; });

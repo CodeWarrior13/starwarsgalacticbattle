@@ -4060,3 +4060,14 @@ body.perf-on .cos-bulbs i, body.perf-on .cos-signs .vk, body.perf-on .lbl-title.
 .st5 .set-head > .swi { animation: st5-gear .9s cubic-bezier(.2, 1.25, .4, 1); }
 @keyframes st5-gear { from { transform: rotate(-90deg); } to { transform: none; } }
 @media (prefers-reduced-motion: reduce) { .st5 .set-head > .swi { animation: none; } }
+
+/* Update log performance: decorations play only on screen and hold still mid-scroll; no blur behind the log. */
+.lbl .lbl-deco b, .lbl .lbl-deco b::after, .lbl .cos-bulbs i, .lbl .cos-signs .vk { animation-play-state: paused; }
+.lbl .live .lbl-deco b, .lbl .live .lbl-deco b::after, .lbl .lbl-hero.live .cos-bulbs i, .lbl .lbl-hero.live .cos-signs .vk { animation-play-state: running; }
+.lbl-busy .lbl .lbl-deco b, .lbl-busy .lbl .lbl-deco b::after, .lbl-busy .lbl .cos-bulbs i, .lbl-busy .lbl .cos-signs .vk, .lbl-busy .lbl-more { animation-play-state: paused !important; }
+.lbl .cos-bulbs i { box-shadow: none; }
+.lbl .lbl-hero.live .cos-bulbs i { box-shadow: 0 0 6px #ffd23f; }
+.lbl-num { text-shadow: none; }
+.lbl .lbl-sec, .lbl .lbl-hero { contain: layout paint; }
+.modal-backdrop:has(> .update-modal) { backdrop-filter: none; -webkit-backdrop-filter: none; background: rgba(3, 4, 8, 0.9); }
+.modal.update-modal .ul-list, .modal.update-modal.th-cosmetic, .modal.update-modal.th-liberation { will-change: scroll-position; }
