@@ -207,18 +207,18 @@
     return { fr: eq.fr(), ti: ti && ti.id ? { id: ti.id, t: ti.t } : null, po: c.eq.po || null, wi: eq.wi(), in: eq.in(), co: colNow(),
       pk: Object.fromEntries(CRATES.map(([id]) => [id, eq.pa(id)])), cbk: Object.fromEntries(CBCRATES().map(([id]) => [id, eq.cb(id)])) };
   }
-  // Puts a saved look back on. Only pieces you still own are worn; the rest stay as they are.
+  // Puts a saved look back on. A piece you no longer own falls back to the default one, so the set is always complete.
   function wearLook(L) {
     const c = C(); let missed = 0;
     const own = (kind, list, id) => { const x = list.find((y) => y.id === id); return !!x && (x.id === 'default' || ownsItem(kind, x)); };
-    if (L.fr) { if (frames().includes(L.fr)) HN().cos25.wear(L.fr); else missed++; }
-    if (L.ti) { if (!wearTitle(L.ti.id, L.ti.t)) missed++; } else { HN().cos25.prof().ti = null; HN().cos25.publish(); }
-    if (L.po) { if (POSES.some((x) => x.id === L.po && ownsItem('po', x))) c.eq.po = L.po; else missed++; } else delete c.eq.po;
-    if (L.wi) { if (L.wi === 'medal' || own('wi', WINS, L.wi)) c.eq.wi = L.wi; else missed++; }
-    if (L.in) { if (L.in === 'vs' || own('in', INTROS, L.in)) c.eq.in = L.in; else missed++; }
-    if (L.co && root.Col25) { if (root.Col25.wear(L.co)) root.Col25.outline(); else missed++; }
-    for (const [cid, id] of Object.entries(L.pk || {})) { if (id === 'default' || own('pa', PACKS, id)) c.pk[cid] = id; else missed++; }
-    for (const [cid, id] of Object.entries(L.cbk || {})) { if (id === 'default' || own('cb', CBACKS, id)) c.cbk[cid] = id; else missed++; }
+    if (L.fr) { if (frames().includes(L.fr)) HN().cos25.wear(L.fr); else { missed++; HN().cos25.wear('recruit'); } }
+    if (L.ti) { if (!wearTitle(L.ti.id, L.ti.t)) { missed++; HN().cos25.prof().ti = null; HN().cos25.publish(); } } else { HN().cos25.prof().ti = null; HN().cos25.publish(); }
+    if (L.po) { if (POSES.some((x) => x.id === L.po && ownsItem('po', x))) c.eq.po = L.po; else { missed++; delete c.eq.po; } } else delete c.eq.po;
+    if (L.wi) { if (L.wi === 'medal' || own('wi', WINS, L.wi)) c.eq.wi = L.wi; else { missed++; c.eq.wi = 'medal'; } }
+    if (L.in) { if (L.in === 'vs' || own('in', INTROS, L.in)) c.eq.in = L.in; else { missed++; c.eq.in = 'vs'; } }
+    if (L.co && root.Col25) { if (root.Col25.wear(L.co)) root.Col25.outline(); else { missed++; root.Col25.wear('default'); root.Col25.outline(); } }
+    for (const [cid, id] of Object.entries(L.pk || {})) { if (id === 'default' || own('pa', PACKS, id)) c.pk[cid] = id; else { missed++; c.pk[cid] = 'default'; } }
+    for (const [cid, id] of Object.entries(L.cbk || {})) { if (id === 'default' || own('cb', CBACKS, id)) c.cbk[cid] = id; else { missed++; c.cbk[cid] = 'default'; } }
     if (L.wi && L.wi.startsWith('lib_') && root.Lib25) root.Lib25.load(L.wi.slice(4));
     if (L.in && L.in !== 'vs' && root.Lib25) root.Lib25.load(L.in);
     save();
@@ -397,7 +397,7 @@
       const f = e.target.closest('[data-cf]'); if (f) { filt = f.dataset.cf; grid(); return; }
       const cc = e.target.closest('[data-cc]'); if (cc) { crate = cc.dataset.cc; sel = null; paint(); grid(); detail(null); return; }
       const cm = e.target.closest('[data-cmc]'); if (cm) { kind = 'cb'; crate = cm.dataset.cmc; sel = null; paint(); grid(); detail(null); return; }
-      const ws = e.target.closest('[data-wset]'); if (ws) { const x = sets()[+ws.dataset.wset]; if (!x) return; const missed = wearLook(x.look); toast(missed ? `${x.n} is on. ${missed} piece${missed > 1 ? 's' : ''} you no longer own stayed as ${missed > 1 ? 'they were' : 'it was'}.` : `${x.n} is on.`); paint(); grid(); return; }
+      const ws = e.target.closest('[data-wset]'); if (ws) { const x = sets()[+ws.dataset.wset]; if (!x) return; const missed = wearLook(x.look); toast(missed ? `${x.n} is on. ${missed} piece${missed > 1 ? 's' : ''} you no longer own ${missed > 1 ? 'were' : 'was'} swapped for the default.` : `${x.n} is on.`); paint(); grid(); return; }
       const ss = e.target.closest('[data-sset]'); if (ss) { const i = +ss.dataset.sset; if (i >= setSlots()) return; const old = sets()[i]; const go = () => { sets()[i] = { n: old ? old.n : `Set ${i + 1}`, look: lookNow(), at: Date.now() }; save(); toast(old ? `${old.n} saved over with your current look.` : `Saved to slot ${i + 1}.`); grid(); }; if (old) ask(`Save your current look over ${old.n}?`, 'Save over', go); else go(); return; }
       const rs = e.target.closest('[data-rset]'); if (rs) { const i = +rs.dataset.rset; const x = sets()[i]; if (!x) return; renameSet(i, x); return; }
       const it = e.target.closest('.c25-it');
