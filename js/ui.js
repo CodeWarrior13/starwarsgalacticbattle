@@ -109,10 +109,23 @@
     setTimeout(() => t.remove(), opts.ms || (opts.onTap ? 6000 : 2700));
   }
 
+  // Window flags for the stylesheet (cheaper than page-wide :has() rules): which window is on top,
+  // which sit underneath, and whether a Cosmetics or shop window is open. Kept in step by watching #modal-root,
+  // so a window removed any way at all clears its flags.
+  let flagsOn = false;
+  const syncFlags = () => {
+    const mr = document.getElementById('modal-root'); if (!mr) return;
+    const bds = [...mr.children].filter((n) => n.classList && n.classList.contains('modal-backdrop'));
+    let c25 = false;
+    bds.forEach((b, i) => { const isC = !!b.querySelector('.c25'); if (isC) c25 = true; b.classList.toggle('bd-c25', isC); b.classList.toggle('bd-log', !!b.querySelector('.update-modal')); b.classList.toggle('bd-under', i < bds.length - 1); });
+    document.body.classList.toggle('c25-open', c25);
+  };
+  const watchFlags = () => { if (flagsOn) return; const mr = document.getElementById('modal-root'); if (!mr) return; flagsOn = true; new MutationObserver(syncFlags).observe(mr, { childList: true }); };
   function openModal(html, opts = {}) {
+    watchFlags();
     const backdrop = el(`<div class="modal-backdrop"><div class="modal ${opts.cls || ''} ${opts.small ? 'small' : ''}" role="dialog" aria-modal="true">${html}</div></div>`);
     const close = () => {
-      backdrop.remove();
+      backdrop.remove(); syncFlags();
       document.removeEventListener('keydown', onKey);
       if (opts.onClose) opts.onClose();
     };
@@ -125,8 +138,9 @@
     });
     document.addEventListener('keydown', onKey);
     $('#modal-root').appendChild(backdrop);
+    syncFlags();
     const first = backdrop.querySelector('[data-autofocus]') || backdrop.querySelector('button');
-    if (first) first.focus({ preventScroll: true });
+    if (first) requestAnimationFrame(() => { if (first.isConnected) first.focus({ preventScroll: true }); });
     return { root: backdrop, close };
   }
 

@@ -4069,12 +4069,13 @@ body.perf-on .cos-bulbs i, body.perf-on .cos-signs .vk, body.perf-on .lbl-title.
 .lbl .lbl-hero.live .cos-bulbs i { box-shadow: 0 0 6px #ffd23f; }
 .lbl-num { text-shadow: none; }
 .lbl .lbl-sec, .lbl .lbl-hero { contain: layout paint; }
-.modal-backdrop:has(> .update-modal) { backdrop-filter: none; -webkit-backdrop-filter: none; background: rgba(3, 4, 8, 0.9); }
+.modal-backdrop.bd-log { backdrop-filter: none; -webkit-backdrop-filter: none; background: rgba(3, 4, 8, 0.9); }
 .modal.update-modal .ul-list, .modal.update-modal.th-cosmetic, .modal.update-modal.th-liberation { will-change: scroll-position; }
 /* Cosmetics (profile) and stacked windows: a solid dim instead of a live blur, so the screen behind isn't re-blurred every frame. */
-.modal-backdrop:has(.c25), .modal-backdrop + .modal-backdrop { backdrop-filter: none; -webkit-backdrop-filter: none; background: rgba(3, 4, 8, 0.82); }
-body:has(#modal-root .c25[aria-label="Cosmetics"]) > :is(.starfield, .topbar, #screen) { visibility: hidden; }
-.modal-backdrop:has(> .modal .c25[aria-label="Cosmetics"]) { background: rgba(3, 4, 8, 0.96); }
+.modal-backdrop.bd-c25, .modal-backdrop + .modal-backdrop { backdrop-filter: none; -webkit-backdrop-filter: none; background: rgba(3, 4, 8, 0.82); }
+body.c25-open > :is(.starfield, .topbar, #screen) { visibility: hidden; }
+body.c25-open #screen *, body.c25-open #screen *::before, body.c25-open #screen *::after { animation-play-state: paused !important; }
+.modal-backdrop.bd-c25 { background: rgba(3, 4, 8, 0.96); }
 .c25-rest .c25-it:not(:hover):not(:focus-visible):not(.sel) *, .c25-rest .c25-it:not(:hover):not(:focus-visible):not(.sel) *::before, .c25-rest .c25-it:not(:hover):not(:focus-visible):not(.sel) *::after { animation-play-state: paused !important; }
 .c25-grid .c25-it { contain: layout paint; }
 .lu25-it.lu25-rest:not(:hover) *, .lu25-it.lu25-rest:not(:hover) *::before, .lu25-it.lu25-rest:not(:hover) *::after { animation-play-state: paused !important; }
@@ -4083,3 +4084,23 @@ body:has(#modal-root .c25[aria-label="Cosmetics"]) > :is(.starfield, .topbar, #s
 .s25-pane .section-head { flex-wrap: wrap; row-gap: 2px; }
 .s25-pane .section-head > * { min-width: 0; white-space: normal; overflow-wrap: anywhere; }
 .daily-card { overflow-x: clip; }
+
+/* Cosmetics, made light: thumbnails are still pictures (tap one to see it move), and whatever sits under a pop-up stops drawing. */
+.c25-grid .c25-it *, .c25-grid .c25-it *::before, .c25-grid .c25-it *::after { animation-delay: -1.2s !important; animation-play-state: paused !important; }
+.modal-backdrop.bd-c25.bd-under > .modal { visibility: hidden; }
+.modal-backdrop.bd-c25.bd-under > .modal *, .modal-backdrop.bd-c25.bd-under > .modal *::before, .modal-backdrop.bd-c25.bd-under > .modal *::after { animation-play-state: paused !important; }
+.modal-backdrop.bd-c25 + .modal-backdrop { background: rgba(3, 4, 8, 0.96); }
+/* Nothing in Cosmetics may push it wider than the screen: crate pickers scroll inside themselves. */
+.c25, .c25 > * { min-width: 0; max-width: 100%; }
+.c25-bar > * { min-width: 0; max-width: 100%; }
+.c25-seg { overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; }
+.c25-seg::-webkit-scrollbar { display: none; }
+.c25-seg > button { flex: none; }
+/* Battle intros are wide pictures: keep their shape on every screen instead of a fixed tall box. */
+.fx25-intro.l5in { height: auto !important; aspect-ratio: 2 / 1; max-height: min(78vh, 560px); width: 100%; }
+/* Small battle cards: the DEFEATED stamp shrinks to fit instead of spilling onto its neighbours. */
+.bcard.ko { overflow: hidden; }
+.bcard.ko::after { letter-spacing: .08em; font-size: clamp(7px, 2.2vw, 11px); white-space: nowrap; overflow: hidden; }
+/* No blue/grey flash box when tapping anything (buttons, tabs, cards, areas); keyboard users still get a focus ring. */
+html, body, button, a, label, summary, [role="button"], [role="tab"], [data-ck], [data-hn], .c25-it, .lu25-it, .ucard { -webkit-tap-highlight-color: transparent; }
+.c25 button:focus:not(:focus-visible), .s25 button:focus:not(:focus-visible) { outline: none; }

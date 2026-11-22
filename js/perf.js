@@ -177,6 +177,8 @@
     document.addEventListener('animationstart', (e) => {
       const t = e.target;
       if (!t || !t.getAnimations) return;
+      // Still thumbnails (Cosmetics grid, resting shop pieces) are paused: nothing to step.
+      if (t.closest && t.closest('.c25-grid, .lu25-rest')) return;
       for (const a of t.getAnimations()) {
         if (seen.has(a) || a.animationName !== e.animationName) continue;
         seen.add(a);
@@ -202,7 +204,9 @@
       queued = false;
       const vw = innerWidth, vh = innerHeight;
       let covered = false;
-      if (!document.body.classList.contains('in-battle')) {
+      // An open window settles it without measuring anything.
+      if (!document.body.classList.contains('in-battle') && document.querySelector('#modal-root .modal-backdrop')) covered = true;
+      else if (!document.body.classList.contains('in-battle')) {
         for (const n of document.body.children) {
           if (n.id === 'screen' || [...n.classList].some((c) => KEEP.has(c)) || n.tagName === 'SCRIPT' || n.tagName === 'STYLE') continue;
           const r = n.getBoundingClientRect();

@@ -1651,7 +1651,8 @@
       s.style.left = c.x + 'px';
       s.style.top = c.y + 'px';
       this.fx.appendChild(s);
-      s.animate([{ transform: 'translate(-50%,-50%) scale(4)', opacity: 0 }, { transform: 'translate(-50%,-50%) scale(1)', opacity: 1, offset: 0.35 }, { transform: 'translate(-50%,-50%) scale(1.1)', opacity: 1, offset: 0.7 }, { transform: 'translate(-50%,-50%) scale(1.4)', opacity: 0 }], { duration: 1300 });
+      s.animate([{ transform: 'translate(-50%,-50%) scale(4)', opacity: 0 }, { transform: 'translate(-50%,-50%) scale(1)', opacity: 1, offset: 0.35 }, { transform: 'translate(-50%,-50%) scale(1.1)', opacity: 1, offset: 0.7 }, { transform: 'translate(-50%,-50%) scale(1.4)', opacity: 0 }], { duration: 1300, fill: 'forwards' }).onfinish = () => s.remove();
+      setTimeout(() => s.remove(), 1600);
       await this.wait(450);
       this.wave(c, '#8fd3ff', 8);
       this.env.push(c.x, c.y, 3);

@@ -239,7 +239,9 @@
     const $ = (s) => R.querySelector(s);
     const paint = (pv) => {
       const fr = pv && pv.kind === 'fr' ? pv.x.id : eq.fr();
-      $('[data-av]').innerHTML = HN().cos25.avatar({ ...me, frame: fr }, 'lg');
+      // Only redraw the parts that changed (the framed picture is the expensive one).
+      const set = (sel, html) => { const n = $(sel); if (n && n.__h !== html) { n.innerHTML = html; n.__h = html; } };
+      if ($('[data-av]').__fr !== fr) { $('[data-av]').innerHTML = HN().cos25.avatar({ ...me, frame: fr }, 'lg'); $('[data-av]').__fr = fr; }
       const ti = pv && pv.kind === 'ti' ? { n: pv.x.n, t: pv.tier || pv.x.tier } : eq.ti();
       $('[data-ti]').innerHTML = ti ? titleHtml(ti) : '<span class="muted small">No title</span>';
       const po = POSES.find((x) => x.id === (pv && pv.kind === 'po' ? pv.x.id : eq.po()));
@@ -248,7 +250,7 @@
       $('[data-wi]').textContent = wi.n + (pv && pv.kind === 'wi' && !pv.x.own ? ' (preview)' : '');
       $('[data-pa]').textContent = CRATES.map(([id, n]) => n + ': ' + (PACKS.find((x) => x.id === (pv && pv.kind === 'pa' && id === crate ? pv.x.id : eq.pa(id))) || PACKS[0]).n).join(' · ');
       // Card backs as pictures: each crate next to the back it wears (tap one to jump to that crate).
-      const cbd = $('[data-cb]'); if (cbd) cbd.innerHTML = '<span class="c25-cms">' + CBCRATES().map(([id, n]) => { const b = CBACKS.find((x) => x.id === (pv && pv.kind === 'cb' && id === crate ? pv.x.id : eq.cb(id))) || CBACKS[0]; return `<button type="button" class="c25-cm${kind === 'cb' && id === crate ? ' on' : ''}" data-cmc="${esc(id)}" title="${esc(n)}: ${esc(b.n)}" aria-label="${esc(n)}: ${esc(b.n)}"><span class="c25-cmc">${crateIcon(id)}</span><span class="c25-cma" aria-hidden="true">›</span><span class="c25-cmb">${cbArt(b.id)}</span></button>`; }).join('') + '</span>';
+      const cbd = $('[data-cb]'); if (cbd) set('[data-cb]', '<span class="c25-cms">' + CBCRATES().map(([id, n]) => { const b = CBACKS.find((x) => x.id === (pv && pv.kind === 'cb' && id === crate ? pv.x.id : eq.cb(id))) || CBACKS[0]; return `<button type="button" class="c25-cm${kind === 'cb' && id === crate ? ' on' : ''}" data-cmc="${esc(id)}" title="${esc(n)}: ${esc(b.n)}" aria-label="${esc(n)}: ${esc(b.n)}"><span class="c25-cmc">${crateIcon(id)}</span><span class="c25-cma" aria-hidden="true">›</span><span class="c25-cmb">${cbArt(b.id)}</span></button>`; }).join('') + '</span>');
       const card = $('[data-card]'); card.classList.remove('pop'); void card.offsetWidth; card.classList.add('pop');
     };
     const swatch = (k, x) => {
@@ -271,7 +273,7 @@
       else big = '<div class="c25-try"></div>';
       let tiers = '';
       if (k === 'ti' && x.own) { const have = tiersOf(x.id); tiers = x.t.fix ? `<div class="c25-tiers"><span class="c25-tier on">${titleHtml({ n: TIER[x.t.fix][1], t: x.t.fix })}<small>Fixed colour</small></span></div>` : '<div class="c25-tiers">' + TIERS.map(([tid, tn]) => have.includes(tid) ? `<button type="button" class="c25-tier" data-ptier="${tid}">${titleHtml({ n: tn, t: tid })}</button>` : `<span class="c25-tier lockd">${titleHtml({ n: tn, t: tid })}<small>Luthen's Gallery</small></span>`).join('') + '</div>'; }
-      const pm = UI.openModal(`<div class="c25 c25-pop"><h2>${esc(x.n)}</h2>${big}<p class="c25-pst">${x.own ? (isEq ? 'Equipped' : 'You own this') : 'Locked · ' + esc(x.how) + (x.p ? ' (' + fmt(x.p.have) + ' / ' + fmt(x.p.need) + ')' : '')}</p>${tiers}<div class="c25-pbtns"><button type="button" class="c25-tbtn" data-ptry>Try it on</button>${x.own ? `<button type="button" class="c25-btn" data-peq ${isEq && k !== 'ti' ? 'disabled' : ''}>${isEq && k !== 'ti' ? 'Equipped' : 'Equip'}</button>` : k === 'co' && x.cost ? `<button type="button" class="c25-btn" data-pbuy>Buy · ${fmt(x.cost.beskar)} Beskar</button>` : ''}<button type="button" class="c25-ghost" data-pback>Back to mine</button></div></div>`, { wide: true });
+      const pm = UI.openModal(`<div class="c25 c25-pop"><h2>${esc(x.n)}</h2>${big}<p class="c25-pst">${x.own ? (isEq ? 'Equipped' : 'You own this') : 'Locked · ' + esc(x.how) + (x.p ? ' (' + fmt(x.p.have) + ' / ' + fmt(x.p.need) + ')' : '')}</p>${tiers}<div class="c25-pbtns"><button type="button" class="c25-tbtn" data-ptry>Try it on</button>${x.own ? `<button type="button" class="c25-btn" data-peq ${isEq && k !== 'ti' ? 'disabled' : ''}>${isEq && k !== 'ti' ? 'Equipped' : 'Equip'}</button>${PER(k) ? `<button type="button" class="c25-btn" data-peqall>${k === 'cb' ? 'Equip on all' : 'Equip on all crates'}</button>` : ''}` : k === 'co' && x.cost ? `<button type="button" class="c25-btn" data-pbuy>Buy · ${fmt(x.cost.beskar)} Beskar</button>` : ''}<button type="button" class="c25-ghost" data-pback>Back to mine</button></div></div>`, { wide: true });
       const Rp = pm.root;
       let tier = x.tier;
       const show = () => { if (['po', 'wi', 'pa', 'in'].includes(k) && root.Cos25FX) root.Cos25FX.preview(k, x.id, Rp); };
@@ -283,6 +285,12 @@
         if (e.target.closest('[data-ptry]') && k === 'cb') { const o = Rp.querySelector('.c25-cbd'); if (o) o.outerHTML = cbDemo(x.id); return; }
         if (e.target.closest('[data-ptry]')) { if (['po', 'wi', 'pa', 'in'].includes(k)) { const old = Rp.querySelector('.fx25-prev'); if (old) old.outerHTML = '<div class="c25-try"></div>'; show(); } else { paint({ kind: k, x: { ...x, tier } }); pm.close(); } return; }
         if (e.target.closest('[data-pback]')) { pm.close(); sel = null; paint(); grid(); return; }
+        if (e.target.closest('[data-peqall]') && PER(k)) {
+          // One look for every crate (and, for card backs, the HoloNet pucks too).
+          const all = k === 'cb' ? CBCRATES() : CRATES;
+          all.forEach(([cid]) => setFor(k, cid, x.id));
+          save(); toast(`${x.n} equipped on all ${k === 'cb' ? 'crates and pucks' : 'crates'}.`); pm.close(); paint(); grid(); detail(null); return;
+        }
         if (e.target.closest('[data-peq]')) {
           if (k === 'co') { root.Col25.wear(x.id); root.Col25.outline(); } else if (k === 'fr') HN().cos25.wear(x.id); else if (k === 'ti') wearTitle(x.id, tiersOf(x.id).includes(tier) ? tier : tiersOf(x.id)[0]); else if (k === 'po') C().eq.po = x.id; else if (k === 'wi') C().eq.wi = x.id; else if (k === 'in') C().eq.in = x.id; else if (PER(k)) setFor(k, crate, x.id);
           if (k === 'wi' && x.id.startsWith('lib_') && root.Lib25) root.Lib25.load(x.id.slice(4)); if (k === 'in' && root.Lib25 && x.id !== 'vs') root.Lib25.load(x.id);
@@ -300,6 +308,8 @@
       if (kind === 'pa' && crate === 'puck') crate = CRATES[0][0];
       const curPa = PER(kind) ? eqFor(kind, crate) : null;
       $('[data-grid]').innerHTML = L.length ? L.map((x) => { const isEq = PER(kind) ? curPa === x.id : x.eq; return `<button type="button" class="c25-it ${x.own ? 'own' : 'lock'}${isEq ? ' eq' : ''}${sel === x.id ? ' sel' : ''}" data-id="${esc(x.id)}">${isNew(kind, x) ? '<u class="c25-dot" aria-label="New"></u>' : ''}${x.own ? '' : '<span class="c25-lk" aria-hidden="true"></span>'}${swatch(kind, x)}${kind !== 'ti' ? `<b>${esc(x.n)}</b>` : ''}<small>${isEq ? 'Equipped' : x.own ? esc(x.sub || 'Owned') : esc(x.how)}</small>${x.p ? `<span class="c25-bar2"><i style="width:${Math.round((x.p.have / x.p.need) * 100)}%"></i></span><small>${fmt(x.p.have)} / ${fmt(x.p.need)}</small>` : ''}</button>`; }).join('') : '<p class="muted">Nothing here yet.</p>';
+      // Still pictures: SVG-built motion in thumbnails is frozen on a good frame too.
+      $('[data-grid]').querySelectorAll('svg').forEach((v) => { try { if (v.pauseAnimations) { v.pauseAnimations(); v.setCurrentTime(1.2); } } catch (e) { /* not an animated svg */ } });
       R.querySelectorAll('[data-cf]').forEach((b) => b.classList.toggle('on', b.dataset.cf === filt));
       R.querySelectorAll('[data-cc]').forEach((b) => b.classList.toggle('on', b.dataset.cc === crate));
       $('[data-crates]').hidden = !PER(kind);
