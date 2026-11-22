@@ -291,7 +291,11 @@
       });
     };
     const counts = () => R.querySelectorAll('[data-ck]').forEach((b) => { const L = items(b.dataset.ck); b.querySelector('i').textContent = L.filter((x) => x.own).length + '/' + L.length; b.querySelector('.c25-dot').hidden = !L.some((x) => isNew(b.dataset.ck, x)); b.classList.toggle('on', b.dataset.ck === kind); b.setAttribute('aria-selected', b.dataset.ck === kind); });
+    // Thumbnails play when a tab opens, then hold still (hover or select one to play it again).
+    let restT = 0;
+    const rest = () => { const g = $('[data-grid]'); if (!g) return; g.classList.remove('c25-rest'); clearTimeout(restT); restT = setTimeout(() => { if (g.isConnected) g.classList.add('c25-rest'); }, 3500); };
     const grid = () => {
+      rest();
       const L = items(kind).filter((x) => filt === 'all' || (filt === 'owned' ? x.own : !x.own));
       if (kind === 'pa' && crate === 'puck') crate = CRATES[0][0];
       const curPa = PER(kind) ? eqFor(kind, crate) : null;
@@ -392,7 +396,7 @@
       const cheer = WINS.find((x) => x.id === 'cantina'); const thaw = PACKS.find((x) => x.id === 'carbonite'); const boon = WINS.find((x) => x.id === 'boonta'); const geo = PACKS.find((x) => x.id === 'geode'); const bac = PACKS.find((x) => x.id === 'bacta'); const sar = PACKS.find((x) => x.id === 'sarlacc');
       pane.innerHTML = `<div class="lu25-hero"><div class="lu25-art">${LUTHEN}</div><div class="lu25-copy"><div class="lu25-sign" aria-label="Coruscant gallery"><i></i><span>CORUSCANT</span><i></i></div><h1>Luthen's Gallery</h1><p class="market-sub">Antiquities for the discerning collector. Luthen sells looks, not cards: titles, win screens, crate themes and card backs.</p></div></div>
       <div class="section-head"><h2 class="section-title">Featured</h2><span class="muted">On the plinth this week</span></div><div class="lu25-grid lu25-fg">${card('wi', cheer, { beskar: 1500 }, false, 'Win screen', true)}${card('pa', thaw, { kyber: 230 }, true, 'Crate theme · premium', true)}${card('wi', boon, { beskar: 1500 }, false, 'Win screen · new', true)}${card('pa', geo, { kyber: 230 }, true, 'Crate theme · premium · new', true)}${card('pa', bac, { beskar: 3000 }, false, 'Crate theme · new', true)}${card('pa', sar, { kyber: 230 }, true, 'Crate theme · premium · new', true)}</div>
-      ${(() => { const L = INTROS.filter((x) => x.lib && root.Lib25.BY[x.lib] && !root.Lib25.BY[x.lib].wk); return L.length ? `<div class="section-head"><h2 class="section-title">Battle intros</h2><span class="muted">Play before your live duels · equip in Cosmetics</span></div><div class="lu25-grid lu25-fg">${L.map((x) => card('in', x, x.get, !!x.get.kyber, 'Battle intro' + (x.get.kyber ? ' · premium' : ''), 'NEW')).join('')}</div>` : ''; })()}
+      ${(() => { const L = INTROS.filter((x) => !x.max && x.get && typeof x.get === 'object' && x.lib && root.Lib25.BY[x.lib] && !root.Lib25.BY[x.lib].max && !root.Lib25.BY[x.lib].wk); return L.length ? `<div class="section-head"><h2 class="section-title">Battle intros</h2><span class="muted">Play before your live duels · equip in Cosmetics</span></div><div class="lu25-grid lu25-fg">${L.map((x) => card('in', x, x.get, !!x.get.kyber, 'Battle intro' + (x.get.kyber ? ' · premium' : ''), 'NEW')).join('')}</div>` : ''; })()}
       ${libShelf(c)}
       <div class="section-head"><h2 class="section-title">This week's titles</h2><span class="muted">New titles every Monday</span></div><div class="lu25-grid">${stock().map((t) => card('ti', t, t.cost, !!t.fix && !!t.cost.kyber, t.fix ? 'Profile title · fixed ' + TIERS.find((q) => q[0] === t.fix)[1] : 'Profile title · Silver, upgradable')).join('')}</div>
       ${(() => { const L = CBACKS.filter((x) => x.get && typeof x.get === 'object' && !x.get.ev); return L.length ? `<div class="section-head"><h2 class="section-title">Card backs</h2><span class="muted">Give each crate its own back in Cosmetics</span></div><div class="lu25-grid">${L.map((x) => card('cb', x, x.get, !!x.get.kyber, 'Card back' + (x.get.kyber ? ' · premium' : ''), false)).join('')}</div>` : ''; })()}
