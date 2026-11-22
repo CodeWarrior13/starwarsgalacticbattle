@@ -6713,6 +6713,8 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       ss: seasonNo() * 1e5 + (HN.unplaced && HN.unplaced() ? 0 : Math.max(h.soc.sBest || 0, h.rating)),
       guild: h.guild || null, apply: (!h.guild && h.apply) || null, gp: h.soc.gp, gpw: h.soc.gpw, gpl: h.soc.gpl, don: h.soc.don && h.soc.don.g ? { g: h.soc.don.g, a: h.soc.don.a | 0 } : null, gr: { w: h.soc.gr.w, b: h.soc.gr.b, d: h.soc.gr.d, f: h.soc.gr.f },
     };
+    // 2.6 guild analytics: a 7-day list of points, battles and chats (js/guild26.js).
+    if (HN.a26) { try { body.a26 = HN.a26(); } catch (e) { /* skip */ } }
     // Player collections: what you own, your most-used cards and every badge.
     const PC = root.PlayerCollections;
     if (PC && PC.on()) { body.col = PC.encode(); body.use = PC.encodeUse(); body.ball = allBadges(); }
@@ -7918,6 +7920,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     if (App.current !== 'holonet' || document.querySelector('.modal-backdrop')) return;
     const v = (App.params || {}).view;
     if (!['guild', 'gchat', 'graid', 'guilds'].includes(v)) return;
+    if (v === 'guild' && gtabNow() === 'stats') return; // 2.6 Analytics only redraws when touched
     const now = Date.now();
     const busy = document.activeElement && document.activeElement.matches('.view.hn input, .view.hn select, .view.hn textarea');
     const wait = busy ? 1500 : Math.max(lastTouch + 900 - now, lastLive + 1500 - now);
