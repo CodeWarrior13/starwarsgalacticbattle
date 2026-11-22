@@ -196,13 +196,44 @@
     const t = TMAP[id]; if (!t || !tiersOf(id).includes(tier)) return false;
     HN().cos25.prof().ti = { n: t.n, t: tier, id }; save(); HN().cos25.publish(); return true;
   }
+  // ---------- Equip Sets: save your whole look, wear it again with one tap ----------
+  // Slots open at account levels 35, 45 and 50 (milestones with no reward of their own).
+  const SET_LV = [35, 45, 50];
+  const setSlots = () => SET_LV.filter((lv) => ((Player.state.account || {}).level || 0) >= lv).length;
+  const sets = () => { const c = C(); if (!Array.isArray(c.sets)) c.sets = []; while (c.sets.length < SET_LV.length) c.sets.push(null); return c.sets; };
+  const colNow = () => { try { return root.Col25 ? (root.Col25.B().col || 'default') : null; } catch (e) { return null; } };
+  function lookNow() {
+    const c = C(); const ti = eq.ti();
+    return { fr: eq.fr(), ti: ti && ti.id ? { id: ti.id, t: ti.t } : null, po: c.eq.po || null, wi: eq.wi(), in: eq.in(), co: colNow(),
+      pk: Object.fromEntries(CRATES.map(([id]) => [id, eq.pa(id)])), cbk: Object.fromEntries(CBCRATES().map(([id]) => [id, eq.cb(id)])) };
+  }
+  // Puts a saved look back on. Only pieces you still own are worn; the rest stay as they are.
+  function wearLook(L) {
+    const c = C(); let missed = 0;
+    const own = (kind, list, id) => { const x = list.find((y) => y.id === id); return !!x && (x.id === 'default' || ownsItem(kind, x)); };
+    if (L.fr) { if (frames().includes(L.fr)) HN().cos25.wear(L.fr); else missed++; }
+    if (L.ti) { if (!wearTitle(L.ti.id, L.ti.t)) missed++; } else { HN().cos25.prof().ti = null; HN().cos25.publish(); }
+    if (L.po) { if (POSES.some((x) => x.id === L.po && ownsItem('po', x))) c.eq.po = L.po; else missed++; } else delete c.eq.po;
+    if (L.wi) { if (L.wi === 'medal' || own('wi', WINS, L.wi)) c.eq.wi = L.wi; else missed++; }
+    if (L.in) { if (L.in === 'vs' || own('in', INTROS, L.in)) c.eq.in = L.in; else missed++; }
+    if (L.co && root.Col25) { if (root.Col25.wear(L.co)) root.Col25.outline(); else missed++; }
+    for (const [cid, id] of Object.entries(L.pk || {})) { if (id === 'default' || own('pa', PACKS, id)) c.pk[cid] = id; else missed++; }
+    for (const [cid, id] of Object.entries(L.cbk || {})) { if (id === 'default' || own('cb', CBACKS, id)) c.cbk[cid] = id; else missed++; }
+    if (L.wi && L.wi.startsWith('lib_') && root.Lib25) root.Lib25.load(L.wi.slice(4));
+    if (L.in && L.in !== 'vs' && root.Lib25) root.Lib25.load(L.in);
+    save();
+    return missed;
+  }
+  const sameLook = (a, b) => !!a && !!b && JSON.stringify(a) === JSON.stringify(b);
+  const cleanSetName = (t) => { const v = String(t || '').replace(/[^A-Za-z0-9_ '.-]/g, '').trim().slice(0, 16); return v && (!HN().safe || HN().safe.ok(v)) ? v : ''; };
   // ---------- Cosmetics tab ----------
-  const KINDS = [['fr', 'Frames'], ['ti', 'Titles']].concat(root.Col25 ? [['co', 'Attack colours']] : []).concat([['po', 'Poses'], ['wi', 'Win screens'], ['pa', 'Pack themes']]).concat(CBACKS.length > 1 ? [['cb', 'Card backs']] : []).concat(INTROS.length > 1 ? [['in', 'Intros']] : []);
+  const KINDS = [['set', 'Sets'], ['fr', 'Frames'], ['ti', 'Titles']].concat(root.Col25 ? [['co', 'Attack colours']] : []).concat([['po', 'Poses'], ['wi', 'Win screens'], ['pa', 'Pack themes']]).concat(CBACKS.length > 1 ? [['cb', 'Card backs']] : []).concat(INTROS.length > 1 ? [['in', 'Intros']] : []);
   const PER = (k) => k === 'pa' || k === 'cb';
   const eqFor = (k, crate) => (k === 'cb' ? eq.cb(crate) : eq.pa(crate));
   const setFor = (k, crate, id) => { if (k === 'cb') C().cbk[crate] = id; else C().pk[crate] = id; };
   function items(kind) {
     const c = C();
+    if (kind === 'set') { const n = setSlots(); return sets().map((x, i) => ({ id: 's' + i, n: x ? x.n : 'Empty', own: i < n && !!x })); }
     if (kind === 'co') return root.Col25.items();
     if (kind === 'fr') {
       const own = frames(); const F = HN().cos25.FRAMES;
@@ -225,8 +256,8 @@
     sync();
     const c = C();
     // Anything owned that has never been seen gets a dot; the first visit marks the starting kit as seen.
-    if (!c.seenInit) { for (const [k] of KINDS) for (const x of items(k)) if (x.own) c.seen[k + ':' + x.id] = 1; c.seenInit = 1; save(); }
-    for (const [k] of KINDS) for (const x of items(k)) if (x.own && c.seen[k + ':' + x.id] == null) c.seen[k + ':' + x.id] = 0;
+    if (!c.seenInit) { for (const [k] of KINDS) if (k !== 'set') for (const x of items(k)) if (x.own) c.seen[k + ':' + x.id] = 1; c.seenInit = 1; save(); }
+    for (const [k] of KINDS) if (k !== 'set') for (const x of items(k)) if (x.own && c.seen[k + ':' + x.id] == null) c.seen[k + ':' + x.id] = 0;
     let kind = 'fr', filt = 'all', crate = (CRATES[0] || ['recruit'])[0], sel = null;
     const me = HN().cos25.me();
     const m = UI.openModal(`<div class="c25" role="dialog" aria-label="Cosmetics"><div class="c25-head"><h2>Cosmetics</h2>${root.Badges25 ? '<button type="button" class="btn btn-small" style="margin-left:auto" data-c25bd>Badges</button>' : ''}<button type="button" class="btn btn-small" data-c25x>Close</button></div>
@@ -302,8 +333,30 @@
     // Thumbnails play when a tab opens, then hold still (hover or select one to play it again).
     let restT = 0;
     const rest = () => { const g = $('[data-grid]'); if (!g) return; g.classList.remove('c25-rest'); clearTimeout(restT); restT = setTimeout(() => { if (g.isConnected) g.classList.add('c25-rest'); }, 3500); };
+    // The Sets tab: one card per slot. Still pictures only, like the rest of Cosmetics.
+    const setsGrid = () => {
+      const n = setSlots(); const now = lookNow(); const lv = (Player.state.account || {}).level || 0;
+      const nm = (list, id, dflt) => { const x = list.find((y) => y.id === id); return x ? x.n : dflt; };
+      const chip = (label, val, c) => `<span class="c25-sc" style="--c:${c}"><small>${label}</small><b>${esc(val)}</b></span>`;
+      const card = (x, i) => {
+        if (i >= n) return `<div class="c25-set lock"><span class="c25-snum">${i + 1}</span><div class="c25-slk"><svg class="c25-padlock" viewBox="0 0 24 28" aria-hidden="true"><path d="M7 12V8a5 5 0 0 1 10 0v4" fill="none" stroke="#8aa4b8" stroke-width="2.6" stroke-linecap="round"/><rect x="3" y="12" width="18" height="14" rx="3.5" fill="#8aa4b8"/><circle cx="12" cy="18" r="2" fill="#0e1c2a"/><path d="M12 19v3" stroke="#0e1c2a" stroke-width="2" stroke-linecap="round"/></svg><b>Unlocks at level ${SET_LV[i]}</b><small>You're level ${lv}</small></div></div>`;
+        if (!x) return `<div class="c25-set empty"><span class="c25-snum">${i + 1}</span><p>Empty slot</p><small>Dress up in the other tabs, then save that look here.</small><button type="button" class="c25-btn" data-sset="${i}">Save my look here</button></div>`;
+        const L = x.look; const wearing = sameLook(L, now);
+        const ti = L.ti ? TMAP[L.ti.id] : null; const col = root.Col25 && L.co ? root.Col25.COL[L.co] : null;
+        return `<div class="c25-set${wearing ? ' on' : ''}"><div class="c25-stop"><span class="c25-snum">${i + 1}</span><span class="c25-sav">${HN().cos25.avatar({ ...me, frame: L.fr }, 'md')}</span><div class="c25-snm"><b>${esc(x.n)}</b><small>${wearing ? 'Wearing now' : 'Saved'}</small></div><button type="button" class="c25-sren" data-rset="${i}" aria-label="Rename ${esc(x.n)}">✎</button></div>
+          <div class="c25-schips">${chip('Title', ti ? ti.n + (L.ti.t ? ' · ' + (TIER[L.ti.t] ? TIER[L.ti.t][1] : '') : '') : 'None', ti ? (TCOL[L.ti.t] || '#d8b46a') : '#5a6a7e')}${chip('Pose', L.po ? nm(POSES, L.po, 'Your MVP\'s type') : 'Your MVP\'s type', '#ff8ad8')}${chip('Win screen', nm(WINS, L.wi, 'Medal Ceremony'), '#7ac8ff')}${chip('Intro', nm(INTROS, L.in, 'Lightsaber VS'), '#9affc0')}${col ? chip('Attack colour', col.n || L.co, col.glow || col.c || '#ffd23f') : ''}</div>
+          <div class="c25-srow"><small>Crates</small>${CRATES.map(([cid, cn]) => `<span class="c25-scr" title="${esc(cn)}: ${esc(nm(PACKS, (L.pk || {})[cid], 'Default'))}">${crateIcon(cid)}</span>`).join('')}<small>Backs</small>${CBCRATES().map(([cid, cn]) => `<span class="c25-sbk" title="${esc(cn)}: ${esc(nm(CBACKS, (L.cbk || {})[cid], 'Default'))}">${cbArt((L.cbk || {})[cid] || 'default')}</span>`).join('')}</div>
+          <div class="c25-sbtns">${wearing ? '<button type="button" class="c25-btn" disabled>Wearing</button>' : `<button type="button" class="c25-btn" data-wset="${i}">Wear this set</button>`}<button type="button" class="c25-ghost" data-sset="${i}">Save over</button></div></div>`;
+      };
+      $('[data-grid]').innerHTML = `<div class="c25-sets"><p class="c25-shint">Save your whole look and switch with one tap: frame, title, pose, win screen, intro, attack colour, and every crate's theme and card back.</p>${sets().map(card).join('')}</div>`;
+      $('[data-grid]').querySelectorAll('svg').forEach((v) => { try { if (v.pauseAnimations) { v.pauseAnimations(); v.setCurrentTime(1.2); } } catch (e) { /* not animated */ } });
+      R.querySelector('.c25-bar').style.display = 'none'; $('[data-det]').style.display = 'none';
+      counts();
+    };
     const grid = () => {
       rest();
+      if (kind === 'set') return setsGrid();
+      R.querySelector('.c25-bar').style.display = ''; $('[data-det]').style.display = '';
       const L = items(kind).filter((x) => filt === 'all' || (filt === 'owned' ? x.own : !x.own));
       if (kind === 'pa' && crate === 'puck') crate = CRATES[0][0];
       const curPa = PER(kind) ? eqFor(kind, crate) : null;
@@ -330,6 +383,13 @@
       if (['po', 'wi', 'pa', 'in'].includes(kind) && root.Cos25FX) act = `<button type="button" class="lu25-try" data-tryit>Try it on</button>` + act;
       d.innerHTML = `<b>${esc(x.n)}</b><span>${x.own ? (kind === 'pa' ? 'Owned · applies to the ' + CRATES.find((cc) => cc[0] === crate)[1] : kind === 'ti' ? 'Pick a colour to wear it. More colours are at Luthen\'s Gallery.' : 'Owned') : 'Locked · ' + esc(x.how) + (x.p ? ' (' + fmt(x.p.have) + ' / ' + fmt(x.p.need) + ')' : '')}</span>${act}`;
     };
+    const renameSet = (i, x) => {
+      const pm = UI.openModal(`<div class="c25 c25-pop c25-rn"><h2>Rename set</h2><input class="pf-in" data-rn maxlength="16" value="${esc(x.n)}" aria-label="Set name" autocomplete="off"><p class="muted small" data-rnerr style="margin:0;min-height:1.2em"></p><div class="c25-pbtns"><button type="button" class="c25-btn" data-rnok>Save</button><button type="button" class="c25-ghost" data-rnx>Cancel</button></div></div>`, { small: true });
+      const inp = pm.root.querySelector('[data-rn]'); setTimeout(() => { inp.focus(); inp.select(); }, 60);
+      const ok = () => { const v = cleanSetName(inp.value); if (!v) { pm.root.querySelector('[data-rnerr]').textContent = 'Pick another name (letters and numbers, up to 16).'; return; } x.n = v; save(); pm.close(); grid(); };
+      pm.root.addEventListener('click', (ev) => { if (ev.target.closest('[data-rnok]')) ok(); if (ev.target.closest('[data-rnx]')) pm.close(); });
+      inp.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') ok(); });
+    };
     R.addEventListener('click', (e) => {
       if (e.target.closest('[data-c25x]')) { m.close(); if (back) back(); return; }
       if (e.target.closest('[data-c25bd]')) { root.Badges25.sheet(); return; }
@@ -337,6 +397,9 @@
       const f = e.target.closest('[data-cf]'); if (f) { filt = f.dataset.cf; grid(); return; }
       const cc = e.target.closest('[data-cc]'); if (cc) { crate = cc.dataset.cc; sel = null; paint(); grid(); detail(null); return; }
       const cm = e.target.closest('[data-cmc]'); if (cm) { kind = 'cb'; crate = cm.dataset.cmc; sel = null; paint(); grid(); detail(null); return; }
+      const ws = e.target.closest('[data-wset]'); if (ws) { const x = sets()[+ws.dataset.wset]; if (!x) return; const missed = wearLook(x.look); toast(missed ? `${x.n} is on. ${missed} piece${missed > 1 ? 's' : ''} you no longer own stayed as ${missed > 1 ? 'they were' : 'it was'}.` : `${x.n} is on.`); paint(); grid(); return; }
+      const ss = e.target.closest('[data-sset]'); if (ss) { const i = +ss.dataset.sset; if (i >= setSlots()) return; const old = sets()[i]; const go = () => { sets()[i] = { n: old ? old.n : `Set ${i + 1}`, look: lookNow(), at: Date.now() }; save(); toast(old ? `${old.n} saved over with your current look.` : `Saved to slot ${i + 1}.`); grid(); }; if (old) ask(`Save your current look over ${old.n}?`, 'Save over', go); else go(); return; }
+      const rs = e.target.closest('[data-rset]'); if (rs) { const i = +rs.dataset.rset; const x = sets()[i]; if (!x) return; renameSet(i, x); return; }
       const it = e.target.closest('.c25-it');
       if (it) { const x = items(kind).find((y) => y.id === it.dataset.id); if (!x) return; sel = x.id; if (C().seen[kind + ':' + x.id] === 0) { C().seen[kind + ':' + x.id] = 1; save(); } grid(); pop(x); return; }
       const x = items(kind).find((y) => y.id === sel); if (!x) return;
@@ -550,7 +613,7 @@
   // Casino wins feed the casino titles.
   // The crate opening asks which back each crate wears (js/ui.js packReveal).
   if (UI.hooks) UI.hooks.cardBack = (packId) => { try { if (!on() || !packId || !root.CB25) return ''; const id = C().cbk[packId]; const x = CBACKS.find((y) => y.id === id); if (!x || id === 'default' || !ownsItem('cb', x)) return ''; return root.CB25.svg(id); } catch (e) { return ''; } };
-  root.Cos25 = { ready, open, sync, tour, titleScene, titleHtml, TITLES, TIERS, POSES, WINS, PACKS, INTROS, CBACKS, eq, ownsItem, C: () => C(), save };
+  root.Cos25 = { SET_LV, setSlots, sets, lookNow, wearLook, ready, open, sync, tour, titleScene, titleHtml, TITLES, TIERS, POSES, WINS, PACKS, INTROS, CBACKS, eq, ownsItem, C: () => C(), save };
   if (HN()) HN().titleHtml = titleHtml;
   // The HoloNet loads later on most devices: hook in once it's there.
   let tries = 0;
