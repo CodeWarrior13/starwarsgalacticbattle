@@ -6122,7 +6122,9 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   const still = (html) => String(html).replace(/<animate(?:Transform|Motion)?\b[^>]*\/>/g, '').replace(/<animate(?:Transform|Motion)?\b[^>]*>[\s\S]*?<\/animate(?:Transform|Motion)?>/g, '');
   HN.still = still;
   const SAFE = HN.safe || { clean: (t) => ({ text: t, blocked: false, changed: false }), ok: () => true };
-  const cleanTag = (s) => { const t = String(s || '').replace(/[^A-Za-z0-9_ .-]/g, '').trim().slice(0, 16); return SAFE.ok(t) ? t : ''; };
+  // The word filter is slow, and the same callsigns are checked thousands of times a minute: remember the answers.
+  const tagOk = new Map();
+  const cleanTag = (s) => { const t = String(s || '').replace(/[^A-Za-z0-9_ .-]/g, '').trim().slice(0, 16); let ok = tagOk.get(t); if (ok === undefined) { ok = !!SAFE.ok(t); if (tagOk.size > 4000) tagOk.clear(); tagOk.set(t, ok); } return ok ? t : ''; };
   // Players you've muted: their chat never shows for you (kept on this device).
   const muted = () => { const h = S(); return (h.muted = h.muted || []); };
   const isMuted = (uid) => muted().includes(uid);
@@ -6852,7 +6854,9 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   const bankOf = (gid) => { const g = gmap.get(gid) || {}; return Math.max(0, Object.values(donors(gid)).reduce((a, n) => a + (n | 0), 0) - (g.spent | 0)); };
   // Guild levels 1-10 (guild XP = everyone's guild points, all time).
   const GLVL = [0, 500, 1500, 3000, 5000, 8000, 12000, 17000, 23000, 30000];
-  const guildXp = (gid) => (isNpcG(gid) ? npcXp(NPC_GUILDS.find((g) => g.id === gid)) : 0) + membersOf(gid).reduce((a, uid) => a + (NPC_ROWS.has(uid) ? 0 : (prof(uid).gpl || 0)), 0);
+  // Asked many times per screen; members' points change slowly, so a 2-second memory is plenty.
+  const gxpMemo = new Map();
+  const guildXp = (gid) => { const now = Date.now(); const m = gxpMemo.get(gid); if (m && now - m.t < 2000) return m.v; const v = (isNpcG(gid) ? npcXp(NPC_GUILDS.find((g) => g.id === gid)) : 0) + membersOf(gid).reduce((a, uid) => a + (NPC_ROWS.has(uid) ? 0 : (prof(uid).gpl || 0)), 0); gxpMemo.set(gid, { t: now, v }); return v; };
   const guildLevel = (gid) => {
     const xp = guildXp(gid); let lv = 1; GLVL.forEach((t, i) => { if (xp >= t) lv = i + 1; });
     if (!G23()) return { lv, xp, next: GLVL[lv] || null };
@@ -7906,11 +7910,19 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   const V = HN.VIEWS;
   const rerender = () => { if (App.current === 'holonet') { const n = document.querySelector('.view.hn'); if (n && n.__live) n.__live(); } };
   let liveTimer = null;
+  // Live guild updates arrive constantly in a busy guild. Redraw at most every 1.5s, and never while
+  // the player is touching or scrolling (a redraw under a finger swallows the tap).
+  let lastTouch = 0; let lastLive = 0;
+  ['pointerdown', 'touchstart', 'wheel', 'scroll', 'keydown'].forEach((ev) => document.addEventListener(ev, () => { lastTouch = Date.now(); }, { passive: true, capture: true }));
   const rerenderLive = () => {
     if (App.current !== 'holonet' || document.querySelector('.modal-backdrop')) return;
     const v = (App.params || {}).view;
     if (!['guild', 'gchat', 'graid', 'guilds'].includes(v)) return;
-    if (document.activeElement && document.activeElement.matches('.view.hn input, .view.hn select, .view.hn textarea')) { clearTimeout(liveTimer); liveTimer = setTimeout(rerenderLive, 1500); return; }
+    const now = Date.now();
+    const busy = document.activeElement && document.activeElement.matches('.view.hn input, .view.hn select, .view.hn textarea');
+    const wait = busy ? 1500 : Math.max(lastTouch + 900 - now, lastLive + 1500 - now);
+    if (wait > 0) { if (!liveTimer) liveTimer = setTimeout(() => { liveTimer = null; rerenderLive(); }, wait); return; }
+    clearTimeout(liveTimer); liveTimer = null; lastLive = now;
     rerender();
   };
 
@@ -9205,7 +9217,7 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
   // Announcement board for the guild Home tab.
   const annBoard = (gid) => {
     const anns = SO.announcements(gid);
-    return `<div class="hn-sec hv-ann"><h3>Announcements</h3>
+    return `<div class="hn-sec g-annsec"><h3>Announcements</h3>
       ${anns.length ? anns.map((l) => `<div class="hv-annl"><b>${esc(Net.name(l.uid))} <small>${SO.ROLE_NAME[SO.roleOf(l.uid, gid)]} · ${SO.ago(l.ts)}</small></b><p>${esc(l.t)}</p></div>`).join('') : '<p class="muted small" style="margin:0">No announcements yet.</p>'}
       ${SO.canAnnounce(Net.me, gid) ? '<form class="g-ann" data-noswipe><input class="pf-in" data-annin maxlength="140" placeholder="Post an announcement to the whole guild…" autocomplete="off"><button type="submit" class="hn-btn gold">Post</button></form>' : ''}</div>`;
   };
@@ -9430,7 +9442,7 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
 .hv-rw b { color: #ffd23f; font-family: var(--font-display); letter-spacing: .06em; } .hv-rw small { color: #d8c89a; font-size: 11px; }
 .hv-don { display: flex; gap: 8px; flex-wrap: wrap; }
 .g-mng { padding: 4px 8px; font-size: 11px; flex: none; }
-.hv-ann { border-color: rgba(255, 210, 63, 0.35); }
+.g-annsec { border-color: rgba(255, 210, 63, 0.35); }
 .hv-annl { padding: 8px 10px; border-radius: 10px; background: rgba(40, 30, 6, 0.45); border-left: 3px solid #ffd23f; }
 .hv-annl b { font-size: 13px; color: #ffd86a; } .hv-annl small { color: #c8b88a; font-weight: 500; } .hv-annl p { margin: 4px 0 0; font-size: 14px; }
 .g-ann { display: flex; gap: 8px; } .g-ann .pf-in { flex: 1; min-width: 0; }

@@ -4078,3 +4078,8 @@ body:has(#modal-root .c25[aria-label="Cosmetics"]) > :is(.starfield, .topbar, #s
 .c25-rest .c25-it:not(:hover):not(:focus-visible):not(.sel) *, .c25-rest .c25-it:not(:hover):not(:focus-visible):not(.sel) *::before, .c25-rest .c25-it:not(:hover):not(:focus-visible):not(.sel) *::after { animation-play-state: paused !important; }
 .c25-grid .c25-it { contain: layout paint; }
 .lu25-it.lu25-rest:not(:hover) *, .lu25-it.lu25-rest:not(:hover) *::before, .lu25-it.lu25-rest:not(:hover) *::after { animation-play-state: paused !important; }
+/* Shops on phones: nothing may push the page sideways (long "next week" lines wrap). */
+.s25 > .s25-pane, .s25 > .s25-tabs { min-width: 0; max-width: 100%; }
+.s25-pane .section-head { flex-wrap: wrap; row-gap: 2px; }
+.s25-pane .section-head > * { min-width: 0; white-space: normal; overflow-wrap: anywhere; }
+.daily-card { overflow-x: clip; }
