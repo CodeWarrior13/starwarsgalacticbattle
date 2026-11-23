@@ -44,6 +44,7 @@
         'IMPROVED|The Cosmetics tab opens about twice as fast: previews hold still until you pick one, and everything behind it rests while it\'s open.',
         'IMPROVED|Luthen\'s Gallery shows 4 card backs and 2 battle intros a week, so the plinth isn\'t crowded, and it opens faster.',
         'NEW|Attack colours: Try it on opens its own screen. Your colour plays on a starfighter shot, a blaster shot, a lightsaber slash and stab, and Force lightning against a floating training remote.',
+        'NEW|Leagues: tap any rank\'s crest to see its rating range, your progress, the Beskar it pays, its league reward, the frame it gives and the season-end prize.',
         'NEW|The Darksaber gets its own effect: a black blade with a white edge, crackling white, and black shards when it hits.',
         'IMPROVED|Endor Fireworks shoot real fireworks off the target, and holiday colours shed a few sparks, leaves or lights along Force lightning.',
         'NEW|Other players see your attack colour in Live Duels and friendly battles, and you see theirs.',

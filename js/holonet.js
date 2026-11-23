@@ -3097,7 +3097,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
         const divs = HN.DIVS.filter((d) => d.league === l.id);
         const lr = HN.LEAGUE_REWARD[l.id];
         const rew = lr ? `League reward: ${A.TIER[lr.puck].label} bounty puck${lr.card ? ` + ${D.UNIT_MAP[lr.card].name}` : ''}${lr.cards ? ` + ${lr.cards.map((c) => D.UNIT_MAP[c].name).join(' & ')}` : ''}` : 'Starting league';
-        return `<div class="hn-rung"><b class="lg-${l.id}">${l.name.toUpperCase()}<small class="r">${esc(rew)}</small></b><div class="bdgs" style="${divs.length === 1 ? 'grid-template-columns:1fr' : ''}">${divs.map((d) => `<div class="bdg ${h.best >= d.min ? 'got' : ''} ${d.key === cur.key ? 'cur' : ''}">${A.badge(d.league, d.div)}<span>${esc(d.name)}</span><small>${fmt(d.min)}+ · ${h.divs.includes(d.key) ? '✓' : bes(d.beskar)}</small></div>`).join('')}</div></div>`;
+        return `<div class="hn-rung"><b class="lg-${l.id}">${l.name.toUpperCase()}<small class="r">${esc(rew)}</small></b><div class="bdgs" style="${divs.length === 1 ? 'grid-template-columns:1fr' : ''}">${divs.map((d) => `<div class="bdg ${h.best >= d.min ? 'got' : ''} ${d.key === cur.key ? 'cur' : ''}"${root.Update26 && root.Update26.on() ? ` data-rk26="${d.key}" role="button" tabindex="0" aria-label="${esc(d.name)}: rewards"` : ''}>${A.badge(d.league, d.div)}<span>${esc(d.name)}</span><small>${fmt(d.min)}+ · ${h.divs.includes(d.key) ? '✓' : bes(d.beskar)}</small></div>`).join('')}</div></div>`;
       }).join('')}</div>`;
   };
 
@@ -8107,9 +8107,35 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       <div class="hn-sec"><h3>Season ${HN.seasonLabel(seasonNo())} · ${HN.seasonBreak() ? 'starts' : 'ends'} in ${days} day${days === 1 ? '' : 's'}</h3>
         <p class="muted small" style="margin:0">Seasons last four weeks. When one ends you're paid for the best division you reached that season, then ratings above 800 settle halfway back. Best this season: <b>${esc(HN.divOf(h.soc.sBest || h.rating).name)}</b>.</p>
         <div class="g-ms">${Object.entries(SEASON_REWARD).map(([lg, rw]) => `<div class="g-m ${HN.divOf(h.soc.sBest || h.rating).league === lg ? 'ok' : ''}"><div style="width:48px">${A.badge(lg, lg === 'legend' ? 1 : 3)}</div><b>${lg[0].toUpperCase() + lg.slice(1)}</b><small>${fmt(rw.beskar)} Beskar${rw.puck ? ` · ${A.TIER[rw.puck].label} puck` : ''}${rw.card ? ` · ${esc(D.UNIT_MAP[rw.card].name)}` : ''}${rw.frame ? ` · ${esc(FRAMES[rw.frame].name)} frame` : ''}</small></div>`).join('')}</div></div>
-      <div class="hn-sec"><h3>Profile frames</h3><div class="pf-frames">${shownFrames().map(([id, f]) => `<div class="pf-fr ${frames.includes(id) ? '' : 'locked'}">${avatar({ ...me, frame: id }, 'md')}<b>${esc(f.name)}</b><small>${frames.includes(id) ? 'Unlocked' : esc(f.how)}</small></div>`).join('')}</div>
+      ${root.Update26 && root.Update26.on() ? '<div class="hn-sec">' : `<div class="hn-sec"><h3>Profile frames</h3><div class="pf-frames">${shownFrames().map(([id, f]) => `<div class="pf-fr ${frames.includes(id) ? '' : 'locked'}">${avatar({ ...me, frame: id }, 'md')}<b>${esc(f.name)}</b><small>${frames.includes(id) ? 'Unlocked' : esc(f.how)}</small></div>`).join('')}</div>`}
         <button type="button" class="hn-btn ghost" data-hn="prof" data-uid="me" style="justify-self:start">Your profile ›</button></div>`;
   };
+  // 2.6: tap a crest on the Leagues screen for its card: the rating it covers, your progress, what reaching it pays,
+  // its league's reward, the frame it gives, and what the league pays at the end of the season.
+  const RK_FRAME = { bronze2: 'bronze', silver1: 'silver', gold1: 'gold', gold3: 'gilded3', kyber1: 'kyber', kyber3: 'kyberheart', legend: 'legend' };
+  const RK_COL = { bronze: '#d8935a', silver: '#d8e2ec', gold: '#ffd23f', kyber: '#5ad0ff', legend: '#c86aff' };
+  function rankCard(key) {
+    const i = HN.DIVS.findIndex((d) => d.key === key); if (i < 0) return;
+    const d = HN.DIVS[i]; const next = HN.DIVS[i + 1]; const h = S(); const r = h.rating;
+    const max = next ? next.min - 1 : null; const pct = max ? Math.max(0, Math.min(100, ((r - d.min) / (max + 1 - d.min)) * 100)) : (r >= d.min ? 100 : 0);
+    const where = r >= d.min && (!max || r <= max) ? `You're here: ${fmt(r)}${max ? ` · ${fmt(max + 1 - r)} to the next rank` : ''}` : max && r > max ? 'Reached' : `${fmt(d.min - r)} rating to go`;
+    const lr = d.div === 1 && HN.LEAGUE_REWARD[d.league];
+    const lrTxt = lr ? [`${A.TIER[lr.puck].label} bounty puck`, ...(lr.card ? [D.UNIT_MAP[lr.card].name] : []), ...(lr.cards || []).map((c) => D.UNIT_MAP[c].name)].join(' + ') : '';
+    const fr = RK_FRAME[d.key] && FRAMES[RK_FRAME[d.key]] ? RK_FRAME[d.key] : null;
+    const sr = SEASON_REWARD[d.league]; const srTxt = sr ? [`${fmt(sr.beskar)} Beskar`, ...(sr.puck ? [`${A.TIER[sr.puck].label} puck`] : []), ...(sr.card && D.UNIT_MAP[sr.card] ? [D.UNIT_MAP[sr.card].name] : []), ...(sr.frame && FRAMES[sr.frame] ? [`${FRAMES[sr.frame].name} frame`] : [])].join(' · ') : '';
+    const row = (k, v) => `<div><dt>${k}</dt><dd>${v}</dd></div>`;
+    const m = UI.openModal(`<div class="rk26" style="--lc:${RK_COL[d.league] || '#ffd23f'}">${A.badge(d.league, d.div)}<h2>${esc(d.name)}</h2><div class="rk26-r">${fmt(d.min)}${max ? ` – ${fmt(max)}` : '+'} rating</div><div class="rk26-bar"><i style="width:${pct.toFixed(0)}%"></i></div><div class="rk26-to">${where}</div>
+      <dl>${row('Reach it', `${fmt(d.beskar)} Beskar${h.divs.includes(d.key) ? ' · paid ✓' : ' (first time)'}`)}${lrTxt ? row('League reward', esc(lrTxt)) : ''}${fr ? row('Frame', `<span class="rk26-fp">${avatar({ ...prof(), frame: fr }, 'md')}</span>${esc(FRAMES[fr].name)}`) : ''}${srTxt ? row('Season end', esc(srTxt)) : ''}</dl>
+      <button type="button" class="hn-btn ghost" data-rk26x>Close</button></div>`, { small: true, cls: 'rk26-modal' });
+    m.root.addEventListener('click', (e) => { if (e.target.closest('[data-rk26x]')) m.close(); });
+  }
+  if (root.Update26 && root.Update26.on()) {
+    document.addEventListener('click', (e) => { const b = e.target.closest('[data-rk26]'); if (b) rankCard(b.dataset.rk26); });
+    document.addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target.closest && e.target.closest('[data-rk26]')) { e.preventDefault(); rankCard(e.target.closest('[data-rk26]').dataset.rk26); } });
+    const st = document.createElement('style');
+    st.textContent = '[data-rk26]{cursor:pointer;border-radius:12px;transition:background .2s,transform .15s}[data-rk26]:hover,[data-rk26]:focus-visible{background:rgba(255,255,255,.05);transform:translateY(-2px)}.rk26{display:grid;gap:10px;justify-items:center;text-align:center}.rk26>svg{width:120px;height:auto}.rk26 h2{margin:0;color:var(--lc)}.rk26-r{font:700 14px var(--font-display)}.rk26-bar{width:100%;height:10px;border-radius:5px;background:#1a2430;overflow:hidden}.rk26-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--lc),#fff)}.rk26-to{font-size:12.5px;color:var(--muted);margin-top:-4px}.rk26 dl{margin:0;width:100%;display:grid;gap:6px;text-align:left}.rk26 dl>div{display:grid;grid-template-columns:110px 1fr;gap:8px;align-items:center;padding:7px 10px;border-radius:10px;background:var(--panel-2);border:1px solid var(--line)}.rk26 dt{font:700 10px var(--font-display);letter-spacing:.1em;color:var(--muted);text-transform:uppercase}.rk26 dd{margin:0;font:700 13px var(--font-display);display:flex;gap:8px;align-items:center}.rk26-fp{display:inline-block;flex:none}.rk26-modal .modal{border:1.5px solid var(--lc,#ffd23f)}@media (max-height:520px){.rk26{gap:5px}.rk26>svg{width:64px}.rk26 h2{font-size:18px}.rk26 dl{grid-template-columns:1fr 1fr}.rk26 dl>div{grid-template-columns:1fr;gap:2px;padding:5px 8px}.rk26-fp .pf-av{transform:scale(.7);transform-origin:0 50%}}';
+    document.head.appendChild(st);
+  }
 
   // Hub: a real Guilds tile and your profile.
   const baseHub = V.hub;
