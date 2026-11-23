@@ -6722,6 +6722,8 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     };
     // 2.6 guild analytics: a 7-day list of points, battles and chats (js/guild26.js).
     if (HN.a26) { try { body.a26 = HN.a26(); } catch (e) { /* skip */ } }
+    // 2.6: your attack colour, so the other player sees it in Live Duels and friendlies.
+    if (root.Update26 && root.Update26.on() && root.Col25) { try { body.ac = root.Col25.equipped().id; } catch (e) { /* skip */ } }
     // Player collections: what you own, your most-used cards and every badge.
     const PC = root.PlayerCollections;
     if (PC && PC.on()) { body.col = PC.encode(); body.use = PC.encodeUse(); body.ball = allBadges(); }

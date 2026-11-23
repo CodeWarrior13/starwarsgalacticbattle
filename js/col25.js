@@ -139,6 +139,8 @@
     ['galactic', 'Galactic', '#7a5cff', '#ffffff', '#5ae8ff', { max: 1 }, 'galactic'],
   ].map(([id, n, glow, core, spark, get, fx]) => ({ id, n, glow, core, spark, get, fx: fx || null }));
   const COL = Object.fromEntries(COLOURS.map((c) => [c.id, c]));
+  // 2.6: the Darksaber gets its own effect: a black blade with a white edge, white crackle, black shards on the hit.
+  if (root.Update26 && root.Update26.on() && COL.darksaber) COL.darksaber.fx = 'darksaber';
   const badge = (id) => BADGES.find((b) => b[0] === id);
   const howOf = (c) => {
     if (c.get.free) return 'Everyone has it';
@@ -174,6 +176,7 @@
   const paint = () => (cur.fx === 'prism' ? PRISM[prismI++ % PRISM.length] : cur.fx === 'galactic' ? GAL[prismI++ % GAL.length] : cur.glow);
   // Holiday colours leave a few little shapes where they hit: Life Day stars, Harvest leaves, eggs, fireworks, sand.
   const GLYPH = {
+    darksaber: (i) => (i % 2 ? '<path d="M0 -6.5 L2.2 0 L0 6.5 L-2.2 0Z" fill="#0a0a10" stroke="#f4f8ff" stroke-width=".9"/>' : '<path d="M-5 -2 L-1 1 L1 -1 L5 2" fill="none" stroke="#f4f8ff" stroke-width="1.3" stroke-linecap="round"/>'),
     lifeday: (i) => (i % 2 ? '<path d="M0 -6 l1.8 3.8 4.2.4-3.2 2.8.9 4.2-3.7-2.2-3.7 2.2.9-4.2-3.2-2.8 4.2-.4z" fill="#fff6c8"/>' : `<circle r="2.4" fill="${i % 4 ? '#2ad84a' : '#ff2a2a'}"/>`),
     harvest: (i) => `<path d="M0 -6 L1.8 -2.6 L5.4 -3.4 L3.8 0 L6 1.8 L1.4 2 L0 6 L-1.4 2 L-6 1.8 L-3.8 0 L-5.4 -3.4 L-1.8 -2.6Z" fill="${['#e8742a', '#c8402a', '#ffc04a'][i % 3]}"/>`,
     egg: (i) => `<ellipse rx="3.2" ry="4.2" fill="${['#ff9ad8', '#9ae8ff', '#ffe07a', '#b8ff9a'][i % 4]}"/><path d="M-3 0 q3 -1.6 6 0" stroke="#fff" stroke-width="1" fill="none"/>`,
@@ -184,6 +187,26 @@
   // 2.6: Life Day's lights pop into a twinkling ring; Glacier (Hoth Frost) throws ice shards, a snowflake and a frost ring.
   const v26 = () => !!(root.Update26 && root.Update26.on());
   const BULB = ['#ff2a2a', '#2ad84a', '#ffd23f', '#5ab4ff', '#ffffff'];
+  // Endor Fireworks (2.6): three rockets climb from the target and burst, yellow, pink and blue.
+  const rockets = (ui, pos) => {
+    const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); s.setAttribute('viewBox', '-80 -90 160 120'); s.setAttribute('class', 'col25-g');
+    s.style.cssText = `position:absolute;left:${pos.x}px;top:${pos.y}px;width:160px;height:120px;margin:-90px 0 0 -80px;pointer-events:none;z-index:7;overflow:visible`;
+    s.innerHTML = [[-34, -38, '#ffd23f', 0], [30, -46, '#ff5ad0', 180], [4, -60, '#5ad0ff', 360]].map(([x, y, col, d]) => { const path = `M0 0 Q${x * 0.15} ${y * 0.55} ${x} ${y}`; let spk = ''; for (let k = 0; k < 12; k++) spk += `<g transform="rotate(${k * 30})"><path d="M3 0 H13" stroke="${col}" stroke-width="1.5" stroke-linecap="round"/><circle cx="14.6" cy="0" r="1.1" fill="#fff"/></g>`;
+      return `<path class="c26-tr" d="${path}" fill="none" stroke="${col}" stroke-width="1" stroke-linecap="round" stroke-dasharray="14 120" stroke-dashoffset="14" opacity=".55" style="animation-delay:${d}ms"/><path class="c26-tr" d="${path}" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="3 131" stroke-dashoffset="3" style="animation-delay:${d}ms"/><g transform="translate(${x} ${y})"><g class="c26-pop" style="animation-delay:${d + 450}ms">${spk}<circle r="3" fill="#fff"/></g></g>`; }).join('');
+    ui.fx.appendChild(s); setTimeout(() => s.remove(), 2200);
+  };
+  // Holiday and event colours: a few bits peel off Force lightning as it crackles (2.6).
+  const sideBits = (ui, from, to) => {
+    if (!cur || !GLYPH[cur.fx] || perf() || !ui.fx) return;
+    const fx = cur;
+    [0.3, 0.5, 0.72].forEach((f, i) => setTimeout(() => {
+      const x = from.x + (to.x - from.x) * f, y = from.y + (to.y - from.y) * f;
+      const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); s.setAttribute('viewBox', '-8 -8 16 16'); s.setAttribute('class', 'col25-g');
+      s.innerHTML = GLYPH[fx.fx](i); s.style.cssText = `position:absolute;left:${x}px;top:${y}px;width:16px;height:16px;pointer-events:none;z-index:7`;
+      ui.fx.appendChild(s);
+      s.animate([{ transform: 'translate(-50%,-50%) scale(.4)', opacity: 0 }, { opacity: 1, offset: 0.12 }, { transform: `translate(calc(-50% + ${i % 2 ? 6 : -5}px), calc(-50% + ${(i % 2 ? 1 : -1) * (14 + i * 4)}px)) scale(1) rotate(160deg)`, opacity: 0 }], { duration: 900, easing: 'ease-out' }).onfinish = () => s.remove();
+    }, 120 + i * 140));
+  };
   const ring = (ui, pos) => {
     const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); s.setAttribute('viewBox', '-40 -40 80 80'); s.setAttribute('class', 'col25-g');
     s.style.cssText = `position:absolute;left:${pos.x}px;top:${pos.y}px;width:80px;height:80px;margin:-40px 0 0 -40px;pointer-events:none;z-index:7;overflow:visible`;
@@ -194,6 +217,13 @@
   // A string of lights (Life Day) or an ice crust (Glacier) riding a laser bolt.
   const riders = (bolt) => {
     if (!v26() || !cur || perf() || !bolt) return;
+    if (cur.fx === 'darksaber') { bolt.classList.add('c26-dk'); }
+    if (cur.fx === 'endor' || cur.fx === 'darksaber') {
+      const sv = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); sv.setAttribute('viewBox', '0 0 100 12'); sv.setAttribute('preserveAspectRatio', 'none'); sv.setAttribute('class', 'c26-ride');
+      sv.innerHTML = cur.fx === 'endor' ? [0, 1, 2, 3, 4].map((k) => `<g transform="translate(${k * 20 + 4} ${k % 2 ? 3 : 9})" class="c26-tw"><path d="M-2.4 0 H2.4 M0 -2.4 V2.4" stroke="${['#ffd23f', '#ff5ad0', '#5ad0ff'][k % 3]}" stroke-width="1" vector-effect="non-scaling-stroke"/></g>`).join('')
+        : '<path class="c26-ck" d="M0 6 L12 2 L22 9 L34 3 L46 10 L58 2 L70 9 L82 3 L100 7" fill="none" stroke="#f4f8ff" stroke-width="1" vector-effect="non-scaling-stroke"/>';
+      bolt.appendChild(sv); return;
+    }
     const ld = cur.fx === 'lifeday'; if (!ld && cur.id !== 'hoth') return;
     let d = 'M0 6'; for (let i = 1; i <= 16; i++) d += ` L${(i * 100 / 16).toFixed(1)} ${(6 + (ld ? Math.sin(i * 0.9) * 3.4 : (i % 2 ? -3 : 3))).toFixed(1)}`;
     const bulbs = ld ? [0, 1, 2, 3, 4, 5].map((k) => { const t = (k + 0.5) / 6; const y = 6 + Math.sin(t * 16 * 0.9) * 3.4; return `<circle cx="${(t * 100).toFixed(1)}" cy="${y.toFixed(1)}" r="2.6" fill="${BULB[k % 5]}" opacity=".4"/><circle cx="${(t * 100).toFixed(1)}" cy="${y.toFixed(1)}" r="1.5" fill="${BULB[k % 5]}"/>`; }).join('') : '';
@@ -203,6 +233,7 @@
   };
   const burst = (ui, pos) => {
     if (cur && v26() && (cur.fx === 'lifeday' || cur.id === 'hoth') && !perf() && ui.fx && pos) return ring(ui, pos);
+    if (cur && v26() && cur.fx === 'endor' && !perf() && ui.fx && pos) return rockets(ui, pos);
     if (!cur || !cur.fx || !GLYPH[cur.fx] || perf() || !ui.fx || !pos) return;
     const k = 5;
     for (let i = 0; i < k; i++) {
@@ -224,17 +255,33 @@
     wrap('laser', 2, (ui, a) => { const fx = cur; const go = () => { const c0 = cur; cur = fx; burst(ui, a[1]); cur = c0; }; const bolt = ui.fx && ui.fx.lastElementChild; const isBolt = bolt && bolt.classList.contains('laser'); if (isBolt) riders(bolt); const an = isBolt && bolt.getAnimations()[0]; if (an) an.finished.then(go, () => {}); else setTimeout(go, ((a[3] | 0) + ((a[4] && a[4].dur) || 220)) / (ui.speed || 1) + 30); });
     wrap('flashAt', 1); wrap('sparks', 1); wrap('boom', 1); wrap('wave', 1); wrap('torpedo', 2, (ui, a, ret) => { const fx = cur; landed(ret, () => { const c0 = cur; cur = fx; burst(ui, a[1]); cur = c0; }); });
     wrap('slash', 1, (ui, a) => burst(ui, a[0]));
-    wrap('lightning', 3, (ui, a, ret) => { const t = a[1] && a[1][0]; const fx = cur; if (t) landed(ret, () => { const c0 = cur; cur = fx; if (ui.cards[t.uid]) burst(ui, ui.center(t.uid)); cur = c0; }); });
+    wrap('lightning', 3, (ui, a, ret) => { const t = a[1] && a[1][0]; const fx = cur; if (t && v26() && a[0] && ui.cards[a[0].uid] && ui.cards[t.uid]) sideBits(ui, ui.center(a[0].uid), ui.center(t.uid)); if (t) landed(ret, () => { const c0 = cur; cur = fx; if (ui.cards[t.uid]) burst(ui, ui.center(t.uid)); cur = c0; }); });
     const env = BU.env;
     if (env && typeof env.impact === 'function') { const imp = env.impact.bind(env); env.impact = (x, y, o = {}) => imp(x, y, cur ? { ...o, color: paint() } : o); }
     // Which attacks count: your own cards' basic attacks and the shield ultimate.
+    // The other side's colour: a real player's published pick in Live Duels and friendlies; a bot friend wears one of its own.
+    const BOT_COLS = ['default', 'default', 'kyber', 'sith', 'gold', 'teal', 'emerald', 'amethyst', 'lava', 'nebula', 'spice', 'carbonite', 'dusk', 'mist', 'dune'];
+    const theirs = (ui) => {
+      if (!v26()) return null;
+      const p = ui.params || {}; let id = null;
+      try {
+        if (p.type === 'hn' && p.hn === 'duel' && ui.battle && ui.battle.duel) { const N = root.HN && root.HN.Net; const peer = ui.battle.duel.peer; const row = N && ((N.arena || []).find((x) => x.uid === peer) || (N.rows && N.rows.get(peer))); id = row && row.ac; }
+        else if (p.type === 'hn' && p.hn === 'botfr' && p.uid) id = BOT_COLS[[...String(p.uid)].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) >>> 0, 7) % BOT_COLS.length];
+      } catch (e) { id = null; }
+      const c = id && COL[id]; return c && c.glow ? c : null;
+    };
     const baseUse = BU.animateUse;
     BU.animateUse = async function (ev) {
       const actor = this.battle && this.battle.get(ev.uid);
       const c = equipped();
       const shield = ev.ultimate && actor && (D.ULT_ANIM[actor.id] || this.defaultAnim(actor)) === 'shield';
       const mine = actor && actor.side === 'player' && c.glow && (shield || (!ev.ultimate && ev.offensive !== false));
-      if (!mine) return baseUse.call(this, ev);
+      if (!mine) {
+        const oc = actor && actor.side === 'enemy' && !ev.ultimate && ev.offensive !== false ? theirs(this) : null;
+        if (!oc) return baseUse.call(this, ev);
+        cur = oc; prismI = 0;
+        try { return await baseUse.call(this, ev); } finally { cur = null; }
+      }
       cur = c; prismI = 0;
       if (shield) document.body.classList.add('col25-dome');
       try { return await baseUse.call(this, ev); } finally { cur = null; document.body.classList.remove('col25-dome'); }
@@ -270,7 +317,7 @@ body.col25-on .bcard.targetable:not(.friendly)::after{box-shadow:0 0 20px color-
 body.col25-on .bcard.targetable:not(.friendly){border-color:var(--col25)}
 body.col25-on .abtn.ult{border-color:color-mix(in srgb,var(--col25) 45%,transparent)}body.col25-on .abtn.ult .ult-fill{background:var(--col25)}body.col25-on .abtn.ult .an{color:var(--col25)}
 body.col25-dome .dome{border-color:var(--col25);background:radial-gradient(ellipse at 50% 30%,color-mix(in srgb,var(--col25) 28%,transparent),color-mix(in srgb,var(--col25) 8%,transparent) 70%);box-shadow:0 0 40px color-mix(in srgb,var(--col25) 50%,transparent),inset 0 0 40px color-mix(in srgb,var(--col25) 25%,transparent)}
-.c26-ride{position:absolute;left:0;top:50%;width:100%;height:12px;margin-top:-6px;overflow:visible;pointer-events:none}.c26-b{animation:c26b 1.3s ease-out both}@keyframes c26b{0%{opacity:0;transform:translate(0,0) scale(.3)}12%{opacity:1}30%{transform:translate(var(--x),var(--y)) scale(1.2)}60%{transform:translate(var(--x),var(--y)) scale(1.1)}85%{opacity:1}100%{opacity:0;transform:translate(var(--x),var(--y)) scale(.8)}}.c26-w{animation:c26w 1.3s ease-out both;transform-origin:center}@keyframes c26w{0%{opacity:0;transform:scale(.3)}25%{opacity:.9;transform:scale(1)}100%{opacity:0}}.c26-fr{animation:c26w .9s ease-out both;transform-origin:center}.c26-fl{animation:c26fl 1.2s ease-out both;transform-origin:center}@keyframes c26fl{0%{opacity:0;transform:scale(.2) rotate(0)}20%{opacity:1}100%{opacity:0;transform:scale(1.2) rotate(60deg)}}\n.c25-it .col25-sw{border-radius:8px;background:#05070d;height:40px;width:100%;flex:0 0 auto}\n.col25-demo{padding:18px 10px;background:radial-gradient(ellipse at 50% 50%,#121a2e,#05070d);border-radius:12px;overflow:hidden}.col25-demo.go .col25-sw{animation:col25Shot .7s cubic-bezier(.2,.8,.3,1)}@keyframes col25Shot{from{transform:translateX(-70%);opacity:0}60%{opacity:1}}`;
+.laser.c26-dk{background:#0a0a10!important;box-shadow:0 0 0 1px #f4f8ff,0 0 8px 2px #e8ecf4,0 0 18px 4px rgba(232,236,244,.6)!important}.c26-ck{animation:c26ck .18s steps(2) infinite}@keyframes c26ck{50%{opacity:.25}}.c26-tw{animation:c26tw .5s ease-in-out infinite alternate}@keyframes c26tw{to{opacity:.3}}.c26-tr{animation:c26tr .5s cubic-bezier(.3,.6,.4,1) both}@keyframes c26tr{to{stroke-dashoffset:-82;opacity:0}}.c26-pop{opacity:0;animation:c26pop 1.1s cubic-bezier(.2,.8,.3,1) both}@keyframes c26pop{0%{opacity:0;transform:scale(.2)}8%{opacity:1}70%{opacity:1;transform:scale(1) translateY(3px)}100%{opacity:0;transform:scale(1.1) translateY(8px)}}\n.c26-ride{position:absolute;left:0;top:50%;width:100%;height:12px;margin-top:-6px;overflow:visible;pointer-events:none}.c26-b{animation:c26b 1.3s ease-out both}@keyframes c26b{0%{opacity:0;transform:translate(0,0) scale(.3)}12%{opacity:1}30%{transform:translate(var(--x),var(--y)) scale(1.2)}60%{transform:translate(var(--x),var(--y)) scale(1.1)}85%{opacity:1}100%{opacity:0;transform:translate(var(--x),var(--y)) scale(.8)}}.c26-w{animation:c26w 1.3s ease-out both;transform-origin:center}@keyframes c26w{0%{opacity:0;transform:scale(.3)}25%{opacity:.9;transform:scale(1)}100%{opacity:0}}.c26-fr{animation:c26w .9s ease-out both;transform-origin:center}.c26-fl{animation:c26fl 1.2s ease-out both;transform-origin:center}@keyframes c26fl{0%{opacity:0;transform:scale(.2) rotate(0)}20%{opacity:1}100%{opacity:0;transform:scale(1.2) rotate(60deg)}}\n.c25-it .col25-sw{border-radius:8px;background:#05070d;height:40px;width:100%;flex:0 0 auto}\n.col25-demo{padding:18px 10px;background:radial-gradient(ellipse at 50% 50%,#121a2e,#05070d);border-radius:12px;overflow:hidden}.col25-demo.go .col25-sw{animation:col25Shot .7s cubic-bezier(.2,.8,.3,1)}@keyframes col25Shot{from{transform:translateX(-70%);opacity:0}60%{opacity:1}}`;
   document.head.appendChild(st);
 
   // ---------- Start ----------
