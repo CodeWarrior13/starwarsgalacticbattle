@@ -23,7 +23,30 @@
   // Update 2.5 "Cosmetic": hidden until 2.5 ships, but testers with the 2.5 switch
   // see it now. When the 2.5 date is set (js/cosmetic25.js RELEASE25), set it here too.
   const LAUNCH_25 = (() => { try { if (localStorage.getItem('swcg-v25-test') === '1') return 0; } catch (e) { /* storage blocked */ } return root.__v25Test != null ? root.__v25Test : Date.UTC(2026, 10, 22, 12, 0, 0); })();
+  // Update 2.6 "Squadron Commander": hidden until its date is set in js/update26.js (testers see it now).
+  const LAUNCH_26 = (() => { try { if (localStorage.getItem('swcg-v26-test') === '1') return 0; } catch (e) { /* storage blocked */ } return root.Update26 && root.Update26.at != null ? root.Update26.at : Infinity; })();
   const ALL_UPDATES = [
+    {
+      v: '2.6', date: 'Release day', title: 'Squadron Commander', from: LAUNCH_26,
+      items: [
+        'NEW|Guild analytics: a new Analytics tab for the Leader and Co-Leader (the Leader can open it to Elders). See when the guild plays on a heat map, every member\'s last 7 days day by day, and points, raid damage, Beskar, battles and chats for the last 24 hours, 7 days or the whole season.',
+        'NEW|Promotion breakdown: the Leader and Co-Leader can rank the guild by this week\'s numbers, with a short reason for each pilot. It only suggests; you decide.',
+        'NEW|Equip Sets get colours: give each set a blue, green, yellow, orange or purple backdrop.',
+        'NEW|Shuffle in battles: turn it on and a random saved set goes on before every battle and duel.',
+        'IMPROVED|Jedi Starfighter: new card art and battle look, Twin Laser Burst, and a new move, Force Sense. Astromech Repair now cleanses the squad.',
+        'IMPROVED|Hound\'s Tooth: new card art and battle look, a deadlier hunt, and a new move, Scent of the Prey.',
+        'IMPROVED|TIE Defender: new card art and battle look, harder-hitting Ion Cannons, a Tractor Lock that always stuns, and a new move, Shield Array.',
+        'IMPROVED|Vulture Droid: Swarm Fire, a stronger Buzz Droid Torpedo, and a new move, Swarm Tactics.',
+        'IMPROVED|Cassian\'s Haulcraft gets Spy Network, and Mando\'s N-1 gets a Proton Torpedo.',
+        'BALANCE|Starkiller, Rey, Kylo Ren, K-2SO and the Droideka are reworked: new moves and sharper numbers, each tested so it fits its rarity.',
+        'IMPROVED|Cosmetics tab: Equip on all puts a crate theme or card back on every crate at once.',
+        'IMPROVED|The Cosmetics tab opens about twice as fast: previews hold still until you pick one, and everything behind it rests while it\'s open.',
+        'IMPROVED|Luthen\'s Gallery shows 4 card backs and 2 battle intros a week, so the plinth isn\'t crowded, and it opens faster.',
+        'IMPROVED|The update log scrolls much smoother, and only the numbers that matter light up.',
+        'FIXED|Smoother on every screen: the shops fit phones without scrolling sideways, and every screen was checked on phones, tablets and computers, upright and sideways.',
+        'FIXED|Taps feel smoother: no more faint blue box flashing when you switch tabs.',
+      ],
+    },
     {
       v: '2.5', date: 'November 22, 2026', title: 'Cosmetic', from: LAUNCH_25,
       // Bigger than Liberation: a grand-opening marquee for the three shops.

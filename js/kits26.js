@@ -24,7 +24,7 @@
     vulture_droid: [
       { name: 'Swarm Fire', cd: 0, target: 'enemy', effects: [dmg(0.65, 3)], desc: 'Hit one enemy three times.' },
       { name: 'Buzz Droid Torpedo', cd: 3, target: 'enemy', effects: [dmg(2.8), st('defDown', 2)], desc: 'Deal heavy damage; the buzz droids strip armour: Defense Down for 2 turns.' },
-      { name: 'Swarm Tactics', cd: 4, target: 'allEnemies', effects: [dmg(1.1), st('offDown', 2, 0.7)], desc: 'The swarm closes in: damage all enemies with a 70% chance of Offense Down.' },
+      { name: 'Swarm Tactics', cd: 4, target: 'allEnemies', effects: [dmg(1.25), st('offDown', 2, 0.7)], desc: 'The swarm closes in: damage all enemies with a 70% chance of Offense Down.' },
     ],
     hounds_tooth: [
       { name: 'Concussion Missile', cd: 0, target: 'enemy', effects: [dmg(1.2), st('burn', 2, 0.6)], desc: 'Deal damage with a 60% chance to Burn.' },
@@ -57,9 +57,14 @@
       { name: 'Spy Network', cd: 4, target: 'enemy', effects: [{ type: 'dispel' }, dmg(1.6), st('defDown', 2)], desc: 'Strip one enemy\'s buffs, deal heavy damage and inflict Defense Down for 2 turns.' },
     ],
     mando_n1: [
-      { name: 'Twin Blasters', cd: 0, target: 'enemy', effects: [dmg(0.75, 2)], desc: 'Hit one enemy twice.' },
+      { name: 'Twin Blasters', cd: 0, target: 'enemy', effects: [dmg(0.8, 2)], desc: 'Hit one enemy twice.' },
       { name: 'Booster Kick', cd: 3, target: 'self', effects: [tm(45), st('defUp', 1), st('offUp', 2)], desc: 'Light the boosters: gain 45% Turn Meter, Defense Up and Offense Up.' },
-      { name: 'Proton Torpedo', cd: 4, target: 'enemy', effects: [{ type: 'damage', mult: 2.5, hits: 1, execute: { below: 0.4, bonus: 1.5 } }], desc: 'One heavy torpedo; 1.5× damage against targets under 40% HP.' },
+      { name: 'Proton Torpedo', cd: 4, target: 'enemy', effects: [{ type: 'damage', mult: 2.7, hits: 1, execute: { below: 0.4, bonus: 1.5 } }], desc: 'One heavy torpedo; 1.5× damage against targets under 40% HP.' },
+    ],
+    droideka: [
+      { name: 'Rapid Repeaters', cd: 0, target: 'enemy', effects: [dmg(0.36, 3)], desc: 'Hit one enemy three times in a burst.' },
+      { name: 'Deflector Shield', cd: 3, target: 'self', effects: [st('taunt', 2), st('defUp', 2), heal(0.12)], desc: 'Gain Taunt and Defense Up, and heal 12%.' },
+      { name: 'Roll In', cd: 4, target: 'enemy', effects: [dmg(1.0), st('offDown', 2, 0.6), { ...tm(30), on: 'self' }], desc: 'Curl up, roll in and unfold firing: damage one enemy, 60% chance of Offense Down, and gain 30% Turn Meter.' },
     ],
     k2so: [
       { name: 'Reprogrammed Punch', cd: 0, target: 'enemy', effects: [dmg(1.15), st('stun', 1, 0.35)], desc: 'Deal damage with a 35% chance to Stun.' },
