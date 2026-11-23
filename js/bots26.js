@@ -269,7 +269,7 @@
     const inv = INV()[uid] = { kind, busyUntil: 0, offered: Date.now() };
     HN.save();
     const nm = nameOf(uid);
-    toast(`⚔ ${nm} sent you a friendly battle · ${kind === 'ship' ? 'Fleet' : 'Ground'}`, { onTap: () => start(uid, kind), tap: 'Tap to battle' });
+    toast(`⚔ ${nm} sent you a friendly battle · ${kn(kind)}`, { onTap: () => start(uid, kind), tap: 'Tap to battle' });
     // A single "ready yet?" a few minutes later, never more.
     setTimeout(() => { const v = INV()[uid]; if (v && v.offered === inv.offered && !v.played && !v.nudged && !(S().botCool || {})[uid]) { v.nudged = 1; HN.save(); postDm(uid, voice(persOf(uid), pick(['you ready yet?', 'ready now?', 'still up for it?'], hash(uid)))); } }, (3 + Math.floor(rnd() * 3)) * 60000);
   }
@@ -278,8 +278,12 @@
     const rating = (bp && bp.rating) || (HN.S().rating || 1200);
     return HN.botSquad(kind, rating, HN.rng(hash(uid) + Date.now() % 997), true);
   }
-  function start(uid, kind) {
+  const kn = (k) => (k === 'mix' ? 'Mix' : k === 'ship' ? 'Fleet' : 'Ground');
+  // cont: the next battle of a Mix or Best of 3 series (js/friendly26.js).
+  function start(uid, kind, cont) {
     if (UI.App.battleActive) return toast('Finish your battle first.');
+    if (!cont && HN.fr26) { if (kind === 'mix' || HN.fr26.isSeries(kind)) kind = HN.fr26.srNew(uid, kind, true); else HN.fr26.srDrop(uid); }
+    if (kind === 'mix') kind = 'character';
     const squad = HN.squadEntries ? HN.squadEntries(kind) : [];
     if (!squad.length) return toast('Pick a squad first.');
     document.querySelectorAll('#modal-root > *').forEach((n) => n.remove());
@@ -293,10 +297,18 @@
   function done(uid, kind, won) {
     const rec = REC()[uid] = REC()[uid] || { w: 0, l: 0 }; if (won) rec.w++; else rec.l++; HN.save();
     const p = persOf(uid); const nm = nameOf(uid);
+    let ser = false;
+    if (HN.fr26 && HN.fr26.srOf(uid)) {
+      ser = true;
+      const back = () => { UI.App.go('holonet'); if (HN.friends && HN.friends.open) HN.friends.open(); };
+      HN.fr26.srDone({ uid, name: nm, won, draw: false, host: true, back, next: (k) => start(uid, k, true), rematch: (k) => { back(); battleAsk(uid, k); } });
+      if (HN.fr26.srOf(uid)) return;
+    }
     const line = won ? pick(['gg! you got me', 'gg, nice one', p.id === 'rival' ? 'ok you got me that time 😤' : 'gg wp'], hash(uid + rec.w)) : pick(['gg! that was close', 'gg ez... jk that was close lol', p.id === 'rival' ? 'gg, I\'m up now 😏' : 'ggs'], hash(uid + rec.l));
     postDm(uid, voice(p, line), 2500);
     const cool = (S().botCool || {})[uid] > Date.now();
     if (!cool && rnd() < 0.4) postDm(uid, voice(p, rnd() < 0.6 ? pick(['rematch?', 'run it back?', 'one more?'], hash(uid)) : pick([`wanna switch it up? ${kind === 'ship' ? 'ground' : 'fleet'} this time?`, 'switch it up, different mode?'], hash(uid))), 6500);
+    if (ser) return;
     const m = UI.openModal(`<div class="hn-result"><div class="result-title ${won ? 'win' : 'lose'}">${won ? 'VICTORY' : 'DEFEAT'}</div>
       <p style="text-align:center">Friendly battle against <b>${UI.esc(nm)}</b> · ${kind === 'ship' ? 'Fleet' : 'Ground'}</p>
       <div class="rows"><div><span>Your record vs ${UI.esc(nm)}</span><b class="bf26-r"><span class="w">${rec.w} W</span> · <span class="l">${rec.l} L</span></b></div></div>
@@ -324,13 +336,13 @@
     };
     const P = root.Player; const baseComplete = P.completeEncounter;
     P.completeEncounter = function (params, won, r) {
-      if (params && params.type === 'hn' && params.hn === 'botfr') { const rec = REC()[params.uid] = REC()[params.uid] || { w: 0, l: 0 }; rec.l++; HN.save(); }
+      if (params && params.type === 'hn' && params.hn === 'botfr') { if (HN.fr26) HN.fr26.srDrop(params.uid); const rec = REC()[params.uid] = REC()[params.uid] || { w: 0, l: 0 }; rec.l++; HN.save(); }
       return baseComplete.call(this, params, won, r);
     };
   }
   document.addEventListener('click', (e) => { const b = e.target.closest('[data-fbotbat]'); if (!b) return; e.preventDefault(); e.stopPropagation();
-    const uid = b.dataset.uid; const kind = b.dataset.fbotbat === 'ship' ? 'ship' : 'character'; const A = API();
-    if (A) { const c = A.BCH()[uid] || (A.BCH()[uid] = []); c.push({ me: 1, x: `⚔ Friendly battle? · ${kind === 'ship' ? 'Fleet' : 'Ground'}`, t: Date.now() }); HN.save(); }
+    const uid = b.dataset.uid; const kind = b.dataset.fbotbat === 'ship' ? 'ship' : b.dataset.fbotbat === 'mix' && HN.fr26 ? 'mix' : 'character'; const A = API();
+    if (A) { const c = A.BCH()[uid] || (A.BCH()[uid] = []); c.push({ me: 1, x: `⚔ Friendly battle? · ${kn(kind)}${HN.fr26 && HN.fr26.bo() === 3 ? ' · Best of 3' : ''}`, t: Date.now() }); HN.save(); }
     battleAsk(uid, kind);
     if (HN.friends && HN.friends.F) { HN.friends.F.botChat = uid; if (A) A.redraw(); }
   }, true);

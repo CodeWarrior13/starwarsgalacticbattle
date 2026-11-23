@@ -27,8 +27,14 @@
     const m = mode();
     const trueOn = HN.Duel && HN.Duel.trueOn && HN.Duel.trueOn();
     return `<div class="f26-modes" role="group" aria-label="Friendly battle mode">${MODES.map((k) => `<button type="button" class="f26-mode ${k === m ? 'on' : ''}" data-fr26m="${k}" style="--mc:${COL[k]}"><i aria-hidden="true">${ICON[k]}</i><span><b>${NAME[k]}${k === 'draft' || k === 'triple' ? ' <em>NEW</em>' : ''}</b><small>${esc(HOW[k][0].toUpperCase() + HOW[k].slice(1))}</small></span></button>`).join('')}</div>
-      ${m === 'classic' && trueOn ? `<div class="fr-mode" role="group" aria-label="Card levels"><button type="button" class="${!ts ? 'on' : ''}" data-frmode="even"><b>Even</b><small>Every card at Level ${(HN.Duel && HN.Duel.LEVEL) || 20} ★${(HN.Duel && HN.Duel.STARS) || 3}</small></button><button type="button" class="${ts ? 'on' : ''}" data-frmode="true"><b>True Strength</b><small>Real levels and stars</small></button></div>` : ''}`;
+      ${m === 'classic' && trueOn ? `<div class="fr-mode" role="group" aria-label="Card levels"><button type="button" class="${!ts ? 'on' : ''}" data-frmode="even"><b>Even</b><small>Every card at Level ${(HN.Duel && HN.Duel.LEVEL) || 20} ★${(HN.Duel && HN.Duel.STARS) || 3}</small></button><button type="button" class="${ts ? 'on' : ''}" data-frmode="true"><b>True Strength</b><small>Real levels and stars</small></button></div>` : ''}
+      <div class="fr-mode f26-bo" role="group" aria-label="How many battles"><button type="button" class="${bo() === 1 ? 'on' : ''}" data-fr26bo="1"><b>One battle</b><small>Mix: one Ground, one Fleet</small></button><button type="button" class="${bo() === 3 ? 'on' : ''}" data-fr26bo="3"><b>Best of 3</b><small>First to two wins</small></button></div>`;
   }
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-fr26bo]'); if (!b) return;
+    try { localStorage.setItem('swcg-fr26-bo', b.dataset.fr26bo === '3' ? '3' : '1'); } catch (er) { /* storage blocked */ }
+    b.parentElement.querySelectorAll('[data-fr26bo]').forEach((x) => x.classList.toggle('on', x === b));
+  });
   document.addEventListener('click', (e) => {
     const b = e.target.closest('[data-fr26m]'); if (!b) return;
     setMode(b.dataset.fr26m);
@@ -246,8 +252,84 @@ body.f26-open{overflow:hidden}
  .f26-pool .f26-card{aspect-ratio:auto;height:100%;min-height:0}.f26-pool.tri{grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:minmax(0,1fr);max-width:none}.f26-pool.tri .f26-card{max-width:220px;justify-self:center;width:100%;aspect-ratio:4/5;height:auto;max-height:100%}
  .f26-sq.you{grid-area:you}.f26-sq.them{grid-area:them}.f26-sq{grid-template-columns:1fr;grid-template-rows:auto repeat(5,minmax(0,1fr));align-content:stretch;gap:5px;min-height:0;height:100%}.f26-sq i{aspect-ratio:auto;width:100%;max-width:62px;max-height:62px;justify-self:center;min-height:0;height:100%}.f26-sq>span{padding:0;text-align:center}
 }
+.f26-bo{margin-top:6px}.f26-srl{text-align:center;margin:4px 0 0;font-size:13px;color:#bfefff}.f26-sr{display:grid;gap:8px;justify-items:center;margin:8px 0}.f26-srs{display:flex;align-items:center;gap:14px}.f26-srs span{display:grid;justify-items:center}.f26-srs small{font:700 10px var(--font-display);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}.f26-srs b{font:800 30px/1 var(--font-display)}.f26-srs em{font:700 11px var(--font-display);letter-spacing:.06em;text-transform:uppercase;color:#ffc04a;font-style:normal;text-align:center;max-width:170px}.f26-pips{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}.f26-pip{display:grid;justify-items:center;gap:2px;min-width:64px;padding:5px 8px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.03)}.f26-pip i{font:700 9.5px var(--font-display);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-style:normal}.f26-pip b{font:800 12px var(--font-display)}.f26-pip.w{border-color:#4ade80;background:rgba(74,222,128,.1)}.f26-pip.w b{color:#4ade80}.f26-pip.l{border-color:#ff6b6b;background:rgba(255,107,107,.08)}.f26-pip.l b{color:#ff8a8a}.f26-pip.sk{opacity:.45}
 .f26-rev{display:grid;gap:10px;justify-items:center;text-align:center}.f26-rev h2{margin:0}.f26-revs{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}.f26-revs span{display:grid;gap:3px;width:60px}.f26-revs svg{width:60px;height:60px;border-radius:10px;display:block}.f26-revs b{font:700 10px var(--font-display)}`;
   document.head.appendChild(st);
 
-  HN.fr26 = { NAME, HOW, mode, fmOf, picker, prep, msg, intro, local, draftPool, trios, mirrorSquad, smart, LV, clocks };
+  // ---------- Ground, Fleet or Mix, and Best of 3 ----------
+  // A series is one friend, one kind (Ground, Fleet or Mix) and one length. Mix plays a
+  // Ground battle then a Fleet one (Best of 3: Ground, Fleet, Ground). Wins decide it;
+  // if wins are level, the squad with more health left across the series wins.
+  // Nothing is ranked: it lives on this device, and the challenger carries the score
+  // in each invite so both screens agree.
+  const KN = { character: 'Ground', ship: 'Fleet', mix: 'Mix' };
+  const SR = {};
+  let lastHp = null;
+  const bo = () => { try { return localStorage.getItem('swcg-fr26-bo') === '3' ? 3 : 1; } catch (e) { return 1; } };
+  const hpPct = (b, side) => { const u = (b && b.side && b.side(side)) || []; const t = u.reduce((a, x) => a + (x.maxHp || 0), 0); return t ? Math.round(100 * u.reduce((a, x) => a + Math.max(0, x.hp || 0), 0) / t) : 0; };
+  if (UI.hooks) (UI.hooks.battleEnd = UI.hooks.battleEnd || []).push((b, p) => { if (p && p.type === 'hn' && (p.hn === 'duel' || p.hn === 'botfr')) lastHp = { me: hpPct(b, 'player'), them: hpPct(b, 'enemy'), at: Date.now() }; });
+  const kindAt = (k, i) => (k === 'mix' ? (i % 2 ? 'ship' : 'character') : k);
+  const plan = (s) => (s.bo === 3 ? 3 : s.k === 'mix' ? 2 : 1);
+  const over = (s) => (s.bo === 3 ? s.w[0] >= 2 || s.w[1] >= 2 || s.n >= 3 : s.n >= plan(s));
+  const verdict = (s) => (s.w[0] !== s.w[1] ? (s.w[0] > s.w[1] ? 1 : -1) : s.hp[0] !== s.hp[1] ? (s.hp[0] > s.hp[1] ? 1 : -1) : 0);
+  const isSeries = (k) => k === 'mix' || bo() === 3;
+  // Start a series with a friend (or bot). Returns the first battle's kind.
+  function srNew(uid, k, host) { SR[uid] = { k, bo: bo(), n: 0, w: [0, 0], hp: [0, 0], log: [], host: !!host, fm: mode() }; return kindAt(k, 0); }
+  const srOf = (uid) => SR[uid] || null;
+  const srDrop = (uid) => { delete SR[uid]; };
+  // What goes in an invite: the score from the sender's side.
+  const srOut = (s) => (s ? { k: s.k, bo: s.bo, n: s.n, w: s.w.slice(), hp: s.hp.slice(), log: s.log.slice() } : null);
+  function srClean(x) {
+    if (!x || typeof x !== 'object' || !KN[x.k]) return null;
+    const n = Math.max(0, Math.min(2, x.n | 0)); const num = (v) => Math.max(0, Math.min(300, v | 0));
+    const w = Array.isArray(x.w) ? [num(x.w[0]), num(x.w[1])] : [0, 0]; const hp = Array.isArray(x.hp) ? [num(x.hp[0]), num(x.hp[1])] : [0, 0];
+    const log = (Array.isArray(x.log) ? x.log : []).slice(0, n).map((r) => (r === 'w' || r === 'l' || r === 'd' ? r : 'd'));
+    return { k: x.k, bo: x.bo === 3 ? 3 : 1, n, w, hp, log };
+  }
+  // The other side of an invite: their wins are my losses.
+  function srAccept(uid, x) {
+    const c = srClean(x); if (!c) { srDrop(uid); return null; }
+    SR[uid] = { ...c, w: [c.w[1], c.w[0]], hp: [c.hp[1], c.hp[0]], log: c.log.map((r) => (r === 'w' ? 'l' : r === 'l' ? 'w' : 'd')), host: false };
+    return SR[uid];
+  }
+  function srRecord(uid, res) {
+    const s = SR[uid]; if (!s) return null;
+    const h = lastHp && Date.now() - lastHp.at < 60000 ? lastHp : { me: 0, them: 0 }; lastHp = null;
+    s.log.push(res); s.n += 1; if (res === 'w') s.w[0] += 1; else if (res === 'l') s.w[1] += 1;
+    s.hp[0] += h.me; s.hp[1] += h.them;
+    return s;
+  }
+  const srTitle = (s) => (s.bo === 3 ? `Best of 3 · ${KN[s.k]}` : 'Mix · Ground + Fleet');
+  // "Battle 2 of 3 · Fleet" line for invites and the waiting box.
+  const srLine = (x, flip) => { const s = srClean(x); if (!s) return ''; const w = flip ? [s.w[1], s.w[0]] : s.w; return `<p class="f26-srl"><b>${esc(srTitle(s))}</b> · Battle ${s.n + 1}${s.bo === 3 ? ' of up to 3' : ` of ${plan(s)}`}: <b>${KN[kindAt(s.k, s.n)]}</b>${s.n ? ` · ${w[0]}–${w[1]}` : ''}</p>`; };
+  // The score strip: one pip per battle, filled as they're played.
+  function srStrip(s) {
+    const pips = []; for (let i = 0; i < plan(s); i += 1) { const r = s.log[i]; const sk = i >= s.n && over(s); pips.push(`<span class="f26-pip ${r || (sk ? 'sk' : '')}"><i>${KN[kindAt(s.k, i)]}</i><b>${r === 'w' ? 'WIN' : r === 'l' ? 'LOSS' : r === 'd' ? 'DRAW' : sk ? '—' : '·'}</b></span>`); }
+    return `<div class="f26-sr"><div class="f26-srs"><span><small>You</small><b>${s.w[0]}</b></span><em>${esc(srTitle(s))}</em><span><small>Them</small><b>${s.w[1]}</b></span></div><div class="f26-pips">${pips.join('')}</div>${s.w[0] === s.w[1] && s.n ? `<p class="muted small" style="margin:0;text-align:center">Squad health left, on average: you ${Math.round(s.hp[0] / s.n)}% · them ${Math.round(s.hp[1] / s.n)}%. It breaks a tie in wins.</p>` : ''}</div>`;
+  }
+  // After a series battle: the result, the strip, and Next or the series result.
+  // o: { uid, name, won, draw, next(kind), back(), rematch(), host }
+  function srDone(o) {
+    const s = srRecord(o.uid, o.draw ? 'd' : o.won ? 'w' : 'l'); if (!s) return false;
+    const end = over(s); const v = end ? verdict(s) : 0; const nk = end ? '' : kindAt(s.k, s.n);
+    if (end) srDrop(o.uid);
+    const head = end ? (v > 0 ? ['win', 'SERIES WON'] : v < 0 ? ['lose', 'SERIES LOST'] : ['', 'SERIES DRAWN']) : [o.draw ? '' : o.won ? 'win' : 'lose', o.draw ? 'DRAW' : o.won ? 'VICTORY' : 'DEFEAT'];
+    const why = end && s.w[0] === s.w[1] && v ? `<p class="muted small" style="text-align:center;margin:0">Level on wins, so health left decided it.</p>` : '';
+    const btns = end ? `<button type="button" class="btn" data-s26="back">Back to friends</button><button type="button" class="btn btn-primary" data-s26="again">Play again</button>`
+      : o.host ? `<button type="button" class="btn" data-s26="stop">Stop here</button><button type="button" class="btn btn-primary" data-s26="next">Next: ${KN[nk]}</button>`
+        : `<button type="button" class="btn" data-s26="stop">Stop here</button><span class="muted small" style="align-self:center">${esc(o.name)} starts battle ${s.n + 1}.</span>`;
+    const m = UI.openModal(`<div class="hn-result"><div class="result-title ${head[0]}">${head[1]}</div><p style="text-align:center;margin:0">Friendly series against <b>${esc(o.name)}</b></p>${srStrip(s)}${why}<p class="muted small" style="text-align:center;margin:0">Just for fun: no rating, rewards or records change.</p><div class="modal-actions">${btns}</div></div>`, { small: true, dismissable: false, cls: 'result-modal' });
+    m.root.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-s26]'); if (!b) return;
+      const a = b.dataset.s26; m.close();
+      if (a === 'next') return o.next(nk, srOut(SR[o.uid]));
+      if (a === 'stop') srDrop(o.uid);
+      if (a === 'again') return o.rematch(s.k);
+      o.back();
+    });
+    srDone.modal = m;
+    return true;
+  }
+
+  HN.fr26 = { NAME, HOW, mode, fmOf, picker, prep, msg, intro, local, draftPool, trios, mirrorSquad, smart, LV, clocks, KN, bo, isSeries, srNew, srOf, srDrop, srOut, srAccept, srLine, srDone, kindAt };
 })(window);

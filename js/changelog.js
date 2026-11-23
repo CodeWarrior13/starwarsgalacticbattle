@@ -50,6 +50,7 @@
         'NEW|Other players see your attack colour in Live Duels and friendly battles, and you see theirs.',
         'IMPROVED|Life Day wraps every shot in a string of lights that pops into a ring when it lands; Hoth Frost gets an ice crust, ice shards and a frost ring.',
         'NEW|Friendly battles get five modes: Classic, Mirror Match (both get the same random squad at the same level), Level Field (every card at Level 30 ★5), Draft Duel (take turns picking from a shuffled pool of 18) and Triple Draft (pick one card from each of five trios).',
+        'NEW|Friendly battles: pick Ground, Fleet or Mix (one Ground battle and one Fleet battle), and One battle or Best of 3. A score card after each battle shows the series so far; if wins are level, the squad with more health left takes it.',
         'NEW|Friendly battles have a battle clock: 30 seconds a turn and 10 minutes a battle (7 in Triple Draft). Run out of time in a draft and a pick is made for you that fills what your squad still needs.',
         'NEW|Luthen\'s Gallery: a live countdown to the next collection (Monday 12 AM Central) and a peek at what\'s coming.',
         'IMPROVED|The update log scrolls much smoother, and only the numbers that matter light up.',

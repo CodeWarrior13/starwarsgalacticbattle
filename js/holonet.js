@@ -3880,8 +3880,9 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
 
   // fm (2.6): the friendly mode: '' classic, 'mirror', 'draft', 'triple' or 'level' (js/friendly26.js).
   const fmOk = (x) => (HN.fr26 && ['mirror', 'draft', 'triple', 'level'].includes(String(x)) ? String(x) : '');
-  function challenge(peer, kind, fr, wg, ts, fm) {
+  function challenge(peer, kind, fr, wg, ts, fm, sr) {
     fm = fr ? fmOk(fm) : '';
+    sr = fr && sr && HN.fr26 ? sr : null;
     if (!fr && HN.seasonBreak && HN.seasonBreak()) return toast(HN.breakNote());
     ts = !!(ts && fr && trueOn());
     if (!HN.pool(kind).length) return toast(kind === 'ship' ? 'You need a ship to fly a Fleet duel.' : 'You need a character for a Ground duel.');
@@ -3890,15 +3891,15 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     if (Duel.prep) return toast('Finish setting up your other duel first.');
     const id = rid();
     const seed = 1 + Math.floor(Math.random() * 2e9);
-    Duel.pending = { id, peer: peer.peer, by: peer.by, kind, seed, fr: !!fr, wg: !!wg, nb: bansEach(), ts: fm ? false : ts, fm };
-    Duel.room.emit('challenge', { to: peer.peer, id, kind, seed, rating: HN.S().rating, nm: myNm(), pool: poolIds(kind), fr: fr ? 1 : 0, wg: wg ? 1 : 0, nb: bansEach(), ts: ts && !fm ? 1 : 0, ...(fm ? { fm } : {}) }).catch(() => toast('Could not reach them.'));
-    const m = openModal(`<div class="hn-result"><div class="result-title" style="color:${wg ? '#ffd23f' : '#8fe8ff'};${fr || wg ? 'font-size:clamp(22px,6vw,34px)' : ''}">${fr ? (fm && HN.fr26 ? HN.fr26.NAME[fm].toUpperCase() : ts ? 'TRUE STRENGTH' : 'FRIENDLY BATTLE') : wg ? 'WAGER DUEL' : 'CHALLENGE SENT'}</div><p style="text-align:center">Waiting for <b>${esc(Duel.name(peer))}</b> to accept a ${kindName(kind)} ${fr ? 'friendly battle' : wg ? 'wager duel' : 'duel'}…</p><div class="modal-actions"><button type="button" class="btn" data-x="cancel">Cancel</button></div></div>`, { small: true, dismissable: false });
+    Duel.pending = { id, peer: peer.peer, by: peer.by, kind, seed, fr: !!fr, wg: !!wg, nb: bansEach(), ts: fm ? false : ts, fm, sr };
+    Duel.room.emit('challenge', { to: peer.peer, id, kind, seed, rating: HN.S().rating, nm: myNm(), pool: poolIds(kind), fr: fr ? 1 : 0, wg: wg ? 1 : 0, nb: bansEach(), ts: ts && !fm ? 1 : 0, ...(fm ? { fm } : {}), ...(sr ? { sr } : {}) }).catch(() => toast('Could not reach them.'));
+    const m = openModal(`<div class="hn-result"><div class="result-title" style="color:${wg ? '#ffd23f' : '#8fe8ff'};${fr || wg ? 'font-size:clamp(22px,6vw,34px)' : ''}">${fr ? (fm && HN.fr26 ? HN.fr26.NAME[fm].toUpperCase() : ts ? 'TRUE STRENGTH' : 'FRIENDLY BATTLE') : wg ? 'WAGER DUEL' : 'CHALLENGE SENT'}</div><p style="text-align:center">Waiting for <b>${esc(Duel.name(peer))}</b> to accept a ${kindName(kind)} ${fr ? 'friendly battle' : wg ? 'wager duel' : 'duel'}…</p>${sr ? HN.fr26.srLine(sr) : ''}<div class="modal-actions"><button type="button" class="btn" data-x="cancel">Cancel</button></div></div>`, { small: true, dismissable: false });
     Duel.pending.modal = m;
-    Duel.pending.timer = setTimeout(() => { if (Duel.pending && Duel.pending.id === id) { Duel.pending = null; m.close(); toast('No answer. Try again later.'); } }, 30000);
+    Duel.pending.timer = setTimeout(() => { if (Duel.pending && Duel.pending.id === id) { if (sr) HN.fr26.srDrop(peer.by); Duel.pending = null; m.close(); toast('No answer. Try again later.'); } }, 30000);
     m.root.addEventListener('click', (e) => {
       if (!e.target.closest('[data-x]')) return;
       const p = Duel.pending;
-      if (p && p.id === id) { clearTimeout(p.timer); say(p.peer, { id, step: 'cancel' }); Duel.pending = null; }
+      if (p && p.id === id) { clearTimeout(p.timer); say(p.peer, { id, step: 'cancel' }); if (p.sr) HN.fr26.srDrop(p.by); Duel.pending = null; }
       m.close();
     });
   }
@@ -3926,6 +3927,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const who = Duel.name(msg);
     const m = openModal(`<div class="hn-result" data-invite="${esc(d.id)}">${d.fr ? `<div class="result-title" style="color:#8fe8ff;font-size:clamp(22px,6vw,34px)">FRIENDLY BATTLE</div>
       <p style="text-align:center">Your friend <b>${esc(who)}</b> challenges you to a <b>${kindName(d.kind)}</b> battle.</p>
+      ${d.sr && HN.fr26 ? HN.fr26.srLine(d.sr, true) : ''}
       ${d.ts ? '<p style="text-align:center;margin:0"><b style="color:#ffd23f">True Strength:</b> every card fights at its real level and stars.</p>' : ''}
       <p class="muted small" style="text-align:center;margin:0">${fmOk(d.fm) ? `<b style="color:#ffc04a">${esc(HN.fr26.NAME[fmOk(d.fm)])}:</b> ${esc(HN.fr26.HOW[fmOk(d.fm)])}` : `You each ban ${banWord(d.nb)}, then build your squads.`} Just for fun: no rating, no rewards.</p>` : d.wg ? `<div class="result-title" style="color:#ffd23f;font-size:clamp(22px,6vw,34px)">WAGER DUEL</div>
       <p style="text-align:center"><b>${esc(who)}</b> (${fmt(d.rating || 0)} rating) challenges you to a <b>${kindName(d.kind)}</b> wager duel.</p>
@@ -3947,6 +3949,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       if (!HN.pool(inv.kind).length) { toast(inv.kind === 'ship' ? 'You need a ship for a Fleet duel.' : 'You need a character for a Ground duel.'); say(inv.peer, { id: inv.id, step: 'no' }); return; }
       // Accepting drops any challenge we were still waiting on.
       if (Duel.pending) { const p = Duel.pending; clearTimeout(p.timer); if (p.modal) p.modal.close(); say(p.peer, { id: p.id, step: 'cancel' }); Duel.pending = null; }
+      if (inv.fr && HN.fr26) { if (inv.sr) HN.fr26.srAccept(inv.by, inv.sr); else HN.fr26.srDrop(inv.by); }
       say(inv.peer, { id: inv.id, step: 'go', pool: poolIds(inv.kind), rating: HN.S().rating });
       prep({ fm: inv.fr ? fmOk(inv.fm) : '', id: inv.id, host: false, kind: inv.kind, seed: inv.seed, peer: inv.peer, by: inv.by, who, rating: inv.rating, theirPool: okIds(inv.pool, inv.kind), fr: !!inv.fr, wg: !!inv.wg && !inv.fr, nb: inv.nb === 2 ? 2 : 1, ts: !!(inv.ts && inv.fr) });
     });
@@ -3975,6 +3978,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       if (Duel.match || App.battleActive || Duel.prep) { say(msg.peer, { id: p.id, step: 'cancel' }); return; }
       return prep({ fm: p.fr ? fmOk(p.fm) : '', id: p.id, host: true, kind: p.kind, seed: p.seed, peer: msg.peer, by: msg.by, who: Duel.name(msg), rating: d.rating, theirPool: okIds(d.pool, p.kind), fr: !!p.fr, wg: !!p.wg, nb: p.nb === 2 ? 2 : 1, ts: !!(p.ts && p.fr) });
     }
+    if (p.sr && HN.fr26) HN.fr26.srDrop(p.by);
     toast(d.busy ? 'They are busy in another fight.' : d.nowg ? 'They can\'t take wager duels right now.' : 'Challenge declined.');
   }
 
@@ -4417,7 +4421,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     if (!M) return;
     M.room.emit('bye', {}).catch(() => {});
     // Friendly battles: leaving costs nothing.
-    if (M.fr) { cleanup(M); return; }
+    if (M.fr) { if (HN.fr26) HN.fr26.srDrop(M.by); cleanup(M); return; }
     const h = HN.S();
     h.duels = h.duels || { w: 0, l: 0 };
     h.duels.l += 1; h.duels.s = 0;
@@ -4570,6 +4574,16 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   // Friendly battles: the result, and nothing else changes.
   function friendlyDone(M, won) {
     const draw = M.result === 'draw';
+    // 2.6: Mix and Best of 3 (js/friendly26.js) show the series score and the next battle.
+    const S26 = HN.fr26 && HN.fr26.srOf(M.by);
+    if (S26) {
+      cleanup(M);
+      const peer = { peer: M.peer, by: M.by, nm: M.name };
+      const back = () => { App.go('home'); if (HN.friends) setTimeout(() => HN.friends.open(), 250); };
+      return HN.fr26.srDone({ uid: M.by, name: M.name, won, draw, host: S26.host, back,
+        next: (kind, sr) => challenge(peer, kind, true, false, !!M.ts, S26.fm, sr),
+        rematch: (k) => { const kind = HN.fr26.srNew(M.by, k, true); challenge(peer, kind, true, false, !!M.ts, HN.fr26.mode(), HN.fr26.srOut(HN.fr26.srOf(M.by))); } });
+    }
     const timeNote = M.dealt ? `<p style="text-align:center" class="muted">Time ran out · damage dealt ${fmt(M.dealt.mine)} to ${fmt(M.dealt.theirs)}</p>` : '';
     const name = M.name;
     cleanup(M);
@@ -4585,7 +4599,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       if (b.dataset.r === 'friends' && HN.friends) setTimeout(() => HN.friends.open(), 250);
     });
   }
-  Duel.challengeFriend = (peer, kind, ts, fm) => challenge(peer, kind, true, false, ts, fm);
+  Duel.challengeFriend = (peer, kind, ts, fm, sr) => challenge(peer, kind, true, false, ts, fm, sr);
   Duel.trueOn = trueOn;
 
   // ---------- the lobby screen ----------
@@ -10310,7 +10324,11 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
     const uid = F.other(r);
     if (!isOnline(uid)) return toast(`${F.otherName(r)} isn't online right now.`);
     if (!HN.Duel || !HN.Duel.challengeFriend) return toast('Connecting… try again in a moment.');
-    HN.Duel.challengeFriend({ peer: uid, by: uid, nm: F.otherName(r) }, kind, frMode() === 'true', HN.fr26 ? HN.fr26.mode() : '');
+    let sr = null;
+    // 2.6: Mix, or any Best of 3, is a series (js/friendly26.js).
+    if (HN.fr26 && (kind === 'mix' || HN.fr26.isSeries(kind))) { kind = HN.fr26.srNew(uid, kind, true); sr = HN.fr26.srOut(HN.fr26.srOf(uid)); } else if (HN.fr26) HN.fr26.srDrop(uid);
+    if (kind === 'mix') return;
+    HN.Duel.challengeFriend({ peer: uid, by: uid, nm: F.otherName(r) }, kind, frMode() === 'true', HN.fr26 ? HN.fr26.mode() : '', sr);
   }
 
   // Callsigns starting with key, closest first (exact, then shortest, then A-Z).
@@ -10344,7 +10362,7 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
       const pic = HN.fcard ? HN.fcard.pic(uid, F.otherName(r), 'sm') : '';
       return `<div class="fr-row ${isFav(uid) ? 'fav' : ''}"><button type="button" class="fr-av ${pic ? 'pic' : ''}" data-f="prof" data-id="${esc(r.id)}" aria-label="${esc(F.otherName(r))}'s profile">${pic || esc(F.otherName(r).slice(0, 2).toUpperCase())}</button>
         <span class="fr-who"><b>${esc(F.otherName(r))}</b><small class="${live ? (busy ? 'busy' : 'on') : ''}"><i class="fr-pl" title="Real player">PLAYER</i>${(isOnline(uid) && root.FriendActivity && root.FriendActivity.rich && root.FriendActivity.rich((F.online[uid] || {}).a)) || esc(doingNow(uid))}</small></span>
-        <span class="fr-go">${star(uid)}<button type="button" class="btn fr-chat" data-f="chat" data-id="${esc(r.id)}">Chat${F.unread(r.id) ? `<i class="fr-n">${F.unread(r.id) > 9 ? '9+' : F.unread(r.id)}</i>` : ''}</button><button type="button" class="btn" data-f="ground" data-id="${esc(r.id)}" ${live && !busy ? '' : 'disabled'}>Ground</button><button type="button" class="btn" data-f="fleet" data-id="${esc(r.id)}" ${live && !busy ? '' : 'disabled'}>Fleet</button><button type="button" class="fr-x" data-f="remove" data-id="${esc(r.id)}" aria-label="Remove friend" title="Remove friend">✕</button></span></div>`;
+        <span class="fr-go">${star(uid)}<button type="button" class="btn fr-chat" data-f="chat" data-id="${esc(r.id)}">Chat${F.unread(r.id) ? `<i class="fr-n">${F.unread(r.id) > 9 ? '9+' : F.unread(r.id)}</i>` : ''}</button><button type="button" class="btn" data-f="ground" data-id="${esc(r.id)}" ${live && !busy ? '' : 'disabled'}>Ground</button><button type="button" class="btn" data-f="fleet" data-id="${esc(r.id)}" ${live && !busy ? '' : 'disabled'}>Fleet</button>${HN.fr26 ? `<button type="button" class="btn" data-f="mix" data-id="${esc(r.id)}" ${live && !busy ? '' : 'disabled'}>Mix</button>` : ''}<button type="button" class="fr-x" data-f="remove" data-id="${esc(r.id)}" aria-label="Remove friend" title="Remove friend">✕</button></span></div>`;
     };
     const star = (uid) => `<button type="button" class="fr-star ${isFav(uid) ? 'on' : ''}" data-fstar="${esc(uid)}" aria-pressed="${isFav(uid)}" aria-label="${isFav(uid) ? 'Unpin from the top' : 'Favorite: pin to the top'}" title="${isFav(uid) ? 'Favorite' : 'Make favorite'}">★</button>`;
     const botPic = (b) => { const e = BF()[b.uid] || {}; if (HN.botUid && b.uid.startsWith('bot:')) HN.botUid({ name: b.name, av: e.av, frame: e.frame, best: e.best }); return HN.avatarFor ? HN.avatarFor(b.uid) : ''; };
@@ -10352,7 +10370,7 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
       const n = botNow(b.uid);
       return `<div class="fr-row ${isFav(b.uid) ? 'fav' : ''}"><button type="button" class="fr-av pic" data-fbot="${esc(b.uid)}" aria-label="${esc(b.name)}'s profile">${botPic(b)}</button>
         <span class="fr-who"><b>${esc(b.name)}</b><small class="${n.on ? 'busy' : ''}">${esc(n.txt)}</small></span>
-        <span class="fr-go">${star(b.uid)}<button type="button" class="btn fr-chat" data-fbotchat="${esc(b.uid)}">Chat</button><button type="button" class="btn" ${HN.botBrain ? `data-fbotbat="character" data-uid="${esc(b.uid)}"` : 'disabled'}>Ground</button><button type="button" class="btn" ${HN.botBrain ? `data-fbotbat="ship" data-uid="${esc(b.uid)}"` : 'disabled'}>Fleet</button><button type="button" class="fr-x" data-fbotx="${esc(b.uid)}" aria-label="Remove friend" title="Remove friend">✕</button></span></div>`;
+        <span class="fr-go">${star(b.uid)}<button type="button" class="btn fr-chat" data-fbotchat="${esc(b.uid)}">Chat</button><button type="button" class="btn" ${HN.botBrain ? `data-fbotbat="character" data-uid="${esc(b.uid)}"` : 'disabled'}>Ground</button><button type="button" class="btn" ${HN.botBrain ? `data-fbotbat="ship" data-uid="${esc(b.uid)}"` : 'disabled'}>Fleet</button>${HN.fr26 ? `<button type="button" class="btn" ${HN.botBrain ? `data-fbotbat="mix" data-uid="${esc(b.uid)}"` : 'disabled'}>Mix</button>` : ''}<button type="button" class="fr-x" data-fbotx="${esc(b.uid)}" aria-label="Remove friend" title="Remove friend">✕</button></span></div>`;
     };
     const renderBotChat = (uid) => {
       const nm = (BF()[uid] || {}).name || Net.name(uid);
@@ -10515,7 +10533,7 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
       if (f === 'decline') return drop(r, 'Request declined.');
       if (f === 'cancel') return drop(r, 'Request cancelled.');
       if (f === 'remove') return confirmRemove(r, drop);
-      if (f === 'ground' || f === 'fleet') { m.close(); challenge(r, f === 'fleet' ? 'ship' : 'character'); }
+      if (f === 'ground' || f === 'fleet' || f === 'mix') { m.close(); challenge(r, f === 'mix' ? 'mix' : f === 'fleet' ? 'ship' : 'character'); }
     });
   }
 
