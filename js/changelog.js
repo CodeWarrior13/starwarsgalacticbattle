@@ -103,6 +103,7 @@
         'FIXED|Leaderboards: banners from Luthen\'s Gallery show for everyone (not just your guild\'s banner), and every banner on screen animates.',
         'FIXED|Cosmetics: card backs no longer sit on top of their names on computers.',
         'FIXED|Holiday attack colours: leaves, stars and sparks burst when the shot lands, not before.',
+        'FIXED|HoloNet wins (arena, duels, raids, friendlies) now play your MVP pose and win screen, and count toward badges and events like the Harvest Hunt.',
         'NEW|Luthen never puts everything on the plinth. Some pieces wait for the right buyer.',
         'NEW|Collect everything, everywhere, and the galaxy notices.',
       ],
