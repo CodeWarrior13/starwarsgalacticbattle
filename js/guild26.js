@@ -24,7 +24,7 @@
     const k = Math.max(0, Math.min(7, today - (a.d | 0)));
     if (!k) return a;
     const sh = (arr) => arr.slice(k).concat(Array(k).fill(0));
-    return { d: today, gp: sh(a.gp), bt: sh(a.bt || [0, 0, 0, 0, 0, 0, 0]), ch: sh(a.ch || [0, 0, 0, 0, 0, 0, 0]) };
+    return { ...a, d: today, gp: sh(a.gp), bt: sh(a.bt || [0, 0, 0, 0, 0, 0, 0]), ch: sh(a.ch || [0, 0, 0, 0, 0, 0, 0]) };
   };
   const mine = () => {
     const h = SO.P2();
@@ -32,12 +32,17 @@
     const s = h.a26s || (h.a26s = { gpl: h.soc ? h.soc.gpl | 0 : 0, bt: 0, ts: Date.now() });
     // Points: everything added to your all-time guild points since the last look goes on today.
     const gpl = h.soc ? h.soc.gpl | 0 : 0;
-    if (gpl > s.gpl) a.gp[6] += gpl - s.gpl;
+    const sn = SO.seasonNo ? SO.seasonNo() : 0;
+    if (a.ss !== sn) { a.ss = sn; a.sp = 0; a.sb = 0; a.sc = 0; a.sr = 0; }
+    if (gpl > s.gpl) { a.gp[6] += gpl - s.gpl; a.sp = (a.sp | 0) + gpl - s.gpl; }
     s.gpl = gpl;
+    // Raid damage this season: this week's running total, added as it grows.
+    const gr = h.soc && h.soc.gr ? h.soc.gr : null;
+    if (gr) { const tot = (gr.d | 0) + (gr.f | 0); const wk = `${gr.w}:${gr.b}`; if (s.rw !== wk) { s.rw = wk; s.rd = 0; } if (tot > (s.rd | 0)) { a.sr = (a.sr | 0) + tot - (s.rd | 0); s.rd = tot; } }
     // Battles: wins and losses since the last look.
     const st = (h.prof && h.prof.st) || {};
     const bt = (st.w | 0) + (st.l | 0);
-    if (s.bt && bt > s.bt) a.bt[6] += bt - s.bt;
+    if (s.bt && bt > s.bt) { a.bt[6] += bt - s.bt; a.sb = (a.sb | 0) + bt - s.bt; }
     s.bt = bt;
     // Chats: your guild lines newer than the last look, counted on the day they were sent.
     try {
@@ -48,12 +53,13 @@
         if (!m || !m.ts || m.ts <= (s.ts | 0) || m.g !== gid || m.s) continue;
         const i = 6 - (dayNo() - dayNo(m.ts));
         if (i >= 0 && i <= 6) a.ch[i] += 1;
+        a.sc = (a.sc | 0) + 1;
         newest = Math.max(newest, m.ts);
       }
       s.ts = newest;
     } catch (e) { /* chat not loaded yet */ }
     h.a26 = a;
-    return { d: a.d, gp: a.gp.map((n) => n | 0), bt: a.bt.map((n) => n | 0), ch: a.ch.map((n) => n | 0) };
+    return { d: a.d, gp: a.gp.map((n) => n | 0), bt: a.bt.map((n) => n | 0), ch: a.ch.map((n) => n | 0), ss: a.ss | 0, sp: a.sp | 0, sb: a.sb | 0, sc: a.sc | 0, sr: a.sr | 0 };
   };
   HN.a26 = mine;
   // Battles finish → note them (the next upload carries them; nothing extra is sent).
@@ -82,6 +88,7 @@
     const dons = SO.donors(gid);
     const lines = SO.chatLines(gid).filter((l) => !l.s);
     const since = now - (win === 'day' ? DAY : 7 * DAY);
+    const sn = SO.seasonNo ? SO.seasonNo() : 0; const sea = win === 'season';
     const out = SO.membersOf(gid).map((uid) => {
       const me = uid === Net.me || uid === 'me';
       const id = me ? Net.me : uid;
@@ -90,12 +97,13 @@
       let a = me ? mine() : r && r.a26 ? roll(r.a26, today) : null;
       if (!a) { const g = spread(id, wk); a = { gp: g, bt: g.map((n) => Math.round(n / 25)), ch: [0, 0, 0, 0, 0, 0, 0] }; }
       const chatSeen = lines.filter((l) => l.uid === id && l.ts >= since).length;
-      const chats = Math.max(chatSeen, win === 'day' ? a.ch[6] : a.ch.reduce((x, y) => x + y, 0));
+      const cur = a.ss === sn; // season totals only count if they're from this season
+      const chats = sea ? Math.max(chatSeen, cur ? a.sc | 0 : 0) : Math.max(chatSeen, win === 'day' ? a.ch[6] : a.ch.reduce((x, y) => x + y, 0));
       const seen = me ? now : (r && r.updated) || 0;
       const days = a.gp.map((n, i) => n + a.bt[i] * 10 + a.ch[i] * 4);
       return {
-        uid: id, me, p, r: SO.roleOf(uid, gid), pts: wk, gp7: a.gp.reduce((x, y) => x + y, 0), raid: dmg[id] || dmg[uid] || 0, don: dons[id] | 0,
-        bt7: a.bt.reduce((x, y) => x + y, 0), chats, seen, days, active: days.filter((n) => n > 0).length,
+        uid: id, me, p, r: SO.roleOf(uid, gid), pts: sea ? Math.max(wk, cur ? a.sp | 0 : 0) : wk, gp7: a.gp.reduce((x, y) => x + y, 0), raid: sea ? Math.max(dmg[id] || dmg[uid] || 0, cur ? a.sr | 0 : 0) : dmg[id] || dmg[uid] || 0, don: dons[id] | 0,
+        bt7: sea ? Math.max(a.bt.reduce((x, y) => x + y, 0), cur ? a.sb | 0 : 0) : a.bt.reduce((x, y) => x + y, 0), chats, seen, days, active: days.filter((n) => n > 0).length,
       };
     });
     return out;
@@ -158,7 +166,7 @@
   function view(gid) {
     if (!canSee(gid)) return '<div class="hn-sec"><p class="muted" style="margin:0">Analytics is for the Leader and Co-Leader. The Leader can open it to Elders too.</p></div>';
     const t0 = performance.now();
-    const list = stats(gid, win === 'day' ? 'day' : 'week');
+    const list = stats(gid, win);
     const labels = dayLabels();
     const guildDays = labels.map((_, i) => list.reduce((a, x) => a + x.days[i], 0));
     const gMax = Math.max(1, ...guildDays); const gMin = Math.min(...guildDays.filter((v) => v > 0), gMax) * 0.85;
@@ -167,16 +175,16 @@
     const pool = (raid.ground.pool || 0) + (raid.fleet.pool || 0); const dealt = raid.ground.dealt + raid.fleet.dealt;
     const tiles = [
       ['Active this week', `${list.filter((x) => x.active).length} / ${list.length}`],
-      ['Guild points', fmt(list.reduce((a, x) => a + x.pts, 0))],
+      [win === 'season' ? 'Guild points this season' : 'Guild points this week', fmt(list.reduce((a, x) => a + x.pts, 0))],
       ['Raid damage', fmt(dealt), pool ? `${Math.min(100, Math.round((dealt / pool) * 100))}% of the raid` : ''],
-      [win === 'day' ? 'Chats, 24 hours' : 'Chats, 7 days', fmt(list.reduce((a, x) => a + x.chats, 0))],
+      [win === 'day' ? 'Chats, 24 hours' : win === 'season' ? 'Chats this season' : 'Chats, 7 days', fmt(list.reduce((a, x) => a + x.chats, 0))],
     ];
     const heat = `<div class="ga-heat" role="img" aria-label="When the guild plays, busiest days in red">${guildDays.map((v, i) => `<div><i style="background:${heatC(v, gMax, gMin)}"></i><small>${labels[i]}</small></div>`).join('')}</div>
       <div class="ga-key"><span>Quiet</span><i style="background:linear-gradient(90deg,${HEAT.join(',')})"></i><span>Busiest</span></div>`;
     const sorted = list.slice().sort((a, b) => ['leader', 'co', 'elder', 'member'].indexOf(a.r) - ['leader', 'co', 'elder', 'member'].indexOf(b.r) || b.pts - a.pts);
     const members = sorted.map((x) => { const ban = banner(x); return `<div class="ga-m${ban ? ' has-ban' : ''}${x.active ? '' : ' idle'}">${ban ? `<span class="ga-ban" aria-hidden="true">${ban}</span>` : ''}
       <span class="ga-av">${avatar(x)}</span><span class="ga-nm"><b>${esc(Net.name(x.uid))}</b><small>${esc(SO.ROLE_NAME[x.r] || 'Member')} · ${agoTxt(x.seen)}</small></span>
-      <span class="ga-days" aria-label="Last 7 days">${x.days.map((v, i) => `<i style="background:${heatC(v, mMax)}" title="${labels[i]}"></i>`).join('')}</span>
+      <span class="ga-days" aria-label="Last 7 days">${x.days.map((v, i) => `<span><b>${labels[i][0]}</b><i style="background:${heatC(v, mMax)}" title="${labels[i]}"></i></span>`).join('')}</span>
       <span class="ga-st"><span><b>${fmt(x.pts)}</b><small>points</small></span><span><b>${fmt(x.raid)}</b><small>raid</small></span><span><b>${fmt(x.don)}</b><small>Beskar</small></span><span><b>${fmt(x.bt7)}</b><small>battles</small></span><span><b>${fmt(x.chats)}</b><small>chats</small></span></span></div>`; }).join('');
     const hs = hints(list, gid);
     const lead = roleNow(gid) === 'leader';
@@ -187,11 +195,11 @@
         ${advise ? `<ol class="ga-rank">${breakdown(list).map((x) => `<li class="${x.call === 'Promote to Elder' ? 'up' : x.call === 'Keep' ? '' : 'down'}"><span class="ga-rn">${x.rank}</span><span class="ga-av sm">${avatar(x)}</span><span class="ga-nm"><b>${esc(Net.name(x.uid))}</b><small>${esc(SO.ROLE_NAME[x.r] || 'Member')} · score ${x.score}</small></span><em>${x.call}</em><p>${esc(x.why)}</p></li>`).join('')}</ol>` : ''}</div>`;
     }
     const html = `<div class="ga">
-      <div class="ga-top"><div class="hn-seg ga-seg"><button type="button" class="${win === 'day' ? 'on' : ''}" data-hn="ga26win" data-w="day">24 hours</button><button type="button" class="${win !== 'day' ? 'on' : ''}" data-hn="ga26win" data-w="week">7 days</button></div></div>
+      <div class="ga-top"><div class="hn-seg ga-seg"><button type="button" class="${win === 'day' ? 'on' : ''}" data-hn="ga26win" data-w="day">24 hours</button><button type="button" class="${win === 'week' ? 'on' : ''}" data-hn="ga26win" data-w="week">7 days</button><button type="button" class="${win === 'season' ? 'on' : ''}" data-hn="ga26win" data-w="season">Season</button></div></div>
       <div class="ga-tiles">${tiles.map(([k, v, d]) => `<div class="ga-tile"><small>${k}</small><b>${v}</b>${d ? `<i>${d}</i>` : ''}</div>`).join('')}</div>
       <div class="hn-sec"><h3>When the guild plays</h3>${heat}</div>
       ${hs.length ? `<div class="hn-sec ga-tips"><h3>Worth a look</h3>${hs.map(([c, t]) => `<p><span class="dot ${c}"></span><span>${t}</span></p>`).join('')}</div>` : ''}
-      <div class="hn-sec"><h3>Members · ${list.length}</h3><p class="muted small" style="margin:0 0 4px">Coloured squares are each member's last 7 days, oldest first: red is their busiest day.</p><div class="ga-list">${members}</div></div>
+      <div class="hn-sec"><h3>Members · ${list.length}</h3><p class="muted small" style="margin:0 0 4px">Coloured squares are each member's last 7 days, oldest first, with the day above each: red is their busiest day.</p><div class="ga-list">${members}</div></div>
       ${adv}
       ${lead ? `<div class="hn-sec"><div class="g-sws"><span class="g-fix">Leader · Co-leader</span><button type="button" class="g-sw ${eldersOk(gid) ? 'on' : ''}" data-hn="ga26eld" aria-pressed="${eldersOk(gid)}"><i></i>Elders can see analytics</button></div></div>` : ''}
     </div>`;
@@ -214,7 +222,7 @@
     return out;
   };
   // Analytics only redraws when you touch it (live chat or donations don't rebuild it).
-  CL.ga26win = (b, render) => { win = b.dataset.w === 'day' ? 'day' : 'week'; render(); };
+  CL.ga26win = (b, render) => { win = ['day', 'week', 'season'].includes(b.dataset.w) ? b.dataset.w : 'week'; render(); };
   CL.ga26adv = (b, render) => { const gid = SO.myGuildId(); if (!gid || !canAdvise(gid)) return; advise = !advise; render(); };
   CL.ga26eld = async (b, render) => {
     const gid = SO.myGuildId();
@@ -239,7 +247,7 @@
 .ga-ban{position:absolute;inset:0;z-index:-1;opacity:.55;pointer-events:none}.ga-ban>*{width:100%;height:100%}.ga-m.has-ban::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(6,12,22,.9),rgba(6,12,22,.55) 60%,rgba(6,12,22,.8))}
 .ga-av{grid-area:av;width:44px;height:44px;display:block}.ga-av>*{width:44px!important;height:44px!important}.ga-av.sm,.ga-av.sm>*{width:34px!important;height:34px!important}
 .ga-nm{grid-area:nm;display:grid;min-width:0}.ga-nm b{font:800 14px var(--font-display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 2px rgba(0,0,0,.6)}.ga-nm small{font-size:11.5px;color:#c8d6e4}
-.ga-days{grid-area:days;display:grid;grid-template-columns:repeat(7,12px);gap:3px}.ga-days i{display:block;width:12px;height:18px;border-radius:3px}
+.ga-days{grid-area:days;display:grid;grid-template-columns:repeat(7,13px);gap:3px;padding-top:2px}.ga-days>span{display:grid;justify-items:center;gap:3px}.ga-days b{font:700 9px/1 var(--font-display);color:#9fb4c8}.ga-days i{display:block;width:12px;height:16px;border-radius:3px}
 .ga-st{grid-area:st;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}.ga-st span{display:grid;justify-items:center;padding:4px 2px;border-radius:8px;background:rgba(4,8,16,.55)}.ga-st b{font:800 13px var(--font-display)}.ga-st small{font-size:10.5px;color:var(--muted)}
 @media (min-width:860px){.ga-m{grid-template-columns:44px minmax(140px,1fr) auto minmax(330px,1.4fr);grid-template-areas:"av nm days st"}}
 .ga-advh{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}.ga-advh span{display:grid;gap:2px;min-width:0;flex:1 1 220px}.ga-advh small{color:var(--muted);font-size:12px}
