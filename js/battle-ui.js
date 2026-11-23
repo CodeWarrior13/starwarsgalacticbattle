@@ -2462,7 +2462,7 @@
       }
       if (root.Update24 && root.Update24.on()) list.push({ level: Player.ELITE_LEVEL || 30, name: 'Elite promotion', desc: 'Promote 7★ commons, rares and epics with Kyber: next-rarity strength and a 25% stronger doctrine.' });
       if (root.Update23 && root.Update23.on()) list.push({ level: 30, name: 'Auto-open', desc: 'Open Black Market crates one after another, hands-free, until you reach your number.' });
-      if (root.Cos25 && root.Cos25.SET_LV) root.Cos25.SET_LV.forEach((lv, i) => list.push({ level: lv, name: i ? `Equip Set slot ${i + 1}` : 'Equip Sets', desc: i ? 'Save one more whole look in Cosmetics > Sets.' : 'Save your whole look in Cosmetics > Sets and switch with one tap.' }));
+      if (root.Cos25 && root.Cos25.SET_LV) list.push({ level: root.Cos25.SET_LV[0], name: 'Equip Sets', desc: `Save ${root.Cos25.SET_LV.length} whole looks in Cosmetics > Sets and switch with one tap.` });
       return list.sort((a, b) => a.level - b.level);
     },
 

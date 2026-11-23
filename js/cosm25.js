@@ -197,8 +197,8 @@
     HN().cos25.prof().ti = { n: t.n, t: tier, id }; save(); HN().cos25.publish(); return true;
   }
   // ---------- Equip Sets: save your whole look, wear it again with one tap ----------
-  // Slots open at account levels 35, 45 and 50 (milestones with no reward of their own).
-  const SET_LV = [35, 45, 50];
+  // Equip Sets unlock at account level 35 (a milestone with no reward of its own): all 5 sets at once.
+  const SET_LV = [35, 35, 35, 35, 35];
   const setSlots = () => SET_LV.filter((lv) => ((Player.state.account || {}).level || 0) >= lv).length;
   const sets = () => { const c = C(); if (!Array.isArray(c.sets)) c.sets = []; while (c.sets.length < SET_LV.length) c.sets.push(null); return c.sets; };
   const colNow = () => { try { return root.Col25 ? (root.Col25.B().col || 'default') : null; } catch (e) { return null; } };
@@ -355,6 +355,7 @@
       const nm = (list, id, dflt) => { const x = list.find((y) => y.id === id); return x ? x.n : dflt; };
       const chip = (label, val, c) => `<span class="c25-sc" style="--c:${c}"><small>${label}</small><b>${esc(val)}</b></span>`;
       const card = (x, i) => {
+        if (!n) return i ? '' : `<div class="c25-set lock"><div class="c25-slk"><svg class="c25-padlock" viewBox="0 0 24 28" aria-hidden="true"><path d="M7 12V8a5 5 0 0 1 10 0v4" fill="none" stroke="#8aa4b8" stroke-width="2.6" stroke-linecap="round"/><rect x="3" y="12" width="18" height="14" rx="3.5" fill="#8aa4b8"/><circle cx="12" cy="18" r="2" fill="#0e1c2a"/><path d="M12 19v3" stroke="#0e1c2a" stroke-width="2" stroke-linecap="round"/></svg><b>Equip Sets unlock at level ${SET_LV[0]}</b><small>Save 5 whole looks and switch between them with one tap.</small><small>You're level ${lv}</small></div></div>`;
         if (i >= n) return `<div class="c25-set lock"><span class="c25-snum">${i + 1}</span><div class="c25-slk"><svg class="c25-padlock" viewBox="0 0 24 28" aria-hidden="true"><path d="M7 12V8a5 5 0 0 1 10 0v4" fill="none" stroke="#8aa4b8" stroke-width="2.6" stroke-linecap="round"/><rect x="3" y="12" width="18" height="14" rx="3.5" fill="#8aa4b8"/><circle cx="12" cy="18" r="2" fill="#0e1c2a"/><path d="M12 19v3" stroke="#0e1c2a" stroke-width="2" stroke-linecap="round"/></svg><b>Unlocks at level ${SET_LV[i]}</b><small>You're level ${lv}</small></div></div>`;
         if (!x) return `<div class="c25-set empty"><span class="c25-snum">${i + 1}</span><p>Empty slot</p><small>Dress up in the other tabs, then save that look here.</small><button type="button" class="c25-btn" data-sset="${i}">Save my look here</button></div>`;
         const L = x.look; const wearing = sameLook(L, now);
