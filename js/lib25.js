@@ -17,7 +17,10 @@
   let cssOn = false;
   const css = () => { if (cssOn || typeof document === 'undefined') return; cssOn = true; const s = document.createElement('style'); s.id = 'l5-css'; s.textContent = CSS; document.head.appendChild(s); };
   // Same week as Luthen's titles: a new rotation every Monday at noon Central.
-  const weekNo = () => Math.floor((Date.now() - Date.UTC(2026, 0, 5, 18)) / (7 * 864e5));
+  // The shelf turns over on Monday: noon Central until 2.6, then midnight Central (12 AM) from 2.6 on.
+  const weekStart = () => Date.UTC(2026, 0, 5, root.Update26 && root.Update26.on() ? 6 : 18);
+  const weekNo = () => Math.floor((Date.now() - weekStart()) / (7 * 864e5));
+  const nextTurn = () => weekStart() + (weekNo() + 1) * 7 * 864e5;
   const week = (off = 0) => (((weekNo() + off) % 18) + 18) % 18 + 1;
   function load(id) {
     if (!BY[id]) return Promise.resolve('');
@@ -82,5 +85,5 @@
     const start = () => { try { new MutationObserver((ms) => { for (const m of ms) for (const n of m.addedNodes) if (n.nodeType === 1 && (n.matches('[data-l5]') || n.querySelector('[data-l5]'))) { schedule(); return; } }).observe(document.body, { childList: true, subtree: true }); } catch (e) { /* fill on demand only */ } schedule(); };
     if (document.body) start(); else document.addEventListener('DOMContentLoaded', start);
   }
-  root.Lib25 = { CAT, BY, load, put, fill, html, play, week, names, cached: (id) => art[id] || null };
+  root.Lib25 = { CAT, BY, load, put, fill, html, play, week, nextTurn, names, cached: (id) => art[id] || null };
 })(typeof window !== 'undefined' ? window : globalThis);
