@@ -197,11 +197,13 @@
   if (BU && !BU.__col25) {
     BU.__col25 = true;
     // Swap the colour argument of each basic effect while one of your attacks plays.
-    const wrap = (name, idx, after) => { const f = BU[name]; if (typeof f !== 'function') return; BU[name] = function (...a) { if (cur) { a[idx] = paint(); if (after) after(this, a); } return f.apply(this, a); }; };
-    wrap('laser', 2, (ui, a) => setTimeout(() => burst(ui, a[1]), 120 + (a[3] | 0)));
-    wrap('flashAt', 1); wrap('sparks', 1); wrap('boom', 1); wrap('wave', 1); wrap('torpedo', 2, (ui, a) => burst(ui, a[1]));
+    // after(ui, args, result) runs once the effect is under way; holiday bursts wait for the shot to land.
+    const wrap = (name, idx, after) => { const f = BU[name]; if (typeof f !== 'function') return; BU[name] = function (...a) { const on = !!cur; if (on) a[idx] = paint(); const ret = f.apply(this, a); if (on && after) after(this, a, ret); return ret; }; };
+    const landed = (ret, fn) => { if (ret && typeof ret.then === 'function') ret.then(fn, () => {}); else fn(); };
+    wrap('laser', 2, (ui, a) => { const fx = cur; const go = () => { const c0 = cur; cur = fx; burst(ui, a[1]); cur = c0; }; const bolt = ui.fx && ui.fx.lastElementChild; const an = bolt && bolt.classList.contains('laser') && bolt.getAnimations()[0]; if (an) an.finished.then(go, () => {}); else setTimeout(go, ((a[3] | 0) + ((a[4] && a[4].dur) || 220)) / (ui.speed || 1) + 30); });
+    wrap('flashAt', 1); wrap('sparks', 1); wrap('boom', 1); wrap('wave', 1); wrap('torpedo', 2, (ui, a, ret) => { const fx = cur; landed(ret, () => { const c0 = cur; cur = fx; burst(ui, a[1]); cur = c0; }); });
     wrap('slash', 1, (ui, a) => burst(ui, a[0]));
-    wrap('lightning', 3, (ui, a) => { const t = a[1] && a[1][0]; if (t) setTimeout(() => burst(ui, ui.center(t.uid)), 260); });
+    wrap('lightning', 3, (ui, a, ret) => { const t = a[1] && a[1][0]; const fx = cur; if (t) landed(ret, () => { const c0 = cur; cur = fx; if (ui.cards[t.uid]) burst(ui, ui.center(t.uid)); cur = c0; }); });
     const env = BU.env;
     if (env && typeof env.impact === 'function') { const imp = env.impact.bind(env); env.impact = (x, y, o = {}) => imp(x, y, cur ? { ...o, color: paint() } : o); }
     // Which attacks count: your own cards' basic attacks and the shield ultimate.

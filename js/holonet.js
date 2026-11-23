@@ -5935,7 +5935,10 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     champ: { name: 'Golden Laurel', how: 'Guild level 8', lv: 8 },
   };
   // 2.5: Luthen's Gallery banners (js/lib25.js), bought by pilots for themselves, never by guilds.
-  if (root.Lib25) for (const x of root.Lib25.CAT) if (x.k === 'bn') BANNERS['lib_' + x.id] = { name: x.n, how: x.max ? 'MAX OUT' : "Luthen's Gallery", lib: x.id, max: !!x.max };
+  // Luthen's file can load after this one, so the list fills in whenever it's ready.
+  let libSynced = false;
+  const libSync = () => { if (libSynced || !root.Lib25) return; libSynced = true; for (const x of root.Lib25.CAT) if (x.k === 'bn') BANNERS['lib_' + x.id] = { name: x.n, how: x.max ? 'MAX OUT' : "Luthen's Gallery", lib: x.id, max: !!x.max }; };
+  libSync();
   const libOwn = (b) => { try { return !!(((root.HN.S().cos || {}).own) || {})['bn:' + b.lib]; } catch (e) { return false; } };
   const NPC_BANNER = { npc_rogue: 'hyper', npc_echo: 'holo', npc_mando: 'forge', npc_kessel: 'stars', npc_jedi: 'jedi', npc_sith: 'sith', npc_ewok: 'cloth', npc_hutt: 'dunes' };
   function bannerOwned(gid, id) {
@@ -5950,6 +5953,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   }
   function bannerOf(g) {
     if (!g) return '';
+    libSync();
     if (isNpcG(g.id)) return NPC_BANNER[g.id] || 'cloth';
     return BANNERS[g.banner] ? g.banner : 'cloth';
   }
@@ -5975,9 +5979,10 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   }
   const guildByTag = (tag) => (tag ? NPC_GUILDS.find((g) => g.tag === tag) || null : null);
   // Pilots show their own banner pick (any banner their guild owns), else their guild's.
-  function playerBanOk(k) { try { const b = BANNERS[k]; if (b && b.lib) return libOwn(b); return !!b && bannerOwned(myGuildId(), k); } catch (e) { return false; } }
+  function playerBanOk(k) { libSync(); try { const b = BANNERS[k]; if (b && b.lib) return libOwn(b); return !!b && bannerOwned(myGuildId(), k); } catch (e) { return false; } }
   function bannerForUid(uid) {
     if (!on25() || !uid) return null;
+    libSync();
     const p = prof(uid);
     const g = guildFor(uid);
     if (p && BANNERS[p.ban]) return { id: '_p', color: g ? g.color : '#5fd8ff', banner: p.ban };
@@ -6175,7 +6180,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     if (me) { const h = S(); const p = myProfile(); return { uid: Net.me || 'me', me: true, ...p, ti: on25() && P2().prof.ti ? P2().prof.ti : null, rating: h.rating, level: Player.state.account.level, guild: h.guild || null, gpl: P2().soc.gpl, col: PC ? PC.encode() : '', use: PC ? PC.encodeUse() : '', ball: allBadges() }; }
     if (HN.botProfile && (String(uid).startsWith('bot:') || NPC_ROWS.has(uid))) { const bp = HN.botProfile(uid); if (bp) return bp; }
     const a = Net.arena.find((x) => x.uid === uid) || Net.rows.get(uid) || (NPC_ROWS.has(uid) ? npcRow(uid) : null) || {};
-    return { uid, me: false, col: a.col || '', use: a.use || '', ball: Array.isArray(a.ball) ? a.ball : null, tag: cleanTag(a.tag), av: a.av && D.UNIT_MAP[a.av] ? a.av : ((a.ground || [])[0] || {}).id || 'luke', frame: FRAMES[a.frame] ? a.frame : 'recruit', ban: typeof a.ban === 'string' && a.ban.length < 12 ? a.ban : '', ti: a.ti && typeof a.ti === 'object' && typeof a.ti.n === 'string' ? a.ti : null, badges: Array.isArray(a.badges) ? a.badges.slice(0, 6) : [], nb: a.nb || 0, st: a.st || {}, rating: a.rating || 800, level: a.level || 1, guild: a.guild || null, gpl: a.gpl || 0 };
+    return { uid, me: false, col: a.col || '', use: a.use || '', ball: Array.isArray(a.ball) ? a.ball : null, tag: cleanTag(a.tag), av: a.av && D.UNIT_MAP[a.av] ? a.av : ((a.ground || [])[0] || {}).id || 'luke', frame: FRAMES[a.frame] ? a.frame : 'recruit', ban: typeof a.ban === 'string' && a.ban.length < 40 ? a.ban : '', ti: a.ti && typeof a.ti === 'object' && typeof a.ti.n === 'string' ? a.ti : null, badges: Array.isArray(a.badges) ? a.badges.slice(0, 6) : [], nb: a.nb || 0, st: a.st || {}, rating: a.rating || 800, level: a.level || 1, guild: a.guild || null, gpl: a.gpl || 0 };
   }
   // Name shown everywhere: your callsign, else your account name.
   const baseName = Net.name.bind(Net);
@@ -9065,7 +9070,7 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
   const gOfRow = (x) => { if (!SO.gban) return null; if (x.guild) { const raw = SO.gmap.get(x.guild.id); return raw ? { ...x.guild, ...raw } : x.guild; } return SO.bannerForUid(x.bot ? HN.botUid(x) : isMe(x) ? 'me' : x.uid); };
   const rowOf = (x, i, right, tr = '') => {
     const me = x.guild ? x.guild.id === SO.myGuildId() : isMe(x);
-    const bn = SO.gban ? SO.gban(gOfRow(x), 'row', i >= 10 && !me) : '';
+    const bn = SO.gban ? SO.gban(gOfRow(x), 'row', i >= 10 && !me && document.body.classList.contains('perf-lite')) : '';
     return `<div class="g-row lb-row ${me ? 'me' : ''} ${i < 3 ? `t${i + 1}` : ''}${bn ? ' gb-host' : ''}" ${x.guild ? `data-hn="gpeek" data-id="${esc(x.guild.id)}" role="button" tabindex="0"` : ''}>${bn}<span class="rk"><b>${i + 1}</b>${tr}</span><span class="lb-who">${whoOf(x, flameOf(x))}</span><span class="r">${right}</span><span class="lb-banner" aria-hidden="true"></span></div>`;
   };
   const podPic = (x) => (x.guild ? SO.emblem(x.guild, 64) : x.bot ? SO.avatar({ av: x.av, frame: x.frame }, 'md') : SO.avatar(SO.prof(isMe(x) ? 'me' : x.uid), 'md'));
