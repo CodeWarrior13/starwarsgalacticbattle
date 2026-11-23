@@ -1426,7 +1426,6 @@
         </button>
       </div>
       <div class="ft-summary" data-ft-summary></div>
-      ${MT() ? '<div class="mt-panel" data-mt></div>' : ''}
       <div class="filter-drawer ${ui.collectionFiltersOpen ? 'open' : ''}" data-drawer>
         <div class="fd-inner">
         <div class="filters-row">
@@ -1436,6 +1435,7 @@
           <div class="seg" data-filter="faction">
             <button type="button" data-v="all">Both</button><button type="button" data-v="light">Light</button><button type="button" data-v="dark">Dark</button>
           </div>
+          ${root.HoloCard ? '<div class="seg" data-filter="holo" aria-label="Holo"><button type="button" data-v="all">Any finish</button><button type="button" data-v="holo">✦ Holo</button></div>' : ''}
           <div class="seg" data-filter="sort" aria-label="Sort">
             ${Object.entries(SORTS).map(([k, so]) => `<button type="button" data-v="${k}">${k === 'strong' ? '▼ ' : k === 'weak' ? '▲ ' : ''}${so.label}</button>`).join('')}
           </div>
@@ -1444,6 +1444,7 @@
         <div class="class-bar" data-classes></div>
         </div>
       </div>
+      ${MT() ? '<div class="mt-panel" data-mt></div>' : ''}
       <p class="muted small" data-hn-note hidden>HoloNet-only cards: earned in the HoloNet, never in crates. Locked ones show how to get them.</p>
       <div class="card-grid" data-grid></div>
     </section>`);
@@ -1540,6 +1541,7 @@
     function render(keep) {
       $$('[data-filter="kind"] button', v).forEach((b) => b.classList.toggle('active', b.dataset.v === ui.collectionKind));
       $$('[data-filter="faction"] button', v).forEach((b) => b.classList.toggle('active', b.dataset.v === ui.collectionFaction));
+      $$('[data-filter="holo"] button', v).forEach((b) => b.classList.toggle('active', b.dataset.v === (ui.collectionHolo || 'all')));
       $$('[data-filter="sort"] button', v).forEach((b) => b.classList.toggle('active', b.dataset.v === ui.collectionSort));
       renderClasses();
       // Closed drawer: a one-line summary of what is filtered.
@@ -1547,6 +1549,7 @@
       if (ui.collectionKind !== 'all') parts.push(ui.collectionKind === 'ship' ? 'Ships' : ui.collectionKind === 'holonet' ? 'HoloNet' : 'Heroes');
       if (ui.collectionFaction !== 'all') parts.push(ui.collectionFaction === 'light' ? 'Light Side' : 'Dark Side');
       if (ui.collectionClass !== 'all') parts.push(D.CLASS_INFO[ui.collectionClass].label);
+      if (ui.collectionHolo === 'holo') parts.push('Holo');
       const n = parts.length;
       parts.push(SORTS[ui.collectionSort].label);
       renderMT();
@@ -1557,6 +1560,7 @@
       const list = (hn ? hnDefs() : D.UNITS)
         .filter((u) => hn || ui.collectionKind === 'all' || u.kind === ui.collectionKind)
         .filter((u) => ui.collectionFaction === 'all' || u.faction === ui.collectionFaction)
+        .filter((u) => ui.collectionHolo !== 'holo' || !!(Player.state.units[u.id] && Player.state.units[u.id].holo))
         .filter((u) => ui.collectionClass === 'all' || D.classesOf(u).includes(ui.collectionClass))
         .sort((a, b) => {
           const oa = (hn ? hnOwns(a) : Player.owns(a.id)) ? 0 : 1;
@@ -1693,8 +1697,8 @@
         return;
       }
       if (e.target.closest('[data-filters-reset]')) {
-        if (ui.mtPick) { Object.assign(ui, { collectionFaction: 'all', collectionClass: 'all', collectionSort: 'strong' }); render(); return; }
-        Object.assign(ui, { collectionKind: 'all', collectionFaction: 'all', collectionClass: 'all', collectionSort: 'strong' });
+        if (ui.mtPick) { Object.assign(ui, { collectionFaction: 'all', collectionClass: 'all', collectionSort: 'strong', collectionHolo: 'all' }); render(); return; }
+        Object.assign(ui, { collectionKind: 'all', collectionFaction: 'all', collectionClass: 'all', collectionSort: 'strong', collectionHolo: 'all' });
         render();
         return;
       }
@@ -1706,6 +1710,7 @@
           ui.collectionKind = f.dataset.v;
           ui.collectionClass = 'all';
         } else if (which === 'faction') ui.collectionFaction = f.dataset.v;
+        else if (which === 'holo') ui.collectionHolo = f.dataset.v;
         else ui.collectionSort = f.dataset.v;
         render();
         return;
