@@ -3315,6 +3315,8 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     this.setActive(null);
     await new Promise((r) => setTimeout(r, 900));
     const won = winner === 'player';
+    // Same end-of-battle hooks as every other battle: MVP pose and win screen, badges, events (the Harvest Hunt's Nuna hit).
+    for (const fn of (UI.hooks && UI.hooks.battleEnd) || []) { try { fn(this.battle, p, won); } catch (e) { /* ignore */ } }
     if (root.Sound) { root.Sound.play(won ? 'victory' : 'defeat'); root.Sound.music('menu'); }
     const b = this.battle;
     this.teardown();

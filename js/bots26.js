@@ -313,6 +313,7 @@
       this.ended = true; this.setActive(null);
       await new Promise((r) => setTimeout(r, 900));
       const won = winner === 'player';
+      for (const fn of (UI.hooks && UI.hooks.battleEnd) || []) { try { fn(this.battle, p, won); } catch (e) { /* ignore */ } }
       if (root.Sound) { root.Sound.play(won ? 'victory' : 'defeat'); root.Sound.music('menu'); }
       this.teardown();
       done(p.uid, p.kind, won);
