@@ -23,14 +23,14 @@
 
   // ---------- Personalities ----------
   const PERS = [
-    { id: 'rookie', emoji: 0.35, lower: 0.6, chat: 0.8, owl: 0, hours: [16, 21], em: ['😄', '🎉', '😮', '🙌'] },
+    { id: 'rookie', emoji: 0.1, lower: 0.6, chat: 0.8, owl: 0, hours: [16, 21], em: ['😄', '🎉', '😮', '🙌'] },
     { id: 'veteran', emoji: 0.02, lower: 0, chat: 0.45, owl: 0, hours: [19, 23], em: [] },
-    { id: 'joker', emoji: 0.3, lower: 0.5, chat: 0.85, owl: 0.1, hours: [18, 24], em: ['😂', '💀', '😆'] },
+    { id: 'joker', emoji: 0.12, lower: 0.5, chat: 0.85, owl: 0.1, hours: [18, 24], em: ['😂', '💀', '😆'] },
     { id: 'grinder', emoji: 0, lower: 1, chat: 0.2, owl: 0.6, hours: [22, 26], em: [] },
-    { id: 'hype', emoji: 0.5, lower: 0, chat: 0.8, owl: 0.1, hours: [17, 23], em: ['🔥', '💪', '⚔️'] },
-    { id: 'nerd', emoji: 0.1, lower: 0.3, chat: 0.7, owl: 0.35, hours: [18, 25], em: ['🤓', '✨'] },
-    { id: 'helper', emoji: 0.3, lower: 0.2, chat: 0.75, owl: 0, hours: [15, 22], em: ['🙂', '👍'] },
-    { id: 'rival', emoji: 0.25, lower: 0.5, chat: 0.65, owl: 0.15, hours: [18, 23], em: ['😤', '😏'] },
+    { id: 'hype', emoji: 0.16, lower: 0, chat: 0.8, owl: 0.1, hours: [17, 23], em: ['🔥', '💪', '⚔️'] },
+    { id: 'nerd', emoji: 0.04, lower: 0.3, chat: 0.7, owl: 0.35, hours: [18, 25], em: ['🤓', '✨'] },
+    { id: 'helper', emoji: 0.06, lower: 0.2, chat: 0.75, owl: 0, hours: [15, 22], em: ['🙂', '👍'] },
+    { id: 'rival', emoji: 0.08, lower: 0.5, chat: 0.65, owl: 0.15, hours: [18, 23], em: ['😤', '😏'] },
   ];
   const PROPER = new Set(); for (const u of D.UNITS) PROPER.add(u.name.split(' ')[0].toLowerCase()); ['i', 'i\'m', 'i\'ll'].forEach((w) => PROPER.add(w));
   const persOf = (uid) => PERS[hash(uid) % PERS.length];
@@ -71,8 +71,8 @@
   // ---------- Privacy: never ask for, keep or repeat personal details ----------
   const PERSONAL = [/\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b/, /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i, /\bmy (?:real )?name is\b/i, /\bi live (?:in|at|on)\b/i, /\bmy (?:home )?address\b/i, /\bi'?m \d{1,2}\s*(?:years?|yrs?|y\/?o)\b/i, /\bmy school is\b|\bi go to [a-z ]+ (?:school|elementary|middle|high)\b/i, /\b(?:snap|snapchat|insta|instagram|tiktok|discord|whatsapp)\b.*\b(?:is|me|add)\b/i, /\bpassword\b/i, /\bmy (?:phone|number)\b/i];
   const ASK_PERSONAL = [/\bhow old are you\b/i, /\bwhere (?:do )?you live\b/i, /\bwhat'?s your (?:real )?name\b/i, /\bwhat school\b/i, /\b(?:your|ur) (?:snap|insta|discord|number)\b/i];
-  const PRIV = ["let's keep that private 🙂 you never have to share stuff like that here", "no need to share that, keep personal stuff private! anyway", "hey, keep that private 🙂 internet rule #1"];
-  const PRIV_ME = ["haha I keep that stuff private, internet rules 🙂", "I don't share that kind of thing online, you shouldn't either 🙂", "secret 😄 but ask me anything about the game"];
+  const PRIV = ["hey dude, I'm sure you're cool but somebody out there could use that for bad stuff. don't put that online", "bro delete that lol. never put your number or email in a game chat, not everyone on here is nice", "careful with that, people can do sketchy stuff with info like that. keep it to yourself", "yo don't share that kind of stuff on here, for real. you don't know who's reading", "not trying to be weird but don't post personal stuff in chats. there's some bad people online"];
+  const PRIV_ME = ["nah I don't share personal stuff online", "I don't do personal info on the internet", "not something I share online", "nope, I keep that stuff off the internet", "I don't give that out online, sorry"];
 
   // ---------- Memory (tiny, game-only, fades after 3 weeks) ----------
   const MEM = () => { const h = S(); h.botMem = h.botMem || {}; return h.botMem; };
@@ -99,30 +99,63 @@
 
   // ---------- Small talk ----------
   const TALK = {
-    hi: ['hey!', 'yo whats up', 'hey hey', 'heyy', 'sup', 'hi! how\'s it going'],
-    how: ['good! just grinding raids. you?', 'pretty good, pulled a nice card earlier. how about you?', 'tired lol but good. wbu', 'doing good, what are you up to?'],
-    wyd: ['just doing my raid runs', 'opening crates rn', 'farming campaign stars', 'arena, trying to climb', 'nothing much, chilling. you?'],
-    school: ['ugh school. at least you get to play after', 'school days are long fr. what class is the worst?', 'hang in there, weekend is close'],
-    food: ['ok now I\'m hungry lol', 'that sounds so good', 'pizza is always the answer'],
-    pet: ['aww what kind?', 'pets are the best', 'that\'s so cute'],
-    weekend: ['weekend grind time', 'any plans this weekend?', 'raids all weekend for me lol'],
-    movie: ['which one is your favourite?', 'the original trilogy is the best, change my mind', 'did you see the new one?'],
-    thanks: ['np!', 'anytime', 'no problem 🙂', 'yw!'],
-    nice: ['nice!!', 'lets gooo', 'that\'s huge', 'congrats!'],
-    sad: ['oof, that happens, you\'ll get the next one', 'unlucky. rng is rough sometimes', 'happens to everyone, keep at it'],
+    hi: ['hey!', 'yo whats up', 'hey hey', 'heyy', 'sup', "hi! how's it going", 'yooo', 'hey, you on for raids today?'],
+    how: ['good! just grinding raids. you?', 'pretty good, pulled a nice card earlier. how about you?', 'tired lol but good. wbu', 'doing good, what are you up to?', 'not bad, kinda bored. you?', 'good good. long day though'],
+    wyd: ['just doing my raid runs', 'opening crates rn', 'farming campaign stars', 'arena, trying to climb', 'nothing much, chilling. you?', 'upgrading my squad', 'about to do the raid, you?'],
+    school: ['ugh school. at least you get to play after', 'school days are long fr. what class is the worst?', 'hang in there, weekend is close', 'homework first or game first? lol', 'math is the worst one for me'],
+    food: ["ok now I'm hungry lol", 'that sounds so good', 'pizza is always the answer', 'what are you having?', 'tacos > everything'],
+    pet: ['aww what kind?', 'pets are the best', "that's so cute", "what's their name? (the pet lol)", 'my dog would just sleep on the keyboard'],
+    weekend: ['weekend grind time', 'any plans this weekend?', 'raids all weekend for me lol', 'weekends go by way too fast'],
+    movie: ['which one is your favourite?', 'the original trilogy is the best, change my mind', 'did you see the new one?', 'clone wars is underrated', 'andor was so good'],
+    music: ['what do you listen to while you play?', 'the cantina song is stuck in my head now lol', 'I play with the game music on, the battle theme slaps'],
+    games: ['what else do you play?', 'this is the only game I play rn honestly', 'I play other stuff sometimes but always come back here'],
+    sports: ['did your team win?', "I don't really watch sports lol", 'nice, you play or just watch?'],
+    weather: ["it's freezing here lol", 'perfect gaming weather', "rain = staying in and raiding"],
+    tired: ['same lol', 'get some sleep! the raid will still be here', "I'm running on like no sleep", 'one more battle then bed (it is never one more)'],
+    bored: ["wanna do a friendly?", 'same, the raid helps lol', 'go open some crates', 'try a new squad, keeps it fun'],
+    holiday: ['happy holidays!', 'harvest hunt has been fun this year', 'cant wait for life day stuff', 'eat a lot for me lol'],
+    joke: ["why did the stormtrooper miss? because he's a stormtrooper", "what do you call a sith who won't fight? a sith-ter", "how does vader like his toast? on the dark side"],
+    compliment: ['thanks!! you too', 'appreciate it', 'haha thanks', 'you too man'],
+    insult: ['chill lol', "it's just a game, all good", 'ok ok gg', 'lol ok'],
+    confused: ['what do you mean?', 'wdym', 'huh?', 'say that again?'],
+    ok: ['ok', 'bet', 'cool', 'alright', 'sounds good'],
+    brb: ['ok', 'kk', "i'll be here", 'np'],
+    back: ['wb!', 'welcome back', 'wb, ready?'],
+    thanks: ['np!', 'anytime', 'no problem', 'yw!', 'ofc', 'np np'],
+    nice: ['nice!!', 'lets gooo', "that's huge", 'congrats!', 'W', 'ok thats sick'],
+    sad: ["oof, that happens, you'll get the next one", 'unlucky. rng is rough sometimes', 'happens to everyone, keep at it', 'brutal. try swapping your tank in first'],
+    down: ["that sounds rough, sorry man. talking to someone you trust (a parent, a teacher) actually helps a lot", "hey, hope it gets better. tell someone you trust how you feel, for real"],
+    help: ["that's really serious. please talk to a parent or another adult you trust right now. in the US you can call or text 988 any time, it's free", "please tell an adult you trust about this right now. you can also call or text 988 (US), they help with exactly this"],
   };
   function smallTalk(t, k) {
-    if (/^\s*(?:hi+|hey+|yo|hello|sup|hiya|heyo)\b/i.test(t)) return pick(TALK.hi, k);
-    if (/how (?:are|r) (?:you|u)|how'?s it going|hru\b/i.test(t)) return pick(TALK.how, k);
-    if (/\bwyd\b|what (?:are|r) (?:you|u) doing/i.test(t)) return pick(TALK.wyd, k);
-    if (/\b(?:school|homework|class|teacher)\b/i.test(t)) return pick(TALK.school, k);
-    if (/\b(?:pizza|food|dinner|lunch|tacos|burger|snack|hungry)\b/i.test(t)) return pick(TALK.food, k);
-    if (/\b(?:dog|cat|puppy|kitten|pet)\b/i.test(t)) return pick(TALK.pet, k);
-    if (/\bweekend|saturday|sunday\b/i.test(t)) return pick(TALK.weekend, k);
-    if (/\b(?:movie|film|show|mandalorian|andor|clone wars)\b/i.test(t)) return pick(TALK.movie, k);
+    // Serious things first: a kind, real answer and a pointer to a trusted adult.
+    if (/\b(?:kill myself|hurt myself|want to die|wanna die|end it all|self harm|suicid)/i.test(t)) return pick(TALK.help, k);
+    if (/\b(?:i'?m (?:so )?(?:sad|depressed|lonely)|nobody likes me|no one likes me|i hate my life|bullied|being bullied)\b/i.test(t)) return pick(TALK.down, k);
+    if (/^\s*(?:hi+|hey+|yo+|hello|sup|hiya|heyo|howdy|wassup|whats up)\b/i.test(t)) return pick(TALK.hi, k);
+    if (/how (?:are|r) (?:you|u)|how'?s it going|hru\b|how u doin/i.test(t)) return pick(TALK.how, k);
+    if (/\bwyd\b|what (?:are|r) (?:you|u) doing|what u up to/i.test(t)) return pick(TALK.wyd, k);
+    if (/\b(?:brb|one sec|gimme a sec|afk)\b/i.test(t)) return pick(TALK.brb, k);
+    if (/^\s*(?:back|im back|i'm back)\b/i.test(t)) return pick(TALK.back, k);
+    if (/\b(?:school|homework|class|teacher|test|exam)\b/i.test(t)) return pick(TALK.school, k);
+    if (/\b(?:pizza|food|dinner|lunch|breakfast|tacos|burger|snack|hungry|turkey|pie)\b/i.test(t)) return pick(TALK.food, k);
+    if (/\b(?:dog|cat|puppy|kitten|pet|hamster|fish)\b/i.test(t)) return pick(TALK.pet, k);
+    if (/\b(?:weekend|saturday|sunday)\b/i.test(t)) return pick(TALK.weekend, k);
+    if (/\b(?:movie|film|show|mandalorian|andor|clone wars|ahsoka|episode)\b/i.test(t)) return pick(TALK.movie, k);
+    if (/\b(?:music|song|listen|playlist)\b/i.test(t)) return pick(TALK.music, k);
+    if (/\b(?:fortnite|minecraft|roblox|other games?|xbox|playstation|switch)\b/i.test(t)) return pick(TALK.games, k);
+    if (/\b(?:football|soccer|basketball|baseball|hockey|game last night)\b/i.test(t)) return pick(TALK.sports, k);
+    if (/\b(?:snow\w*|rain\w*|cold|freezing|hot outside|weather|storm\w*)\b/i.test(t)) return pick(TALK.weather, k);
+    if (/\b(?:tired|sleepy|exhausted|bedtime|going to bed)\b/i.test(t)) return pick(TALK.tired, k);
+    if (/\b(?:bored|boring|nothing to do)\b/i.test(t)) return pick(TALK.bored, k);
+    if (/\b(?:thanksgiving|christmas|holiday|life day|halloween|new year|easter)\b/i.test(t)) return pick(TALK.holiday, k);
+    if (/\b(?:joke|make me laugh|say something funny)\b/i.test(t)) return pick(TALK.joke, k);
+    if (/\b(?:you'?re (?:good|cool|nice|awesome|great)|ur (?:good|cool)|nice job|good job|gj|nice play)\b/i.test(t)) return pick(TALK.compliment, k);
+    if (/\b(?:you suck|ur bad|you'?re bad|trash|noob|bad at this|loser)\b/i.test(t)) return pick(TALK.insult, k);
     if (/\b(?:thanks|thank you|ty|thx|tysm)\b/i.test(t)) return pick(TALK.thanks, k);
-    if (/\b(?:pulled|got|won|beat|promoted|legendary|mythic|holo)\b/i.test(t) && !/\?/.test(t)) return pick(TALK.nice, k);
+    if (/\b(?:pulled|got|won|beat|promoted|legendary|mythic|holo|ranked up)\b/i.test(t) && !/\?/.test(t)) return pick(TALK.nice, k);
     if (/\b(?:lost|unlucky|rip|ugh|hate)\b/i.test(t)) return pick(TALK.sad, k);
+    if (/^\s*(?:ok|okay|k|kk|alright|sure|cool|bet)\s*[.!]*\s*$/i.test(t)) return pick(TALK.ok, k);
+    if (/^\s*(?:what|huh|\?+|wdym)\s*\??\s*$/i.test(t)) return pick(TALK.confused, k);
     return null;
   }
 
@@ -170,19 +203,20 @@
     const st = S(); st.botCool = st.botCool || {};
     if (PERSONAL.some((re) => re.test(text))) return voice(p, pick(PRIV, k));
     if (ASK_PERSONAL.some((re) => re.test(text))) return voice(p, pick(PRIV_ME, k));
-    if (DONE_RE.test(t)) { st.botCool[uid] = Date.now() + 6 * 3600000; HN.save(); return voice(p, pick(['all good, gg! catch you later', 'fair lol, gg. later!', 'ok ok no more, see ya 👋', 'np, good games today'], k)); }
+    if (DONE_RE.test(t)) { st.botCool[uid] = Date.now() + 6 * 3600000; HN.save(); return voice(p, pick(['all good, gg! catch you later', 'fair lol, gg. later!', 'ok ok no more, see ya', 'np, good games today'], k)); }
     const s = slangAsk(t);
     if (s) return voice(p, `${s} means ${GLOSS[s]}${p.id === 'helper' || p.id === 'rookie' ? '! no worries, everyone has to learn it once' : ''}`);
     if (BATTLE_RE.test(t)) return battleAsk(uid, /fleet|ship|space/i.test(t) ? 'ship' : 'character', true);
     // Memory: a favourite card, a test coming up.
     const fav = t.match(/\bmy (?:fav|favorite|favourite|main)\b.*\b(?:is|=)\b/) || t.match(/\bi (?:love|main)\b/);
-    if (fav) { const c = findCard(t); if (c) { remember(uid, 'fav', c.id); return voice(p, pick([`${c.name} is a great pick`, `${c.name}!! good taste`, `ok ${c.name} fan noted 😄`], k)); } }
+    if (fav) { const c = findCard(t); if (c) { remember(uid, 'fav', c.id); return voice(p, pick([`${c.name} is a great pick`, `${c.name}!! good taste`, `ok ${c.name} fan noted`], k)); } }
     if (/\b(?:test|exam|quiz|tournament|game|match|recital)\b.*\b(?:tomorrow|tmrw|friday|monday|next week|soon)\b/i.test(t)) { remember(uid, 'event', /test|exam|quiz/i.test(t) ? 'test' : 'game', Date.now() + (1 + Math.floor(rnd() * 2)) * 86400000); return voice(p, pick(['good luck!! you got this', 'gl! let me know how it goes', 'you\'ll do great'], k)); }
+    if (/\b(?:update|2\.6|patch|whats new|what's new|new stuff)\b/i.test(t)) return voice(p, quoteLine(k));
     const g = gameAnswer(text, p); if (g) return voice(p, g);
     const sm = smallTalk(text, k); if (sm) return voice(p, sm);
     if (p.id === 'nerd' && rnd() < 0.3) return voice(p, pick(NERD, k));
-    if (/\?\s*$/.test(t)) return voice(p, pick(['hmm good question', 'not sure tbh', 'probably yeah', 'maybe after this match'], k));
-    return voice(p, pick(['lol', 'true', 'haha yeah', 'facts', 'same', 'nice', `yeah ${my || ''}`.trim()], k));
+    if (/\?\s*$/.test(t)) return voice(p, pick(['hmm good question', 'not sure tbh', 'probably yeah', 'maybe after this match', 'idk honestly', 'I think so?', 'depends lol', 'no idea, try it and see'], k));
+    return voice(p, pick(['lol', 'true', 'haha yeah', 'facts', 'same', 'nice', 'fr', 'real', 'yeah', 'lmao', 'wait really?', 'oh nice', 'ngl same', 'haha', `yeah ${my || ''}`.trim()], k));
   }
   // Follow-ups from memory: "how'd the test go?" a day or two later.
   function followUps() {
@@ -215,7 +249,7 @@
       const mins = 2 + Math.floor(rnd() * 4);
       INV()[uid] = { kind, busyUntil: Date.now() + mins * 60000, offerAt: Date.now() + mins * 60000 + 4500, back: 1, doing };
       HN.save();
-      return say(voice(p, pick([`give me a sec, ${low(doing)} rn 😅`, `one sec, ${low(doing)}. I'll send you one after`, `brb finishing this, ${low(doing)}`], hash(uid + doing))));
+      return say(voice(p, pick([`give me a sec, ${low(doing)} rn`, `one sec, ${low(doing)}. I'll send you one after`, `brb finishing this, ${low(doing)}`], hash(uid + doing))));
     }
     INV()[uid] = { kind, offerAt: Date.now() + (inline ? 7000 : 4500) }; HN.save();
     return say(voice(p, pick(['sure! sending it', 'yeah lets go', 'bet, sending now', "ok you're on"], hash(uid + kind))));
@@ -330,10 +364,23 @@
   const UPD_EARLY = ['2.6 is out!! anyone tried the new Vulture Droid yet?', 'wonder how the Jedi Starfighter plays now that Repair only cleanses', 'Force Sense on the Jedi Starfighter looks kinda strong for raids', 'new TIE Defender looks sick, Shield Array on the whole squad?', 'guild analytics is out, leaders go look at the promotion breakdown', 'what do we think of the Droideka rolling in now', 'Starkiller got buffed, finally'];
   const UPD_LATE = ['ok after testing: Vulture Droid + B2 + Grievous with the droid doctrine is actually nasty, Swarm Tactics softens everyone up', 'after a bunch of runs, Jedi Starfighter with Force Sense first then Twin Laser Burst is the play for fleet raid', 'tested TIE Defender all night: Tractor Lock always stuns now, save it for their healer', 'Hound\'s Tooth with Scent of the Prey then Trandoshan Hunt finishes people off so fast', 'Droideka Roll In early takes their offense down, then taunt. great raid tank', 'Rey strips buffs before Force Awakens now, she wrecks shielded tanks', 'Mando\'s N-1 Proton Torpedo on anything under 40% is a delete button'];
   const TIPS = ['tip: stun right before their ultimate is ready, not after', 'tip: a whole squad sharing a trait gets the doctrine bonus, it adds up fast', 'tip: Turn Meter boosts are better than they look, more turns = more damage', 'tip: do both raid fronts every day, the guild rewards need both', 'tip: save cleanses for burn and stun, not small debuffs', 'tip: put your tank first so taunt is up before their big hitters move'];
+  // Lines straight from the 2.6 notes, and what a player would figure out they're good for.
+  const UPD_QUOTE = [
+    ['"Shuffle in battles: a random saved set goes on before every battle"', "you know what that's good for? save like 5 looks and you never have to think about it again"],
+    ['"Promotion breakdown: rank the guild by this week\'s numbers"', 'leaders can finally see who actually shows up for raids lol'],
+    ['"TIE Defender: a Tractor Lock that always stuns"', "that's a guaranteed stun on their healer every time it's up. huge for raids"],
+    ['"Jedi Starfighter: a new move, Force Sense"', 'turn meter plus defense up first turn, so it gets to go again before they hit'],
+    ['"Hound\'s Tooth: a deadlier hunt"', 'it finishes off anything low. pair it with something that does damage to everyone'],
+    ['"Equip Sets get colours"', 'colour code them, like red for arena and blue for raids'],
+    ['"Guild analytics: see when the guild plays on a heat map"', 'you can plan raids for when everyone is actually on'],
+    ['"Vulture Droid: a new move, Swarm Tactics"', 'it lowers everyone\'s attack, so your tank takes way less'],
+  ];
+  const quoteLine = (i) => { const [q, use] = UPD_QUOTE[Math.abs(i) % UPD_QUOTE.length]; return pick([`did you see this in the update: ${q}`, `the update says ${q}`, `ok ${q} is sick`], i) + `. ${use}`; };
   function topical(gid, r) {
     const k = r();
     const since = (Date.now() - relAt()) / 3600000;
     if (since >= 0 && since < 24 * 7 && k < 0.35) return since < 4 ? pick(UPD_EARLY, Math.floor(r() * 1000)) : pick(since < 30 ? UPD_LATE.concat(UPD_EARLY.slice(0, 2)) : UPD_LATE, Math.floor(r() * 1000));
+    if (since >= 0 && since < 24 * 14 && k >= 0.35 && k < 0.45) return quoteLine(Math.floor(r() * 1000));
     if (k > 0.9) return pick(TIPS, Math.floor(r() * 1000));
     if (k > 0.86) return pick(NERD, Math.floor(r() * 1000));
     return null;
