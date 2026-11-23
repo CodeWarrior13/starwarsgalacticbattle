@@ -3878,7 +3878,10 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   const unitName = (id) => (id && D.UNIT_MAP[id] ? D.UNIT_MAP[id].name : '');
   const say = (to, data) => Duel.room && Duel.room.emit('answer', { to, nm: myNm(), ...data }).catch(() => {});
 
-  function challenge(peer, kind, fr, wg, ts) {
+  // fm (2.6): the friendly mode: '' classic, 'mirror', 'draft', 'triple' or 'level' (js/friendly26.js).
+  const fmOk = (x) => (HN.fr26 && ['mirror', 'draft', 'triple', 'level'].includes(String(x)) ? String(x) : '');
+  function challenge(peer, kind, fr, wg, ts, fm) {
+    fm = fr ? fmOk(fm) : '';
     if (!fr && HN.seasonBreak && HN.seasonBreak()) return toast(HN.breakNote());
     ts = !!(ts && fr && trueOn());
     if (!HN.pool(kind).length) return toast(kind === 'ship' ? 'You need a ship to fly a Fleet duel.' : 'You need a character for a Ground duel.');
@@ -3887,9 +3890,9 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     if (Duel.prep) return toast('Finish setting up your other duel first.');
     const id = rid();
     const seed = 1 + Math.floor(Math.random() * 2e9);
-    Duel.pending = { id, peer: peer.peer, by: peer.by, kind, seed, fr: !!fr, wg: !!wg, nb: bansEach(), ts };
-    Duel.room.emit('challenge', { to: peer.peer, id, kind, seed, rating: HN.S().rating, nm: myNm(), pool: poolIds(kind), fr: fr ? 1 : 0, wg: wg ? 1 : 0, nb: bansEach(), ts: ts ? 1 : 0 }).catch(() => toast('Could not reach them.'));
-    const m = openModal(`<div class="hn-result"><div class="result-title" style="color:${wg ? '#ffd23f' : '#8fe8ff'};${fr || wg ? 'font-size:clamp(22px,6vw,34px)' : ''}">${fr ? (ts ? 'TRUE STRENGTH' : 'FRIENDLY BATTLE') : wg ? 'WAGER DUEL' : 'CHALLENGE SENT'}</div><p style="text-align:center">Waiting for <b>${esc(Duel.name(peer))}</b> to accept a ${kindName(kind)} ${fr ? 'friendly battle' : wg ? 'wager duel' : 'duel'}…</p><div class="modal-actions"><button type="button" class="btn" data-x="cancel">Cancel</button></div></div>`, { small: true, dismissable: false });
+    Duel.pending = { id, peer: peer.peer, by: peer.by, kind, seed, fr: !!fr, wg: !!wg, nb: bansEach(), ts: fm ? false : ts, fm };
+    Duel.room.emit('challenge', { to: peer.peer, id, kind, seed, rating: HN.S().rating, nm: myNm(), pool: poolIds(kind), fr: fr ? 1 : 0, wg: wg ? 1 : 0, nb: bansEach(), ts: ts && !fm ? 1 : 0, ...(fm ? { fm } : {}) }).catch(() => toast('Could not reach them.'));
+    const m = openModal(`<div class="hn-result"><div class="result-title" style="color:${wg ? '#ffd23f' : '#8fe8ff'};${fr || wg ? 'font-size:clamp(22px,6vw,34px)' : ''}">${fr ? (fm && HN.fr26 ? HN.fr26.NAME[fm].toUpperCase() : ts ? 'TRUE STRENGTH' : 'FRIENDLY BATTLE') : wg ? 'WAGER DUEL' : 'CHALLENGE SENT'}</div><p style="text-align:center">Waiting for <b>${esc(Duel.name(peer))}</b> to accept a ${kindName(kind)} ${fr ? 'friendly battle' : wg ? 'wager duel' : 'duel'}…</p><div class="modal-actions"><button type="button" class="btn" data-x="cancel">Cancel</button></div></div>`, { small: true, dismissable: false });
     Duel.pending.modal = m;
     Duel.pending.timer = setTimeout(() => { if (Duel.pending && Duel.pending.id === id) { Duel.pending = null; m.close(); toast('No answer. Try again later.'); } }, 30000);
     m.root.addEventListener('click', (e) => {
@@ -3924,7 +3927,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const m = openModal(`<div class="hn-result" data-invite="${esc(d.id)}">${d.fr ? `<div class="result-title" style="color:#8fe8ff;font-size:clamp(22px,6vw,34px)">FRIENDLY BATTLE</div>
       <p style="text-align:center">Your friend <b>${esc(who)}</b> challenges you to a <b>${kindName(d.kind)}</b> battle.</p>
       ${d.ts ? '<p style="text-align:center;margin:0"><b style="color:#ffd23f">True Strength:</b> every card fights at its real level and stars.</p>' : ''}
-      <p class="muted small" style="text-align:center;margin:0">You each ban ${banWord(d.nb)}, then build your squads. Just for fun: no rating, no rewards.</p>` : d.wg ? `<div class="result-title" style="color:#ffd23f;font-size:clamp(22px,6vw,34px)">WAGER DUEL</div>
+      <p class="muted small" style="text-align:center;margin:0">${fmOk(d.fm) ? `<b style="color:#ffc04a">${esc(HN.fr26.NAME[fmOk(d.fm)])}:</b> ${esc(HN.fr26.HOW[fmOk(d.fm)])}` : `You each ban ${banWord(d.nb)}, then build your squads.`} Just for fun: no rating, no rewards.</p>` : d.wg ? `<div class="result-title" style="color:#ffd23f;font-size:clamp(22px,6vw,34px)">WAGER DUEL</div>
       <p style="text-align:center"><b>${esc(who)}</b> (${fmt(d.rating || 0)} rating) challenges you to a <b>${kindName(d.kind)}</b> wager duel.</p>
       <p class="muted small" style="text-align:center;margin:0">After bans you have 45 seconds to agree a credit wager (1,000 to 100,000). The winner takes both, minus a 10% house tax. Ranked: rating counts.</p>` : `<div class="result-title" style="color:#8fe8ff">LIVE DUEL</div>
       <p style="text-align:center"><b>${esc(who)}</b> (${fmt(d.rating || 0)} rating) challenges you to a <b>${kindName(d.kind)}</b> duel.</p>
@@ -3945,7 +3948,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       // Accepting drops any challenge we were still waiting on.
       if (Duel.pending) { const p = Duel.pending; clearTimeout(p.timer); if (p.modal) p.modal.close(); say(p.peer, { id: p.id, step: 'cancel' }); Duel.pending = null; }
       say(inv.peer, { id: inv.id, step: 'go', pool: poolIds(inv.kind), rating: HN.S().rating });
-      prep({ id: inv.id, host: false, kind: inv.kind, seed: inv.seed, peer: inv.peer, by: inv.by, who, rating: inv.rating, theirPool: okIds(inv.pool, inv.kind), fr: !!inv.fr, wg: !!inv.wg && !inv.fr, nb: inv.nb === 2 ? 2 : 1, ts: !!(inv.ts && inv.fr) });
+      prep({ fm: inv.fr ? fmOk(inv.fm) : '', id: inv.id, host: false, kind: inv.kind, seed: inv.seed, peer: inv.peer, by: inv.by, who, rating: inv.rating, theirPool: okIds(inv.pool, inv.kind), fr: !!inv.fr, wg: !!inv.wg && !inv.fr, nb: inv.nb === 2 ? 2 : 1, ts: !!(inv.ts && inv.fr) });
     });
   }
 
@@ -3970,7 +3973,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     if (step === 'go') {
       // They accepted too late: we're already fighting someone else.
       if (Duel.match || App.battleActive || Duel.prep) { say(msg.peer, { id: p.id, step: 'cancel' }); return; }
-      return prep({ id: p.id, host: true, kind: p.kind, seed: p.seed, peer: msg.peer, by: msg.by, who: Duel.name(msg), rating: d.rating, theirPool: okIds(d.pool, p.kind), fr: !!p.fr, wg: !!p.wg, nb: p.nb === 2 ? 2 : 1, ts: !!(p.ts && p.fr) });
+      return prep({ fm: p.fr ? fmOk(p.fm) : '', id: p.id, host: true, kind: p.kind, seed: p.seed, peer: msg.peer, by: msg.by, who: Duel.name(msg), rating: d.rating, theirPool: okIds(d.pool, p.kind), fr: !!p.fr, wg: !!p.wg, nb: p.nb === 2 ? 2 : 1, ts: !!(p.ts && p.fr) });
     }
     toast(d.busy ? 'They are busy in another fight.' : d.nowg ? 'They can\'t take wager duels right now.' : 'Challenge declined.');
   }
@@ -3992,6 +3995,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       list: banList(cfg.kind, mine, cfg.theirPool) };
     setPresence();
     refresh();
+    if (P.fm && HN.fr26) return HN.fr26.prep(P, DAPI);
     // The challenger bans first.
     if (P.host) myBan(P); else waitFor(P, `<b>${esc(P.who)}</b> is choosing a card to ban…`, BAN_MS + 15000);
   }
@@ -4041,6 +4045,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   function prepMsg(P, step, d) {
     if (!live(P)) return;
     if (step === 'cancel' || step === 'no') return endPrep(P, `${P.who} left the duel.`);
+    if (P.fm && HN.fr26 && HN.fr26.msg(P, step, d, DAPI)) return;
     if (step === 'wg') { if (P.wg && HN.Wager) HN.Wager.msg(P, d); return; }
     if (step === 'ban') {
       if (P.bans.length >= banTotal(P)) return;
@@ -4072,8 +4077,9 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       waitFor(P, `Waiting for <b>${esc(P.who)}</b> to finish their squad…`, BUILD_MS + 20000);
     });
   }
+  const DAPI = { say: (P, data) => say(P.peer, { id: P.id, ...data }), live: (P) => live(P), leave: (P, note) => leave(P, note), timedOut: (P, note) => timedOut(P, note), endPrep: (P, note) => endPrep(P, note), waitFor: (P, html, ms) => waitFor(P, html, ms), closeWait: (P) => closeWait(P), build: (P) => build(P), fight: (P) => fight(P) };
   function fight(P) {
-    const cfg = { id: P.id, host: P.host, kind: P.kind, seed: P.seed, mine: P.mine, theirs: P.theirs, peer: P.peer, by: P.by, name: P.who, oppRating: +P.rating || 800, bans: P.bans.filter(Boolean), fr: !!P.fr, wager: P.wager || 0, ts: !!P.ts };
+    const cfg = { fm: P.fm || '', lv: P.lv || null, turnMs: P.turnMs || (P.fr && HN.fr26 ? HN.fr26.clocks('').turnMs : 0), matchMs: P.matchMs || (P.fr && HN.fr26 ? HN.fr26.clocks('').matchMs : 0), id: P.id, host: P.host, kind: P.kind, seed: P.seed, mine: P.mine, theirs: P.theirs, peer: P.peer, by: P.by, name: P.who, oppRating: +P.rating || 800, bans: P.bans.filter(Boolean), fr: !!P.fr, wager: P.wager || 0, ts: !!P.ts };
     P.fought = true;
     endPrep(P);
     start(cfg);
@@ -4262,9 +4268,10 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     // listed first, so turn order and every roll match.
     const rng = HN.rng(cfg.seed);
     HN.B.back = cfg.fr ? { friends: true } : { view: 'duels' };
-    HN.hnStart({ type: 'hn', hn: 'duel', kind: cfg.kind }, cfg.mine.map(levelOf(cfg.ts)), cfg.theirs.map(levelOf(cfg.ts)), {
+    const lvl = cfg.lv ? (e) => ({ ...e, level: cfg.lv.level, stars: cfg.lv.stars }) : levelOf(cfg.ts);
+    HN.hnStart({ type: 'hn', hn: 'duel', kind: cfg.kind }, cfg.mine.map(lvl), cfg.theirs.map(lvl), {
       name: `${cfg.ts ? 'True Strength' : cfg.fr ? 'Friendly Battle' : 'Live Duel'} · vs ${cfg.name}`, kind: cfg.kind, peer: cfg.peer, planet: cfg.kind === 'ship' ? 'coruscant' : 'geonosis', rng,
-      intro: `${cfg.fr ? 'Friendly battle (unranked, no rewards)' : 'Live'}: ${cfg.ts ? 'True Strength, every card fights at its real level and stars' : `every card fights at Level ${DUEL_LEVEL} ★${DUEL_STARS}`}.${(cfg.bans || []).length ? ` Banned: ${cfg.bans.map(unitName).join(' and ')}.` : ''} You play your squad, they play theirs. 45 seconds per move.`,
+      intro: cfg.fm && HN.fr26 ? HN.fr26.intro(cfg) : `${cfg.fr ? 'Friendly battle (unranked, no rewards)' : 'Live'}: ${cfg.ts ? 'True Strength, every card fights at its real level and stars' : `every card fights at Level ${DUEL_LEVEL} ★${DUEL_STARS}`}.${(cfg.bans || []).length ? ` Banned: ${cfg.bans.map(unitName).join(' and ')}.` : ''} You play your squad, they play theirs. 45 seconds per move.`,
       setup(b) {
         b.duel = M;
         for (const u of b.units) {
@@ -4320,7 +4327,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     if (M.ended || !BUI.field || !(BUI.battle && BUI.battle.duel === M)) return;
     let n = BUI.field.querySelector('.hn-clock');
     if (!n) { n = el('<div class="hn-clock" aria-label="Match time left"></div>'); BUI.field.appendChild(n); }
-    const left = matchMs() - (Date.now() - M.startAt);
+    const left = (M.matchMs || matchMs()) - (Date.now() - M.startAt);
     n.textContent = left > 0 ? mmss(left) : 'Time up';
     n.classList.toggle('low', left < 60000);
     if (left < 60000 && !M.warned) { M.warned = true; BUI.log('One minute left! When time runs out, whoever has dealt more damage wins.', 'hazard'); }
@@ -4492,7 +4499,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       let action;
       if (actor.side === 'player') {
         const before = hash(b);
-        let left = TURN_MS / 1000;
+        let left = (M.turnMs || TURN_MS) / 1000;
         say(`Your move · ${left}s`);
         const tick = setInterval(() => {
           left = Math.max(0, left - 1);
@@ -4504,7 +4511,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
         say('');
         if (stale() || !action) return;
         const tgt = action.targetUid ? b.get(action.targetUid) : null;
-        action.tl = Date.now() - M.startAt >= matchMs() ? 1 : 0;
+        action.tl = Date.now() - M.startAt >= (M.matchMs || matchMs()) ? 1 : 0;
         send(M, { seq, a: actor.canon, i: action.abilityIndex, t: tgt ? tgt.canon : null, h: before, tl: action.tl });
       } else {
         this.renderActions(actor);
@@ -4578,7 +4585,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       if (b.dataset.r === 'friends' && HN.friends) setTimeout(() => HN.friends.open(), 250);
     });
   }
-  Duel.challengeFriend = (peer, kind, ts) => challenge(peer, kind, true, false, ts);
+  Duel.challengeFriend = (peer, kind, ts, fm) => challenge(peer, kind, true, false, ts, fm);
   Duel.trueOn = trueOn;
 
   // ---------- the lobby screen ----------
@@ -10303,7 +10310,7 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
     const uid = F.other(r);
     if (!isOnline(uid)) return toast(`${F.otherName(r)} isn't online right now.`);
     if (!HN.Duel || !HN.Duel.challengeFriend) return toast('Connecting… try again in a moment.');
-    HN.Duel.challengeFriend({ peer: uid, by: uid, nm: F.otherName(r) }, kind, frMode() === 'true');
+    HN.Duel.challengeFriend({ peer: uid, by: uid, nm: F.otherName(r) }, kind, frMode() === 'true', HN.fr26 ? HN.fr26.mode() : '');
   }
 
   // Callsigns starting with key, closest first (exact, then shortest, then A-Z).
@@ -10420,8 +10427,8 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
             <p class="muted small">Your callsign is <b>${esc(myTag())}</b>. Share it so friends can add you.</p>`;
       host.dataset.chat = '';
       host.innerHTML = `<div class="fr-head"><div><p class="eyebrow">Friends</p><h2>Friendly battles</h2></div><button type="button" class="btn" data-f="close">Close</button></div>
-        <p class="muted small fr-blurb">Challenge a friend who's online to a Ground or Fleet battle: you each ban cards and build a squad. Just for fun: no rating, no rewards.</p>
-        ${HN.Duel && HN.Duel.trueOn && HN.Duel.trueOn() ? `<div class="fr-mode" role="group" aria-label="Battle mode"><button type="button" class="${frMode() === 'even' ? 'on' : ''}" data-frmode="even"><b>Even</b><small>Every card at Level ${(HN.Duel && HN.Duel.LEVEL) || 20} ★${(HN.Duel && HN.Duel.STARS) || 3}</small></button><button type="button" class="${frMode() === 'true' ? 'on' : ''}" data-frmode="true"><b>True Strength</b><small>Real levels and stars</small></button></div>` : ''}
+        ${HN.fr26 ? '' : `<p class="muted small fr-blurb">Challenge a friend who's online to a Ground or Fleet battle: you each ban cards and build a squad. Just for fun: no rating, no rewards.</p>`}
+        ${HN.fr26 ? HN.fr26.picker(frMode() === 'true') : HN.Duel && HN.Duel.trueOn && HN.Duel.trueOn() ? `<div class="fr-mode" role="group" aria-label="Battle mode"><button type="button" class="${frMode() === 'even' ? 'on' : ''}" data-frmode="even"><b>Even</b><small>Every card at Level ${(HN.Duel && HN.Duel.LEVEL) || 20} ★${(HN.Duel && HN.Duel.STARS) || 3}</small></button><button type="button" class="${frMode() === 'true' ? 'on' : ''}" data-frmode="true"><b>True Strength</b><small>Real levels and stars</small></button></div>` : ''}
         <div class="fr-tabs"><button type="button" class="${tab === 'list' ? 'on' : ''}" data-tab="list">Friends <i>${items.length}</i></button><button type="button" class="${tab === 'req' ? 'on' : ''}" data-tab="req">Requests ${inc.length ? `<i class="hot">${inc.length}</i>` : ''}</button><button type="button" class="${tab === 'add' ? 'on' : ''}" data-tab="add">Add</button></div>
         ${body}<p class="pe-st ${status.cls}" data-st>${esc(status.msg)}</p>`;
       if (tab === 'add') {

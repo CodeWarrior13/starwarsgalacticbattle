@@ -284,7 +284,11 @@
     if (!squad.length) return toast('Pick a squad first.');
     document.querySelectorAll('#modal-root > *').forEach((n) => n.remove());
     const v = INV()[uid] || (INV()[uid] = {}); v.played = Date.now(); v.kind = kind; v.busyUntil = 0; HN.save();
-    HN.hnStart({ type: 'hn', hn: 'botfr', kind, uid }, squad, botSquad(uid, kind), { name: `Friendly · vs ${nameOf(uid)}`, kind, planet: kind === 'ship' ? 'coruscant' : 'geonosis', intro: 'A friendly battle: no rating, nothing to lose.' });
+    const bs = botSquad(uid, kind);
+    const go = (mine, theirs, fm) => { if (UI.App.battleActive) return; HN.hnStart({ type: 'hn', hn: 'botfr', kind, uid, fm: fm || '' }, mine, theirs, { name: `${fm && HN.fr26 ? HN.fr26.NAME[fm] : 'Friendly'} · vs ${nameOf(uid)}`, kind, planet: kind === 'ship' ? 'coruscant' : 'geonosis', intro: fm && HN.fr26 ? HN.fr26.intro({ fm }) : 'A friendly battle: no rating, nothing to lose.' }); };
+    // 2.6 friendly modes (js/friendly26.js): Mirror Match, Draft Duel, Triple Draft and Level Field work against bots too.
+    if (HN.fr26 && HN.fr26.mode() !== 'classic') { HN.fr26.local(uid, kind, bs).then((r) => { if (r) go(r.mine, r.theirs, r.fm); }); return; }
+    go(squad, bs, '');
   }
   function done(uid, kind, won) {
     const rec = REC()[uid] = REC()[uid] || { w: 0, l: 0 }; if (won) rec.w++; else rec.l++; HN.save();
