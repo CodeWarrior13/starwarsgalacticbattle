@@ -339,6 +339,7 @@
       Rp.addEventListener('click', (e) => {
         const pt = e.target.closest('[data-ptier]'); if (pt) { tier = pt.dataset.ptier; Rp.querySelectorAll('[data-ptier]').forEach((b) => b.classList.toggle('on', b === pt)); const ti = Rp.querySelector('.c25-id .t25'); if (ti) ti.outerHTML = titleHtml({ n: x.n, t: tier }); return; }
         if (e.target.closest('[data-pbuy]') && k === 'co') { if (root.Col25.buy(root.Col25.COL[x.id])) { toast(x.n + ' is yours.'); pm.close(); grid(); pop(items('co').find((y) => y.id === x.id)); } return; }
+        if (e.target.closest('[data-ptry]') && k === 'co' && root.TryOn26) { root.TryOn26.open(x.id, { after: () => { pm.close(); grid(); paint(); detail(null); } }); return; }
         if (e.target.closest('[data-ptry]') && k === 'co') { const o = Rp.querySelector('.col25-demo'); if (o) { o.classList.remove('go'); void o.offsetWidth; o.classList.add('go'); } return; }
         if (e.target.closest('[data-ptry]') && k === 'cb') { const o = Rp.querySelector('.c25-cbd'); if (o) o.outerHTML = cbDemo(x.id); return; }
         if (e.target.closest('[data-ptry]')) { if (['po', 'wi', 'pa', 'in'].includes(k)) { const old = Rp.querySelector('.fx25-prev'); if (old) old.outerHTML = '<div class="c25-try"></div>'; show(); } else { paint({ kind: k, x: { ...x, tier } }); pm.close(); } return; }

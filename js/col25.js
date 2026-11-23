@@ -181,7 +181,28 @@
     dune: () => `<circle r="${(1 + Math.random() * 1.6).toFixed(1)}" fill="#e8c890"/>`,
     galactic: (i) => `<path d="M0 -5 L1.2 -1.2 L5 0 L1.2 1.2 L0 5 L-1.2 1.2 L-5 0 L-1.2 -1.2Z" fill="${['#ffffff', '#5ae8ff', '#ff5ad0', '#b8a8ff'][i % 4]}"/>`,
   };
+  // 2.6: Life Day's lights pop into a twinkling ring; Glacier (Hoth Frost) throws ice shards, a snowflake and a frost ring.
+  const v26 = () => !!(root.Update26 && root.Update26.on());
+  const BULB = ['#ff2a2a', '#2ad84a', '#ffd23f', '#5ab4ff', '#ffffff'];
+  const ring = (ui, pos) => {
+    const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); s.setAttribute('viewBox', '-40 -40 80 80'); s.setAttribute('class', 'col25-g');
+    s.style.cssText = `position:absolute;left:${pos.x}px;top:${pos.y}px;width:80px;height:80px;margin:-40px 0 0 -40px;pointer-events:none;z-index:7;overflow:visible`;
+    if (cur.fx === 'lifeday') s.innerHTML = '<circle r="25" fill="none" stroke="#2a5a2a" stroke-width=".8" stroke-dasharray="2 3" class="c26-w"/>' + BULB.concat(BULB.slice(0, 3)).map((col, i) => { const a = (i / 8) * Math.PI * 2; return `<g class="c26-b" style="--x:${(Math.cos(a) * 25).toFixed(1)}px;--y:${(Math.sin(a) * 25).toFixed(1)}px;animation-delay:${i * 40}ms"><circle r="3.2" fill="${col}" opacity=".35"/><circle r="1.9" fill="${col}"/><circle r=".7" cx="-.5" cy="-.6" fill="#fff"/></g>`; }).join('');
+    else s.innerHTML = '<circle r="24" fill="none" stroke="#bfefff" stroke-width="2" class="c26-fr"/><g class="c26-fl">' + [0, 60, 120, 180, 240, 300].map((r) => `<g transform="rotate(${r})"><path d="M0 0 V-11 M0 -6 l-3 -3 M0 -6 l3 -3" stroke="#eaf8ff" stroke-width="1.4" stroke-linecap="round" fill="none"/></g>`).join('') + '</g>' + [0, 1, 2, 3, 4, 5, 6].map((i) => { const a = (i / 7) * Math.PI * 2 + 0.3; return `<g class="c26-b" style="--x:${(Math.cos(a) * 28).toFixed(1)}px;--y:${(Math.sin(a) * 28).toFixed(1)}px"><path d="M0 -6 L2 0 L0 7 L-2 0Z" transform="rotate(${Math.round(a * 180 / Math.PI + 90)})" fill="#eaf8ff" stroke="#8fd8ff" stroke-width=".6"/></g>`; }).join('');
+    ui.fx.appendChild(s); setTimeout(() => s.remove(), 1500);
+  };
+  // A string of lights (Life Day) or an ice crust (Glacier) riding a laser bolt.
+  const riders = (bolt) => {
+    if (!v26() || !cur || perf() || !bolt) return;
+    const ld = cur.fx === 'lifeday'; if (!ld && cur.id !== 'hoth') return;
+    let d = 'M0 6'; for (let i = 1; i <= 16; i++) d += ` L${(i * 100 / 16).toFixed(1)} ${(6 + (ld ? Math.sin(i * 0.9) * 3.4 : (i % 2 ? -3 : 3))).toFixed(1)}`;
+    const bulbs = ld ? [0, 1, 2, 3, 4, 5].map((k) => { const t = (k + 0.5) / 6; const y = 6 + Math.sin(t * 16 * 0.9) * 3.4; return `<circle cx="${(t * 100).toFixed(1)}" cy="${y.toFixed(1)}" r="2.6" fill="${BULB[k % 5]}" opacity=".4"/><circle cx="${(t * 100).toFixed(1)}" cy="${y.toFixed(1)}" r="1.5" fill="${BULB[k % 5]}"/>`; }).join('') : '';
+    const sv = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); sv.setAttribute('viewBox', '0 0 100 12'); sv.setAttribute('preserveAspectRatio', 'none'); sv.setAttribute('class', 'c26-ride');
+    sv.innerHTML = `<path d="${d}" fill="none" stroke="${ld ? '#1f4a1f' : '#eaf8ff'}" stroke-width="${ld ? 0.9 : 1}" vector-effect="non-scaling-stroke"/>${bulbs}`;
+    bolt.appendChild(sv);
+  };
   const burst = (ui, pos) => {
+    if (cur && v26() && (cur.fx === 'lifeday' || cur.id === 'hoth') && !perf() && ui.fx && pos) return ring(ui, pos);
     if (!cur || !cur.fx || !GLYPH[cur.fx] || perf() || !ui.fx || !pos) return;
     const k = 5;
     for (let i = 0; i < k; i++) {
@@ -200,7 +221,7 @@
     // after(ui, args, result) runs once the effect is under way; holiday bursts wait for the shot to land.
     const wrap = (name, idx, after) => { const f = BU[name]; if (typeof f !== 'function') return; BU[name] = function (...a) { const on = !!cur; if (on) a[idx] = paint(); const ret = f.apply(this, a); if (on && after) after(this, a, ret); return ret; }; };
     const landed = (ret, fn) => { if (ret && typeof ret.then === 'function') ret.then(fn, () => {}); else fn(); };
-    wrap('laser', 2, (ui, a) => { const fx = cur; const go = () => { const c0 = cur; cur = fx; burst(ui, a[1]); cur = c0; }; const bolt = ui.fx && ui.fx.lastElementChild; const an = bolt && bolt.classList.contains('laser') && bolt.getAnimations()[0]; if (an) an.finished.then(go, () => {}); else setTimeout(go, ((a[3] | 0) + ((a[4] && a[4].dur) || 220)) / (ui.speed || 1) + 30); });
+    wrap('laser', 2, (ui, a) => { const fx = cur; const go = () => { const c0 = cur; cur = fx; burst(ui, a[1]); cur = c0; }; const bolt = ui.fx && ui.fx.lastElementChild; const isBolt = bolt && bolt.classList.contains('laser'); if (isBolt) riders(bolt); const an = isBolt && bolt.getAnimations()[0]; if (an) an.finished.then(go, () => {}); else setTimeout(go, ((a[3] | 0) + ((a[4] && a[4].dur) || 220)) / (ui.speed || 1) + 30); });
     wrap('flashAt', 1); wrap('sparks', 1); wrap('boom', 1); wrap('wave', 1); wrap('torpedo', 2, (ui, a, ret) => { const fx = cur; landed(ret, () => { const c0 = cur; cur = fx; burst(ui, a[1]); cur = c0; }); });
     wrap('slash', 1, (ui, a) => burst(ui, a[0]));
     wrap('lightning', 3, (ui, a, ret) => { const t = a[1] && a[1][0]; const fx = cur; if (t) landed(ret, () => { const c0 = cur; cur = fx; if (ui.cards[t.uid]) burst(ui, ui.center(t.uid)); cur = c0; }); });
@@ -249,7 +270,7 @@ body.col25-on .bcard.targetable:not(.friendly)::after{box-shadow:0 0 20px color-
 body.col25-on .bcard.targetable:not(.friendly){border-color:var(--col25)}
 body.col25-on .abtn.ult{border-color:color-mix(in srgb,var(--col25) 45%,transparent)}body.col25-on .abtn.ult .ult-fill{background:var(--col25)}body.col25-on .abtn.ult .an{color:var(--col25)}
 body.col25-dome .dome{border-color:var(--col25);background:radial-gradient(ellipse at 50% 30%,color-mix(in srgb,var(--col25) 28%,transparent),color-mix(in srgb,var(--col25) 8%,transparent) 70%);box-shadow:0 0 40px color-mix(in srgb,var(--col25) 50%,transparent),inset 0 0 40px color-mix(in srgb,var(--col25) 25%,transparent)}
-.c25-it .col25-sw{border-radius:8px;background:#05070d;height:40px;width:100%;flex:0 0 auto}\n.col25-demo{padding:18px 10px;background:radial-gradient(ellipse at 50% 50%,#121a2e,#05070d);border-radius:12px;overflow:hidden}.col25-demo.go .col25-sw{animation:col25Shot .7s cubic-bezier(.2,.8,.3,1)}@keyframes col25Shot{from{transform:translateX(-70%);opacity:0}60%{opacity:1}}`;
+.c26-ride{position:absolute;left:0;top:50%;width:100%;height:12px;margin-top:-6px;overflow:visible;pointer-events:none}.c26-b{animation:c26b 1.3s ease-out both}@keyframes c26b{0%{opacity:0;transform:translate(0,0) scale(.3)}12%{opacity:1}30%{transform:translate(var(--x),var(--y)) scale(1.2)}60%{transform:translate(var(--x),var(--y)) scale(1.1)}85%{opacity:1}100%{opacity:0;transform:translate(var(--x),var(--y)) scale(.8)}}.c26-w{animation:c26w 1.3s ease-out both;transform-origin:center}@keyframes c26w{0%{opacity:0;transform:scale(.3)}25%{opacity:.9;transform:scale(1)}100%{opacity:0}}.c26-fr{animation:c26w .9s ease-out both;transform-origin:center}.c26-fl{animation:c26fl 1.2s ease-out both;transform-origin:center}@keyframes c26fl{0%{opacity:0;transform:scale(.2) rotate(0)}20%{opacity:1}100%{opacity:0;transform:scale(1.2) rotate(60deg)}}\n.c25-it .col25-sw{border-radius:8px;background:#05070d;height:40px;width:100%;flex:0 0 auto}\n.col25-demo{padding:18px 10px;background:radial-gradient(ellipse at 50% 50%,#121a2e,#05070d);border-radius:12px;overflow:hidden}.col25-demo.go .col25-sw{animation:col25Shot .7s cubic-bezier(.2,.8,.3,1)}@keyframes col25Shot{from{transform:translateX(-70%);opacity:0}60%{opacity:1}}`;
   document.head.appendChild(st);
 
   // ---------- Start ----------

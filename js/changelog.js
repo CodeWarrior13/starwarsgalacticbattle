@@ -43,6 +43,8 @@
         'IMPROVED|Cosmetics tab: Equip on all puts a crate theme or card back on every crate at once.',
         'IMPROVED|The Cosmetics tab opens about twice as fast: previews hold still until you pick one, and everything behind it rests while it\'s open.',
         'IMPROVED|Luthen\'s Gallery shows 4 card backs and 2 battle intros a week, so the plinth isn\'t crowded, and it opens faster.',
+        'NEW|Attack colours: Try it on opens its own screen. Your colour plays on a starfighter shot, a blaster shot, a lightsaber slash and stab, and Force lightning against a floating training remote.',
+        'IMPROVED|Life Day wraps every shot in a string of lights that pops into a ring when it lands; Hoth Frost gets an ice crust, ice shards and a frost ring.',
         'NEW|Luthen\'s Gallery: a live countdown to the next collection (Monday 12 AM Central) and a peek at what\'s coming.',
         'IMPROVED|The update log scrolls much smoother, and only the numbers that matter light up.',
         'FIXED|Smoother on every screen: the shops fit phones without scrolling sideways, and every screen was checked on phones, tablets and computers, upright and sideways.',
