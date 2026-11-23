@@ -7129,6 +7129,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   };
   // What the crew talks about follows what's going on: the raid, upgrades, ranks, the season.
   const npcSay = (gid, r) => {
+    if (HN.botBrain && HN.botBrain.topical) { const v = HN.botBrain.topical(gid, r); if (v) return v; }
     const roll = r();
     try {
       if (roll < 0.25) {
@@ -7518,7 +7519,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     if (poll && !canTools(Net.me, gid)) return toast('Your rank can\'t start polls right now.');
     msgs.push({ g: gid, t, ts: Date.now(), s: system ? 1 : 0, a: ann ? 1 : 0, ...(poll ? { p: poll } : {}) });
     try { await Net.db.doc(`gchat/${Net.me}`).set({ g: gid, msgs, rx: (mine && mine.g === gid && mine.rx) || {}, pv: (mine && mine.g === gid && mine.pv) || {} }); } catch (e) { toast('Message not sent.'); }
-    if (isNpcG(gid) && !system && Math.random() < 0.7) npcReply(gid);
+    if (isNpcG(gid) && !system) { if (HN.botBrain && HN.botBrain.guildReply) HN.botBrain.guildReply(gid, npcCrew(gid), t); else if (Math.random() < 0.7) npcReply(gid); }
   }
   // 2.3: react to a guild message (one reaction each; tap it again to take it back).
   // Your reactions live in your own chat doc, so nobody can change anyone else's.
@@ -7577,6 +7578,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       out[e] = (out[e] || 0) + 1;
       if (c.uid === Net.me) mineE = e;
     }
+    if (HN.botBrain && HN.botBrain.rx) { const e = HN.botBrain.rx(gid, uid, ts); if (e && REACTS.includes(e)) out[e] = (out[e] || 0) + 1; }
     return { out, mineE };
   };
   // Everyone's lines for this guild, filtered again on screen (older or
@@ -10308,7 +10310,7 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
       const n = botNow(b.uid);
       return `<div class="fr-row ${isFav(b.uid) ? 'fav' : ''}"><button type="button" class="fr-av pic" data-fbot="${esc(b.uid)}" aria-label="${esc(b.name)}'s profile">${botPic(b)}</button>
         <span class="fr-who"><b>${esc(b.name)}</b><small class="${n.on ? 'busy' : ''}">${esc(n.txt)}</small></span>
-        <span class="fr-go">${star(b.uid)}<button type="button" class="btn fr-chat" data-fbotchat="${esc(b.uid)}">Chat</button><button type="button" class="btn" disabled>Ground</button><button type="button" class="btn" disabled>Fleet</button><button type="button" class="fr-x" data-fbotx="${esc(b.uid)}" aria-label="Remove friend" title="Remove friend">✕</button></span></div>`;
+        <span class="fr-go">${star(b.uid)}<button type="button" class="btn fr-chat" data-fbotchat="${esc(b.uid)}">Chat</button><button type="button" class="btn" ${HN.botBrain ? `data-fbotbat="character" data-uid="${esc(b.uid)}"` : 'disabled'}>Ground</button><button type="button" class="btn" ${HN.botBrain ? `data-fbotbat="ship" data-uid="${esc(b.uid)}"` : 'disabled'}>Fleet</button><button type="button" class="fr-x" data-fbotx="${esc(b.uid)}" aria-label="Remove friend" title="Remove friend">✕</button></span></div>`;
     };
     const renderBotChat = (uid) => {
       const nm = (BF()[uid] || {}).name || Net.name(uid);
@@ -10582,6 +10584,7 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
   const pickReply = (uid, text, n) => {
     const t = String(text).toLowerCase();
     const k = /\b(hi|hey|yo|hello|sup)\b/.test(t) ? 'hi' : /\bgg\b/.test(t) ? 'gg' : /raid|boss/.test(t) ? 'raid' : /rank|arena|legend|kyber|division/.test(t) ? 'rank' : /\?/.test(t) ? 'q' : 'any';
+    if (HN.botBrain && HN.botBrain.dm) { const v = HN.botBrain.dm(uid, text, n); if (v) return v; }
     const list = BOT_REPLY[k];
     return list[(uid.length * 7 + n * 13 + t.length) % list.length];
   };
@@ -10609,6 +10612,7 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
   };
   // What a pilot is up to: some are in a battle, the rest were on a while ago. Changes through the day.
   const botNow = (uid) => {
+    if (HN.botBrain && HN.botBrain.now) { const v = HN.botBrain.now(uid); if (v) return v; }
     const slot = Math.floor(Date.now() / 600000);
     const r = HN.rng([...uid].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, slot))();
     if (r < 0.3) return { on: true, txt: 'Online · In a battle' };
@@ -10616,6 +10620,7 @@ body.hn-u-inv .mk-inv { display: block; width: 10px; height: 10px; border-radius
     const hrs = 1 + Math.floor(r * 30);
     return { on: false, txt: hrs < 24 ? `Last seen ${hrs}h ago` : 'Last seen yesterday' };
   };
+  HN.botChatApi = { BCH, BF, redraw: () => { try { redraw(); } catch (e) { /* closed */ } }, botNow0: (uid) => { const slot = Math.floor(Date.now() / 600000); const r = HN.rng([...uid].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, slot))(); return r; } };
   HN.friends = { boot, open, addUid: (uid, nm) => (HN.isBotUid && HN.isBotUid(uid) ? botAdd(uid, nm) : addUid(uid, nm)), sendCard, pairId, isFav, toggleFav, chatWith: (uid) => { const r = F.rows.get(pairId(Net.me, uid)); if (!r || !r.ok) return; F.chatWith = r.id; open(); }, badge: () => F.badge(), isFriend: (uid) => F.isFriend(uid), state: (uid) => { if (HN.isBotUid && HN.isBotUid(uid)) return botState(uid); const r = F.rows.get(pairId(Net.me, uid)); return r ? (r.ok ? 'friends' : r.by === Net.me ? 'sent' : 'incoming') : ''; }, F };
 
   const css = document.createElement('style');

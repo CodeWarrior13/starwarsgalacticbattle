@@ -41,7 +41,7 @@
       try {
         await loadFb();
       } catch (e) { /* no connection: the HoloNet shows its offline screen */ }
-      try { await load('js/holonet.js'); if (root.Update26 && root.Update26.on()) await load('js/guild26.js').catch(() => {}); } catch (e) { if (root.UI && root.UI.toast) root.UI.toast('Couldn\'t load the HoloNet. Check your connection and try again.'); loading = null; }
+      try { await load('js/holonet.js'); if (root.Update26 && root.Update26.on()) { await load('js/guild26.js').catch(() => {}); await load('js/bots26.js').catch(() => {}); } } catch (e) { if (root.UI && root.UI.toast) root.UI.toast('Couldn\'t load the HoloNet. Check your connection and try again.'); loading = null; }
     })();
     return loading;
   }
@@ -85,7 +85,7 @@
     root.__hnEnv = 'live';
     loading = (async () => {
       try { await loadFb(); } catch (e) { /* no connection: the HoloNet shows its offline screen */ }
-      try { await load('js/holonet.js'); if (root.Update26 && root.Update26.on()) await load('js/guild26.js').catch(() => {}); } catch (e) { if (root.UI && root.UI.toast) root.UI.toast('Couldn\'t load the HoloNet. Check your connection and reload.'); loading = null; }
+      try { await load('js/holonet.js'); if (root.Update26 && root.Update26.on()) { await load('js/guild26.js').catch(() => {}); await load('js/bots26.js').catch(() => {}); } } catch (e) { if (root.UI && root.UI.toast) root.UI.toast('Couldn\'t load the HoloNet. Check your connection and reload.'); loading = null; }
     })();
     return loading;
   }
