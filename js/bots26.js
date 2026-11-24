@@ -18,7 +18,9 @@
   const S = () => SO.P2();
   const hash = (s) => [...String(s)].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7);
   const pick = (arr, k) => arr[Math.abs(k | 0) % arr.length];
-  const rnd = Math.random;
+  // rnd: random, except while a shared reply is worked out (then seeded, so every screen agrees).
+  let RNG = null;
+  const rnd = () => (RNG ? RNG() : Math.random());
   const ctHour = (t) => { const d = new Date((t || Date.now()) - 6 * 3600000); return d.getUTCHours(); };
 
   // ---------- Personalities ----------
@@ -374,6 +376,29 @@
     setTimeout(() => { try { if (SO.gtabNow() === 'chat') SO.rerender(); } catch (e) { /* not open */ } }, 3000);
     setTimeout(() => { try { if (SO.gtabNow() === 'chat') SO.rerender(); } catch (e) { /* not open */ } }, 15000);
   }
+  // The same choice as guildReply, worked out from a seed: for real guilds, where every
+  // member's screen has to show the same reply. Returns [{ uid, t, d (ms after the message) }].
+  function replyFor(crew, said, r, who) {
+    if (!crew || !crew.length) return [];
+    RNG = r;
+    try {
+      const t = String(said || ''); const out = [];
+      const my = nick(who || '', crew.map(npcTag));
+      const byP = (id) => crew.filter((u) => persOf(u).id === id);
+      const choose = (pref) => { const list = pref.map(byP).flat(); return list.length ? list[Math.floor(rnd() * list.length)] : crew[Math.floor(rnd() * crew.length)]; };
+      let lead = null; let line = null; let must = false;
+      if (PERSONAL.some((re) => re.test(t))) { lead = choose(['helper', 'veteran']); line = `${my ? `${my}, ` : ''}${pick(PRIV, hash(t))}`; must = true; }
+      else if (ASK_PERSONAL.some((re) => re.test(t))) { lead = choose(['joker', 'helper']); line = pick(PRIV_ME, hash(t)); must = true; }
+      else { const sl = slangAsk(t); if (sl) { lead = choose(['helper', 'rookie', 'nerd']); line = `${sl} = ${GLOSS[sl]}${my ? ` ${my}` : ''}`; } }
+      if (!line) { const g = gameAnswer(t, persOf(crew[0])); if (g) { lead = choose(['veteran', 'nerd', 'helper']); line = g; } }
+      if (!line) { const sm = smallTalk(t, hash(t)); if (sm && rnd() < 0.6) { lead = choose(['rookie', 'joker', 'hype', 'helper']); line = /^(hey|yo|hi|sup)/i.test(sm) && my ? `${sm.replace(/!$/, '')} ${my}!` : sm; } }
+      if (!line && rnd() < 0.25) { lead = choose(['joker', 'rookie', 'hype', 'rival']); line = pick(['lol', 'facts', 'true', 'haha', 'real', 'same tbh', 'W'], hash(t)); }
+      // A small guild doesn't answer everything: most plain lines get no reply.
+      if (line && lead && (must || rnd() < 0.7)) { const v = voice(persOf(lead), line); out.push({ uid: lead, t: v.slice(0, 140), d: 2500 + v.length * 80 + rnd() * 9000 }); }
+      if (out.length && /^(hey|yo|hi|hello|sup)/i.test(t) && rnd() < 0.3) { const u2 = choose(['hype', 'rookie']); if (u2 !== lead) out.push({ uid: u2, t: voice(persOf(u2), `${pick(['yo', 'hey', 'heyy'], hash(u2))}${my ? ` ${my}` : ''}`), d: 9000 + rnd() * 12000 }); }
+      return out;
+    } finally { RNG = null; }
+  }
   const rx = (gid, uid, ts) => { if (!(typeof gid === 'string' && gid.startsWith('npc_'))) return null; const m = S().botRx; return m ? m[`${uid}_${ts}`] || null : null; };
 
   // ---------- Update talk and strategy tips in bot guilds ----------
@@ -430,7 +455,7 @@
     } catch (e) { /* the guild isn't loaded yet */ }
   }
 
-  HN.botBrain = { now, dm, guildReply, rx, topical, nick, persOf, start };
+  HN.botBrain = { now, dm, guildReply, replyFor, rx, topical, nick, persOf, start };
   setInterval(() => { if (!document.hidden) { followUps(); promotions(); } }, 60000);
   setInterval(() => { if (!document.hidden) dueOffers(); }, 5000);
   setTimeout(() => { followUps(); promotions(); }, 8000);

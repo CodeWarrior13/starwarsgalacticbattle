@@ -6829,6 +6829,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const rows = Net.arena.filter((a) => a.guild === gid && a.uid !== Net.me && !out.includes(a.uid)).map((a) => a.uid);
     if (S().guild === gid) rows.unshift(Net.me || 'me');
     if (isNpcG(gid)) rows.push(...npcCrew(gid));
+    else if (HN.rg26 && HN.rg26.sync(gid)) rows.push(...npcCrew(gid));
     return rows;
   };
   // 35 members to start, up to 50 with Barracks.
@@ -6991,7 +6992,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const sf = (() => { try { const si = HN.seasonInfo(); return clampN(1 - si.ends / si.length, 0, 1); } catch (e) { return 0.5; } })();
     const rating = Math.round(clampN(rp.rating + row.off + 140 * sf * (0.6 + pace * 0.4), 700, root.HN && root.HN.rank24 && root.HN.rank24() ? 2800 : 2350));
     const level = Math.round(clampN(rp.level + row.loff + weeksLive() * 0.4, 20, 50));
-    const gp = Math.round(rp.gp * pace * share * Math.pow(weekFrac(), 0.9));
+    const gp = Math.round(rp.gp * pace * share * Math.pow(weekFrac(), 0.9) * (row.rg ? 0.7 : 1));
     const sr = HN.rng(hashS(uid) + wk * 13);
     const live = { ...row, rating, level, gp, gpw: wk, gpl: row.gpl + Math.round(weeksLive() * rp.gp * 0.8), nb: row.nb + Math.floor(weeksLive() * 0.6),
       ground: HN.botSquad('character', rating, sr, true), fleet: HN.botSquad('ship', rating, sr, true), st: { ws: Math.floor(r() * r() * 9) } };
@@ -7012,7 +7013,9 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const pace = npcPace(row.guild, wk);
     const w = crew.map((u) => 0.4 + HN.rng(hashS(u) + wk * 7)() * 1.2);
     const tot = w.reduce((a, x) => a + x, 0) || 1;
-    const mine = w[crew.indexOf(uid)] / tot;
+    let mine = w[crew.indexOf(uid)] / tot;
+    // In a real guild they do a little under their share, so the real players' hits decide it.
+    if (row.rg) mine *= (crew.length / Math.max(crew.length, membersOf(row.guild).length)) * 0.8;
     const days = weekFrac() * 7;
     const F = (k) => Math.min(1.03, pace * k * Math.pow(days / 5.2, 1.15));
     return { w: wk, b: g.id, d: Math.round(gpool(g, 'ground', row.guild) * F(1) * mine), f: Math.round(gpool(g, 'fleet', row.guild) * F(0.93) * mine) };
@@ -7023,8 +7026,114 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     NPC_GUILDS.forEach((g) => { gmap.set(g.id, { ...g, xp: npcXp(g), lvl: npcLvl(g) }); });
     G.guilds = [...gmap.values()].filter((g) => g && g.name).map(safeGuild);
   };
+  // ---------- 2.6: HoloNet pilots in small real guilds ----------
+  // A real guild with only a few players fills out with HoloNet pilots, one at a
+  // time over hours, and they drift off again as real players join. The list
+  // lives on the guild doc (bots), written by the leader's or co-leader's game,
+  // so every member sees the same pilots. Each id is the minute they joined
+  // (base 36) plus two letters that pick their name and look. Open guilds:
+  // they just join. Request guilds: they ask, and a leader accepts or not.
+  // Invite-only guilds: they don't come. Their chat is worked out the same way
+  // on every member's screen, from the guild, the day and the real messages.
+  const on26 = () => !!(root.Update26 && root.Update26.on && root.Update26.on());
+  const RG_MAX = 12;
+  const rgOk = (x) => typeof x === 'string' && /^[a-z0-9]{5,9}$/.test(x);
+  const rgUid = (gid, id) => `npc:${gid}:${id}`;
+  const rgJoin = (id) => parseInt(id.slice(0, -2), 36) * 60000;
+  const rgIds = (g) => { if (!g || !Array.isArray(g.bots)) return []; const out = (g.kicked || []); return g.bots.filter((x) => rgOk(x) && !out.includes(rgUid(g.id, x))).slice(0, RG_MAX); };
+  const rgMade = new Map();
+  function rgRow(gid, id, taken) {
+    const uid = rgUid(gid, id);
+    if (NPC_ROWS.has(uid)) return uid;
+    const names = HN.BOT_NAMES_X || []; const avs = HN.BOT_AVS || ['luke']; const frames = ['bronze', 'silver', 'gold', 'kyber', 'guild', 'linked', 'squadron', 'recruit'];
+    const seed = hashS(`${gid}:${id.slice(-2)}`); const r = HN.rng(seed);
+    let name = names[seed % Math.max(1, names.length)] || 'Pilot';
+    for (let t = 1; t < 40 && taken.has(name); t += 1) name = names[(seed + t * 7) % names.length];
+    taken.add(name);
+    NPC_ROWS.set(uid, { uid, rid: id, rg: true, tag: name, av: avs[Math.floor(r() * avs.length)], frame: frames[Math.floor(r() * frames.length)], rating: 1200, off: Math.round((r() - 0.6) * 520), loff: Math.round((r() - 0.5) * 12), guild: gid, gpl: Math.round(r() * 1500), gp: 0, nb: 2 + Math.floor(r() * 9), bot: true });
+    Net.names[uid] = name;
+    return uid;
+  }
+  // Keeps this guild's pilots in step with its doc. True if it has any.
+  function rgSync(gid) {
+    if (!on26() || !gid || isNpcG(gid)) return false;
+    const g = gmap.get(gid);
+    const ids = rgIds(g ? { ...g, id: gid } : null);
+    const key = ids.join(',');
+    if (rgMade.get(gid) !== key) {
+      rgMade.set(gid, key);
+      for (const [uid, row] of NPC_ROWS) if (row.rg && row.guild === gid && !ids.includes(row.rid)) NPC_ROWS.delete(uid);
+      const taken = new Set([...NPC_ROWS.values()].filter((x) => x.guild === gid).map((x) => x.tag));
+      ids.forEach((id) => rgRow(gid, id, taken));
+      gxpMemo.delete(gid);
+    }
+    return ids.length > 0;
+  }
+  // How many pilots a guild wants: enough to reach 8 to 11, none once real players fill it.
+  const rgTarget = (gid) => 8 + (hashS(gid) % 4);
+  const rgReal = (gid) => membersOf(gid).filter((u) => !(NPC_ROWS.get(u) || {}).rg).length;
+  const rgWant = (gid) => { const real = rgReal(gid); return real < 1 ? 0 : Math.max(0, Math.min(RG_MAX, rgTarget(gid) - real)); };
+  // Hours between one pilot coming or going and the next: the first comes sooner.
+  const rgGap = (gid, g, n) => (n ? 3 + (hashS(`${gid}:${g.botAt | 0}`) % 8) : 1 + (hashS(gid) % 3)) * 3600000;
+  const rgNewId = (gid, at, salt) => `${Math.floor(at / 60000).toString(36)}${(hashS(`${gid}:${salt}`) % 1296).toString(36).padStart(2, '0')}`;
+  // The leader's or co-leader's game moves things along.
+  let rgBusy = false;
+  async function rgTend(gid) {
+    if (rgBusy || !on26() || !gid || isNpcG(gid) || !canManage(gid) || !Net.ready) return;
+    const g = gmap.get(gid); if (!g) return;
+    const ids = rgIds({ ...g, id: gid }); const want = rgWant(gid); const now = Date.now();
+    if (!g.botAt) { if (want > 0) { rgBusy = true; await writeGuild(gid, { botAt: now }); rgBusy = false; } return; }
+    if (now - g.botAt < rgGap(gid, g, ids.length)) return;
+    rgBusy = true;
+    try {
+      if (ids.length > want) await writeGuild(gid, { bots: ids.filter((x, i) => i !== (hashS(`${gid}:${now}`) % ids.length)), botAt: now });
+      else if (ids.length < want && modeOf(g) === 'open' && sizeOf(gid) < maxMembers(gid)) await writeGuild(gid, { bots: [...ids, rgNewId(gid, now, now)], botAt: now });
+    } finally { rgBusy = false; }
+    rerenderLive();
+  }
+  // Request guilds: one pilot at a time asks to join, the same one on every manager's screen.
+  function rgApplicant(gid) {
+    if (!on26() || !gid || isNpcG(gid)) return null;
+    const g = gmap.get(gid); if (!g || modeOf(g) !== 'request' || !g.botAt) return null;
+    const ids = rgIds({ ...g, id: gid }); if (ids.length >= rgWant(gid) || sizeOf(gid) >= maxMembers(gid)) return null;
+    const at = g.botAt + rgGap(gid, g, ids.length); if (Date.now() < at) return null;
+    const id = rgNewId(gid, at, `ask:${at}`); const uid = rgUid(gid, id);
+    if ((g.no || []).includes(uid) || (g.bl || []).includes(uid)) return null;
+    rgRow(gid, id, new Set([...NPC_ROWS.values()].filter((x) => x.guild === gid).map((x) => x.tag)));
+    return uid;
+  }
+  // Accepting one: it joins now (its join minute is now, same name and look).
+  async function rgAccept(gid, uid) {
+    const g = gmap.get(gid); const row = NPC_ROWS.get(uid); if (!g || !row || !row.rg) return false;
+    const id = rgNewId(gid, Date.now(), 0).slice(0, -2) + row.rid.slice(-2);
+    NPC_ROWS.delete(uid);
+    return writeGuild(gid, { bots: [...rgIds({ ...g, id: gid }), id], botAt: Date.now(), no: (g.no || []).filter((x) => x !== uid) });
+  }
+  // Their chat in a real guild: the day's chatter from those who'd joined by then,
+  // a "joined" line for each, and now and then a reply to a real member's message.
+  let rgTimer = 0;
+  function rgChat(gid) {
+    if (!rgSync(gid)) return [];
+    const crew = npcCrew(gid); const now = Date.now();
+    const joinOf = new Map(crew.map((u) => [u, rgJoin(NPC_ROWS.get(u).rid)]));
+    const out = npcChat(gid, true).filter((m) => joinOf.get(m.uid) <= m.ts);
+    for (const [u, at] of joinOf) if (now - at < 2 * 864e5 && at <= now) out.push({ g: gid, uid: u, t: 'joined the guild.', s: 1, ts: at });
+    const said = G.chat.flatMap((c) => (c.msgs || []).filter((m) => m && m.g === gid && !m.s && typeof m.t === 'string' && now - m.ts < 2 * 864e5).map((m) => ({ ...m, uid: c.uid })));
+    let next = 0;
+    for (const m of said) {
+      const here = crew.filter((u) => joinOf.get(u) < m.ts); if (!here.length) continue;
+      const r = HN.rng(hashS(`${m.uid}:${m.ts}`));
+      const got = HN.botBrain && HN.botBrain.replyFor ? HN.botBrain.replyFor(here, m.t, r, Net.name(m.uid)) : (r() < 0.4 ? [{ uid: here[Math.floor(r() * here.length)], t: replyTo(m.t, r), d: 4000 + r() * 20000 }] : []);
+      for (const x of got) { const ts = Math.round(m.ts + x.d); if (ts <= now) out.push({ g: gid, uid: x.uid, t: x.t, ts }); else if (!next || ts < next) next = ts; }
+    }
+    // Wake the chat when the next reply is due.
+    if (next && next - now < 120000) { clearTimeout(rgTimer); rgTimer = setTimeout(() => { if (gtabNow() === 'chat') rerenderLive(); }, next - now + 300); }
+    return out;
+  }
+  HN.rg26 = { sync: rgSync, tend: rgTend, applicant: rgApplicant, accept: rgAccept, chat: rgChat, want: rgWant, isPilot: (uid) => !!(NPC_ROWS.get(uid) || {}).rg };
+  setInterval(() => { const gid = myGuildId(); if (gid && document.visibilityState !== 'hidden') rgTend(gid); }, 10 * 60000);
   // Faces for the HoloNet: crew members show up as arena opponents and on the boards under their guild tag.
-  HN.npcFace = (r) => { const ids = [...NPC_ROWS.keys()]; const row = NPC_ROWS.get(ids[Math.floor(r() * ids.length)]); const g = NPC_GUILDS.find((x) => x.id === row.guild); return { name: row.tag, av: row.av, frame: row.frame, gtag: g ? g.tag : '' }; };
+  HN.npcFace = (r) => { const ids = [...NPC_ROWS.keys()].filter((u) => !NPC_ROWS.get(u).rg); const row = NPC_ROWS.get(ids[Math.floor(r() * ids.length)]); const g = NPC_GUILDS.find((x) => x.id === row.guild); return { name: row.tag, av: row.av, frame: row.frame, gtag: g ? g.tag : '' }; };
   HN.npcTagOf = (name) => { for (const row of NPC_ROWS.values()) if (row.tag === name) { const g = NPC_GUILDS.find((x) => x.id === row.guild); return g ? g.tag : ''; } return ''; };
   // Every pilot on the boards has a full profile you can open: picture, frame,
   // stats, a collection that fits their rating and level, and badges. Same pilot,
@@ -7095,7 +7204,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     return full;
   }
   // Computer guild members on the season board, at their current rating.
-  HN.npcBoard = () => [...NPC_ROWS.keys()].map((uid) => { const n = npcRow(uid); return { uid, npc: true, best: n.rating + (hashS(uid) % 40), ws: (n.st || {}).ws | 0 }; });
+  HN.npcBoard = () => [...NPC_ROWS.keys()].filter((u) => !NPC_ROWS.get(u).rg).map((uid) => { const n = npcRow(uid); return { uid, npc: true, best: n.rating + (hashS(uid) % 40), ws: (n.st || {}).ws | 0 }; });
   HN.botProfile = botProfile;
   // Their chatter: a few lines every few hours, plus a reply when you post.
   const NPC_LINES = ['Raid fronts are up, hit them when you can!', 'gg everyone, great week', 'Anyone got tips for the Fleet front?', 'Just pulled a legendary from a puck!!', 'Welcome to all the new pilots o7', 'Don\'t forget your arena battles today', 'Who else is grinding Beskar?', 'That Boss Trial is no joke', 'Ground front almost cleared, push!', 'Night shift checking in', 'Remember to use your raid runs', 'New season soon, who\'s going for Legend?', 'My squad finally hit level 40', 'Lol the Wampa just ate my whole team', 'Good luck in your duels everyone', 'Vault upgrades looking good this week', 'Anyone want a friendly battle?', 'May the Force be with you all'];
@@ -7121,7 +7230,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   const MOODS = [['dead', 0.12, 0, 1], ['quiet', 0.23, 2, 4], ['normal', 0.35, 5, 9], ['active', 0.2, 10, 16], ['super', 0.1, 18, 28]];
   const CT_MS = 6 * 3600000; // Central time (close enough for picking hours and day names)
   const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  const npcChat = (gid) => {
+  const npcChat = (gid, rg) => {
     const crew = npcCrew(gid);
     if (!crew.length) return [];
     const now = Date.now();
@@ -7131,6 +7240,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       const r = HN.rng(hashS(gid) + d * 7919);
       let x = r(); const mood = MOODS.find((m) => (x -= m[1]) <= 0) || MOODS[2];
       let left = mood[2] + Math.floor(r() * (mood[3] - mood[2] + 1));
+      if (rg) left = Math.round(left * Math.min(1, (crew.length + 1) / 10));
       const dayName = DAY_NAMES[new Date(d * 864e5 + 12 * 3600000).getUTCDay()];
       const sessions = Math.max(1, Math.min(4, Math.ceil(left / 5)));
       const pollDay = r() < 0.18;
@@ -7144,23 +7254,26 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
         const kind = r();
         let first;
         if (pollDay && k === 0) { const pq = NPC_POLLS[Math.floor(r() * NPC_POLLS.length)]; out.push({ g: gid, uid: crew[Math.floor(r() * Math.min(4, crew.length))], t: pq[0], p: pq[1], ts }); ts += 60000 * (2 + r() * 6); }
-        first = kind < 0.45 ? NPC_TALK[Math.floor(r() * NPC_TALK.length)].replace('{day}', dayName) : npcSay(gid, r);
+        first = kind < 0.45 ? NPC_TALK[Math.floor(r() * NPC_TALK.length)].replace('{day}', dayName) : npcSay(gid, r, rg);
         out.push({ g: gid, uid: opener, t: first, ts });
         for (let m = 1; m < burst; m++) {
           ts += 30000 + r() * 240000;
           let who = crew[Math.floor(r() * crew.length)];
           if (who === opener && crew.length > 1) who = crew[(crew.indexOf(who) + 1) % crew.length];
-          out.push({ g: gid, uid: who, t: r() < 0.7 ? replyTo(first, r) : npcSay(gid, r), ts });
+          out.push({ g: gid, uid: who, t: r() < 0.7 ? replyTo(first, r) : npcSay(gid, r, rg), ts });
         }
       }
     }
+    if (rg) return out.map((m) => ({ ...m, ts: Math.round(m.ts) })).filter((m) => m.ts <= now);
     const mine = (S().npcChat || []).filter((m) => m.g === gid && m.ts <= now);
     return out.map((m) => ({ ...m, ts: Math.round(m.ts) })).filter((m) => m.ts <= now).concat(mine);
   };
   // What the crew talks about follows what's going on: the raid, upgrades, ranks, the season.
-  const npcSay = (gid, r) => {
+  const npcSay = (gid, r, rg) => {
     if (HN.botBrain && HN.botBrain.topical) { const v = HN.botBrain.topical(gid, r); if (v) return v; }
     const roll = r();
+    // Real guilds: every member's screen shows the same words, so nothing that depends on this device.
+    if (rg) return roll < 0.25 ? ['Hit the raid when you can, every hit counts', 'Did my raid runs for today', 'Raid\'s looking good this week', 'Who\'s doing the fleet front today?'][Math.floor(r() * 4)] : NPC_LINES[Math.floor(r() * NPC_LINES.length)];
     try {
       if (roll < 0.25) {
         const t = graidTotals(gid);
@@ -7225,6 +7338,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       const data = d && (typeof d.data === 'function' ? d.data() : d);
       if (data && data.name) gmap.set(docId, { id: docId, ...data }); else gmap.delete(docId);
       if (gid) onMyGuild(gid, data && data.name ? data : null); else onApplied(appGid, data && data.name ? data : null);
+      if (gid && data && data.name && HN.rg26) setTimeout(() => HN.rg26.tend(gid), 4000);
       setGuilds(); rerenderLive(); marks();
     }, () => {});
     Net.subs.gdoc = { q: key, off };
@@ -7425,6 +7539,10 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     if (!gid || !canReview(gid)) return;
     if (yes && sizeOf(gid) >= maxMembers(gid)) return toast('Your guild is full. Build Barracks for more room.');
     const g = gmap.get(gid) || {};
+    if (yes && (NPC_ROWS.get(uid) || {}).rg) {
+      if (await rgAccept(gid, uid)) { toast(`${Net.name(uid)} is accepted.`); sayLine(`accepted ${Net.name(uid)} into the guild.`, true); rerender(); marks(); } else toast('Could not save. Try again.');
+      return;
+    }
     const members = membersOf(gid);
     const ok = (g.ok || []).filter((x) => x !== uid && !members.includes(x));
     const no = (g.no || []).filter((x) => x !== uid);
@@ -7476,7 +7594,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
     const gid = myGuildId();
     const seen = (P2().soc && P2().soc.seen) || {};
     if (!gid) return { chat: false, ann: false, apps: 0, inv: (G.invites || []).length };
-    return { chat: lastFrom(gid, false) > (seen.chat || 0), ann: lastFrom(gid, true) > (seen.ann || 0), apps: canReview(gid) ? (G.apps || []).length : 0, inv: 0 };
+    return { chat: lastFrom(gid, false) > (seen.chat || 0), ann: lastFrom(gid, true) > (seen.ann || 0), apps: canReview(gid) ? (G.apps || []).length + (HN.rg26 && HN.rg26.applicant(gid) ? 1 : 0) : 0, inv: 0 };
   }
   // A new guild-wide announcement pops up once, wherever you are in the game.
   function noticeAnn(gid) {
@@ -7613,7 +7731,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   };
   // Everyone's lines for this guild, filtered again on screen (older or
   // tampered messages included), minus anyone you've muted.
-  const chatLines = (gid) => G.chat.filter((c) => !isMuted(c.uid)).flatMap((c) => (c.msgs || []).filter((m) => m && m.g === gid && typeof m.t === 'string').map((m) => ({ ...m, uid: c.uid }))).concat(isNpcG(gid) ? npcChat(gid) : []).map((m) => {
+  const chatLines = (gid) => G.chat.filter((c) => !isMuted(c.uid)).flatMap((c) => (c.msgs || []).filter((m) => m && m.g === gid && typeof m.t === 'string').map((m) => ({ ...m, uid: c.uid }))).concat(isNpcG(gid) ? npcChat(gid) : HN.rg26 ? HN.rg26.chat(gid) : []).map((m) => {
     const f = SAFE.clean(m.t);
     // An announcement only counts if the sender's rank may post them right now.
     return { ...m, t: f.blocked ? 'Message hidden' : f.text, hid: f.blocked, a: m.a && !f.blocked && canAnnounce(m.uid, gid) ? 1 : 0 };
@@ -7995,7 +8113,8 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
   GP.apps = (gid) => {
     if (!canReview(gid)) return '';
     const g = gmap.get(gid) || {};
-    const list = (G.apps || []);
+    const ra = HN.rg26 && HN.rg26.applicant(gid);
+    const list = ra ? [...(G.apps || []), ra] : (G.apps || []);
     const rows = list.map((uid) => {
       const p = prof(uid); const st = p.st || {}; const d = HN.divOf(p.rating);
       const wr = (st.w || 0) + (st.l || 0) ? Math.round(((st.w || 0) / ((st.w || 0) + (st.l || 0))) * 100) : 0;
@@ -9367,6 +9486,7 @@ button.pf-fr { cursor: pointer; } .pf-fr.on { border-color: #ffd23f; box-shadow:
       if (k === 'bl' && !(await UI.confirmBox('Remove and blacklist?', `${Net.name(uid)} is removed and can't join or ask to join again unless you unblock them (Members, then Guild settings).`, 'Blacklist'))) return;
       if (k === 'kick' && !(await UI.confirmBox('Remove from guild?', `${Net.name(uid)} will be removed from the guild. You'll have a few seconds to undo it.`, 'Remove'))) return;
       if (k === 'lead' && !(await UI.confirmBox(`Make ${Net.name(uid)} the leader?`, 'They get full control of the guild, including disbanding it. You become the co-leader. Only they can give it back.', 'Hand over'))) return;
+      if ((k === 'lead' || k === 'co') && (HN.rg26 && HN.rg26.isPilot(uid))) return toast(`${Net.name(uid)} said they'd rather not, maybe later.`);
       if (k === 'co' && raw.co && !(await UI.confirmBox('Replace the co-leader?', `${Net.name(raw.co)} goes back to being a member.`, 'Replace'))) return;
       const r = SO.gmap.get(gid) || {};
       const el = (r.elders || []).filter((x) => x !== uid);
