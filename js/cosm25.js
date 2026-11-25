@@ -165,10 +165,14 @@
   const LIB = root.Lib25 ? root.Lib25.CAT : [];
   for (const x of LIB) if (x.k === 'wi') WINS.push({ id: 'lib_' + x.id, n: x.n, c: x.c, get: x.cost, how: "Luthen's Gallery · weekly rotation", lib: x.id });
   const INTROS = [{ id: 'vs', n: 'Lightsaber VS', c: '#8fe8ff', get: null, how: 'Everyone has it' }].concat(LIB.filter((x) => x.k === 'in').map((x) => (x.max ? { id: x.id, n: x.n, c: '#b8a8ff', get: () => !!(root.Max25 && root.Max25.done()), max: true, how: 'MAX OUT', lib: x.id } : { id: x.id, n: x.n, c: x.c, get: x.cost, how: x.wk ? "Luthen's Gallery · weekly rotation" : "Luthen's Gallery · " + (x.cost.kyber ? fmt(x.cost.kyber) + ' Kyber' : fmt(x.cost.beskar) + ' Beskar'), lib: x.id })));
-  const CRATES = (D.PACKS || []).map((p) => [p.id, p.name]);
+  // Black Market buys (daily stock, restocks, flash deals) get their own slot, so they open in your theme and card back too.
+  const CRATES = (D.PACKS || []).map((p) => [p.id, p.name]).concat([['market', 'Black Market buys']]);
   // Card backs also dress the HoloNet's Beskar pucks, once pucks open up at level 25.
-  const CBCRATES = () => CRATES.concat(((Player.state.account || {}).level || 0) >= 25 ? [['puck', 'Beskar Pucks']] : []);
-  const crateIcon = (id) => (id === 'puck' ? (root.HNArt && root.HNArt.puck ? `<svg viewBox="0 0 100 100">${root.HNArt.puck('elite', null, { bare: true })}</svg>` : '') : (root.Art && root.Art.crateArt ? root.Art.crateArt(id) : ''));
+  const CBCRATES = () => CRATES.concat(((Player.state.account || {}).level || 0) >= 25 || (HN() && HN().ui && HN().ui.unlocked && HN().ui.unlocked()) ? [['puck', 'Beskar Pucks']] : []);
+  // Until you pick something for Black Market buys, they wear whatever most of your crates wear.
+  const common = (map) => { const n = {}; for (const p of (D.PACKS || [])) { const v = map[p.id]; if (v && v !== 'default') n[v] = (n[v] || 0) + 1; } let best = null; for (const k in n) if (!best || n[k] > n[best]) best = k; return best || 'default'; };
+  const slotVal = (map, crate) => (map[crate] != null ? map[crate] : crate === 'market' ? common(map) : undefined);
+  const crateIcon = (id) => (id === 'market' ? '<svg viewBox="0 0 100 100"><path d="M14 40 L22 22 H78 L86 40Z" fill="#b8742f"/><path d="M14 40 h72 v6 h-72z" fill="#8a4f22"/><rect x="20" y="46" width="60" height="36" rx="3" fill="#3a2a1a"/><rect x="28" y="54" width="18" height="20" rx="2" fill="#5ad0ff"/><rect x="54" y="54" width="18" height="20" rx="2" fill="#ffd23f"/><path d="M14 40 L22 22 H32 L26 40Z M38 40 L42 22 H50 V40Z M62 40 L58 22 H68 L74 40Z" fill="#e8d9b0" opacity=".5"/></svg>' : id === 'puck' ? (root.HNArt && root.HNArt.puck ? `<svg viewBox="0 0 100 100">${root.HNArt.puck('elite', null, { bare: true })}</svg>` : '') : (root.Art && root.Art.crateArt ? root.Art.crateArt(id) : ''));
   const getProg = (x) => { if (!x.get || x.get === 'event' || (typeof x.get === 'object' && !Array.isArray(x.get) && typeof x.get !== 'function')) return null; try { const r = x.get(st()); if (Array.isArray(r)) return { have: Math.min(r[0], r[1]), need: r[1], done: r[0] >= r[1] }; return { done: !!r }; } catch (e) { return { done: false }; } };
   const ownsItem = (kind, x) => { if (kind === 'po') return !!(C().mvp || {})[x.id] || !!C().own['po:' + x.id]; if (!x.get) return true; if (C().own[kind + ':' + x.id]) return true; const p = getProg(x); return !!(p && p.done); };
   const posesOwned = () => POSES.filter((p) => ownsItem('po', p));
@@ -188,8 +192,8 @@
     ti: () => (HN().cos25.prof().ti || null),
     po: () => C().eq.po || null,
     wi: () => C().eq.wi || 'medal',
-    pa: (crate) => C().pk[crate] || 'default',
-    cb: (crate) => (CBACKS.some((x) => x.id === C().cbk[crate]) ? C().cbk[crate] : 'default'),
+    pa: (crate) => slotVal(C().pk, crate) || 'default',
+    cb: (crate) => (CBACKS.some((x) => x.id === slotVal(C().cbk, crate)) ? slotVal(C().cbk, crate) : 'default'),
     in: () => (INTROS.some((x) => x.id === C().eq.in) ? C().eq.in : 'vs'),
   };
   function wearTitle(id, tier) {
@@ -665,14 +669,14 @@
   if (root.Shops25) root.Shops25.add('luthen', gallery); else (root.__shops25q = root.__shops25q || []).push(['luthen', gallery]);
   // Casino wins feed the casino titles.
   // The crate opening asks which back each crate wears (js/ui.js packReveal).
-  if (UI.hooks) UI.hooks.cardBack = (packId) => { try { if (!on() || !packId || !root.CB25) return ''; const id = C().cbk[packId]; const x = CBACKS.find((y) => y.id === id); if (!x || id === 'default' || !ownsItem('cb', x)) return ''; return root.CB25.svg(id); } catch (e) { return ''; } };
+  if (UI.hooks) UI.hooks.cardBack = (packId) => { try { if (!on() || !packId || !root.CB25) return ''; const id = slotVal(C().cbk, packId); const x = CBACKS.find((y) => y.id === id); if (!x || id === 'default' || !ownsItem('cb', x)) return ''; return root.CB25.svg(id); } catch (e) { return ''; } };
   // Shuffle: wear a random saved set as each battle starts (tutorial battles keep your look).
   if (root.BattleUI && root.BattleUI.start && !root.BattleUI.start.__c26) {
     const st = root.BattleUI.start.bind(root.BattleUI);
     root.BattleUI.start = function (params) { if (!params || params.type !== 'tutorial') shuffle(); return st(params); };
     root.BattleUI.start.__c26 = true;
   }
-  root.Cos25 = { SET_BG, shuffle, SET_LV, setSlots, sets, lookNow, wearLook, ready, open, sync, tour, titleScene, titleHtml, TITLES, TIERS, POSES, WINS, PACKS, INTROS, CBACKS, eq, ownsItem, C: () => C(), save };
+  root.Cos25 = { themeFor: (crate) => { try { return eq.pa(crate); } catch (e) { return 'default'; } }, SET_BG, shuffle, SET_LV, setSlots, sets, lookNow, wearLook, ready, open, sync, tour, titleScene, titleHtml, TITLES, TIERS, POSES, WINS, PACKS, INTROS, CBACKS, eq, ownsItem, C: () => C(), save };
   if (HN()) HN().titleHtml = titleHtml;
   // The HoloNet loads later on most devices: hook in once it's there.
   let tries = 0;

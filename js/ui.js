@@ -2366,7 +2366,7 @@
       const buy = e.target.closest('[data-buy]');
       if (buy) {
         const r = Player.buyMarket(Number(buy.dataset.buy));
-        if (r) packReveal([r]);
+        if (r) packReveal([r], null, { slot: 'market' });
         return;
       }
       if (e.target.closest('[data-reroll]')) {
@@ -2402,7 +2402,7 @@
         const r = Player.buyFlash(Number(fl.dataset.flash));
         if (r) {
           updateWallet();
-          packReveal(r);
+          packReveal(r, null, { slot: 'market' });
         }
         return;
       }
@@ -3532,13 +3532,18 @@
     let doneAuto = null;
     const closed = auto ? new Promise((res) => { doneAuto = res; }) : null;
     const best = results.reduce((b, r) => (R_ORDER[D.UNIT_MAP[r.id].rarity] > R_ORDER[b] ? D.UNIT_MAP[r.id].rarity : b), 'common');
+    // opts.slot: cards that come from no crate (Black Market buys) still wear that slot's theme and card back.
+    const slot = packId || opts.slot || '';
     if (packId) {
       // 2.5: an equipped pack theme plays instead of the usual crate opening.
       const fx = !auto && HOOKS.crateFx ? HOOKS.crateFx(packId, best, results) : null;
       if (fx) await fx; else await crateCinematic(packId, best);
+    } else if (slot) {
+      const fx = !auto && HOOKS.crateFx ? HOOKS.crateFx(slot, best, results) : null;
+      if (fx) await fx;
     }
     // 2.5: a crate can wear its own card back (Cosmetics > Card backs).
-    const back25 = packId && HOOKS.cardBack ? HOOKS.cardBack(packId) : '';
+    const back25 = slot && HOOKS.cardBack ? HOOKS.cardBack(slot) : '';
     const cards = results.map((r, i) => {
       const def = D.UNIT_MAP[r.id];
       // 2.2: a new card gets a small "NEW CARD" ribbon in its top-left corner

@@ -185,7 +185,7 @@
   const backOf = (packId, def) => { let b = ''; try { b = packId && UI.hooks.cardBack ? UI.hooks.cardBack(packId) : ''; } catch (e) { b = ''; } if (!b && root.Art && root.Art.cardBack) b = root.Art.cardBack((def && def.faction) || 'light'); return String(b).replace('<svg ', '<svg preserveAspectRatio="xMidYMid slice" '); };
   if (UI.hooks) UI.hooks.crateFx = (packId, best, results) => {
     if (!on() || !motion()) return null;
-    const c = C(); const th = c && c.pk ? c.pk[packId] : null;
+    const c = C(); const th = root.Cos25 && root.Cos25.themeFor ? root.Cos25.themeFor(packId) : c && c.pk ? c.pk[packId] : null;
     if (!th || th === 'default' || !PACK_KEY[th] || !PK[PACK_KEY[th]]) return null;
     const k = PACK_KEY[th];
     // Face down: the cards fly out showing their backs, so nothing is given away before you flip them.
