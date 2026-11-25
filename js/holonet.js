@@ -2390,6 +2390,10 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
 .hn-bounty .go .hb-card, .hn-bounty .go .hb-tint, .hn-bounty .go .hb-sw { will-change: transform, opacity; }
 .hn-bounty .go .hb-puck::after { animation: hb-lens 1.2s ease-out forwards; }
 .hn-bounty .go .hb-card { animation: hb-proj .6s cubic-bezier(.2,.8,.3,1) .12s forwards; }
+.hn-bounty .hb-stage.armed .hb-card { opacity: 1 !important; transform: none !important; animation: hb-armed 2.4s ease-in-out infinite !important; cursor: pointer; }
+.hn-bounty .hb-stage.armed .hb-card > :not(.hb-back25) { visibility: hidden; }
+.hn-bounty .hb-stage.armed .hb-back25 { animation: none; box-shadow: 0 0 22px var(--rc); }
+@keyframes hb-armed { 50% { transform: translateY(-6px) !important; } }
 .hn-bounty .hb-back25 { position: absolute; inset: 0; z-index: 6; border-radius: 12px; overflow: hidden; pointer-events: none; }
 .hn-bounty .hb-back25 svg { width: 100%; height: 100%; display: block; }
 .hn-bounty .go .hb-back25 { animation: hb-back25 .55s ease-in .7s forwards; }
@@ -3612,7 +3616,9 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       </div>`);
       const $ = (q) => node.querySelector(q);
       // 2.5: Beskar pucks can wear a card back (Cosmetics > Card backs); it flips away as each card decrypts.
-      const back25 = (UI.hooks && UI.hooks.cardBack ? UI.hooks.cardBack('puck') : '').replace('<svg ', '<svg preserveAspectRatio="xMidYMid slice" ');
+      // Every card starts face down (your puck card back, or the plain one) and waits for a tap, so nothing is given away early.
+      const back25 = ((UI.hooks && UI.hooks.cardBack ? UI.hooks.cardBack('puck') : '') || (root.Art && root.Art.cardBack ? root.Art.cardBack('light') : '')).replace('<svg ', '<svg preserveAspectRatio="xMidYMid slice" ');
+      let armed = false;
       const puck = `<div class="hb-beam"></div><div class="hb-puck"><svg viewBox="0 0 100 100">${A.puck(tier, out.target || null, { bare: true })}</svg></div>`;
       document.body.appendChild(node);
       let i = -1;
@@ -3632,9 +3638,22 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
         const hv = rank >= 3;
         $('[data-stage]').innerHTML = `<div class="hb-card" style="--rc:${R_COL[def.rarity]};--dt:${dt}s">${back25 ? `<span class="hb-back25">${back25}</span>` : ''}<span class="glow"></span>${hv ? '<span class="hb-ring"></span>' : ''}${cardOf(def, r)}<span class="hb-tint"></span><span class="hb-sw"><i></i></span><span class="hb-stamp ${r.isNew ? '' : 'dup'}">${tagOf(r)}</span>${hv ? `<span class="hb-hv">${rank >= 4 ? 'MOST WANTED' : 'HIGH-VALUE TARGET'}</span>` : ''}</div>${puck}`;
         const stage = $('[data-stage]');
-        stage.className = 'hb-stage';
+        stage.className = 'hb-stage armed';
         stage.style.setProperty('--dt', `${dt}s`);
         stage.style.setProperty('--rc', R_COL[def.rarity]);
+        armed = true;
+        $('[data-t]').textContent = 'Bounty data locked';
+        $('[data-hint]').textContent = 'Tap the card to decrypt it';
+      };
+      const run = () => {
+        armed = false;
+        const r = res[i];
+        const def = D.UNIT_MAP[r.id];
+        const rank = R_RANK[def.rarity] || 0;
+        const dt = 0.75 + rank * 0.22;
+        const hv = rank >= 3;
+        const stage = $('[data-stage]');
+        stage.classList.remove('armed');
         const settle = () => { ready = true; $('[data-t]').textContent = def.name; $('[data-hint]').textContent = i < res.length - 1 ? 'Tap the card for the next one' : 'Tap the card to finish'; };
         if (!motion()) { stage.classList.add('skip'); settle(); return; }
         void stage.offsetWidth;
@@ -3670,6 +3689,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
           return;
         }
         if (node.classList.contains('done') || !e.target.closest('[data-stage]')) return;
+        if (armed) { run(); return; }
         // First tap mid-projection finishes it; the next tap moves on.
         if (!ready) { clearTimeout(timer); $('[data-stage]').classList.remove('go'); $('[data-stage]').classList.add('skip'); ready = true; $('[data-t]').textContent = D.UNIT_MAP[res[i].id].name; $('[data-hint]').textContent = i < res.length - 1 ? 'Tap the card for the next one' : 'Tap the card to finish'; return; }
         toTray();
@@ -9531,6 +9551,8 @@ button.lb-pod { cursor: pointer; }
 .hv-bot .nm b { font-size: 13px; }
 .hv-botpic { display: grid; place-items: center; width: 100%; height: 100%; font: 700 14px var(--font-display); color: #8fe8ff; background: #0c2030; border-radius: 50%; }
 /* ---------- 2.5 animated banners ---------- */
+/* Banners sit at z-index -1: whatever holds one gets its own layer, or the banner slides behind the box's background. */
+:where(*:has(> .gb)) { isolation: isolate; }
 .gb-host { position: relative; isolation: isolate; text-shadow: 0 1px 2px rgba(0, 0, 0, .95), 0 0 8px rgba(0, 0, 0, .7); }
 .gb { position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; border-radius: inherit; background: #06101a; --s1: .72; --s2: .52; --s3: .6; }
 .gb > i { position: absolute; inset: 0; display: block; }
