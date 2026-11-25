@@ -2396,6 +2396,9 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
 @keyframes hb-armed { 50% { transform: translateY(-6px) !important; } }
 .hn-bounty .hb-back25 { position: absolute; inset: 0; z-index: 6; border-radius: 12px; overflow: hidden; pointer-events: none; }
 .hn-bounty .hb-back25 svg { width: 100%; height: 100%; display: block; }
+/* The whole card back shows (no cropping), centred on the card. */
+.hn-bounty .hb-back25 { display: grid; place-items: center; background: #04070f; }
+.hn-bounty .hb-back25 svg { width: auto; max-width: 100%; height: 100%; aspect-ratio: 100 / 154; }
 .hn-bounty .go .hb-back25 { animation: hb-back25 .55s ease-in .7s forwards; }
 .hn-bounty .skip .hb-back25 { display: none; }
 @keyframes hb-back25 { to { transform: perspective(600px) rotateY(90deg); opacity: 0; } }
@@ -3617,7 +3620,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       const $ = (q) => node.querySelector(q);
       // 2.5: Beskar pucks can wear a card back (Cosmetics > Card backs); it flips away as each card decrypts.
       // Every card starts face down (your puck card back, or the plain one) and waits for a tap, so nothing is given away early.
-      const back25 = ((UI.hooks && UI.hooks.cardBack ? UI.hooks.cardBack('puck') : '') || (root.Art && root.Art.cardBack ? root.Art.cardBack('light') : '')).replace('<svg ', '<svg preserveAspectRatio="xMidYMid slice" ');
+      const back25 = ((UI.hooks && UI.hooks.cardBack ? UI.hooks.cardBack('puck') : '') || (root.Art && root.Art.cardBack ? root.Art.cardBack('light') : ''));
       let armed = false;
       const puck = `<div class="hb-beam"></div><div class="hb-puck"><svg viewBox="0 0 100 100">${A.puck(tier, out.target || null, { bare: true })}</svg></div>`;
       document.body.appendChild(node);
