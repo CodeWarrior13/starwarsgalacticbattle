@@ -54,6 +54,7 @@
         'NEW|Friendly battles have a battle clock: 30 seconds a turn and 10 minutes a battle (7 in Triple Draft). Run out of time in a draft and a pick is made for you that fills what your squad still needs.',
         'NEW|Luthen\'s Gallery: a live countdown to the next collection (Monday 12 AM Central) and a peek at what\'s coming.',
         'IMPROVED|The update log scrolls much smoother, and only the numbers that matter light up.',
+        'FIXED|Win screens on phones held upright: the whole scene now fits on screen, with VICTORY underneath instead of on top of it.',
         'FIXED|Smoother on every screen: the shops fit phones without scrolling sideways, and every screen was checked on phones, tablets and computers, upright and sideways.',
         'FIXED|Taps feel smoother: no more faint blue box flashing when you switch tabs.',
       ],
