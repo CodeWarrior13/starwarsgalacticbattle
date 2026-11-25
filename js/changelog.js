@@ -69,6 +69,7 @@
         'NEW|Favourite squads: save up to 6 Ground or Fleet squads with a name, an emblem and a colour, and swap with one tap.',
         'IMPROVED|Friends see exactly what you\'re doing: a raid boss, a duel opponent, a campaign stage or a casino game.',
         'IMPROVED|Guild ranks: the leader\'s gold name shimmers, and chat bubbles carry the sender\'s rank colour.',
+        'FIXED|Profiles on phones: Strongest cards sit two to a row, so levels, stars and power are never cut off.',
         'FIXED|Banners: a banner you tap in Cosmetics shows its full animated preview again (it was hiding behind the box), and banners show properly everywhere they are used.',
         'FIXED|Crate openings: crate themes (Sarlacc Pit, Bacta Tank, Kyber Geode and the rest) now deal your cards face down. You only see a card when you flip it.',
         'FIXED|Bounty pucks: each card now waits face down until you tap it, then decrypts.',
