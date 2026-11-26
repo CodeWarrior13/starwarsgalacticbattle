@@ -2462,6 +2462,7 @@
       }
       if (root.Update24 && root.Update24.on()) list.push({ level: Player.ELITE_LEVEL || 30, name: 'Elite promotion', desc: 'Promote 7★ commons, rares and epics with Kyber: next-rarity strength and a 25% stronger doctrine.' });
       if (root.Update23 && root.Update23.on()) list.push({ level: 30, name: 'Auto-open', desc: 'Open Black Market crates one after another, hands-free, until you reach your number.' });
+      if (root.Cos25 && root.Cos25.SHUF_LV && root.Update26 && root.Update26.on()) list.push({ level: root.Cos25.SHUF_LV, name: 'Card back shuffle', desc: 'Every card you open gets a random back from the ones you pick in Cosmetics > Card backs.' });
       if (root.Cos25 && root.Cos25.SET_LV) list.push({ level: root.Cos25.SET_LV[0], name: 'Equip Sets', desc: `Save ${root.Cos25.SET_LV.length} whole looks in Cosmetics > Sets and switch with one tap.` });
       return list.sort((a, b) => a.level - b.level);
     },

@@ -41,7 +41,7 @@
         'BALANCE|Starkiller, Rey, Kylo Ren, K-2SO and the Droideka are reworked: new moves and sharper numbers, each tested so it fits its rarity.',
         'IMPROVED|Droideka: new art. Armoured legs on crescent feet, blasters pointed right at you, and a smooth shield bubble.',
         'IMPROVED|Cosmetics tab: Equip on all puts a crate theme or card back on every crate at once.',
-        'NEW|Card back shuffle: switch it on in Cosmetics, Card backs, and every card you open from a crate or puck gets its own random back. Pick which backs go in the mix (at least 2), or Select all.',
+        'NEW|Card back shuffle (unlocks at Level 10): switch it on in Cosmetics, Card backs, and every card you open from a crate or puck gets its own random back. Pick which backs go in the mix (at least 2), or Select all.',
         'IMPROVED|The Cosmetics tab opens about twice as fast: previews hold still until you pick one, and everything behind it rests while it\'s open.',
         'IMPROVED|Luthen\'s Gallery shows 4 card backs and 2 battle intros a week, so the plinth isn\'t crowded, and it opens faster.',
         'NEW|Attack colours: Try it on opens its own screen. Your colour plays on a starfighter shot, a blaster shot, a lightsaber slash and stab, and Force lightning against a floating training remote.',
