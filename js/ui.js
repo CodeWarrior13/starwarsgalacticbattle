@@ -3535,11 +3535,11 @@
     // opts.slot: cards that come from no crate (Black Market buys) still wear that slot's theme and card back.
     const slot = packId || opts.slot || '';
     if (packId) {
-      // 2.5: an equipped pack theme plays instead of the usual crate opening.
-      const fx = !auto && HOOKS.crateFx ? HOOKS.crateFx(packId, best, results) : null;
+      // 2.5: an equipped pack theme plays instead of the usual crate opening (Auto-open too).
+      const fx = HOOKS.crateFx ? HOOKS.crateFx(packId, best, results) : null;
       if (fx) await fx; else await crateCinematic(packId, best);
     } else if (slot) {
-      const fx = !auto && HOOKS.crateFx ? HOOKS.crateFx(slot, best, results) : null;
+      const fx = HOOKS.crateFx ? HOOKS.crateFx(slot, best, results) : null;
       if (fx) await fx;
     }
     // 2.5: a crate can wear its own card back (Cosmetics > Card backs).
