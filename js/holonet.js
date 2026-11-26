@@ -3620,7 +3620,9 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
       const $ = (q) => node.querySelector(q);
       // 2.5: Beskar pucks can wear a card back (Cosmetics > Card backs); it flips away as each card decrypts.
       // Every card starts face down (your puck card back, or the plain one) and waits for a tap, so nothing is given away early.
-      const back25 = ((UI.hooks && UI.hooks.cardBack ? UI.hooks.cardBack('puck') : '') || (root.Art && root.Art.cardBack ? root.Art.cardBack('light') : ''));
+      if (UI.hooks && UI.hooks.cardBackRoll) UI.hooks.cardBackRoll('puck', res.length);
+      const backAt = (k) => ((UI.hooks && UI.hooks.cardBack ? UI.hooks.cardBack('puck', k) : '') || (root.Art && root.Art.cardBack ? root.Art.cardBack('light') : ''));
+      const back25 = backAt(0);
       let armed = false;
       const puck = `<div class="hb-beam"></div><div class="hb-puck"><svg viewBox="0 0 100 100">${A.puck(tier, out.target || null, { bare: true })}</svg></div>`;
       document.body.appendChild(node);
@@ -3639,7 +3641,7 @@ body.hn-focus .main-nav [data-nav="home"], body.hn-focus .main-nav [data-nav="co
         $('[data-n]').textContent = res.length > 1 ? `CARD ${i + 1} OF ${res.length}` : '';
         $('[data-t]').textContent = 'Decrypting bounty data…';
         const hv = rank >= 3;
-        $('[data-stage]').innerHTML = `<div class="hb-card" style="--rc:${R_COL[def.rarity]};--dt:${dt}s">${back25 ? `<span class="hb-back25">${back25}</span>` : ''}<span class="glow"></span>${hv ? '<span class="hb-ring"></span>' : ''}${cardOf(def, r)}<span class="hb-tint"></span><span class="hb-sw"><i></i></span><span class="hb-stamp ${r.isNew ? '' : 'dup'}">${tagOf(r)}</span>${hv ? `<span class="hb-hv">${rank >= 4 ? 'MOST WANTED' : 'HIGH-VALUE TARGET'}</span>` : ''}</div>${puck}`;
+        $('[data-stage]').innerHTML = `<div class="hb-card" style="--rc:${R_COL[def.rarity]};--dt:${dt}s">${back25 ? `<span class="hb-back25">${backAt(i)}</span>` : ''}<span class="glow"></span>${hv ? '<span class="hb-ring"></span>' : ''}${cardOf(def, r)}<span class="hb-tint"></span><span class="hb-sw"><i></i></span><span class="hb-stamp ${r.isNew ? '' : 'dup'}">${tagOf(r)}</span>${hv ? `<span class="hb-hv">${rank >= 4 ? 'MOST WANTED' : 'HIGH-VALUE TARGET'}</span>` : ''}</div>${puck}`;
         const stage = $('[data-stage]');
         stage.className = 'hb-stage armed';
         stage.style.setProperty('--dt', `${dt}s`);

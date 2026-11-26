@@ -182,14 +182,14 @@
   };
   if (!hookHN()) { let k = 0; const t = setInterval(() => { if (hookHN() || ++k > 120) clearInterval(t); }, 1000); }
   // ---------- Pack themes ----------
-  const backOf = (packId, def) => { let b = ''; try { b = packId && UI.hooks.cardBack ? UI.hooks.cardBack(packId) : ''; } catch (e) { b = ''; } if (!b && root.Art && root.Art.cardBack) b = root.Art.cardBack((def && def.faction) || 'light'); return String(b).replace('<svg ', '<svg preserveAspectRatio="xMidYMid slice" '); };
+  const backOf = (packId, def, i) => { let b = ''; try { b = packId && UI.hooks.cardBack ? UI.hooks.cardBack(packId, i || 0) : ''; } catch (e) { b = ''; } if (!b && root.Art && root.Art.cardBack) b = root.Art.cardBack((def && def.faction) || 'light'); return String(b).replace('<svg ', '<svg preserveAspectRatio="xMidYMid slice" '); };
   if (UI.hooks) UI.hooks.crateFx = (packId, best, results) => {
     if (!on() || !motion()) return null;
     const c = C(); const th = root.Cos25 && root.Cos25.themeFor ? root.Cos25.themeFor(packId) : c && c.pk ? c.pk[packId] : null;
     if (!th || th === 'default' || !PACK_KEY[th] || !PK[PACK_KEY[th]]) return null;
     const k = PACK_KEY[th];
     // Face down: the cards fly out showing their backs, so nothing is given away before you flip them.
-    const cards = results.slice(0, 3).map((r, i) => `<span class="pcard bk c${i + 1}"><span class="ca">${backOf(packId, D.UNIT_MAP[r.id])}</span></span>`).join('');
+    const cards = results.slice(0, 3).map((r, i) => `<span class="pcard bk c${i + 1}"><span class="ca">${backOf(packId, D.UNIT_MAP[r.id], i)}</span></span>`).join('');
     const o = overlay('pack');
     return play(o, `<div class="packs r-${best}"><div class="pack"><div class="pstage ${k}">${uniq(PK[k])}<span class="flash"></span><span class="cards">${cards}</span></div></div></div>`, 5600).then(() => { o.classList.add('out'); setTimeout(() => o.remove(), 300); });
   };

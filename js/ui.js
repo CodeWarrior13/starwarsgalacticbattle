@@ -3534,6 +3534,7 @@
     const best = results.reduce((b, r) => (R_ORDER[D.UNIT_MAP[r.id].rarity] > R_ORDER[b] ? D.UNIT_MAP[r.id].rarity : b), 'common');
     // opts.slot: cards that come from no crate (Black Market buys) still wear that slot's theme and card back.
     const slot = packId || opts.slot || '';
+    if (slot && HOOKS.cardBackRoll) HOOKS.cardBackRoll(slot, results.length);
     if (packId) {
       // 2.5: an equipped pack theme plays instead of the usual crate opening (Auto-open too).
       const fx = HOOKS.crateFx ? HOOKS.crateFx(packId, best, results) : null;
@@ -3543,7 +3544,7 @@
       if (fx) await fx;
     }
     // 2.5: a crate can wear its own card back (Cosmetics > Card backs).
-    const back25 = slot && HOOKS.cardBack ? HOOKS.cardBack(slot) : '';
+    const back25 = slot && HOOKS.cardBack ? HOOKS.cardBack(slot, 0) : '';
     const cards = results.map((r, i) => {
       const def = D.UNIT_MAP[r.id];
       // 2.2: a new card gets a small "NEW CARD" ribbon in its top-left corner
@@ -3551,7 +3552,7 @@
       const corner = r.isNew && v22();
       const tag = corner ? NEW_CORNER : r.isNew ? '<span class="reveal-tag">NEW!</span>' : `<span class="reveal-tag dup">+${r.shards} shards</span>`;
       return `<div class="flip glow-${def.rarity} r-${def.rarity} side-${def.faction} ${r.holo ? 'is-holo' : ''} ${i > 0 ? 'stack-hidden' : ''}" style="--rc:${R_COLOR[def.rarity]};--i:${i};--fc:${def.faction === 'dark' ? '#ff2a3a' : '#5ab4ff'}" data-i="${i}" tabindex="0" role="button" aria-label="Reveal card">
-        <div class="flip-face flip-back">${back25 || Art.cardBack(def.faction)}</div>
+        <div class="flip-face flip-back">${(i && slot && HOOKS.cardBack ? HOOKS.cardBack(slot, i) : back25) || Art.cardBack(def.faction)}</div>
         <div class="flip-face flip-front">${tag}${r.holo ? `<span class="holo-tag${corner ? ' right' : ''}">HOLO</span>` : ''}${r.pity ? '<span class="holo-tag pity">PITY</span>' : ''}${unitCard(def, { tag: 'div', hideShards: true, holo: r.holo })}</div>
       </div>`;
     }).join('');
