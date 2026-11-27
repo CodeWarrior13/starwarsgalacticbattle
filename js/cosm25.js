@@ -610,7 +610,7 @@
   // (and with it their profile) is set up. Never mid-battle or over a pop-up.
   const T = () => root.Tutorial;
   const qs = (x) => document.querySelector(x);
-  const clearScreen = () => !UI.App.battleActive && UI.App.current !== 'battle' && !qs('.modal-backdrop, .modal, .tut-intro, .tut-coach, .tut-skip, .tut-victory, .tut-welcome, .feat-show, .feat-cine, .rank-up, .walkout, .fx25-ov, .wp25, .tc-scene') && !(root.RexGuide && root.RexGuide.active && root.RexGuide.active()) && !(root.Tutorial && root.Tutorial.active);
+  const clearScreen = () => !UI.App.battleActive && UI.App.current !== 'battle' && !(root.BattleUI && root.BattleUI.loadingScene) && !qs('.hyperspace') && !qs('.modal-backdrop, .modal, .tut-intro, .tut-coach, .tut-skip, .tut-victory, .tut-welcome, .feat-show, .feat-cine, .rank-up, .walkout, .fx25-ov, .wp25, .tc-scene') && !(root.RexGuide && root.RexGuide.active && root.RexGuide.active()) && !(root.Tutorial && root.Tutorial.active);
   let touring = false;
   const waitFor = (test, cb) => { const t = setInterval(() => { if (test()) { clearInterval(t); cb(); } }, 250); };
   function tourStep(text, glow, label, next) { T().coach(text, glow, { tour: true, next, label: label || 'Next' }); }

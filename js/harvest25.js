@@ -126,7 +126,7 @@
     else if (x.k === 'riddle') body = `<blockquote class="hv-quote">“Two suns set over me and the sand never cools. Farmers pull water from my empty sky. The boy who left me lit a fire across the galaxy. Name my world.”<cite>— Luthen</cite></blockquote><input class="hv-in" maxlength="24" placeholder="Your answer" autocomplete="off"><p class="hv-msg muted small"></p><button type="button" class="btn btn-primary" data-ans>Answer</button>`;
     else if (x.k === 'glint') body = `<p>Something on the galaxy map is catching the light, on one of your worlds. Look closely at the home map and tap it.</p><p class="muted small">It blinks like a message: long, short, long.</p><button type="button" class="btn btn-primary" data-map>Go to the map</button>`;
     else if (x.k === 'tatooine') body = `<p>Win 5 battles on Tatooine.</p><div class="hv-bar"><i style="width:${Math.min(100, ((h.p.tat | 0) / 5) * 100)}%"></i></div><p class="muted small">${Math.min(5, h.p.tat | 0)} / 5</p>`;
-    else if (x.k === 'nuna') body = hnLevel() ? `<p>A giant feather in the sand, footprints over the dune… The Grand Nuna is this week's <b>community raid</b> in the HoloNet. Land one hit on it.</p><p class="muted small">Gobble, Feather Storm, Stuffed and Nuna Chicks: smash the feast table first.</p>` : `<p>The Grand Nuna is raiding the moisture farms. Win a battle on Tatooine to drive it off.</p><p class="muted small">From account level 25 you can fight it in the HoloNet raid.</p>`;
+    else if (x.k === 'nuna') body = hnLevel() ? `<p>A giant feather in the sand, footprints over the dune… The Grand Nuna is this week's <b>community raid</b> in the HoloNet. Land one hit on it.</p><p class="muted small">Gobble, Feather Storm, Stuffed and Nuna Chicks: smash the feast table first.</p>` : `<p>The Grand Nuna is raiding the moisture farms on Tatooine. Fly out and land one hit on it.</p><p class="muted small">Gobble, Feather Storm and Nuna Chicks. You don't have to win: one hit counts. From account level 25 you can also fight it in the HoloNet raid.</p><button type="button" class="btn btn-primary" data-nuna>Hunt the Grand Nuna</button>`;
     else if (x.k === 'watto') { const w = h.p.wg || {}; body = `<p>Win once in each of Watto's games.</p><ul class="hv-checks">${[['sb', 'Sabacc'], ['hc', 'Holo-Chess Wager'], ['pr', 'Podrace Bets'], ['pz', 'Pazaak']].map(([k, n]) => `<li class="${w[k] ? 'on' : ''}">${w[k] ? '✓' : '○'} ${n}</li>`).join('')}</ul><p class="muted small">Only wins from Friday on count.</p>`; }
     else if (x.k === 'cloche') body = `<p>Luthen left a covered dish somewhere ${clocheAt()[1]}. Find it and lift the lid.</p>`;
     else if (x.k === 'cipher') body = cipherHtml();
@@ -137,6 +137,7 @@
     if (ans) { const go = () => { const v = r.querySelector('.hv-in').value.toLowerCase(); if (/tatoo?ine/.test(v.replace(/\s+/g, ''))) { m.close(); complete(0); } else r.querySelector('.hv-msg').textContent = 'Luthen shakes his head. “Think of the two suns.”'; }; ans.onclick = go; r.querySelector('.hv-in').onkeydown = (e) => { if (e.key === 'Enter') go(); }; }
     const mp = r.querySelector('[data-map]'); if (mp) mp.onclick = () => { m.close(); document.querySelectorAll('.modal-backdrop').forEach((n) => n.remove()); UI.App.go('home'); };
     if (x.k === 'cipher' && !done) cipherWire(r, () => { m.close(); complete(6); });
+    const nb = r.querySelector('[data-nuna]'); if (nb) nb.onclick = () => { m.close(); document.querySelectorAll('.modal-backdrop').forEach((n) => n.remove()); huntNuna(); };
   }
   // ---------- Sunday: the cipher wheel ----------
   const WORD = 'GRATITUDE'; const SHIFT = 7;
@@ -153,6 +154,42 @@
     r.querySelector('[data-r]').onclick = () => { s = (s + 1) % 26; paint(); };
     r.querySelector('[data-crack]').onclick = () => { if (read() === WORD) ok(); else r.querySelector('.hv-msg').textContent = 'Still scrambled. Keep turning.'; };
   }
+  // ---------- The Grand Nuna for every level ----------
+  // Below level 25 there is no HoloNet raid, so the Nuna comes to Tatooine: one battle against
+  // the Nuna and two chicks, scaled to your squad. One hit finishes Thursday's task (win or lose),
+  // and the battle ends back on the map like any Tatooine fight.
+  const HV_UNITS = () => {
+    const dmg = (mult) => ({ type: 'damage', mult, hits: 1 });
+    const debuff = (status, turns, chance) => ({ type: 'status', status, turns, chance: chance == null ? 1 : chance });
+    const ab = (name, cd, target, effects, desc) => ({ name, cd, target, effects, desc });
+    const ult = (name, target, effects, desc, quote) => ({ name, cd: 0, target, effects, desc, quote, ultimate: true });
+    return [
+      { id: 'hv_nuna', name: 'The Grand Nuna', kind: 'character', faction: 'dark', rarity: 'legendary', role: 'tank', spd: 92, traits: [], home: 'tatooine', portrait: 'raid_nuna', exclusive: true, boss: { hp: 2.5, atk: 0.75, def: 1 },
+        bio: 'Gobble. The Harvest Hunt\'s giant bird is raiding the moisture farms.',
+        abilities: [ab('Peck and Gobble', 0, 'enemy', [dmg(1.1)], 'Pecks one card.'), ab('Feather Storm', 3, 'allEnemies', [dmg(0.7)], 'The tail fan whips a storm of feathers into every card.')],
+        ultimate: ult('Thunderous Gobble', 'allEnemies', [dmg(1.1), debuff('offDown', 2, 0.6)], 'A gobble so loud every card loses its nerve.', 'GOBBLE!') },
+      { id: 'hv_chick', name: 'Nuna Chick', kind: 'character', faction: 'dark', rarity: 'common', role: 'attacker', spd: 124, traits: [], home: 'tatooine', portrait: 'hn_nuna_chick', exclusive: true,
+        bio: 'Small, fast and very hungry.',
+        abilities: [ab('Peck', 0, 'enemy', [dmg(0.8)], 'A sharp little peck.')], ultimate: ult('Flock', 'enemy', [dmg(1.3)], 'The whole clutch piles on.', '') },
+    ];
+  };
+  function hvReady() { for (const u of HV_UNITS()) if (!D.UNIT_MAP[u.id]) { D.UNIT_MAP[u.id] = u; if (D.BIOS) D.BIOS[u.id] = u.bio; } }
+  if (!Player.__hvEnc) {
+    Player.__hvEnc = true; const enc0 = Player.encounter.bind(Player);
+    Player.encounter = function (params) {
+      const e = enc0(params);
+      if (!params || !params.hvNuna) return e;
+      hvReady();
+      const sq = Player.squadEntries('character');
+      const lvl = Math.max(1, Math.round(sq.reduce((a, x) => a + (x.level || 1), 0) / Math.max(1, sq.length)));
+      return { ...e, name: 'The Grand Nuna', enemies: ['hv_chick', 'hv_nuna', 'hv_chick'], level: lvl, stars: 2, enemyScale: 1, boss: 'hv_nuna', label: 'Harvest Hunt · The Grand Nuna' };
+    };
+  }
+  function huntNuna() {
+    hvReady();
+    if (!Player.squadEntries('character').length) { toast('Pick a ground squad first.'); return; }
+    root.BattleUI.start({ type: 'stage', planet: 'tatooine', stage: 0, hvNuna: true });
+  }
   // ---------- Hooks into the rest of the game ----------
   // Battles: Wednesday's 5 Tatooine wins, Thursday's hit on the Grand Nuna (or a Tatooine win below level 25).
   UI.hooks.battleEnd.push((battle, params, won) => {
@@ -161,6 +198,7 @@
     if (dayNo() >= 2 && !h.d[2] && won && params.planet === 'tatooine') { h.p.tat = (h.p.tat | 0) + 1; save(); if (h.p.tat >= 5) complete(2); else toast(`Harvest Hunt: ${h.p.tat} / 5 Tatooine wins`); }
     if (dayNo() >= 3 && !h.d[3]) {
       if (params.hn === 'raid' && params.boss === 'raid_nuna') { const boss = battle && battle.units.find((u) => u.def.raid); if (boss && (battle.hnStartHp || 0) - boss.hp > 0) complete(3); }
+      else if (params.hvNuna) { const boss = battle && battle.units.find((u) => u.id === 'hv_nuna'); if (boss && boss.hp < boss.maxHp) complete(3); else toast('The Grand Nuna got away. Land one hit to finish the task.'); }
       else if (!hnLevel() && won && params.planet === 'tatooine') complete(3);
     }
   });
