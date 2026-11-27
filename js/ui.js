@@ -82,7 +82,7 @@
         <div class="ucard-meta"><span class="rar">${D.RARITIES[def.rarity].label}${u && u.elite && !opts.level ? ' <b class="elite-tag">Elite</b>' : ''}</span><span>${owned ? 'Lv ' + level : 'Locked'}</span></div>
         ${owned ? stars(starCount) : '<span class="muted" style="font-size:12px">Find in the Black Market</span>'}
         ${owned ? `<div class="ucard-meta"><span class="power">⚡ ${fmt(D.power(def, level, starCount, u && u.elite && !opts.level))}</span><span>${def.kind === 'ship' ? 'Ship' : 'Hero'}</span></div>` : ''}
-        ${opts.traits ? `<div class="trait-icons">${D.traitsOf(def.id).map((t) => `<span title="${D.TRAIT_INFO[t].label}">${D.TRAIT_INFO[t].icon}</span>`).join('')}</div>` : ''}
+        ${opts.traits ? `<div class="trait-icons">${D.traitsOf(def.id).filter((t) => D.TRAIT_INFO[t]).map((t) => `<span title="${D.TRAIT_INFO[t].label}">${D.TRAIT_INFO[t].icon}</span>`).join('')}</div>` : ''}
         ${shard}
       </div>
     </${tag}>`;
@@ -797,7 +797,7 @@
   }
 
   function traitChips(id) {
-    return D.traitsOf(id).map((t) => `<span class="trait" title="${D.TRAIT_INFO[t].label}">${D.TRAIT_INFO[t].icon} ${D.TRAIT_INFO[t].label}</span>`).join('');
+    return D.traitsOf(id).filter((t) => D.TRAIT_INFO[t]).map((t) => `<span class="trait" title="${D.TRAIT_INFO[t].label}">${D.TRAIT_INFO[t].icon} ${D.TRAIT_INFO[t].label}</span>`).join('');
   }
 
   // Main teams preview (js/mainteams.js), only while its test switch is on.
