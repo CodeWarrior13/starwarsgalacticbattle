@@ -40,6 +40,7 @@
         'IMPROVED|Cassian\'s Haulcraft gets Spy Network, and Mando\'s N-1 gets a Proton Torpedo.',
         'BALANCE|Starkiller, Rey, Kylo Ren, K-2SO and the Droideka are reworked: new moves and sharper numbers, each tested so it fits its rarity.',
         'IMPROVED|Droideka: new art. Armoured legs on crescent feet, blasters pointed right at you, and a smooth shield bubble.',
+        'IMPROVED|New art for Darth Vader, the Mandalorian, the Stormtrooper, Yoda, C-3PO and Darth Maul: real necks and shoulders, bodies in proportion and more detail. Yoda gets a slimmer robe and a new Dagobah swamp with his hut, C-3PO is slimmer and friendlier, and Maul\'s face is redrawn with his classic markings.',
         'IMPROVED|Cosmetics tab: Equip on all puts a crate theme or card back on every crate at once.',
         'NEW|Card back shuffle (unlocks at Level 10): switch it on in Cosmetics, Card backs, and every card you open from a crate or puck gets its own random back. Pick which backs go in the mix (at least 2), or Select all.',
         'IMPROVED|The Cosmetics tab opens about twice as fast: previews hold still until you pick one, and everything behind it rests while it\'s open.',
