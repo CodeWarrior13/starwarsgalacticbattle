@@ -2260,7 +2260,8 @@
       delete p.farm;
       if (p.type === 'secret' && won) return this.secretVictory(p, rewards);
       const isTower = p.type === 'tower';
-      const isStage = p.type === 'stage';
+      // Snow Day battles (Wampa King, Frostline) use Hoth's stage slot but have no next stage.
+      const isStage = p.type === 'stage' && !p.sd;
       const planet = isStage ? D.PLANET_MAP[p.planet] : null;
       const nextInPlanet = won && isStage && p.stage < planet.stages.length - 1;
       const nextPlanet = won && isStage && rewards.planetComplete ? D.PLANETS[D.PLANETS.indexOf(planet) + 1] : null;
@@ -2319,7 +2320,7 @@
           ${isTower ? '' : '<button class="btn" type="button" data-r="retry">Retry</button>'}
           ${nextParams && hasNext ? '<button class="btn" type="button" data-r="edit-next">Edit squad</button>' : ''}
           ${won ? '' : '<button class="btn" type="button" data-r="collection">Collection</button>'}
-          ${p.type === 'secret' ? '<button class="btn btn-primary" type="button" data-r="secret">Return to the Monolith</button>' : isTower ? `<button class="btn" type="button" data-r="tower-exit">Leave tower</button><button class="btn btn-primary" type="button" data-r="tower">${won ? `Climb to floor ${rewards.towerFloor}` : `Restart from floor ${rewards.towerFloor}`}</button>` : nextInPlanet ? '<button class="btn btn-primary" type="button" data-r="next">Next stage</button>' : nextPlanet ? `<button class="btn btn-primary" type="button" data-r="planet">Travel to ${esc(nextPlanet.name)}</button>` : '<button class="btn btn-primary" type="button" data-r="campaign">Continue</button>'}
+          ${p.sd ? '<button class="btn btn-primary" type="button" data-r="campaign">Back to Echo Base</button>' : p.type === 'secret' ? '<button class="btn btn-primary" type="button" data-r="secret">Return to the Monolith</button>' : isTower ? `<button class="btn" type="button" data-r="tower-exit">Leave tower</button><button class="btn btn-primary" type="button" data-r="tower">${won ? `Climb to floor ${rewards.towerFloor}` : `Restart from floor ${rewards.towerFloor}`}</button>` : nextInPlanet ? '<button class="btn btn-primary" type="button" data-r="next">Next stage</button>' : nextPlanet ? `<button class="btn btn-primary" type="button" data-r="planet">Travel to ${esc(nextPlanet.name)}</button>` : '<button class="btn btn-primary" type="button" data-r="campaign">Continue</button>'}
         </div>`, { small: true, dismissable: false, cls: 'result-modal' });
       if (won) this.spinReel(m.root, rewards);
       // 2.4: what this play session has earned, and the rate per hour.
