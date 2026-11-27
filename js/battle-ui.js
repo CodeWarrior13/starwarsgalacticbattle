@@ -59,7 +59,30 @@
       return new Promise((r) => setTimeout(r, ms / this.speed));
     },
 
+    // Safety net: if anything goes wrong while a battle is starting, put the
+    // player back on a working map instead of leaving the game stuck "in battle"
+    // with an empty screen. The error is kept on this device for bug reports.
     async start(params) {
+      try { return await this.startInner(params); } catch (e) { this.recover(e); }
+    },
+
+    recover(e) {
+      try { console.error('[battle]', e); localStorage.setItem('swcg-last-battle-err', new Date().toISOString() + ' ' + String((e && (e.stack || e.message)) || e).slice(0, 900)); } catch (x) { /* storage blocked */ }
+      this.loadingScene = false;
+      this.ended = true;
+      this.battle = null;
+      try { if (this.env) this.env.stop(); } catch (x) { /* already gone */ }
+      try { document.removeEventListener('keydown', this.onKey); } catch (x) { /* never added */ }
+      App.battleActive = false;
+      document.body.classList.remove('in-battle');
+      $$('.hyperspace, .boss-intro, .cine, .keys-help').forEach((n) => n.parentNode && n.parentNode.removeChild(n));
+      App.current = 'home';
+      try { App.go('home'); } catch (x) { /* the map has its own safety net */ }
+      const msg = String((e && e.message) || e || '').slice(0, 70);
+      toast(`That battle couldn't load, so you're back on the map. Please try again.${msg ? ` (${msg})` : ''}`);
+    },
+
+    async startInner(params) {
       const tut = params.type === 'tutorial';
       const enc = tut ? root.Tutorial.encounter(params.stage) : Player.encounter(params);
       const squad = tut ? root.Tutorial.squad(params.stage) : Player.squadEntries(enc.kind);
@@ -74,7 +97,7 @@
       if (root.Stages24 && !root.Stages24.ready(params)) {
         if (this.loadingScene) return;
         this.loadingScene = true;
-        try { await root.Stages24.load(params); } catch (e) { /* offline: the battle just has no scene */ }
+        try { await Promise.race([root.Stages24.load(params), new Promise((r) => setTimeout(r, 8000))]); } catch (e) { /* offline or slow: the battle just has no scene */ }
         this.loadingScene = false;
       }
       this.params = params;
@@ -109,7 +132,7 @@
         savePrefs(this.prefs);
         toast('PC controls: 1–5 abilities, ←/→ target, Enter to attack, ? for help');
       }
-      this.loop();
+      Promise.resolve(this.loop()).catch((e) => { if (!this.ended) this.recover(e); });
     },
 
     // ---------- Ultimate preview (training simulation) ----------

@@ -253,7 +253,15 @@
     ui: { collectionKind: 'all', collectionFaction: 'all', collectionSort: 'strong', campaignKind: 'character', betIndex: 0 },
 
     go(screen, params, opts = {}) {
-      if (App.battleActive && screen !== 'battle') return;
+      // Safety net: "in battle" with no battle on screen means a battle failed
+      // to start or finish; let the player leave instead of being stuck.
+      if (App.battleActive && screen !== 'battle') {
+        const B = root.BattleUI;
+        if (B && B.battle && !B.ended && document.querySelector('#screen .battle')) return;
+        App.battleActive = false;
+        document.body.classList.remove('in-battle');
+        $$('.hyperspace, .boss-intro').forEach((n) => n.parentNode && n.parentNode.removeChild(n));
+      }
       App.current = screen;
       App.params = params || {};
       $$('.main-nav button').forEach((b) => {
@@ -262,7 +270,19 @@
       });
       const container = $('#screen');
       container.innerHTML = '';
-      container.appendChild(Screens[screen](App.params));
+      try {
+        container.appendChild(Screens[screen](App.params));
+      } catch (e) {
+        // A screen that fails to draw never leaves the player on a blank page.
+        try { console.error('[screen]', screen, e); localStorage.setItem('swcg-last-screen-err', new Date().toISOString() + ' ' + screen + ' ' + String((e && (e.stack || e.message)) || e).slice(0, 900)); } catch (x) { /* storage blocked */ }
+        container.innerHTML = '';
+        const box = document.createElement('section');
+        box.className = 'view';
+        box.style.cssText = 'display:grid;gap:12px;place-items:center;text-align:center;padding:48px 16px';
+        box.innerHTML = `<h2>Something went wrong loading this screen.</h2><p class="muted">${esc(String((e && e.message) || e).slice(0, 90))}</p><button type="button" class="btn btn-primary" data-reload>Reload the game</button>`;
+        box.querySelector('[data-reload]').onclick = () => location.reload();
+        container.appendChild(box);
+      }
       updateWallet();
       // Slide the console's saber under the active tab.
       const navEl = $('.main-nav');
