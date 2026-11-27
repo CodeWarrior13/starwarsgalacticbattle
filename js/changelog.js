@@ -92,6 +92,7 @@
         'NEW|Other pilots see your holo cards on your profile, marked with a small HOLO tag in the corner.',
         'NEW|The Harvest Hunt, November 23 to December 1: find a new relic every day (missed one? catch it up later) and finish the set for the Relic Hunter badge and 150 Kyber.',
         'NEW|The Grand Nuna lands for a community raid during Thanksgiving week, and everyone who plays on Thanksgiving Day gets 75 Kyber and 750 Beskar.',
+        'IMPROVED|Every pilot can hunt the Grand Nuna: below level 25, the Harvest Hunt\'s Thursday task has a Hunt the Grand Nuna button that flies you straight into the fight on Tatooine, then back to the map. One hit counts.',
         'NEW|Play during Life Day, the Harvest Hunt, the Egg Hunt or May the 4th week to earn that holiday\'s attack colour and profile pictures.',
         'NEW|The loading screens and the app icon change for each holiday on their own.',
         'IMPROVED|The B-wing and the Ebon Hawk are redrawn with new attack animations. The Ebon Hawk also gets a new kit: Dorsal Turrets hit three times and lower Defense, HK-47 Protocol finishes off weakened enemies, and a tractor-beam ultimate.',
