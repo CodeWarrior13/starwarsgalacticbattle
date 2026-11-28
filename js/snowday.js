@@ -190,6 +190,9 @@
     save(); bump(() => {});
   }
 
+  // Performance mode: freeze the animated pictures (globes, frames, win screens) so Snow Day never lags.
+  const calm = (node) => { try { if (!node || !document.body.classList.contains('perf-lite')) return; node.querySelectorAll('svg').forEach((v) => { if (v.pauseAnimations) v.pauseAnimations(); }); } catch (e) { /* older browsers */ } };
+  const modal = (h, o) => { const m = UI.openModal(h, o); calm(m.root); return m; };
   // ---------- Opening a door ----------
   function openDoor(i) {
     const h = S(); if (h.d[i] || !ready(i)) return;
@@ -200,7 +203,7 @@
   }
   function reveal(i) {
     const x = SD.DAYS[i];
-    const m = UI.openModal(`<div class="sd-rev"><div class="sd-rev-door"><div class="sd-swing">${SD.DOOR(i)}</div><div class="sd-rev-in">${x.r.map((r) => { const f = info(r); return `<span class="sd-ri ${f.cur ? 'cur' : f.kind}">${f.art}</span>`; }).join('')}</div></div>
+    const m = modal(`<div class="sd-rev"><div class="sd-rev-door"><div class="sd-swing">${SD.DOOR(i)}</div><div class="sd-rev-in">${x.r.map((r) => { const f = info(r); return `<span class="sd-ri ${f.cur ? 'cur' : f.kind}">${f.art}</span>`; }).join('')}</div></div>
       <p class="eyebrow">Door ${i + 1} · ${esc(x.d)}</p><h2>${esc(x.t)}</h2><ul class="sd-rlist">${x.r.map((r) => `<li>${esc(info(r).label)}</li>`).join('')}</ul><p class="muted small">Added to your collection. Skins and items stay yours after Christmas.</p>
       <div class="modal-actions"><button type="button" class="btn btn-primary" data-x>Merry Christmas!</button></div></div>`, { small: true, cls: 'sd-modal' });
     m.root.querySelector('[data-x]').onclick = () => m.close();
@@ -220,7 +223,7 @@
         <div class="modal-actions">${x.m.k === 'boss' ? '<button type="button" class="btn" data-cave>Go to the cave</button>' : ''}${x.m.k === 'camp' ? '<button type="button" class="btn" data-frost>Go to the Frostline</button>' : ''}${x.m.k === 'visit' ? '<button type="button" class="btn" data-stall>Visit Luthen</button>' : ''}<button type="button" class="btn btn-primary" data-open ${ready(i) ? '' : 'disabled'}>${ready(i) ? 'Open the door' : 'Not yet'}</button></div>
         ${testDay() != null ? '<p class="sd-test"><button type="button" class="btn btn-small" data-cheat>Tester: complete this mission</button></p>' : ''}`;
     }
-    const m = UI.openModal(`<div class="sd-sheet"><div class="sd-sheet-door ${st}">${SD.DOOR(i)}</div><p class="eyebrow">Door ${i + 1} · ${esc(x.d)}${st === 'catch' ? ' · catch up' : ''}</p><h2>${esc(x.t)}</h2>${body}<div class="modal-actions"><button type="button" class="btn" data-x>Back</button></div></div>`, { small: true, cls: 'sd-modal', onClose: after });
+    const m = modal(`<div class="sd-sheet"><div class="sd-sheet-door ${st}">${SD.DOOR(i)}</div><p class="eyebrow">Door ${i + 1} · ${esc(x.d)}${st === 'catch' ? ' · catch up' : ''}</p><h2>${esc(x.t)}</h2>${body}<div class="modal-actions"><button type="button" class="btn" data-x>Back</button></div></div>`, { small: true, cls: 'sd-modal', onClose: after });
     const r = m.root;
     r.addEventListener('click', (e) => {
       if (e.target.closest('[data-x]')) return m.close();
@@ -259,7 +262,7 @@
   }
   function talk() {
     const h = S();
-    const m = UI.openModal(`<div class="sd-talk"><div class="sd-talk-pic">${uq(SD.LUTH('lut'))}</div><div class="sd-talk-c"><p class="eyebrow">Luthen</p><p class="sd-say">"${esc(SD.LUTHEN.hello[2])}"</p><div class="sd-opts"><button type="button" class="btn" data-o="sale">What's for sale?</button><button type="button" class="btn" data-o="merry">Wish Luthen a Merry Christmas</button><button type="button" class="btn" data-o="bye">Goodbye</button></div></div></div>`, { small: true, cls: 'sd-modal' });
+    const m = modal(`<div class="sd-talk"><div class="sd-talk-pic">${uq(SD.LUTH('lut'))}</div><div class="sd-talk-c"><p class="eyebrow">Luthen</p><p class="sd-say">"${esc(SD.LUTHEN.hello[2])}"</p><div class="sd-opts"><button type="button" class="btn" data-o="sale">What's for sale?</button><button type="button" class="btn" data-o="merry">Wish Luthen a Merry Christmas</button><button type="button" class="btn" data-o="bye">Goodbye</button></div></div></div>`, { small: true, cls: 'sd-modal' });
     const say = (t) => { m.root.querySelector('.sd-say').textContent = `"${t}"`; };
     const opts = (html) => { m.root.querySelector('.sd-opts').innerHTML = html; };
     m.root.addEventListener('click', (e) => {
@@ -300,7 +303,7 @@
   }
   function stage(i) {
     const s = SD.FROST[i]; const h = S(); const pay = info(s.pay);
-    const m = UI.openModal(`<div class="sd-sheet"><p class="eyebrow">Frostline · Stage ${i + 1} of 6</p><h2>${esc(s.n)}</h2><p>${esc(s.d)}</p><p class="muted small">Enemies: ${s.en.map((id) => esc(id === 'snowtrooper' ? 'Snowtrooper' : (UNITS().find((u) => u.id === id) || {}).name || id)).join(', ')}</p><p>Best: ${'★'.repeat(h.cs[i] | 0)}${'☆'.repeat(3 - (h.cs[i] | 0))}${h.cs[i] ? '' : ` · first clear pays <b>${esc(pay.label)}</b>`}</p><p class="muted small">Stars: 3 if your whole squad survives, 2 if half does, 1 for a win.</p><div class="modal-actions"><button type="button" class="btn" data-x>Back</button><button type="button" class="btn btn-primary" data-f>Fight</button></div></div>`, { small: true, cls: 'sd-modal' });
+    const m = modal(`<div class="sd-sheet"><p class="eyebrow">Frostline · Stage ${i + 1} of 6</p><h2>${esc(s.n)}</h2><p>${esc(s.d)}</p><p class="muted small">Enemies: ${s.en.map((id) => esc(id === 'snowtrooper' ? 'Snowtrooper' : (UNITS().find((u) => u.id === id) || {}).name || id)).join(', ')}</p><p>Best: ${'★'.repeat(h.cs[i] | 0)}${'☆'.repeat(3 - (h.cs[i] | 0))}${h.cs[i] ? '' : ` · first clear pays <b>${esc(pay.label)}</b>`}</p><p class="muted small">Stars: 3 if your whole squad survives, 2 if half does, 1 for a win.</p><div class="modal-actions"><button type="button" class="btn" data-x>Back</button><button type="button" class="btn btn-primary" data-f>Fight</button></div></div>`, { small: true, cls: 'sd-modal' });
     m.root.addEventListener('click', (e) => { if (e.target.closest('[data-x]')) m.close(); if (e.target.closest('[data-f]')) { m.close(); fight({ sd: 'camp', st: i }); } });
   }
   function wish() {
@@ -324,10 +327,10 @@
     if (k === 'tree') { if (dayNo() >= N - 1 && live()) { christmas(false); return; } toast('Come back on Christmas Day. Something will be under the tree.'); return; }
     if (k === 'rex') { const i = Math.min(Math.max(dayNo(), 0), N - 1); doorSheet(i, render); return; }
     body.innerHTML = `<button type="button" class="sd-back" data-home>← Echo Base</button>${k === 'cal' ? calendar() : k === 'stall' ? stall() : k === 'cave' ? cave() : k === 'frost' ? frost() : k === 'wish' ? wish() : ''}`;
-    body.dataset.p = k; el.querySelector('.sd-scroll').scrollTop = 0;
+    body.dataset.p = k; el.querySelector('.sd-scroll').scrollTop = 0; calm(body);
   }
   function render() { if (!el) return; const p = el.querySelector('.sd-body').dataset.p; if (p && p !== 'hub') panel(p); else home(); head(); }
-  function home() { const b = el.querySelector('.sd-body'); b.innerHTML = hub(); b.dataset.p = 'hub'; }
+  function home() { const b = el.querySelector('.sd-body'); b.innerHTML = hub(); b.dataset.p = 'hub'; calm(b); }
   function head() {
     const t = testDay();
     el.querySelector('.sd-top-s').textContent = live() ? `Door ${Math.min(dayNo(), N - 1) + 1} of 27 · ${opened()} opened` : dayNo() < 0 ? 'Opens Sunday, November 29' : 'Merry Christmas';
@@ -348,7 +351,7 @@
       }
       document.body.classList.add('sd-open'); home(); head();
       requestAnimationFrame(() => el.classList.add('in'));
-      if (S().secretPop) { S().secretPop = 0; save(); setTimeout(() => { const m = UI.openModal(`<div class="sd-rev"><div class="sd-ri sq big">${uq(ART()['pfp:Snowtrooper Scarf'])}</div><p class="eyebrow">Secret found</p><h2>Snowtrooper Scarf</h2><p class="muted">Three stars on every Frostline stage. Not many pilots will find this one.</p><div class="modal-actions"><button type="button" class="btn btn-primary" data-x>Nice</button></div></div>`, { small: true, cls: 'sd-modal' }); m.root.querySelector('[data-x]').onclick = () => m.close(); }, 500); }
+      if (S().secretPop) { S().secretPop = 0; save(); setTimeout(() => { const m = modal(`<div class="sd-rev"><div class="sd-ri sq big">${uq(ART()['pfp:Snowtrooper Scarf'])}</div><p class="eyebrow">Secret found</p><h2>Snowtrooper Scarf</h2><p class="muted">Three stars on every Frostline stage. Not many pilots will find this one.</p><div class="modal-actions"><button type="button" class="btn btn-primary" data-x>Nice</button></div></div>`, { small: true, cls: 'sd-modal' }); m.root.querySelector('[data-x]').onclick = () => m.close(); }, 500); }
     });
   }
   function close() { if (!el) return; el.classList.remove('in'); document.body.classList.remove('sd-open'); const n = el; el = null; setTimeout(() => n.remove(), 300); }
